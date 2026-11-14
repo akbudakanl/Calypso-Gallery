@@ -28,6 +28,8 @@ import com.bumptech.glide.request.RequestOptions
 import com.squareup.picasso.Picasso
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.ConfirmationDialog
+import org.fossify.commons.dialogs.FilePickerDialog
+import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.dialogs.SecurityDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.extensions.getCurrentFormattedDateTime
@@ -35,6 +37,7 @@ import org.fossify.commons.extensions.internalStoragePath
 import org.fossify.commons.helpers.*
 import org.fossify.commons.models.FAQItem
 import org.fossify.commons.models.FileDirItem
+import org.fossify.commons.models.RadioItem
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
 import org.fossify.gallery.activities.MediaActivity
@@ -51,6 +54,7 @@ import org.fossify.gallery.dialogs.ResizeMultipleImagesDialog
 import org.fossify.gallery.dialogs.ResizeWithPathDialog
 import org.fossify.gallery.dialogs.VaultExitDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
+import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
@@ -300,6 +304,21 @@ fun BaseSimpleActivity.removeNoMedia(path: String, callback: (() -> Unit)? = nul
     }
 }
 
+private const val VAULT_ACTION_CREATE_NEW = 1
+private const val VAULT_ACTION_USE_EXISTING = 2
+private const val VAULT_LOCATION_OPTION_STANDARD = 1
+private const val VAULT_LOCATION_OPTION_CUSTOM = 2
+
+private data class VaultConfigSnapshot(
+    val vaultRootPath: String,
+    val wrappedKeyData: String,
+    val publicKey: String,
+    val hiddenPasswordHash: String,
+    val isHiddenPasswordProtectionOn: Boolean,
+    val isVaultBiometricEnabled: Boolean,
+    val biometricWrappedBundle: String
+)
+
 fun BaseSimpleActivity.hasVaultCreated(): Boolean {
     // The vault exists only while its .vault header is physically on disk. This is re-checked on
     // every call (no cached "true"). If the vault folder was removed externally, all leftover
@@ -347,16 +366,37 @@ fun BaseSimpleActivity.openSecretVaultPrompt(
             activity = this,
             requiredHash = config.hiddenPasswordHash,
             showTabIndex = initialType,
-            minimalist = true
-        ) { _, type, success ->
-            onDialogShowingChanged(false)
-            if (success) {
-                config.hiddenProtectionType = type
-                onVaultReady(false)
-            } else {
+            minimalist = true,
+            onCancelCallback = {
+                onDialogShowingChanged(false)
                 onCancelled()
             }
+        ) { _, type, success ->
+            if (success) {
+                onDialogShowingChanged(false)
+                config.hiddenProtectionType = type
+                onVaultReady(false)
+            }
         }
+    } else if (CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)) {
+        promptUnavailableExternalVault(
+            onRetryAvailable = {
+                openSecretVaultPrompt(
+                    onDialogShowingChanged = onDialogShowingChanged,
+                    onMissingVaultReset = onMissingVaultReset,
+                    onCancelled = onCancelled,
+                    onVaultReady = onVaultReady
+                )
+            },
+            onLocationChanged = {
+                onDialogShowingChanged(false)
+                onVaultReady(false)
+            },
+            onCancelled = {
+                onDialogShowingChanged(false)
+                onCancelled()
+            }
+        )
     } else {
         promptCreateVault(
             onCreated = {
@@ -371,41 +411,636 @@ fun BaseSimpleActivity.openSecretVaultPrompt(
     }
 }
 
-fun BaseSimpleActivity.promptCreateVault(
-    onCreated: () -> Unit,
+fun BaseSimpleActivity.promptUnavailableExternalVault(
+    onRetryAvailable: () -> Unit,
+    onLocationChanged: () -> Unit,
     onCancelled: () -> Unit = {}
 ) {
     val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).setText(R.string.vault_not_created_prompt)
+    val configuredPath = config.vaultRootPath
+    val displayPath = if (configuredPath.isNotEmpty()) humanizePath(configuredPath) else ""
+    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+        getString(R.string.external_vault_unavailable_prompt, displayPath)
+
     getAlertDialogBuilder()
-        .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
-            VaultSecurityDialog(this, "", SHOW_ALL_TABS, minimalist = false) { hash, type, success ->
-                if (success) {
-                    config.isHiddenPasswordProtectionOn = true
-                    config.hiddenPasswordHash = hash
-                    config.hiddenProtectionType = type
-                    ensureBackgroundThread {
-                        CryptoManager.getOrCreateDefaultHiddenAlbum(this)
-                        VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
-                        runOnUiThread {
-                            toast(org.fossify.commons.R.string.protection_setup_successfully)
-                            onCreated()
-                        }
-                    }
-                } else {
-                    onCancelled()
-                }
+        .setPositiveButton(R.string.retry) { _, _ ->
+            if (hasVaultCreated()) {
+                onRetryAvailable()
+            } else if (CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)) {
+                promptUnavailableExternalVault(onRetryAvailable, onLocationChanged, onCancelled)
+            } else {
+                onCancelled()
             }
         }
-        .setNegativeButton(org.fossify.commons.R.string.no) { _, _ ->
+        .setNeutralButton(R.string.change_vault_location) { _, _ ->
+            promptVaultSetupChoice(
+                confirmBeforeCreatingNew = false,
+                onCreated = onLocationChanged,
+                onCancelled = {
+                    promptUnavailableExternalVault(onRetryAvailable, onLocationChanged, onCancelled)
+                }
+            )
+        }
+        .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
             onCancelled()
         }
         .setOnCancelListener {
             onCancelled()
         }
         .apply {
-            setupDialogStuff(messageView, this)
+            setupDialogStuff(messageView, this, R.string.external_vault_unavailable_title)
         }
+}
+
+fun BaseSimpleActivity.promptCreateVault(
+    onCreated: () -> Unit,
+    onCancelled: () -> Unit = {}
+) {
+    if (CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)) {
+        promptUnavailableExternalVault(
+            onRetryAvailable = {
+                if (CryptoManager.isVaultUnlocked) {
+                    onCreated()
+                } else {
+                    ensureVaultUnlocked(onCancelled = onCancelled, onUnlocked = onCreated)
+                }
+            },
+            onLocationChanged = onCreated,
+            onCancelled = onCancelled
+        )
+        return
+    }
+
+    promptVaultSetupChoice(
+        confirmBeforeCreatingNew = false,
+        onCreated = onCreated,
+        onCancelled = onCancelled
+    )
+}
+
+fun BaseSimpleActivity.promptVaultSetupChoice(
+    confirmBeforeCreatingNew: Boolean,
+    onCreated: () -> Unit,
+    onCancelled: () -> Unit = {}
+) {
+    val items = arrayListOf(
+        RadioItem(VAULT_ACTION_CREATE_NEW, getString(R.string.create_new_vault_option)),
+        RadioItem(VAULT_ACTION_USE_EXISTING, getString(R.string.use_existing_vault_option))
+    )
+
+    RadioGroupDialog(
+        activity = this,
+        items = items,
+        checkedItemId = -1,
+        titleId = R.string.vault_setup_action_title,
+        cancelCallback = {
+            onCancelled()
+        }
+    ) { selected ->
+        val reopenStage1 = {
+            promptVaultSetupChoice(confirmBeforeCreatingNew, onCreated, onCancelled)
+        }
+        when (selected as Int) {
+            VAULT_ACTION_CREATE_NEW -> {
+                promptWhereToCreateVault(
+                    confirmBeforeCreatingNew = confirmBeforeCreatingNew,
+                    onVaultReady = onCreated,
+                    onBack = reopenStage1
+                )
+            }
+            VAULT_ACTION_USE_EXISTING -> {
+                pickExistingVaultAndUnlock(
+                    onVaultReady = onCreated,
+                    onBack = reopenStage1
+                )
+            }
+            else -> onCancelled()
+        }
+    }
+}
+
+fun BaseSimpleActivity.promptWhereToCreateVault(
+    confirmBeforeCreatingNew: Boolean = false,
+    onVaultReady: () -> Unit,
+    onBack: () -> Unit
+) {
+    val items = arrayListOf(
+        RadioItem(VAULT_LOCATION_OPTION_STANDARD, getString(R.string.vault_location_default_short)),
+        RadioItem(VAULT_LOCATION_OPTION_CUSTOM, getString(R.string.vault_location_custom_short))
+    )
+
+    RadioGroupDialog(
+        activity = this,
+        items = items,
+        checkedItemId = -1,
+        titleId = R.string.where_to_create_vault_title,
+        cancelCallback = {
+            onBack()
+        }
+    ) { selected ->
+        val reopenStage2 = {
+            promptWhereToCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack)
+        }
+        when (selected as Int) {
+            VAULT_LOCATION_OPTION_STANDARD -> {
+                handleCreateTargetSelected(
+                    targetDir = null,
+                    confirmBeforeCreatingNew = confirmBeforeCreatingNew,
+                    onVaultReady = onVaultReady,
+                    onBack = reopenStage2,
+                    onPickAnother = reopenStage2
+                )
+            }
+            VAULT_LOCATION_OPTION_CUSTOM -> {
+                pickCustomFolderForCreateVault(
+                    confirmBeforeCreatingNew = confirmBeforeCreatingNew,
+                    onVaultReady = onVaultReady,
+                    onBack = reopenStage2
+                )
+            }
+            else -> onBack()
+        }
+    }
+}
+
+private fun BaseSimpleActivity.pickCustomFolderForCreateVault(
+    confirmBeforeCreatingNew: Boolean,
+    onVaultReady: () -> Unit,
+    onBack: () -> Unit
+) {
+    pickCustomVaultDirectory(
+        initialPath = defaultCustomVaultPickerPath(),
+        onPicked = { pickedDir ->
+            handleCreateTargetSelected(
+                targetDir = pickedDir,
+                confirmBeforeCreatingNew = confirmBeforeCreatingNew,
+                onVaultReady = onVaultReady,
+                onBack = onBack,
+                onPickAnother = {
+                    pickCustomFolderForCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack)
+                }
+            )
+        },
+        onCancelled = onBack
+    )
+}
+
+private fun BaseSimpleActivity.pickExistingVaultAndUnlock(
+    onVaultReady: () -> Unit,
+    onBack: () -> Unit
+) {
+    val initialDir = CryptoManager.findCandidateExternalVaultRoots(this)
+        .firstOrNull()
+        ?.let { it.parentFile ?: it }
+        ?.takeIf { it.exists() && it.isDirectory }
+        ?.absolutePath
+        ?: config.vaultRootPath
+            .takeIf { it.isNotEmpty() }
+            ?.let { File(it).parentFile }
+            ?.takeIf { it.exists() && it.isDirectory }
+            ?.absolutePath
+        ?: CryptoManager.listExternalStorageVolumeRoots(this)
+            .firstOrNull { it.exists() && it.isDirectory }
+            ?.absolutePath
+        ?: internalStoragePath
+
+    pickCustomVaultDirectory(
+        initialPath = initialDir,
+        onPicked = { pickedDir ->
+            val existingVault = CryptoManager.resolveExistingVaultInDirectory(pickedDir)
+            if (existingVault == null) {
+                showNoExistingVaultDialog(
+                    onRetryPick = { pickExistingVaultAndUnlock(onVaultReady, onBack) },
+                    onBack = onBack
+                )
+            } else {
+                unlockCandidateVault(
+                    existingVault = existingVault,
+                    onVaultReady = onVaultReady,
+                    onBack = { pickExistingVaultAndUnlock(onVaultReady, onBack) }
+                )
+            }
+        },
+        onCancelled = onBack
+    )
+}
+
+private fun BaseSimpleActivity.showNoExistingVaultDialog(
+    onRetryPick: () -> Unit,
+    onBack: () -> Unit
+) {
+    val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).setText(R.string.no_existing_vault_at_location)
+    var buttonHandled = false
+    getAlertDialogBuilder()
+        .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+            buttonHandled = true
+            onRetryPick()
+        }
+        .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
+            buttonHandled = true
+            onBack()
+        }
+        .apply {
+            setupDialogStuff(messageView, this) { alertDialog ->
+                alertDialog.setOnDismissListener {
+                    if (!buttonHandled) {
+                        onBack()
+                    }
+                }
+            }
+        }
+}
+
+private fun BaseSimpleActivity.defaultCustomVaultPickerPath(): String {
+    return config.vaultRootPath
+        .takeIf { it.isNotEmpty() }
+        ?.let { File(it).parentFile }
+        ?.takeIf { it.exists() && it.isDirectory }
+        ?.absolutePath
+        ?: CryptoManager.listExternalStorageVolumeRoots(this)
+            .firstOrNull { it.exists() && it.isDirectory }
+            ?.absolutePath
+        ?: internalStoragePath
+}
+
+private fun BaseSimpleActivity.pickCustomVaultDirectory(
+    initialPath: String,
+    requireWritable: Boolean = true,
+    onPicked: (File) -> Unit,
+    onCancelled: () -> Unit
+) {
+    var selectionConfirmed = false
+    val picker = FilePickerDialog(
+        activity = this,
+        currPath = initialPath,
+        pickFile = false,
+        showHidden = config.shouldShowHidden,
+        showFAB = true,
+        canAddShowHiddenButton = true,
+        enforceStorageRestrictions = false
+    ) { pickedPath ->
+        selectionConfirmed = true
+        validatePickedVaultDirectory(pickedPath, requireWritable, onPicked, onCancelled)
+    }
+
+    val attachedDismiss = runCatching {
+        val dialogField = FilePickerDialog::class.java.getDeclaredField("mDialog")
+        dialogField.isAccessible = true
+        val alertDialog = dialogField.get(picker) as? androidx.appcompat.app.AlertDialog
+        alertDialog?.setOnDismissListener {
+            window?.decorView?.post {
+                if (!selectionConfirmed) {
+                    onCancelled()
+                }
+            }
+        }
+        alertDialog != null
+    }.getOrDefault(false)
+
+    if (!attachedDismiss) {
+        onCancelled()
+    }
+}
+
+private fun BaseSimpleActivity.validatePickedVaultDirectory(
+    pickedPath: String,
+    requireWritable: Boolean = true,
+    onValid: (File) -> Unit,
+    onCancelled: () -> Unit
+) {
+    val resolvedDir = CryptoManager.resolvePickedPathToFile(this, pickedPath)
+    if (resolvedDir == null) {
+        showVaultLocationNoticeDialog(R.string.usb_direct_filesystem_required, onCancelled)
+        return
+    }
+
+    if (requireWritable) {
+        if (!resolvedDir.exists()) {
+            resolvedDir.mkdirs()
+        }
+        if (!resolvedDir.isDirectory || !CryptoManager.canWriteToDirectory(resolvedDir)) {
+            showVaultLocationNoticeDialog(R.string.vault_location_not_writable, onCancelled)
+            return
+        }
+    } else {
+        if (!resolvedDir.exists() || !resolvedDir.isDirectory || !resolvedDir.canRead()) {
+            showVaultLocationNoticeDialog(R.string.vault_location_not_readable, onCancelled)
+            return
+        }
+    }
+
+    onValid(resolvedDir)
+}
+
+private fun BaseSimpleActivity.showVaultLocationNoticeDialog(messageResId: Int, onDone: () -> Unit) {
+    val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).setText(messageResId)
+    getAlertDialogBuilder()
+        .setPositiveButton(org.fossify.commons.R.string.ok, null)
+        .apply {
+            setupDialogStuff(messageView, this) { alertDialog ->
+                alertDialog.setOnDismissListener {
+                    onDone()
+                }
+            }
+        }
+}
+
+private fun BaseSimpleActivity.unlockCandidateVault(
+    existingVault: File,
+    onVaultReady: () -> Unit,
+    onBack: () -> Unit
+) {
+    val currentActiveRoot = CryptoManager.findVaultRoot(this)?.absolutePath
+    if (currentActiveRoot != null && currentActiveRoot.equals(existingVault.absolutePath, ignoreCase = true) && CryptoManager.isVaultUnlocked) {
+        onVaultReady()
+        return
+    }
+
+    val snapshot = VaultConfigSnapshot(
+        vaultRootPath = config.vaultRootPath,
+        wrappedKeyData = config.vaultWrappedKeyData,
+        publicKey = config.vaultPublicKey,
+        hiddenPasswordHash = config.hiddenPasswordHash,
+        isHiddenPasswordProtectionOn = config.isHiddenPasswordProtectionOn,
+        isVaultBiometricEnabled = config.isVaultBiometricEnabled,
+        biometricWrappedBundle = config.vaultBiometricWrappedBundle
+    )
+    val switchingToDifferentVault = snapshot.vaultRootPath.isNotEmpty() &&
+        !snapshot.vaultRootPath.trimEnd('/', '\\').equals(existingVault.absolutePath.trimEnd('/', '\\'), ignoreCase = true)
+
+    CryptoManager.lockVault()
+    CryptoManager.setVaultRootLocation(this, existingVault)
+    if (switchingToDifferentVault) {
+        // Keep previous biometric bundle out of the unlock prompt for the candidate vault;
+        // restored in full if the user backs out before unlocking.
+        config.isVaultBiometricEnabled = false
+    }
+
+    toast(getString(R.string.existing_vault_detected_at_location, humanizePath(existingVault.absolutePath)))
+
+    val initialType = CryptoManager.getVaultProtectionType(this)
+        ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
+
+    VaultSecurityDialog(
+        activity = this,
+        requiredHash = "existing_vault",
+        showTabIndex = initialType,
+        minimalist = false,
+        onCancelCallback = {
+            CryptoManager.lockVault()
+            config.vaultRootPath = snapshot.vaultRootPath
+            config.vaultWrappedKeyData = snapshot.wrappedKeyData
+            config.vaultPublicKey = snapshot.publicKey
+            config.hiddenPasswordHash = snapshot.hiddenPasswordHash
+            config.isHiddenPasswordProtectionOn = snapshot.isHiddenPasswordProtectionOn
+            config.isVaultBiometricEnabled = snapshot.isVaultBiometricEnabled
+            config.vaultBiometricWrappedBundle = snapshot.biometricWrappedBundle
+            if (snapshot.vaultRootPath.isNotEmpty()) {
+                CryptoManager.setVaultRootLocation(this, File(snapshot.vaultRootPath))
+            } else {
+                CryptoManager.clearCachedVaultRoot()
+            }
+            onBack()
+        }
+    ) { _, type, success ->
+        if (success) {
+            config.hiddenProtectionType = type
+            ensureBackgroundThread {
+                if (switchingToDifferentVault) {
+                    CryptoManager.clearBiometricKey(this)
+                    VirtualAlbumSyncManager.evictHiddenVirtualAlbumsFromDbCache(this)
+                    CryptoManager.clearAppImageCaches(this)
+                }
+                CryptoManager.getOrCreateDefaultHiddenAlbum(this)
+                VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
+                runOnUiThread {
+                    onVaultReady()
+                }
+            }
+        }
+    }
+}
+
+private fun BaseSimpleActivity.handleCreateTargetSelected(
+    targetDir: File?,
+    confirmBeforeCreatingNew: Boolean,
+    onVaultReady: () -> Unit,
+    onBack: () -> Unit,
+    onPickAnother: () -> Unit
+) {
+    val lookupDir = targetDir ?: CryptoManager.getDefaultVaultRoot()
+    val existingVault = CryptoManager.resolveExistingVaultInDirectory(lookupDir)
+    if (existingVault != null) {
+        val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+        messageView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+            getString(R.string.unlock_existing_vault_at_location_prompt, humanizePath(existingVault.absolutePath))
+        var buttonHandled = false
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
+                buttonHandled = true
+                unlockCandidateVault(
+                    existingVault = existingVault,
+                    onVaultReady = onVaultReady,
+                    onBack = onPickAnother
+                )
+            }
+            .setNegativeButton(org.fossify.commons.R.string.no) { _, _ ->
+                buttonHandled = true
+                onPickAnother()
+            }
+            .apply {
+                setupDialogStuff(messageView, this) { alertDialog ->
+                    alertDialog.setOnDismissListener {
+                        if (!buttonHandled) {
+                            onBack()
+                        }
+                    }
+                }
+            }
+        return
+    }
+
+    val switchingFromAnotherVault = hasVaultCreated() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)
+    val startCreationDialog = {
+        val customDir = if (targetDir == null && switchingFromAnotherVault) {
+            CryptoManager.ensureCipherRootDirectory()
+            CryptoManager.getDefaultVaultRoot()
+        } else {
+            targetDir
+        }
+        VaultSecurityDialog(
+            activity = this,
+            requiredHash = "",
+            showTabIndex = SHOW_ALL_TABS,
+            minimalist = false,
+            customTargetDir = customDir,
+            onCancelCallback = onBack
+        ) { hash, type, success ->
+            if (success) {
+                config.isHiddenPasswordProtectionOn = true
+                config.hiddenPasswordHash = hash
+                config.hiddenProtectionType = type
+                ensureBackgroundThread {
+                    CryptoManager.getOrCreateDefaultHiddenAlbum(this)
+                    VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
+                    runOnUiThread {
+                        toast(org.fossify.commons.R.string.protection_setup_successfully)
+                        onVaultReady()
+                    }
+                }
+            }
+        }
+    }
+
+    val targetDisplayDir = if (targetDir == null) {
+        CryptoManager.getDefaultVaultRoot()
+    } else if (targetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true)) {
+        targetDir
+    } else {
+        File(targetDir, CIPHER_SECRETS_DIR_NAME)
+    }
+
+    if (confirmBeforeCreatingNew && switchingFromAnotherVault) {
+        val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+        messageView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+            getString(R.string.create_new_vault_at_location_prompt, humanizePath(targetDisplayDir.absolutePath))
+        var buttonHandled = false
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
+                buttonHandled = true
+                startCreationDialog()
+            }
+            .setNegativeButton(org.fossify.commons.R.string.no) { _, _ ->
+                buttonHandled = true
+                onBack()
+            }
+            .apply {
+                setupDialogStuff(messageView, this) { alertDialog ->
+                    alertDialog.setOnDismissListener {
+                        if (!buttonHandled) {
+                            onBack()
+                        }
+                    }
+                }
+            }
+    } else {
+        startCreationDialog()
+    }
+}
+
+private fun BaseSimpleActivity.defaultSyncSourcePickerPath(): String {
+    return CryptoManager.findCandidateExternalVaultRoots(this)
+        .firstOrNull()
+        ?.let { it.parentFile ?: it }
+        ?.takeIf { it.exists() && it.isDirectory }
+        ?.absolutePath
+        ?: CryptoManager.listExternalStorageVolumeRoots(this)
+            .firstOrNull { it.exists() && it.isDirectory }
+            ?.absolutePath
+        ?: internalStoragePath
+}
+
+fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = null) {
+    if (!hasVaultCreated()) {
+        toast(R.string.enable_hidden_protection_first_prompt)
+        return
+    }
+
+    ensureVaultUnlocked {
+        val promptView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+        promptView.findViewById<TextView>(org.fossify.commons.R.id.message)
+            .setText(R.string.sync_vault_select_source_prompt)
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                pickCustomVaultDirectory(
+                    initialPath = defaultSyncSourcePickerPath(),
+                    requireWritable = false,
+                    onPicked = { pickedDir ->
+                        val resolvedSource = CryptoManager.resolveSyncSourceRoot(pickedDir)
+                        val activeVaultRoot = CryptoManager.findVaultRoot(this)
+                        val sameVault = activeVaultRoot != null && runCatching {
+                            resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
+                        }.getOrDefault(false)
+                        if (sameVault) {
+                            showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, {})
+                            return@pickCustomVaultDirectory
+                        }
+
+                        ensureNotificationPermissionThenRun { notificationsAllowed ->
+                            val progressDialog = CryptoProgressDialog(
+                                activity = this,
+                                max = 0,
+                                titleId = R.string.syncing_vault_progress,
+                                enableNotification = notificationsAllowed
+                            )
+                            ensureBackgroundThread {
+                                val result = CryptoManager.syncVaultFromExternalDirectory(
+                                    context = this,
+                                    sourceDir = pickedDir
+                                ) { processed, total ->
+                                    runOnUiThread {
+                                        if (!isFinishing && !isDestroyed) {
+                                            progressDialog.updateProgress(processed, total)
+                                        }
+                                    }
+                                }
+                                runOnUiThread {
+                                    progressDialog.dismiss()
+                                    if (isFinishing || isDestroyed) {
+                                        onSynced?.invoke()
+                                        return@runOnUiThread
+                                    }
+                                    when {
+                                        result == null -> toast(
+                                            if (sameVault) {
+                                                R.string.vault_sync_same_folder_error
+                                            } else {
+                                                org.fossify.commons.R.string.unknown_error_occurred
+                                            }
+                                        )
+                                        result.copiedCount == 0 &&
+                                            result.renamedCount == 0 &&
+                                            result.skippedDuplicateCount == 0 &&
+                                            result.failedCount == 0 -> toast(R.string.vault_sync_nothing_to_sync)
+                                        else -> {
+                                            val summaryView = layoutInflater.inflate(
+                                                org.fossify.commons.R.layout.dialog_message,
+                                                null
+                                            )
+                                            summaryView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+                                                getString(
+                                                    R.string.vault_sync_summary_message,
+                                                    result.copiedCount,
+                                                    result.renamedCount,
+                                                    result.skippedDuplicateCount,
+                                                    result.failedCount
+                                                )
+                                            getAlertDialogBuilder()
+                                                .setPositiveButton(org.fossify.commons.R.string.ok, null)
+                                                .apply {
+                                                    setupDialogStuff(
+                                                        summaryView,
+                                                        this,
+                                                        titleId = R.string.sync_vault_from_external
+                                                    )
+                                                }
+                                        }
+                                    }
+                                    onSynced?.invoke()
+                                }
+                            }
+                        }
+                    },
+                    onCancelled = {}
+                )
+            }
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .apply {
+                setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
+            }
+    }
 }
 
 fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, callback: ((newPath: String) -> Unit)? = null) {

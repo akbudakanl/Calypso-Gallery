@@ -704,6 +704,11 @@ fun Context.isCipherSystemPath(path: String): Boolean {
         return true
     }
 
+    val configuredVaultRoot = config.vaultRootPath.trimEnd('/')
+    if (configuredVaultRoot.isNotEmpty() && (clean.equals(configuredVaultRoot, ignoreCase = true) || clean.startsWith("$configuredVaultRoot/", ignoreCase = true))) {
+        return true
+    }
+
     return CryptoManager.isEncryptedFolderPath(this, clean) || isEncryptedVaultAlbum(clean)
 }
 

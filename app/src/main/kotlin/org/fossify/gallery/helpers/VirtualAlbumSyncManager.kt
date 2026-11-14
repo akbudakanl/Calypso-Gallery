@@ -10,6 +10,7 @@ import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.virtualAlbumsDB
+import org.fossify.gallery.interfaces.VirtualAlbumsDao
 import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import org.fossify.gallery.models.VirtualAlbum
@@ -25,7 +26,8 @@ data class VirtualAlbumBackup(
     @SerializedName("items") val items: List<VirtualAlbumItemBackup>? = null,
     @SerializedName(value = "parentPhysicalPath", alternate = ["parent_physical_path", "sourcePath", "source_path"]) val parentPhysicalPath: String? = null,
     @SerializedName(value = "mediaPaths", alternate = ["media_paths", "paths", "media", "files"]) val mediaPaths: List<String>? = null,
-    @SerializedName(value = "encryptedPayload", alternate = ["encrypted_payload", "encrypted_data"]) val encryptedPayload: String? = null
+    @SerializedName(value = "encryptedPayload", alternate = ["encrypted_payload", "encrypted_data"]) val encryptedPayload: String? = null,
+    @SerializedName(value = "relativeParentVaultPath", alternate = ["relative_parent_vault_path"]) val relativeParentVaultPath: String? = null
 )
 
 data class VirtualAlbumItemBackup(
@@ -38,7 +40,8 @@ data class VirtualAlbumItemBackup(
     @SerializedName(value = "state") val state: String? = null,
     @SerializedName(value = "folderInode", alternate = ["folder_inode"]) val folderInode: Long? = null,
     @SerializedName(value = "folderSignature", alternate = ["folder_signature"]) val folderSignature: String? = null,
-    @SerializedName(value = "capturedAtSec", alternate = ["captured_at_sec"]) val capturedAtSec: Long? = null
+    @SerializedName(value = "capturedAtSec", alternate = ["captured_at_sec"]) val capturedAtSec: Long? = null,
+    @SerializedName(value = "relativeVaultPath", alternate = ["relative_vault_path"]) val relativeVaultPath: String? = null
 )
 
 object VirtualAlbumSyncManager {
@@ -51,8 +54,93 @@ object VirtualAlbumSyncManager {
     @VisibleForTesting
     var customVaultDirForTest: File? = null
 
+    @VisibleForTesting
+    internal var daoProviderForTest: ((Context) -> VirtualAlbumsDao)? = null
+
     @Volatile
     private var lastSyncTs = 0L
+
+    private fun getDao(context: Context): VirtualAlbumsDao {
+        return daoProviderForTest?.invoke(context) ?: context.virtualAlbumsDB
+    }
+
+    private fun isVaultJsonRelativePath(relPath: String): Boolean {
+        return relPath.equals(VAULT_JSON_SUBFOLDER, ignoreCase = true) ||
+            relPath.startsWith("$VAULT_JSON_SUBFOLDER/", ignoreCase = true)
+    }
+
+    fun extractRelativeVaultPath(fullPath: String?, vaultRoot: File? = null): String? {
+        if (fullPath.isNullOrBlank()) return null
+        val normFull = fullPath.trim().replace('\\', '/').trimEnd('/')
+        if (normFull.isEmpty()) return null
+
+        if (vaultRoot != null) {
+            val prefixes = listOfNotNull(
+                vaultRoot.absolutePath,
+                runCatching { vaultRoot.canonicalPath }.getOrNull()
+            )
+                .map { it.trim().replace('\\', '/').trimEnd('/') }
+                .filter { it.isNotEmpty() }
+                .distinct()
+
+            for (prefix in prefixes) {
+                if (normFull.startsWith("$prefix/", ignoreCase = true)) {
+                    val suffix = normFull.substring(prefix.length + 1).trim('/')
+                    if (suffix.isNotEmpty() && !isVaultJsonRelativePath(suffix)) {
+                        val segments = suffix.split('/')
+                        if (segments.none { it.isEmpty() || it == "." || it == ".." }) {
+                            return suffix
+                        }
+                    }
+                }
+            }
+        }
+
+        val markers = listOf("/$CIPHER_SECRETS_DIR_NAME/", "/$CIPHER_ROOT_DIR_NAME/")
+        val lowerFull = normFull.lowercase()
+        for (marker in markers) {
+            val idx = lowerFull.lastIndexOf(marker.lowercase())
+            if (idx >= 0) {
+                val suffix = normFull.substring(idx + marker.length).trim('/')
+                if (suffix.isNotEmpty() && !isVaultJsonRelativePath(suffix)) {
+                    val segments = suffix.split('/')
+                    if (segments.none { it.isEmpty() || it == "." || it == ".." }) {
+                        return suffix
+                    }
+                }
+            }
+        }
+        return null
+    }
+
+    fun resolveVaultItemPath(vaultRoot: File, relativeVaultPath: String?, rawFullPath: String?): String? {
+        val rawRel = relativeVaultPath?.takeIf { it.isNotBlank() }
+            ?: extractRelativeVaultPath(rawFullPath, vaultRoot)
+            ?: return null
+        val normalizedRel = rawRel.trim().replace('\\', '/').trim('/')
+        if (normalizedRel.isEmpty() || isVaultJsonRelativePath(normalizedRel)) return null
+
+        val segments = normalizedRel.split('/')
+        if (segments.any { it.isEmpty() || it == "." || it == ".." }) return null
+
+        var resolved = vaultRoot
+        for (segment in segments) {
+            resolved = File(resolved, segment)
+        }
+        return resolved.absolutePath
+    }
+
+    fun evictHiddenVirtualAlbumsFromDbCache(context: Context) {
+        try {
+            val dao = getDao(context)
+            dao.getAllAlbums().filter { it.isHidden }.forEach { album ->
+                val albumId = album.id ?: return@forEach
+                dao.deleteItemsForAlbum(albumId)
+                dao.deleteAlbumById(albumId)
+            }
+        } catch (_: Exception) {
+        }
+    }
 
     fun getVirtualAlbumsStorageDir(): File {
         customStorageDirForTest?.let { return it }
@@ -105,7 +193,7 @@ object VirtualAlbumSyncManager {
         }
     }
 
-    fun toBackupItems(items: List<VirtualAlbumItem>): List<VirtualAlbumItemBackup> {
+    fun toBackupItems(items: List<VirtualAlbumItem>, vaultRoot: File? = null): List<VirtualAlbumItemBackup> {
         return items.map {
             VirtualAlbumItemBackup(
                 fullPath = it.fullPath,
@@ -117,7 +205,8 @@ object VirtualAlbumSyncManager {
                 state = it.state,
                 folderInode = it.folderInode.takeIf { inode -> inode > 0L },
                 folderSignature = it.folderSignature.ifEmpty { null },
-                capturedAtSec = it.capturedAtSec.takeIf { ts -> ts > 0L }
+                capturedAtSec = it.capturedAtSec.takeIf { ts -> ts > 0L },
+                relativeVaultPath = if (vaultRoot != null) extractRelativeVaultPath(it.fullPath, vaultRoot) else null
             )
         }
     }
@@ -135,19 +224,21 @@ object VirtualAlbumSyncManager {
 
     fun saveAlbumToFile(context: Context, albumId: Long) {
         try {
-            val album = context.virtualAlbumsDB.getAlbumById(albumId) ?: return
+            val dao = getDao(context)
+            val album = dao.getAlbumById(albumId) ?: return
             if (!album.isHidden && !context.config.autoBackupFavoritesAndVirtualAlbums) {
                 return
             }
-            val items = context.virtualAlbumsDB.getItems(albumId)
-
-            // Keep all items (including UNRESOLVED) so their MediaIdentity survives in the backup
-            // until the user explicitly removes them or deletes the underlying file.
-            val backupItems = toBackupItems(items)
+            val items = dao.getItems(albumId)
 
             val gson = GsonBuilder().setPrettyPrinting().create()
 
             if (album.isHidden) {
+                val vaultRoot = CryptoManager.getVaultRoot(context)
+                // Keep all items (including UNRESOLVED) so their MediaIdentity survives in the backup
+                // until the user explicitly removes them or deletes the underlying file.
+                val backupItems = toBackupItems(items, vaultRoot)
+
                 // Stealth Vault Virtual Album:
                 // 1. Remove any old plaintext file in public Documents
                 val publicDir = getVirtualAlbumsStorageDir()
@@ -165,7 +256,8 @@ object VirtualAlbumSyncManager {
                     createdTs = album.createdTs,
                     isHidden = true,
                     parentPhysicalPath = album.parentPhysicalPath,
-                    items = backupItems
+                    items = backupItems,
+                    relativeParentVaultPath = extractRelativeVaultPath(album.parentPhysicalPath, vaultRoot)
                 )
                 val innerJson = gson.toJson(innerBackup)
                 val encryptedPayload = CryptoManager.encryptStringForVault(context, innerJson)
@@ -254,7 +346,7 @@ object VirtualAlbumSyncManager {
 
             // The item stays in the album and in the backup. It is only marked as unresolved so the
             // UI can tell the user that the file could not be found.
-            val dao = context.virtualAlbumsDB
+            val dao = getDao(context)
             actuallyMissing.forEach { path ->
                 dao.markItemUnresolved(albumId, path)
             }
@@ -270,7 +362,7 @@ object VirtualAlbumSyncManager {
         }
         lastSyncTs = now
 
-        val dao = context.virtualAlbumsDB
+        val dao = getDao(context)
         val dbAlbums = try {
             dao.getAllAlbums()
         } catch (_: Exception) {
@@ -477,9 +569,20 @@ object VirtualAlbumSyncManager {
                         val albumName = innerBackup.name?.trim()?.ifEmpty { null } ?: continue
                         val createdTs = innerBackup.createdTs ?: file.lastModified()
 
-                        val parentPhysicalPath = innerBackup.parentPhysicalPath?.trim()?.ifEmpty { null }
-                            ?: innerBackup.items?.firstOrNull()?.fullPath?.getParentPath()
-                            ?: innerBackup.mediaPaths?.firstOrNull()?.getParentPath()
+                        val effectiveParentPhysicalPath = resolveVaultItemPath(
+                            vaultRoot,
+                            innerBackup.relativeParentVaultPath,
+                            innerBackup.parentPhysicalPath
+                        )
+                            ?: innerBackup.parentPhysicalPath?.trim()?.ifEmpty { null }
+                            ?: innerBackup.items?.firstOrNull()?.let {
+                                resolveVaultItemPath(vaultRoot, it.relativeVaultPath, it.fullPath)?.getParentPath()
+                                    ?: it.fullPath?.getParentPath()
+                            }
+                            ?: innerBackup.mediaPaths?.firstOrNull()?.let {
+                                resolveVaultItemPath(vaultRoot, null, it)?.getParentPath()
+                                    ?: it.getParentPath()
+                            }
                             ?: ""
 
                         var album = dao.getAlbumByName(albumName)
@@ -491,15 +594,15 @@ object VirtualAlbumSyncManager {
                                     createdTs = createdTs,
                                     thumbnail = "",
                                     isHidden = true,
-                                    parentPhysicalPath = parentPhysicalPath
+                                    parentPhysicalPath = effectiveParentPhysicalPath
                                 )
                             )
                             if (newId > 0) {
                                 album = dao.getAlbumById(newId)
                             }
-                        } else if (album.parentPhysicalPath.isEmpty() && parentPhysicalPath.isNotEmpty()) {
-                            album.id?.let { dao.updateAlbumParentPhysicalPath(it, parentPhysicalPath) }
-                            album.parentPhysicalPath = parentPhysicalPath
+                        } else if (effectiveParentPhysicalPath.isNotEmpty() && album.parentPhysicalPath != effectiveParentPhysicalPath) {
+                            album.id?.let { dao.updateAlbumParentPhysicalPath(it, effectiveParentPhysicalPath) }
+                            album.parentPhysicalPath = effectiveParentPhysicalPath
                         }
 
                         if (album?.id == null) continue
@@ -507,6 +610,12 @@ object VirtualAlbumSyncManager {
 
                         val existingItems = dao.getItems(albumId)
                         val existingPaths = existingItems.map { it.fullPath.lowercase() }.toHashSet()
+                        val existingItemsByRelPath = HashMap<String, VirtualAlbumItem>()
+                        for (existingItem in existingItems) {
+                            extractRelativeVaultPath(existingItem.fullPath, vaultRoot)?.lowercase()?.let { rel ->
+                                existingItemsByRelPath[rel] = existingItem
+                            }
+                        }
 
                         val rawItems = innerBackup.items
                             ?: innerBackup.mediaPaths?.map { VirtualAlbumItemBackup(fullPath = it, addedTs = createdTs) }
@@ -514,12 +623,16 @@ object VirtualAlbumSyncManager {
 
                         val itemsToInsert = ArrayList<VirtualAlbumItem>()
                         var hadNewlyUnresolved = false
+                        var hadPathRewrite = false
 
                         for (entry in rawItems) {
                             try {
-                                val path = entry.fullPath ?: continue
-                                if (path.isBlank()) continue
-                                val targetFile = File(path)
+                                val effectiveFullPath = resolveVaultItemPath(vaultRoot, entry.relativeVaultPath, entry.fullPath)
+                                    ?: entry.fullPath
+                                    ?: continue
+                                if (effectiveFullPath.isBlank()) continue
+                                val targetFile = File(effectiveFullPath)
+                                val effectiveParentPath = targetFile.parent ?: effectiveFullPath.getParentPath()
                                 val exists = targetFile.exists()
                                 val hasUsableIdentity = (entry.mediaStoreId ?: 0L) > 0L ||
                                     !entry.fingerprint.isNullOrEmpty() ||
@@ -529,23 +642,51 @@ object VirtualAlbumSyncManager {
                                     continue
                                 }
 
-                                if (!existingPaths.contains(path.lowercase())) {
-                                    itemsToInsert.add(
-                                        VirtualAlbumItem(
-                                            id = null,
-                                            albumId = albumId,
-                                            fullPath = path,
-                                            filename = targetFile.name,
-                                            parentPath = targetFile.parent ?: path.getParentPath(),
-                                            addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
-                                            mediaStoreId = entry.mediaStoreId ?: 0L,
-                                            fileSize = entry.fileSize ?: 0L,
-                                            lastModified = entry.lastModified ?: 0L,
-                                            fingerprint = entry.fingerprint ?: "",
-                                            state = if (exists) ITEM_STATE_OK else ITEM_STATE_UNRESOLVED
+                                if (!existingPaths.contains(effectiveFullPath.lowercase())) {
+                                    val relKey = extractRelativeVaultPath(effectiveFullPath, vaultRoot)?.lowercase()
+                                    val matchingExisting = relKey?.let { existingItemsByRelPath[it] }
+                                    if (matchingExisting != null && matchingExisting.fullPath != effectiveFullPath) {
+                                        dao.updateItemPathInAlbum(
+                                            albumId,
+                                            matchingExisting.fullPath,
+                                            effectiveFullPath,
+                                            targetFile.name,
+                                            effectiveParentPath
                                         )
-                                    )
-                                    existingPaths.add(path.lowercase())
+                                        if (exists) {
+                                            dao.markItemResolved(albumId, effectiveFullPath)
+                                        }
+                                        existingPaths.remove(matchingExisting.fullPath.lowercase())
+                                        existingPaths.add(effectiveFullPath.lowercase())
+                                        hadPathRewrite = true
+                                    } else {
+                                        itemsToInsert.add(
+                                            VirtualAlbumItem(
+                                                id = null,
+                                                albumId = albumId,
+                                                fullPath = effectiveFullPath,
+                                                filename = targetFile.name,
+                                                parentPath = effectiveParentPath,
+                                                addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
+                                                mediaStoreId = entry.mediaStoreId ?: 0L,
+                                                fileSize = entry.fileSize ?: 0L,
+                                                lastModified = entry.lastModified ?: 0L,
+                                                fingerprint = entry.fingerprint ?: "",
+                                                state = if (exists) ITEM_STATE_OK else ITEM_STATE_UNRESOLVED,
+                                                folderInode = entry.folderInode ?: 0L,
+                                                folderSignature = entry.folderSignature ?: "",
+                                                capturedAtSec = entry.capturedAtSec ?: 0L
+                                            )
+                                        )
+                                        existingPaths.add(effectiveFullPath.lowercase())
+                                    }
+                                } else if (exists) {
+                                    val existingItem = existingItems.firstOrNull {
+                                        it.fullPath.equals(effectiveFullPath, ignoreCase = true)
+                                    }
+                                    if (existingItem?.state == ITEM_STATE_UNRESOLVED) {
+                                        dao.markItemResolved(albumId, effectiveFullPath)
+                                    }
                                 }
                             } catch (_: Exception) {
                                 hadNewlyUnresolved = true
@@ -556,7 +697,8 @@ object VirtualAlbumSyncManager {
                             dao.insertItems(itemsToInsert)
                         }
 
-                        val newlyMissingDbPaths = existingItems.filter {
+                        val refreshedItems = dao.getItems(albumId)
+                        val newlyMissingDbPaths = refreshedItems.filter {
                             it.state != ITEM_STATE_UNRESOLVED && !File(it.fullPath).exists() && File(it.fullPath).parentFile?.exists() == true
                         }.map { it.fullPath }
                         if (newlyMissingDbPaths.isNotEmpty()) {
@@ -565,7 +707,7 @@ object VirtualAlbumSyncManager {
                             hadNewlyUnresolved = true
                         }
 
-                        if (hadNewlyUnresolved || itemsToInsert.isNotEmpty()) {
+                        if (hadNewlyUnresolved || itemsToInsert.isNotEmpty() || hadPathRewrite) {
                             saveAlbumToFile(context, albumId)
                         }
                     } catch (_: Exception) {

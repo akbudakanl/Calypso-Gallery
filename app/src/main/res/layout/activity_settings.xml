@@ -874,6 +874,29 @@
                 android:layout_height="wrap_content"
                 android:text="@string/encrypted_vault" />
 
+            <RelativeLayout
+                android:id="@+id/settings_vault_location_holder"
+                style="@style/SettingsHolderTextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_vault_location_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/vault_location" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_vault_location"
+                    style="@style/SettingsTextValueStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/settings_vault_location_label"
+                    tools:text="@string/vault_location_standard_summary" />
+
+            </RelativeLayout>
+
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/settings_create_vault_holder"
                 style="@style/SettingsHolderTextViewOneLinerStyle"
@@ -886,6 +909,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/create_encrypted_vault"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_sync_vault_holder"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_sync_vault"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sync_vault_from_external"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
