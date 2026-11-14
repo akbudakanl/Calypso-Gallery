@@ -2336,7 +2336,8 @@ object CryptoManager {
         sourceFile: File,
         targetDir: File,
         wipeSource: Boolean = true,
-        clearCachesNow: Boolean = false
+        clearCachesNow: Boolean = false,
+        conflictResolution: Int = CONFLICT_KEEP_BOTH
     ): File? {
         if (!sourceFile.exists() || !sourceFile.isFile) return null
         if (isEncryptedFile(sourceFile.name)) return sourceFile
@@ -2363,13 +2364,68 @@ object CryptoManager {
             targetDir.mkdirs()
         }
 
-        val originalName = sourceFile.name
+        var originalName = sourceFile.name
+        if (masterKey != null) {
+            val existingEntries = targetDir.listFiles()
+                ?.filter { it.isFile && isEncryptedFile(it.name) }
+                ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
+                ?: emptyList()
+
+            for ((existingBin, existingMeta) in existingEntries) {
+                if (isSameOrCollisionVariant(existingMeta.originalName, originalName) &&
+                    arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
+                ) {
+                    if (wipeSource) {
+                        val duplicateSourcePath = sourceFile.absolutePath
+                        runCatching {
+                            context.updateVirtualAlbumItemPathOnEncrypt(duplicateSourcePath, existingBin.absolutePath)
+                        }
+                        secureWipeAndDeleteFile(context, sourceFile)
+                    }
+                    if (clearCachesNow) {
+                        runCatching { clearAppImageCaches(context) }
+                    }
+                    return existingBin
+                }
+            }
+
+            val exactMatches = existingEntries.filter { (_, existingMeta) ->
+                existingMeta.originalName.equals(originalName, ignoreCase = true)
+            }
+            if (exactMatches.isNotEmpty()) {
+                when (conflictResolution) {
+                    CONFLICT_SKIP -> return null
+                    CONFLICT_OVERWRITE -> {
+                        exactMatches.forEach { (existingBin, _) ->
+                            metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+                            runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
+                            existingBin.delete()
+                        }
+                    }
+                    else -> {
+                        val existingNamesLower = existingEntries.map { it.second.originalName.lowercase() }.toHashSet()
+                        var copyIndex = 1
+                        var candidateName = formatCollisionFileName(originalName, copyIndex)
+                        while (existingNamesLower.contains(candidateName.lowercase())) {
+                            copyIndex++
+                            candidateName = formatCollisionFileName(originalName, copyIndex)
+                        }
+                        originalName = candidateName
+                    }
+                }
+            }
+        }
+
         val lastModified = sourceFile.lastModified()
         val dateTaken = lastModified
         val originalSize = sourceFile.length()
         val mediaType = getMediaTypeForName(originalName)
-        val videoDuration = if (mediaType == TYPE_VIDEOS) (context.getDuration(sourceFile.absolutePath) ?: 0) else 0
-        val thumbBytes = generateEmbeddedThumbnail(sourceFile, mediaType)
+        val videoDuration = if (mediaType == TYPE_VIDEOS) {
+            runCatching { context.getDuration(sourceFile.absolutePath) }.getOrNull() ?: 0
+        } else {
+            0
+        }
+        val thumbBytes = runCatching { generateEmbeddedThumbnail(sourceFile, mediaType) }.getOrDefault(ByteArray(0))
 
         val headerPlainBytes = ByteArrayOutputStream().use { baos ->
             DataOutputStream(baos).use { dos ->
@@ -2476,11 +2532,11 @@ object CryptoManager {
             }
 
             if (wipeSource) {
-                context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encryptedFile.absolutePath)
+                runCatching { context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encryptedFile.absolutePath) }
                 secureWipeAndDeleteFile(context, sourceFile)
             }
             if (clearCachesNow) {
-                clearAppImageCaches(context)
+                runCatching { clearAppImageCaches(context) }
             }
             encryptedFile
         } catch (e: Exception) {
@@ -2713,7 +2769,8 @@ object CryptoManager {
         context: Context,
         encryptedFile: File,
         targetDir: File,
-        deleteEncryptedSource: Boolean = true
+        deleteEncryptedSource: Boolean = true,
+        conflictResolution: Int = CONFLICT_KEEP_BOTH
     ): File? {
         if (!encryptedFile.exists() || !isEncryptedFile(encryptedFile.name)) return null
         val meta = readMetadata(encryptedFile) ?: return null
@@ -2726,15 +2783,35 @@ object CryptoManager {
             targetDir.mkdirs()
         }
 
+        val encCanon = runCatching { encryptedFile.canonicalPath }.getOrDefault(encryptedFile.absolutePath)
+        val existingVariants = targetDir.listFiles()?.filter {
+            it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, meta.originalName)
+        } ?: emptyList()
+        for (existingPlain in existingVariants) {
+            if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta)) {
+                val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
+                if (deleteEncryptedSource && encCanon != plainCanon) {
+                    val encPath = encryptedFile.absolutePath
+                    runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, existingPlain.absolutePath) }
+                    metadataCache.remove(encPath)?.fileKey?.fill(0)
+                    runCatching { context.mediaDB.deleteMediumPath(encPath) }
+                    encryptedFile.delete()
+                }
+                runCatching { context.rescanPaths(arrayListOf(existingPlain.absolutePath)) }
+                return existingPlain
+            }
+        }
+
         var outFile = File(targetDir, meta.originalName)
         if (outFile.exists()) {
-            val base = meta.originalName.substringBeforeLast('.', meta.originalName)
-            val ext = meta.originalName.substringAfterLast('.', "")
-            var idx = 1
-            while (outFile.exists()) {
-                val candidate = if (ext.isNotEmpty()) "${base}_$idx.$ext" else "${base}_$idx"
-                outFile = File(targetDir, candidate)
-                idx++
+            when (conflictResolution) {
+                CONFLICT_SKIP -> return null
+                CONFLICT_OVERWRITE -> {
+                    outFile.delete()
+                }
+                else -> {
+                    outFile = getAlternativePlainFile(targetDir, meta.originalName)
+                }
             }
         }
 
@@ -2757,12 +2834,12 @@ object CryptoManager {
             outFile.setLastModified(meta.lastModified)
 
             if (deleteEncryptedSource) {
-                context.updateVirtualAlbumItemPathOnDecrypt(encPath, outFile.absolutePath)
+                runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, outFile.absolutePath) }
                 metadataCache.remove(encPath)?.fileKey?.fill(0)
-                context.mediaDB.deleteMediumPath(encPath)
+                runCatching { context.mediaDB.deleteMediumPath(encPath) }
                 encryptedFile.delete()
             }
-            context.rescanPaths(arrayListOf(outFile.absolutePath))
+            runCatching { context.rescanPaths(arrayListOf(outFile.absolutePath)) }
             outFile
         } catch (e: Exception) {
             outFile.delete()
@@ -3203,6 +3280,265 @@ object CryptoManager {
         }
     }
 
+    fun arePlainFilesIdentical(fileA: File, fileB: File): Boolean {
+        if (!fileA.isFile || !fileB.isFile) return false
+        val canonA = runCatching { fileA.canonicalPath }.getOrDefault(fileA.absolutePath)
+        val canonB = runCatching { fileB.canonicalPath }.getOrDefault(fileB.absolutePath)
+        if (canonA == canonB) return true
+        val size = fileA.length()
+        if (size != fileB.length()) return false
+        if (size == 0L) return true
+        return try {
+            FileInputStream(fileA).use { inA ->
+                FileInputStream(fileB).use { inB ->
+                    streamsHaveEqualBytes(inA, inB, size)
+                }
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun arePlainAndEncryptedIdentical(
+        plainFile: File,
+        encryptedFile: File,
+        meta: EncryptedFileMetadata? = readMetadata(encryptedFile)
+    ): Boolean {
+        if (!plainFile.isFile || !encryptedFile.isFile) return false
+        val resolvedMeta = meta ?: return false
+        val size = plainFile.length()
+        if (size != resolvedMeta.originalSize) return false
+        if (resolvedMeta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile)) {
+            return false
+        }
+        if (size == 0L) return true
+        return try {
+            FileInputStream(plainFile).use { plainIn ->
+                openDecryptedContentStream(encryptedFile, 0L)?.use { decIn ->
+                    streamsHaveEqualBytes(plainIn, decIn, size)
+                } ?: false
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun getAlternativePlainFile(targetDir: File, originalName: String): File {
+        var copyIndex = 1
+        var candidate = File(targetDir, formatCollisionFileName(originalName, copyIndex))
+        while (candidate.exists()) {
+            copyIndex++
+            candidate = File(targetDir, formatCollisionFileName(originalName, copyIndex))
+        }
+        return candidate
+    }
+
+    fun findIdenticalPlainFileInDir(
+        sourcePlainFile: File,
+        targetDir: File,
+        desiredName: String = sourcePlainFile.name
+    ): File? {
+        if (!sourcePlainFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
+        val candidates = targetDir.listFiles()?.filter {
+            it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, desiredName)
+        } ?: return null
+        return candidates.firstOrNull { arePlainFilesIdentical(sourcePlainFile, it) }
+    }
+
+    fun findContentConflictInTarget(
+        sourceFile: File,
+        targetDir: File,
+        isTargetEncrypted: Boolean
+    ): String? {
+        if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
+        val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
+        val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+        if (srcParentCanon != null && srcParentCanon == targetCanon) return null
+
+        val isSourceEncrypted = isEncryptedFile(sourceFile.name)
+        val sourceMeta = if (isSourceEncrypted) readMetadata(sourceFile) else null
+        if (isSourceEncrypted && sourceMeta == null) return null
+
+        val desiredName = sourceMeta?.originalName ?: sourceFile.name
+
+        if (isTargetEncrypted) {
+            if (unlockedMasterKey == null) return null
+            val existingEntries = targetDir.listFiles()
+                ?.filter { it.isFile && isEncryptedFile(it.name) }
+                ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
+                ?: return null
+
+            for ((existingBin, existingMeta) in existingEntries) {
+                if (isSameOrCollisionVariant(existingMeta.originalName, desiredName)) {
+                    val identical = if (isSourceEncrypted && sourceMeta != null) {
+                        areEncryptedFilesIdenticalContent(sourceFile, sourceMeta, existingBin, existingMeta)
+                    } else {
+                        arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
+                    }
+                    if (identical) return null
+                }
+            }
+
+            return if (existingEntries.any { (_, meta) -> meta.originalName.equals(desiredName, ignoreCase = true) }) {
+                desiredName
+            } else {
+                null
+            }
+        } else {
+            val candidates = targetDir.listFiles()
+                ?.filter { it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, desiredName) }
+                ?: emptyList()
+
+            for (existingPlain in candidates) {
+                val identical = if (isSourceEncrypted && sourceMeta != null) {
+                    arePlainAndEncryptedIdentical(existingPlain, sourceFile, sourceMeta)
+                } else {
+                    arePlainFilesIdentical(sourceFile, existingPlain)
+                }
+                if (identical) return null
+            }
+
+            val exactExists = File(targetDir, desiredName).exists() ||
+                candidates.any { it.name.equals(desiredName, ignoreCase = true) }
+            return if (exactExists) desiredName else null
+        }
+    }
+
+    fun copyOrMoveEncryptedFileToDirectory(
+        context: Context,
+        sourceBin: File,
+        targetDir: File,
+        isMove: Boolean,
+        conflictResolution: Int = CONFLICT_KEEP_BOTH
+    ): File? {
+        if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
+        val sourceMeta = readMetadata(sourceBin) ?: return null
+        if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin)) return null
+        if (!targetDir.exists() && !targetDir.mkdirs()) return null
+
+        val srcParentCanon = runCatching { sourceBin.parentFile?.canonicalPath }.getOrNull()
+        val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+        if (srcParentCanon != null && srcParentCanon == targetCanon) return sourceBin
+
+        val existingEntries = targetDir.listFiles()
+            ?.filter { it.isFile && isEncryptedFile(it.name) }
+            ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
+            ?: emptyList()
+
+        for ((existingBin, existingMeta) in existingEntries) {
+            if (isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName) &&
+                areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)
+            ) {
+                if (isMove) {
+                    runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
+                    runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
+                    metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+                    sourceBin.delete()
+                }
+                return existingBin
+            }
+        }
+
+        var desiredName = sourceMeta.originalName
+        val exactMatches = existingEntries.filter { (_, existingMeta) ->
+            existingMeta.originalName.equals(desiredName, ignoreCase = true)
+        }
+        if (exactMatches.isNotEmpty()) {
+            when (conflictResolution) {
+                CONFLICT_SKIP -> return null
+                CONFLICT_OVERWRITE -> {
+                    exactMatches.forEach { (existingBin, _) ->
+                        metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+                        runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
+                        existingBin.delete()
+                    }
+                }
+                else -> {
+                    val existingNamesLower = existingEntries.map { it.second.originalName.lowercase() }.toHashSet()
+                    var copyIndex = 1
+                    var candidateName = formatCollisionFileName(desiredName, copyIndex)
+                    while (existingNamesLower.contains(candidateName.lowercase())) {
+                        copyIndex++
+                        candidateName = formatCollisionFileName(desiredName, copyIndex)
+                    }
+                    desiredName = candidateName
+                }
+            }
+        }
+
+        var destBin = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+        while (destBin.exists()) {
+            destBin = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+        }
+
+        val needsRename = desiredName != sourceMeta.originalName
+        val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
+            true
+        } else {
+            try {
+                FileInputStream(sourceBin).use { fis ->
+                    BufferedInputStream(fis, 64 * 1024).use { bis ->
+                        FileOutputStream(destBin).use { fos ->
+                            BufferedOutputStream(fos, 64 * 1024).use { bos ->
+                                bis.copyTo(bos, 64 * 1024)
+                                bos.flush()
+                                fos.fd.sync()
+                            }
+                        }
+                    }
+                }
+                destBin.setLastModified(sourceBin.lastModified())
+                if (needsRename && !renameEncryptedFile(destBin, desiredName)) {
+                    destBin.delete()
+                    return null
+                }
+                if (isMove) {
+                    sourceBin.delete()
+                }
+                true
+            } catch (_: Exception) {
+                destBin.delete()
+                false
+            }
+        }
+        if (!transferred) return null
+
+        if (isMove) {
+            metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+            runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, destBin.absolutePath) }
+            runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
+        }
+        readMetadata(destBin)
+        return destBin
+    }
+
+    fun cleanupEmptyEncryptedAlbumIfNeeded(context: Context, albumDir: File): Boolean {
+        if (!albumDir.exists() || !albumDir.isDirectory || !isEncryptedFolder(albumDir)) return false
+        val vaultRoot = findVaultRoot(context)
+        if (vaultRoot != null) {
+            val rootCanon = runCatching { vaultRoot.canonicalPath }.getOrDefault(vaultRoot.absolutePath)
+            val dirCanon = runCatching { albumDir.canonicalPath }.getOrDefault(albumDir.absolutePath)
+            if (rootCanon == dirCanon) return false
+        }
+        if (isVaultRecycleBin(albumDir) || isDefaultHiddenAlbum(albumDir)) {
+            return false
+        }
+        val metaNames = setOf(VAULT_SUBFOLDER_META_FILE, ENCRYPTED_FOLDER_META_FILE, NOMEDIA, VAULT_RESTORE_INFO_FILE)
+        val remaining = albumDir.listFiles() ?: emptyArray()
+        if (remaining.any { it.name !in metaNames }) {
+            return false
+        }
+        val deleted = runCatching { albumDir.deleteRecursively() }.getOrDefault(false)
+        if (deleted || !albumDir.exists()) {
+            folderNameCache.remove(albumDir.absolutePath)
+            encryptedFolderCache[albumDir.absolutePath] = false
+            runCatching { context.config.removeEncryptedFolder(albumDir.absolutePath) }
+            runCatching { context.directoryDB.deleteDirPath(albumDir.absolutePath) }
+            return true
+        }
+        return false
+    }
+
     fun syncVaultFromExternalDirectory(
         context: Context,
         sourceDir: File,
@@ -3551,25 +3887,25 @@ object CryptoManager {
             isPathOrParentHidden = isHiddenParent
         )
 
-        val existingEncryptedNames = vaultRoot.listFiles()
-            ?.filter { it.isDirectory }
-            ?.mapNotNull { getDecryptedFolderName(it)?.takeIf { name -> name != VAULT_RECYCLE_BIN_NAME } }
-            ?: emptyList()
-        var originalFolderName = rawFolderName
-        var nameCollisionIdx = 1
-        while (existingEncryptedNames.any { it.equals(originalFolderName, ignoreCase = true) }) {
-            originalFolderName = "$rawFolderName($nameCollisionIdx)"
-            nameCollisionIdx++
+        val existingAlbum = if (rawFolderName.equals(VAULT_DEFAULT_ALBUM_NAME, ignoreCase = true)) {
+            findExistingDefaultHiddenAlbum(vaultRoot)
+        } else {
+            matchExistingDestinationAlbum(vaultRoot, rawFolderName)
         }
+        val targetAlbumExistedBefore = existingAlbum != null
+        val originalFolderName = existingAlbum?.let { getDecryptedFolderName(it, context) } ?: rawFolderName
 
         // Only formats supported by the gallery are encrypted; other files (pdf, md, ...) are left untouched.
         val filesToEncrypt = folder.listFiles()?.filter { isEncryptableMediaFile(it) } ?: emptyList()
 
-        var subfolder = File(vaultRoot, randomHex(6))
-        while (subfolder.exists()) {
-            subfolder = File(vaultRoot, randomHex(6))
+        val subfolder = existingAlbum ?: run {
+            var candidate = File(vaultRoot, randomHex(6))
+            while (candidate.exists()) {
+                candidate = File(vaultRoot, randomHex(6))
+            }
+            candidate
         }
-        if (!subfolder.mkdirs()) return null
+        if (!subfolder.exists() && !subfolder.mkdirs()) return null
 
         if (shouldAddNoMedia) {
             val noMedia = File(subfolder, NOMEDIA)
@@ -3578,11 +3914,17 @@ object CryptoManager {
             }
         }
 
-        writeEncryptedFolderMeta(context, subfolder, originalFolderName)
+        if (!File(subfolder, VAULT_SUBFOLDER_META_FILE).exists() &&
+            !File(subfolder, ENCRYPTED_FOLDER_META_FILE).exists()
+        ) {
+            writeEncryptedFolderMeta(context, subfolder, originalFolderName)
+        }
 
         val total = filesToEncrypt.size
         onProgress?.invoke(0, total)
 
+        val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
+        val newlyCreatedBins = ArrayList<File>()
         val encryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false
 
@@ -3594,8 +3936,11 @@ object CryptoManager {
                 wipeSource = false,
                 clearCachesNow = false
             )
-            if (enc != null && enc.exists() && enc.length() > 0L) {
+            if (enc != null && enc.exists()) {
                 encryptedPairs.add(Pair(file, enc))
+                if (enc.absolutePath !in preExistingBinPaths) {
+                    newlyCreatedBins.add(enc)
+                }
             } else {
                 failed = true
                 break
@@ -3605,7 +3950,14 @@ object CryptoManager {
 
         // ROLLBACK IF ENCRYPTION FAILED ON ANY FILE
         if (failed || encryptedPairs.size != filesToEncrypt.size) {
-            subfolder.deleteRecursively()
+            if (targetAlbumExistedBefore) {
+                newlyCreatedBins.forEach { createdBin ->
+                    metadataCache.remove(createdBin.absolutePath)?.fileKey?.fill(0)
+                    runCatching { createdBin.delete() }
+                }
+            } else {
+                subfolder.deleteRecursively()
+            }
             return null
         }
 
@@ -3617,7 +3969,7 @@ object CryptoManager {
         for ((index, pair) in encryptedPairs.withIndex()) {
             val (sourceFile, encFile) = pair
             val sourcePath = sourceFile.absolutePath
-            context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encFile.absolutePath)
+            runCatching { context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encFile.absolutePath) }
             if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = false, purgeTraces = false)) {
                 wipedPaths.add(sourcePath)
                 wipedFileNames.add(sourceFile.name)
@@ -3629,27 +3981,27 @@ object CryptoManager {
             }
             onProgress?.invoke(wipeProgress, total)
         }
-        syncDir(folder)
+        runCatching { syncDir(folder) }
 
         // Batch-purge MediaStore, Room DB, and thumbnail traces once for all wiped files
         if (wipedPaths.isNotEmpty()) {
             val cleanFolderPath = folder.absolutePath.trimEnd('/')
-            try {
+            runCatching {
                 context.contentResolver.delete(
                     MediaStore.Files.getContentUri("external"),
                     "${MediaStore.MediaColumns.DATA} LIKE ?",
                     arrayOf("$cleanFolderPath/%")
                 )
                 MediaScannerConnection.scanFile(context, wipedPaths.toTypedArray(), null, null)
-            } catch (_: Exception) {}
+            }
 
-            try {
+            runCatching {
                 context.mediaDB.deleteMediaFromPath(cleanFolderPath)
                 context.favoritesDB.deleteFavoritesByPrefix(cleanFolderPath)
                 GalleryDatabase.getInstance(context.applicationContext).DateTakensDao().deleteDateTakensFromPath(cleanFolderPath)
-            } catch (_: Exception) {}
+            }
 
-            try {
+            runCatching {
                 val dcimThumbnails = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), ".thumbnails")
                 val picThumbnails = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), ".thumbnails")
                 val parentThumbnails = File(folder, ".thumbnails")
@@ -3662,7 +4014,7 @@ object CryptoManager {
                         }
                     }
                 }
-            } catch (_: Exception) {}
+            }
         }
 
         // Preserve any existing .bin files that were already encrypted in this folder
@@ -3670,15 +4022,19 @@ object CryptoManager {
             file.isFile && isEncryptedFile(file.name)
         } ?: emptyList()
         for (encFile in existingEncryptedFiles) {
-            var dest = File(subfolder, encFile.name)
-            while (dest.exists()) {
-                dest = File(subfolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-            }
-            val oldEncPath = encFile.absolutePath
-            if (encFile.renameTo(dest)) {
-                context.updateVirtualAlbumItemPath(oldEncPath, dest.absolutePath)
-                metadataCache.remove(oldEncPath)?.let { meta ->
-                    metadataCache[dest.absolutePath] = meta
+            if (unlockedMasterKey != null) {
+                copyOrMoveEncryptedFileToDirectory(context, encFile, subfolder, isMove = true)
+            } else {
+                var dest = File(subfolder, encFile.name)
+                while (dest.exists()) {
+                    dest = File(subfolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+                }
+                val oldEncPath = encFile.absolutePath
+                if (encFile.renameTo(dest)) {
+                    runCatching { context.updateVirtualAlbumItemPath(oldEncPath, dest.absolutePath) }
+                    metadataCache.remove(oldEncPath)?.let { meta ->
+                        metadataCache[dest.absolutePath] = meta
+                    }
                 }
             }
         }
@@ -3718,7 +4074,7 @@ object CryptoManager {
                             )
                         } catch (_: Exception) {}
                     }
-                    context.directoryDB.deleteDirPath(child.absolutePath)
+                    runCatching { context.directoryDB.deleteDirPath(child.absolutePath) }
                     movedSubfolderPaths.add(targetSubfolder.absolutePath)
                 }
             }
@@ -3732,12 +4088,12 @@ object CryptoManager {
                     pathsToRescan.add(it.absolutePath)
                 }
             }
-            context.rescanPaths(pathsToRescan)
+            runCatching { context.rescanPaths(pathsToRescan) }
         }
 
         // Delete original plaintext folder - but only if nothing besides leftovers of ours remains in it.
         // Files the gallery can't display (pdf, md, ...) were intentionally NOT encrypted and must survive.
-        try {
+        runCatching {
             val leftoverUnsupportedFiles = folder.listFiles()?.any { child ->
                 child.name != NOMEDIA && (child.isFile || child.isDirectory)
             } == true
@@ -3748,13 +4104,15 @@ object CryptoManager {
                     try { oldNoMedia.createNewFile() } catch (_: Exception) {}
                 }
 
-                val contentResolver = context.contentResolver
-                val filesUri = MediaStore.Files.getContentUri("external")
-                contentResolver.delete(
-                    filesUri,
-                    "${MediaStore.MediaColumns.DATA} LIKE ?",
-                    arrayOf("${folder.absolutePath}%")
-                )
+                runCatching {
+                    val contentResolver = context.contentResolver
+                    val filesUri = MediaStore.Files.getContentUri("external")
+                    contentResolver.delete(
+                        filesUri,
+                        "${MediaStore.MediaColumns.DATA} LIKE ?",
+                        arrayOf("${folder.absolutePath}%")
+                    )
+                }
 
                 folder.listFiles()?.forEach { child ->
                     try { child.delete() } catch (_: Exception) {}
@@ -3765,21 +4123,21 @@ object CryptoManager {
                     deletedDir = folder.deleteRecursively()
                 }
                 if (!deletedDir) {
-                    deletedDir = context.tryFastDocumentDelete(folder.absolutePath, true)
+                    deletedDir = runCatching { context.tryFastDocumentDelete(folder.absolutePath, true) }.getOrDefault(false)
                 }
             }
-        } catch (_: Exception) {}
-
-        context.config.removeEncryptedFolder(folder.absolutePath)
-        context.config.addEncryptedFolder(subfolder.absolutePath)
-        if (!folder.exists()) {
-            context.config.replaceExactExcludedFolder(folder.absolutePath, subfolder.absolutePath)
         }
-        context.directoryDB.deleteDirPath(folder.absolutePath)
+
+        runCatching { context.config.removeEncryptedFolder(folder.absolutePath) }
+        runCatching { context.config.addEncryptedFolder(subfolder.absolutePath) }
+        if (!folder.exists()) {
+            runCatching { context.config.replaceExactExcludedFolder(folder.absolutePath, subfolder.absolutePath) }
+        }
+        runCatching { context.directoryDB.deleteDirPath(folder.absolutePath) }
         folderNameCache[subfolder.absolutePath] = originalFolderName
         encryptedFolderCache[folder.absolutePath] = false
         encryptedFolderCache[subfolder.absolutePath] = true
-        clearAppImageCaches(context)
+        runCatching { clearAppImageCaches(context) }
 
         return subfolder.absolutePath
     }
@@ -3799,7 +4157,6 @@ object CryptoManager {
         if (!isVaultUnlocked) return folderPath
 
         val hadNoMedia = File(folder, NOMEDIA).exists()
-        val targetExistedBefore = targetFolderOverride?.exists() == true
         val targetFolder = if (targetFolderOverride != null) {
             targetFolderOverride
         } else {
@@ -3810,13 +4167,14 @@ object CryptoManager {
             }
             var candidate = File(picturesDir, originalFolderName)
             var idx = 1
-            while (candidate.exists()) {
+            while (candidate.exists() && !candidate.isDirectory) {
                 candidate = File(picturesDir, "$originalFolderName($idx)")
                 idx++
             }
             candidate
         }
-        if (!targetFolder.exists() && !targetFolder.mkdirs()) return null
+        val targetExistedBefore = targetFolder.exists()
+        if (!targetExistedBefore && !targetFolder.mkdirs()) return null
 
         val filesToDecrypt = folder.listFiles()?.filter {
             it.isFile && isEncryptedFile(it.name)
@@ -3825,6 +4183,8 @@ object CryptoManager {
         val total = filesToDecrypt.size
         onProgress?.invoke(0, total)
 
+        val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
+        val newlyCreatedPlainFiles = ArrayList<File>()
         val decryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false
 
@@ -3835,8 +4195,11 @@ object CryptoManager {
                 targetDir = targetFolder,
                 deleteEncryptedSource = false
             )
-            if (decrypted != null && decrypted.exists() && decrypted.length() > 0L) {
+            if (decrypted != null && decrypted.exists()) {
                 decryptedPairs.add(Pair(file, decrypted))
+                if (decrypted.absolutePath !in preExistingPlainPaths) {
+                    newlyCreatedPlainFiles.add(decrypted)
+                }
             } else {
                 failed = true
                 break
@@ -3846,15 +4209,11 @@ object CryptoManager {
 
         // ROLLBACK IF DECRYPTION FAILED
         if (failed || decryptedPairs.size != filesToDecrypt.size) {
-            if (targetFolderOverride != null) {
-                decryptedPairs.forEach { (_, decryptedFile) ->
-                    try { decryptedFile.delete() } catch (_: Exception) {}
-                }
-                if (!targetExistedBefore && targetFolder.listFiles().isNullOrEmpty()) {
-                    try { targetFolder.delete() } catch (_: Exception) {}
-                }
-            } else {
-                targetFolder.deleteRecursively()
+            newlyCreatedPlainFiles.forEach { decryptedFile ->
+                try { decryptedFile.delete() } catch (_: Exception) {}
+            }
+            if (!targetExistedBefore && targetFolder.listFiles().isNullOrEmpty()) {
+                try { targetFolder.deleteRecursively() } catch (_: Exception) {}
             }
             return null
         }
@@ -3862,13 +4221,13 @@ object CryptoManager {
         // ALL FILES DECRYPTED! Now delete encrypted files:
         for ((encFile, decryptedFile) in decryptedPairs) {
             val encPath = encFile.absolutePath
-            context.updateVirtualAlbumItemPathOnDecrypt(encPath, decryptedFile.absolutePath)
+            runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, decryptedFile.absolutePath) }
             metadataCache.remove(encPath)?.fileKey?.fill(0)
-            context.mediaDB.deleteMediumPath(encPath)
+            runCatching { context.mediaDB.deleteMediumPath(encPath) }
             encFile.delete()
         }
 
-        try {
+        runCatching {
             val contentResolver = context.contentResolver
             val filesUri = MediaStore.Files.getContentUri("external")
             contentResolver.delete(
@@ -3876,6 +4235,8 @@ object CryptoManager {
                 "${MediaStore.MediaColumns.DATA} LIKE ?",
                 arrayOf("${folder.absolutePath}%")
             )
+        }
+        runCatching {
             if (!folder.deleteRecursively()) {
                 (context as? BaseSimpleActivity)?.deleteFileBg(
                     folder.toFileDirItem(context),
@@ -3883,12 +4244,12 @@ object CryptoManager {
                     isDeletingMultipleFiles = false
                 )
             }
-        } catch (_: Exception) {}
+        }
         folderNameCache.remove(folder.absolutePath)
 
-        context.config.removeEncryptedFolder(folder.absolutePath)
-        context.config.replaceExactExcludedFolder(folder.absolutePath, targetFolder.absolutePath)
-        context.directoryDB.deleteDirPath(folder.absolutePath)
+        runCatching { context.config.removeEncryptedFolder(folder.absolutePath) }
+        runCatching { context.config.replaceExactExcludedFolder(folder.absolutePath, targetFolder.absolutePath) }
+        runCatching { context.directoryDB.deleteDirPath(folder.absolutePath) }
         encryptedFolderCache[folder.absolutePath] = false
         encryptedFolderCache[targetFolder.absolutePath] = false
 
@@ -3900,14 +4261,14 @@ object CryptoManager {
                 } catch (_: Exception) {}
             }
             if (targetNoMedia.exists()) {
-                try {
+                runCatching {
                     val content = ContentValues().apply {
                         put(MediaStore.Files.FileColumns.TITLE, NOMEDIA)
                         put(MediaStore.Files.FileColumns.DATA, targetNoMedia.absolutePath)
                         put(MediaStore.Files.FileColumns.MEDIA_TYPE, MediaStore.Files.FileColumns.MEDIA_TYPE_NONE)
                     }
                     context.contentResolver.insert(MediaStore.Files.getContentUri("external"), content)
-                } catch (_: Exception) {}
+                }
             }
         }
 
@@ -3915,12 +4276,12 @@ object CryptoManager {
         if (!isHiddenTarget) {
             val restoredPaths = targetFolder.listFiles()?.filter { it.isFile }?.map { it.absolutePath } ?: emptyList()
             if (restoredPaths.isNotEmpty()) {
-                context.rescanPaths(ArrayList(restoredPaths))
+                runCatching { context.rescanPaths(ArrayList(restoredPaths)) }
             }
         } else if (hadNoMedia) {
             val targetNoMedia = File(targetFolder, NOMEDIA)
             if (targetNoMedia.exists()) {
-                context.rescanPaths(arrayListOf(targetNoMedia.absolutePath))
+                runCatching { context.rescanPaths(arrayListOf(targetNoMedia.absolutePath)) }
             }
         }
         return targetFolder.absolutePath
@@ -4429,7 +4790,7 @@ object CryptoManager {
         }
 
         if (purgeTraces && context != null) {
-            purgeTracesForFile(context, originalPath)
+            runCatching { purgeTracesForFile(context, originalPath) }
         }
 
         return deleted
