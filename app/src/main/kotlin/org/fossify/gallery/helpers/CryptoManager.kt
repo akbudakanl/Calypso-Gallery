@@ -3034,7 +3034,7 @@ object CryptoManager {
         streamA: InputStream,
         streamB: InputStream,
         byteCount: Long,
-        bufferSize: Int = 16 * 1024
+        bufferSize: Int = 64 * 1024
     ): Boolean {
         val bufA = ByteArray(bufferSize)
         val bufB = ByteArray(bufferSize)
@@ -3053,6 +3053,80 @@ object CryptoManager {
         return true
     }
 
+    private fun isMacAuthenticatedContainerHeader(file: File): Boolean {
+        if (file.length() < 9L + MAC_TAG_LENGTH) return false
+        return runCatching {
+            val head = ByteArray(9)
+            FileInputStream(file).use { fis ->
+                if (readExactOrEof(fis, head, 9) != 9) return@runCatching false
+            }
+            val magic = String(head, 0, 8, Charsets.US_ASCII)
+            val version = head[8]
+            (magic == MAGIC_V2 || magic == MAGIC_V1) &&
+                (version == VERSION_SYMMETRIC_AUTH || version == VERSION_ASYMMETRIC_AUTH || version == VERSION_V5_AUTH)
+        }.getOrDefault(false)
+    }
+
+    private fun trailingMacTagsEqual(fileA: File, fileB: File): Boolean {
+        if (fileA.length() < MAC_TAG_LENGTH || fileB.length() < MAC_TAG_LENGTH) return false
+        return runCatching {
+            val tagA = ByteArray(MAC_TAG_LENGTH)
+            val tagB = ByteArray(MAC_TAG_LENGTH)
+            RandomAccessFile(fileA, "r").use { raf ->
+                raf.seek(fileA.length() - MAC_TAG_LENGTH)
+                raf.readFully(tagA)
+            }
+            RandomAccessFile(fileB, "r").use { raf ->
+                raf.seek(fileB.length() - MAC_TAG_LENGTH)
+                raf.readFully(tagB)
+            }
+            tagA.contentEquals(tagB)
+        }.getOrDefault(false)
+    }
+
+    private fun hasMatchingMacTrailer(sourceBin: File, existingFile: File): Boolean {
+        return sourceBin.length() == existingFile.length() &&
+            isMacAuthenticatedContainerHeader(sourceBin) &&
+            isMacAuthenticatedContainerHeader(existingFile) &&
+            trailingMacTagsEqual(sourceBin, existingFile)
+    }
+
+    private fun isFastMacMatchDuplicate(
+        fileA: File,
+        metaA: EncryptedFileMetadata,
+        fileB: File,
+        metaB: EncryptedFileMetadata
+    ): Boolean {
+        return metaA.originalSize > 0L &&
+            metaA.originalSize == metaB.originalSize &&
+            metaA.mediaType == metaB.mediaType &&
+            fileA.length() == fileB.length() &&
+            metaA.contentIv.contentEquals(metaB.contentIv) &&
+            metaA.isMacAuthenticated &&
+            metaB.isMacAuthenticated &&
+            fileA.length() >= metaA.payloadOffset + metaA.originalSize + MAC_TAG_LENGTH &&
+            fileB.length() >= metaB.payloadOffset + metaB.originalSize + MAC_TAG_LENGTH &&
+            trailingMacTagsEqual(fileA, fileB)
+    }
+
+    private fun streamsMatchBitForBit(
+        fileA: File,
+        fileB: File,
+        originalSize: Long
+    ): Boolean {
+        return try {
+            val sA = openDecryptedContentStream(fileA, 0L) ?: return false
+            sA.use { streamA ->
+                val sB = openDecryptedContentStream(fileB, 0L) ?: return false
+                sB.use { streamB ->
+                    streamsHaveEqualBytes(streamA, streamB, originalSize, bufferSize = 64 * 1024)
+                }
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun areEncryptedFilesIdenticalContent(
         fileA: File,
         metaA: EncryptedFileMetadata,
@@ -3065,63 +3139,10 @@ object CryptoManager {
         if (metaA.originalSize == 0L) {
             return true
         }
-
-        if (
-            fileA.length() == fileB.length() &&
-            metaA.contentIv.contentEquals(metaB.contentIv) &&
-            metaA.isMacAuthenticated &&
-            metaB.isMacAuthenticated &&
-            fileA.length() >= metaA.payloadOffset + metaA.originalSize + MAC_TAG_LENGTH &&
-            fileB.length() >= metaB.payloadOffset + metaB.originalSize + MAC_TAG_LENGTH
-        ) {
-            val macEqual = runCatching {
-                val tagA = ByteArray(MAC_TAG_LENGTH)
-                val tagB = ByteArray(MAC_TAG_LENGTH)
-                RandomAccessFile(fileA, "r").use { raf ->
-                    raf.seek(fileA.length() - MAC_TAG_LENGTH)
-                    raf.readFully(tagA)
-                }
-                RandomAccessFile(fileB, "r").use { raf ->
-                    raf.seek(fileB.length() - MAC_TAG_LENGTH)
-                    raf.readFully(tagB)
-                }
-                tagA.contentEquals(tagB)
-            }.getOrDefault(false)
-            if (macEqual) return true
+        if (isFastMacMatchDuplicate(fileA, metaA, fileB, metaB)) {
+            return true
         }
-
-        return try {
-            if (metaA.originalSize <= 256 * 1024L) {
-                val sA = openDecryptedContentStream(fileA, 0L) ?: return false
-                sA.use { streamA ->
-                    val sB = openDecryptedContentStream(fileB, 0L) ?: return false
-                    sB.use { streamB ->
-                        streamsHaveEqualBytes(streamA, streamB, metaA.originalSize)
-                    }
-                }
-            } else {
-                val windowSize = 65536L
-                val offsets = listOf(
-                    0L,
-                    (metaA.originalSize / 2).coerceAtLeast(0L),
-                    (metaA.originalSize - windowSize).coerceAtLeast(0L)
-                ).distinct()
-                for (offset in offsets) {
-                    val compareLen = minOf(windowSize, metaA.originalSize - offset)
-                    val sA = openDecryptedContentStream(fileA, offset) ?: return false
-                    val matched = sA.use { streamA ->
-                        val sB = openDecryptedContentStream(fileB, offset) ?: return false
-                        sB.use { streamB ->
-                            streamsHaveEqualBytes(streamA, streamB, compareLen)
-                        }
-                    }
-                    if (!matched) return false
-                }
-                true
-            }
-        } catch (_: Exception) {
-            false
-        }
+        return streamsMatchBitForBit(fileA, fileB, metaA.originalSize)
     }
 
     private data class SyncPendingItem(
@@ -3150,6 +3171,11 @@ object CryptoManager {
         return collected
     }
 
+    private fun findExistingDefaultHiddenAlbum(vaultRoot: File): File? {
+        val subfolders = vaultRoot.listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: return null
+        return subfolders.firstOrNull { isDefaultHiddenAlbum(it) }
+    }
+
     private fun matchExistingDestinationAlbum(vaultRoot: File, albumName: String): File? {
         val subfolders = vaultRoot.listFiles()?.filter { dir ->
             dir.isDirectory &&
@@ -3162,6 +3188,18 @@ object CryptoManager {
         subfolders.firstOrNull { getDecryptedRawFolderName(it) == albumName }?.let { return it }
         return subfolders.firstOrNull {
             getDecryptedRawFolderName(it)?.trim()?.equals(albumName, ignoreCase = true) == true
+        }
+    }
+
+    private fun findExistingDestinationAlbum(vaultRoot: File, item: SyncPendingItem): File? {
+        if (item.isDefaultTarget) {
+            return findExistingDefaultHiddenAlbum(vaultRoot)
+        }
+        val name = item.sourceAlbumName?.takeIf { it.isNotEmpty() }
+        return if (name == null) {
+            findExistingDefaultHiddenAlbum(vaultRoot)
+        } else {
+            matchExistingDestinationAlbum(vaultRoot, name)
         }
     }
 
@@ -3229,13 +3267,50 @@ object CryptoManager {
 
         runCryptoOperation {
             val resolvedAlbumMap = HashMap<String, File>()
+            val existingAlbumLookedUp = HashSet<String>()
             val albumEntriesIndex = HashMap<File, MutableList<Pair<File, EncryptedFileMetadata>>>()
+            val albumBinNameIndex = HashMap<File, HashMap<String, File>>()
 
             var processed = 0
             for (item in pendingItems) {
                 val sourceBin = item.sourceBin
+                val albumKey = if (item.isDefaultTarget) {
+                    "__DEFAULT__"
+                } else {
+                    "ALBUM:${item.sourceAlbumName?.trim()?.lowercase(Locale.ROOT) ?: ""}"
+                }
+
+                var existingTarget = resolvedAlbumMap[albumKey]
+                if (existingTarget == null && existingAlbumLookedUp.add(albumKey)) {
+                    existingTarget = findExistingDestinationAlbum(vaultRoot, item)
+                    if (existingTarget != null) {
+                        resolvedAlbumMap[albumKey] = existingTarget
+                    }
+                }
+
+                // Stage 0: O(1) exact-mirror .bin fast skip before reading headers or full payload hashing
+                if (existingTarget != null) {
+                    val binNameMap = albumBinNameIndex.getOrPut(existingTarget) {
+                        val map = HashMap<String, File>()
+                        existingTarget.listFiles()
+                            ?.filter { isEncryptedBinFile(it) }
+                            ?.forEach { existingBin ->
+                                map[existingBin.name.lowercase(Locale.ROOT)] = existingBin
+                            }
+                        map
+                    }
+                    val matchingMirrorBin = binNameMap[sourceBin.name.lowercase(Locale.ROOT)]
+                    if (matchingMirrorBin != null && hasMatchingMacTrailer(sourceBin, matchingMirrorBin)) {
+                        skippedDuplicateCount++
+                        processed++
+                        onProgress?.invoke(processed, total)
+                        continue
+                    }
+                }
+
+                // Stage 1: Small GCM-authenticated header read only (no full-payload read yet)
                 val sourceMeta = readMetadata(sourceBin)
-                if (sourceMeta == null || (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin))) {
+                if (sourceMeta == null) {
                     metadataCache.remove(sourceBin.absolutePath)
                     failedCount++
                     processed++
@@ -3243,28 +3318,82 @@ object CryptoManager {
                     continue
                 }
 
-                val albumKey = if (item.isDefaultTarget) {
-                    "__DEFAULT__"
-                } else {
-                    "ALBUM:${item.sourceAlbumName?.trim()?.lowercase(Locale.ROOT) ?: ""}"
-                }
+                var integrityVerified = !sourceMeta.isMacAuthenticated
 
-                val targetAlbum = resolvedAlbumMap[albumKey] ?: run {
-                    val resolved = if (item.isDefaultTarget) {
-                        getOrCreateDefaultHiddenAlbum(context)
-                    } else {
-                        val name = item.sourceAlbumName?.takeIf { it.isNotEmpty() }
-                        if (name == null) {
-                            getOrCreateDefaultHiddenAlbum(context)
-                        } else {
-                            matchExistingDestinationAlbum(vaultRoot, name)
-                                ?: createHiddenPhysicalAlbum(context, name)
+                if (existingTarget != null) {
+                    val existingEntries = albumEntriesIndex.getOrPut(existingTarget) {
+                        val list = ArrayList<Pair<File, EncryptedFileMetadata>>()
+                        existingTarget.listFiles()
+                            ?.filter { isEncryptedBinFile(it) }
+                            ?.forEach { existingBin ->
+                                readMetadata(existingBin)?.let { existingMeta ->
+                                    list.add(existingBin to existingMeta)
+                                }
+                            }
+                        list
+                    }
+
+                    val collisionCandidates = existingEntries.filter { (_, existingMeta) ->
+                        isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName)
+                    }
+
+                    // Stage 2: O(1) length + contentIv + Poly1305 trailer match before full integrity scan
+                    if (collisionCandidates.any { (existingFile, existingMeta) ->
+                            isFastMacMatchDuplicate(sourceBin, sourceMeta, existingFile, existingMeta)
+                        }
+                    ) {
+                        skippedDuplicateCount++
+                        processed++
+                        onProgress?.invoke(processed, total)
+                        continue
+                    }
+
+                    // Before Stage 4 bit-by-bit comparison or importing, verify MAC integrity of sourceBin
+                    if (!integrityVerified) {
+                        integrityVerified = verifyFileIntegrity(sourceBin)
+                        if (!integrityVerified) {
+                            metadataCache.remove(sourceBin.absolutePath)
+                            failedCount++
+                            processed++
+                            onProgress?.invoke(processed, total)
+                            continue
                         }
                     }
-                    if (resolved != null) {
-                        resolvedAlbumMap[albumKey] = resolved
+
+                    // Stage 3/4: Full bit-by-bit decrypted stream comparison in RAM
+                    if (collisionCandidates.any { (existingFile, existingMeta) ->
+                            areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
+                        }
+                    ) {
+                        skippedDuplicateCount++
+                        processed++
+                        onProgress?.invoke(processed, total)
+                        continue
                     }
-                    resolved
+                } else {
+                    // Validate sourceBin cryptographically before lazily creating a new destination album
+                    if (!integrityVerified) {
+                        integrityVerified = verifyFileIntegrity(sourceBin)
+                        if (!integrityVerified) {
+                            metadataCache.remove(sourceBin.absolutePath)
+                            failedCount++
+                            processed++
+                            onProgress?.invoke(processed, total)
+                            continue
+                        }
+                    }
+                }
+
+                val targetAlbum = existingTarget ?: run {
+                    val created = if (item.isDefaultTarget || item.sourceAlbumName.isNullOrBlank()) {
+                        getOrCreateDefaultHiddenAlbum(context)
+                    } else {
+                        createHiddenPhysicalAlbum(context, item.sourceAlbumName)
+                    }
+                    if (created != null) {
+                        resolvedAlbumMap[albumKey] = created
+                    }
+                    created
                 }
 
                 if (targetAlbum == null) {
@@ -3284,17 +3413,6 @@ object CryptoManager {
                             }
                         }
                     list
-                }
-
-                val duplicateFound = existingEntries.any { (existingFile, existingMeta) ->
-                    isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName) &&
-                        areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
-                }
-                if (duplicateFound) {
-                    skippedDuplicateCount++
-                    processed++
-                    onProgress?.invoke(processed, total)
-                    continue
                 }
 
                 val tempFile = File(targetAlbum, ".sync_tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
@@ -3357,6 +3475,7 @@ object CryptoManager {
                     if (renameEncryptedFile(destBin, renamedName)) {
                         val updatedMeta = readMetadata(destBin) ?: sourceMeta.copy(originalName = renamedName)
                         existingEntries.add(destBin to updatedMeta)
+                        albumBinNameIndex[targetAlbum]?.put(destBin.name.lowercase(Locale.ROOT), destBin)
                         touchedTargetAlbums.add(targetAlbum.absolutePath)
                         renamedCount++
                     } else {
@@ -3369,6 +3488,7 @@ object CryptoManager {
                     syncDir(targetAlbum)
                     metadataCache[destBin.absolutePath] = sourceMeta
                     existingEntries.add(destBin to sourceMeta)
+                    albumBinNameIndex[targetAlbum]?.put(destBin.name.lowercase(Locale.ROOT), destBin)
                     touchedTargetAlbums.add(targetAlbum.absolutePath)
                     copiedCount++
                 }

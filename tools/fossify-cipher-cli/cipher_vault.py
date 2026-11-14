@@ -180,14 +180,7 @@ MESSAGES = {
         "enc_skipped_summary": "\033[1;33m[i] Skipped {count} unsupported file(s).\033[0m",
         "enc_nested_flatten_note": "\033[1;34m[i] Nested subfolders under '{album}' will be routed into top-level vault album '{album}'.\033[0m",
         "enc_input_not_found": "\033[1;31m[ERROR]\033[0m Input path does not exist: {path}",
-        "enc_dest_title": "\n\033[1;36m[?] Select Encryption Destination:\033[0m",
-        "enc_dest_opt1": "  [1] Encrypt directly into detected Vault (Recommended): \033[1;32m{path}\033[0m",
-        "enc_dest_opt2": "  [2] Save to Desktop output folder: \033[1;33m{path}\033[0m",
-        "enc_dest_opt3": "  [3] Specify another custom output / vault folder",
-        "enc_dest_prompt": "\033[1;36m[?] Select destination [1/2/3] (Default: 1): \033[0m",
-        "enc_dest_invalid": "\033[1;31m[-] Invalid selection. Enter 1, 2, or 3.\033[0m",
-        "enc_dest_custom_prompt": "\033[1;36m-> Enter custom target vault/output folder path: \033[0m",
-        "enc_dest_custom_invalid": "\033[1;31m[-] Invalid path or cannot create directory: {path}\033[0m",
+        "enc_auto_target_vault": "\033[1;32m[✓] Encryption destination:\033[0m {path}",
         "enc_tip_direct": "\033[1;37m[i] Encrypted directly inside the Vault. Existing .meta albums were reused and new albums created.\033[0m",
     },
     "tr": {
@@ -232,14 +225,7 @@ MESSAGES = {
         "enc_skipped_summary": "\033[1;33m[i] Desteklenmeyen {count} dosya atlandı.\033[0m",
         "enc_nested_flatten_note": "\033[1;34m[i] '{album}' altındaki iç içe alt klasör dosyaları '{album}' kasa albümüne yönlendirilecek.\033[0m",
         "enc_input_not_found": "\033[1;31m[HATA]\033[0m Girdi yolu bulunamadı: {path}",
-        "enc_dest_title": "\n\033[1;36m[?] Şifreleme Hedefini Seçin:\033[0m",
-        "enc_dest_opt1": "  [1] Doğrudan algılanan Kasaya şifrele (Önerilen): \033[1;32m{path}\033[0m",
-        "enc_dest_opt2": "  [2] Masaüstü çıktı klasörüne kaydet: \033[1;33m{path}\033[0m",
-        "enc_dest_opt3": "  [3] Başka bir özel çıktı / kasa klasörü belirt",
-        "enc_dest_prompt": "\033[1;36m[?] Hedef seçin [1/2/3] (Varsayılan: 1): \033[0m",
-        "enc_dest_invalid": "\033[1;31m[-] Geçersiz seçim. 1, 2 veya 3 girin.\033[0m",
-        "enc_dest_custom_prompt": "\033[1;36m-> Özel hedef kasa/çıktı klasörü yolunu girin: \033[0m",
-        "enc_dest_custom_invalid": "\033[1;31m[-] Geçersiz yol veya klasör oluşturulamadı: {path}\033[0m",
+        "enc_auto_target_vault": "\033[1;32m[✓] Şifreleme hedefi:\033[0m {path}",
         "enc_tip_direct": "\033[1;37m[i] Doğrudan Kasa içine şifrelendi. Mevcut .meta albümleri yeniden kullanıldı ve yeni albümler oluşturuldu.\033[0m",
     },
 }
@@ -1135,53 +1121,39 @@ def choose_encrypt_output_dir(
     vault_path: Path | None,
 ) -> Path:
     """
-    Determines the encryption destination directory. When -o is omitted and an external
-    or dedicated vault directory is detected in interactive mode, offers encrypting
-    directly into that vault ([1]), Desktop output ([2]), or a custom directory ([3]).
+    Determines the unified encryption destination directory with no interactive prompt:
+    1. Explicit -o / --output path.
+    2. Targetable vault directory (e.g. .../Cipher_Secrets/.vault -> .../Cipher_Secrets).
+    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Cipher_Secrets).
+    4. Fallback to localized Desktop output folder (Encrypted_Output / Sifreli_Cikti).
     """
     if args.output:
-        return Path(args.output).expanduser().resolve()
+        target_dir = Path(args.output).expanduser().resolve()
+        print(t(lang, "enc_auto_target_vault", path=target_dir))
+        return target_dir
 
-    desktop_out_dir = desktop / FOLDER_NAMES.get(lang, FOLDER_NAMES["en"])["enc_out"]
-    if not sys.stdin.isatty() or not is_targetable_vault_dir(vault_path, desktop, input_path, desktop_out_dir):
-        desktop_out_dir.mkdir(parents=True, exist_ok=True)
-        return desktop_out_dir
+    desktop_out_dir = (desktop / FOLDER_NAMES.get(lang, FOLDER_NAMES["en"])["enc_out"]).resolve()
+    if is_targetable_vault_dir(vault_path, desktop, input_path, desktop_out_dir):
+        target_dir = vault_path.parent.resolve()
+    elif vault_path is not None:
+        vdir = vault_path.parent.resolve()
+        standalone_excluded = {
+            desktop.resolve(),
+            desktop_out_dir,
+            Path.home().resolve(),
+            input_path.resolve(),
+            Path(__file__).resolve().parent.resolve(),
+        }
+        if vdir not in standalone_excluded:
+            target_dir = (vdir / "Cipher_Secrets").resolve()
+        else:
+            target_dir = desktop_out_dir
+    else:
+        target_dir = desktop_out_dir
 
-    direct_vault_dir = vault_path.parent.resolve()
-    print(t(lang, "enc_dest_title"))
-    print(t(lang, "enc_dest_opt1", path=direct_vault_dir))
-    print(t(lang, "enc_dest_opt2", path=desktop_out_dir))
-    print(t(lang, "enc_dest_opt3"))
-
-    while True:
-        try:
-            choice = input(t(lang, "enc_dest_prompt")).strip()
-        except (KeyboardInterrupt, EOFError):
-            print(t(lang, "op_cancelled"))
-            sys.exit(1)
-
-        if choice in ("", "1"):
-            return direct_vault_dir
-        if choice == "2":
-            desktop_out_dir.mkdir(parents=True, exist_ok=True)
-            return desktop_out_dir
-        if choice == "3":
-            while True:
-                try:
-                    raw = input(t(lang, "enc_dest_custom_prompt")).strip()
-                except (KeyboardInterrupt, EOFError):
-                    print(t(lang, "op_cancelled"))
-                    sys.exit(1)
-                clean = raw.strip("'\"")
-                if not clean:
-                    continue
-                custom_dir = Path(clean).expanduser().resolve()
-                try:
-                    custom_dir.mkdir(parents=True, exist_ok=True)
-                    return custom_dir
-                except Exception:
-                    print(t(lang, "enc_dest_custom_invalid", path=clean))
-        print(t(lang, "enc_dest_invalid"))
+    target_dir.mkdir(parents=True, exist_ok=True)
+    print(t(lang, "enc_auto_target_vault", path=target_dir))
+    return target_dir
 
 def run_encrypt_mode(args, desktop: Path, lang: str):
     input_path = Path(args.input).expanduser().resolve() if args.input else get_localized_desktop_dir(desktop, lang, "enc_in")
