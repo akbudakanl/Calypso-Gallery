@@ -82,6 +82,7 @@ import org.fossify.gallery.dialogs.RenameVirtualAlbumDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.extensions.addNoMedia
 import org.fossify.gallery.extensions.checkAppendingHidden
+import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.deleteVirtualAlbum
 import org.fossify.gallery.extensions.directoryDB
@@ -99,6 +100,7 @@ import org.fossify.gallery.extensions.loadImage
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.promptCreateVault
 import org.fossify.gallery.extensions.removeNoMedia
+import org.fossify.gallery.extensions.rescanFolderMedia
 import org.fossify.gallery.extensions.showRecycleBinEmptyingDialog
 import org.fossify.gallery.extensions.tryCopyMoveFilesTo
 import org.fossify.gallery.extensions.isHiddenVirtualAlbumPath
@@ -921,31 +923,42 @@ class DirectoryAdapter(
         }
 
         val fileDirItems = paths.map { FileDirItem(it, it.getFilenameFromPath()) } as ArrayList<FileDirItem>
+        val selectedFolderDirs = validPaths.map { File(it) }
         val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
-        activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = sourceDirectoryPath) {
-            val destinationPath = it
+        activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = sourceDirectoryPath) { destinationPath ->
             val affectedFolders = LinkedHashSet<String>(validPaths.size + 1).apply {
                 addAll(validPaths)
                 if (!destinationPath.isVirtualAlbumPath()) {
                     add(destinationPath)
                 }
             }
-            if (!destinationPath.isVirtualAlbumPath() && !CryptoManager.isEncryptedFolderPath(activity, destinationPath)) {
-                val newPaths = fileDirItems.map { "$destinationPath/${it.name}" }.toMutableList() as ArrayList<String>
-                activity.rescanPaths(newPaths) {
-                    activity.fixDateTaken(newPaths, false)
-                    activity.runOnUiThread {
-                        listener?.refreshPaths(affectedFolders)
-                    }
-                }
-            }
-
-            if (!isCopyOperation && !destinationPath.isVirtualAlbumPath()) {
-                activity.updateFavoritePaths(fileDirItems, destinationPath)
-            }
-
             config.tempFolderPath = ""
-            listener?.refreshPaths(affectedFolders)
+            if (!destinationPath.isVirtualAlbumPath()) {
+                val isDestEncrypted = CryptoManager.isEncryptedFolderPath(activity, destinationPath)
+                if (!isCopyOperation || !isDestEncrypted) {
+                    ensureBackgroundThread {
+                        if (!isCopyOperation) {
+                            selectedFolderDirs.forEach { dir ->
+                                if (CryptoManager.isEncryptedFolder(dir)) {
+                                    CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(activity, dir)
+                                } else {
+                                    activity.cleanupEmptyPlaintextAlbumIfNeeded(dir, forceIfEmpty = true)
+                                }
+                            }
+                        }
+                        if (!isDestEncrypted) {
+                            activity.applicationContext.rescanFolderMedia(destinationPath)
+                        }
+                        activity.runOnUiThread {
+                            listener?.refreshPaths(affectedFolders)
+                        }
+                    }
+                } else {
+                    listener?.refreshPaths(affectedFolders)
+                }
+            } else {
+                listener?.refreshPaths(affectedFolders)
+            }
             finishActMode()
         }
     }
