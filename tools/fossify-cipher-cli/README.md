@@ -37,36 +37,35 @@ If you prefer another Linux Live USB, boot with its **copy-to-RAM** and **no-swa
 
 ---
 
-## 💾 Two External-Drive Workflows (Tails OS RAM-Only)
+## 💾 Unified `Cipher_Secrets` External-Drive Workflows (Tails OS RAM-Only)
+
+Both workflows use **one unified folder structure (`Cipher_Secrets/`)** on your external USB/SD drive, with **no interactive output destination prompt** in `cipher_vault.py`:
 
 ### Workflow 1: Direct External Vault (`Cipher_Secrets` directly on USB/SD)
 Use your external USB/SD drive as the vault itself from Android without copying encrypted media into your phone's internal storage:
 
 1. **Stage plaintext media in RAM:** Download or place your plaintext photos/videos into `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`), which lives purely in volatile RAM (`tmpfs`) on Tails / `toram` Live OS.
 2. **Plug in your external USB/SD drive:** Mount the drive containing `Cipher_Secrets/.vault` (e.g., `/media/amnesia/USB/Cipher_Secrets/.vault` or `/mnt/.../Cipher_Secrets/.vault`).
-3. **Run `./run.sh`:** The CLI auto-detects the mounted `.vault` (or lets you drag & drop it). After unlocking with your password/PIN/pattern, choose **Option `[1]`** to encrypt **directly into `Cipher_Secrets/` on the external drive** (or pass `-o /media/.../Cipher_Secrets -v /media/.../Cipher_Secrets/.vault`).
-4. **Done:** Encrypted `.bin` files and `.meta` album subfolders are written straight to the external vault. Optionally zero-wipe the RAM input files (`--delete-source` or interactive prompt), then connect the USB/SD drive directly to your phone.
+3. **Run `./run.sh`:** The CLI auto-detects `.vault`, prompts for your vault password/PIN/pattern, and **automatically writes** newly encrypted `.meta` (`FGMETA2`) album folders and `.bin` payloads directly into `<USB>/Cipher_Secrets/` (with zero output prompt — or pass `-o` / `--output` to override).
+4. **Done:** Optionally zero-wipe the RAM input files (`--delete-source` or interactive prompt), then connect the USB/SD drive directly to your phone.
 
-### Workflow 2: Phone Vault + External Drive In-App Sync
-Keep your primary `Cipher_Secrets` vault on your phone while encrypting new media inside Tails OS onto an external USB/SD drive, then merge them safely inside the Android app without using a file manager to dig into internal vault folders.
+### Workflow 2: Phone Vault + Unified `Cipher_Secrets` External Sync
+Keep your primary `Cipher_Secrets` vault on your phone while encrypting new media inside Tails OS onto an external USB/SD drive, then merge them inside the Android app without manually copying files with a file manager:
 
-#### Scenario 2A — External Drive Holds a Full Copy of `Cipher_Secrets`
-Use this when you keep a mirror/copy of your phone's `Cipher_Secrets` folder (including `.vault` and encrypted `<hex>/.meta` album folders) on your USB drive:
-1. **Stage plaintext media in Tails RAM:** Place new files in `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`):
-   * Files placed directly in the root folder route to **`Default Secret Album`**.
-   * Files placed inside named subfolders (e.g., `To_Encrypt/Vacation/photo.jpg`) match or create that album name in the vault.
-2. **Encrypt onto the USB copy:** Plug in the USB drive, run `./run.sh`, enter your vault password/PIN/pattern, and select **Option `[1]`** to encrypt directly into `<USB>/Cipher_Secrets` (the CLI matches existing `.meta` albums on the USB copy automatically or creates new encrypted album folders). Optionally zero-wipe the RAM input files.
-3. **Sync into your phone inside the Android app:** Connect the USB drive to your phone, open **Fossify Gallery Cipher**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
-   * The app skips all already-present files on the phone (even if unchanged `.bin`s or re-encrypted copies of identical media exist), copies only the newly added items into matching or newly created albums (and `Default Secret Album`), and renames any same-name/different-content conflict safely to `<name>(1)`.
-
-#### Scenario 2B — External Drive Has NO Vault Copy (Delta-Only Transfer)
-Use this when you do **not** want a copy of your existing vault media on the USB drive—you only want to carry the newly encrypted additions:
-1. **One-time `.vault` header preparation:** You only need the small `.vault` key-header file (`Internal Storage > Fossify Gallery Cipher > Cipher_Secrets > .vault`)—**none** of your vault photos/videos need to be copied. Keep that `.vault` file on the USB drive or copy it to `~/Desktop/` in Tails OS so the CLI can derive your vault's Master Key (`.vault` is protected by Argon2id + your password/PIN).
-2. **Stage & encrypt only the new media:** Put the new plaintext files into `~/Desktop/To_Encrypt` (directly in root for `Default Secret Album`, or inside named subfolders like `To_Encrypt/Vacation/` for specific albums), run `./run.sh`, and unlock with your vault password/PIN.
-   * Choose **Option `[2]`** (`~/Desktop/Encrypted_Output`, then copy the generated output folder—containing `.meta` subfolders and/or `.bin` files—onto your USB drive), OR choose **Option `[3]`** (`-o /media/amnesia/USB/To_Sync`) to write only the newly encrypted delta folders/files directly onto the USB drive.
-   * Note: Every generated `<6-hex>` subfolder holds a `.meta` file storing the real album name (for example `Vacation`), OR you can even put bare `.bin` files / `.meta` subfolders directly in your USB transfer folder.
-3. **Sync into your phone inside the Android app:** Connect the USB drive to your phone, open **Settings > Encrypted vault > Sync vault from external drive** (*"Harici diskten kasayı eşitle"*), and pick the delta folder on your USB drive (e.g., `Encrypted_Output` / `To_Sync`).
-   * The Android app reads each subfolder's `.meta` (matching existing phone vault albums by real name or creating new 6-hex encrypted albums if none exist yet), routes bare `.bin` files without an album folder into **`Default Secret Album`**, skips duplicates, and renames different-content collisions to `<name>(1)`.
+1. **Prepare `Cipher_Secrets/` on the external USB/SD drive (pick either setup):**
+   * **Scenario 1 — Full Copy of `Cipher_Secrets` on USB:** Copy your phone's `Cipher_Secrets` folder (`.vault` + existing encrypted `<hex>/.meta` album folders) onto the USB drive.
+   * **Scenario 2 — Header-Only `.vault` on USB (No Existing Vault Media on USB):** Create `Cipher_Secrets/` on the USB drive and place **only** your small `.vault` key-header file inside it (`<USB>/Cipher_Secrets/.vault`), with none of your phone's media copied onto the USB drive.
+     * *(Tip: Even if you place `.vault` directly at the external drive root `<USB>/.vault`, `choose_encrypt_output_dir` automatically targets `<USB>/Cipher_Secrets/`! By contrast, a standalone `.vault` copied onto `~/Desktop/.vault` or `~/` falls back to `~/Desktop/Encrypted_Output` / `~/Desktop/Sifreli_Cikti`, and `-o` / `--output` always lets you specify any explicit folder.)*
+2. **Stage & encrypt new media in Tails OS (`./run.sh`):**
+   * Place new plaintext files in `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`): files directly in the root route to **`Default Secret Album`**, while named subfolders (e.g., `To_Encrypt/Vacation/photo.jpg`) match existing `.meta` albums or create new encrypted ones.
+   * Run `./run.sh` and enter your vault password/PIN/pattern. **No output destination prompt is shown** — `cipher_vault.py` unlocks `.vault` and automatically encrypts into `<USB>/Cipher_Secrets/`. Optionally zero-wipe the RAM source files (`--delete-source` or interactive prompt).
+3. **Sync into your phone inside the Android app:**
+   * Connect the USB/SD drive to your phone, open **Fossify Gallery Cipher**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
+   * **Identical handling for both scenarios:** Whether your USB's `Cipher_Secrets/` holds a full vault mirror (Scenario 1) or only `.vault` plus newly encrypted additions (Scenario 2), Android sync processes it identically. In Scenario 2, once syncing completes, you can delete the synced `.bin` files and album subfolders from `<USB>/Cipher_Secrets/` while keeping only `.vault` for next time.
+   * **4-Stage Sync Optimization & Full Bit-by-Bit Safety:**
+     * Unchanged mirrored `.bin` files already in the destination album skip in `O(1)` time (checking size + header version + trailing 16-byte `Poly1305-AES` tag) without decrypting headers or hashing gigabytes of video.
+     * Incoming `.bin` files with distinct filenames copy immediately after `Poly1305-AES` MAC verification (lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`).
+     * Same-name / same-size filename collisions undergo `Poly1305-AES` integrity verification followed by **full bit-by-bit decrypted comparison in RAM**: identical bits (even when re-encrypted with different random IVs) are skipped cleanly, while differing bits are safely preserved as `<name>(1)`, `<name>(2)`, etc.
 
 ---
 
@@ -93,20 +92,20 @@ Unsupported files (such as `.txt`, `.pdf`, `.md`, `.zip`) as well as `.bin` file
 
 ---
 
-## 🌐 Language & Desktop Folder Workflow
+## 🌐 Language & Automatic Output Routing
 
-On interactive launch, the tool asks you to choose **English** or **Türkçe** (or pass `--lang en` / `--lang tr`), and uses matching Desktop folders:
+On interactive launch, the tool asks you to choose **English** or **Türkçe** (or pass `--lang en` / `--lang tr`), and uses matching localized folders without prompting for an output destination:
 
-| Language Flag | Default Input Folder | Output Destination Options |
+| Language Flag | Default Input Folder | Automatic Output Routing (`choose_encrypt_output_dir`) |
 | :--- | :--- | :--- |
-| `--lang en` | `~/Desktop/To_Encrypt` | `[1]` Detected `Cipher_Secrets` vault, `[2]` `~/Desktop/Encrypted_Output`, `[3]` Custom folder |
-| `--lang tr` | `~/Desktop/Sifrelenecek` | `[1]` Algılanan `Cipher_Secrets` kasası, `[2]` `~/Desktop/Sifreli_Cikti`, `[3]` Özel klasör |
+| `--lang en` | `~/Desktop/To_Encrypt` | `<USB>/Cipher_Secrets` (for mounted `Cipher_Secrets/.vault` or `<USB>/.vault`); falls back to `~/Desktop/Encrypted_Output` if `.vault` is standalone on Desktop/Home (`-o` overrides) |
+| `--lang tr` | `~/Desktop/Sifrelenecek` | `<USB>/Cipher_Secrets` (bağlı `Cipher_Secrets/.vault` veya `<USB>/.vault` için); `.vault` Masaüstü/Ev dizinindeyse `~/Desktop/Sifreli_Cikti` (`-o` ile özelleştirilebilir) |
 
 ---
 
 ## 🚀 Quick Start & CLI Examples
 
-1. **Mount Vault or Copy `.vault`:** Plug in your external USB/SD drive containing `Cipher_Secrets/.vault` (or your `.vault` file), or copy `.vault` from your phone (`Internal Storage > Fossify Gallery Cipher > Cipher_Secrets > .vault`) to your Desktop/USB.
+1. **Mount USB `Cipher_Secrets/` (Full Vault or Header-Only `.vault`):** Plug in your external USB/SD drive containing `Cipher_Secrets/.vault` (either a full vault copy or just `.vault`), or copy `.vault` to `~/Desktop/.vault` from your phone (`Internal Storage > Fossify Gallery Cipher > Cipher_Secrets > .vault`).
 2. **Run Launcher:**
    ```bash
    chmod +x run.sh cipher_vault.py
@@ -115,18 +114,18 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
    *(Automatically detects `apt`, `dnf`, `pacman`, or `zypper` if dependencies are missing, creates the Desktop shortcut, and starts the sandboxed CLI.)*
 
 ```bash
-# Interactive mode (prompts for Language, Vault destination [1/2/3], and optional secure wipe)
+# Interactive mode (prompts for Language, .vault secret with retry, and optional secure wipe; no output prompt)
 ./run.sh
 
 # English or Turkish interactive folder workflow (-e/--encrypt is optional default)
 ./run.sh --lang en
 ./run.sh --lang tr
 
-# Encrypt directly into an external USB/SD drive's Cipher_Secrets vault
-./run.sh --lang en -i ~/Desktop/To_Encrypt -o /media/amnesia/USB/Cipher_Secrets -v /media/amnesia/USB/Cipher_Secrets/.vault
+# Auto-target <USB>/Cipher_Secrets directly (works identically for full vault copy or header-only .vault)
+./run.sh --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Cipher_Secrets/.vault
 
-# Encrypt delta batch onto USB for Android "Sync vault from external drive"
-./run.sh --lang en -i ~/Desktop/To_Encrypt -o /media/amnesia/USB/Encrypted_Output -v ~/Desktop/.vault
+# Explicit custom -o override (for example writing to a custom USB transfer folder)
+./run.sh --lang en -i ~/Desktop/To_Encrypt -o /media/amnesia/USB/Custom_Output -v /media/amnesia/USB/Cipher_Secrets/.vault
 
 # Specify .vault (-v or -k), 3x3 pattern indices, and wipe plaintext sources after encryption
 ./run.sh -v ~/.vault --pattern "0,1,2,5" --delete-source
@@ -146,35 +145,33 @@ Bu CLI aracı **yalnızca RAM üzerinde çalışan Live Boot Linux sistemler** i
 * **Önerilen Sistem:** **Tails OS** (Tüm çalışma geçici RAM'dedir, dahili disk ve swap otomatik bağlanmaz, kapatınca her şey silinir).
 * **Alternatif:** Debian/Ubuntu (`toram noswap`), Fedora/openSUSE (`rd.live.ram=1`) veya Arch (`copytoram=y`) Live ISO'ları.
 
-### 💾 İki Harici Disk İş Akışı (Tails OS RAM Üzerinde)
+### 💾 Birleşik `Cipher_Secrets` Harici Disk İş Akışları (Tails OS RAM Üzerinde)
+
+Her iki iş akışı da harici USB/SD diskinizde **tek bir birleşik `Cipher_Secrets/` klasör yapısı** kullanır ve `cipher_vault.py` size etkileşimli çıktı hedefi sormaz:
 
 #### 1. Doğrudan Harici Disk Kasası (Direct External Vault)
 Telefonun dahili depolamasına kopyalama yapmadan, Android uygulamasından harici USB/SD diskinizdeki `Cipher_Secrets` klasörünü doğrudan kasa olarak kullanın:
 1. Şifrelenecek şifresiz medyaları RAM üzerindeki `~/Desktop/Sifrelenecek` (veya `To_Encrypt`) klasörüne koyun.
 2. İçinde `Cipher_Secrets/.vault` bulunan harici USB/SD diskinizi takın (örn. `/media/amnesia/USB/Cipher_Secrets/.vault`).
-3. `./run.sh` aracını başlatın. Araç harici kasayı otomatik algılar; şifre/PIN/desen ile kilidi açtıktan sonra **Seçenek `[1]`** ile **doğrudan harici diskteki `Cipher_Secrets` klasörünün içine** şifreleme yapın (veya `-o /media/.../Cipher_Secrets -v /media/.../Cipher_Secrets/.vault` kullanın).
+3. `./run.sh` aracını başlatın. Araç `.vault` dosyasını otomatik algılar; şifre/PIN/desen ile kilidi açtıktan sonra **ek bir hedef sorusu sormadan doğrudan `<USB>/Cipher_Secrets/` içine** şifreleme yapar (isteğe bağlı olarak `-o` / `--output` ile özel dizin verebilirsiniz).
 4. Şifreleme bitince RAM'deki kaynak dosyaları güvenli şekilde sıfırlayıp silebilir ve USB/SD diski doğrudan telefonunuza takabilirsiniz.
 
-#### 2. Telefon Kasası + Harici Disk Uygulama İçi Senkronizasyon (Phone Vault + External Drive In-App Sync)
-Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şifreleyin ve dosya yöneticisiyle telefon klasörlerine girmeden doğrudan Android uygulamasının içinden birleştirin.
+#### 2. Telefon Kasası + Birleşik `Cipher_Secrets` Harici Disk Senkronizasyonu
+Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şifreleyin ve dosya yöneticisiyle telefon klasörlerine girmeden doğrudan Android uygulamasının içinden birleştirin:
 
-##### Senaryo 2A — Harici Diskte Kasanın Tam Kopyası (`Cipher_Secrets`) Varsa
-USB diskinizde telefon kasanızın bir kopyası (`.vault` ve mevcut şifreli `<hex>/.meta` albüm klasörleri) duruyorsa:
-1. **Tails OS'te şifresiz medyaları hazırlayın:** Yeni dosyaları `~/Desktop/Sifrelenecek` (veya `To_Encrypt`) içine bırakın:
-   * Klasörün köküne konan dosyalar **`Default Secret Album`**'e gider.
-   * Alt klasör (ör. `Sifrelenecek/Tatil/foto.jpg`) içine konan dosyalar kasadaki o albümle eşleştirilir veya yeni şifreli albüm oluşturur.
-2. **USB kopyasının üzerine şifreleyin:** USB diski takın, `./run.sh` aracını çalıştırın, kasa şifrenizi/PIN'inizi girin ve **Seçenek `[1]`** ile doğrudan `<USB>/Cipher_Secrets` üzerine şifreleme yapın. Araç USB'deki mevcut `.meta` albümlerini tanıyıp yenileri ilgili klasörlere ekler. İsterseniz RAM'deki kaynak dosyaları temizletin.
-3. **Telefonda uygulama içinden eşitleyin:** USB diski telefonunuza bağlayın, uygulamada **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** seçeneğine dokunun, istenirse kasanın kilidini açın ve USB'deki `Cipher_Secrets` klasörünü (veya doğrudan USB kökünü) seçin.
-   * Uygulama telefondaki kasada zaten bulunan eski/aynı dosyaları içerik kontrolüyle **otomatik atlar**, yalnızca yeni eklenenleri ilgili albümlere (veya `Default Secret Album`'e) aktarır ve aynı adda ama farklı içerikte bir dosya varsa üzerine yazmadan `<ad>(1)` şeklinde yeniden adlandırır.
-
-##### Senaryo 2B — Harici Diskte Kasa Kopyası YOKSA (Yalnızca Değişiklik / Delta Aktarımı)
-Harici diskinizde eski şifreli dosyalarınızın kopyasını tutmak istemiyor, USB'yi sadece yeni şifrelediğiniz eklemeleri taşımak için kullanıyorsanız:
-1. **Tek seferlik `.vault` başlık dosyası:** Harici diskte tüm kasa medyalarının bulunmasına gerek yoktur; aracın kasanızın şifreleme anahtarını türetebilmesi için yalnızca telefonunuzdaki küçük `.vault` dosyasına (`Dahili Depolama > Fossify Gallery Cipher > Cipher_Secrets > .vault`) ihtiyacınız vardır. Bu `.vault` dosyasını USB diske veya Tails Masaüstüne kopyalayın (parolanız olmadan tek başına açılamaz).
-2. **Yalnızca yeni dosyaları şifreleyip USB'ye alın:** Yeni dosyaları `~/Desktop/Sifrelenecek` içine koyun (doğrudan köke koyduklarınız `Default Secret Album`'e, `Tatil/` gibi alt klasörlere koyduklarınız ilgili albüme göre hazırlanır) ve `./run.sh` ile kasa şifrenizi girin:
-   * **Seçenek `[2]`** ile Masaüstündeki `Sifreli_Cikti` (`Encrypted_Output`) klasörüne yazıp bu klasörü (içindeki `.meta` alt klasörlerini ve/veya `.bin` dosyalarını) USB diske kopyalayın **veya** **Seçenek `[3]`** ile doğrudan USB diskteki bir aktarım klasörüne (`-o /media/amnesia/USB/Eklenecek`) çıktı alın.
-   * Not: Oluşan her alt klasör içinde gerçek albüm adını şifreli tutan `.meta` dosyası bulunur; doğrudan çıktı köküne koyduğunuz `.bin` dosyaları veya `.meta` alt klasörleri aktarım için yeterlidir.
-3. **Telefonda uygulama içinden eşitleyin:** USB diski telefona bağlayın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** seçeneğini açıp USB'deki aktarım klasörünü (`Sifreli_Cikti` / `Eklenecek`) seçin.
-   * Uygulama alt klasörlerdeki `.meta` etiketlerini çözerek telefondaki **aynı adlı albümlere otomatik ekler** (telefonda henüz o isimde bir albüm yoksa yenisini şifreli olarak oluşturur); herhangi bir alt klasörde olmayan çıplak `.bin` dosyalarını ise doğrudan **`Default Secret Album`** içine yerleştirir. Aynı içerikli dosyalar atlanır, farklı içerikli ad çakışmaları `<ad>(1)` olarak korunur.
+1. **Harici USB/SD diskinizde `Cipher_Secrets/` hazırlayın (iki yöntemden birini seçin):**
+   * **Senaryo 1 — USB'de tam `Cipher_Secrets` kopyası varsa:** Telefonunuzdaki `Cipher_Secrets` klasörünü (`.vault` + mevcut şifreli `<hex>/.meta` albüm klasörleri) USB diske kopyalayın.
+   * **Senaryo 2 — USB'de eski kasa medyaları YOKSA (Yalnızca `.vault`):** USB diskte `Cipher_Secrets/` klasörü açıp içine **yalnızca** telefonunuzdaki küçük `.vault` başlık dosyasını (`Dahili Depolama > Fossify Gallery Cipher > Cipher_Secrets > .vault`) koyun; hiçbir medya kopyalanmaz. *(Not: `.vault` dosyasını doğrudan `<USB>/.vault` köküne koysanız bile CLI çıktıyı otomatik olarak `<USB>/Cipher_Secrets/` içine yazar; yalnızca `~/Desktop/.vault` veya Ev dizinindeki tekil `.vault` dosyalarında Masaüstü `Sifreli_Cikti` / `Encrypted_Output` klasörüne düşer.)*
+2. **Tails OS'te şifreleyin (`./run.sh`):**
+   * Yeni medyaları `~/Desktop/Sifrelenecek` (veya `To_Encrypt`) içine koyun (doğrudan köke konanlar `Default Secret Album`'e gider; `Sifrelenecek/Tatil/foto.jpg` gibi alt klasörler mevcut `.meta` albümle eşleşir veya yeni albüm oluşturur).
+   * `./run.sh` ile kasa şifrenizi/PIN'inizi girin. **Çıktı hedefi sorulmaz** — araç kilidi açar açmaz doğrudan `<USB>/Cipher_Secrets/` içine şifreli `.meta` (`FGMETA2`) klasörlerini ve `.bin` dosyalarını yazar. İsterseniz RAM'deki kaynak dosyaları sildirin (`--delete-source` veya etkileşimli onay).
+3. **Telefonda uygulama içinden eşitleyin:**
+   * USB/SD diski telefonunuza bağlayın, **Fossify Gallery Cipher** uygulamasını açın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** (*"Settings > Encrypted vault > Sync vault from external drive"*) seçeneğine dokunun, istenirse kasanın kilidini açın ve `<USB>/Cipher_Secrets` (veya USB kökünü) seçin.
+   * **Her iki senaryo tek yapıda aynı şekilde çalışır:** USB'de tam kopya (Senaryo 1) veya yalnızca `.vault` + yeni eklenenler (Senaryo 2) olması fark etmez. Senaryo 2'de eşitleme bittikten sonra isterseniz `<USB>/Cipher_Secrets/` içindeki aktarılmış `.bin`/alt klasörleri silip yalnızca `.vault` dosyasını bir sonraki aktarım için bırakabilirsiniz.
+   * **4 Aşamalı Optimizasyon ve Tam Bit Düzeyinde Güvenlik:**
+     * Telefonda zaten bulunan değişmemiş birebir `.bin` dosyaları başlık çözme veya gigabaytlarca video hash'leme yapmadan `O(1)` sürede (boyut + başlık sürümü + sondaki 16 baytlık `Poly1305-AES` etiketi kontrolüyle) atlanır.
+     * Farklı addaki yeni `.bin` dosyaları `Poly1305-AES` MAC doğrulamasından sonra doğrudan eşleşen veya yeni oluşturulan albümlere (ve kökteki dosyalar `Default Secret Album`'e) kopyalanır.
+     * Aynı ad / aynı boyuttaki çakışmalar önce `Poly1305-AES` bütünlük doğrulamasından geçer, ardından RAM'de **tam bit bit (byte-byte) şifre çözerek karşılaştırılır**: farklı IV ile yeniden şifrelenmiş olsalar bile aynı bitler atlanır; farklı içeriğe sahip dosyalar üzerine yazılmadan `<ad>(1)`, `<ad>(2)` olarak güvenle adlandırılır.
 
 ### 📁 Desteklenen Medya Kontrolü ve Otomatik Albüm Yönlendirmesi
 * **Şifreleme Öncesi Format Doğrulaması:** Yalnızca Android uygulamasının desteklediği fotoğraf, GIF, SVG, RAW ve video uzantıları şifrelenir. `.txt`, `.pdf`, `.md`, `.zip` gibi desteklenmeyen dosyalar ile `.bin` ve `.` ile başlayan gizli dosyalar uyarı verilerek atlanır ve özet raporda belirtilir.
@@ -192,12 +189,12 @@ Harici diskinizde eski şifreli dosyalarınızın kopyasını tutmak istemiyor, 
 chmod +x run.sh cipher_vault.py
 ./run.sh
 
-# Türkçe arayüz ile etkileşimli şifreleme
+# Türkçe arayüz ile etkileşimli şifreleme (ek çıktı hedefi sormaz)
 ./run.sh --lang tr
 
-# Harici USB kasasına doğrudan şifreleme
-./run.sh --lang tr -i ~/Desktop/Sifrelenecek -o /media/amnesia/USB/Cipher_Secrets -v /media/amnesia/USB/Cipher_Secrets/.vault
+# Harici USB Cipher_Secrets kasasına (tam kopya veya yalnızca .vault içeren) otomatik yönlendirme
+./run.sh --lang tr -i ~/Desktop/Sifrelenecek -v /media/amnesia/USB/Cipher_Secrets/.vault
 
-# Harici USB'deki delta klasörüne şifreleme (Uygulama içi "Harici diskten kasayı eşitle" için)
-./run.sh --lang tr -i ~/Desktop/Sifrelenecek -o /media/amnesia/USB/Sifreli_Cikti -v ~/Desktop/.vault
+# İsteğe bağlı özel -o çıktı klasörü ile geçersiz kılma
+./run.sh --lang tr -i ~/Desktop/Sifrelenecek -o /media/amnesia/USB/Ozel_Cikti -v /media/amnesia/USB/Cipher_Secrets/.vault
 ```

@@ -411,37 +411,77 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.assertTrue((input_dir / "keep.txt").is_file())
         self.assertTrue((input_dir / "Sub" / "keep.pdf").is_file())
 
-    def test_direct_external_vault_targeting_interactive_choices(self):
+    def test_unified_output_directory_resolution_without_prompts(self):
         input_dir = self.desktop / "To_Encrypt"
         input_dir.mkdir(parents=True, exist_ok=True)
         desktop_out = self.desktop / "Encrypted_Output"
+        args_no_out = argparse.Namespace(output=None)
 
         # Standalone .vault on Desktop must NOT be treated as a targetable vault directory
         standalone_desktop_vault = self.desktop / ".vault"
         create_test_vault_file(standalone_desktop_vault, self.secret, self.master_key)
         self.assertFalse(cv.is_targetable_vault_dir(standalone_desktop_vault, self.desktop, input_dir, desktop_out))
 
-        # External USB Cipher_Secrets/.vault MUST be targetable
+        # External USB Cipher_Secrets/.vault containing ONLY .vault (delta usage inside Cipher_Secrets)
         self.assertTrue(cv.is_targetable_vault_dir(self.vault_file, self.desktop, input_dir, desktop_out))
 
-        args_no_out = argparse.Namespace(output=None)
-        with mock.patch("sys.stdin.isatty", return_value=True):
-            # Option [1] (default Enter) -> direct vault_file.parent
-            with mock.patch("builtins.input", return_value=""), redirect_stdout(io.StringIO()):
-                chosen1 = cv.choose_encrypt_output_dir(args_no_out, self.desktop, "en", input_dir, self.vault_file)
-            self.assertEqual(chosen1, self.vault_dir.resolve())
+        # Populated external Cipher_Secrets/.vault (with .nomedia and a .meta album)
+        populated_vault_dir = self.root / "PopulatedUSB" / "Cipher_Secrets"
+        populated_vault_dir.mkdir(parents=True)
+        populated_vault_file = populated_vault_dir / ".vault"
+        create_test_vault_file(populated_vault_file, self.secret, self.master_key)
+        (populated_vault_dir / ".nomedia").touch()
+        album_sub = populated_vault_dir / "a1b2c3"
+        album_sub.mkdir()
+        cv.write_encrypted_folder_meta(album_sub, "Album", self.master_key, vault_dir=populated_vault_dir)
 
-            # Option [2] -> Desktop/Encrypted_Output
-            with mock.patch("builtins.input", return_value="2"), redirect_stdout(io.StringIO()):
-                chosen2 = cv.choose_encrypt_output_dir(args_no_out, self.desktop, "en", input_dir, self.vault_file)
-            self.assertEqual(chosen2, desktop_out.resolve())
+        # External root .vault (e.g. /media/usb/.vault without Cipher_Secrets parent)
+        usb_root_dir = self.root / "ExternalUSBRoot"
+        usb_root_dir.mkdir()
+        usb_root_vault = usb_root_dir / ".vault"
+        create_test_vault_file(usb_root_vault, self.secret, self.master_key)
+        self.assertFalse(cv.is_targetable_vault_dir(usb_root_vault, self.desktop, input_dir, desktop_out))
 
-            # Option [3] -> Custom path
+        with mock.patch("sys.stdin.isatty", return_value=True), \
+             mock.patch("builtins.input", side_effect=AssertionError("Should not prompt for destination")):
+            # 1. <USB>/Cipher_Secrets/.vault (only .vault present) -> <USB>/Cipher_Secrets
+            buf1 = io.StringIO()
+            with redirect_stdout(buf1):
+                chosen_only_vault = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, "en", input_dir, self.vault_file
+                )
+            self.assertEqual(chosen_only_vault, self.vault_dir.resolve())
+            self.assertIn(str(self.vault_dir.resolve()), buf1.getvalue())
+
+            # 2. <USB>/Cipher_Secrets/.vault (with existing contents) -> <USB>/Cipher_Secrets
+            with redirect_stdout(io.StringIO()):
+                chosen_populated = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, "en", input_dir, populated_vault_file
+                )
+            self.assertEqual(chosen_populated, populated_vault_dir.resolve())
+
+            # 3. <USB>/.vault at external root -> <USB>/Cipher_Secrets
+            with redirect_stdout(io.StringIO()):
+                chosen_usb_root = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, "en", input_dir, usb_root_vault
+                )
+            self.assertEqual(chosen_usb_root, (usb_root_dir / "Cipher_Secrets").resolve())
+
+            # 4. Standalone ~/Desktop/.vault -> ~/Desktop/Encrypted_Output
+            with redirect_stdout(io.StringIO()):
+                chosen_desktop = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, "en", input_dir, standalone_desktop_vault
+                )
+            self.assertEqual(chosen_desktop, desktop_out.resolve())
+
+            # 5. Explicit -o / --output overrides cleanly
             custom_path = self.root / "CustomVault"
-            with mock.patch("builtins.input", side_effect=["3", str(custom_path)]), redirect_stdout(io.StringIO()):
-                chosen3 = cv.choose_encrypt_output_dir(args_no_out, self.desktop, "en", input_dir, self.vault_file)
-            self.assertEqual(chosen3, custom_path.resolve())
-            self.assertTrue(custom_path.is_dir())
+            args_with_out = argparse.Namespace(output=str(custom_path))
+            with redirect_stdout(io.StringIO()):
+                chosen_override = cv.choose_encrypt_output_dir(
+                    args_with_out, self.desktop, "en", input_dir, self.vault_file
+                )
+            self.assertEqual(chosen_override, custom_path.resolve())
 
     def test_turkish_messages_when_skipping_unsupported(self):
         input_dir = self.root / "Sifrelenecek"

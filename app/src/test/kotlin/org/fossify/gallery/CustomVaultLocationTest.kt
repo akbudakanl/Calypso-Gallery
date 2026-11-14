@@ -430,6 +430,22 @@ class CustomVaultLocationTest {
             )
         )
 
+        // Mutate a single bit at offset 90 KB (inside old skipped gap between 64 KB and 200 KB) -> must NOT deduplicate!
+        val largeGapBitFlipped = largePlaintext.copyOf().also {
+            val gapIdx = 90 * 1024
+            it[gapIdx] = (it[gapIdx].toInt() xor 0x01).toByte()
+        }
+        val extGapDiffDir = File(tempRoot, "ExtGapDiff/Media").apply { mkdirs() }
+        val extGapDiffBin = encryptBytesForTest(extGapDiffDir, "large.jpg", largeGapBitFlipped)
+        assertFalse(
+            CryptoManager.areEncryptedFilesIdenticalContent(
+                extGapDiffBin,
+                CryptoManager.readMetadata(extGapDiffBin)!!,
+                phoneLarge,
+                CryptoManager.readMetadata(phoneLarge)!!
+            )
+        )
+
         // Mutate a byte near the tail (last 64 KB) -> must NOT deduplicate!
         val largeTailMutated = largePlaintext.copyOf().also {
             val tailIdx = largePlaintext.size - 1024
@@ -445,6 +461,68 @@ class CustomVaultLocationTest {
                 CryptoManager.readMetadata(phoneLarge)!!
             )
         )
+    }
+
+    @Test
+    fun syncVaultFromExternalDirectory_stage0FastSkipMirroredBinAndRejectTamperedPayloadOrMac() {
+        val random = SecureRandom()
+        val masterKey = ByteArray(32).also { random.nextBytes(it) }
+        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val phoneVault = File(tempRoot, "PhoneStage0/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
+        setMasterKey(masterKey)
+        CryptoManager.setVaultRootLocation(testContext, phoneVault)
+
+        val phoneAlbum = CryptoManager.createHiddenPhysicalAlbum(testContext, "Archive")!!
+        val payload = ByteArray(64 * 1024).also { random.nextBytes(it) }
+        val phoneBin = encryptBytesForTest(phoneAlbum, "archive_item.jpg", payload)
+
+        // Build exact byte-for-byte mirror on external drive (same .bin name, length, header, and MAC trailer)
+        val extMirrorSecrets = File(tempRoot, "ExtMirror/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        File(extMirrorSecrets, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
+        val extMirrorAlbum = File(extMirrorSecrets, phoneAlbum.name).apply { mkdirs() }
+        File(phoneAlbum, VAULT_SUBFOLDER_META_FILE).copyTo(File(extMirrorAlbum, VAULT_SUBFOLDER_META_FILE))
+        val extMirrorBin = File(extMirrorAlbum, phoneBin.name)
+        phoneBin.copyTo(extMirrorBin)
+
+        // Stage 0 O(1) mirror skip (clear metadataCache first so we ensure Stage 0 needs no cached metadata)
+        resetCryptoManagerSingletons()
+        setMasterKey(masterKey)
+        CryptoManager.setVaultRootLocation(testContext, phoneVault)
+
+        val mirrorResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets)!!
+        assertEquals(0, mirrorResult.copiedCount)
+        assertEquals(0, mirrorResult.renamedCount)
+        assertEquals(1, mirrorResult.skippedDuplicateCount)
+        assertEquals(0, mirrorResult.failedCount)
+
+        // Flip 1 bit in the mirrored MAC trailer -> Stage 0 misses & MAC verification fails (failedCount == 1)
+        val corruptedTrailerBytes = extMirrorBin.readBytes().also {
+            it[it.size - 1] = (it[it.size - 1].toInt() xor 0x01).toByte()
+        }
+        extMirrorBin.writeBytes(corruptedTrailerBytes)
+
+        val tamperedTrailerResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets)!!
+        assertEquals(0, tamperedTrailerResult.copiedCount)
+        assertEquals(0, tamperedTrailerResult.skippedDuplicateCount)
+        assertEquals(1, tamperedTrailerResult.failedCount)
+
+        // 1-bit flip inside payload of a new album folder -> integrity check fails before folder creation (no orphan folder)
+        val extCorruptNewRoot = File(tempRoot, "ExtCorruptNew").apply { mkdirs() }
+        val extCorruptNewAlbum = File(extCorruptNewRoot, "BrandNewCorruptAlbum").apply { mkdirs() }
+        val corruptNewBin = encryptBytesForTest(extCorruptNewAlbum, "corrupt_new.jpg", payload)
+        val binBytes = corruptNewBin.readBytes().also {
+            val payloadBitIdx = it.size - 32
+            it[payloadBitIdx] = (it[payloadBitIdx].toInt() xor 0x01).toByte()
+        }
+        corruptNewBin.writeBytes(binBytes)
+
+        val folderCountBefore = phoneVault.listFiles()!!.count { it.isDirectory }
+        val corruptNewResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extCorruptNewRoot)!!
+        assertEquals(0, corruptNewResult.copiedCount)
+        assertEquals(0, corruptNewResult.renamedCount)
+        assertEquals(1, corruptNewResult.failedCount)
+        assertEquals(folderCountBefore, phoneVault.listFiles()!!.count { it.isDirectory })
     }
 
     @Test
