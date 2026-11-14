@@ -38,9 +38,13 @@ import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.ensureBackgroundThread
-import org.fossify.commons.helpers.getConflictResolution
 import org.fossify.commons.models.FileDirItem
 import org.fossify.gallery.dialogs.CryptoProgressDialog
+import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.resolveSmartContentConflicts
+import org.fossify.gallery.extensions.updateDBMediaPath
+import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
@@ -136,7 +140,7 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
     callback: (destinationPath: String) -> Unit
 ) {
     val startAfterSpaceCheck = {
-        checkConflicts(fileDirItems, destination, 0, LinkedHashMap()) { conflictResolutions ->
+        val proceedAfterConflicts = { conflictResolutions: LinkedHashMap<String, Int> ->
             ensureNotificationPermissionThenRun { notificationsAllowed ->
                 executeCopyMoveWithProgress(
                     fileDirItems = fileDirItems,
@@ -150,6 +154,51 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                     callback = callback
                 )
             }
+        }
+
+        if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
+            ensureBackgroundThread {
+                val conflicts = ArrayList<Pair<String, String>>()
+                val destDir = File(destination)
+
+                fun collectLocalConflicts(sourceDir: File, targetDir: File) {
+                    if (!targetDir.exists() || !targetDir.isDirectory) return
+                    sourceDir.listFiles()?.forEach { child ->
+                        if (child.isDirectory) {
+                            collectLocalConflicts(child, File(targetDir, child.name))
+                        } else if (!copyMediaOnly || child.absolutePath.isMediaFile()) {
+                            val conflictName = CryptoManager.findContentConflictInTarget(
+                                sourceFile = child,
+                                targetDir = targetDir,
+                                isTargetEncrypted = false
+                            )
+                            if (conflictName != null) {
+                                conflicts.add(File(targetDir, child.name).absolutePath to conflictName)
+                            }
+                        }
+                    }
+                }
+
+                for (item in fileDirItems) {
+                    val srcFile = File(item.path)
+                    if (item.isDirectory) {
+                        collectLocalConflicts(srcFile, File(destDir, item.name))
+                    } else {
+                        val conflictName = CryptoManager.findContentConflictInTarget(
+                            sourceFile = srcFile,
+                            targetDir = destDir,
+                            isTargetEncrypted = false
+                        )
+                        if (conflictName != null) {
+                            conflicts.add(File(destDir, item.name).absolutePath to conflictName)
+                        }
+                    }
+                }
+
+                resolveSmartContentConflicts(conflicts, proceedAfterConflicts)
+            }
+        } else {
+            proceedAfterConflicts(LinkedHashMap())
         }
     }
 
@@ -232,7 +281,8 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
                     isCopyOperation = isCopyOperation,
                     taskSucceeded = result.succeeded,
                     transferredCount = result.transferredCount,
-                    expectedCount = result.expectedCount
+                    expectedCount = result.expectedCount,
+                    skippedConflictCount = result.skippedConflictCount
                 )
                 if (result.succeeded) {
                     callback(destination)
@@ -259,10 +309,14 @@ private fun BaseSimpleActivity.showCopyMoveCompletionToast(
     isCopyOperation: Boolean,
     taskSucceeded: Boolean,
     transferredCount: Int,
-    expectedCount: Int
+    expectedCount: Int,
+    skippedConflictCount: Int = 0
 ) {
     if (!taskSucceeded) {
         toast(org.fossify.commons.R.string.copy_move_failed)
+        return
+    }
+    if (transferredCount == 0 && expectedCount == 0 && skippedConflictCount > 0) {
         return
     }
     val allSucceeded = transferredCount >= expectedCount
@@ -296,8 +350,15 @@ private data class CopyMoveResult(
     val succeeded: Boolean,
     val transferredCount: Int,
     val expectedCount: Int,
+    val skippedConflictCount: Int,
     val itemsToDeleteSdk30: ArrayList<FileDirItem>
 )
+
+private sealed class TopLevelResolution {
+    data object SkippedConflict : TopLevelResolution()
+    data object DeduplicatedDuplicate : TopLevelResolution()
+    data class Proceed(val destItem: FileDirItem) : TopLevelResolution()
+}
 
 private class CopyMoveRunner(
     private val activity: BaseSimpleActivity,
@@ -318,22 +379,29 @@ private class CopyMoveRunner(
     fun execute(items: ArrayList<FileDirItem>): CopyMoveResult {
         totalItems = items.size
         var expectedCount = items.size
+        var skippedConflictCount = 0
         totalBytes = computeTotalBytes(items)
 
         val succeeded = try {
             for (item in items) {
-                val destItem = resolveTopLevelDestination(item)
-                if (destItem == null) {
-                    expectedCount--
-                    processedItems++
-                    publishProgress(forceUi = true, filename = item.name)
-                    continue
+                when (val outcome = resolveTopLevelDestination(item)) {
+                    TopLevelResolution.SkippedConflict -> {
+                        expectedCount--
+                        skippedConflictCount++
+                        processedItems++
+                        publishProgress(forceUi = true, filename = item.name)
+                    }
+                    TopLevelResolution.DeduplicatedDuplicate -> {
+                        processedItems++
+                        publishProgress(forceUi = true, filename = item.name)
+                    }
+                    is TopLevelResolution.Proceed -> {
+                        publishProgress(forceUi = true, filename = item.name)
+                        transferTopLevelItem(item, outcome.destItem)
+                        processedItems++
+                        publishProgress(forceUi = true, filename = item.name)
+                    }
                 }
-
-                publishProgress(forceUi = true, filename = item.name)
-                transferTopLevelItem(item, destItem)
-                processedItems++
-                publishProgress(forceUi = true, filename = item.name)
             }
             if (movedPathsToRescan.isNotEmpty()) {
                 activity.rescanPaths(movedPathsToRescan)
@@ -348,6 +416,7 @@ private class CopyMoveRunner(
             succeeded = succeeded,
             transferredCount = transferredFiles.size,
             expectedCount = expectedCount,
+            skippedConflictCount = skippedConflictCount,
             itemsToDeleteSdk30 = itemsToDeleteSdk30
         )
     }
@@ -358,9 +427,9 @@ private class CopyMoveRunner(
             if (item.size == 0L) {
                 item.size = item.getProperSize(activity.applicationContext, config.copyHidden)
             }
-            val targetPath = "${config.destination}/${item.name}"
+            val targetPath = File(config.destination, item.name).absolutePath
             val exists = activity.getDoesFilePathExist(targetPath)
-            val resolution = getConflictResolution(config.conflictResolutions, targetPath)
+            val resolution = config.conflictResolutions[targetPath] ?: CONFLICT_KEEP_BOTH
             if (resolution != CONFLICT_SKIP || !exists) {
                 bytes += item.size
             }
@@ -368,26 +437,51 @@ private class CopyMoveRunner(
         return bytes
     }
 
-    private fun resolveTopLevelDestination(item: FileDirItem): FileDirItem? {
-        val targetPath = "${config.destination}/${item.name}"
-        var destItem = FileDirItem(targetPath, targetPath.getFilenameFromPath(), item.isDirectory)
-        if (!activity.getDoesFilePathExist(targetPath)) {
-            return destItem
+    private fun resolveTopLevelDestination(item: FileDirItem): TopLevelResolution {
+        val destDir = File(config.destination)
+        val targetPath = File(destDir, item.name).absolutePath
+        var destItem = FileDirItem(targetPath, item.name, item.isDirectory)
+
+        if (item.isDirectory) {
+            return TopLevelResolution.Proceed(destItem)
         }
 
-        when (getConflictResolution(config.conflictResolutions, targetPath)) {
-            CONFLICT_SKIP -> return null
+        val srcFile = File(item.path)
+        if (srcFile.isFile) {
+            val identical = CryptoManager.findIdenticalPlainFileInDir(srcFile, destDir, item.name)
+            if (identical != null) {
+                if (!config.isCopyOperation) {
+                    val srcCanon = runCatching { srcFile.canonicalPath }.getOrDefault(srcFile.absolutePath)
+                    val idCanon = runCatching { identical.canonicalPath }.getOrDefault(identical.absolutePath)
+                    if (srcCanon != idCanon) {
+                        runCatching { activity.updateDBMediaPath(srcFile.absolutePath, identical.absolutePath) }
+                        deleteSourceFile(item)
+                        srcFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
+                    }
+                }
+                transferredFiles.add(item)
+                transferredBytes += item.size
+                return TopLevelResolution.DeduplicatedDuplicate
+            }
+        }
+
+        if (!activity.getDoesFilePathExist(targetPath)) {
+            return TopLevelResolution.Proceed(destItem)
+        }
+
+        when (config.conflictResolutions[targetPath] ?: CONFLICT_KEEP_BOTH) {
+            CONFLICT_SKIP -> return TopLevelResolution.SkippedConflict
             CONFLICT_KEEP_BOTH -> {
-                val altFile = activity.getAlternativeFile(File(destItem.path))
-                destItem = FileDirItem(altFile.path, altFile.name, altFile.isDirectory)
+                val altFile = CryptoManager.getAlternativePlainFile(destDir, item.name)
+                destItem = FileDirItem(altFile.path, altFile.name, false)
             }
             CONFLICT_OVERWRITE -> {
-                if (!config.useStreamCopy && !item.isDirectory) {
+                if (!config.useStreamCopy) {
                     File(destItem.path).delete()
                 }
             }
         }
-        return destItem
+        return TopLevelResolution.Proceed(destItem)
     }
 
     private fun transferTopLevelItem(source: FileDirItem, dest: FileDirItem) {
@@ -397,6 +491,10 @@ private class CopyMoveRunner(
             if (!dstFile.exists() && srcFile.renameTo(dstFile)) {
                 if (!activity.baseConfig.keepLastModified) {
                     dstFile.setLastModified(System.currentTimeMillis())
+                }
+                if (!config.isCopyOperation) {
+                    runCatching { activity.updateDBMediaPath(source.path, dstFile.absolutePath) }
+                    srcFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
                 }
                 movedPathsToRescan.add(dstFile.absolutePath)
                 activity.deleteFromMediaStore(source.path)
@@ -490,14 +588,45 @@ private class CopyMoveRunner(
         destPath: String,
         childNames: Array<String>
     ) {
+        val destDir = File(destPath)
         childNames.forEach { childName ->
-            val targetPath = "$destPath/$childName"
-            if (!activity.getDoesFilePathExist(targetPath)) {
-                val srcFile = File(source.path, childName)
-                val srcChild = srcFile.toFileDirItem(activity)
-                val dstChild = FileDirItem(targetPath, targetPath.getFilenameFromPath(), srcFile.isDirectory)
-                copy(srcChild, dstChild)
+            val srcFile = File(source.path, childName)
+            val srcChild = srcFile.toFileDirItem(activity)
+            if (srcFile.isDirectory) {
+                val targetDirPath = File(destDir, childName).absolutePath
+                copy(srcChild, FileDirItem(targetDirPath, childName, true))
+            } else {
+                val identical = CryptoManager.findIdenticalPlainFileInDir(srcFile, destDir, childName)
+                if (identical != null) {
+                    if (!config.isCopyOperation) {
+                        val srcCanon = runCatching { srcFile.canonicalPath }.getOrDefault(srcFile.absolutePath)
+                        val idCanon = runCatching { identical.canonicalPath }.getOrDefault(identical.absolutePath)
+                        if (srcCanon != idCanon) {
+                            runCatching { activity.updateDBMediaPath(srcFile.absolutePath, identical.absolutePath) }
+                            deleteSourceFile(srcChild)
+                        }
+                    }
+                } else {
+                    val exactTarget = File(destDir, childName)
+                    val targetFile = if (activity.getDoesFilePathExist(exactTarget.absolutePath)) {
+                        when (config.conflictResolutions[exactTarget.absolutePath] ?: CONFLICT_KEEP_BOTH) {
+                            CONFLICT_SKIP -> null
+                            CONFLICT_OVERWRITE -> exactTarget
+                            else -> CryptoManager.getAlternativePlainFile(destDir, childName)
+                        }
+                    } else {
+                        exactTarget
+                    }
+                    if (targetFile != null) {
+                        val dstChild = FileDirItem(targetFile.absolutePath, targetFile.name, false)
+                        copy(srcChild, dstChild)
+                    }
+                }
             }
+        }
+        if (!config.isCopyOperation) {
+            runCatching { activity.updateReferencesForFolderRename(source.path, destPath) }
+            activity.cleanupEmptyPlaintextAlbumIfNeeded(File(source.path), forceIfEmpty = true)
         }
         transferredFiles.add(source)
     }
@@ -544,7 +673,9 @@ private class CopyMoveRunner(
         }
 
         if (transferSuccess && !config.isCopyOperation) {
+            runCatching { activity.updateDBMediaPath(source.path, dest.path) }
             deleteSourceFile(source)
+            File(source.path).parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
         }
     }
 

@@ -891,8 +891,7 @@ class MediaAdapter(
             return
         }
 
-        activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = path) {
-            val destinationPath = it
+        activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = path) { destinationPath ->
             config.tempFolderPath = ""
             if (destinationPath.isVirtualAlbumPath()) {
                 listener?.refreshItems()
@@ -901,24 +900,25 @@ class MediaAdapter(
             }
             if (!CryptoManager.isEncryptedFolderPath(activity, destinationPath)) {
                 activity.applicationContext.rescanFolderMedia(destinationPath)
-                activity.applicationContext.rescanFolderMedia(fileDirItems.first().getParentPath())
-
-                val newPaths = fileDirItems.map { "$destinationPath/${it.name}" }.toMutableList() as ArrayList<String>
-                activity.rescanPaths(newPaths) {
-                    activity.fixDateTaken(newPaths, false)
-                    if (!isCopyOperation || destinationPath == path) {
-                        activity.runOnUiThread {
-                            listener?.refreshItems()
-                        }
-                    }
+                if (!isCopyOperation) {
+                    activity.applicationContext.rescanFolderMedia(fileDirItems.first().getParentPath())
                 }
             }
 
-            if (!isCopyOperation || destinationPath == path) {
-                listener?.refreshItems()
-                if (!isCopyOperation) {
-                    activity.updateFavoritePaths(fileDirItems, destinationPath)
+            if (!isCopyOperation) {
+                ensureBackgroundThread {
+                    val srcDirs = fileDirItems.mapNotNull { File(it.path).parentFile }.distinctBy { it.absolutePath }
+                    srcDirs.forEach { srcDir ->
+                        if (CryptoManager.isEncryptedFolder(srcDir)) {
+                            CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(activity, srcDir)
+                        }
+                    }
+                    activity.runOnUiThread {
+                        listener?.refreshItems()
+                    }
                 }
+            } else if (destinationPath == path) {
+                listener?.refreshItems()
             }
             finishActMode()
         }
