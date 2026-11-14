@@ -22,6 +22,7 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
+import java.io.File
 
 class VaultSecurityDialog(
     private val activity: BaseSimpleActivity,
@@ -29,18 +30,22 @@ class VaultSecurityDialog(
     private val showTabIndex: Int,
     private val minimalist: Boolean = false,
     private val isChangePasswordMode: Boolean = false,
+    private val customTargetDir: File? = null,
+    private val onCancelCallback: (() -> Unit)? = null,
     private val callback: (hash: String, type: Int, success: Boolean) -> Unit
 ) {
     private var dialog: AlertDialog? = null
+    private var dialogSucceeded = false
+    private var cancelNotified = false
     private val binding = DialogVaultSecurityBinding.inflate(activity.layoutInflater)
     private val inputHelper = VaultAuthInputHelper(activity, binding)
-    private val isSetupMode = isChangePasswordMode || (!CryptoManager.hasExistingVault(activity) && (requiredHash.isEmpty() || showTabIndex == SHOW_ALL_TABS))
+    private val isSetupMode = isChangePasswordMode || customTargetDir != null || (!CryptoManager.hasExistingVault(activity) && (requiredHash.isEmpty() || showTabIndex == SHOW_ALL_TABS))
 
     private var currentType: Int = when (showTabIndex) {
         PROTECTION_PASSWORD -> PROTECTION_PASSWORD
         PROTECTION_PIN -> PROTECTION_PIN
         else -> {
-            val vaultType = CryptoManager.getVaultProtectionType(activity)
+            val vaultType = if (customTargetDir != null) null else CryptoManager.getVaultProtectionType(activity)
             when (vaultType) {
                 PROTECTION_PASSWORD -> PROTECTION_PASSWORD
                 PROTECTION_PIN -> PROTECTION_PIN
@@ -101,16 +106,13 @@ class VaultSecurityDialog(
         switchProtectionType(currentType)
 
         inputHelper.setupBiometricButton(enabled = !isSetupMode) {
+            dialogSucceeded = true
             dialog?.dismiss()
             callback(requiredHash, currentType, true)
         }
 
         val builder = activity.getAlertDialogBuilder()
-        if (!minimalist) {
-            builder.setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
-                cancelDialog()
-            }
-        }
+        builder.setNegativeButton(org.fossify.commons.R.string.cancel, null)
         builder.setOnCancelListener {
             cancelDialog()
         }
@@ -118,6 +120,11 @@ class VaultSecurityDialog(
         builder.apply {
             activity.setupDialogStuff(binding.root, this) { alertDialog ->
                 dialog = alertDialog
+                alertDialog.setOnDismissListener {
+                    if (!dialogSucceeded) {
+                        cancelDialog()
+                    }
+                }
                 alertDialog.window?.apply {
                     addFlags(WindowManager.LayoutParams.FLAG_SECURE)
                     addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
@@ -131,6 +138,7 @@ class VaultSecurityDialog(
                 if (!isSetupMode && CryptoManager.canUnlockWithBiometrics(activity)) {
                     binding.root.post {
                         inputHelper.promptBiometricUnlock {
+                            dialogSucceeded = true
                             dialog?.dismiss()
                             callback(requiredHash, currentType, true)
                         }
@@ -185,12 +193,20 @@ class VaultSecurityDialog(
                 inputHelper.clearInputs()
                 updateStatusLabel()
             } else if (firstStepSecret == secret) {
-                val hash = CryptoManager.setupOrUpdateCredentials(activity, secret, currentType)
-                activity.config.hiddenProtectionType = currentType
-                activity.applyVaultScreenProtection(true)
-                activity.hideKeyboard()
-                dialog?.dismiss()
-                callback(hash, currentType, true)
+                try {
+                    val hash = CryptoManager.setupOrUpdateCredentials(activity, secret, currentType, customTargetDir)
+                    activity.config.hiddenProtectionType = currentType
+                    activity.applyVaultScreenProtection(true)
+                    activity.hideKeyboard()
+                    dialogSucceeded = true
+                    dialog?.dismiss()
+                    callback(hash, currentType, true)
+                } catch (_: Exception) {
+                    firstStepSecret = ""
+                    inputHelper.clearInputs()
+                    updateStatusLabel()
+                    activity.toast(R.string.vault_location_not_writable)
+                }
             } else {
                 firstStepSecret = ""
                 inputHelper.clearInputs()
@@ -199,14 +215,18 @@ class VaultSecurityDialog(
                 activity.toast(errId)
             }
         } else if (inputHelper.unlockWithSecret(secret, currentType)) {
+            dialogSucceeded = true
             dialog?.dismiss()
             callback(requiredHash, currentType, true)
         }
     }
 
     private fun cancelDialog() {
+        if (dialogSucceeded || cancelNotified) return
+        cancelNotified = true
         activity.hideKeyboard()
         dialog?.dismiss()
         callback("", currentType, false)
+        onCancelCallback?.invoke()
     }
 }

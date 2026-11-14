@@ -64,6 +64,9 @@ interface VirtualAlbumsDao {
     @Query("DELETE FROM virtual_albums WHERE id = :id")
     fun deleteAlbumById(id: Long)
 
+    @Query("DELETE FROM virtual_album_items WHERE album_id = :albumId")
+    fun deleteItemsForAlbum(albumId: Long)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertItem(item: VirtualAlbumItem): Long
 

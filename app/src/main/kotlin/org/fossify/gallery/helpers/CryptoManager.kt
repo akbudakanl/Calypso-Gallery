@@ -5,9 +5,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.system.Os
 import android.util.Base64
+import androidx.annotation.VisibleForTesting
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
@@ -137,6 +141,14 @@ data class VaultPhysicalAlbum(
     val fullPath: String,
     val folder: File,
     val itemCount: Int
+)
+
+data class VaultSyncResult(
+    val copiedCount: Int,
+    val renamedCount: Int,
+    val skippedDuplicateCount: Int,
+    val failedCount: Int,
+    val syncedAlbumsCount: Int
 )
 
 object CryptoManager {
@@ -405,16 +417,279 @@ object CryptoManager {
         }
     }
 
+    @VisibleForTesting
+    internal var otgMountBaseOverrideForTest: List<File>? = null
+
+    private fun normalizeVaultPath(path: String): String {
+        return path.trim().trimEnd('/', '\\')
+    }
+
+    private fun isInternalStoragePath(path: String): Boolean {
+        val clean = normalizeVaultPath(path)
+        if (clean.isEmpty()) return false
+        val internalRoot = normalizeVaultPath(getStorageRootDirectory().absolutePath)
+        return clean.equals(internalRoot, ignoreCase = true) ||
+            clean.startsWith("$internalRoot/", ignoreCase = true)
+    }
+
+    fun getVaultRoot(context: Context): File? = findVaultRoot(context)
+
+    fun canWriteToDirectory(dir: File): Boolean {
+        if (!dir.exists() || !dir.isDirectory || !dir.canWrite()) return false
+        return try {
+            val probe = File(dir, ".fv_write_test_${System.nanoTime()}")
+            val created = probe.createNewFile()
+            if (created) {
+                probe.delete()
+                true
+            } else {
+                probe.exists()
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private fun resolveUriViaProcFd(context: Context, uri: Uri): File? {
+        return runCatching {
+            val resolvedPath = context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                Os.readlink("/proc/self/fd/${pfd.fd}")
+            }
+            val file = resolvedPath
+                ?.takeIf { it.startsWith("/") && !it.startsWith("/proc/") }
+                ?.let { File(it) }
+            if (file != null && file.exists() && file.isDirectory) {
+                file
+            } else {
+                null
+            }
+        }.getOrNull()
+    }
+
+    private fun resolveVolumeMountPath(
+        context: Context,
+        partition: String,
+        relativeSubpath: String
+    ): File? {
+        val rel = relativeSubpath.trim().replace('\\', '/').trim('/')
+        val roots = ArrayList<File>()
+        if (partition.isNotEmpty()) {
+            otgMountBaseOverrideForTest?.forEach { base ->
+                roots.add(File(base, partition))
+            }
+            roots.add(File("/storage/$partition"))
+            roots.add(File("/mnt/media_rw/$partition"))
+            roots.add(File("/mnt/runtime/write/$partition"))
+            roots.add(File("/mnt/runtime/default/$partition"))
+        }
+        roots.addAll(listExternalStorageVolumeRoots(context))
+
+        for (volRoot in roots.distinctBy { it.absolutePath }) {
+            val candidate = if (rel.isEmpty()) volRoot else File(volRoot, rel)
+            if (candidate.exists() && candidate.isDirectory) {
+                return candidate
+            }
+        }
+        return null
+    }
+
+    /**
+     * Resolves a folder path returned by Fossify's [FilePickerDialog] to a real POSIX directory
+     * [File]. Direct POSIX paths (including mounted `/storage/XXXX-XXXX/...` paths that Fossify's
+     * `isPathOnOTG()` may flag when `config.OTGPath` shares the prefix) are returned directly;
+     * `otg:` pseudo-paths and `content://` tree URIs are mapped to their POSIX mount when
+     * available, or return `null` if the device only exposes virtual SAF access.
+     */
+    fun resolvePickedPathToFile(context: Context, pickedPath: String): File? {
+        val trimmed = pickedPath.trim()
+        if (trimmed.isEmpty()) return null
+
+        val otgConfigPath = try {
+            context.config.OTGPath.trim()
+        } catch (_: Throwable) {
+            ""
+        }
+
+        val isOtgPseudoPath = trimmed.startsWith("otg:", ignoreCase = true) ||
+            (otgConfigPath.startsWith("otg:", ignoreCase = true) && trimmed.startsWith(otgConfigPath, ignoreCase = true))
+
+        if (isOtgPseudoPath) {
+            val partition = try {
+                context.config.OTGPartition.trim()
+            } catch (_: Throwable) {
+                ""
+            }
+            val relCandidates = ArrayList<String>(2)
+            if (otgConfigPath.startsWith("otg:", ignoreCase = true) && trimmed.startsWith(otgConfigPath, ignoreCase = true)) {
+                relCandidates.add(trimmed.substring(otgConfigPath.length).trim('/'))
+            }
+            if (trimmed.startsWith("otg:", ignoreCase = true)) {
+                relCandidates.add(trimmed.substring(4).trim('/'))
+            }
+
+            for (rel in relCandidates.distinct()) {
+                resolveVolumeMountPath(context, partition, rel)?.let { return it }
+            }
+
+            // Fallback via SAF DocumentFile -> /proc/self/fd readlink
+            runCatching {
+                val docFile = context.getOTGFastDocumentFile(trimmed)
+                if (docFile != null) {
+                    resolveUriViaProcFd(context, docFile.uri)?.let { return it }
+                    val childFile = docFile.listFiles().firstOrNull { it.isFile }
+                    if (childFile != null) {
+                        val resolvedChild = context.contentResolver.openFileDescriptor(childFile.uri, "r")?.use { pfd ->
+                            Os.readlink("/proc/self/fd/${pfd.fd}")
+                        }
+                        val parent = resolvedChild
+                            ?.takeIf { it.startsWith("/") && !it.startsWith("/proc/") }
+                            ?.let { File(it).parentFile }
+                        if (parent != null && parent.exists() && parent.isDirectory) {
+                            return parent
+                        }
+                    }
+                }
+            }
+            return null
+        }
+
+        if (trimmed.startsWith("content://", ignoreCase = true)) {
+            val uri = Uri.parse(trimmed)
+            resolveUriViaProcFd(context, uri)?.let { return it }
+
+            val docId = runCatching {
+                if (DocumentsContract.isDocumentUri(context, uri)) {
+                    DocumentsContract.getDocumentId(uri)
+                } else {
+                    DocumentsContract.getTreeDocumentId(uri)
+                }
+            }.getOrNull() ?: runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()
+
+            if (!docId.isNullOrBlank()) {
+                if (docId.startsWith("raw:", ignoreCase = true)) {
+                    val rawDir = File(docId.substring(4))
+                    if (rawDir.exists() && rawDir.isDirectory) return rawDir
+                }
+                val volumeId = docId.substringBefore(':')
+                val subPath = docId.substringAfter(':', "").trim('/')
+                if (volumeId.equals("primary", ignoreCase = true)) {
+                    val internal = getStorageRootDirectory()
+                    val target = if (subPath.isEmpty()) internal else File(internal, subPath)
+                    if (target.exists() && target.isDirectory) return target
+                } else if (volumeId.isNotEmpty()) {
+                    resolveVolumeMountPath(context, volumeId, subPath)?.let { return it }
+                }
+            }
+            return null
+        }
+
+        // Case A: Direct POSIX path
+        return File(trimmed)
+    }
+
+    fun isConfiguredCustomVaultPath(context: Context): Boolean {
+        val stored = normalizeVaultPath(context.config.vaultRootPath)
+        if (stored.isEmpty()) return false
+        val defaultPath = normalizeVaultPath(getDefaultVaultRoot().absolutePath)
+        return !stored.equals(defaultPath, ignoreCase = true)
+    }
+
+    fun isConfiguredExternalVaultPath(context: Context): Boolean {
+        val stored = normalizeVaultPath(context.config.vaultRootPath)
+        if (stored.isEmpty()) return false
+        return isConfiguredCustomVaultPath(context) && !isInternalStoragePath(stored)
+    }
+
+    fun isConfiguredVaultTemporarilyUnavailable(context: Context): Boolean {
+        val stored = normalizeVaultPath(context.config.vaultRootPath)
+        if (stored.isEmpty()) return false
+        if (!isConfiguredCustomVaultPath(context) || isInternalStoragePath(stored)) return false
+        val storedFile = File(context.config.vaultRootPath)
+        return !hasValidVaultHeader(storedFile) && !isLegacyVaultRoot(context, storedFile)
+    }
+
+    fun setVaultRootLocation(context: Context, vaultDir: File) {
+        cachedVaultRoot = vaultDir
+        encryptedFolderCache.clear()
+        folderNameCache.clear()
+        vaultRecycleBinFolder = null
+        if (context.config.vaultRootPath != vaultDir.absolutePath) {
+            context.config.vaultRootPath = vaultDir.absolutePath
+        }
+    }
+
+    fun clearCachedVaultRoot() {
+        cachedVaultRoot = null
+        encryptedFolderCache.clear()
+        folderNameCache.clear()
+        vaultRecycleBinFolder = null
+    }
+
+    fun prepareVaultLocationSwitch(context: Context, newVaultRoot: File? = null) {
+        val previousPath = normalizeVaultPath(cachedVaultRoot?.absolutePath ?: context.config.vaultRootPath)
+        val targetPath = normalizeVaultPath(newVaultRoot?.absolutePath ?: "")
+        val switchingToDifferentVault = previousPath.isNotEmpty() && !previousPath.equals(targetPath, ignoreCase = true)
+
+        lockVault()
+        cachedVaultRoot = newVaultRoot
+        encryptedFolderCache.clear()
+        folderNameCache.clear()
+        vaultRecycleBinFolder = null
+        clearBiometricKey(context)
+        val cfg = context.config
+        cfg.vaultRootPath = newVaultRoot?.absolutePath ?: ""
+        cfg.vaultWrappedKeyData = ""
+        cfg.vaultPublicKey = ""
+        cfg.hiddenPasswordHash = ""
+        cfg.isHiddenPasswordProtectionOn = false
+        cfg.temporarilyShowHidden = false
+        cfg.temporarilyShowVaultExcluded = false
+        if (switchingToDifferentVault) {
+            runCatching { VirtualAlbumSyncManager.evictHiddenVirtualAlbumsFromDbCache(context) }
+        }
+        try {
+            clearAppImageCaches(context)
+        } catch (_: Throwable) {}
+    }
+
+    /**
+     * Checks whether [dir] directly contains a vault or hosts a Cipher_Secrets folder
+     * (either directly inside [dir], inside `<dir>/Fossify Gallery Cipher`, or `<dir>/Cipher`).
+     */
+    fun resolveExistingVaultInDirectory(dir: File): File? {
+        val candidates = listOf(
+            dir,
+            File(dir, CIPHER_SECRETS_DIR_NAME),
+            File(File(dir, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME),
+            File(File(dir, CIPHER_ROOT_DIR_NAME), CIPHER_SECRETS_DIR_NAME)
+        )
+        return candidates.firstOrNull { hasValidVaultHeader(it) }
+    }
+
+    private fun internalVaultCandidates(): List<File> {
+        val documentsDir = getDocumentsDirectory()
+        return listOf(
+            getDefaultVaultRoot(),
+            File(getCipherRootDirectory(), CIPHER_ROOT_DIR_NAME),
+            File(documentsDir, "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"),
+            File(documentsDir, CIPHER_SECRETS_DIR_NAME),
+            File(documentsDir, CIPHER_ROOT_DIR_NAME)
+        ).distinctBy { it.absolutePath }
+    }
+
     private fun knownVaultRootCandidates(context: Context): List<File> {
         val candidates = ArrayList<File>(6)
-        cachedVaultRoot?.let { candidates.add(it) }
-        candidates.add(getDefaultVaultRoot())
-        // Legacy locations: the vault used to live inside the Documents folder.
-        candidates.add(File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"))
-        candidates.add(File(getDocumentsDirectory(), CIPHER_SECRETS_DIR_NAME))
         val storedPath = context.config.vaultRootPath
         if (storedPath.isNotEmpty()) {
+            cachedVaultRoot?.takeIf {
+                normalizeVaultPath(it.absolutePath).equals(normalizeVaultPath(storedPath), ignoreCase = true)
+            }?.let { candidates.add(it) }
             candidates.add(File(storedPath))
+            if (!isConfiguredCustomVaultPath(context)) {
+                candidates.addAll(internalVaultCandidates())
+            }
+        } else {
+            candidates.addAll(internalVaultCandidates())
         }
         return candidates.distinctBy { it.absolutePath }
     }
@@ -426,35 +701,83 @@ object CryptoManager {
         }
     }
 
-    private fun scanForVaultRoot(context: Context): File? {
-        val documentsDir = getDocumentsDirectory()
-        val storageRoot = getStorageRootDirectory()
-        val roots = listOfNotNull(
-            storageRoot,
-            getCipherRootDirectory(),
-            documentsDir,
-            File(documentsDir, CIPHER_ROOT_DIR_NAME),
-            try { Environment.getExternalStorageDirectory() } catch (_: Throwable) { null },
-            File("/storage/emulated/0"),
-            context.sdCardPath.takeIf { it.isNotEmpty() }?.let { File(it) }
-        ).distinctBy { it.absolutePath }
+    fun listExternalStorageVolumeRoots(context: Context): List<File> {
+        val volumeRoots = LinkedHashMap<String, File>()
 
-        for (root in roots) {
-            if (!root.isDirectory) continue
-            val children = root.listFiles() ?: continue
-            for (child in children) {
-                if (hasValidVaultHeader(child)) return child
+        try {
+            context.getExternalFilesDirs(null).filterNotNull().forEach { extDir ->
+                var cur: File? = extDir
+                while (cur != null) {
+                    if (cur.name == "Android") {
+                        cur.parentFile?.let { volRoot ->
+                            volumeRoots.putIfAbsent(volRoot.absolutePath, volRoot)
+                        }
+                        break
+                    }
+                    cur = cur.parentFile
+                }
+            }
+        } catch (_: Throwable) {}
+
+        try {
+            val storageDir = File("/storage")
+            if (storageDir.isDirectory) {
+                storageDir.listFiles()?.forEach { child ->
+                    if (
+                        child.isDirectory &&
+                        !child.name.equals("emulated", ignoreCase = true) &&
+                        !child.name.equals("self", ignoreCase = true)
+                    ) {
+                        volumeRoots.putIfAbsent(child.absolutePath, child)
+                    }
+                }
+            }
+        } catch (_: Throwable) {}
+
+        return volumeRoots.values.toList()
+    }
+
+    fun findCandidateExternalVaultRoots(context: Context): List<File> {
+        val results = LinkedHashMap<String, File>()
+        val volumeRoots = ArrayList<File>()
+        volumeRoots.addAll(listExternalStorageVolumeRoots(context))
+        try {
+            context.sdCardPath.takeIf { it.isNotEmpty() }?.let { volumeRoots.add(File(it)) }
+        } catch (_: Throwable) {}
+        try {
+            context.config.OTGPath
+                .takeIf { it.isNotEmpty() && !it.startsWith("otg:", ignoreCase = true) && !it.startsWith("content://", ignoreCase = true) }
+                ?.let { volumeRoots.add(File(it)) }
+        } catch (_: Throwable) {}
+
+        val internalRoot = normalizeVaultPath(getStorageRootDirectory().absolutePath)
+        for (root in volumeRoots.distinctBy { it.absolutePath }) {
+            val normRoot = normalizeVaultPath(root.absolutePath)
+            if (normRoot.equals(internalRoot, ignoreCase = true)) continue
+            if (!root.exists() || !root.isDirectory) continue
+
+            resolveExistingVaultInDirectory(root)?.let { results.putIfAbsent(it.absolutePath, it) }
+            root.listFiles()?.forEach { child ->
+                if (hasValidVaultHeader(child)) {
+                    results.putIfAbsent(child.absolutePath, child)
+                }
             }
         }
-        return null
+        return results.values.toList()
     }
 
     /**
-     * Looks for the vault root ON DISK. The well-known locations (default, legacy, stored path) are
-     * checked live on every call; nothing is cached as "exists". Only the expensive scan of the
-     * storage root for a vault placed at a non-standard location is rate limited.
+     * Looks for the vault root ON DISK.
+     * - When [Config.vaultRootPath] is empty, ONLY default and legacy internal vault locations are
+     *   checked (external USB/SD drives are NOT auto-adopted without explicit user selection).
+     * - When [Config.vaultRootPath] is set, that configured location is checked directly.
      */
     fun locateVaultRootOnDisk(context: Context, allowDeepScan: Boolean = true): File? {
+        if (isConfiguredVaultTemporarilyUnavailable(context)) {
+            cachedVaultRoot = null
+            return null
+        }
+
         val known = knownVaultRootCandidates(context)
 
         known.firstOrNull { hasValidVaultHeader(it) }?.let {
@@ -464,17 +787,6 @@ object CryptoManager {
         known.firstOrNull { isLegacyVaultRoot(context, it) }?.let {
             rememberVaultRoot(context, it)
             return it
-        }
-
-        if (allowDeepScan) {
-            val now = System.currentTimeMillis()
-            if (now - lastDeepScanMs >= DEEP_SCAN_INTERVAL_MS) {
-                lastDeepScanMs = now
-                scanForVaultRoot(context)?.let {
-                    rememberVaultRoot(context, it)
-                    return it
-                }
-            }
         }
 
         cachedVaultRoot = null
@@ -531,6 +843,14 @@ object CryptoManager {
             // The disk cannot be inspected: neither wipe anything nor trust it blindly.
             return context.config.vaultWrappedKeyData.isNotEmpty() || context.config.vaultPublicKey.isNotEmpty()
         }
+        if (isConfiguredVaultTemporarilyUnavailable(context)) {
+            lockVault()
+            cachedVaultRoot = null
+            encryptedFolderCache.clear()
+            folderNameCache.clear()
+            vaultRecycleBinFolder = null
+            return false
+        }
         val exists = vaultExistsOnDisk(context)
         if (!exists && !vaultSetupInProgress && hasStaleVaultState(context)) {
             resetStaleVaultState(context)
@@ -540,16 +860,25 @@ object CryptoManager {
 
     fun deleteExistingVault(context: Context) {
         val targets = mutableListOf<File>()
-        targets.add(getDefaultVaultRoot())
-        // Legacy locations of the vault.
-        targets.add(File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"))
-        targets.add(File(getDocumentsDirectory(), CIPHER_SECRETS_DIR_NAME))
-        val storedPath = context.config.vaultRootPath
-        if (storedPath.isNotEmpty()) {
-            targets.add(File(storedPath))
+        if (isConfiguredCustomVaultPath(context)) {
+            val storedPath = context.config.vaultRootPath
+            if (storedPath.isNotEmpty()) {
+                targets.add(File(storedPath))
+            }
+            getExistingCipherSecretsDir(context)?.let { targets.add(it) }
+            findVaultRoot(context)?.let { targets.add(it) }
+        } else {
+            targets.add(getDefaultVaultRoot())
+            // Legacy locations of the vault.
+            targets.add(File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"))
+            targets.add(File(getDocumentsDirectory(), CIPHER_SECRETS_DIR_NAME))
+            val storedPath = context.config.vaultRootPath
+            if (storedPath.isNotEmpty()) {
+                targets.add(File(storedPath))
+            }
+            getExistingCipherSecretsDir(context)?.let { targets.add(it) }
+            findVaultRoot(context)?.let { targets.add(it) }
         }
-        getExistingCipherSecretsDir(context)?.let { targets.add(it) }
-        findVaultRoot(context)?.let { targets.add(it) }
 
         for (dir in targets.distinct()) {
             if (dir.exists()) {
@@ -596,18 +925,48 @@ object CryptoManager {
     // ==================== MASTER VAULT ROOT (STEALTH CONSOLIDATED CONTAINER) ====================
 
     /**
-     * Creates the vault root folder. ONLY the vault setup flow (setupOrUpdateCredentials) may call
-     * this. Every other code path must use findVaultRoot() and handle "no vault" - otherwise a
-     * deleted vault folder would silently come back as an empty folder.
+     * Creates the vault root folder. UI flows must go through [setupOrUpdateCredentials] so every
+     * vault root immediately receives a valid `.vault` header; direct calls are intended for setup
+     * and tests.
      */
-    private fun createVaultRoot(context: Context): File {
-        findVaultRoot(context)?.let { return it }
+    fun createVaultRoot(context: Context, customTargetDir: File? = null): File? {
+        if (customTargetDir == null) {
+            findVaultRoot(context)?.let { return it }
 
-        ensureCipherRootDirectory()
+            ensureCipherRootDirectory()
 
-        val newDir = getDefaultVaultRoot()
+            val newDir = getDefaultVaultRoot()
+            if (!newDir.exists()) {
+                newDir.mkdirs()
+            }
+
+            val noMedia = File(newDir, NOMEDIA)
+            if (!noMedia.exists()) {
+                try { noMedia.createNewFile() } catch (_: Exception) {}
+            }
+
+            if (!newDir.exists() || !newDir.isDirectory || !newDir.canWrite()) {
+                return null
+            }
+
+            setVaultRootLocation(context, newDir)
+            return newDir
+        }
+
+        val newDir = if (
+            customTargetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true) ||
+            isValidVaultHeader(File(customTargetDir, VAULT_HEADER_FILE))
+        ) {
+            customTargetDir
+        } else {
+            File(customTargetDir, CIPHER_SECRETS_DIR_NAME)
+        }
+
         if (!newDir.exists()) {
             newDir.mkdirs()
+        }
+        if (!newDir.exists() || !newDir.isDirectory || !newDir.canWrite()) {
+            return null
         }
 
         val noMedia = File(newDir, NOMEDIA)
@@ -615,13 +974,17 @@ object CryptoManager {
             try { noMedia.createNewFile() } catch (_: Exception) {}
         }
 
-        context.config.vaultRootPath = newDir.absolutePath
-        cachedVaultRoot = newDir
+        setVaultRootLocation(context, newDir)
         return newDir
     }
 
     /** Returns the vault root only if a vault really exists on disk; never creates anything. */
     fun findVaultRoot(context: Context): File? {
+        if (isConfiguredVaultTemporarilyUnavailable(context)) {
+            cachedVaultRoot = null
+            return null
+        }
+
         // Fast path: a cached root is trusted only while its .vault header is still there.
         cachedVaultRoot?.let { cached ->
             if (cached.isDirectory && File(cached, VAULT_HEADER_FILE).isFile) return cached
@@ -1041,21 +1404,41 @@ object CryptoManager {
      * Uses Argon2id (32 MB, 3 iterations, 2 threads) + AES-256-GCM.
      * The master bundle (MasterKey + PrivateKey) is written directly to .vault in the root folder.
      */
-    fun setupOrUpdateCredentials(context: Context, secret: String, protectionType: Int): String {
+    fun setupOrUpdateCredentials(
+        context: Context,
+        secret: String,
+        protectionType: Int,
+        customTargetDir: File? = null
+    ): String {
         vaultSetupInProgress = true
         try {
             // A vault that no longer exists on disk must never leak its old keys into a new one.
-            if (canAccessSharedStorage(context) && !vaultExistsOnDisk(context)) {
+            if (
+                customTargetDir == null &&
+                canAccessSharedStorage(context) &&
+                !vaultExistsOnDisk(context) &&
+                !isConfiguredVaultTemporarilyUnavailable(context)
+            ) {
                 resetStaleVaultState(context)
             }
-            return setupOrUpdateCredentialsInternal(context, secret, protectionType)
+            return setupOrUpdateCredentialsInternal(context, secret, protectionType, customTargetDir)
         } finally {
             vaultSetupInProgress = false
         }
     }
 
-    private fun setupOrUpdateCredentialsInternal(context: Context, secret: String, protectionType: Int): String {
-        if (hasExistingVault(context) && !isVaultUnlocked) {
+    private fun setupOrUpdateCredentialsInternal(
+        context: Context,
+        secret: String,
+        protectionType: Int,
+        customTargetDir: File? = null
+    ): String {
+        if (customTargetDir != null) {
+            if (resolveExistingVaultInDirectory(customTargetDir) != null) {
+                throw IllegalStateException("Vault already exists at target location! Unlock instead of overwriting.")
+            }
+            prepareVaultLocationSwitch(context, null)
+        } else if (hasExistingVault(context) && !isVaultUnlocked) {
             throw IllegalStateException("Vault is locked! Cannot update credentials without unlocking first.")
         }
         val masterKey = unlockedMasterKey ?: ByteArray(32).also { secureRandom.nextBytes(it) }
@@ -1097,7 +1480,8 @@ object CryptoManager {
         clearBiometricKey(context)
 
         // Write vault root header (.vault) on disk for full multi-device portability
-        val vaultRoot = createVaultRoot(context)
+        val vaultRoot = createVaultRoot(context, customTargetDir)
+            ?: throw IOException("Failed to create writable vault directory")
         val vaultHeader = File(vaultRoot, VAULT_HEADER_FILE)
         writeVaultHeader(vaultHeader, salt, ARGON2_MEMORY_KB, ARGON2_ITERATIONS, ARGON2_PARALLELISM, iv, wrapped, protectionType)
 
@@ -1115,6 +1499,11 @@ object CryptoManager {
         context.config.hiddenPasswordHash = marker
         context.config.hiddenProtectionType = protectionType
         context.config.isHiddenPasswordProtectionOn = true
+
+        try {
+            getOrCreateDefaultHiddenAlbum(context)
+        } catch (_: Exception) {
+        }
 
         // Ensure any existing hidden virtual albums have their names encrypted in SQLite
         ensureBackgroundThread {
@@ -2551,6 +2940,456 @@ object CryptoManager {
             tempFile.delete()
             false
         }
+    }
+
+    // ==================== EXTERNAL VAULT SYNC ====================
+
+    private fun hasFolderMetaFile(dir: File): Boolean {
+        return File(dir, VAULT_SUBFOLDER_META_FILE).exists() ||
+            File(dir, ENCRYPTED_FOLDER_META_FILE).exists()
+    }
+
+    private fun isEncryptedBinFile(file: File): Boolean {
+        return file.isFile && !file.name.startsWith(".") && file.name.endsWith(ENCRYPTED_BIN_EXT, ignoreCase = true)
+    }
+
+    fun resolveSyncSourceRoot(selectedDir: File): File {
+        if (!selectedDir.exists() || !selectedDir.isDirectory) return selectedDir
+
+        if (hasValidVaultHeader(selectedDir) || hasFolderMetaFile(selectedDir)) {
+            return selectedDir
+        }
+
+        val immediateChildren = selectedDir.listFiles() ?: emptyArray()
+        if (immediateChildren.any { isEncryptedBinFile(it) }) {
+            return selectedDir
+        }
+
+        val nestedContainerCandidates = listOf(
+            File(File(selectedDir, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME),
+            File(File(selectedDir, CIPHER_ROOT_DIR_NAME), CIPHER_SECRETS_DIR_NAME),
+            File(selectedDir, CIPHER_SECRETS_DIR_NAME),
+            File(selectedDir, "Encrypted_Output"),
+            File(selectedDir, "Sifreli_Cikti")
+        )
+        for (candidate in nestedContainerCandidates) {
+            if (candidate.exists() && candidate.isDirectory) {
+                return candidate
+            }
+        }
+
+        val hasImmediateSubdirWithVaultContent = immediateChildren.any { sub ->
+            sub.isDirectory &&
+                !sub.name.equals("JSON", ignoreCase = true) &&
+                (!sub.name.startsWith(".") || hasFolderMetaFile(sub)) &&
+                (hasFolderMetaFile(sub) || (sub.listFiles()?.any { isEncryptedBinFile(it) } == true))
+        }
+        if (hasImmediateSubdirWithVaultContent) {
+            return selectedDir
+        }
+
+        return selectedDir
+    }
+
+    internal fun formatCollisionFileName(originalName: String, copyIndex: Int): String {
+        val lastDot = originalName.lastIndexOf('.')
+        return if (lastDot > 0) {
+            "${originalName.substring(0, lastDot)}($copyIndex)${originalName.substring(lastDot)}"
+        } else {
+            "$originalName($copyIndex)"
+        }
+    }
+
+    internal fun isSameOrCollisionVariant(candidateName: String, incomingOriginalName: String): Boolean {
+        if (candidateName.equals(incomingOriginalName, ignoreCase = true)) return true
+        val lastDot = incomingOriginalName.lastIndexOf('.')
+        val stem = if (lastDot > 0) incomingOriginalName.substring(0, lastDot) else incomingOriginalName
+        val ext = if (lastDot > 0) incomingOriginalName.substring(lastDot) else ""
+
+        if (ext.isNotEmpty() && !candidateName.endsWith(ext, ignoreCase = true)) {
+            return false
+        }
+        val candidateBody = candidateName.substring(0, candidateName.length - ext.length)
+        val prefix = "$stem("
+        if (!candidateBody.startsWith(prefix, ignoreCase = true) || !candidateBody.endsWith(")")) {
+            return false
+        }
+        val indexStr = candidateBody.substring(prefix.length, candidateBody.length - 1)
+        return indexStr.isNotEmpty() &&
+            indexStr.all { it in '0'..'9' } &&
+            (indexStr.toIntOrNull() ?: 0) >= 1
+    }
+
+    private fun readExactOrEof(stream: InputStream, buffer: ByteArray, length: Int): Int {
+        var total = 0
+        while (total < length) {
+            val read = stream.read(buffer, total, length - total)
+            if (read == -1) break
+            total += read
+        }
+        return total
+    }
+
+    private fun streamsHaveEqualBytes(
+        streamA: InputStream,
+        streamB: InputStream,
+        byteCount: Long,
+        bufferSize: Int = 16 * 1024
+    ): Boolean {
+        val bufA = ByteArray(bufferSize)
+        val bufB = ByteArray(bufferSize)
+        var remaining = byteCount
+        while (remaining > 0L) {
+            val toRead = minOf(remaining, bufferSize.toLong()).toInt()
+            val readA = streamA.read(bufA, 0, toRead)
+            if (readA <= 0) return false
+            val readB = readExactOrEof(streamB, bufB, readA)
+            if (readB != readA) return false
+            for (i in 0 until readA) {
+                if (bufA[i] != bufB[i]) return false
+            }
+            remaining -= readA.toLong()
+        }
+        return true
+    }
+
+    fun areEncryptedFilesIdenticalContent(
+        fileA: File,
+        metaA: EncryptedFileMetadata,
+        fileB: File,
+        metaB: EncryptedFileMetadata
+    ): Boolean {
+        if (metaA.originalSize != metaB.originalSize || metaA.mediaType != metaB.mediaType) {
+            return false
+        }
+        if (metaA.originalSize == 0L) {
+            return true
+        }
+
+        if (
+            fileA.length() == fileB.length() &&
+            metaA.contentIv.contentEquals(metaB.contentIv) &&
+            metaA.isMacAuthenticated &&
+            metaB.isMacAuthenticated &&
+            fileA.length() >= metaA.payloadOffset + metaA.originalSize + MAC_TAG_LENGTH &&
+            fileB.length() >= metaB.payloadOffset + metaB.originalSize + MAC_TAG_LENGTH
+        ) {
+            val macEqual = runCatching {
+                val tagA = ByteArray(MAC_TAG_LENGTH)
+                val tagB = ByteArray(MAC_TAG_LENGTH)
+                RandomAccessFile(fileA, "r").use { raf ->
+                    raf.seek(fileA.length() - MAC_TAG_LENGTH)
+                    raf.readFully(tagA)
+                }
+                RandomAccessFile(fileB, "r").use { raf ->
+                    raf.seek(fileB.length() - MAC_TAG_LENGTH)
+                    raf.readFully(tagB)
+                }
+                tagA.contentEquals(tagB)
+            }.getOrDefault(false)
+            if (macEqual) return true
+        }
+
+        return try {
+            if (metaA.originalSize <= 256 * 1024L) {
+                val sA = openDecryptedContentStream(fileA, 0L) ?: return false
+                sA.use { streamA ->
+                    val sB = openDecryptedContentStream(fileB, 0L) ?: return false
+                    sB.use { streamB ->
+                        streamsHaveEqualBytes(streamA, streamB, metaA.originalSize)
+                    }
+                }
+            } else {
+                val windowSize = 65536L
+                val offsets = listOf(
+                    0L,
+                    (metaA.originalSize / 2).coerceAtLeast(0L),
+                    (metaA.originalSize - windowSize).coerceAtLeast(0L)
+                ).distinct()
+                for (offset in offsets) {
+                    val compareLen = minOf(windowSize, metaA.originalSize - offset)
+                    val sA = openDecryptedContentStream(fileA, offset) ?: return false
+                    val matched = sA.use { streamA ->
+                        val sB = openDecryptedContentStream(fileB, offset) ?: return false
+                        sB.use { streamB ->
+                            streamsHaveEqualBytes(streamA, streamB, compareLen)
+                        }
+                    }
+                    if (!matched) return false
+                }
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private data class SyncPendingItem(
+        val sourceBin: File,
+        val sourceAlbumName: String?,
+        val isDefaultTarget: Boolean
+    )
+
+    private fun collectSubdirBinFiles(rootSubdir: File): List<File> {
+        val collected = ArrayList<File>()
+        rootSubdir.walkTopDown()
+            .onEnter { dir ->
+                if (dir == rootSubdir) {
+                    true
+                } else {
+                    !dir.name.equals("JSON", ignoreCase = true) &&
+                        !isVaultRecycleBin(dir) &&
+                        (!dir.name.startsWith(".") || hasFolderMetaFile(dir))
+                }
+            }
+            .forEach { entry ->
+                if (isEncryptedBinFile(entry)) {
+                    collected.add(entry)
+                }
+            }
+        return collected
+    }
+
+    private fun matchExistingDestinationAlbum(vaultRoot: File, albumName: String): File? {
+        val subfolders = vaultRoot.listFiles()?.filter { dir ->
+            dir.isDirectory &&
+                !dir.name.startsWith(".") &&
+                !dir.name.equals("JSON", ignoreCase = true) &&
+                !isVaultRecycleBin(dir) &&
+                !isDefaultHiddenAlbum(dir)
+        } ?: return null
+
+        subfolders.firstOrNull { getDecryptedRawFolderName(it) == albumName }?.let { return it }
+        return subfolders.firstOrNull {
+            getDecryptedRawFolderName(it)?.trim()?.equals(albumName, ignoreCase = true) == true
+        }
+    }
+
+    fun syncVaultFromExternalDirectory(
+        context: Context,
+        sourceDir: File,
+        onProgress: ((processed: Int, total: Int) -> Unit)? = null
+    ): VaultSyncResult? {
+        if (unlockedMasterKey == null) return null
+        val vaultRoot = findVaultRoot(context) ?: return null
+        val effectiveSource = resolveSyncSourceRoot(sourceDir)
+        if (!effectiveSource.exists() || !effectiveSource.isDirectory) return null
+
+        val sourceCanonical = runCatching { effectiveSource.canonicalPath }.getOrDefault(effectiveSource.absolutePath)
+        val vaultCanonical = runCatching { vaultRoot.canonicalPath }.getOrDefault(vaultRoot.absolutePath)
+        if (sourceCanonical == vaultCanonical) return null
+
+        val pendingItems = ArrayList<SyncPendingItem>()
+
+        if (hasFolderMetaFile(effectiveSource)) {
+            val raw = getDecryptedRawFolderName(effectiveSource)
+            if (raw != VAULT_RECYCLE_BIN_NAME) {
+                val bins = collectSubdirBinFiles(effectiveSource)
+                val isDefaultTarget = isDefaultAlbumRawName(raw)
+                val albumName = if (isDefaultTarget) {
+                    null
+                } else {
+                    (raw?.takeIf { it.isNotBlank() } ?: effectiveSource.name).trim()
+                }
+                bins.forEach { bin ->
+                    pendingItems.add(SyncPendingItem(bin, albumName, isDefaultTarget))
+                }
+            }
+        } else {
+            val children = effectiveSource.listFiles() ?: emptyArray()
+            children.filter { isEncryptedBinFile(it) }.forEach { bin ->
+                pendingItems.add(SyncPendingItem(bin, null, isDefaultTarget = true))
+            }
+
+            children.filter { it.isDirectory }.forEach { sub ->
+                if (sub.name.equals("JSON", ignoreCase = true)) return@forEach
+                if (sub.name == VAULT_RECYCLE_BIN_NAME || isVaultRecycleBin(sub)) return@forEach
+                if (sub.name.startsWith(".") && !hasFolderMetaFile(sub)) return@forEach
+
+                val bins = collectSubdirBinFiles(sub)
+                if (bins.isEmpty()) return@forEach
+
+                val raw = getDecryptedRawFolderName(sub)?.takeIf { it.isNotBlank() } ?: sub.name
+                if (raw == VAULT_RECYCLE_BIN_NAME) return@forEach
+
+                val isDefaultTarget = isDefaultAlbumRawName(raw)
+                val albumName = if (isDefaultTarget) null else raw.trim()
+                bins.forEach { bin ->
+                    pendingItems.add(SyncPendingItem(bin, albumName, isDefaultTarget))
+                }
+            }
+        }
+
+        val total = pendingItems.size
+        var copiedCount = 0
+        var renamedCount = 0
+        var skippedDuplicateCount = 0
+        var failedCount = 0
+        val touchedTargetAlbums = HashSet<String>()
+
+        runCryptoOperation {
+            val resolvedAlbumMap = HashMap<String, File>()
+            val albumEntriesIndex = HashMap<File, MutableList<Pair<File, EncryptedFileMetadata>>>()
+
+            var processed = 0
+            for (item in pendingItems) {
+                val sourceBin = item.sourceBin
+                val sourceMeta = readMetadata(sourceBin)
+                if (sourceMeta == null || (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin))) {
+                    metadataCache.remove(sourceBin.absolutePath)
+                    failedCount++
+                    processed++
+                    onProgress?.invoke(processed, total)
+                    continue
+                }
+
+                val albumKey = if (item.isDefaultTarget) {
+                    "__DEFAULT__"
+                } else {
+                    "ALBUM:${item.sourceAlbumName?.trim()?.lowercase(Locale.ROOT) ?: ""}"
+                }
+
+                val targetAlbum = resolvedAlbumMap[albumKey] ?: run {
+                    val resolved = if (item.isDefaultTarget) {
+                        getOrCreateDefaultHiddenAlbum(context)
+                    } else {
+                        val name = item.sourceAlbumName?.takeIf { it.isNotEmpty() }
+                        if (name == null) {
+                            getOrCreateDefaultHiddenAlbum(context)
+                        } else {
+                            matchExistingDestinationAlbum(vaultRoot, name)
+                                ?: createHiddenPhysicalAlbum(context, name)
+                        }
+                    }
+                    if (resolved != null) {
+                        resolvedAlbumMap[albumKey] = resolved
+                    }
+                    resolved
+                }
+
+                if (targetAlbum == null) {
+                    failedCount++
+                    processed++
+                    onProgress?.invoke(processed, total)
+                    continue
+                }
+
+                val existingEntries = albumEntriesIndex.getOrPut(targetAlbum) {
+                    val list = ArrayList<Pair<File, EncryptedFileMetadata>>()
+                    targetAlbum.listFiles()
+                        ?.filter { isEncryptedBinFile(it) }
+                        ?.forEach { existingBin ->
+                            readMetadata(existingBin)?.let { existingMeta ->
+                                list.add(existingBin to existingMeta)
+                            }
+                        }
+                    list
+                }
+
+                val duplicateFound = existingEntries.any { (existingFile, existingMeta) ->
+                    isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName) &&
+                        areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
+                }
+                if (duplicateFound) {
+                    skippedDuplicateCount++
+                    processed++
+                    onProgress?.invoke(processed, total)
+                    continue
+                }
+
+                val tempFile = File(targetAlbum, ".sync_tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
+                var destBin = File(targetAlbum, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+                while (destBin.exists()) {
+                    destBin = File(targetAlbum, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+                }
+
+                val copyOk = try {
+                    FileInputStream(sourceBin).use { fis ->
+                        FileOutputStream(tempFile).use { fos ->
+                            val buf = ByteArray(64 * 1024)
+                            var read: Int
+                            while (fis.read(buf).also { read = it } != -1) {
+                                fos.write(buf, 0, read)
+                            }
+                            fos.flush()
+                            fos.fd.sync()
+                        }
+                    }
+                    try {
+                        java.nio.file.Files.move(
+                            tempFile.toPath(),
+                            destBin.toPath(),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                        )
+                        true
+                    } catch (_: Exception) {
+                        tempFile.renameTo(destBin)
+                    }
+                } catch (_: Exception) {
+                    tempFile.delete()
+                    destBin.delete()
+                    false
+                }
+
+                if (!copyOk || !destBin.exists()) {
+                    tempFile.delete()
+                    failedCount++
+                    processed++
+                    onProgress?.invoke(processed, total)
+                    continue
+                }
+
+                val exactNameTaken = existingEntries.any { (_, existingMeta) ->
+                    existingMeta.originalName.equals(sourceMeta.originalName, ignoreCase = true)
+                }
+
+                if (exactNameTaken) {
+                    var copyIndex = 1
+                    var renamedName = formatCollisionFileName(sourceMeta.originalName, copyIndex)
+                    while (existingEntries.any { (_, existingMeta) ->
+                            existingMeta.originalName.equals(renamedName, ignoreCase = true)
+                        }
+                    ) {
+                        copyIndex++
+                        renamedName = formatCollisionFileName(sourceMeta.originalName, copyIndex)
+                    }
+
+                    if (renameEncryptedFile(destBin, renamedName)) {
+                        val updatedMeta = readMetadata(destBin) ?: sourceMeta.copy(originalName = renamedName)
+                        existingEntries.add(destBin to updatedMeta)
+                        touchedTargetAlbums.add(targetAlbum.absolutePath)
+                        renamedCount++
+                    } else {
+                        metadataCache.remove(destBin.absolutePath)
+                        destBin.delete()
+                        failedCount++
+                    }
+                } else {
+                    destBin.setLastModified(sourceBin.lastModified())
+                    syncDir(targetAlbum)
+                    metadataCache[destBin.absolutePath] = sourceMeta
+                    existingEntries.add(destBin to sourceMeta)
+                    touchedTargetAlbums.add(targetAlbum.absolutePath)
+                    copiedCount++
+                }
+
+                processed++
+                onProgress?.invoke(processed, total)
+            }
+        }
+
+        if (copiedCount + renamedCount > 0) {
+            invalidateFolderCache()
+            runCatching { clearAppImageCaches(context) }
+        }
+
+        return VaultSyncResult(
+            copiedCount = copiedCount,
+            renamedCount = renamedCount,
+            skippedDuplicateCount = skippedDuplicateCount,
+            failedCount = failedCount,
+            syncedAlbumsCount = touchedTargetAlbums.size
+        )
     }
 
     /**

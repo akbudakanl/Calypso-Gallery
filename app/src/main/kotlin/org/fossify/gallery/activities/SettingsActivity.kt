@@ -539,8 +539,14 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsVaultLabel.beGoneIf(!hasStoragePermission)
         binding.settingsVaultDivider.beGoneIf(!hasStoragePermission)
 
+        // 0) Kasa konumu (depolama izni varsa her zaman gösterilir)
+        binding.settingsVaultLocationHolder.beVisibleIf(hasStoragePermission)
+
         // 1) Şifreli kasa oluştur (bu sadece şifreli kasa oluşturulmamış ise gösterilir)
         binding.settingsCreateVaultHolder.beVisibleIf(hasStoragePermission && !vaultExists)
+
+        // 1b) Harici diskten kasayı eşitle
+        binding.settingsSyncVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 2) Şifreli kasa şifresini değiştir
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
@@ -551,36 +557,60 @@ class SettingsActivity : SimpleActivity() {
         // 4) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        setupVaultLocation()
         setupCreateVault()
+        setupSyncVault()
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupEmptyVault()
     }
 
-    private fun setupCreateVault() {
-        binding.settingsCreateVaultHolder.setOnClickListener {
-            if (doesVaultExist()) return@setOnClickListener
-            promptCreateNewVaultPassword()
+    private fun setupVaultLocation() {
+        binding.settingsVaultLocation.text = when {
+            CryptoManager.isConfiguredVaultTemporarilyUnavailable(this) -> {
+                getString(R.string.vault_location_unavailable_summary, humanizePath(config.vaultRootPath))
+            }
+            CryptoManager.isConfiguredCustomVaultPath(this) -> {
+                humanizePath(config.vaultRootPath)
+            }
+            else -> {
+                getString(R.string.vault_location_standard_summary)
+            }
+        }
+
+        binding.settingsVaultLocationHolder.setOnClickListener {
+            val hasConfiguredVault = doesVaultExist() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)
+            promptVaultSetupChoice(
+                confirmBeforeCreatingNew = hasConfiguredVault,
+                onCreated = {
+                    setupVaultSettings()
+                },
+                onCancelled = {
+                    setupVaultSettings()
+                }
+            )
         }
     }
 
-    private fun promptCreateNewVaultPassword() {
-        VaultSecurityDialog(this, "", SHOW_ALL_TABS, minimalist = false) { hash, type, success ->
-            if (success) {
-                config.isHiddenPasswordProtectionOn = true
-                config.hiddenPasswordHash = hash
-                config.hiddenProtectionType = type
-
-                val confirmationTextId = org.fossify.commons.R.string.protection_setup_successfully
-                ConfirmationDialog(this, "", confirmationTextId, org.fossify.commons.R.string.ok, 0) { }
-
-                ensureBackgroundThread {
-                    CryptoManager.getOrCreateDefaultHiddenAlbum(this)
-                    VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
-                    runOnUiThread {
-                        setupVaultSettings()
-                    }
+    private fun setupCreateVault() {
+        binding.settingsCreateVaultHolder.setOnClickListener {
+            if (doesVaultExist()) return@setOnClickListener
+            promptCreateVault(
+                onCreated = {
+                    setupVaultSettings()
+                },
+                onCancelled = {
+                    setupVaultSettings()
                 }
+            )
+        }
+    }
+
+    private fun setupSyncVault() {
+        binding.settingsSyncVaultHolder.setOnClickListener {
+            if (!doesVaultExist()) return@setOnClickListener
+            promptSyncVaultFromExternal {
+                setupVaultSettings()
             }
         }
     }
