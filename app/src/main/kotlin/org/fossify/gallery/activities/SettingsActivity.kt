@@ -95,6 +95,7 @@ class SettingsActivity : SimpleActivity() {
         setupAppPasswordProtection()
         setupFileDeletionPasswordProtection()
         setupVaultSettings()
+        setupConflictHandlingMode()
         setupDeleteEmptyFolders()
         setupKeepScreenOn()
         setupAllowPhotoGestures()
@@ -813,6 +814,40 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupConflictHandlingMode() {
+        binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
+        binding.settingsConflictHandlingModeHolder.setOnClickListener {
+            val dialogBinding = org.fossify.gallery.databinding.DialogConflictHandlingModeBinding.inflate(layoutInflater)
+            if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
+                dialogBinding.conflictHandlingSmartDialog.isChecked = true
+            } else {
+                dialogBinding.conflictHandlingAuto.isChecked = true
+            }
+
+            getAlertDialogBuilder()
+                .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                    config.conflictHandlingMode = if (dialogBinding.conflictHandlingSmartDialog.isChecked) {
+                        CONFLICT_HANDLING_SMART_DIALOG
+                    } else {
+                        CONFLICT_HANDLING_AUTO
+                    }
+                    binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
+                }
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .apply {
+                    setupDialogStuff(dialogBinding.root, this, R.string.conflict_handling_explanation_title)
+                }
+        }
+    }
+
+    private fun getConflictHandlingModeText() = getString(
+        if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
+            R.string.conflict_handling_smart_dialog_short
+        } else {
+            R.string.conflict_handling_auto_short
+        }
+    )
+
     private fun setupDeleteEmptyFolders() {
         binding.settingsDeleteEmptyFolders.isChecked = config.deleteEmptyFolders
         binding.settingsDeleteEmptyFoldersHolder.setOnClickListener {
@@ -1339,6 +1374,7 @@ class SettingsActivity : SimpleActivity() {
                 put(HIDE_EXTENDED_DETAILS, config.hideExtendedDetails)
                 put(EXTENDED_DETAILS, config.extendedDetails)
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
+                put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
                 put(SKIP_DELETE_CONFIRMATION, config.skipDeleteConfirmation)
                 put(DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS, config.deleteOriginalFromFavoritesAndVirtualAlbums)
@@ -1489,6 +1525,7 @@ class SettingsActivity : SimpleActivity() {
                 HIDE_EXTENDED_DETAILS -> config.hideExtendedDetails = value.toBoolean()
                 EXTENDED_DETAILS -> config.extendedDetails = value.toInt()
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
+                CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()

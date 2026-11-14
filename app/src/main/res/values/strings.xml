@@ -317,11 +317,11 @@
     <string name="decrypt">Decrypt</string>
     <string name="encrypt_album">Encrypt album</string>
     <string name="decrypt_album">Decrypt album</string>
-    <string name="confirm_encrypt_album">Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted.</string>
-    <string name="confirm_encrypt_albums">Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted.</string>
-    <string name="confirm_encrypt_file">Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted.</string>
-    <string name="confirm_encrypt_files">Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted.</string>
-    <string name="confirm_encrypt_files_to_vault">The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue?</string>
+    <string name="confirm_encrypt_album">Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. If an album with the same name already exists in the vault, they will be merged (bit-identical files are skipped; different files with the same name are kept as (1)). The original files will be deleted.</string>
+    <string name="confirm_encrypt_albums">Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. If albums with the same names already exist in the vault, they will be merged (bit-identical files are skipped; different files with the same name are kept as (1)). The original files will be deleted.</string>
+    <string name="confirm_encrypt_file">Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault (if the target album already has a bit-identical file, duplication is skipped; if a different file has the same name, it is saved as (1)). The original file will be deleted.</string>
+    <string name="confirm_encrypt_files">Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault (bit-identical duplicates are skipped; different files with the same name are saved as (1)). The original files will be deleted.</string>
+    <string name="confirm_encrypt_files_to_vault">The selected files will be encrypted when they are copied into the encrypted vault (bit-identical duplicates are automatically skipped; different files with the same name are handled according to your conflict resolution setting). Do you want to continue?</string>
 
     <!-- Virtual albums -->
     <string name="create_virtual_album">Create virtual album</string>
@@ -362,7 +362,7 @@
     <string name="confirm_checkbox_label">I confirm</string>
     <string name="secret_vault">Encrypted Vault</string>
     <string name="secret_vault_empty">Encrypted Vault is empty</string>
-    <string name="confirm_decrypt_hidden_file">Are you sure you want to decrypt the hidden file(s)?</string>
+    <string name="confirm_decrypt_hidden_file">Are you sure you want to decrypt the hidden file(s)? Bit-identical copies already present at the destination are skipped automatically; different files with the same name are kept as (1) (or according to your conflict resolution setting).</string>
     <string name="copy_to_clipboard_disabled_in_vault">Copying to clipboard is disabled while vault is unlocked for security.</string>
     <string name="on_vault_exit">On leaving encrypted section</string>
     <string name="on_vault_exit_keep_showing">Keep showing encrypted albums</string>
@@ -418,7 +418,12 @@
     <string name="vault_location_not_writable">The selected folder does not exist or is not writable on this device.</string>
     <string name="vault_location_not_readable">The selected folder does not exist or is not readable on this device.</string>
     <string name="sync_vault_from_external">Sync vault from external drive</string>
-    <string name="sync_vault_select_source_prompt">Select an external vault folder (such as Cipher_Secrets or an exported delta folder encrypted with the same vault password) to import new media into your phone vault without duplicating existing items.</string>
+    <string name="sync_vault_select_source_prompt">How External Vault Sync Works:\n\n1. Unified Cipher_Secrets Folder:\nKeep a folder named Cipher_Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Cipher_Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Cipher_Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg.</string>
+    <string name="conflict_handling_mode_label">File conflict &amp; duplicate resolution</string>
+    <string name="conflict_handling_auto_short">Full automatic (Default — Skip identical, rename different as (1))</string>
+    <string name="conflict_handling_smart_dialog_short">Smart dialog (Auto-skip identical, ask when content differs)</string>
+    <string name="conflict_handling_explanation_title">File Conflict &amp; Duplicate Resolution</string>
+    <string name="conflict_handling_explanation_message">When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). If the files are 100% identical, duplication is skipped automatically and any redundant source file in Move / Encrypt / Decrypt is cleaned up.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content.</string>
     <string name="syncing_vault_progress">Syncing vault from external drive…</string>
     <string name="vault_sync_summary_message">Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d</string>
     <string name="vault_sync_nothing_to_sync">No encrypted media (.bin) files were found in the selected folder.</string>

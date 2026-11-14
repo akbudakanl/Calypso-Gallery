@@ -361,6 +361,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(DELETE_EMPTY_FOLDERS, false)
         set(deleteEmptyFolders) = prefs.edit().putBoolean(DELETE_EMPTY_FOLDERS, deleteEmptyFolders).apply()
 
+    var conflictHandlingMode: Int
+        get() = prefs.getInt(CONFLICT_HANDLING_MODE, CONFLICT_HANDLING_AUTO)
+        set(mode) = prefs.edit().putInt(CONFLICT_HANDLING_MODE, mode).apply()
+
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()
