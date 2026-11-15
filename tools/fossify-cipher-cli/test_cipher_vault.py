@@ -648,12 +648,118 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.assertEqual(unlocked_key, self.master_key)
         self.assertEqual(unlocked_path, self.vault_file.resolve())
 
+    def test_cloud_sync_path_detection_and_skips_desktop_vault_copy(self):
+        self.assertTrue(cv.is_cloud_synced_path(Path("/Users/alice/Library/Mobile Documents/com~apple~CloudDocs/Desktop")))
+        self.assertTrue(cv.is_cloud_synced_path(Path("C:/Users/alice/OneDrive/Desktop")))
+        self.assertTrue(cv.is_cloud_synced_path(Path("/home/alice/Dropbox/Photos")))
+        self.assertFalse(cv.is_cloud_synced_path(self.root / "LocalDesktop"))
+
+        with mock.patch.dict(os.environ, {"OneDrive": str(self.root / "SyncedRoot")}, clear=False):
+            with mock.patch("os.name", "nt"):
+                self.assertTrue(cv.is_cloud_synced_path(self.root / "SyncedRoot" / "Desktop"))
+
+        # Standalone .vault imported when Desktop is cloud-synced must NOT prompt to copy .vault to Desktop
+        synced_desktop = self.root / "OneDrive" / "Desktop"
+        synced_desktop.mkdir(parents=True)
+        standalone_src = self.root / "LocalUSB" / "phone.vault"
+        standalone_src.parent.mkdir(parents=True)
+        create_test_vault_file(standalone_src, self.secret, self.master_key)
+
+        with mock.patch.object(cv, "get_desktop_dir", return_value=synced_desktop), \
+             mock.patch("builtins.input", side_effect=[str(standalone_src)]), \
+             redirect_stdout(io.StringIO()):
+            chosen = cv.prompt_for_vault_file("en")
+        self.assertEqual(chosen, standalone_src.resolve())
+        self.assertFalse((synced_desktop / ".vault").exists())
+
+    def test_cross_platform_mount_roots_and_windows_drive_vault_discovery(self):
+        with mock.patch.object(cv, "get_platform_kind", return_value="macos"):
+            self.assertEqual(cv._external_mount_roots(), [Path("/Volumes")])
+
+        fake_usb_drive = self.root / "FakeDriveE"
+        fake_usb_drive.mkdir()
+        drive_root_vault = fake_usb_drive / ".vault"
+        create_test_vault_file(drive_root_vault, self.secret, self.master_key)
+
+        with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
+             mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
+             mock.patch.object(cv, "_external_mount_roots", return_value=[fake_usb_drive]):
+            detected_root = cv.find_vault_file()
+        self.assertEqual(detected_root, drive_root_vault)
+
+        # Cipher_Secrets/.vault on Windows-style drive takes priority over root .vault
+        cs_vault = fake_usb_drive / "Cipher_Secrets" / ".vault"
+        cs_vault.parent.mkdir(parents=True)
+        create_test_vault_file(cs_vault, self.secret, self.master_key)
+        with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
+             mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
+             mock.patch.object(cv, "_external_mount_roots", return_value=[fake_usb_drive]):
+            detected_cs = cv.find_vault_file()
+        self.assertEqual(detected_cs, cs_vault)
+
+    def test_windows_and_macos_notices_and_readonly_wipe_without_extra_prompts(self):
+        in_dir = self.root / "OneDrive" / "To_Encrypt"
+        in_dir.mkdir(parents=True)
+        ro_img = in_dir / "readonly.jpg"
+        ro_img.write_bytes(b"readonly-jpg-bytes")
+        os.chmod(ro_img, 0o444)
+
+        buf = io.StringIO()
+        with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
+             mock.patch("sys.stdin.isatty", return_value=True), \
+             mock.patch("builtins.input", side_effect=AssertionError("Should not prompt for OS choice or wipe when --delete-source is set")), \
+             redirect_stdout(buf):
+            cv.run_encrypt_mode(
+                self._make_encrypt_args(in_dir, output_dir=self.vault_dir, delete_source=True, lang="en"),
+                self.desktop,
+                "en",
+            )
+
+        out = buf.getvalue()
+        self.assertIn("Standard OS Mode (Windows)", out)
+        self.assertIn("Cloud-synced folder detected", out)
+        self.assertIn("SSD wear-leveling", out)
+        self.assertFalse(ro_img.exists())
+
     def test_encrypt_only_module_has_no_decryption_code(self):
         for removed in ("decrypt_file", "decrypt_stream", "run_decrypt_mode", "choose_operation_mode", "resolve_unique_output_path"):
             self.assertFalse(hasattr(cv, removed), f"cipher_vault must not expose {removed}")
         source_text = Path(cv.__file__).read_text(encoding="utf-8")
         for forbidden in ("decrypt_file", "decrypt_stream", "run_decrypt_mode", "import zipfile"):
             self.assertNotIn(forbidden, source_text)
+
+    def test_pending_sync_appends_across_sessions_without_overwriting(self):
+        batch1 = self.root / "Batch1"
+        batch1.mkdir()
+        (batch1 / "one.jpg").write_bytes(b"first-batch")
+
+        with redirect_stdout(io.StringIO()):
+            cv.run_encrypt_mode(
+                self._make_encrypt_args(batch1, output_dir=self.vault_dir, delete_source=False),
+                self.desktop,
+                "en",
+            )
+
+        pending_file = self.vault_dir / ".pending_sync"
+        self.assertTrue(pending_file.is_file())
+        first_entries = [l for l in pending_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+        self.assertEqual(len(first_entries), 1)
+
+        batch2 = self.root / "Batch2"
+        (batch2 / "Trip").mkdir(parents=True)
+        (batch2 / "Trip" / "two.jpg").write_bytes(b"second-batch")
+
+        with redirect_stdout(io.StringIO()):
+            cv.run_encrypt_mode(
+                self._make_encrypt_args(batch2, output_dir=self.vault_dir, delete_source=False),
+                self.desktop,
+                "en",
+            )
+
+        all_entries = [l for l in pending_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+        self.assertEqual(len(all_entries), 2)
+        self.assertEqual(all_entries[0], first_entries[0])
+        self.assertTrue((self.vault_dir / all_entries[1]).is_file())
 
 
 if __name__ == "__main__":
