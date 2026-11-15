@@ -101,16 +101,8 @@ fun Context.getVirtualAlbumPaths(albumPath: String): ArrayList<String> {
         val newlyMissingPaths = ArrayList<String>()
         var repairedAny = false
 
-        val missingItems = items.filter { item ->
-            val path = item.fullPath
-            !deletedPaths.contains(path) &&
-                !path.startsWith(recycleBinPath) &&
-                !(CryptoManager.isVaultMediaPath(this, path) && !canAccessHidden) &&
-                !File(path).exists()
-        }
-        val resolvedMissingMap = resolveVirtualAlbumItemsTwoPass(items, missingItems, session = null, vaultOnly = album.isHidden)
-
         for (item in items) {
+            if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) continue
             val path = item.fullPath
             if (deletedPaths.contains(path) || path.startsWith(recycleBinPath)) continue
             // Only vault content is protected inside a virtual album. Files coming from a hidden
@@ -118,8 +110,10 @@ fun Context.getVirtualAlbumPaths(albumPath: String): ArrayList<String> {
             val isVaultContent = CryptoManager.isVaultMediaPath(this, path)
             if (!album.isHidden && isVaultContent) continue
             if (isVaultContent && !canAccessHidden) continue
-            if (File(path).exists()) {
+            val file = File(path)
+            if (file.exists()) {
                 if (item.state == ITEM_STATE_UNRESOLVED) {
+                    if (!doesVirtualItemMatchDiskFile(item, file, album.isHidden)) continue
                     try {
                         virtualAlbumsDB.markItemResolved(albumId, path)
                         repairedAny = true
@@ -127,18 +121,10 @@ fun Context.getVirtualAlbumPaths(albumPath: String): ArrayList<String> {
                     }
                 }
                 validPaths.add(path)
-            } else {
-                // The file may have been renamed or moved outside of the app. Its identity allows
-                // finding it again at the new location.
-                val resolved = resolvedMissingMap[path]
-                if (resolved != null) {
-                    validPaths.add(resolved)
-                    repairedAny = true
-                } else if (item.state != ITEM_STATE_UNRESOLVED) {
-                    // The item stays in the album and is only marked as unresolved, so it can be
-                    // repaired later. It is never removed behind the user's back.
-                    newlyMissingPaths.add(path)
-                }
+            } else if (item.state != ITEM_STATE_UNRESOLVED) {
+                // The item stays in the album and is only marked as unresolved, so it can be
+                // repaired later in the background repair pass.
+                newlyMissingPaths.add(path)
             }
         }
 
@@ -189,9 +175,15 @@ private fun Context.doesVirtualItemMatchDiskFile(
  * Resolves the `Medium` list for a virtual album without requiring encrypted `.fenc` or hidden files
  * to be stored in the `media` SQLite table.
  */
-fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = false): ArrayList<Medium> {
+fun Context.getVirtualAlbumMedia(
+    albumId: Long,
+    getVideoDurations: Boolean = false,
+    preloadedAlbum: VirtualAlbum? = null,
+    preloadedFavoritePaths: Set<String>? = null,
+    preloadedDeletedOrigPaths: Set<String>? = null
+): ArrayList<Medium> {
     return try {
-        val album = virtualAlbumsDB.getAlbumById(albumId) ?: return ArrayList()
+        val album = preloadedAlbum ?: virtualAlbumsDB.getAlbumById(albumId) ?: return ArrayList()
         val canAccessHidden = canAccessHiddenVirtualAlbums()
         if (album.isHidden && !canAccessHidden) {
             return ArrayList()
@@ -202,13 +194,13 @@ fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = fal
 
         val cachedMediaByPath = virtualAlbumsDB.getValidMedia(albumId).associateBy { it.path }
         val deletedPaths = virtualAlbumsDB.getDeletedPathsForAlbum(albumId).toHashSet()
-        val favoritePaths = try {
+        val favoritePaths = preloadedFavoritePaths ?: try {
             favoritesDB.getValidFavoritePaths().toHashSet()
         } catch (_: Exception) {
             emptySet()
         }
 
-        val deletedOrigPaths = try {
+        val deletedOrigPaths = preloadedDeletedOrigPaths ?: try {
             mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN).lowercase() }
         } catch (_: Exception) {
             emptySet()
@@ -218,21 +210,9 @@ fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = fal
         val newlyMissingPaths = ArrayList<String>()
         var repairedAny = false
 
-        val missingItems = items.filter { item ->
-            val path = item.fullPath
-            item.state != ITEM_STATE_ENCRYPTED &&
-                item.state != ITEM_STATE_DECRYPTED &&
-                !deletedPaths.contains(path) &&
-                path.lowercase() !in deletedOrigPaths &&
-                !path.startsWith(recycleBinPath) &&
-                !CryptoManager.isVaultRecycleBinPath(this, path) &&
-                !File(path).exists()
-        }
-        val resolvedMissingMap = resolveVirtualAlbumItemsTwoPass(items, missingItems, session = null, vaultOnly = album.isHidden)
-
         for (item in items) {
             if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) continue
-            var path = item.fullPath
+            val path = item.fullPath
             if (deletedPaths.contains(path) ||
                 path.lowercase() in deletedOrigPaths ||
                 path.startsWith(recycleBinPath) ||
@@ -241,19 +221,12 @@ fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = fal
                 continue
             }
 
-            var file = File(path)
+            val file = File(path)
             if (!file.exists()) {
-                // The file may have been renamed or moved outside of the app.
-                val resolved = resolvedMissingMap[path]
-                if (resolved == null) {
-                    if (item.state != ITEM_STATE_UNRESOLVED) {
-                        newlyMissingPaths.add(path)
-                    }
-                    continue
+                if (item.state != ITEM_STATE_UNRESOLVED) {
+                    newlyMissingPaths.add(path)
                 }
-                path = resolved
-                file = File(path)
-                repairedAny = true
+                continue
             } else if (item.state == ITEM_STATE_UNRESOLVED) {
                 if (!doesVirtualItemMatchDiskFile(item, file, album.isHidden)) continue
                 try {
@@ -293,6 +266,7 @@ fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = fal
 
             val cached = cachedMediaByPath[path]
             if (cached != null) {
+                cached.isFavorite = favoritePaths.contains(path)
                 result.add(cached)
             } else if (file.isFile) {
                 val isImage = path.isImageFast()
@@ -1170,10 +1144,18 @@ fun Context.deleteVirtualAlbumItemFromAllAlbums(path: String) {
  * Hidden virtual albums are strictly omitted unless `canAccessHiddenVirtualAlbums()` is true.
  * Empty albums are included too, otherwise a freshly created album could not be found. Must run on a background thread.
  */
-fun Context.getVirtualAlbumDirectories(isSecretVaultView: Boolean = false): ArrayList<Directory> {
-    VirtualAlbumSyncManager.syncVirtualAlbums(this)
+fun Context.getVirtualAlbumDirectories(
+    isSecretVaultView: Boolean = false,
+    getVideosOnly: Boolean = false,
+    getImagesOnly: Boolean = false,
+    syncFromDisk: Boolean = true
+): ArrayList<Directory> {
+    var albums = getVirtualAlbums()
+    if (syncFromDisk || albums.isEmpty() || (CryptoManager.isVaultUnlocked && albums.none { it.isHidden })) {
+        VirtualAlbumSyncManager.syncVirtualAlbums(this)
+        albums = getVirtualAlbums()
+    }
     val directories = ArrayList<Directory>()
-    val albums = getVirtualAlbums()
     if (albums.isEmpty()) {
         return directories
     }
@@ -1182,8 +1164,19 @@ fun Context.getVirtualAlbumDirectories(isSecretVaultView: Boolean = false): Arra
     val includedFolders = config.includedFolders
     val canAccessHidden = canAccessHiddenVirtualAlbums()
     val getProperFileSize = config.directorySorting and SORT_BY_SIZE != 0
+    val filterMedia = config.filterMedia
     val hiddenString = getString(R.string.hidden)
     val mediaFetcher = MediaFetcher(this)
+    val favoritePaths = try {
+        favoritesDB.getValidFavoritePaths().toHashSet()
+    } catch (_: Exception) {
+        emptySet()
+    }
+    val deletedOrigPaths = try {
+        mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN).lowercase() }
+    } catch (_: Exception) {
+        emptySet()
+    }
 
     for (album in albums) {
         val albumId = album.id ?: continue
@@ -1196,7 +1189,25 @@ fun Context.getVirtualAlbumDirectories(isSecretVaultView: Boolean = false): Arra
         }
         val resolvedName = getResolvedVirtualAlbumName(album) ?: continue
         val path = getVirtualAlbumPath(albumId)
-        val media = getVirtualAlbumMedia(albumId, getVideoDurations = false)
+        val rawMedia = getVirtualAlbumMedia(
+            albumId = albumId,
+            getVideoDurations = false,
+            preloadedAlbum = album,
+            preloadedFavoritePaths = favoritePaths,
+            preloadedDeletedOrigPaths = deletedOrigPaths
+        )
+        val media = (when {
+            getVideosOnly -> rawMedia.filter { it.type == TYPE_VIDEOS }
+            getImagesOnly -> rawMedia.filter { it.type == TYPE_IMAGES }
+            else -> rawMedia.filter {
+                (filterMedia and TYPE_IMAGES != 0 && it.type == TYPE_IMAGES) ||
+                    (filterMedia and TYPE_VIDEOS != 0 && it.type == TYPE_VIDEOS) ||
+                    (filterMedia and TYPE_GIFS != 0 && it.type == TYPE_GIFS) ||
+                    (filterMedia and TYPE_RAWS != 0 && it.type == TYPE_RAWS) ||
+                    (filterMedia and TYPE_SVGS != 0 && it.type == TYPE_SVGS) ||
+                    (filterMedia and TYPE_PORTRAITS != 0 && it.type == TYPE_PORTRAITS)
+            }
+        }) as ArrayList<Medium>
 
         val directory = if (media.isEmpty()) {
             Directory(null, path, "", resolvedName, 0, album.createdTs, album.createdTs, 0L, LOCATION_INTERNAL, 0, "")

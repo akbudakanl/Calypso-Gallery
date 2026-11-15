@@ -357,12 +357,13 @@ object VirtualAlbumSyncManager {
         }
     }
 
-    fun syncVirtualAlbums(context: Context, force: Boolean = false) {
+    fun syncVirtualAlbums(context: Context, force: Boolean = false): Boolean {
         val now = System.currentTimeMillis()
-        if (!force && now - lastSyncTs < 5000L) {
-            return
+        if (!force && now - lastSyncTs < 30_000L) {
+            return false
         }
         lastSyncTs = now
+        var anyDbChange = false
 
         val dao = getDao(context)
         val dbAlbums = try {
@@ -454,10 +455,12 @@ object VirtualAlbumSyncManager {
                         )
                         if (newId > 0) {
                             album = dao.getAlbumById(newId)
+                            anyDbChange = true
                         }
                     } else if (album.parentPhysicalPath.isEmpty() && parentPhysicalPath.isNotEmpty()) {
                         album.id?.let { dao.updateAlbumParentPhysicalPath(it, parentPhysicalPath) }
                         album.parentPhysicalPath = parentPhysicalPath
+                        anyDbChange = true
                     }
 
                     if (album?.id == null) continue
@@ -477,6 +480,9 @@ object VirtualAlbumSyncManager {
                         try {
                             val path = entry.fullPath ?: continue
                             if (path.isBlank()) continue
+                            val lowerPath = path.lowercase()
+                            if (existingPaths.contains(lowerPath)) continue
+
                             val targetFile = File(path)
                             val exists = targetFile.exists()
                             val isDormantState = entry.state == ITEM_STATE_ENCRYPTED || entry.state == ITEM_STATE_DECRYPTED
@@ -489,32 +495,30 @@ object VirtualAlbumSyncManager {
                                 continue
                             }
 
-                            if (!existingPaths.contains(path.lowercase())) {
-                                val resolvedState = when {
-                                    isDormantState -> entry.state!!
-                                    exists -> ITEM_STATE_OK
-                                    else -> ITEM_STATE_UNRESOLVED
-                                }
-                                itemsToInsert.add(
-                                    VirtualAlbumItem(
-                                        id = null,
-                                        albumId = albumId,
-                                        fullPath = path,
-                                        filename = targetFile.name,
-                                        parentPath = targetFile.parent ?: path.getParentPath(),
-                                        addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
-                                        mediaStoreId = entry.mediaStoreId ?: 0L,
-                                        fileSize = entry.fileSize ?: 0L,
-                                        lastModified = entry.lastModified ?: 0L,
-                                        fingerprint = entry.fingerprint ?: "",
-                                        state = resolvedState,
-                                        folderInode = entry.folderInode ?: 0L,
-                                        folderSignature = entry.folderSignature ?: "",
-                                        capturedAtSec = entry.capturedAtSec ?: 0L
-                                    )
-                                )
-                                existingPaths.add(path.lowercase())
+                            val resolvedState = when {
+                                isDormantState -> entry.state!!
+                                exists -> ITEM_STATE_OK
+                                else -> ITEM_STATE_UNRESOLVED
                             }
+                            itemsToInsert.add(
+                                VirtualAlbumItem(
+                                    id = null,
+                                    albumId = albumId,
+                                    fullPath = path,
+                                    filename = targetFile.name,
+                                    parentPath = targetFile.parent ?: path.getParentPath(),
+                                    addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
+                                    mediaStoreId = entry.mediaStoreId ?: 0L,
+                                    fileSize = entry.fileSize ?: 0L,
+                                    lastModified = entry.lastModified ?: 0L,
+                                    fingerprint = entry.fingerprint ?: "",
+                                    state = resolvedState,
+                                    folderInode = entry.folderInode ?: 0L,
+                                    folderSignature = entry.folderSignature ?: "",
+                                    capturedAtSec = entry.capturedAtSec ?: 0L
+                                )
+                            )
+                            existingPaths.add(lowerPath)
                         } catch (_: Exception) {
                             hadNewlyUnresolved = true
                         }
@@ -522,6 +526,7 @@ object VirtualAlbumSyncManager {
 
                     if (itemsToInsert.isNotEmpty()) {
                         dao.insertItems(itemsToInsert)
+                        anyDbChange = true
                     }
 
                     val newlyMissingDbPaths = existingItems.filter {
@@ -532,6 +537,7 @@ object VirtualAlbumSyncManager {
                         // moved, and the identity is what allows finding it again.
                         newlyMissingDbPaths.forEach { dao.markItemUnresolved(albumId, it) }
                         hadNewlyUnresolved = true
+                        anyDbChange = true
                     }
 
                     if (hadNewlyUnresolved || itemsToInsert.isNotEmpty()) {
@@ -607,10 +613,12 @@ object VirtualAlbumSyncManager {
                             )
                             if (newId > 0) {
                                 album = dao.getAlbumById(newId)
+                                anyDbChange = true
                             }
                         } else if (effectiveParentPhysicalPath.isNotEmpty() && album.parentPhysicalPath != effectiveParentPhysicalPath) {
                             album.id?.let { dao.updateAlbumParentPhysicalPath(it, effectiveParentPhysicalPath) }
                             album.parentPhysicalPath = effectiveParentPhysicalPath
+                            anyDbChange = true
                         }
 
                         if (album?.id == null) continue
@@ -618,6 +626,7 @@ object VirtualAlbumSyncManager {
 
                         val existingItems = dao.getItems(albumId)
                         val existingPaths = existingItems.map { it.fullPath.lowercase() }.toHashSet()
+                        val existingItemsByPathLower = existingItems.associateBy { it.fullPath.lowercase() }
                         val existingItemsByRelPath = HashMap<String, VirtualAlbumItem>()
                         for (existingItem in existingItems) {
                             extractRelativeVaultPath(existingItem.fullPath, vaultRoot)?.lowercase()?.let { rel ->
@@ -639,6 +648,16 @@ object VirtualAlbumSyncManager {
                                     ?: entry.fullPath
                                     ?: continue
                                 if (effectiveFullPath.isBlank()) continue
+                                val lowerFullPath = effectiveFullPath.lowercase()
+                                if (existingPaths.contains(lowerFullPath)) {
+                                    val existingItem = existingItemsByPathLower[lowerFullPath]
+                                    if (existingItem?.state == ITEM_STATE_UNRESOLVED && File(effectiveFullPath).exists()) {
+                                        dao.markItemResolved(albumId, effectiveFullPath)
+                                        anyDbChange = true
+                                    }
+                                    continue
+                                }
+
                                 val targetFile = File(effectiveFullPath)
                                 val effectiveParentPath = targetFile.parent ?: effectiveFullPath.getParentPath()
                                 val exists = targetFile.exists()
@@ -651,56 +670,48 @@ object VirtualAlbumSyncManager {
                                     continue
                                 }
 
-                                if (!existingPaths.contains(effectiveFullPath.lowercase())) {
-                                    val relKey = extractRelativeVaultPath(effectiveFullPath, vaultRoot)?.lowercase()
-                                    val matchingExisting = relKey?.let { existingItemsByRelPath[it] }
-                                    if (matchingExisting != null && matchingExisting.fullPath != effectiveFullPath) {
-                                        dao.updateItemPathInAlbum(
-                                            albumId,
-                                            matchingExisting.fullPath,
-                                            effectiveFullPath,
-                                            targetFile.name,
-                                            effectiveParentPath
-                                        )
-                                        if (exists && matchingExisting.state == ITEM_STATE_UNRESOLVED) {
-                                            dao.markItemResolved(albumId, effectiveFullPath)
-                                        }
-                                        existingPaths.remove(matchingExisting.fullPath.lowercase())
-                                        existingPaths.add(effectiveFullPath.lowercase())
-                                        hadPathRewrite = true
-                                    } else {
-                                        val resolvedState = when {
-                                            isDormantState -> entry.state!!
-                                            exists -> ITEM_STATE_OK
-                                            else -> ITEM_STATE_UNRESOLVED
-                                        }
-                                        itemsToInsert.add(
-                                            VirtualAlbumItem(
-                                                id = null,
-                                                albumId = albumId,
-                                                fullPath = effectiveFullPath,
-                                                filename = targetFile.name,
-                                                parentPath = effectiveParentPath,
-                                                addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
-                                                mediaStoreId = entry.mediaStoreId ?: 0L,
-                                                fileSize = entry.fileSize ?: 0L,
-                                                lastModified = entry.lastModified ?: 0L,
-                                                fingerprint = entry.fingerprint ?: "",
-                                                state = resolvedState,
-                                                folderInode = entry.folderInode ?: 0L,
-                                                folderSignature = entry.folderSignature ?: "",
-                                                capturedAtSec = entry.capturedAtSec ?: 0L
-                                            )
-                                        )
-                                        existingPaths.add(effectiveFullPath.lowercase())
-                                    }
-                                } else if (exists) {
-                                    val existingItem = existingItems.firstOrNull {
-                                        it.fullPath.equals(effectiveFullPath, ignoreCase = true)
-                                    }
-                                    if (existingItem?.state == ITEM_STATE_UNRESOLVED) {
+                                val relKey = extractRelativeVaultPath(effectiveFullPath, vaultRoot)?.lowercase()
+                                val matchingExisting = relKey?.let { existingItemsByRelPath[it] }
+                                if (matchingExisting != null && matchingExisting.fullPath != effectiveFullPath) {
+                                    dao.updateItemPathInAlbum(
+                                        albumId,
+                                        matchingExisting.fullPath,
+                                        effectiveFullPath,
+                                        targetFile.name,
+                                        effectiveParentPath
+                                    )
+                                    if (exists && matchingExisting.state == ITEM_STATE_UNRESOLVED) {
                                         dao.markItemResolved(albumId, effectiveFullPath)
                                     }
+                                    existingPaths.remove(matchingExisting.fullPath.lowercase())
+                                    existingPaths.add(lowerFullPath)
+                                    hadPathRewrite = true
+                                    anyDbChange = true
+                                } else {
+                                    val resolvedState = when {
+                                        isDormantState -> entry.state!!
+                                        exists -> ITEM_STATE_OK
+                                        else -> ITEM_STATE_UNRESOLVED
+                                    }
+                                    itemsToInsert.add(
+                                        VirtualAlbumItem(
+                                            id = null,
+                                            albumId = albumId,
+                                            fullPath = effectiveFullPath,
+                                            filename = targetFile.name,
+                                            parentPath = effectiveParentPath,
+                                            addedTS = if ((entry.addedTs ?: 0L) > 0) entry.addedTs!! else System.currentTimeMillis(),
+                                            mediaStoreId = entry.mediaStoreId ?: 0L,
+                                            fileSize = entry.fileSize ?: 0L,
+                                            lastModified = entry.lastModified ?: 0L,
+                                            fingerprint = entry.fingerprint ?: "",
+                                            state = resolvedState,
+                                            folderInode = entry.folderInode ?: 0L,
+                                            folderSignature = entry.folderSignature ?: "",
+                                            capturedAtSec = entry.capturedAtSec ?: 0L
+                                        )
+                                    )
+                                    existingPaths.add(lowerFullPath)
                                 }
                             } catch (_: Exception) {
                                 hadNewlyUnresolved = true
@@ -709,6 +720,7 @@ object VirtualAlbumSyncManager {
 
                         if (itemsToInsert.isNotEmpty()) {
                             dao.insertItems(itemsToInsert)
+                            anyDbChange = true
                         }
 
                         val refreshedItems = dao.getItems(albumId)
@@ -719,9 +731,11 @@ object VirtualAlbumSyncManager {
                             // Kept, only marked as unresolved, so a renamed file can be found again.
                             newlyMissingDbPaths.forEach { dao.markItemUnresolved(albumId, it) }
                             hadNewlyUnresolved = true
+                            anyDbChange = true
                         }
 
                         if (hadNewlyUnresolved || itemsToInsert.isNotEmpty() || hadPathRewrite) {
+                            anyDbChange = true
                             saveAlbumToFile(context, albumId)
                         }
                     } catch (_: Exception) {
@@ -745,5 +759,6 @@ object VirtualAlbumSyncManager {
                 }
             }
         }
+        return anyDbChange
     }
 }
