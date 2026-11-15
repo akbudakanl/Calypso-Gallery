@@ -372,6 +372,7 @@
     <string name="on_vault_exit_keep_showing">Keep showing encrypted albums</string>
     <string name="on_vault_exit_hide">Hide encrypted albums</string>
     <string name="on_vault_exit_ask_every_time">Always ask</string>
+    <string name="on_vault_exit_ask_every_time_default">Always ask (Default)</string>
     <string name="vault_exit_dialog_title">Exiting Encrypted Section</string>
     <string name="vault_exit_question_single">Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on.</string>
     <string name="vault_exit_question_multiple">Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on.</string>
@@ -424,6 +425,8 @@
     <string name="sync_vault_from_external">Sync vault from external drive</string>
     <string name="sync_vault_select_source_prompt">How External Vault Sync Works:\n\n1. Unified Cipher_Secrets Folder:\nKeep a folder named Cipher_Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Cipher_Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Cipher_Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg.</string>
     <string name="conflict_handling_mode_label">File conflict &amp; duplicate resolution</string>
+    <string name="conflict_handling_auto_summary">Full automatic</string>
+    <string name="conflict_handling_smart_dialog_summary">Smart dialog</string>
     <string name="conflict_handling_auto_short">Full automatic (Default — Skip identical, rename different as (1))</string>
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Auto-skip identical, ask when content differs)</string>
     <string name="album_crypto_conflict_mode_label">Album conflict (Encrypt / Decrypt)</string>

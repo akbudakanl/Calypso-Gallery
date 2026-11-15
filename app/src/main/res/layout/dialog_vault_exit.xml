@@ -33,7 +33,7 @@
             android:id="@+id/vault_exit_always_ask_checkbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:checked="false"
+            android:checked="true"
             android:text="@string/on_vault_exit_ask_every_time" />
 
         <org.fossify.commons.views.MyTextView
