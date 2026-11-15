@@ -303,16 +303,9 @@
     <string name="confirm_checkbox_label">確認しました</string>
     <string name="secret_vault">暗号化された保管庫</string>
     <string name="secret_vault_empty">暗号化された保管庫は空です</string>
+    <string name="press_back_again_to_exit_vault">終了するにはもう一度戻るボタンを押してください</string>
     <string name="confirm_decrypt_hidden_file">非表示ファイルを復号してもよろしいですか？</string>
     <string name="copy_to_clipboard_disabled_in_vault">セキュリティのため、保管庫のロック解除中はクリップボードへのコピーが無効になっています。</string>
-    <string name="on_vault_exit">暗号化セクションを離れるとき</string>
-    <string name="on_vault_exit_keep_showing">暗号化アルバムを表示し続ける</string>
-    <string name="on_vault_exit_hide">暗号化アルバムを非表示</string>
-    <string name="on_vault_exit_ask_every_time">毎回確認する</string>
-    <string name="vault_exit_dialog_title">暗号化セクションの終了</string>
-    <string name="vault_exit_question_single">暗号化アルバムを他のアルバムと一緒に表示しますか？\n\nこの場合、アプリのセッション中、アプリをバックグラウンドに移動してから再び戻ったときや、画面をオフにしてから再びオンにしたときに、非表示の保管庫のロックを解除する必要があります。</string>
-    <string name="vault_exit_question_multiple">暗号化アルバムを他のアルバムと一緒に表示しますか？\n\nこの場合、アプリのセッション中、アプリをバックグラウンドに移動してから再び戻ったときや、画面をオフにしてから再びオンにしたときに、非表示の保管庫のロックを解除する必要があります。</string>
-    <string name="vault_exit_settings_hint">詳細なオプションは、[設定] &gt; [暗号化セクションを離れるとき] を参照してください</string>
     <string name="stop_showing_hidden">暗号化メディアの表示を停止</string>
     <string name="system_default">システムのデフォルト</string>
     <string name="language">言語</string>
@@ -336,6 +329,7 @@
     <string name="create_encrypted_vault">暗号化された保管庫を作成</string>
     <string name="change_encrypted_vault_password">暗号化された保管庫のパスワードを変更</string>
     <string name="biometric_access_to_encrypted_vault">生体認証で暗号化された保管庫にアクセス</string>
+    <string name="block_vault_screenshots">隠し保管庫でのスクリーンショットを禁止する</string>
     <string name="empty_encrypted_vault">暗号化された保管庫を空にする</string>
     <string name="enter_new_pin">新しいPINを入力</string>
     <string name="repeat_new_pin">新しいPINを再入力</string>

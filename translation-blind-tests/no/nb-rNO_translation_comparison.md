@@ -52,16 +52,10 @@ These 66 strings were introduced by this fork (Gallery-Cipher) and do not exist 
 | 31 | 31 | `confirm_checkbox_label` | I confirm | Checkbox label, suffixed with countdown (10) in dialog |
 | 32 | 32 | `secret_vault` | Encrypted Vault | Vault feature title ("Kryptert hvelv") |
 | 33 | 33 | `secret_vault_empty` | Encrypted Vault is empty | Empty state placeholder for Encrypted Vault |
+| - | - | `press_back_again_to_exit_vault` | Press back again to exit | Toast shown on first back press in hidden vault |
+| - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Confirmation prompt for singular/plural file(s) |
 | 35 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Security notice while vault is unlocked |
-| 36 | 36 | `on_vault_exit` | On leaving encrypted section | Settings label for behavior when leaving encrypted section |
-| 37 | 37 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | Radio option |
-| 38 | 38 | `on_vault_exit_hide` | Hide encrypted albums | Radio option |
-| 39 | 39 | `on_vault_exit_ask_every_time` | Always ask | Radio option |
-| 40 | 40 | `vault_exit_dialog_title` | Exiting Encrypted Section | Dialog title |
-| 41 | 41 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | Dialog question (single album) |
-| 42 | 42 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | Dialog question (multiple albums) |
-| 43 | 43 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | References Innstillinger > Når du forlater kryptert seksjon |
 | 44 | 63 | `open_system_language_settings` | Open system language settings | Fork-only addition: opens the device language picker (not in the original Fossify Gallery) |
 | 45 | 44 | `file_encrypted_successfully` | File encrypted successfully | Filen ble kryptert                           |
 | 46 | 45 | `files_encrypted_successfully` | Files encrypted successfully | Filene ble kryptert                           |
@@ -522,16 +516,10 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 294 | `confirm_checkbox_label` | I confirm | Jeg bekrefter |
 | 295 | `secret_vault` | Encrypted Vault | Kryptert hvelv |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | Det krypterte hvelvet er tomt |
+| - | `press_back_again_to_exit_vault` | Press back again to exit | Trykk tilbake igjen for å avslutte |
+| - | `block_vault_screenshots` | Block screenshots in hidden vault | Blokker skjermbilder i det skjulte hvelvet |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Er du sikker på at du vil dekryptere de(n) skjulte filen(e)? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Kopiering til utklippstavlen er deaktivert av sikkerhetshensyn mens hvelvet er låst opp. |
-| 299 | `on_vault_exit` | On leaving encrypted section | Når du forlater kryptert seksjon |
-| 300 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | Fortsett å vise krypterte album |
-| 301 | `on_vault_exit_hide` | Hide encrypted albums | Skjul krypterte album |
-| 302 | `on_vault_exit_ask_every_time` | Always ask | Spør alltid |
-| 303 | `vault_exit_dialog_title` | Exiting Encrypted Section | Forlater kryptert seksjon |
-| 304 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | Vise kryptert album sammen med andre album?\n\nI så fall må du i løpet av appøkten låse opp det skjulte hvelvet hver gang du sender appen til bakgrunnen og går tilbake til den, eller slår skjermen av og på igjen. |
-| 305 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | Vise krypterte album sammen med andre album?\n\nI så fall må du i løpet av appøkten låse opp det skjulte hvelvet hver gang du sender appen til bakgrunnen og går tilbake til den, eller slår skjermen av og på igjen. |
-| 306 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | For flere alternativer, se Innstillinger &gt; Når du forlater kryptert seksjon |
 | 307 | `stop_showing_hidden` | Stop showing encrypted media | Slutt å vise krypterte medier |
 | 308 | `system_default` | System default | Systemstandard |
 | 309 | `language` | Language | Språk |

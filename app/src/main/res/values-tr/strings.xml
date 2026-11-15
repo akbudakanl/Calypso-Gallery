@@ -311,19 +311,11 @@
     <string name="confirm_checkbox_label">Onaylıyorum</string>
     <string name="secret_vault">Şifreli Kasa</string>
     <string name="secret_vault_empty">Şifreli Kasa boş</string>
+    <string name="press_back_again_to_exit_vault">Çıkmak için geri tuşuna basın</string>
     <string name="confirm_decrypt_hidden_file">Gizli dosyaların şifresini çözmek istediğinizden emin misiniz?</string>
     <string name="decrypt_info_title">Şifre Çözme Nasıl Çalışır?</string>
     <string name="decrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifreli bir albüm veya dosyanın şifresi çözüldüğünde, orijinal adı ve biçimiyle seçilen hedef klasöre aktarılır ve şifreli kasadan çıkarılır.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir klasör mü oluşturulacağını yoksa mevcut klasörle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan şifreli dosyaların kasadan silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
     <string name="copy_to_clipboard_disabled_in_vault">Kasa açıkken güvenlik nedeniyle panoya kopyalama devre dışıdır.</string>
-    <string name="on_vault_exit">Şifreli bölümden çıkıldığında</string>
-    <string name="on_vault_exit_keep_showing">Şifreli albümleri göstermeye devam et</string>
-    <string name="on_vault_exit_hide">Şifreli albümleri gizle</string>
-    <string name="on_vault_exit_ask_every_time">Her zaman sor</string>
-    <string name="on_vault_exit_ask_every_time_default">Her zaman sor (Varsayılan)</string>
-    <string name="vault_exit_dialog_title">Şifreli Bölümden Çıkış</string>
-    <string name="vault_exit_question_single">Şifreli albüm, diğer albümlerle birlikte gösterilmeye devam edilsin mi?\n\nBu durumda uygulama oturumu boyunca uygulamayı arka plana atıp tekrar döndüğünüzde veya ekranı kapatıp tekrar açtığınızda gizli kasa şifresini açmanız gerekir.</string>
-    <string name="vault_exit_question_multiple">Şifreli albümler, diğer albümlerle birlikte gösterilmeye devam edilsin mi?\n\nBu durumda uygulama oturumu boyunca uygulamayı arka plana atıp tekrar döndüğünüzde veya ekranı kapatıp tekrar açtığınızda gizli kasa şifresini açmanız gerekir.</string>
-    <string name="vault_exit_settings_hint">Daha fazla seçenek için Ayarlar &gt; Şifreli bölümden çıkıldığında bölümüne bakın</string>
     <string name="stop_showing_hidden">Şifreli medyayı göstermeyi bırak</string>
     <string name="system_default">Sistem varsayılanı</string>
     <string name="language">Dil</string>
@@ -406,6 +398,7 @@
     <string name="vault_sync_same_folder_error">Seçilen kaynak klasör aktif kasanızla aynı.</string>
     <string name="change_encrypted_vault_password">Şifreli kasa şifresini değiştir</string>
     <string name="biometric_access_to_encrypted_vault">Şifreli kasaya biyometrik ile giriş</string>
+    <string name="block_vault_screenshots">Gizli kasada ekran görüntüsü almayı yasakla</string>
     <string name="empty_encrypted_vault">Şifreli kasayı boşalt</string>
     <string name="enter_new_pin">Yeni PIN\'i girin</string>
     <string name="repeat_new_pin">Yeni PIN\'i tekrarlayın</string>
