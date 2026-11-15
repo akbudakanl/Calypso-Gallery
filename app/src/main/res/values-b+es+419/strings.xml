@@ -446,4 +446,13 @@
     <string name="vault_sync_nothing_to_sync">No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada.</string>
     <string name="vault_sync_same_folder_error">La carpeta de origen seleccionada es la misma que tu bóveda activa.</string>
     <string name="use_for_this_album">Usar solo para este álbum</string>
+    <string name="crypto_duplicate_source_mode_label">Cuando un archivo ya existe en el destino al cifrar o descifrar</string>
+    <string name="crypto_duplicate_source_ask">Preguntar siempre (Predeterminado)</string>
+    <string name="crypto_duplicate_source_keep">Conservar el archivo en la carpeta de origen</string>
+    <string name="crypto_duplicate_source_delete">Eliminar el archivo de la carpeta de origen</string>
+    <string name="crypto_duplicate_source_title">El archivo ya existe en el destino</string>
+    <string name="crypto_duplicate_source_encrypt_message">Algunos de los archivos que estás cifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen?</string>
+    <string name="crypto_duplicate_source_decrypt_message">Algunos de los archivos que estás descifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen?</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">Advertencia: Si eliges \"Conservar\" para archivos sin cifrar, el archivo de origen permanecerá sin cifrar en el almacenamiento.</string>
+    <string name="crypto_duplicate_source_always_ask">Preguntar siempre</string>
 </resources>

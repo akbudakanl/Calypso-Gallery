@@ -650,3 +650,12 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 453 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。 |
 | 454 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 所選的來源資料夾與您使用中的保險箱相同。 |
 | 455 | `use_for_this_album` | Use for this album only | 僅套用於此相簿 |
+| 456 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 加密或解密時若目標資料夾已存在相同檔案 |
+| 457 | `crypto_duplicate_source_ask` | Always ask (Default) | 每次詢問（預設） |
+| 458 | `crypto_duplicate_source_keep` | Keep file in source folder | 保留來源資料夾中的檔案 |
+| 459 | `crypto_duplicate_source_delete` | Delete file from source folder | 刪除來源資料夾中的檔案 |
+| 460 | `crypto_duplicate_source_title` | File Already Exists in Destination | 目標資料夾已存在相同檔案 |
+| 461 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要加密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
+| 462 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要解密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
+| 463 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：若對未加密的檔案選擇「保留」，來源檔案將以未加密狀態繼續留在儲存裝置上。 |
+| 464 | `crypto_duplicate_source_always_ask` | Always ask | 每次詢問 |

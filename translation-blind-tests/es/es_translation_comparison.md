@@ -639,3 +639,12 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 442 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada. |
 | 443 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | La carpeta de origen seleccionada es la misma que su bóveda activa. |
 | 444 | `use_for_this_album` | Use for this album only | Solo para este álbum |
+| 445 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Cuando un archivo ya existe en el destino al cifrar o descifrar |
+| 446 | `crypto_duplicate_source_ask` | Always ask (Default) | Preguntar siempre (Predeterminado) |
+| 447 | `crypto_duplicate_source_keep` | Keep file in source folder | Conservar el archivo en la carpeta de origen |
+| 448 | `crypto_duplicate_source_delete` | Delete file from source folder | Eliminar el archivo de la carpeta de origen |
+| 449 | `crypto_duplicate_source_title` | File Already Exists in Destination | El archivo ya existe en el destino |
+| 450 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás cifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos de la carpeta de origen? |
+| 451 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás descifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos de la carpeta de origen? |
+| 452 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Advertencia: Si eliges \"Conservar\" para archivos sin cifrar, el archivo de origen permanecerá sin cifrar en el almacenamiento. |
+| 453 | `crypto_duplicate_source_always_ask` | Always ask | Preguntar siempre |

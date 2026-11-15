@@ -455,4 +455,13 @@
     <string name="vault_sync_nothing_to_sync">Ingen ventende CLI-krypterte medier (.pending_sync) ble funnet i den valgte mappen.</string>
     <string name="vault_sync_same_folder_error">Den valgte kildemappen er den samme som det aktive hvelvet ditt.</string>
     <string name="use_for_this_album">Bruk kun for dette albumet</string>
+    <string name="crypto_duplicate_source_mode_label">Når en fil allerede finnes i målmappen under kryptering/dekryptering</string>
+    <string name="crypto_duplicate_source_ask">Spør alltid (Standard)</string>
+    <string name="crypto_duplicate_source_keep">Behold filen i kildemappen</string>
+    <string name="crypto_duplicate_source_delete">Slett filen fra kildemappen</string>
+    <string name="crypto_duplicate_source_title">Filen finnes allerede i målmappen</string>
+    <string name="crypto_duplicate_source_encrypt_message">Noen av filene du krypterer finnes allerede i målmappen. Hva skal skje med filene i kildemappen?</string>
+    <string name="crypto_duplicate_source_decrypt_message">Noen av filene du dekrypterer finnes allerede i målmappen. Hva skal skje med filene i kildemappen?</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">Advarsel: Hvis du velger «Behold» for ukrypterte filer, vil kildefilen bli liggende ukryptert på disken.</string>
+    <string name="crypto_duplicate_source_always_ask">Spør alltid</string>
 </resources>

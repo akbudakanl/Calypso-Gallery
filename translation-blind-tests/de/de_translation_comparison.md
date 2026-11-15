@@ -601,3 +601,12 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 440 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Im ausgewählten Ordner wurden keine ausstehenden CLI-verschlüsselten Medien (.pending_sync) gefunden. |
 | 441 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Der ausgewählte Quellordner ist identisch mit deinem aktiven Tresor. |
 | 442 | `use_for_this_album` | Use for this album only | Nur auf dieses Album anwenden |
+| 443 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Wenn eine Datei beim Verschlüsseln/Entschlüsseln bereits im Zielordner existiert |
+| 444 | `crypto_duplicate_source_ask` | Always ask (Default) | Immer fragen (Standard) |
+| 445 | `crypto_duplicate_source_keep` | Keep file in source folder | Datei im Quellordner behalten |
+| 446 | `crypto_duplicate_source_delete` | Delete file from source folder | Datei aus dem Quellordner löschen |
+| 447 | `crypto_duplicate_source_title` | File Already Exists in Destination | Datei existiert bereits im Zielordner |
+| 448 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Einige der zu verschlüsselnden Dateien existieren bereits im Zielordner. Was soll mit den Dateien im Quellordner geschehen? |
+| 449 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Einige der zu entschlüsselnden Dateien existieren bereits im Zielordner. Was soll mit den Dateien im Quellordner geschehen? |
+| 450 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Warnung: Wenn du für unverschlüsselte Dateien „Behalten“ wählst, bleibt die Quelldatei unverschlüsselt auf dem Datenträger. |
+| 451 | `crypto_duplicate_source_always_ask` | Always ask | Immer fragen |
