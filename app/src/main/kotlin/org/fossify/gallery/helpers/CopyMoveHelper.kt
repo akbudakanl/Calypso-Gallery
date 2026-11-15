@@ -40,9 +40,12 @@ import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.FileDirItem
 import org.fossify.gallery.dialogs.CryptoProgressDialog
+import org.fossify.gallery.dialogs.SmartConflictItem
+import org.fossify.gallery.extensions.StandardConflictItem
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.resolveSmartContentConflicts
+import org.fossify.gallery.extensions.resolveStandardFilenameConflicts
 import org.fossify.gallery.extensions.updateDBMediaPath
 import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import java.io.File
@@ -161,32 +164,126 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
             }
         }
 
-        if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
-            ensureBackgroundThread {
-                val conflicts = ArrayList<Pair<String, String>>()
-                val precheckedIdenticalPaths = HashSet<String>()
-                val precheckedNonIdenticalPaths = HashSet<String>()
-                val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>()
-                val destDir = File(destination)
+        when (config.conflictHandlingMode) {
+            CONFLICT_HANDLING_STANDARD_DIALOG -> {
+                ensureBackgroundThread {
+                    val standardConflicts = ArrayList<StandardConflictItem>()
+                    val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>()
+                    val destDir = File(destination)
 
-                fun getIndex(dir: File): CryptoManager.TargetPlainIndex {
-                    return targetIndexes.getOrPut(dir.absolutePath) {
-                        CryptoManager.TargetPlainIndex(dir)
+                    fun getIndex(dir: File): CryptoManager.TargetPlainIndex {
+                        return targetIndexes.getOrPut(dir.absolutePath) {
+                            CryptoManager.TargetPlainIndex(dir)
+                        }
+                    }
+
+                    fun collectStandardFileConflict(srcFile: File, targetDir: File, displayName: String) {
+                        val resolutionKey = File(targetDir, displayName).absolutePath
+                        val exists = getIndex(targetDir).findExact(displayName) != null || getDoesFilePathExist(resolutionKey)
+                        if (exists) {
+                            standardConflicts.add(
+                                StandardConflictItem(
+                                    resolutionKey = resolutionKey,
+                                    fileDirItem = FileDirItem(
+                                        path = srcFile.absolutePath,
+                                        name = displayName,
+                                        isDirectory = false,
+                                        modified = srcFile.lastModified(),
+                                        size = srcFile.length()
+                                    )
+                                )
+                            )
+                        }
+                    }
+
+                    fun collectStandardDirConflicts(sourceDir: File, targetDir: File) {
+                        if (!targetDir.exists() || !targetDir.isDirectory) return
+                        sourceDir.listFiles()?.forEach { child ->
+                            if (child.isDirectory) {
+                                collectStandardDirConflicts(child, File(targetDir, child.name))
+                            } else if (!copyMediaOnly || child.absolutePath.isMediaFile()) {
+                                collectStandardFileConflict(child, targetDir, child.name)
+                            }
+                        }
+                    }
+
+                    for (item in fileDirItems) {
+                        val srcFile = File(item.path)
+                        if (item.isDirectory) {
+                            collectStandardDirConflicts(srcFile, File(destDir, item.name))
+                        } else {
+                            collectStandardFileConflict(srcFile, destDir, item.name)
+                        }
+                    }
+
+                    resolveStandardFilenameConflicts(standardConflicts) { resolutions ->
+                        proceedAfterConflicts(resolutions, emptySet(), emptySet())
                     }
                 }
+            }
+            CONFLICT_HANDLING_SMART_DIALOG -> {
+                ensureBackgroundThread {
+                    val conflicts = ArrayList<SmartConflictItem>()
+                    val precheckedIdenticalPaths = HashSet<String>()
+                    val precheckedNonIdenticalPaths = HashSet<String>()
+                    val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>()
+                    val destDir = File(destination)
 
-                val useFastSampling = config.fastLargeDuplicateCheck
+                    fun getIndex(dir: File): CryptoManager.TargetPlainIndex {
+                        return targetIndexes.getOrPut(dir.absolutePath) {
+                            CryptoManager.TargetPlainIndex(dir)
+                        }
+                    }
 
-                fun collectLocalConflicts(sourceDir: File, targetDir: File) {
-                    if (!targetDir.exists() || !targetDir.isDirectory) return
-                    val index = getIndex(targetDir)
-                    sourceDir.listFiles()?.forEach { child ->
-                        if (child.isDirectory) {
-                            collectLocalConflicts(child, File(targetDir, child.name))
-                        } else if (!copyMediaOnly || child.absolutePath.isMediaFile()) {
+                    val useFastSampling = config.fastLargeDuplicateCheck
+
+                    fun collectLocalConflicts(sourceDir: File, targetDir: File) {
+                        if (!targetDir.exists() || !targetDir.isDirectory) return
+                        val index = getIndex(targetDir)
+                        sourceDir.listFiles()?.forEach { child ->
+                            if (child.isDirectory) {
+                                collectLocalConflicts(child, File(targetDir, child.name))
+                            } else if (!copyMediaOnly || child.absolutePath.isMediaFile()) {
+                                val check = CryptoManager.inspectTransferConflict(
+                                    sourceFile = child,
+                                    targetDir = targetDir,
+                                    isTargetEncrypted = false,
+                                    plainIndex = index,
+                                    fastSampling = useFastSampling,
+                                    context = applicationContext
+                                )
+                                when (check.status) {
+                                    CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
+                                        precheckedIdenticalPaths.add(child.absolutePath)
+                                    }
+                                    CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
+                                        precheckedNonIdenticalPaths.add(child.absolutePath)
+                                        val resolutionKey = File(targetDir, child.name).absolutePath
+                                        conflicts.add(
+                                            SmartConflictItem(
+                                                resolutionKey = resolutionKey,
+                                                displayName = check.displayName ?: child.name,
+                                                sourcePath = child.absolutePath,
+                                                existingPath = check.existingFile?.absolutePath ?: resolutionKey,
+                                                useFastLargeDuplicateCheck = useFastSampling
+                                            )
+                                        )
+                                    }
+                                    CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
+                                }
+                            }
+                        }
+                    }
+
+                    for (item in fileDirItems) {
+                        val srcFile = File(item.path)
+                        if (item.isDirectory) {
+                            collectLocalConflicts(srcFile, File(destDir, item.name))
+                        } else {
+                            val index = getIndex(destDir)
                             val check = CryptoManager.inspectTransferConflict(
-                                sourceFile = child,
-                                targetDir = targetDir,
+                                sourceFile = srcFile,
+                                targetDir = destDir,
                                 isTargetEncrypted = false,
                                 plainIndex = index,
                                 fastSampling = useFastSampling,
@@ -194,51 +291,34 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                             )
                             when (check.status) {
                                 CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
-                                    precheckedIdenticalPaths.add(child.absolutePath)
+                                    precheckedIdenticalPaths.add(srcFile.absolutePath)
                                 }
                                 CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
-                                    precheckedNonIdenticalPaths.add(child.absolutePath)
-                                    conflicts.add(File(targetDir, child.name).absolutePath to (check.displayName ?: child.name))
+                                    precheckedNonIdenticalPaths.add(srcFile.absolutePath)
+                                    val resolutionKey = File(destDir, item.name).absolutePath
+                                    conflicts.add(
+                                        SmartConflictItem(
+                                            resolutionKey = resolutionKey,
+                                            displayName = check.displayName ?: item.name,
+                                            sourcePath = srcFile.absolutePath,
+                                            existingPath = check.existingFile?.absolutePath ?: resolutionKey,
+                                            useFastLargeDuplicateCheck = useFastSampling
+                                        )
+                                    )
                                 }
                                 CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
                             }
                         }
                     }
-                }
 
-                for (item in fileDirItems) {
-                    val srcFile = File(item.path)
-                    if (item.isDirectory) {
-                        collectLocalConflicts(srcFile, File(destDir, item.name))
-                    } else {
-                        val index = getIndex(destDir)
-                        val check = CryptoManager.inspectTransferConflict(
-                            sourceFile = srcFile,
-                            targetDir = destDir,
-                            isTargetEncrypted = false,
-                            plainIndex = index,
-                            fastSampling = useFastSampling,
-                            context = applicationContext
-                        )
-                        when (check.status) {
-                            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
-                                precheckedIdenticalPaths.add(srcFile.absolutePath)
-                            }
-                            CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
-                                precheckedNonIdenticalPaths.add(srcFile.absolutePath)
-                                conflicts.add(File(destDir, item.name).absolutePath to (check.displayName ?: item.name))
-                            }
-                            CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
-                        }
+                    resolveSmartContentConflicts(conflicts) { resolutions ->
+                        proceedAfterConflicts(resolutions, precheckedIdenticalPaths, precheckedNonIdenticalPaths)
                     }
                 }
-
-                resolveSmartContentConflicts(conflicts) { resolutions ->
-                    proceedAfterConflicts(resolutions, precheckedIdenticalPaths, precheckedNonIdenticalPaths)
-                }
             }
-        } else {
-            proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet())
+            else -> {
+                proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet())
+            }
         }
     }
 
@@ -435,6 +515,7 @@ private class CopyMoveRunner(
         destIndex: CryptoManager.TargetPlainIndex
     ): Boolean {
         if (!srcFile.isFile) return false
+        if (activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG) return false
         if (srcFile.absolutePath in config.precheckedIdenticalPaths) return true
         if (srcFile.absolutePath in config.precheckedNonIdenticalPaths) return false
 

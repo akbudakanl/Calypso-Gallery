@@ -855,10 +855,10 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
         binding.settingsConflictHandlingModeHolder.setOnClickListener {
             val dialogBinding = org.fossify.gallery.databinding.DialogConflictHandlingModeBinding.inflate(layoutInflater)
-            if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
-                dialogBinding.conflictHandlingSmartDialog.isChecked = true
-            } else {
-                dialogBinding.conflictHandlingAuto.isChecked = true
+            when (config.conflictHandlingMode) {
+                CONFLICT_HANDLING_SMART_DIALOG -> dialogBinding.conflictHandlingSmartDialog.isChecked = true
+                CONFLICT_HANDLING_AUTO -> dialogBinding.conflictHandlingAuto.isChecked = true
+                else -> dialogBinding.conflictHandlingStandardDialog.isChecked = true
             }
             dialogBinding.fastLargeDuplicateCheckCheckbox.isChecked = config.fastLargeDuplicateCheck
             bindSettingInfoIcon(
@@ -867,12 +867,23 @@ class SettingsActivity : SimpleActivity() {
                 messageResId = R.string.fast_large_duplicate_check_info_message
             )
 
+            fun updateFastCheckState() {
+                val usesDuplicateCheck = !dialogBinding.conflictHandlingStandardDialog.isChecked
+                dialogBinding.fastLargeDuplicateCheckCheckbox.isEnabled = usesDuplicateCheck
+                dialogBinding.fastLargeDuplicateCheckRow.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                dialogBinding.fastLargeDuplicateCheckHint.alpha = if (usesDuplicateCheck) 0.75f else 0.35f
+            }
+            updateFastCheckState()
+            dialogBinding.conflictHandlingRadioGroup.setOnCheckedChangeListener { _, _ ->
+                updateFastCheckState()
+            }
+
             getAlertDialogBuilder()
                 .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
-                    config.conflictHandlingMode = if (dialogBinding.conflictHandlingSmartDialog.isChecked) {
-                        CONFLICT_HANDLING_SMART_DIALOG
-                    } else {
-                        CONFLICT_HANDLING_AUTO
+                    config.conflictHandlingMode = when {
+                        dialogBinding.conflictHandlingSmartDialog.isChecked -> CONFLICT_HANDLING_SMART_DIALOG
+                        dialogBinding.conflictHandlingAuto.isChecked -> CONFLICT_HANDLING_AUTO
+                        else -> CONFLICT_HANDLING_STANDARD_DIALOG
                     }
                     config.fastLargeDuplicateCheck = dialogBinding.fastLargeDuplicateCheckCheckbox.isChecked
                     binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
@@ -885,10 +896,10 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun getConflictHandlingModeText() = getString(
-        if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
-            R.string.conflict_handling_smart_dialog_summary
-        } else {
-            R.string.conflict_handling_auto_summary
+        when (config.conflictHandlingMode) {
+            CONFLICT_HANDLING_SMART_DIALOG -> R.string.conflict_handling_smart_dialog_summary
+            CONFLICT_HANDLING_AUTO -> R.string.conflict_handling_auto_summary
+            else -> R.string.conflict_handling_standard_dialog_summary
         }
     )
 

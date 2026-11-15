@@ -10,6 +10,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogCryptoDuplicateSourceBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CRYPTO_DUPLICATE_SOURCE_DELETE
 import org.fossify.gallery.helpers.CRYPTO_DUPLICATE_SOURCE_KEEP
 
@@ -26,6 +27,10 @@ fun resolveCryptoDuplicateSourceOption(
     onCancelled: (() -> Unit)? = null,
     onResolved: (deleteSourceOnIdentical: Boolean) -> Unit
 ) {
+    if (activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG) {
+        onResolved(false)
+        return
+    }
     when (activity.config.cryptoDuplicateSourceMode) {
         CRYPTO_DUPLICATE_SOURCE_KEEP -> onResolved(false)
         CRYPTO_DUPLICATE_SOURCE_DELETE -> onResolved(true)
