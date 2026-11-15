@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import android.system.Os
 import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
@@ -24,6 +25,7 @@ import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.dateTakensDB
 import org.fossify.gallery.extensions.deleteDBPaths
 import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
 import org.fossify.gallery.extensions.directoryDB
@@ -65,7 +67,9 @@ import android.security.keystore.KeyProperties
 import org.fossify.gallery.databases.GalleryDatabase
 import org.fossify.gallery.extensions.favoritesDB
 import org.fossify.gallery.fragments.VideoFragment
+import org.fossify.gallery.models.DateTaken
 import java.security.KeyStore
+import java.text.SimpleDateFormat
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.crypto.KeyGenerator
@@ -167,6 +171,199 @@ object CryptoManager {
     private const val VAULT_STR_PREFIX = "FVSTR1:"
     const val VAULT_RECYCLE_BIN_NAME = "\$\$VAULT_RECYCLE_BIN\$\$"
     const val VAULT_RESTORE_INFO_FILE = ".restore_info"
+    const val TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 2_000L
+
+    fun areTimestampsEquivalent(
+        tsA: Long,
+        tsB: Long,
+        toleranceMs: Long = TIMESTAMP_EQUIVALENCE_TOLERANCE_MS
+    ): Boolean {
+        if (tsA <= 0L && tsB <= 0L) return true
+        if (tsA <= 0L || tsB <= 0L) return false
+        return kotlin.math.abs(tsA - tsB) <= toleranceMs
+    }
+
+    fun areMediaTimestampsEquivalent(
+        lastModifiedA: Long,
+        dateTakenA: Long,
+        lastModifiedB: Long,
+        dateTakenB: Long,
+        toleranceMs: Long = TIMESTAMP_EQUIVALENCE_TOLERANCE_MS
+    ): Boolean {
+        if (!areTimestampsEquivalent(lastModifiedA, lastModifiedB, toleranceMs)) {
+            return false
+        }
+        if (dateTakenA > 0L && dateTakenB > 0L &&
+            !areTimestampsEquivalent(dateTakenA, dateTakenB, toleranceMs)
+        ) {
+            return false
+        }
+        return true
+    }
+
+    fun areEncryptedTimestampsEquivalent(
+        metaA: EncryptedFileMetadata,
+        metaB: EncryptedFileMetadata,
+        toleranceMs: Long = TIMESTAMP_EQUIVALENCE_TOLERANCE_MS
+    ): Boolean {
+        return areMediaTimestampsEquivalent(
+            metaA.lastModified,
+            metaA.dateTaken,
+            metaB.lastModified,
+            metaB.dateTaken,
+            toleranceMs
+        )
+    }
+
+    internal fun parseExifDateTimeMs(rawDate: String?): Long {
+        val trimmed = rawDate?.trim()?.takeIf { it.length >= 19 } ?: return 0L
+        if (trimmed.startsWith("0000")) return 0L
+        val candidate = trimmed.substring(0, 19)
+        val normalized = buildString(19) {
+            for (i in candidate.indices) {
+                val c = candidate[i]
+                append(
+                    when {
+                        i == 4 || i == 7 -> if (c == '-') ':' else c
+                        i == 10 -> if (c == 'T' || c == 't') ' ' else c
+                        else -> c
+                    }
+                )
+            }
+        }
+        return runCatching {
+            SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.US).apply {
+                isLenient = false
+            }.parse(normalized)?.time ?: 0L
+        }.getOrDefault(0L)
+    }
+
+    private fun parseVideoMetadataDateMs(rawDate: String?): Long {
+        val trimmed = rawDate?.trim()?.takeIf { it.isNotEmpty() } ?: return 0L
+        val compact = trimmed.replace(".000", "")
+        val patterns = listOf(
+            "yyyyMMdd'T'HHmmss'Z'" to true,
+            "yyyyMMdd'T'HHmmss" to false,
+            "yyyy-MM-dd'T'HH:mm:ss'Z'" to true
+        )
+        for ((pattern, useUtc) in patterns) {
+            val parsed = runCatching {
+                SimpleDateFormat(pattern, Locale.US).apply {
+                    isLenient = false
+                    if (useUtc) {
+                        timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    }
+                }.parse(compact)?.time ?: 0L
+            }.getOrDefault(0L)
+            if (parsed > 0L) return parsed
+        }
+        return parseExifDateTimeMs(trimmed)
+    }
+
+    internal fun resolvePlaintextDateTaken(
+        context: Context?,
+        sourceFile: File,
+        fallbackLastModified: Long = sourceFile.lastModified()
+    ): Long {
+        if (context != null) {
+            runCatching {
+                val dbTaken = context.dateTakensDB.getDateTakenFromPath(sourceFile.absolutePath)?.taken ?: 0L
+                if (dbTaken > 0L) return dbTaken
+            }
+            runCatching {
+                val uri = MediaStore.Files.getContentUri("external")
+                val projection = arrayOf(MediaStore.Images.Media.DATE_TAKEN)
+                val selection = "${MediaStore.MediaColumns.DATA} = ?"
+                context.contentResolver?.query(
+                    uri,
+                    projection,
+                    selection,
+                    arrayOf(sourceFile.absolutePath),
+                    null
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val idx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)
+                        if (idx >= 0) {
+                            val storeTaken = cursor.getLong(idx)
+                            if (storeTaken > 0L) return storeTaken
+                        }
+                    }
+                }
+            }
+        }
+        val mediaType = getMediaTypeForName(sourceFile.name)
+        if (mediaType == TYPE_IMAGES) {
+            runCatching {
+                val exif = ExifInterface(sourceFile.absolutePath)
+                val rawDate = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)
+                    ?: exif.getAttribute(ExifInterface.TAG_DATETIME_DIGITIZED)
+                    ?: exif.getAttribute(ExifInterface.TAG_DATETIME)
+                val parsed = parseExifDateTimeMs(rawDate)
+                if (parsed > 0L) return parsed
+            }
+        } else if (mediaType == TYPE_VIDEOS) {
+            runCatching {
+                val retriever = MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(sourceFile.absolutePath)
+                    val rawDate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DATE)
+                    val parsed = parseVideoMetadataDateMs(rawDate)
+                    if (parsed > 0L) return parsed
+                } finally {
+                    retriever.release()
+                }
+            }
+        }
+        return if (fallbackLastModified > 0L) fallbackLastModified else System.currentTimeMillis()
+    }
+
+    internal fun updateMediaStoreTimestamps(
+        context: Context,
+        filePath: String,
+        dateTaken: Long,
+        lastModified: Long
+    ) {
+        runCatching {
+            val values = ContentValues().apply {
+                if (dateTaken > 0L) {
+                    put(MediaStore.Images.Media.DATE_TAKEN, dateTaken)
+                }
+                if (lastModified > 0L) {
+                    put(MediaStore.MediaColumns.DATE_MODIFIED, lastModified / 1000L)
+                }
+            }
+            if (values.size() > 0) {
+                val uri = MediaStore.Files.getContentUri("external")
+                val selection = "${MediaStore.MediaColumns.DATA} = ?"
+                context.contentResolver?.update(uri, values, selection, arrayOf(filePath))
+            }
+        }
+    }
+
+    internal fun persistDecryptedDateTaken(
+        context: Context,
+        outFile: File,
+        dateTaken: Long,
+        lastModified: Long
+    ) {
+        val fullPath = outFile.absolutePath
+        if (dateTaken > 0L) {
+            runCatching {
+                val row = DateTaken(
+                    id = null,
+                    fullPath = fullPath,
+                    filename = outFile.name,
+                    parentPath = outFile.parent ?: fullPath.getParentPath(),
+                    taken = dateTaken,
+                    lastFixed = (System.currentTimeMillis() / 1000L).toInt(),
+                    lastModified = if (lastModified > 0L) lastModified else outFile.lastModified()
+                )
+                context.dateTakensDB.deleteDateTaken(fullPath)
+                context.dateTakensDB.insertAll(listOf(row))
+            }
+        }
+        updateMediaStoreTimestamps(context, fullPath, dateTaken, lastModified)
+    }
 
     // Cryptographic Key Separation Domains & MAC Specifications
     private const val DOMAIN_HEADER_KEY = "FossifyGallery:Header:AES256GCM"
@@ -2370,6 +2567,18 @@ object CryptoManager {
         }
 
         var originalName = sourceFile.name
+        val sourceLastModified = sourceFile.lastModified()
+        val originalSize = sourceFile.length()
+        val sourceMediaType = getMediaTypeForName(originalName)
+        var resolvedDateTaken: Long? = null
+        fun getSourceDateTaken(): Long {
+            return resolvedDateTaken ?: resolvePlaintextDateTaken(
+                context = context,
+                sourceFile = sourceFile,
+                fallbackLastModified = sourceLastModified
+            ).also { resolvedDateTaken = it }
+        }
+
         var activeIndex: TargetEncryptedIndex? = targetIndex
         if (masterKey != null) {
             val index = activeIndex ?: TargetEncryptedIndex(targetDir).also { activeIndex = it }
@@ -2377,6 +2586,18 @@ object CryptoManager {
             if (!skipDuplicateCheck) {
                 val candidates = index.findCandidates(originalName, matchCollisionVariants)
                 for ((existingBin, existingMeta) in candidates) {
+                    if (existingMeta.originalSize != originalSize || existingMeta.mediaType != sourceMediaType) {
+                        continue
+                    }
+                    if (!areMediaTimestampsEquivalent(
+                            sourceLastModified,
+                            getSourceDateTaken(),
+                            existingMeta.lastModified,
+                            existingMeta.dateTaken
+                        )
+                    ) {
+                        continue
+                    }
                     if (arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)) {
                         if (wipeSource && deleteSourceOnIdentical) {
                             val duplicateSourcePath = sourceFile.absolutePath
@@ -2422,10 +2643,9 @@ object CryptoManager {
             }
         }
 
-        val lastModified = sourceFile.lastModified()
-        val dateTaken = lastModified
-        val originalSize = sourceFile.length()
-        val mediaType = getMediaTypeForName(originalName)
+        val lastModified = sourceLastModified
+        val dateTaken = getSourceDateTaken()
+        val mediaType = sourceMediaType
         val videoDuration = if (mediaType == TYPE_VIDEOS) {
             runCatching { context.getDuration(sourceFile.absolutePath) }.getOrNull() ?: 0
         } else {
@@ -2577,7 +2797,9 @@ object CryptoManager {
         targetDir: File,
         originalName: String,
         contentLength: Long = -1L,
-        onProgress: ((bytesRead: Long, totalBytes: Long) -> Unit)? = null
+        onProgress: ((bytesRead: Long, totalBytes: Long) -> Unit)? = null,
+        lastModifiedOverride: Long? = null,
+        dateTakenOverride: Long? = null
     ): File? {
         val masterKey = unlockedMasterKey
         val fileKey: ByteArray
@@ -2601,8 +2823,9 @@ object CryptoManager {
             targetDir.mkdirs()
         }
 
-        val lastModified = System.currentTimeMillis()
-        val dateTaken = lastModified
+        val fallbackNow = System.currentTimeMillis()
+        val lastModified = lastModifiedOverride?.takeIf { it > 0L } ?: fallbackNow
+        val dateTaken = dateTakenOverride?.takeIf { it > 0L } ?: lastModified
         val initialSize = if (contentLength > 0L) contentLength else 0L
         val mediaType = getMediaTypeForName(originalName)
         val videoDuration = 0
@@ -2813,6 +3036,15 @@ object CryptoManager {
         if (!skipDuplicateCheck) {
             val existingVariants = index.findCandidates(meta.originalName, matchCollisionVariants)
             for (existingPlain in existingVariants) {
+                if (existingPlain.length() != meta.originalSize) continue
+                val existingLastMod = existingPlain.lastModified()
+                if (!areTimestampsEquivalent(existingLastMod, meta.lastModified)) continue
+                if (meta.dateTaken > 0L) {
+                    val existingDateTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
+                    if (!areMediaTimestampsEquivalent(existingLastMod, existingDateTaken, meta.lastModified, meta.dateTaken)) {
+                        continue
+                    }
+                }
                 if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta, verifyIntegrity = false)) {
                     val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
                     if (deleteEncryptedSource && deleteSourceOnIdentical && encCanon != plainCanon) {
@@ -2837,7 +3069,12 @@ object CryptoManager {
                         }
                     }
                     if (deleteSourceOnIdentical) {
-                        runCatching { context.rescanPaths(arrayListOf(existingPlain.absolutePath)) }
+                        persistDecryptedDateTaken(context, existingPlain, meta.dateTaken, meta.lastModified)
+                        runCatching {
+                            context.rescanPath(existingPlain.absolutePath) {
+                                updateMediaStoreTimestamps(context, existingPlain.absolutePath, meta.dateTaken, meta.lastModified)
+                            }
+                        }
                     }
                     return if (!deleteSourceOnIdentical) null else existingPlain
                 }
@@ -2875,6 +3112,7 @@ object CryptoManager {
             } ?: return null
 
             outFile.setLastModified(meta.lastModified)
+            persistDecryptedDateTaken(context, outFile, meta.dateTaken, meta.lastModified)
             index.recordFile(outFile)
 
             if (deleteEncryptedSource) {
@@ -2897,7 +3135,11 @@ object CryptoManager {
                     )
                 }
             }
-            runCatching { context.rescanPaths(arrayListOf(outFile.absolutePath)) }
+            runCatching {
+                context.rescanPath(outFile.absolutePath) {
+                    updateMediaStoreTimestamps(context, outFile.absolutePath, meta.dateTaken, meta.lastModified)
+                }
+            }
             outFile
         } catch (e: Exception) {
             outFile.delete()
@@ -3145,23 +3387,10 @@ object CryptoManager {
     }
 
     internal fun isSameOrCollisionVariant(candidateName: String, incomingOriginalName: String): Boolean {
-        if (candidateName.equals(incomingOriginalName, ignoreCase = true)) return true
-        val lastDot = incomingOriginalName.lastIndexOf('.')
-        val stem = if (lastDot > 0) incomingOriginalName.substring(0, lastDot) else incomingOriginalName
-        val ext = if (lastDot > 0) incomingOriginalName.substring(lastDot) else ""
-
-        if (ext.isNotEmpty() && !candidateName.endsWith(ext, ignoreCase = true)) {
-            return false
-        }
-        val candidateBody = candidateName.substring(0, candidateName.length - ext.length)
-        val prefix = "$stem("
-        if (!candidateBody.startsWith(prefix, ignoreCase = true) || !candidateBody.endsWith(")")) {
-            return false
-        }
-        val indexStr = candidateBody.substring(prefix.length, candidateBody.length - 1)
-        return indexStr.isNotEmpty() &&
-            indexStr.all { it in '0'..'9' } &&
-            (indexStr.toIntOrNull() ?: 0) >= 1
+        return stripCollisionIndex(candidateName).equals(
+            stripCollisionIndex(incomingOriginalName),
+            ignoreCase = true
+        )
     }
 
     internal fun stripCollisionIndex(name: String): String {
@@ -3178,7 +3407,10 @@ object CryptoManager {
         return name
     }
 
-    class TargetPlainIndex(val targetDir: File) {
+    class TargetPlainIndex(
+        val targetDir: File,
+        private val preExistingPaths: Set<String>? = null
+    ) {
         private val byExactNameLower = HashMap<String, File>()
         private val byFamilyLower = HashMap<String, MutableList<File>>()
 
@@ -3195,21 +3427,18 @@ object CryptoManager {
         fun recordFile(file: File) {
             val exactLower = file.name.lowercase(Locale.ROOT)
             byExactNameLower[exactLower] = file
-            byFamilyLower.getOrPut(exactLower) { ArrayList(1) }.add(file)
-            val strippedLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
-            if (strippedLower != exactLower) {
-                byFamilyLower.getOrPut(strippedLower) { ArrayList(2) }.add(file)
+            val familyLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
+            byFamilyLower.getOrPut(familyLower) { ArrayList(2) }.apply {
+                removeAll { it.name.equals(file.name, ignoreCase = true) }
+                add(file)
             }
         }
 
         fun removeFile(file: File) {
             val exactLower = file.name.lowercase(Locale.ROOT)
             byExactNameLower.remove(exactLower)
-            byFamilyLower[exactLower]?.removeAll { it.name.equals(file.name, ignoreCase = true) }
-            val strippedLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
-            if (strippedLower != exactLower) {
-                byFamilyLower[strippedLower]?.removeAll { it.name.equals(file.name, ignoreCase = true) }
-            }
+            val familyLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
+            byFamilyLower[familyLower]?.removeAll { it.name.equals(file.name, ignoreCase = true) }
         }
 
         fun findExact(desiredName: String): File? {
@@ -3224,8 +3453,14 @@ object CryptoManager {
             if (!includeCollisionVariants) {
                 return findExact(desiredName)?.let { listOf(it) } ?: emptyList()
             }
-            val list = byFamilyLower[desiredName.lowercase(Locale.ROOT)] ?: return emptyList()
-            return list.filter { isSameOrCollisionVariant(it.name, desiredName) }
+            val familyLower = stripCollisionIndex(desiredName).lowercase(Locale.ROOT)
+            val list = byFamilyLower[familyLower] ?: return emptyList()
+            return list.filter { candidate ->
+                isSameOrCollisionVariant(candidate.name, desiredName) &&
+                    (candidate.name.equals(desiredName, ignoreCase = true) ||
+                        preExistingPaths == null ||
+                        candidate.absolutePath in preExistingPaths)
+            }
         }
 
         fun getAlternativeFile(originalName: String): File {
@@ -3239,7 +3474,10 @@ object CryptoManager {
         }
     }
 
-    class TargetEncryptedIndex(val targetDir: File) {
+    class TargetEncryptedIndex(
+        val targetDir: File,
+        private val preExistingPaths: Set<String>? = null
+    ) {
         private val byBinNameLower = HashMap<String, File>()
         private val byExactNameLower = HashMap<String, MutableList<Pair<File, EncryptedFileMetadata>>>()
         private val byFamilyLower = HashMap<String, MutableList<Pair<File, EncryptedFileMetadata>>>()
@@ -3261,11 +3499,8 @@ object CryptoManager {
             val exactLower = meta.originalName.lowercase(Locale.ROOT)
             val entry = binFile to meta
             byExactNameLower.getOrPut(exactLower) { ArrayList(1) }.add(entry)
-            byFamilyLower.getOrPut(exactLower) { ArrayList(1) }.add(entry)
-            val strippedLower = stripCollisionIndex(meta.originalName).lowercase(Locale.ROOT)
-            if (strippedLower != exactLower) {
-                byFamilyLower.getOrPut(strippedLower) { ArrayList(2) }.add(entry)
-            }
+            val familyLower = stripCollisionIndex(meta.originalName).lowercase(Locale.ROOT)
+            byFamilyLower.getOrPut(familyLower) { ArrayList(2) }.add(entry)
         }
 
         fun addEntry(binFile: File, meta: EncryptedFileMetadata) {
@@ -3288,8 +3523,14 @@ object CryptoManager {
             if (!includeCollisionVariants) {
                 return findExactEntries(desiredName)
             }
-            val list = byFamilyLower[desiredName.lowercase(Locale.ROOT)] ?: return emptyList()
-            return list.filter { (_, meta) -> isSameOrCollisionVariant(meta.originalName, desiredName) }
+            val familyLower = stripCollisionIndex(desiredName).lowercase(Locale.ROOT)
+            val list = byFamilyLower[familyLower] ?: return emptyList()
+            return list.filter { (binFile, meta) ->
+                isSameOrCollisionVariant(meta.originalName, desiredName) &&
+                    (meta.originalName.equals(desiredName, ignoreCase = true) ||
+                        preExistingPaths == null ||
+                        binFile.absolutePath in preExistingPaths)
+            }
         }
 
         fun getAlternativeOriginalName(originalName: String): String {
@@ -3309,11 +3550,8 @@ object CryptoManager {
             removed.forEach { (binFile, _) ->
                 byBinNameLower.remove(binFile.name.lowercase(Locale.ROOT))
             }
-            byFamilyLower[exactLower]?.removeAll { it.first.absolutePath in removedPaths }
-            val strippedLower = stripCollisionIndex(desiredName).lowercase(Locale.ROOT)
-            if (strippedLower != exactLower) {
-                byFamilyLower[strippedLower]?.removeAll { it.first.absolutePath in removedPaths }
-            }
+            val familyLower = stripCollisionIndex(desiredName).lowercase(Locale.ROOT)
+            byFamilyLower[familyLower]?.removeAll { it.first.absolutePath in removedPaths }
             return removed.map { it.first }
         }
     }
@@ -3851,12 +4089,32 @@ object CryptoManager {
         targetDir: File,
         desiredName: String = sourcePlainFile.name,
         targetIndex: TargetPlainIndex? = null,
-        includeCollisionVariants: Boolean = true
+        includeCollisionVariants: Boolean = true,
+        context: Context? = null
     ): File? {
         if (!sourcePlainFile.isFile) return null
+        val srcLastMod = sourcePlainFile.lastModified()
+        var srcDateTaken: Long? = null
+        fun getSrcDateTaken(): Long {
+            return srcDateTaken ?: resolvePlaintextDateTaken(context, sourcePlainFile, srcLastMod).also {
+                srcDateTaken = it
+            }
+        }
+
+        fun matchesPlain(candidate: File): Boolean {
+            if (!candidate.isFile || candidate.length() != sourcePlainFile.length()) return false
+            val candLastMod = candidate.lastModified()
+            if (!areTimestampsEquivalent(srcLastMod, candLastMod)) return false
+            val candTaken = resolvePlaintextDateTaken(context, candidate, candLastMod)
+            if (!areMediaTimestampsEquivalent(srcLastMod, getSrcDateTaken(), candLastMod, candTaken)) {
+                return false
+            }
+            return arePlainFilesIdentical(sourcePlainFile, candidate)
+        }
+
         if (targetIndex != null) {
             val candidates = targetIndex.findCandidates(desiredName, includeCollisionVariants)
-            return candidates.firstOrNull { arePlainFilesIdentical(sourcePlainFile, it) }
+            return candidates.firstOrNull { matchesPlain(it) }
         }
         if (!targetDir.exists() || !targetDir.isDirectory) return null
         val candidates = if (includeCollisionVariants) {
@@ -3873,7 +4131,7 @@ object CryptoManager {
                 } ?: return null
             }
         }
-        return candidates.firstOrNull { arePlainFilesIdentical(sourcePlainFile, it) }
+        return candidates.firstOrNull { matchesPlain(it) }
     }
 
     enum class TransferConflictStatus {
@@ -3894,7 +4152,8 @@ object CryptoManager {
         plainIndex: TargetPlainIndex? = null,
         encryptedIndex: TargetEncryptedIndex? = null,
         desiredPlainName: String? = null,
-        fastSampling: Boolean = false
+        fastSampling: Boolean = false,
+        context: Context? = null
     ): TransferConflictCheck {
         if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) {
             return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
@@ -3916,6 +4175,17 @@ object CryptoManager {
         }
 
         val desiredName = desiredPlainName ?: sourceMeta?.originalName ?: sourceFile.name
+        val sourceLastMod = sourceMeta?.lastModified ?: sourceFile.lastModified()
+        val sourceOrigSize = sourceMeta?.originalSize ?: sourceFile.length()
+        val sourceMediaType = sourceMeta?.mediaType ?: getMediaTypeForName(desiredName)
+        var resolvedSourceDateTaken: Long? = sourceMeta?.dateTaken
+        fun getSourceDateTaken(): Long {
+            return resolvedSourceDateTaken ?: resolvePlaintextDateTaken(
+                context = context,
+                sourceFile = sourceFile,
+                fallbackLastModified = sourceLastMod
+            ).also { resolvedSourceDateTaken = it }
+        }
 
         if (isTargetEncrypted) {
             if (unlockedMasterKey == null) {
@@ -3927,7 +4197,20 @@ object CryptoManager {
                 return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
             }
 
-            for ((existingBin, existingMeta) in exactEntries) {
+            val candidates = index.findCandidates(desiredName, includeCollisionVariants = true)
+            for ((existingBin, existingMeta) in candidates) {
+                if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
+                    continue
+                }
+                if (!areMediaTimestampsEquivalent(
+                        sourceLastMod,
+                        getSourceDateTaken(),
+                        existingMeta.lastModified,
+                        existingMeta.dateTaken
+                    )
+                ) {
+                    continue
+                }
                 val identical = if (isSourceEncrypted && sourceMeta != null) {
                     areEncryptedFilesIdenticalContent(
                         sourceFile,
@@ -3953,25 +4236,35 @@ object CryptoManager {
             return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
         } else {
             val index = plainIndex ?: TargetPlainIndex(targetDir)
-            val existingPlain = index.findExact(desiredName)
+            index.findExact(desiredName)
                 ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
 
-            val identical = if (isSourceEncrypted && sourceMeta != null) {
-                arePlainAndEncryptedIdentical(
-                    existingPlain,
-                    sourceFile,
-                    sourceMeta,
-                    verifyIntegrity = false,
-                    fastSampling = fastSampling
-                )
-            } else {
-                arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
+            val candidates = index.findCandidates(desiredName, includeCollisionVariants = true)
+            for (existingPlain in candidates) {
+                if (existingPlain.length() != sourceOrigSize) continue
+                val existingLastMod = existingPlain.lastModified()
+                if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+                val srcTaken = getSourceDateTaken()
+                val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
+                if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+                    continue
+                }
+                val identical = if (isSourceEncrypted && sourceMeta != null) {
+                    arePlainAndEncryptedIdentical(
+                        existingPlain,
+                        sourceFile,
+                        sourceMeta,
+                        verifyIntegrity = false,
+                        fastSampling = fastSampling
+                    )
+                } else {
+                    arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
+                }
+                if (identical) {
+                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
+                }
             }
-            return if (identical) {
-                TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
-            } else {
-                TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
-            }
+            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
         }
     }
 
@@ -3981,7 +4274,8 @@ object CryptoManager {
         isTargetEncrypted: Boolean,
         plainIndex: TargetPlainIndex? = null,
         encryptedIndex: TargetEncryptedIndex? = null,
-        includeCollisionVariants: Boolean = true
+        includeCollisionVariants: Boolean = true,
+        context: Context? = null
     ): String? {
         if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
         val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
@@ -3997,6 +4291,17 @@ object CryptoManager {
         if (isSourceEncrypted && sourceMeta == null) return null
 
         val desiredName = sourceMeta?.originalName ?: sourceFile.name
+        val sourceLastMod = sourceMeta?.lastModified ?: sourceFile.lastModified()
+        val sourceOrigSize = sourceMeta?.originalSize ?: sourceFile.length()
+        val sourceMediaType = sourceMeta?.mediaType ?: getMediaTypeForName(desiredName)
+        var resolvedSourceDateTaken: Long? = sourceMeta?.dateTaken
+        fun getSourceDateTaken(): Long {
+            return resolvedSourceDateTaken ?: resolvePlaintextDateTaken(
+                context = context,
+                sourceFile = sourceFile,
+                fallbackLastModified = sourceLastMod
+            ).also { resolvedSourceDateTaken = it }
+        }
 
         if (isTargetEncrypted) {
             if (unlockedMasterKey == null) return null
@@ -4004,6 +4309,18 @@ object CryptoManager {
             val candidates = index.findCandidates(desiredName, includeCollisionVariants)
 
             for ((existingBin, existingMeta) in candidates) {
+                if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
+                    continue
+                }
+                if (!areMediaTimestampsEquivalent(
+                        sourceLastMod,
+                        getSourceDateTaken(),
+                        existingMeta.lastModified,
+                        existingMeta.dateTaken
+                    )
+                ) {
+                    continue
+                }
                 val identical = if (isSourceEncrypted && sourceMeta != null) {
                     areEncryptedFilesIdenticalContent(sourceFile, sourceMeta, existingBin, existingMeta)
                 } else {
@@ -4018,6 +4335,14 @@ object CryptoManager {
             val candidates = index.findCandidates(desiredName, includeCollisionVariants)
 
             for (existingPlain in candidates) {
+                if (existingPlain.length() != sourceOrigSize) continue
+                val existingLastMod = existingPlain.lastModified()
+                if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+                val srcTaken = getSourceDateTaken()
+                val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
+                if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+                    continue
+                }
                 val identical = if (isSourceEncrypted && sourceMeta != null) {
                     arePlainAndEncryptedIdentical(existingPlain, sourceFile, sourceMeta)
                 } else {
@@ -4055,7 +4380,9 @@ object CryptoManager {
         if (!skipDuplicateCheck) {
             val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
             for ((existingBin, existingMeta) in candidates) {
-                if (areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)) {
+                if (areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
+                    areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)
+                ) {
                     if (isMove && deleteSourceOnIdentical) {
                         runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
                         runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
@@ -4331,9 +4658,10 @@ object CryptoManager {
                     }
                     val collisionCandidates = index.findCandidates(sourceMeta.originalName, includeCollisionVariants = true)
 
-                    // Stage 2: O(1) length + contentIv + Poly1305 trailer match before full integrity scan
+                    // Stage 2: O(1) length + contentIv + Poly1305 trailer + timestamp match before full integrity scan
                     if (collisionCandidates.any { (existingFile, existingMeta) ->
-                            isFastMacMatchDuplicate(sourceBin, sourceMeta, existingFile, existingMeta)
+                            areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
+                                isFastMacMatchDuplicate(sourceBin, sourceMeta, existingFile, existingMeta)
                         }
                     ) {
                         skippedDuplicateCount++
@@ -4342,10 +4670,11 @@ object CryptoManager {
                         continue
                     }
 
-                    // Stage 3/4: Filter to exact size + mediaType matches and compare + verify MAC in 1 pass
+                    // Stage 3/4: Filter to exact size + mediaType + timestamp matches and compare + verify MAC in 1 pass
                     val sizeMatchingCandidates = collisionCandidates.filter { (_, existingMeta) ->
                         existingMeta.originalSize == sourceMeta.originalSize &&
-                            existingMeta.mediaType == sourceMeta.mediaType
+                            existingMeta.mediaType == sourceMeta.mediaType &&
+                            areEncryptedTimestampsEquivalent(sourceMeta, existingMeta)
                     }
                     if (sizeMatchingCandidates.isNotEmpty()) {
                         var matchOutcome = StreamCompareMacResult.MISMATCH
@@ -4657,7 +4986,7 @@ object CryptoManager {
         onProgress?.invoke(0, total)
 
         val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
-        val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder) else null
+        val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder, preExistingBinPaths) else null
         val newlyCreatedBins = ArrayList<File>()
         val encryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false
@@ -4961,7 +5290,7 @@ object CryptoManager {
         onProgress?.invoke(0, total)
 
         val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
-        val targetPlainIndex = TargetPlainIndex(targetFolder)
+        val targetPlainIndex = TargetPlainIndex(targetFolder, preExistingPlainPaths)
         val newlyCreatedPlainFiles = ArrayList<File>()
         val decryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false

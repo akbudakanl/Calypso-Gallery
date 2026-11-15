@@ -1197,13 +1197,237 @@ class CustomVaultLocationTest {
         )
     }
 
-    private fun encryptBytesForTest(targetDir: File, originalName: String, payload: ByteArray): File {
+    @Test
+    fun timestampEquivalence_keepsOldAndNewBitIdenticalCopies_and_deduplicatesMatchingTimestamps() {
+        val masterKey = ByteArray(32) { (it + 7).toByte() }
+        setMasterKey(masterKey)
+
+        val payload = ByteArray(4096) { (it * 13 + 3).toByte() }
+        val ts2021 = 1_620_000_000_000L // May 2021
+        val ts2026 = 1_770_000_000_000L // Feb 2026
+
+        // 1. encryptFileToDirectory: keep both 2021 and 2026 copies as photo.jpg and photo(1).jpg, idempotently skip repeat 2026
+        val plainSrc = File(tempRoot, "plain_src").apply { mkdirs() }
+        val encTarget = File(tempRoot, "enc_target").apply { mkdirs() }
+
+        val src2021 = File(plainSrc, "photo.jpg").apply {
+            writeBytes(payload)
+            setLastModified(ts2021)
+        }
+        val enc2021 = CryptoManager.encryptFileToDirectory(testContext, src2021, encTarget, wipeSource = false)
+        assertNotNull(enc2021)
+        assertEquals("photo.jpg", CryptoManager.readMetadata(enc2021!!, includeThumbnail = false, cacheResult = false)!!.originalName)
+
+        val src2026 = File(plainSrc, "photo.jpg").apply {
+            writeBytes(payload)
+            setLastModified(ts2026)
+        }
+        val enc2026 = CryptoManager.encryptFileToDirectory(testContext, src2026, encTarget, wipeSource = false)
+        assertNotNull(enc2026)
+        assertFalse(enc2026!!.absolutePath == enc2021.absolutePath)
+        assertEquals("photo(1).jpg", CryptoManager.readMetadata(enc2026, includeThumbnail = false, cacheResult = false)!!.originalName)
+
+        // Repeat encrypt of 2026 copy must idempotently match photo(1).jpg (with wipeSource=true -> delete source without creating photo(2).jpg)
+        val src2026Repeat = File(tempRoot, "repeat/photo.jpg").apply {
+            parentFile!!.mkdirs()
+            writeBytes(payload)
+            setLastModified(ts2026 + 1_200L) // within FAT32 2s tolerance
+        }
+        val dedupResult = CryptoManager.encryptFileToDirectory(testContext, src2026Repeat, encTarget, wipeSource = true)
+        assertEquals(enc2026.absolutePath, dedupResult?.absolutePath)
+        assertFalse(src2026Repeat.exists())
+        assertEquals(2, encTarget.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+
+        // 2. decryptFileToDirectory: keep both 2021 and 2026 plaintext copies, idempotently match 2026 on repeat
+        val plainOut = File(tempRoot, "plain_out").apply { mkdirs() }
+        val dec2021 = CryptoManager.decryptFileToDirectory(testContext, enc2021, plainOut, deleteEncryptedSource = false)
+        assertEquals("photo.jpg", dec2021?.name)
+        val dec2026 = CryptoManager.decryptFileToDirectory(testContext, enc2026, plainOut, deleteEncryptedSource = false)
+        assertEquals("photo(1).jpg", dec2026?.name)
+        val enc2026Copy = encryptBytesForTest(
+            targetDir = File(tempRoot, "enc_extra").apply { mkdirs() },
+            originalName = "photo.jpg",
+            payload = payload,
+            lastModifiedOverride = ts2026 + 1_000L,
+            dateTakenOverride = ts2026 + 1_000L
+        )
+        val dec2026Repeat = CryptoManager.decryptFileToDirectory(testContext, enc2026Copy, plainOut, deleteEncryptedSource = true)
+        assertEquals(dec2026?.absolutePath, dec2026Repeat?.absolutePath)
+        assertFalse(enc2026Copy.exists())
+        assertEquals(2, plainOut.listFiles()?.size)
+
+        // 3. copyOrMoveEncryptedFileToDirectory: keep both 2021 and 2026 .bin inside another album, idempotently match on repeat
+        val otherAlbum = File(tempRoot, "enc_other").apply { mkdirs() }
+        val copied2021 = CryptoManager.copyOrMoveEncryptedFileToDirectory(testContext, enc2021, otherAlbum, isMove = false)
+        val copied2026 = CryptoManager.copyOrMoveEncryptedFileToDirectory(testContext, enc2026, otherAlbum, isMove = false)
+        assertNotNull(copied2021)
+        assertNotNull(copied2026)
+        assertEquals(2, otherAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+        assertEquals(
+            copied2026!!.absolutePath,
+            CryptoManager.copyOrMoveEncryptedFileToDirectory(testContext, enc2026, otherAlbum, isMove = false)?.absolutePath
+        )
+        assertEquals(2, otherAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+
+        // 4. inspectTransferConflict: different timestamp -> NAME_CONFLICT; within 2s -> IDENTICAL_SKIP; across family -> IDENTICAL_SKIP
+        val probeDir = File(tempRoot, "probe").apply { mkdirs() }
+        val probe2021 = File(probeDir, "photo.jpg").apply {
+            writeBytes(payload)
+            setLastModified(ts2021)
+        }
+        val probe2026 = File(tempRoot, "probe_new/photo.jpg").apply {
+            parentFile!!.mkdirs()
+            writeBytes(payload)
+            setLastModified(ts2026)
+        }
+        val probe2021Tolerance = File(tempRoot, "probe_tol/photo.jpg").apply {
+            parentFile!!.mkdirs()
+            writeBytes(payload)
+            setLastModified(ts2021 + 1_500L)
+        }
+        val encTargetOne = File(tempRoot, "enc_one").apply { mkdirs() }
+        CryptoManager.copyOrMoveEncryptedFileToDirectory(testContext, enc2021, encTargetOne, isMove = false)
+
+        // With only 2021 in target, incoming 2026 must trigger NAME_CONFLICT (not IDENTICAL_SKIP), while 2021+1.5s -> IDENTICAL_SKIP
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(probe2026, encTargetOne, isTargetEncrypted = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(probe2021Tolerance, encTargetOne, isTargetEncrypted = true).status
+        )
+        // With both 2021 (photo.jpg) and 2026 (photo(1).jpg) in encTarget, incoming 2026 must hit IDENTICAL_SKIP across family
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(probe2026, encTarget, isTargetEncrypted = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(probe2026, plainOut, isTargetEncrypted = false).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(probe2026, probeDir, isTargetEncrypted = false).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(probe2021Tolerance, probeDir, isTargetEncrypted = false).status
+        )
+        assertTrue(probe2021.exists())
+    }
+
+    @Test
+    fun syncVaultFromExternalDirectory_keepsDifferentTimestampCopyAsCollisionVariant_andSkipsRepeat() {
+        val masterKey = ByteArray(32) { (it + 19).toByte() }
+        setMasterKey(masterKey)
+
+        val vaultRoot = CryptoManager.createVaultRoot(testContext, File(tempRoot, "vault_host").apply { mkdirs() })!!
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        CryptoManager.setVaultRootLocation(testContext, vaultRoot)
+        val vaultAlbum = File(vaultRoot, "ab12cd").apply { mkdirs() }
+        writeMetaV2(vaultAlbum, masterKey, "Trips")
+
+        val payload = ByteArray(8192) { (it * 7 + 1).toByte() }
+        val ts2021 = 1_620_000_000_000L
+        val ts2026 = 1_770_000_000_000L
+
+        encryptBytesForTest(
+            targetDir = vaultAlbum,
+            originalName = "photo.jpg",
+            payload = payload,
+            lastModifiedOverride = ts2021,
+            dateTakenOverride = ts2021
+        )
+
+        val extRoot = File(tempRoot, "ext_sync").apply { mkdirs() }
+        val extAlbum = File(extRoot, "ef99aa").apply { mkdirs() }
+        writeMetaV2(extAlbum, masterKey, "Trips")
+        encryptBytesForTest(
+            targetDir = extAlbum,
+            originalName = "photo.jpg",
+            payload = payload,
+            lastModifiedOverride = ts2026,
+            dateTakenOverride = ts2026
+        )
+
+        val firstSync = CryptoManager.syncVaultFromExternalDirectory(
+            context = testContext,
+            sourceDir = extRoot,
+            requirePendingManifest = false
+        )
+        assertNotNull(firstSync)
+        assertEquals(0, firstSync!!.skippedDuplicateCount)
+        assertEquals(1, firstSync.renamedCount)
+        assertEquals(2, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+
+        val secondSync = CryptoManager.syncVaultFromExternalDirectory(
+            context = testContext,
+            sourceDir = extRoot,
+            requirePendingManifest = false
+        )
+        assertNotNull(secondSync)
+        assertEquals(1, secondSync!!.skippedDuplicateCount)
+        assertEquals(0, secondSync.copiedCount + secondSync.renamedCount)
+        assertEquals(2, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+    }
+
+    @Test
+    fun encryptFolder_and_decryptFolder_preserveSameTimestampSiblingVariantsInSameFolder() {
+        val masterKey = ByteArray(32) { (it + 31).toByte() }
+        setMasterKey(masterKey)
+
+        val vaultHost = File(tempRoot, "vault_siblings").apply { mkdirs() }
+        val siblingVaultRoot = CryptoManager.createVaultRoot(testContext, vaultHost)!!
+        File(siblingVaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        CryptoManager.setVaultRootLocation(testContext, siblingVaultRoot)
+        testContext.config.internalStoragePath = tempRoot.absolutePath
+
+        val payload = ByteArray(2048) { (it * 5 + 11).toByte() }
+        val sharedTs = 1_700_000_000_000L
+        val srcFolder = File(tempRoot, "SiblingAlbum").apply { mkdirs() }
+        File(srcFolder, "photo.jpg").apply {
+            writeBytes(payload)
+            setLastModified(sharedTs)
+        }
+        File(srcFolder, "photo(1).jpg").apply {
+            writeBytes(payload)
+            setLastModified(sharedTs)
+        }
+
+        val encAlbumPath = CryptoManager.encryptFolder(testContext, srcFolder.absolutePath)
+        assertNotNull(encAlbumPath)
+        val encAlbum = File(encAlbumPath!!)
+        val encFiles = encAlbum.listFiles()?.filter { it.name.endsWith(ENCRYPTED_BIN_EXT) }.orEmpty()
+        assertEquals(2, encFiles.size)
+        val encOriginalNames = encFiles.map {
+            CryptoManager.readMetadata(it, includeThumbnail = false, cacheResult = false)!!.originalName
+        }.toSet()
+        assertEquals(setOf("photo.jpg", "photo(1).jpg"), encOriginalNames)
+
+        val restoreTarget = File(tempRoot, "restored/SiblingAlbum").apply { parentFile!!.mkdirs() }
+        val decFolderPath = CryptoManager.decryptFolder(testContext, encAlbum.absolutePath, targetFolderOverride = restoreTarget)
+        assertNotNull(decFolderPath)
+        val decFolder = File(decFolderPath!!)
+        val decNames = decFolder.listFiles()?.map { it.name }?.toSet().orEmpty()
+        assertEquals(setOf("photo.jpg", "photo(1).jpg"), decNames)
+    }
+
+    private fun encryptBytesForTest(
+        targetDir: File,
+        originalName: String,
+        payload: ByteArray,
+        lastModifiedOverride: Long? = null,
+        dateTakenOverride: Long? = null
+    ): File {
         return CryptoManager.encryptStreamToDirectory(
             context = null,
             inputStream = ByteArrayInputStream(payload),
             targetDir = targetDir,
             originalName = originalName,
-            contentLength = payload.size.toLong()
+            contentLength = payload.size.toLong(),
+            lastModifiedOverride = lastModifiedOverride,
+            dateTakenOverride = dateTakenOverride
         )!!
     }
 

@@ -37,6 +37,7 @@ import getpass
 import argparse
 import subprocess
 import shutil
+from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 from io import BytesIO
@@ -1102,6 +1103,47 @@ def append_pending_sync_entries(output_dir: Path, created_bins: list[Path]) -> P
     return pending_file
 
 
+def extract_date_taken_ms(source_path: Path, fallback_ms: int) -> int:
+    """Extracts EXIF capture timestamp in milliseconds, falling back to fallback_ms."""
+    if not HAS_PIL:
+        return fallback_ms
+    try:
+        with Image.open(source_path) as img:
+            exif = img.getexif()
+            if not exif:
+                return fallback_ms
+            exif_ifd = {}
+            get_ifd = getattr(exif, "get_ifd", None)
+            if callable(get_ifd):
+                try:
+                    exif_ifd = get_ifd(0x8769) or {}
+                except Exception:
+                    exif_ifd = {}
+            raw = (
+                exif_ifd.get(36867)
+                or exif.get(36867)
+                or exif_ifd.get(36868)
+                or exif.get(36868)
+                or exif.get(306)
+            )
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8", errors="ignore")
+            if not isinstance(raw, str):
+                return fallback_ms
+            text = raw.strip()
+            if len(text) < 19 or text.startswith("0000"):
+                return fallback_ms
+            candidate = text[:19]
+            normalized = (
+                f"{candidate[:4]}:{candidate[5:7]}:{candidate[8:10]} {candidate[11:19]}"
+            )
+            parsed = datetime.strptime(normalized, "%Y:%m:%d %H:%M:%S")
+            ms = int(parsed.timestamp() * 1000)
+            return ms if ms > 0 else fallback_ms
+    except Exception:
+        return fallback_ms
+
+
 def encrypt_file(
     source_path: Path,
     target_dir: Path,
@@ -1116,8 +1158,8 @@ def encrypt_file(
     orig_name = source_path.name
     orig_size = stat.st_size
     last_mod = int(stat.st_mtime * 1000)
-    date_taken = last_mod
     media_type = get_media_type(orig_name)
+    date_taken = extract_date_taken_ms(source_path, last_mod) if media_type == TYPE_IMAGES else last_mod
     video_duration = 0
 
     thumb_bytes = generate_thumbnail_bytes(source_path) if media_type == TYPE_IMAGES else b""

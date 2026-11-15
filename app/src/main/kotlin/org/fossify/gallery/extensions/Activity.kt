@@ -1522,7 +1522,8 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                                     isTargetEncrypted = false,
                                     plainIndex = plainIndex,
                                     desiredPlainName = desiredName,
-                                    fastSampling = config.fastLargeDuplicateCheck
+                                    fastSampling = config.fastLargeDuplicateCheck,
+                                    context = this
                                 )
                                 when (check.status) {
                                     CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
@@ -1947,7 +1948,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                 isTargetEncrypted = isDestEncrypted,
                                 plainIndex = plainIndex,
                                 encryptedIndex = encIndex,
-                                fastSampling = config.fastLargeDuplicateCheck
+                                fastSampling = config.fastLargeDuplicateCheck,
+                                context = this
                             )
                             when (check.status) {
                                 CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
