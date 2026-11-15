@@ -417,6 +417,7 @@
     <string name="album_crypto_conflict_mode_label">相簿衝突（加密 / 解密）</string>
     <string name="album_crypto_conflict_ask">一律詢問（預設）</string>
     <string name="album_crypto_conflict_merge">合併至現有相簿</string>
+    <string name="album_crypto_conflict_merge_delete_identical">合併至現有相簿並自動刪除相同來源</string>
     <string name="album_crypto_conflict_rename">建立新相簿為 (1)</string>
     <string name="album_crypto_conflict_title">相簿已存在</string>
     <string name="album_crypto_conflict_message">目的地已存在名為「%s」的相簿。您要如何處理？</string>

@@ -432,6 +432,7 @@
     <string name="album_crypto_conflict_mode_label">Album conflict (Encrypt / Decrypt)</string>
     <string name="album_crypto_conflict_ask">Always ask (Default)</string>
     <string name="album_crypto_conflict_merge">Merge into existing album</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Merge into existing album and automatically delete identical sources</string>
     <string name="album_crypto_conflict_rename">Create new album as (1)</string>
     <string name="album_crypto_conflict_title">Album Already Exists</string>
     <string name="album_crypto_conflict_message">An album named \"%s\" already exists at the destination. How would you like to proceed?</string>

@@ -487,6 +487,7 @@
     <string name="album_crypto_conflict_mode_label">Albom ziddiyyəti (Şifrələ / Şifrəsini aç)</string>
     <string name="album_crypto_conflict_ask">Həmişə soruş (Susmaya görə)</string>
     <string name="album_crypto_conflict_merge">Mövcud alboma birləşdir</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Mövcud alboma birləşdir və eyni mənbələri avtomatik sil</string>
     <string name="album_crypto_conflict_rename">Yeni albomu (1) kimi yarat</string>
     <string name="album_crypto_conflict_title">Albom artıq mövcuddur</string>
     <string name="album_crypto_conflict_message">Təyinat yerində \"%s\" adlı albom artıq mövcuddur. Necə davam etmək istəyirsiniz?</string>

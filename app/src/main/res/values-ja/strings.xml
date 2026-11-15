@@ -420,6 +420,7 @@
     <string name="album_crypto_conflict_mode_label">アルバムの競合（暗号化 / 復号）</string>
     <string name="album_crypto_conflict_ask">毎回確認（既定）</string>
     <string name="album_crypto_conflict_merge">既存のアルバムに統合</string>
+    <string name="album_crypto_conflict_merge_delete_identical">既存のアルバムに統合して同一の元ファイルを自動削除</string>
     <string name="album_crypto_conflict_rename">新しいアルバムを (1) として作成</string>
     <string name="album_crypto_conflict_title">アルバムは既に存在します</string>
     <string name="album_crypto_conflict_message">保存先に「%s」という名前のアルバムが既に存在します。どのように処理しますか？</string>

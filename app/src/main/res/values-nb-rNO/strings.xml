@@ -434,6 +434,7 @@
     <string name="album_crypto_conflict_mode_label">Albumkonflikt (Krypter / Dekrypter)</string>
     <string name="album_crypto_conflict_ask">Spør alltid (Standard)</string>
     <string name="album_crypto_conflict_merge">Slå sammen med eksisterende album</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Slå sammen med eksisterende album og slett identiske kilder automatisk</string>
     <string name="album_crypto_conflict_rename">Opprett nytt album som (1)</string>
     <string name="album_crypto_conflict_title">Albumet finnes allerede</string>
     <string name="album_crypto_conflict_message">Et album med navnet \"%s\" finnes allerede på målet. Hvordan vil du fortsette?</string>
