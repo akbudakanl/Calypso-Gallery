@@ -8,11 +8,12 @@ import org.junit.Test
 class VaultLockPolicyTest {
 
     @Test
-    fun armsReauthOnlyWhenVaultIsUnlockedAndExists() {
-        assertTrue(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = true, hasExistingVault = true))
-        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = false, hasExistingVault = true))
-        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = true, hasExistingVault = false))
-        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = false, hasExistingVault = false))
+    fun armsReauthOnlyWhenVaultIsUnlockedExistsAndInVaultSession() {
+        assertTrue(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = true, hasExistingVault = true, isInVaultSession = true))
+        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = true, hasExistingVault = true, isInVaultSession = false))
+        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = false, hasExistingVault = true, isInVaultSession = true))
+        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = true, hasExistingVault = false, isInVaultSession = true))
+        assertFalse(VaultLockPolicy.shouldArmReauth(isVaultUnlocked = false, hasExistingVault = false, isInVaultSession = false))
     }
 
     @Test

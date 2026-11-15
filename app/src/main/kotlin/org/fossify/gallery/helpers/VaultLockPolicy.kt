@@ -5,8 +5,12 @@ package org.fossify.gallery.helpers
  * upon returning from background or turning the screen back on.
  */
 object VaultLockPolicy {
-    fun shouldArmReauth(isVaultUnlocked: Boolean, hasExistingVault: Boolean): Boolean {
-        return isVaultUnlocked && hasExistingVault
+    fun shouldArmReauth(
+        isVaultUnlocked: Boolean,
+        hasExistingVault: Boolean,
+        isInVaultSession: Boolean
+    ): Boolean {
+        return isVaultUnlocked && hasExistingVault && isInVaultSession
     }
 
     fun shouldShowLockScreen(

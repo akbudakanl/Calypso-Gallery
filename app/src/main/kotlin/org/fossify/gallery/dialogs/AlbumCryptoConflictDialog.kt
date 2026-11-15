@@ -18,6 +18,7 @@ import org.fossify.gallery.helpers.CryptoManager
 fun resolveAlbumCryptoOptions(
     activity: Activity,
     conflicts: List<CryptoManager.AlbumConflictPreview>,
+    onCancel: (() -> Unit)? = null,
     callback: (CryptoManager.AlbumCryptoOptions) -> Unit
 ) {
     if (conflicts.isEmpty()) {
@@ -48,7 +49,7 @@ fun resolveAlbumCryptoOptions(
             )
         }
         else -> {
-            AlbumCryptoConflictDialog(activity, conflicts, callback)
+            AlbumCryptoConflictDialog(activity, conflicts, onCancel, callback)
         }
     }
 }
@@ -56,8 +57,11 @@ fun resolveAlbumCryptoOptions(
 class AlbumCryptoConflictDialog(
     val activity: Activity,
     val conflicts: List<CryptoManager.AlbumConflictPreview>,
+    val onCancel: (() -> Unit)? = null,
     val callback: (CryptoManager.AlbumCryptoOptions) -> Unit
 ) {
+    private var handled = false
+
     init {
         val isMultiple = conflicts.size > 1
         val first = conflicts.first()
@@ -84,6 +88,7 @@ class AlbumCryptoConflictDialog(
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                handled = true
                 val isMerge = binding.albumCryptoConflictMerge.isChecked
                 if (binding.albumCryptoDontAskAgain.isChecked) {
                     activity.config.albumCryptoConflictMode = if (isMerge) {
@@ -103,7 +108,18 @@ class AlbumCryptoConflictDialog(
                     )
                 )
             }
-            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
+            .setOnCancelListener {
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
             .apply {
                 activity.setupDialogStuff(binding.root, this, R.string.album_crypto_conflict_title)
             }

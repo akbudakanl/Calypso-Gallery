@@ -1198,6 +1198,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             mHiddenDisplayMode = DISPLAY_NONE
             CryptoManager.lockVault()
             CryptoManager.clearAppImageCaches(this)
+            VaultSessionManager.onVaultExited()
         }
         updateVaultModeUi()
         binding.directoriesGrid.adapter = null
