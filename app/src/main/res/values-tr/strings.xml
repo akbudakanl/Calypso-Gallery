@@ -445,4 +445,13 @@
     <string name="lock_album">Albümü kilitle</string>
     <string name="unlock_album">Albümün kilidini aç</string>
     <string name="use_for_this_album">Yalnızca bu albüm için kullan</string>
+    <string name="crypto_duplicate_source_mode_label">Şifreleme ve şifre çözme işlemleri sırasında dosya hedef klasörde varsa</string>
+    <string name="crypto_duplicate_source_ask">Her zaman sor (Varsayılan)</string>
+    <string name="crypto_duplicate_source_keep">Kaynak klasördeki dosyayı sakla</string>
+    <string name="crypto_duplicate_source_delete">Kaynak klasördeki dosyayı sil</string>
+    <string name="crypto_duplicate_source_title">Hedefte Aynı Dosya Mevcut</string>
+    <string name="crypto_duplicate_source_encrypt_message">Şifrelediğiniz dosyaların bir kısmı hedef klasörde zaten var. Kaynak klasördeki dosyalara ne olsun?</string>
+    <string name="crypto_duplicate_source_decrypt_message">Şifresini çözdüğünüz dosyaların bir kısmı hedef klasörde zaten var. Kaynak klasördeki dosyalara ne olsun?</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">Uyarı: Şifresiz dosyalarda \"Sakla\" seçeneğinin seçilmesi, dosyanın şifrelenmeden diskte kalmaya devam etmesine yol açar.</string>
+    <string name="crypto_duplicate_source_always_ask">Her zaman sor</string>
 </resources>

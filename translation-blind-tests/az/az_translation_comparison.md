@@ -635,3 +635,12 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 455 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Seçilmiş qovluqda gözləyən CLI ilə şifrələnmiş media (.pending_sync) tapılmadı. |
 | 456 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Seçilmiş mənbə qovluğu aktiv seyfinizlə eynidir. |
 | 457 | `use_for_this_album` | Use for this album only | Yalnız bu albom üçün işlət |
+| 458 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Şifrələmə və şifrə açma zamanı fayl hədəf qovluqda mövcud olduqda |
+| 459 | `crypto_duplicate_source_ask` | Always ask (Default) | Həmişə soruş (Standart) |
+| 460 | `crypto_duplicate_source_keep` | Keep file in source folder | Mənbə qovluqdakı faylı saxla |
+| 461 | `crypto_duplicate_source_delete` | Delete file from source folder | Mənbə qovluqdakı faylı sil |
+| 462 | `crypto_duplicate_source_title` | File Already Exists in Destination | Fayl hədəfdə artıq mövcuddur |
+| 463 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Şifrələdiyiniz faylların bəziləri hədəf qovluqda artıq mövcuddur. Mənbə qovluqdakı fayllarla nə edilsin? |
+| 464 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Şifrəsini açdığınız faylların bəziləri hədəf qovluqda artıq mövcuddur. Mənbə qovluqdakı fayllarla nə edilsin? |
+| 465 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Xəbərdarlıq: Şifrələnməmiş fayllar üçün \"Saxla\" seçilərsə, mənbə fayl şifrələnmədən diskdə qalacaq. |
+| 466 | `crypto_duplicate_source_always_ask` | Always ask | Həmişə soruş |

@@ -642,3 +642,12 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 453 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。 |
 | 454 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 選択した参照元フォルダーは、現在有効な保管庫と同じです。 |
 | 455 | `use_for_this_album` | Use for this album only | このアルバムのみに適用 |
+| 456 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 暗号化/復号時に同じファイルが保存先フォルダにすでに存在する場合 |
+| 457 | `crypto_duplicate_source_ask` | Always ask (Default) | 毎回確認する（デフォルト） |
+| 458 | `crypto_duplicate_source_keep` | Keep file in source folder | 元のフォルダのファイルを残す |
+| 459 | `crypto_duplicate_source_delete` | Delete file from source folder | 元のフォルダのファイルを削除する |
+| 460 | `crypto_duplicate_source_title` | File Already Exists in Destination | 保存先に同じファイルがすでに存在します |
+| 461 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 暗号化しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
+| 462 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 復号しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
+| 463 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：未暗号化ファイルで「残す」を選択すると、元のファイルは暗号化されないままディスク上に残ります。 |
+| 464 | `crypto_duplicate_source_always_ask` | Always ask | 毎回確認する |

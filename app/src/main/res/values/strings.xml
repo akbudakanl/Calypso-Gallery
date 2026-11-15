@@ -476,4 +476,13 @@
     <string name="unlock_album">Unlock album</string>
     <string name="auto_backup_prompt_message">Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time.</string>
     <string name="use_for_this_album">Use for this album only</string>
+    <string name="crypto_duplicate_source_mode_label">When a file already exists in destination during encrypt/decrypt</string>
+    <string name="crypto_duplicate_source_ask">Always ask (Default)</string>
+    <string name="crypto_duplicate_source_keep">Keep file in source folder</string>
+    <string name="crypto_duplicate_source_delete">Delete file from source folder</string>
+    <string name="crypto_duplicate_source_title">File Already Exists in Destination</string>
+    <string name="crypto_duplicate_source_encrypt_message">Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder?</string>
+    <string name="crypto_duplicate_source_decrypt_message">Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder?</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk.</string>
+    <string name="crypto_duplicate_source_always_ask">Always ask</string>
 </resources>

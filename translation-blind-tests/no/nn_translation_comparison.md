@@ -651,3 +651,12 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 456 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Ingen ventande CLI-krypterte medium (.pending_sync) vart funne i den valde mappa. |
 | 457 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Den valde kjeldemappa er den same som det aktive kvelvet ditt. |
 | 458 | `use_for_this_album` | Use for this album only | Bruk berre for dette albumet |
+| 459 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Når ei fil alt finst i målmappa under kryptering/dekryptering |
+| 460 | `crypto_duplicate_source_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 461 | `crypto_duplicate_source_keep` | Keep file in source folder | Behald fila i kjeldemappa |
+| 462 | `crypto_duplicate_source_delete` | Delete file from source folder | Slett fila frå kjeldemappa |
+| 463 | `crypto_duplicate_source_title` | File Already Exists in Destination | Fila finst alt i målmappa |
+| 464 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du krypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
+| 465 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du dekrypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
+| 466 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Åtvaring: Om du vel «Behald» for ukrypterte filer, vil kjeldefila bli liggjande ukryptert på disken. |
+| 467 | `crypto_duplicate_source_always_ask` | Always ask | Spør alltid |

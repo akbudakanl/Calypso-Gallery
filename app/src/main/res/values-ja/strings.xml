@@ -441,4 +441,13 @@
     <string name="vault_sync_nothing_to_sync">選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。</string>
     <string name="vault_sync_same_folder_error">選択した参照元フォルダーは、現在有効な保管庫と同じです。</string>
     <string name="use_for_this_album">このアルバムのみに適用</string>
+    <string name="crypto_duplicate_source_mode_label">暗号化/復号時に同じファイルが保存先フォルダにすでに存在する場合</string>
+    <string name="crypto_duplicate_source_ask">毎回確認する（デフォルト）</string>
+    <string name="crypto_duplicate_source_keep">元のフォルダのファイルを残す</string>
+    <string name="crypto_duplicate_source_delete">元のフォルダのファイルを削除する</string>
+    <string name="crypto_duplicate_source_title">保存先に同じファイルがすでに存在します</string>
+    <string name="crypto_duplicate_source_encrypt_message">暗号化しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？</string>
+    <string name="crypto_duplicate_source_decrypt_message">復号しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">警告：未暗号化ファイルで「残す」を選択すると、元のファイルは暗号化されないままディスク上に残ります。</string>
+    <string name="crypto_duplicate_source_always_ask">毎回確認する</string>
 </resources>

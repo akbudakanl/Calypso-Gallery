@@ -662,3 +662,12 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 446 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Ingen ventende CLI-krypterte medier (.pending_sync) ble funnet i den valgte mappen. |
 | 447 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Den valgte kildemappen er den samme som det aktive hvelvet ditt. |
 | 448 | `use_for_this_album` | Use for this album only | Bruk kun for dette albumet |
+| 449 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Når en fil allerede finnes i målmappen under kryptering/dekryptering |
+| 450 | `crypto_duplicate_source_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 451 | `crypto_duplicate_source_keep` | Keep file in source folder | Behold filen i kildemappen |
+| 452 | `crypto_duplicate_source_delete` | Delete file from source folder | Slett filen fra kildemappen |
+| 453 | `crypto_duplicate_source_title` | File Already Exists in Destination | Filen finnes allerede i målmappen |
+| 454 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Noen av filene du krypterer finnes allerede i målmappen. Hva skal skje med filene i kildemappen? |
+| 455 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Noen av filene du dekrypterer finnes allerede i målmappen. Hva skal skje med filene i kildemappen? |
+| 456 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Advarsel: Hvis du velger «Behold» for ukrypterte filer, vil kildefilen bli liggende ukryptert på disken. |
+| 457 | `crypto_duplicate_source_always_ask` | Always ask | Spør alltid |

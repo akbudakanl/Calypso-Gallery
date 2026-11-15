@@ -438,4 +438,13 @@
     <string name="vault_sync_nothing_to_sync">在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。</string>
     <string name="vault_sync_same_folder_error">所選的來源資料夾與您使用中的保險箱相同。</string>
     <string name="use_for_this_album">僅套用於此相簿</string>
+    <string name="crypto_duplicate_source_mode_label">加密或解密時若目標資料夾已存在相同檔案</string>
+    <string name="crypto_duplicate_source_ask">每次詢問（預設）</string>
+    <string name="crypto_duplicate_source_keep">保留來源資料夾中的檔案</string>
+    <string name="crypto_duplicate_source_delete">刪除來源資料夾中的檔案</string>
+    <string name="crypto_duplicate_source_title">目標資料夾已存在相同檔案</string>
+    <string name="crypto_duplicate_source_encrypt_message">您要加密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？</string>
+    <string name="crypto_duplicate_source_decrypt_message">您要解密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？</string>
+    <string name="crypto_duplicate_source_encrypt_keep_warning">警告：若對未加密的檔案選擇「保留」，來源檔案將以未加密狀態繼續留在儲存裝置上。</string>
+    <string name="crypto_duplicate_source_always_ask">每次詢問</string>
 </resources>
