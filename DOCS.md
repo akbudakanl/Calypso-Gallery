@@ -71,7 +71,7 @@ External USB / SD Card (Optional Custom Vault Location):
 ### B. `Cipher_Secrets/` (Cryptographic Vault Container)
 Created when the user enables password protection for hidden items in Settings or chooses a custom/external vault location:
 - **`.nomedia` Placement Rules:** `.nomedia` belongs at the **vault container root** (`Cipher_Secrets/.nomedia`), instructing Android's `MediaScanner` to ignore the entire directory tree without marking individual physical albums as excluded. Normal physical albums and the Default Secret Album (`__VAULT_DEFAULT_ALBUM__`) do **not** receive an inner `.nomedia`. In accordance with `ExcludedMenuPolicy.isEncryptedAlbumExcluded`, only explicitly `.`-prefixed hidden albums inside the vault receive an inner `.nomedia` (created by `CryptoManager.createHiddenPhysicalAlbum` or the Desktop CLI's `write_encrypted_folder_meta`), keeping normal vault albums directly visible once unlocked (while the Encrypted Vault Recycle Bin is always exempted from exclusion by `isVaultRecycleBin`).
-- **`.vault` (Master Vault Header):** Stores the encrypted bundle containing the 256-bit Master Encryption Key (MEK) and RSA-2048 keypair, protected via `Argon2id` (64 MB RAM cost, 3 iterations, 2 threads) and `AES-256-GCM`.
+- **`.vault` (Master Vault Header):** Stores the encrypted 256-bit Master Encryption Key (MEK), protected via `Argon2id` (64 MB RAM cost, 3 iterations, 2 threads) and `AES-256-GCM`.
 - **`JSON/` (Stealth Encrypted Virtual Albums):**
   - When a virtual album is created from contents of a hidden/encrypted physical album, it automatically gains **Stealth Virtual Album** status.
   - The filename is an obfuscated 16-character hexadecimal identifier (`fva_8f4b1e2a9c3d4e5f.json`), derived via HMAC-SHA256 with MEK.
@@ -172,7 +172,7 @@ The application transitions through three distinct operational states to balance
 ### 🛑 Lock & Memory Zeroization (RAM Purge)
 - When the user closes the app (swiping away from Android's Recents overview) or taps *"Stop showing hidden items"*:
   - The app locks immediately and returns to Mode 1.
-  - In-memory Master Keys, Private Keys, and cached file keys are zeroized (`fill(0)`).
+  - In-memory Master Keys and cached file keys are zeroized (`fill(0)`).
   - Glide memory and disk caches are wiped to ensure decrypted frames do not persist in flash storage.
 
 ---
