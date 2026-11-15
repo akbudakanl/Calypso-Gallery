@@ -165,7 +165,9 @@ import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DeleteBehaviorHelper
 import org.fossify.gallery.helpers.DeleteOriginType
+import org.fossify.gallery.helpers.MediaFetcher
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
@@ -1926,6 +1928,16 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         mMediaFiles = shuffled
         mPrevHashcode = mMediaFiles.hashCode()
         mPos = shuffled.indexOfFirst { it.path == currentPath }.takeIf { it != -1 } ?: 0
+
+        if (!isExternalIntent()) {
+            val scopeKey = if (mShowAll) (if (mIsVaultFilesView) "vault_show_all" else SHOW_ALL) else mDirectory
+            RandomOrderManager.setMediaOrder(scopeKey, mMediaFiles.map { it.path })
+            val pathToUse = if (mShowAll) SHOW_ALL else mDirectory.ifEmpty { SHOW_ALL }
+            MediaActivity.mMedia = MediaFetcher(applicationContext, mIsVaultFilesView).groupMedia(
+                ArrayList(mMediaFiles),
+                pathToUse
+            )
+        }
 
         updatePagerItems(mMediaFiles.toMutableList())
         updateActionbarTitle()

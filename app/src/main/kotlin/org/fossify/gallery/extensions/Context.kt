@@ -100,6 +100,7 @@ import org.fossify.gallery.helpers.PicassoRoundedCornersTransformation
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ROUNDED_CORNERS_NONE
 import org.fossify.gallery.helpers.ROUNDED_CORNERS_SMALL
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.THUMBNAIL_FADE_DURATION_MS
@@ -190,8 +191,8 @@ fun Context.getSortedDirectories(source: ArrayList<Directory>): ArrayList<Direct
     val dirs = source.clone() as ArrayList<Directory>
 
     if (sorting and SORT_BY_RANDOM != 0) {
-        dirs.shuffle()
-        return movePinnedDirectoriesToFront(dirs)
+        val randomlyOrdered = RandomOrderManager.sortDirectoriesRandomly(dirs)
+        return movePinnedDirectoriesToFront(randomlyOrdered)
     } else if (sorting and SORT_BY_CUSTOM != 0) {
         val newDirsOrdered = ArrayList<Directory>()
         config.customFoldersOrder.split("|||").forEach { path ->
@@ -1395,7 +1396,12 @@ fun Context.getCachedMedia(
     ensureBackgroundThread {
         val mediaFetcher = MediaFetcher(this)
         val foldersToScan = if (path.isEmpty()) {
-            mediaFetcher.getFoldersToScan()
+            mediaFetcher.getFoldersToScan().filter {
+                it != RECYCLE_BIN &&
+                    it != FAVORITES &&
+                    !config.isFolderProtected(it) &&
+                    (!CryptoManager.isVaultUnlocked || !CryptoManager.isVaultRecycleBinPath(this, it))
+            }.toMutableList() as ArrayList<String>
         } else {
             arrayListOf(path)
         }
@@ -1464,7 +1470,7 @@ fun Context.getCachedMedia(
         }) as ArrayList<Medium>
 
         val pathToUse = path.ifEmpty { SHOW_ALL }
-        mediaFetcher.sortMedia(media, config.getEffectiveMediaSorting(pathToUse), enableRandom)
+        mediaFetcher.sortMedia(media, config.getEffectiveMediaSorting(pathToUse), enableRandom, pathToUse)
         val grouped = mediaFetcher.groupMedia(media, pathToUse)
         callback(grouped.clone() as ArrayList<ThumbnailItem>)
         val OTGPath = config.OTGPath
@@ -1510,6 +1516,7 @@ fun Context.removeInvalidDBDirectories(dirs: ArrayList<Directory>? = null) {
 }
 
 fun Context.updateDBMediaPath(oldPath: String, newPath: String) {
+    RandomOrderManager.onPathRenamed(oldPath, newPath)
     val newFilename = newPath.getFilenameFromPath()
     val newParentPath = newPath.getParentPath()
     try {

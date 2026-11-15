@@ -66,6 +66,7 @@ import org.fossify.commons.helpers.FAVORITES
 import org.fossify.commons.helpers.PERMISSION_READ_STORAGE
 import org.fossify.commons.helpers.SORT_BY_DATE_MODIFIED
 import org.fossify.commons.helpers.SORT_BY_DATE_TAKEN
+import org.fossify.commons.helpers.SORT_BY_RANDOM
 import org.fossify.commons.helpers.SORT_BY_SIZE
 import org.fossify.commons.helpers.SORT_USE_NUMERIC_VALUE
 import org.fossify.commons.helpers.VIEW_TYPE_GRID
@@ -147,12 +148,14 @@ import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MONTH_MILLISECONDS
 import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.ON_VAULT_EXIT
 import org.fossify.gallery.helpers.ON_VAULT_EXIT_KEEP_SHOWING
 import org.fossify.gallery.helpers.ON_VAULT_EXIT_HIDE
 import org.fossify.gallery.helpers.ON_VAULT_EXIT_ASK_EVERY_TIME
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
 import org.fossify.gallery.helpers.SET_WALLPAPER_INTENT
@@ -253,6 +256,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mHasVaultExcludedFolders = false
     private var mLastOpenedDirectoryPath: String? = null
     private val mPendingPrioritizedPaths = LinkedHashSet<String>()
+    private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
 
     private val vaultPullGesture by lazy {
         VaultPullGestureHandler(
@@ -269,6 +273,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             },
             onListRefresh = {
                 if (config.enablePullToRefresh) {
+                    RandomOrderManager.invalidateDirectoryOrder()
                     binding.directoriesRefreshLayout.isRefreshing = true
                     getDirectories()
                 }
@@ -326,7 +331,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         )
 
 
-        binding.directoriesRefreshLayout.setOnRefreshListener { getDirectories(forceRepair = true) }
+        binding.directoriesRefreshLayout.setOnRefreshListener {
+            RandomOrderManager.invalidateDirectoryOrder()
+            getDirectories(forceRepair = true)
+        }
         storeStateVariables()
         checkWhatsNewDialog()
         setupLatestMediaId()
@@ -474,6 +482,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.directoriesSwitchSearching.setTextColor(primaryColor)
         binding.directoriesSwitchSearching.underlineText()
         binding.directoriesEmptyPlaceholder2.bringToFront()
+
+        val currentRandomGeneration = RandomOrderManager.getSessionGeneration()
+        if (mLastRandomSessionGeneration != currentRandomGeneration) {
+            mLastRandomSessionGeneration = currentRandomGeneration
+            if (config.directorySorting and SORT_BY_RANDOM != 0) {
+                mLoadedInitialPhotos = false
+            }
+        }
 
         if (!binding.mainMenu.isSearchOpen) {
             refreshMenuItems()
@@ -788,6 +804,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.mainMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.refresh_menu -> {
+                    RandomOrderManager.invalidateDirectoryOrder()
                     getDirectories()
                     true
                 }
@@ -980,12 +997,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     private fun showSortingDialog() {
         ChangeSortingDialog(this, true, false) {
+            val currentDirs = ArrayList(mDirs.ifEmpty { getCurrentlyDisplayedDirs() })
             binding.directoriesGrid.adapter = null
             if (config.directorySorting and SORT_BY_DATE_MODIFIED != 0 || config.directorySorting and SORT_BY_DATE_TAKEN != 0) {
                 getDirectories()
             } else {
                 ensureBackgroundThread {
-                    gotDirectories(getCurrentlyDisplayedDirs())
+                    gotDirectories(currentDirs)
                 }
             }
 
@@ -1655,12 +1673,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
 
         val dirs = getSortedDirectories(newDirs)
-        val previousDirsHash = mDirs.hashCode()
+        val previousDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(mDirs)
         mDirs = dirs.clone() as ArrayList<Directory>
 
         var isPlaceholderVisible = dirs.isEmpty()
 
-        if (!isIncremental || dirs.hashCode() != previousDirsHash) {
+        if (!isIncremental || MediaUpdatePolicy.computeDirectoryContentHash(dirs) != previousDirsHash) {
             runOnUiThread {
                 if (generation != mFetchGeneration.get() || isDestroyed || isFinishing) return@runOnUiThread
                 checkPlaceholderVisibility(dirs)
@@ -1711,41 +1729,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val lastModifieds = fetcher.getLastModifieds()
         val dateTakens = fetcher.getDateTakens()
 
-        if (
-            !mIsSecretVaultView && config.showRecycleBinAtFolders
-            && !config.showRecycleBinLast
-            && !dirs.map { it.path }.contains(RECYCLE_BIN)
-        ) {
-            try {
-                if (mediaDB.getDeletedMediaCount() > 0) {
-                    val recycleBin = Directory().apply {
-                        path = RECYCLE_BIN
-                        name = getString(org.fossify.commons.R.string.recycle_bin)
-                        location = LOCATION_INTERNAL
-                    }
-
-                    dirs.add(0, recycleBin)
-                    mDirs = dirs.clone() as ArrayList<Directory>
-                    setupAdapter(dirs)
-                }
-            } catch (ignored: Exception) {
-            }
-        }
-
-        if (!mIsSecretVaultView && !dirs.map { it.path }.contains(FAVORITES)) {
-            if (favoritePaths.isNotEmpty() || mediaDB.getFavoritesCount() > 0) {
-                val favorites = Directory().apply {
-                    path = FAVORITES
-                    name = getString(org.fossify.commons.R.string.favorites)
-                    location = LOCATION_INTERNAL
-                }
-
-                dirs.add(0, favorites)
-                mDirs = dirs.clone() as ArrayList<Directory>
-                setupAdapter(dirs)
-            }
-        }
-
         // fetch files from MediaStore only, unless the app has the MANAGE_EXTERNAL_STORAGE permission on Android 11+
         val android11Files = fetcher.getAndroid11FolderMedia(
             isPickImage = getImagesOnly,
@@ -1782,6 +1765,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             .sortedByDescending { it in prioritySet }
 
         // Phase 1: check newly discovered / uncached folders FIRST so new albums appear immediately
+        var newFoldersAdded = false
         for (folder in newFolders) {
             if (mIsSecretVaultView) {
                 if (!isEncryptedVaultAlbum(folder)) continue
@@ -1849,8 +1833,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 noMediaFolders = noMediaFolders
             )
             dirs.add(newDir)
-            mDirs = dirs.clone() as ArrayList<Directory>
-            setupAdapter(dirs)
+            newFoldersAdded = true
 
             // make sure to create a new thread for these operations, dont just use the common bg thread
             if (!newDir.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, folder)) {
@@ -1858,12 +1841,24 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     try {
                         directoryDB.insert(newDir)
                         if (folder != RECYCLE_BIN && folder != FAVORITES) {
-                            mediaDB.insertAll(newMedia.filterNot { isPathHiddenOrEncrypted(it.path) })
+                            val filteredMedia = newMedia.filterNot { isPathHiddenOrEncrypted(it.path) }
+                            val cachedFolderMedia = try {
+                                mediaDB.getMediaFromPath(folder)
+                            } catch (_: Exception) {
+                                emptyList()
+                            }
+                            MediaUpdatePolicy.mergeCachedMediaMetadata(filteredMedia, cachedFolderMedia)
+                            mediaDB.insertAll(filteredMedia)
                         }
                     } catch (ignored: Exception) {
                     }
                 }.start()
             }
+        }
+
+        if (newFoldersAdded) {
+            mDirs = dirs.clone() as ArrayList<Directory>
+            setupAdapter(dirs)
         }
 
         // Phase 2: recheck existing folders, prioritizing recently visited/modified folders first
@@ -1873,6 +1868,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 it.path in prioritySet || it.areFavorites() || it.isRecycleBin()
             }
 
+        var existingDirsChanged = false
         try {
             for (directory in existingDirsOrdered) {
                 if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
@@ -1928,11 +1924,28 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                         includedFolders = includedFolders,
                         getProperFileSize = getProperFileSize,
                         noMediaFolders = noMediaFolders
-                    )
+                    ).apply {
+                        if (!getProperLastModified && modified == 0L && directory.modified != 0L) {
+                            modified = directory.modified
+                        }
+                        if (!getProperDateTaken && taken == 0L && directory.taken != 0L) {
+                            taken = directory.taken
+                        }
+                        if (!getProperFileSize && size == 0L && directory.size != 0L) {
+                            size = directory.size
+                        }
+                    }
                 }
 
                 // we are looping through the already displayed folders looking for changes, do not do anything if nothing changed
-                if (directory.copy(id = null, subfoldersCount = 0, subfoldersMediaCount = 0) == newDir) {
+                val isRandomDirSort = config.directorySorting and SORT_BY_RANDOM != 0
+                val isUnchanged = directory.tmb == newDir.tmb
+                        && directory.name == newDir.name
+                        && directory.mediaCnt == newDir.mediaCnt
+                        && directory.size == newDir.size
+                        && directory.types == newDir.types
+                        && (isRandomDirSort || directory.sortValue == newDir.sortValue)
+                if (isUnchanged) {
                     continue
                 }
 
@@ -1944,18 +1957,28 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     taken = newDir.taken
                     this@apply.size = newDir.size
                     types = newDir.types
-                    sortValue = getDirectorySortingValue(curMedia, path, name, size, mediaCnt)
+                    sortValue = if (isRandomDirSort && newDir.sortValue == "0" && sortValue.isNotEmpty()) {
+                        sortValue
+                    } else {
+                        getDirectorySortingValue(curMedia, path, name, size, mediaCnt)
+                    }
                 }
 
-                mDirs = dirs.clone() as ArrayList<Directory>
-                setupAdapter(dirs)
+                existingDirsChanged = true
 
                 // update directories and media files in the local db, delete invalid items. Intentionally creating a new thread
                 updateDBDirectory(directory)
                 if (!directory.isRecycleBin() && !directory.areFavorites() && !directory.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, directory.path)) {
                     Thread {
                         try {
-                            mediaDB.insertAll(curMedia.filterNot { isPathHiddenOrEncrypted(it.path) })
+                            val filteredMedia = curMedia.filterNot { isPathHiddenOrEncrypted(it.path) }
+                            val cachedFolderMedia = try {
+                                mediaDB.getMediaFromPath(directory.path)
+                            } catch (_: Exception) {
+                                emptyList()
+                            }
+                            MediaUpdatePolicy.mergeCachedMediaMetadata(filteredMedia, cachedFolderMedia)
+                            mediaDB.insertAll(filteredMedia)
                         } catch (ignored: Exception) {
                         }
                     }.start()
@@ -1984,6 +2007,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     directoryDB.deleteDirPath(it.path)
                 }
                 dirs.removeAll(dirsToRemove)
+                existingDirsChanged = true
+            }
+
+            if (existingDirsChanged) {
                 mDirs = dirs.clone() as ArrayList<Directory>
                 setupAdapter(dirs)
             }

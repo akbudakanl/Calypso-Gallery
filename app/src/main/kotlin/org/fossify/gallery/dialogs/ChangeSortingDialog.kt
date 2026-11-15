@@ -20,6 +20,7 @@ import org.fossify.commons.helpers.SORT_USE_NUMERIC_VALUE
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogChangeSortingBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.SortingPolicy
 
@@ -37,6 +38,7 @@ class ChangeSortingDialog(
     private val canShowAlbumCheckbox = SortingPolicy.shouldShowUseForThisAlbumCheckbox(scope, showFolderCheckbox)
     private var pathToUse = if (scope == SortingPolicy.Scope.FILES_VIEW) SHOW_ALL else path
     private val binding: DialogChangeSortingBinding
+    private var initialUseForThisAlbum = false
 
     init {
         currSorting = when (scope) {
@@ -60,6 +62,7 @@ class ChangeSortingDialog(
 
             sortingDialogUseForThisFolder.beVisibleIf(canShowAlbumCheckbox)
             sortingDialogUseForThisFolder.isChecked = canShowAlbumCheckbox && config.isAlbumCustomSortingEnabled(pathToUse)
+            initialUseForThisAlbum = sortingDialogUseForThisFolder.isChecked
             sortingDialogBottomNote.beVisibleIf(!isDirectorySorting)
             sortingDialogRadioCustom.beVisibleIf(isDirectorySorting)
         }
@@ -153,7 +156,16 @@ class ChangeSortingDialog(
             }
         }
 
-        if (currSorting != sorting) {
+        if (sorting and SORT_BY_RANDOM != 0) {
+            if (scope == SortingPolicy.Scope.DIRECTORY_LIST) {
+                RandomOrderManager.invalidateDirectoryOrder()
+            } else {
+                RandomOrderManager.invalidateMediaScope(pathToUse)
+            }
+        }
+
+        val albumCheckboxChanged = canShowAlbumCheckbox && initialUseForThisAlbum != binding.sortingDialogUseForThisFolder.isChecked
+        if (currSorting != sorting || (sorting and SORT_BY_RANDOM != 0) || albumCheckboxChanged) {
             callback()
         }
     }

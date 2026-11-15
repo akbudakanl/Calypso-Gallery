@@ -80,7 +80,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
         }
 
-        sortMedia(curMedia, context.config.getEffectiveMediaSorting(curPath), enableRandom)
+        sortMedia(curMedia, context.config.getEffectiveMediaSorting(curPath), enableRandom, curPath.ifEmpty { SHOW_ALL })
         return curMedia
     }
 
@@ -867,9 +867,9 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         return sizes
     }
 
-    fun sortMedia(media: ArrayList<Medium>, sorting: Int, enableRandom: Boolean = true) {
+    fun sortMedia(media: ArrayList<Medium>, sorting: Int, enableRandom: Boolean = true, scopeKey: String = "") {
         if (enableRandom && sorting and SORT_BY_RANDOM != 0) {
-            media.shuffle()
+            RandomOrderManager.sortMediaRandomly(media, scopeKey)
             return
         }
 

@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -118,6 +119,7 @@ import org.fossify.gallery.helpers.FOLDER_STYLE_ROUNDED_CORNERS
 import org.fossify.gallery.helpers.FOLDER_STYLE_SQUARE
 import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.LOCATION_SD
+import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PinMenuPolicy
 import org.fossify.gallery.helpers.RECYCLE_BIN
@@ -154,7 +156,7 @@ class DirectoryAdapter(
     private var animateGifs = config.animateGifs
     private var cropThumbnails = config.cropThumbnails
     private var groupDirectSubfolders = config.groupDirectSubfolders
-    private var currentDirectoriesHash = dirs.hashCode()
+    private var currentDirectoriesHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
     private var lockedFolderPaths = ArrayList<String>()
     private var isDragAndDropping = false
     private var startReorderDragListener: StartReorderDragListener? = null
@@ -1220,13 +1222,30 @@ class DirectoryAdapter(
 
     fun updateDirs(newDirs: ArrayList<Directory>) {
         val directories = newDirs.clone() as ArrayList<Directory>
-        if (directories.hashCode() != currentDirectoriesHash) {
-            currentDirectoriesHash = directories.hashCode()
+        val newDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(directories)
+        if (newDirsHash != currentDirectoriesHash) {
+            val samePaths = MediaUpdatePolicy.haveSameDirectoryPaths(dirs, directories)
+            currentDirectoriesHash = newDirsHash
             dirs = directories
             pinnedFolders = config.pinnedFolders
             fillLockedFolders()
-            notifyDataSetChanged()
-            finishActMode()
+            if (actModeCallback.isSelectable) {
+                MediaUpdatePolicy.reconcileSelectedDirectoryKeys(selectedKeys, directories)
+                if (!samePaths) {
+                    notifyDataSetChanged()
+                }
+                if (selectedKeys.isEmpty()) {
+                    finishActMode()
+                } else {
+                    val selectableCount = getSelectableItemCount()
+                    val selectedCount = minOf(selectedKeys.size, selectableCount)
+                    (actMode?.customView as? TextView)?.text = "$selectedCount / $selectableCount"
+                    actMode?.invalidate()
+                }
+            } else {
+                notifyDataSetChanged()
+                finishActMode()
+            }
         }
     }
 
