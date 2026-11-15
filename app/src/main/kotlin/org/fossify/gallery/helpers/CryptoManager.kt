@@ -3887,6 +3887,128 @@ object CryptoManager {
         val displayName: String? = null
     )
 
+    enum class SmartConflictDifference {
+        CONTENT_DIFFERS,
+        DATE_TAKEN_DIFFERS,
+        MODIFIED_DATE_DIFFERS,
+        BOTH_DATES_DIFFER,
+        IDENTICAL_MATCH
+    }
+
+    data class SmartConflictComparison(
+        val difference: SmartConflictDifference,
+        val sourceSize: Long,
+        val existingSize: Long,
+        val sourceLastModified: Long,
+        val existingLastModified: Long,
+        val sourceDateTaken: Long,
+        val existingDateTaken: Long,
+        val hasDistinctDateTaken: Boolean
+    )
+
+    /**
+     * Classifies why two conflicting files differ for SmartFileConflictDialog:
+     * byte/size mismatch takes precedence over timestamp differences.
+     */
+    fun compareFilesForSmartConflict(
+        sourceFile: File,
+        existingFile: File,
+        fastSampling: Boolean = false,
+        context: Context? = null
+    ): SmartConflictComparison {
+        val isSrcEnc = isEncryptedFile(sourceFile.name)
+        val isExistEnc = isEncryptedFile(existingFile.name)
+        val srcMeta = if (isSrcEnc && sourceFile.isFile) {
+            readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+        } else {
+            null
+        }
+        val existMeta = if (isExistEnc && existingFile.isFile) {
+            readMetadata(existingFile, includeThumbnail = false, cacheResult = false)
+        } else {
+            null
+        }
+
+        val srcSize = srcMeta?.originalSize ?: if (sourceFile.isFile) sourceFile.length() else -1L
+        val existSize = existMeta?.originalSize ?: if (existingFile.isFile) existingFile.length() else -1L
+        val srcLastMod = srcMeta?.lastModified ?: if (sourceFile.exists()) sourceFile.lastModified() else 0L
+        val existLastMod = existMeta?.lastModified ?: if (existingFile.exists()) existingFile.lastModified() else 0L
+        val srcDateTaken = srcMeta?.dateTaken ?: if (sourceFile.isFile) {
+            resolvePlaintextDateTaken(context, sourceFile, srcLastMod)
+        } else {
+            0L
+        }
+        val existDateTaken = existMeta?.dateTaken ?: if (existingFile.isFile) {
+            resolvePlaintextDateTaken(context, existingFile, existLastMod)
+        } else {
+            0L
+        }
+
+        val eitherHasSeparateTaken =
+            (srcDateTaken > 0L && !areTimestampsEquivalent(srcDateTaken, srcLastMod)) ||
+                (existDateTaken > 0L && !areTimestampsEquivalent(existDateTaken, existLastMod))
+
+        val bytesMatch = when {
+            !sourceFile.isFile || !existingFile.isFile -> false
+            isSrcEnc && srcMeta == null -> false
+            isExistEnc && existMeta == null -> false
+            srcSize < 0L || existSize < 0L || srcSize != existSize -> false
+            isSrcEnc && isExistEnc -> areEncryptedFilesIdenticalContent(
+                fileA = sourceFile,
+                metaA = srcMeta!!,
+                fileB = existingFile,
+                metaB = existMeta!!,
+                fastSampling = fastSampling
+            )
+            !isSrcEnc && !isExistEnc -> arePlainFilesIdentical(
+                fileA = sourceFile,
+                fileB = existingFile,
+                fastSampling = fastSampling
+            )
+            isSrcEnc && !isExistEnc -> arePlainAndEncryptedIdentical(
+                plainFile = existingFile,
+                encryptedFile = sourceFile,
+                meta = srcMeta!!,
+                verifyIntegrity = false,
+                fastSampling = fastSampling
+            )
+            else -> arePlainAndEncryptedIdentical(
+                plainFile = sourceFile,
+                encryptedFile = existingFile,
+                meta = existMeta!!,
+                verifyIntegrity = false,
+                fastSampling = fastSampling
+            )
+        }
+
+        val difference = if (!bytesMatch) {
+            SmartConflictDifference.CONTENT_DIFFERS
+        } else {
+            val modifiedDiffers = !areTimestampsEquivalent(srcLastMod, existLastMod)
+            val rawTakenDiffers = srcDateTaken > 0L &&
+                existDateTaken > 0L &&
+                !areTimestampsEquivalent(srcDateTaken, existDateTaken)
+            val takenDiffers = rawTakenDiffers && eitherHasSeparateTaken
+            when {
+                takenDiffers && modifiedDiffers -> SmartConflictDifference.BOTH_DATES_DIFFER
+                takenDiffers -> SmartConflictDifference.DATE_TAKEN_DIFFERS
+                modifiedDiffers -> SmartConflictDifference.MODIFIED_DATE_DIFFERS
+                else -> SmartConflictDifference.IDENTICAL_MATCH
+            }
+        }
+
+        return SmartConflictComparison(
+            difference = difference,
+            sourceSize = srcSize,
+            existingSize = existSize,
+            sourceLastModified = srcLastMod,
+            existingLastModified = existLastMod,
+            sourceDateTaken = srcDateTaken,
+            existingDateTaken = existDateTaken,
+            hasDistinctDateTaken = eitherHasSeparateTaken
+        )
+    }
+
     fun inspectTransferConflict(
         sourceFile: File,
         targetDir: File,
