@@ -123,6 +123,7 @@ const val DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS = "delete_original_f
 const val CONFLICT_HANDLING_MODE = "conflict_handling_mode"
 const val CONFLICT_HANDLING_AUTO = 0
 const val CONFLICT_HANDLING_SMART_DIALOG = 1
+const val CONFLICT_HANDLING_STANDARD_DIALOG = 2
 const val FAST_LARGE_DUPLICATE_CHECK = "fast_large_duplicate_check"
 const val ALBUM_CRYPTO_CONFLICT_MODE = "album_crypto_conflict_mode"
 const val ALBUM_CRYPTO_CONFLICT_ASK = 0

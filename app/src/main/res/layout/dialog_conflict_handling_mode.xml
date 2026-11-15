@@ -28,12 +28,12 @@
             android:layout_height="wrap_content">
 
             <org.fossify.commons.views.MyCompatRadioButton
-                android:id="@+id/conflict_handling_auto"
+                android:id="@+id/conflict_handling_standard_dialog"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingTop="@dimen/medium_margin"
                 android:paddingBottom="@dimen/medium_margin"
-                android:text="@string/conflict_handling_auto_short" />
+                android:text="@string/conflict_handling_standard_dialog_short" />
 
             <org.fossify.commons.views.MyCompatRadioButton
                 android:id="@+id/conflict_handling_smart_dialog"
@@ -42,6 +42,14 @@
                 android:paddingTop="@dimen/medium_margin"
                 android:paddingBottom="@dimen/medium_margin"
                 android:text="@string/conflict_handling_smart_dialog_short" />
+
+            <org.fossify.commons.views.MyCompatRadioButton
+                android:id="@+id/conflict_handling_auto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="@dimen/medium_margin"
+                android:paddingBottom="@dimen/medium_margin"
+                android:text="@string/conflict_handling_auto_short" />
         </RadioGroup>
 
         <LinearLayout

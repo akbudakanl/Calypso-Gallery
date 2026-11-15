@@ -3884,7 +3884,8 @@ object CryptoManager {
 
     data class TransferConflictCheck(
         val status: TransferConflictStatus,
-        val displayName: String? = null
+        val displayName: String? = null,
+        val existingFile: File? = null
     )
 
     enum class SmartConflictDifference {
@@ -4009,6 +4010,58 @@ object CryptoManager {
         )
     }
 
+    private fun resolveTransferDesiredName(
+        sourceFile: File,
+        targetDir: File,
+        desiredPlainName: String? = null
+    ): Triple<Boolean, EncryptedFileMetadata?, String>? {
+        if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) {
+            return null
+        }
+        val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
+        val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+        if (srcParentCanon != null && srcParentCanon == targetCanon) {
+            return null
+        }
+
+        val isSourceEncrypted = isEncryptedFile(sourceFile.name)
+        val sourceMeta = if (isSourceEncrypted) {
+            readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+        } else {
+            null
+        }
+        if (isSourceEncrypted && sourceMeta == null) {
+            return null
+        }
+
+        val desiredName = desiredPlainName ?: sourceMeta?.originalName ?: sourceFile.name
+        return Triple(isSourceEncrypted, sourceMeta, desiredName)
+    }
+
+    /**
+     * Checks only whether a file with the same target filename already exists at [targetDir],
+     * without comparing sizes, timestamps, or contents (Fossify standard conflict mode).
+     */
+    fun inspectStandardFilenameConflict(
+        sourceFile: File,
+        targetDir: File,
+        isTargetEncrypted: Boolean,
+        plainIndex: TargetPlainIndex? = null,
+        encryptedIndex: TargetEncryptedIndex? = null,
+        desiredPlainName: String? = null
+    ): String? {
+        val (_, _, desiredName) = resolveTransferDesiredName(sourceFile, targetDir, desiredPlainName)
+            ?: return null
+        return if (isTargetEncrypted) {
+            if (unlockedMasterKey == null) return null
+            val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+            if (index.findExactEntries(desiredName).isNotEmpty()) desiredName else null
+        } else {
+            val index = plainIndex ?: TargetPlainIndex(targetDir)
+            if (index.findExact(desiredName) != null) desiredName else null
+        }
+    }
+
     fun inspectTransferConflict(
         sourceFile: File,
         targetDir: File,
@@ -4019,26 +4072,11 @@ object CryptoManager {
         fastSampling: Boolean = false,
         context: Context? = null
     ): TransferConflictCheck {
-        if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) {
-            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
-        }
-        val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
-        val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
-        if (srcParentCanon != null && srcParentCanon == targetCanon) {
-            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
-        }
-
-        val isSourceEncrypted = isEncryptedFile(sourceFile.name)
-        val sourceMeta = if (isSourceEncrypted) {
-            readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
-        } else {
-            null
-        }
-        if (isSourceEncrypted && sourceMeta == null) {
-            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
-        }
-
-        val desiredName = desiredPlainName ?: sourceMeta?.originalName ?: sourceFile.name
+        val (isSourceEncrypted, sourceMeta, desiredName) = resolveTransferDesiredName(
+            sourceFile,
+            targetDir,
+            desiredPlainName
+        ) ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
         val sourceLastMod = sourceMeta?.lastModified ?: sourceFile.lastModified()
         val sourceOrigSize = sourceMeta?.originalSize ?: sourceFile.length()
         val sourceMediaType = sourceMeta?.mediaType ?: getMediaTypeForName(desiredName)
@@ -4094,13 +4132,13 @@ object CryptoManager {
                     )
                 }
                 if (identical) {
-                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
+                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingBin)
                 }
             }
-            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
+            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName, exactEntries.firstOrNull()?.first)
         } else {
             val index = plainIndex ?: TargetPlainIndex(targetDir)
-            index.findExact(desiredName)
+            val exactTarget = index.findExact(desiredName)
                 ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
 
             val candidates = index.findCandidates(desiredName, includeCollisionVariants = true)
@@ -4125,10 +4163,10 @@ object CryptoManager {
                     arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
                 }
                 if (identical) {
-                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
+                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingPlain)
                 }
             }
-            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
+            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName, exactTarget)
         }
     }
 
@@ -4269,7 +4307,8 @@ object CryptoManager {
         targetIndex: TargetEncryptedIndex? = null,
         skipDuplicateCheck: Boolean = false,
         deleteSourceOnIdentical: Boolean = true,
-        matchCollisionVariants: Boolean = true
+        matchCollisionVariants: Boolean = true,
+        fastSampling: Boolean = false
     ): File? {
         if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
         val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false) ?: return null
@@ -4286,7 +4325,7 @@ object CryptoManager {
             val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
             for ((existingBin, existingMeta) in candidates) {
                 if (areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
-                    areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)
+                    areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta, fastSampling = fastSampling)
                 ) {
                     if (isMove && deleteSourceOnIdentical) {
                         runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }

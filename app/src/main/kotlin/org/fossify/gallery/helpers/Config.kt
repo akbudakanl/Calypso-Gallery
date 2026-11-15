@@ -429,7 +429,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(deleteEmptyFolders) = prefs.edit().putBoolean(DELETE_EMPTY_FOLDERS, deleteEmptyFolders).apply()
 
     var conflictHandlingMode: Int
-        get() = prefs.getInt(CONFLICT_HANDLING_MODE, CONFLICT_HANDLING_AUTO)
+        get() = prefs.getInt(CONFLICT_HANDLING_MODE, CONFLICT_HANDLING_STANDARD_DIALOG)
         set(mode) = prefs.edit().putInt(CONFLICT_HANDLING_MODE, mode).apply()
 
     var fastLargeDuplicateCheck: Boolean
