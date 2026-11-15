@@ -316,7 +316,6 @@ private const val VAULT_LOCATION_OPTION_CUSTOM = 2
 private data class VaultConfigSnapshot(
     val vaultRootPath: String,
     val wrappedKeyData: String,
-    val publicKey: String,
     val hiddenPasswordHash: String,
     val isHiddenPasswordProtectionOn: Boolean,
     val isVaultBiometricEnabled: Boolean,
@@ -765,7 +764,6 @@ private fun BaseSimpleActivity.unlockCandidateVault(
     val snapshot = VaultConfigSnapshot(
         vaultRootPath = config.vaultRootPath,
         wrappedKeyData = config.vaultWrappedKeyData,
-        publicKey = config.vaultPublicKey,
         hiddenPasswordHash = config.hiddenPasswordHash,
         isHiddenPasswordProtectionOn = config.isHiddenPasswordProtectionOn,
         isVaultBiometricEnabled = config.isVaultBiometricEnabled,
@@ -796,7 +794,6 @@ private fun BaseSimpleActivity.unlockCandidateVault(
             CryptoManager.lockVault()
             config.vaultRootPath = snapshot.vaultRootPath
             config.vaultWrappedKeyData = snapshot.wrappedKeyData
-            config.vaultPublicKey = snapshot.publicKey
             config.hiddenPasswordHash = snapshot.hiddenPasswordHash
             config.isHiddenPasswordProtectionOn = snapshot.isHiddenPasswordProtectionOn
             config.isVaultBiometricEnabled = snapshot.isVaultBiometricEnabled
