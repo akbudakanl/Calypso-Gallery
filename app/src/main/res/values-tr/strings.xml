@@ -42,7 +42,7 @@
     <string name="portraits">Portreler</string>
     <string name="no_media_with_filters">Seçilen süzgeçlerle hiçbir medya dosyası bulunamadı.</string>
     <string name="change_filters_underlined"><u>Süzgeçleri değiştir</u></string>
-    <string name="exclude_folder_description">Bu, alt klasörleriyle birlikte seçimi yalnızca Fossify Galeriden hariç tutacaktır. Hariç tutulan klasörleri Ayarlar\'dan yönetebilirsiniz.</string>
+    <string name="exclude_folder_description">Bu, alt klasörleriyle birlikte seçimi yalnızca Fossify Galeriden hariç tutacaktır. Hariç tutulan klasörleri Ayarlardan yönetebilirsiniz.</string>
     <string name="exclude_folder_parent">Bunun yerine bir üst dizin hariç tutulsun mu\?</string>
     <string name="excluded_activity_placeholder">Klasörleri hariç tutmak, onları yalnızca Fossify Galeri\'de gizlenen alt klasörleriyle bir araya getirecek, diğer uygulamalarda görünmeye devam edecektir.
 \n
@@ -313,7 +313,7 @@
     <string name="secret_vault_empty">Şifreli Kasa boş</string>
     <string name="confirm_decrypt_hidden_file">Gizli dosyaların şifresini çözmek istediğinizden emin misiniz?</string>
     <string name="decrypt_info_title">Şifre Çözme Nasıl Çalışır?</string>
-    <string name="decrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifreli bir albüm veya dosyanın şifresi çözüldüğünde, orijinal adı ve biçimiyle seçilen hedef klasöre aktarılır ve şifreli kasadan çıkarılır.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir klasör mü oluşturulacağını yoksa mevcut klasörle mi birleştirileceğini sorar (Ayarlar\'dan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan şifreli dosyaların kasadan silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
+    <string name="decrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifreli bir albüm veya dosyanın şifresi çözüldüğünde, orijinal adı ve biçimiyle seçilen hedef klasöre aktarılır ve şifreli kasadan çıkarılır.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir klasör mü oluşturulacağını yoksa mevcut klasörle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan şifreli dosyaların kasadan silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
     <string name="copy_to_clipboard_disabled_in_vault">Kasa açıkken güvenlik nedeniyle panoya kopyalama devre dışıdır.</string>
     <string name="on_vault_exit">Şifreli bölümden çıkıldığında</string>
     <string name="on_vault_exit_keep_showing">Şifreli albümleri göstermeye devam et</string>
@@ -441,7 +441,7 @@
     <string name="confirm_encrypt_files">Seçilen dosyaları şifrelemek istediğinizden emin misiniz? Dosyalar şifrelenecek ve şifreli kasaya taşınacaktır. Orijinal dosyalar silinecektir.</string>
     <string name="confirm_encrypt_files_to_vault">Seçilen dosyalar şifreli kasaya kopyalanırken şifrelenecektir. Devam etmek istiyor musunuz?</string>
     <string name="encrypt_info_title">Şifreleme Nasıl Çalışır?</string>
-    <string name="encrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifresiz bir albüm şifrelendiğinde, kasa klasörü (Cipher_Secrets) içinde şifreli bir alt klasöre dönüştürülür.\n• Hem klasör adı hem de içindeki tüm dosya adları ve içerikler şifrelenir; uygulama dışında okunamaz.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir albüm mü oluşturulacağını yoksa mevcut şifreli albümle mi birleştirileceğini sorar (Ayarlar\'dan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan kaynak dosyaların silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
+    <string name="encrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifresiz bir albüm şifrelendiğinde, kasa klasörü (Cipher_Secrets) içinde şifreli bir alt klasöre dönüştürülür.\n• Hem klasör adı hem de içindeki tüm dosya adları ve içerikler şifrelenir; uygulama dışında okunamaz.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir albüm mü oluşturulacağını yoksa mevcut şifreli albümle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan kaynak dosyaların silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
     <string name="allow_batch_renaming">Birden fazla dosya seçildiğinde toplu yeniden adlandırmaya izin ver</string>
     <string name="keep_original_remove_from_virtual_album">Orijinal dosyayı koru, yalnızca bu sanal albümden kaldır</string>
     <string name="keep_original_remove_from_favorites">Orijinal dosyayı koru, yalnızca favorilerden kaldır</string>
