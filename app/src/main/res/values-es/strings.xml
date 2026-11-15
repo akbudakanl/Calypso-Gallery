@@ -421,6 +421,7 @@
     <string name="album_crypto_conflict_mode_label">Conflicto de álbum (Cifrar / Descifrar)</string>
     <string name="album_crypto_conflict_ask">Preguntar siempre (Predeterminado)</string>
     <string name="album_crypto_conflict_merge">Fusionar con el álbum existente</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Fusionar con el álbum existente y eliminar orígenes idénticos automáticamente</string>
     <string name="album_crypto_conflict_rename">Crear álbum nuevo como (1)</string>
     <string name="album_crypto_conflict_title">El álbum ya existe</string>
     <string name="album_crypto_conflict_message">Ya existe un álbum llamado \"%s\" en el destino. ¿Cómo desea proceder?</string>

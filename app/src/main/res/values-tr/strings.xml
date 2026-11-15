@@ -378,6 +378,7 @@
     <string name="album_crypto_conflict_mode_label">Albüm çakışması (Şifrele / Şifre Çöz)</string>
     <string name="album_crypto_conflict_ask">Her zaman sor (Varsayılan)</string>
     <string name="album_crypto_conflict_merge">Mevcut albümle birleştir</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Mevcut albümle birleştir ve aynı kaynakları otomatik sil</string>
     <string name="album_crypto_conflict_rename">Yeni albüm olarak oluştur (1)</string>
     <string name="album_crypto_conflict_title">Albüm Zaten Mevcut</string>
     <string name="album_crypto_conflict_message">Hedefte \"%s\" adında bir albüm zaten var. Nasıl devam etmek istersiniz?</string>

@@ -488,6 +488,7 @@
     <string name="album_crypto_conflict_mode_label">Albumkonflikt (Kryptera / Dekryptera)</string>
     <string name="album_crypto_conflict_ask">Spør alltid (Standard)</string>
     <string name="album_crypto_conflict_merge">Slå saman med eksisterande album</string>
+    <string name="album_crypto_conflict_merge_delete_identical">Slå saman med eksisterande album og slett identiske kjelder automatisk</string>
     <string name="album_crypto_conflict_rename">Opprett nytt album som (1)</string>
     <string name="album_crypto_conflict_title">Albumet finst alt</string>
     <string name="album_crypto_conflict_message">Eit album med namnet \"%s\" finst alt på målet. Korleis vil du halda fram?</string>

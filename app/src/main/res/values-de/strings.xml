@@ -419,6 +419,7 @@
     <string name="album_crypto_conflict_mode_label">Albumkonflikt (Verschlüsseln / Entschlüsseln)</string>
     <string name="album_crypto_conflict_ask">Immer fragen (Standard)</string>
     <string name="album_crypto_conflict_merge">In vorhandenes Album zusammenführen</string>
+    <string name="album_crypto_conflict_merge_delete_identical">In vorhandenes Album zusammenführen und identische Quellen automatisch löschen</string>
     <string name="album_crypto_conflict_rename">Neues Album als (1) erstellen</string>
     <string name="album_crypto_conflict_title">Album existiert bereits</string>
     <string name="album_crypto_conflict_message">Am Ziel existiert bereits ein Album namens \"%s\". Wie möchtest du fortfahren?</string>

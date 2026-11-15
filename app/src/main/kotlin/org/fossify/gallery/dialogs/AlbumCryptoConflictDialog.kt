@@ -8,6 +8,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogAlbumCryptoConflictBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
+import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL
 import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_RENAME
 import org.fossify.gallery.helpers.CryptoManager
 
@@ -34,6 +35,14 @@ fun resolveAlbumCryptoOptions(
                 CryptoManager.AlbumCryptoOptions(
                     resolution = CryptoManager.AlbumConflictResolution.RENAME,
                     deleteIdenticalSource = false
+                )
+            )
+        }
+        ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> {
+            callback(
+                CryptoManager.AlbumCryptoOptions(
+                    resolution = CryptoManager.AlbumConflictResolution.MERGE,
+                    deleteIdenticalSource = true
                 )
             )
         }
@@ -113,11 +122,12 @@ class AlbumCryptoConflictDialog(
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
                 val isMerge = binding.albumCryptoConflictMerge.isChecked
+                val deleteIdentical = isMerge && binding.albumCryptoDeleteIdenticalSource.isChecked
                 if (binding.albumCryptoDontAskAgain.isChecked) {
-                    activity.config.albumCryptoConflictMode = if (isMerge) {
-                        ALBUM_CRYPTO_CONFLICT_MERGE
-                    } else {
-                        ALBUM_CRYPTO_CONFLICT_RENAME
+                    activity.config.albumCryptoConflictMode = when {
+                        isMerge && deleteIdentical -> ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL
+                        isMerge -> ALBUM_CRYPTO_CONFLICT_MERGE
+                        else -> ALBUM_CRYPTO_CONFLICT_RENAME
                     }
                 }
                 callback(
@@ -127,7 +137,7 @@ class AlbumCryptoConflictDialog(
                         } else {
                             CryptoManager.AlbumConflictResolution.RENAME
                         },
-                        deleteIdenticalSource = isMerge && binding.albumCryptoDeleteIdenticalSource.isChecked
+                        deleteIdenticalSource = deleteIdentical
                     )
                 )
             }

@@ -865,6 +865,10 @@ class SettingsActivity : SimpleActivity() {
             val items = arrayListOf(
                 RadioItem(ALBUM_CRYPTO_CONFLICT_ASK, getString(R.string.album_crypto_conflict_ask)),
                 RadioItem(ALBUM_CRYPTO_CONFLICT_MERGE, getString(R.string.album_crypto_conflict_merge)),
+                RadioItem(
+                    ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL,
+                    getString(R.string.album_crypto_conflict_merge_delete_identical)
+                ),
                 RadioItem(ALBUM_CRYPTO_CONFLICT_RENAME, getString(R.string.album_crypto_conflict_rename))
             )
             RadioGroupDialog(this@SettingsActivity, items, config.albumCryptoConflictMode) {
@@ -877,6 +881,7 @@ class SettingsActivity : SimpleActivity() {
     private fun getAlbumCryptoConflictModeText() = getString(
         when (config.albumCryptoConflictMode) {
             ALBUM_CRYPTO_CONFLICT_MERGE -> R.string.album_crypto_conflict_merge
+            ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> R.string.album_crypto_conflict_merge_delete_identical
             ALBUM_CRYPTO_CONFLICT_RENAME -> R.string.album_crypto_conflict_rename
             else -> R.string.album_crypto_conflict_ask
         }
