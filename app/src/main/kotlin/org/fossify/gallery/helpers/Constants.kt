@@ -144,7 +144,6 @@ const val AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS = "auto_backup_favorites_and_
 // AES-256 Vault Encryption
 const val PROTECTION_PASSWORD = 3
 const val VAULT_WRAPPED_KEY_DATA = "vault_wrapped_key_data"
-const val VAULT_PUBLIC_KEY = "vault_public_key"
 const val VAULT_ROOT_PATH = "vault_root_path"
 const val IS_VAULT_BIOMETRIC_ENABLED = "is_vault_biometric_enabled"
 const val VAULT_BIOMETRIC_WRAPPED_BUNDLE = "vault_biometric_wrapped_bundle"

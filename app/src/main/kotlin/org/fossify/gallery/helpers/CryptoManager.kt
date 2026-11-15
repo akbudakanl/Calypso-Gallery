@@ -39,15 +39,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
 import java.math.BigInteger
-import java.security.KeyFactory
-import java.security.KeyPairGenerator
 import java.security.MessageDigest
-import java.security.PrivateKey
-import java.security.PublicKey
 import java.security.SecureRandom
-import java.security.spec.MGF1ParameterSpec
-import java.security.spec.PKCS8EncodedKeySpec
-import java.security.spec.X509EncodedKeySpec
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
@@ -55,9 +48,7 @@ import javax.crypto.CipherInputStream
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.OAEPParameterSpec
 import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.PSource
 import android.media.MediaScannerConnection
 import android.os.Build
 import androidx.biometric.BiometricManager
@@ -160,12 +151,9 @@ object CryptoManager {
     private const val MAGIC_V1 = "FVLTENC1"
     private const val MAGIC_V2 = "FGVLTENC"
     private const val VERSION_SYMMETRIC: Byte = 1
-    private const val VERSION_ASYMMETRIC: Byte = 2
     private const val VERSION_SYMMETRIC_AUTH: Byte = 3
-    private const val VERSION_ASYMMETRIC_AUTH: Byte = 4
     private const val VERSION_V5_AUTH: Byte = 5
     private const val META_MAGIC_SYM = "FVLTMETA"
-    private const val META_MAGIC_ASYM = "FVLTMET2"
     private const val META_MAGIC_V2 = "FGMETA2"
     private const val VAULT_HEADER_MAGIC = "FGVLT2"
     private const val VAULT_STR_PREFIX = "FVSTR1:"
@@ -385,7 +373,6 @@ object CryptoManager {
 
     private const val PBKDF2_ITERATIONS = 100_000
     private const val KEY_LENGTH_BITS = 256
-    private const val RSA_KEY_BITS = 2048
     private const val GCM_IV_LENGTH = 12
     private const val GCM_TAG_BITS = 128
     private const val CTR_IV_LENGTH = 16
@@ -396,9 +383,6 @@ object CryptoManager {
 
     @Volatile
     private var unlockedMasterKey: ByteArray? = null
-
-    @Volatile
-    private var unlockedPrivateKey: PrivateKey? = null
 
     private val metadataCache = ConcurrentHashMap<String, EncryptedFileMetadata>()
     private val folderNameCache = ConcurrentHashMap<String, String>()
@@ -445,7 +429,6 @@ object CryptoManager {
     private fun lockVaultInternal() {
         unlockedMasterKey?.fill(0)
         unlockedMasterKey = null
-        unlockedPrivateKey = null
         metadataCache.values.forEach { it.fileKey.fill(0) }
         metadataCache.clear()
         folderNameCache.clear()
@@ -837,7 +820,6 @@ object CryptoManager {
         val cfg = context.config
         cfg.vaultRootPath = newVaultRoot?.absolutePath ?: ""
         cfg.vaultWrappedKeyData = ""
-        cfg.vaultPublicKey = ""
         cfg.hiddenPasswordHash = ""
         cfg.isHiddenPasswordProtectionOn = false
         cfg.temporarilyShowHidden = false
@@ -999,9 +981,7 @@ object CryptoManager {
     fun hasStaleVaultState(context: Context): Boolean {
         val c = context.config
         return isVaultUnlocked ||
-            unlockedPrivateKey != null ||
             c.vaultWrappedKeyData.isNotEmpty() ||
-            c.vaultPublicKey.isNotEmpty() ||
             c.vaultRootPath.isNotEmpty() ||
             c.hiddenPasswordHash.isNotEmpty() ||
             c.isHiddenPasswordProtectionOn ||
@@ -1023,7 +1003,6 @@ object CryptoManager {
         val cfg = context.config
         cfg.vaultRootPath = ""
         cfg.vaultWrappedKeyData = ""
-        cfg.vaultPublicKey = ""
         cfg.hiddenPasswordHash = ""
         cfg.isHiddenPasswordProtectionOn = false
         cfg.isVaultBiometricEnabled = false
@@ -1039,7 +1018,7 @@ object CryptoManager {
     fun verifyVaultOnDisk(context: Context): Boolean {
         if (!canAccessSharedStorage(context)) {
             // The disk cannot be inspected: neither wipe anything nor trust it blindly.
-            return context.config.vaultWrappedKeyData.isNotEmpty() || context.config.vaultPublicKey.isNotEmpty()
+            return context.config.vaultWrappedKeyData.isNotEmpty()
         }
         if (isConfiguredVaultTemporarilyUnavailable(context)) {
             lockVault()
@@ -1101,14 +1080,12 @@ object CryptoManager {
 
         lockVault()
         unlockedMasterKey = null
-        unlockedPrivateKey = null
         cachedVaultRoot = null
         encryptedFolderCache.clear()
 
         clearBiometricKey(context)
         context.config.vaultRootPath = ""
         context.config.vaultWrappedKeyData = ""
-        context.config.vaultPublicKey = ""
         context.config.hiddenPasswordHash = ""
         context.config.isHiddenPasswordProtectionOn = false
         context.config.isVaultBiometricEnabled = false
@@ -1213,7 +1190,7 @@ object CryptoManager {
         return root
     }
 
-    // ==================== KEY MANAGEMENT (ARGON2id + AES-256-GCM + RSA-2048) ====================
+    // ==================== KEY MANAGEMENT (ARGON2id + AES-256-GCM) ====================
 
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
     private const val BIOMETRIC_KEYSTORE_ALIAS = "vault_biometric_hw_key"
@@ -1294,19 +1271,8 @@ object CryptoManager {
 
     fun completeBiometricSetup(context: Context, cipher: Cipher): Boolean {
         val masterKey = unlockedMasterKey ?: return false
-        val privKey = unlockedPrivateKey ?: return false
-        val privBytes = privKey.encoded ?: return false
         return try {
-            val bundle = ByteArrayOutputStream().use { baos ->
-                DataOutputStream(baos).use { dos ->
-                    dos.write(masterKey)
-                    dos.writeInt(privBytes.size)
-                    dos.write(privBytes)
-                }
-                baos.toByteArray()
-            }
-            val encrypted = cipher.doFinal(bundle)
-            bundle.fill(0)
+            val encrypted = cipher.doFinal(masterKey)
             val iv = cipher.iv
             val combined = ByteArray(iv.size + encrypted.size)
             System.arraycopy(iv, 0, combined, 0, iv.size)
@@ -1360,18 +1326,11 @@ object CryptoManager {
 
         return try {
             val bundle = cipher.doFinal(encrypted)
-            DataInputStream(ByteArrayInputStream(bundle)).use { dis ->
-                val masterKey = ByteArray(32)
-                dis.readFully(masterKey)
-                val privLen = dis.readInt()
-                val privBytes = ByteArray(privLen)
-                dis.readFully(privBytes)
-                val privKey = KeyFactory.getInstance("RSA")
-                    .generatePrivate(PKCS8EncodedKeySpec(privBytes))
-                privBytes.fill(0)
-                unlockedMasterKey = masterKey
-                unlockedPrivateKey = privKey
+            if (bundle.size < 32) {
+                bundle.fill(0)
+                return false
             }
+            unlockedMasterKey = bundle.copyOf(32)
             bundle.fill(0)
             context.config.hiddenPasswordHash = "argon2id_aes256_gcm_v2"
             context.config.isHiddenPasswordProtectionOn = true
@@ -1434,29 +1393,6 @@ object CryptoManager {
             spec.clearPassword()
             chars.fill('\u0000')
         }
-    }
-
-    private fun getOaepSpec(): OAEPParameterSpec {
-        return OAEPParameterSpec(
-            "SHA-256",
-            "MGF1",
-            MGF1ParameterSpec.SHA256,
-            PSource.PSpecified.DEFAULT
-        )
-    }
-
-    private fun wrapKeyWithPublicKey(publicKeyBytes: ByteArray, ephemeralKey: ByteArray): ByteArray {
-        val pubKey: PublicKey = KeyFactory.getInstance("RSA")
-            .generatePublic(X509EncodedKeySpec(publicKeyBytes))
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, pubKey, getOaepSpec())
-        return cipher.doFinal(ephemeralKey)
-    }
-
-    private fun unwrapKeyWithPrivateKey(privateKey: PrivateKey, wrappedKey: ByteArray): ByteArray {
-        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
-        cipher.init(Cipher.DECRYPT_MODE, privateKey, getOaepSpec())
-        return cipher.doFinal(wrappedKey)
     }
 
     private fun writeVaultHeader(
@@ -1530,19 +1466,11 @@ object CryptoManager {
                     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
                     cipher.init(Cipher.DECRYPT_MODE, wrappingKey, GCMParameterSpec(GCM_TAG_BITS, iv))
                     val bundle = cipher.doFinal(wrapped)
-
-                    val masterKey = ByteArray(32)
-                    DataInputStream(ByteArrayInputStream(bundle)).use { bdis ->
-                        bdis.readFully(masterKey)
-                        val privLen = bdis.readInt()
-                        val privBytes = ByteArray(privLen)
-                        bdis.readFully(privBytes)
-                        val privKey = KeyFactory.getInstance("RSA")
-                            .generatePrivate(PKCS8EncodedKeySpec(privBytes))
-                        privBytes.fill(0)
-                        unlockedMasterKey = masterKey
-                        unlockedPrivateKey = privKey
+                    if (bundle.size < 32) {
+                        bundle.fill(0)
+                        return false
                     }
+                    unlockedMasterKey = bundle.copyOf(32)
                     bundle.fill(0)
 
 
@@ -1640,40 +1568,13 @@ object CryptoManager {
             throw IllegalStateException("Vault is locked! Cannot update credentials without unlocking first.")
         }
         val masterKey = unlockedMasterKey ?: ByteArray(32).also { secureRandom.nextBytes(it) }
-        val privateKey: PrivateKey
-        val publicKeyBytes: ByteArray
-
-        val existingPriv = unlockedPrivateKey
-        val existingPubB64 = context.config.vaultPublicKey
-        if (existingPriv != null && existingPubB64.isNotEmpty()) {
-            privateKey = existingPriv
-            publicKeyBytes = Base64.decode(existingPubB64, Base64.NO_WRAP)
-        } else {
-            val kpg = KeyPairGenerator.getInstance("RSA")
-            kpg.initialize(RSA_KEY_BITS, secureRandom)
-            val kp = kpg.generateKeyPair()
-            privateKey = kp.private
-            publicKeyBytes = kp.public.encoded
-            context.config.vaultPublicKey = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP)
-        }
-
-        val privBytes = privateKey.encoded
-        val bundle = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.write(masterKey)
-                dos.writeInt(privBytes.size)
-                dos.write(privBytes)
-            }
-            baos.toByteArray()
-        }
 
         val salt = ByteArray(ARGON2_SALT_LENGTH).also { secureRandom.nextBytes(it) }
         val wrappingKey = deriveKeyArgon2id(secret, salt, ARGON2_MEMORY_KB, ARGON2_ITERATIONS, ARGON2_PARALLELISM)
         val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, wrappingKey, GCMParameterSpec(GCM_TAG_BITS, iv))
-        val wrapped = cipher.doFinal(bundle)
-        bundle.fill(0)
+        val wrapped = cipher.doFinal(masterKey)
 
         clearBiometricKey(context)
 
@@ -1692,7 +1593,6 @@ object CryptoManager {
         encryptedFolderCache.clear()
 
         unlockedMasterKey = masterKey.copyOf()
-        unlockedPrivateKey = privateKey
         val marker = "argon2id_aes256_gcm_v2"
         context.config.hiddenPasswordHash = marker
         context.config.hiddenProtectionType = protectionType
@@ -1725,53 +1625,21 @@ object CryptoManager {
 
     fun encryptStringForVault(context: Context, plainText: String): String {
         if (isEncryptedVaultString(plainText)) return plainText
-        val masterKey = unlockedMasterKey
-        if (masterKey != null) {
-            val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-            val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-            val payload = ByteArrayOutputStream().use { baos ->
-                DataOutputStream(baos).use { dos ->
-                    dos.writeByte(VERSION_SYMMETRIC.toInt())
-                    dos.write(iv)
-                    dos.writeInt(encrypted.size)
-                    dos.write(encrypted)
-                }
-                baos.toByteArray()
+        val masterKey = unlockedMasterKey ?: return plainText
+        val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+        val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+        val payload = ByteArrayOutputStream().use { baos ->
+            DataOutputStream(baos).use { dos ->
+                dos.writeByte(VERSION_SYMMETRIC.toInt())
+                dos.write(iv)
+                dos.writeInt(encrypted.size)
+                dos.write(encrypted)
             }
-            return VAULT_STR_PREFIX + Base64.encodeToString(payload, Base64.NO_WRAP)
+            baos.toByteArray()
         }
-
-        val pubKeyB64 = context.config.vaultPublicKey
-        if (pubKeyB64.isNotEmpty()) {
-            return try {
-                val pubKeyBytes = Base64.decode(pubKeyB64, Base64.NO_WRAP)
-                val ephemeralKey = ByteArray(32).also { secureRandom.nextBytes(it) }
-                val wrappedKey = wrapKeyWithPublicKey(pubKeyBytes, ephemeralKey)
-                val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(ephemeralKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-                val encrypted = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-                ephemeralKey.fill(0)
-
-                val payload = ByteArrayOutputStream().use { baos ->
-                    DataOutputStream(baos).use { dos ->
-                        dos.writeByte(VERSION_ASYMMETRIC.toInt())
-                        dos.writeInt(wrappedKey.size)
-                        dos.write(wrappedKey)
-                        dos.write(iv)
-                        dos.writeInt(encrypted.size)
-                        dos.write(encrypted)
-                    }
-                    baos.toByteArray()
-                }
-                VAULT_STR_PREFIX + Base64.encodeToString(payload, Base64.NO_WRAP)
-            } catch (_: Exception) {
-                plainText
-            }
-        }
-        return plainText
+        return VAULT_STR_PREFIX + Base64.encodeToString(payload, Base64.NO_WRAP)
     }
 
     fun decryptStringFromVault(storedText: String): String? {
@@ -1782,18 +1650,7 @@ object CryptoManager {
             val raw = Base64.decode(b64, Base64.NO_WRAP)
             DataInputStream(ByteArrayInputStream(raw)).use { dis ->
                 val version = dis.readByte()
-                val aesKey: ByteArray = when (version) {
-                    VERSION_SYMMETRIC -> masterKey
-                    VERSION_ASYMMETRIC -> {
-                        val privKey = unlockedPrivateKey ?: return null
-                        val wrappedLen = dis.readInt()
-                        if (wrappedLen <= 0 || wrappedLen > 2048) return null
-                        val wrappedKey = ByteArray(wrappedLen)
-                        dis.readFully(wrappedKey)
-                        unwrapKeyWithPrivateKey(privKey, wrappedKey)
-                    }
-                    else -> return null
-                }
+                if (version != VERSION_SYMMETRIC) return null
                 val iv = ByteArray(GCM_IV_LENGTH)
                 dis.readFully(iv)
                 val len = dis.readInt()
@@ -1801,12 +1658,8 @@ object CryptoManager {
                 val encrypted = ByteArray(len)
                 dis.readFully(encrypted)
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(aesKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-                val plain = String(cipher.doFinal(encrypted), Charsets.UTF_8)
-                if (version == VERSION_ASYMMETRIC) {
-                    aesKey.fill(0)
-                }
-                plain
+                cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+                String(cipher.doFinal(encrypted), Charsets.UTF_8)
             }
         } catch (_: Exception) {
             null
@@ -1860,18 +1713,11 @@ object CryptoManager {
                 ?: tryDecrypt(deriveWrappingKey(secret, salt))
                 ?: return false
 
-            DataInputStream(ByteArrayInputStream(bundle)).use { dis ->
-                val masterKey = ByteArray(32)
-                dis.readFully(masterKey)
-                val privLen = dis.readInt()
-                val privBytes = ByteArray(privLen)
-                dis.readFully(privBytes)
-                val privKey = KeyFactory.getInstance("RSA")
-                    .generatePrivate(PKCS8EncodedKeySpec(privBytes))
-                privBytes.fill(0)
-                unlockedMasterKey = masterKey
-                unlockedPrivateKey = privKey
+            if (bundle.size < 32) {
+                bundle.fill(0)
+                return false
             }
+            unlockedMasterKey = bundle.copyOf(32)
             bundle.fill(0)
 
             // Upgrade to Argon2id and write the .vault header into the existing root
@@ -1886,55 +1732,27 @@ object CryptoManager {
 
     private fun writeEncryptedFolderMeta(context: Context, folder: File, originalName: String) {
         val metaFile = File(folder, VAULT_SUBFOLDER_META_FILE)
-        val masterKey = unlockedMasterKey
-        if (masterKey != null) {
-            val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-            val encryptedName = cipher.doFinal(originalName.toByteArray(Charsets.UTF_8))
+        val masterKey = unlockedMasterKey ?: return
+        val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+        val encryptedName = cipher.doFinal(originalName.toByteArray(Charsets.UTF_8))
 
-            FileOutputStream(metaFile).use { fos ->
-                DataOutputStream(fos).use { dos ->
-                    dos.write(META_MAGIC_V2.toByteArray(Charsets.US_ASCII))
-                    dos.write(iv)
-                    dos.writeInt(encryptedName.size)
-                    dos.write(encryptedName)
-                    dos.flush()
-                    fos.fd.sync()
-                }
+        FileOutputStream(metaFile).use { fos ->
+            DataOutputStream(fos).use { dos ->
+                dos.write(META_MAGIC_V2.toByteArray(Charsets.US_ASCII))
+                dos.write(iv)
+                dos.writeInt(encryptedName.size)
+                dos.write(encryptedName)
+                dos.flush()
+                fos.fd.sync()
             }
-            folderNameCache[folder.absolutePath] = originalName
-        } else {
-            val pubKeyB64 = context.config.vaultPublicKey
-            if (pubKeyB64.isEmpty()) return
-            val pubKeyBytes = Base64.decode(pubKeyB64, Base64.NO_WRAP)
-            val ephemeralKey = ByteArray(32).also { secureRandom.nextBytes(it) }
-            val wrappedKey = wrapKeyWithPublicKey(pubKeyBytes, ephemeralKey)
-
-            val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(ephemeralKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-            val encryptedName = cipher.doFinal(originalName.toByteArray(Charsets.UTF_8))
-            ephemeralKey.fill(0)
-
-            FileOutputStream(metaFile).use { fos ->
-                DataOutputStream(fos).use { dos ->
-                    dos.write(META_MAGIC_ASYM.toByteArray(Charsets.US_ASCII))
-                    dos.writeInt(wrappedKey.size)
-                    dos.write(wrappedKey)
-                    dos.write(iv)
-                    dos.writeInt(encryptedName.size)
-                    dos.write(encryptedName)
-                    dos.flush()
-                    fos.fd.sync()
-                }
-            }
-            folderNameCache[folder.absolutePath] = originalName
         }
+        folderNameCache[folder.absolutePath] = originalName
     }
 
     fun createHiddenPhysicalAlbum(context: Context, originalName: String): File? {
-        if (unlockedMasterKey == null && context.config.vaultPublicKey.isEmpty()) {
+        if (unlockedMasterKey == null) {
             return null
         }
         val vaultRoot = findVaultRoot(context) ?: return null
@@ -2023,9 +1841,7 @@ object CryptoManager {
 
     fun getDecryptedRawFolderName(folder: File): String? {
         folderNameCache[folder.absolutePath]?.let { return it }
-        val masterKey = unlockedMasterKey
-        val privKey = unlockedPrivateKey
-        if (masterKey == null && privKey == null) return null
+        val masterKey = unlockedMasterKey ?: return null
 
         val metaFile = when {
             File(folder, VAULT_SUBFOLDER_META_FILE).exists() -> File(folder, VAULT_SUBFOLDER_META_FILE)
@@ -2043,27 +1859,14 @@ object CryptoManager {
                 val str8 = if (bytesRead >= 8) String(headerBytes, 0, 8, Charsets.US_ASCII) else ""
 
                 bis.reset()
-                val (magic, skipLen) = when {
-                    str8 == META_MAGIC_ASYM -> Pair(META_MAGIC_ASYM, 8)
-                    str8 == META_MAGIC_SYM -> Pair(META_MAGIC_SYM, 8)
-                    str7 == META_MAGIC_V2 -> Pair(META_MAGIC_V2, 7)
+                val skipLen = when {
+                    str8 == META_MAGIC_SYM -> 8
+                    str7 == META_MAGIC_V2 -> 7
                     else -> return null
                 }
                 bis.skip(skipLen.toLong())
 
                 DataInputStream(bis).use { dis ->
-                    val aesKey: ByteArray = when (magic) {
-                        META_MAGIC_V2, META_MAGIC_SYM -> masterKey ?: return null
-                        META_MAGIC_ASYM -> {
-                            val pk = privKey ?: return null
-                            val wrappedLen = dis.readInt()
-                            if (wrappedLen <= 0 || wrappedLen > 2048) return null
-                            val wrappedKey = ByteArray(wrappedLen)
-                            dis.readFully(wrappedKey)
-                            unwrapKeyWithPrivateKey(pk, wrappedKey)
-                        }
-                        else -> return null
-                    }
                     val iv = ByteArray(GCM_IV_LENGTH)
                     dis.readFully(iv)
                     val len = dis.readInt()
@@ -2071,11 +1874,8 @@ object CryptoManager {
                     val encryptedName = ByteArray(len)
                     dis.readFully(encryptedName)
                     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                    cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(aesKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+                    cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
                     val name = String(cipher.doFinal(encryptedName), Charsets.UTF_8)
-                    if (magic == META_MAGIC_ASYM) {
-                        aesKey.fill(0)
-                    }
                     folderNameCache[folder.absolutePath] = name
                     name
                 }
@@ -2106,7 +1906,7 @@ object CryptoManager {
         val trimmed = newName.trim()
         if (trimmed.isEmpty() || !folder.exists() || !folder.isDirectory) return false
         if (!isEncryptedFolder(folder) || isVaultRecycleBin(folder) || isDefaultHiddenAlbum(folder)) return false
-        if (unlockedMasterKey == null && context.config.vaultPublicKey.isEmpty()) return false
+        if (unlockedMasterKey == null) return false
         return try {
             writeEncryptedFolderMeta(context, folder, trimmed)
             true
@@ -2127,7 +1927,7 @@ object CryptoManager {
     }
 
     fun getOrCreateDefaultHiddenAlbum(context: Context): File? {
-        if (unlockedMasterKey == null && context.config.vaultPublicKey.isEmpty()) {
+        if (unlockedMasterKey == null) {
             return null
         }
         val vaultRoot = findVaultRoot(context) ?: return null
@@ -2544,23 +2344,9 @@ object CryptoManager {
         if (!sourceFile.exists() || !sourceFile.isFile) return null
         if (isEncryptedFile(sourceFile.name)) return sourceFile
 
-        val masterKey = unlockedMasterKey
-        val fileKey: ByteArray
-        val rsaWrappedKey: ByteArray?
-        val versionByte: Byte
-
-        if (masterKey != null) {
-            fileKey = masterKey
-            rsaWrappedKey = null
-            versionByte = VERSION_SYMMETRIC_AUTH
-        } else {
-            val pubKeyB64 = context.config.vaultPublicKey
-            if (pubKeyB64.isEmpty()) return null
-            val pubKeyBytes = Base64.decode(pubKeyB64, Base64.NO_WRAP)
-            fileKey = ByteArray(32).also { secureRandom.nextBytes(it) }
-            rsaWrappedKey = wrapKeyWithPublicKey(pubKeyBytes, fileKey)
-            versionByte = VERSION_ASYMMETRIC_AUTH
-        }
+        val masterKey = unlockedMasterKey ?: return null
+        val fileKey: ByteArray = masterKey
+        val versionByte: Byte = VERSION_SYMMETRIC_AUTH
 
         if (!targetDir.exists()) {
             targetDir.mkdirs()
@@ -2580,7 +2366,7 @@ object CryptoManager {
         }
 
         var activeIndex: TargetEncryptedIndex? = targetIndex
-        if (masterKey != null) {
+        run {
             val index = activeIndex ?: TargetEncryptedIndex(targetDir).also { activeIndex = it }
 
             if (!skipDuplicateCheck) {
@@ -2700,10 +2486,6 @@ object CryptoManager {
                     DataOutputStream(bos).use { dos ->
                         dos.write(MAGIC_V2.toByteArray(Charsets.US_ASCII))
                         dos.writeByte(versionByte.toInt())
-                        if (rsaWrappedKey != null) {
-                            dos.writeInt(rsaWrappedKey.size)
-                            dos.write(rsaWrappedKey)
-                        }
                         dos.write(headerIv)
                         dos.writeInt(encryptedHeader.size)
                         dos.write(encryptedHeader)
@@ -2737,27 +2519,23 @@ object CryptoManager {
 
             encryptedFile.setLastModified(lastModified)
 
-            if (masterKey != null) {
-                val payloadOffset = (MAGIC_V2.length + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
-                val newMeta = EncryptedFileMetadata(
-                    originalName = originalName,
-                    lastModified = lastModified,
-                    dateTaken = dateTaken,
-                    originalSize = originalSize,
-                    mediaType = mediaType,
-                    videoDuration = videoDuration,
-                    payloadOffset = payloadOffset,
-                    contentIv = contentIv,
-                    fileKey = fileKey.copyOf(),
-                    version = versionByte,
-                    isMacAuthenticated = true,
-                    thumbnailBytes = if (thumbBytes.isNotEmpty()) thumbBytes else null
-                )
-                metadataCache[encryptedFile.absolutePath] = newMeta
-                activeIndex?.addEntry(encryptedFile, newMeta)
-            } else {
-                fileKey.fill(0)
-            }
+            val payloadOffset = (MAGIC_V2.length + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
+            val newMeta = EncryptedFileMetadata(
+                originalName = originalName,
+                lastModified = lastModified,
+                dateTaken = dateTaken,
+                originalSize = originalSize,
+                mediaType = mediaType,
+                videoDuration = videoDuration,
+                payloadOffset = payloadOffset,
+                contentIv = contentIv,
+                fileKey = fileKey.copyOf(),
+                version = versionByte,
+                isMacAuthenticated = true,
+                thumbnailBytes = if (thumbBytes.isNotEmpty()) thumbBytes else null
+            )
+            metadataCache[encryptedFile.absolutePath] = newMeta
+            activeIndex?.addEntry(encryptedFile, newMeta)
 
             if (wipeSource) {
                 val plainIdentity = runCatching {
@@ -2780,7 +2558,6 @@ object CryptoManager {
             }
             encryptedFile
         } catch (e: Exception) {
-            if (masterKey == null) fileKey.fill(0)
             encryptedFile.delete()
             null
         }
@@ -2801,23 +2578,9 @@ object CryptoManager {
         lastModifiedOverride: Long? = null,
         dateTakenOverride: Long? = null
     ): File? {
-        val masterKey = unlockedMasterKey
-        val fileKey: ByteArray
-        val rsaWrappedKey: ByteArray?
-        val versionByte: Byte
-
-        if (masterKey != null) {
-            fileKey = masterKey
-            rsaWrappedKey = null
-            versionByte = VERSION_SYMMETRIC_AUTH
-        } else {
-            val pubKeyB64 = context?.config?.vaultPublicKey ?: ""
-            if (pubKeyB64.isEmpty()) return null
-            val pubKeyBytes = Base64.decode(pubKeyB64, Base64.NO_WRAP)
-            fileKey = ByteArray(32).also { secureRandom.nextBytes(it) }
-            rsaWrappedKey = wrapKeyWithPublicKey(pubKeyBytes, fileKey)
-            versionByte = VERSION_ASYMMETRIC_AUTH
-        }
+        val masterKey = unlockedMasterKey ?: return null
+        val fileKey: ByteArray = masterKey
+        val versionByte: Byte = VERSION_SYMMETRIC_AUTH
 
         if (!targetDir.exists()) {
             targetDir.mkdirs()
@@ -2874,7 +2637,7 @@ object CryptoManager {
             encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
         }
 
-        val headerIvOffset = MAGIC_V2.length + 1 + (if (rsaWrappedKey != null) 4 + rsaWrappedKey.size else 0)
+        val headerIvOffset = MAGIC_V2.length + 1
 
         return try {
             var totalBytesRead = 0L
@@ -2883,10 +2646,6 @@ object CryptoManager {
                     DataOutputStream(bos).use { dos ->
                         dos.write(MAGIC_V2.toByteArray(Charsets.US_ASCII))
                         dos.writeByte(versionByte.toInt())
-                        if (rsaWrappedKey != null) {
-                            dos.writeInt(rsaWrappedKey.size)
-                            dos.write(rsaWrappedKey)
-                        }
                         dos.write(headerIv)
                         dos.writeInt(encryptedHeader.size)
                         dos.write(encryptedHeader)
@@ -2935,34 +2694,29 @@ object CryptoManager {
 
             encryptedFile.setLastModified(lastModified)
 
-            val finalThumbBytes = if (mediaType == TYPE_IMAGES && masterKey != null) {
+            val finalThumbBytes = if (mediaType == TYPE_IMAGES) {
                 generateEmbeddedThumbnailFromEncryptedFile(encryptedFile)
             } else null
 
-            if (masterKey != null) {
-                val payloadOffset = (headerIvOffset + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
-                metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
-                    originalName = originalName,
-                    lastModified = lastModified,
-                    dateTaken = dateTaken,
-                    originalSize = totalBytesRead,
-                    mediaType = mediaType,
-                    videoDuration = videoDuration,
-                    payloadOffset = payloadOffset,
-                    contentIv = contentIv,
-                    fileKey = fileKey.copyOf(),
-                    version = versionByte,
-                    isMacAuthenticated = true,
-                    thumbnailBytes = finalThumbBytes
-                )
-            } else {
-                fileKey.fill(0)
-            }
+            val payloadOffset = (headerIvOffset + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
+            metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
+                originalName = originalName,
+                lastModified = lastModified,
+                dateTaken = dateTaken,
+                originalSize = totalBytesRead,
+                mediaType = mediaType,
+                videoDuration = videoDuration,
+                payloadOffset = payloadOffset,
+                contentIv = contentIv,
+                fileKey = fileKey.copyOf(),
+                version = versionByte,
+                isMacAuthenticated = true,
+                thumbnailBytes = finalThumbBytes
+            )
 
             encryptedFile
         } catch (e: Exception) {
             headerKey.fill(0)
-            if (masterKey == null) fileKey.fill(0)
             encryptedFile.delete()
             null
         }
@@ -3189,16 +2943,10 @@ object CryptoManager {
         return try {
             val magicBytes = ByteArray(8)
             val version: Byte
-            var rsaWrappedKey: ByteArray? = null
 
             RandomAccessFile(encryptedFile, "r").use { raf ->
                 raf.readFully(magicBytes)
                 version = raf.readByte()
-                if (version == VERSION_ASYMMETRIC || version == VERSION_ASYMMETRIC_AUTH) {
-                    val wrappedLen = raf.readInt()
-                    if (wrappedLen <= 0 || wrappedLen > 2048) return false
-                    rsaWrappedKey = ByteArray(wrappedLen).also { raf.readFully(it) }
-                }
             }
 
             val newExt = trimmedName.substringAfterLast('.', "")
@@ -3242,19 +2990,13 @@ object CryptoManager {
                 headerKey.fill(0)
             }
 
-            val extraHeaderBytes = rsaWrappedKey?.let { 4 + it.size } ?: 0
-            val newPayloadOffset = (8 + 1 + extraHeaderBytes + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
+            val newPayloadOffset = (8 + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
 
             FileOutputStream(tempFile).use { fos ->
                 BufferedOutputStream(fos, 64 * 1024).use { bos ->
                     DataOutputStream(bos).use { dos ->
                         dos.write(magicBytes)
                         dos.writeByte(version.toInt())
-                        val wrapped = rsaWrappedKey
-                        if (wrapped != null) {
-                            dos.writeInt(wrapped.size)
-                            dos.write(wrapped)
-                        }
                         dos.write(headerIv)
                         dos.writeInt(encryptedHeader.size)
                         dos.write(encryptedHeader)
@@ -3654,7 +3396,7 @@ object CryptoManager {
             val magic = String(head, 0, 8, Charsets.US_ASCII)
             val version = head[8]
             (magic == MAGIC_V2 || magic == MAGIC_V1) &&
-                (version == VERSION_SYMMETRIC_AUTH || version == VERSION_ASYMMETRIC_AUTH || version == VERSION_V5_AUTH)
+                (version == VERSION_SYMMETRIC_AUTH || version == VERSION_V5_AUTH)
         }.getOrDefault(false)
     }
 
@@ -4915,7 +4657,7 @@ object CryptoManager {
         val folder = File(folderPath)
         if (!folder.exists() || !folder.isDirectory) return folderPath
 
-        if (unlockedMasterKey == null && context.config.vaultPublicKey.isEmpty()) {
+        if (unlockedMasterKey == null) {
             return null
         }
 
@@ -5439,18 +5181,8 @@ object CryptoManager {
                     if (magicStr != MAGIC_V2 && magicStr != MAGIC_V1) return null
 
                     val version = dis.readByte()
-                    var extraHeaderBytes = 0
                     val fileKey: ByteArray = when (version) {
                         VERSION_SYMMETRIC, VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH -> masterKey.copyOf()
-                        VERSION_ASYMMETRIC, VERSION_ASYMMETRIC_AUTH -> {
-                            val privKey = unlockedPrivateKey ?: return null
-                            val wrappedLen = dis.readInt()
-                            if (wrappedLen <= 0 || wrappedLen > 2048) return null
-                            val wrappedKey = ByteArray(wrappedLen)
-                            dis.readFully(wrappedKey)
-                            extraHeaderBytes = 4 + wrappedLen
-                            unwrapKeyWithPrivateKey(privKey, wrappedKey)
-                        }
                         else -> return null
                     }
 
@@ -5469,7 +5201,7 @@ object CryptoManager {
                     val contentIv = ByteArray(CTR_IV_LENGTH)
                     dis.readFully(contentIv)
 
-                    val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_ASYMMETRIC_AUTH || version == VERSION_V5_AUTH)
+                    val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_V5_AUTH)
                     val headerKey = if (isMacAuth) {
                         deriveSubkey(fileKey, DOMAIN_HEADER_KEY)
                     } else {
@@ -5506,7 +5238,7 @@ object CryptoManager {
                         } else {
                             null
                         }
-                        val payloadOffset = (8 + 1 + extraHeaderBytes + GCM_IV_LENGTH + 4 + encHeaderLen + CTR_IV_LENGTH).toLong()
+                        val payloadOffset = (8 + 1 + GCM_IV_LENGTH + 4 + encHeaderLen + CTR_IV_LENGTH).toLong()
 
                         val meta = EncryptedFileMetadata(
                             originalName = originalName,
@@ -5550,11 +5282,7 @@ object CryptoManager {
                     if (magicStr != MAGIC_V2 && magicStr != MAGIC_V1) return null
 
                     val version = dis.readByte()
-                    if (version == VERSION_ASYMMETRIC || version == VERSION_ASYMMETRIC_AUTH) {
-                        val wrappedLen = dis.readInt()
-                        if (wrappedLen <= 0 || wrappedLen > 2048) return null
-                        dis.skipBytes(wrappedLen)
-                    } else if (version != VERSION_SYMMETRIC && version != VERSION_SYMMETRIC_AUTH && version != VERSION_V5_AUTH) {
+                    if (version != VERSION_SYMMETRIC && version != VERSION_SYMMETRIC_AUTH && version != VERSION_V5_AUTH) {
                         return null
                     }
 
@@ -5567,7 +5295,7 @@ object CryptoManager {
                     val encHeader = ByteArray(encHeaderLen)
                     dis.readFully(encHeader)
 
-                    val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_ASYMMETRIC_AUTH || version == VERSION_V5_AUTH)
+                    val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_V5_AUTH)
                     val headerKey = if (isMacAuth) {
                         deriveSubkey(meta.fileKey, DOMAIN_HEADER_KEY)
                     } else {

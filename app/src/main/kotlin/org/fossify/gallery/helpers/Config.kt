@@ -755,10 +755,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getString(VAULT_WRAPPED_KEY_DATA, "")!!
         set(value) = prefs.edit().putString(VAULT_WRAPPED_KEY_DATA, value).apply()
 
-    var vaultPublicKey: String
-        get() = prefs.getString(VAULT_PUBLIC_KEY, "")!!
-        set(value) = prefs.edit().putString(VAULT_PUBLIC_KEY, value).apply()
-
         var isVaultBiometricEnabled: Boolean
         get() = prefs.getBoolean(IS_VAULT_BIOMETRIC_ENABLED, false)
         set(value) = prefs.edit().putBoolean(IS_VAULT_BIOMETRIC_ENABLED, value).apply()
