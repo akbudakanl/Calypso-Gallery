@@ -432,6 +432,10 @@
     <string name="skipped_crypto_files_delete">Delete</string>
     <string name="skipped_crypto_files_encrypt_message">The files you skipped were not transferred. For your privacy, you can delete these files.</string>
     <string name="skipped_crypto_files_decrypt_message">The files you skipped were not transferred. You can delete these files.</string>
+    <string name="skipped_crypto_files_identical_encrypt_message">Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files.</string>
+    <string name="skipped_crypto_files_identical_decrypt_message">Files that already exist in the destination folder were not transferred. You can delete these files.</string>
+    <string name="skipped_crypto_files_both_encrypt_message">The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files.</string>
+    <string name="skipped_crypto_files_both_decrypt_message">The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files.</string>
     <string name="skipped_crypto_files_always_ask">Always ask</string>
     <string name="delete_skipped_files_confirm_title">Are you sure?</string>
     <string name="delete_skipped_files_confirm_message">Your files will be deleted!</string>
@@ -496,15 +500,6 @@
     <string name="unlock_album">Unlock album</string>
     <string name="auto_backup_prompt_message">Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time.</string>
     <string name="use_for_this_album">Use for this album only</string>
-    <string name="crypto_duplicate_source_mode_label">When a file already exists in destination during encrypt/decrypt</string>
-    <string name="crypto_duplicate_source_ask">Always ask (Default)</string>
-    <string name="crypto_duplicate_source_keep">Keep file in source folder</string>
-    <string name="crypto_duplicate_source_delete">Delete file from source folder</string>
-    <string name="crypto_duplicate_source_title">File Already Exists in Destination</string>
-    <string name="crypto_duplicate_source_encrypt_message">Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder?</string>
-    <string name="crypto_duplicate_source_decrypt_message">Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder?</string>
-    <string name="crypto_duplicate_source_encrypt_keep_warning">Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk.</string>
-    <string name="crypto_duplicate_source_always_ask">Always ask</string>
     <string name="export_encrypted_vault">Export encrypted vault</string>
     <string name="export_vault_only_header">Export folder containing only .vault file</string>
     <string name="export_vault_entire_folder">Export entire folder</string>

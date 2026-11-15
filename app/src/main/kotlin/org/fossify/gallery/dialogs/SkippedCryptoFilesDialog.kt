@@ -20,12 +20,38 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.deleteDBPaths
 import org.fossify.gallery.extensions.markReferencesOnDecrypt
 import org.fossify.gallery.extensions.markReferencesOnEncrypt
+import org.fossify.gallery.extensions.updateDBMediaPath
+import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_ASK
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_DELETE
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_KEEP
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.MediaIdentity
 import java.io.File
+
+fun resolveSkippedCryptoMessageRes(
+    isEncrypt: Boolean,
+    conflictHandlingMode: Int,
+    hasUserSkipped: Boolean,
+    hasIdenticalSkipped: Boolean
+): Int {
+    val messageKind = when (conflictHandlingMode) {
+        CONFLICT_HANDLING_STANDARD_DIALOG -> 0
+        CONFLICT_HANDLING_AUTO -> 1
+        else -> when {
+            hasUserSkipped && hasIdenticalSkipped -> 2
+            hasIdenticalSkipped -> 1
+            else -> 0
+        }
+    }
+    return when (messageKind) {
+        1 -> if (isEncrypt) R.string.skipped_crypto_files_identical_encrypt_message else R.string.skipped_crypto_files_identical_decrypt_message
+        2 -> if (isEncrypt) R.string.skipped_crypto_files_both_encrypt_message else R.string.skipped_crypto_files_both_decrypt_message
+        else -> if (isEncrypt) R.string.skipped_crypto_files_encrypt_message else R.string.skipped_crypto_files_decrypt_message
+    }
+}
 
 fun Activity.getDestructiveRedColor(): Int {
     val isDarkBg = getProperBackgroundColor().getContrastColor() == Color.WHITE
@@ -153,6 +179,7 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
     isEncrypt: Boolean,
     skippedFiles: List<File>,
     identicalTargetMap: Map<String, File> = emptyMap(),
+    identicalSkippedPaths: Set<String> = identicalTargetMap.keys,
     forceCleanupEmptyAlbum: Boolean = false,
     onComplete: (deletedCount: Int) -> Unit
 ) {
@@ -161,6 +188,8 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
         onComplete(0)
         return
     }
+    val hasIdenticalSkipped = existingSkipped.any { it.absolutePath in identicalSkippedPaths }
+    val hasUserSkipped = existingSkipped.any { it.absolutePath !in identicalSkippedPaths }
 
     val performDelete = {
         ensureBackgroundThread {
@@ -174,23 +203,37 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
                 val isEnc = CryptoManager.isEncryptedFile(file.name)
                 val identicalTarget = identicalTargetMap[sourcePath]
                 if (identicalTarget != null) {
-                    if (!isEnc) {
-                        val plainIdentity = runCatching { MediaIdentity.ofWithFolder(this, file) }.getOrNull()
-                        runCatching {
-                            markReferencesOnEncrypt(
-                                sourcePath = sourcePath,
-                                encPath = identicalTarget.absolutePath,
-                                plaintextIdentity = plainIdentity,
-                                markPlaintextDormant = true
-                            )
+                    val isTargetEnc = CryptoManager.isEncryptedFile(identicalTarget.name)
+                    when {
+                        !isEnc && isTargetEnc -> {
+                            val plainIdentity = runCatching { MediaIdentity.ofWithFolder(this, file) }.getOrNull()
+                            runCatching {
+                                markReferencesOnEncrypt(
+                                    sourcePath = sourcePath,
+                                    encPath = identicalTarget.absolutePath,
+                                    plaintextIdentity = plainIdentity,
+                                    markPlaintextDormant = true
+                                )
+                            }
                         }
-                    } else {
-                        runCatching {
-                            markReferencesOnDecrypt(
-                                encPath = sourcePath,
-                                decryptedFile = identicalTarget,
-                                hideStealthReferences = true
-                            )
+                        isEnc && !isTargetEnc -> {
+                            runCatching {
+                                markReferencesOnDecrypt(
+                                    encPath = sourcePath,
+                                    decryptedFile = identicalTarget,
+                                    hideStealthReferences = true
+                                )
+                            }
+                        }
+                        isEnc && isTargetEnc -> {
+                            runCatching {
+                                updateVirtualAlbumItemPath(sourcePath, identicalTarget.absolutePath)
+                            }
+                        }
+                        else -> {
+                            runCatching {
+                                updateDBMediaPath(sourcePath, identicalTarget.absolutePath)
+                            }
                         }
                     }
                 }
@@ -234,11 +277,12 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
 
             val binding = DialogSkippedCryptoFilesBinding.inflate(layoutInflater)
             binding.skippedCryptoFilesMessage.text = getString(
-                if (isEncrypt) {
-                    R.string.skipped_crypto_files_encrypt_message
-                } else {
-                    R.string.skipped_crypto_files_decrypt_message
-                }
+                resolveSkippedCryptoMessageRes(
+                    isEncrypt = isEncrypt,
+                    conflictHandlingMode = config.conflictHandlingMode,
+                    hasUserSkipped = hasUserSkipped,
+                    hasIdenticalSkipped = hasIdenticalSkipped
+                )
             )
 
             var handled = false

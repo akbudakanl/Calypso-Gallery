@@ -530,9 +530,6 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 4b) Şifreleme ve şifre çözme sırasında hedefte aynı dosya varsa
-        binding.settingsCryptoDuplicateSourceHolder.beVisibleIf(hasStoragePermission && vaultExists)
-
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -546,7 +543,6 @@ class SettingsActivity : SimpleActivity() {
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupBlockVaultScreenshots()
-        setupCryptoDuplicateSourceMode()
         setupEmptyVault()
     }
 
@@ -590,9 +586,11 @@ class SettingsActivity : SimpleActivity() {
             if (doesVaultExist()) return@setOnClickListener
             promptCreateVault(
                 onCreated = {
+                    VaultSessionManager.lockVaultIfOutsideSession(this)
                     setupVaultSettings()
                 },
                 onCancelled = {
+                    VaultSessionManager.lockVaultIfOutsideSession(this)
                     setupVaultSettings()
                 }
             )
@@ -670,7 +668,17 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun promptChangeVaultPassword() {
-        VaultSecurityDialog(this, "", SHOW_ALL_TABS, minimalist = false, isChangePasswordMode = true) { _, _, changeSuccess ->
+        VaultSecurityDialog(
+            activity = this,
+            requiredHash = "",
+            showTabIndex = SHOW_ALL_TABS,
+            minimalist = false,
+            isChangePasswordMode = true,
+            onCancelCallback = {
+                VaultSessionManager.lockVaultIfOutsideSession(this)
+            }
+        ) { _, _, changeSuccess ->
+            VaultSessionManager.lockVaultIfOutsideSession(this)
             if (changeSuccess) {
                 updateVaultBiometricSwitch()
                 toast(R.string.password_changed_successfully)
@@ -693,6 +701,7 @@ class SettingsActivity : SimpleActivity() {
                 config.temporarilyShowVaultExcluded = false
                 CryptoManager.lockVault()
                 CryptoManager.clearAppImageCaches(this)
+                VaultSessionManager.onVaultExited()
                 applyVaultScreenProtection(false)
                 updateVaultBiometricSwitch()
             } else {
@@ -979,29 +988,6 @@ class SettingsActivity : SimpleActivity() {
             ALBUM_CRYPTO_CONFLICT_MERGE -> R.string.album_crypto_conflict_merge
             ALBUM_CRYPTO_CONFLICT_RENAME -> R.string.album_crypto_conflict_rename
             else -> R.string.album_crypto_conflict_ask
-        }
-    )
-
-    private fun setupCryptoDuplicateSourceMode() {
-        binding.settingsCryptoDuplicateSource.text = getCryptoDuplicateSourceModeText()
-        binding.settingsCryptoDuplicateSourceHolder.setOnClickListener {
-            val items = arrayListOf(
-                RadioItem(CRYPTO_DUPLICATE_SOURCE_ASK, getString(R.string.crypto_duplicate_source_ask)),
-                RadioItem(CRYPTO_DUPLICATE_SOURCE_KEEP, getString(R.string.crypto_duplicate_source_keep)),
-                RadioItem(CRYPTO_DUPLICATE_SOURCE_DELETE, getString(R.string.crypto_duplicate_source_delete))
-            )
-            RadioGroupDialog(this@SettingsActivity, items, config.cryptoDuplicateSourceMode) {
-                config.cryptoDuplicateSourceMode = it as Int
-                binding.settingsCryptoDuplicateSource.text = getCryptoDuplicateSourceModeText()
-            }
-        }
-    }
-
-    private fun getCryptoDuplicateSourceModeText() = getString(
-        when (config.cryptoDuplicateSourceMode) {
-            CRYPTO_DUPLICATE_SOURCE_KEEP -> R.string.crypto_duplicate_source_keep
-            CRYPTO_DUPLICATE_SOURCE_DELETE -> R.string.crypto_duplicate_source_delete
-            else -> R.string.crypto_duplicate_source_ask
         }
     )
 
@@ -1605,7 +1591,6 @@ class SettingsActivity : SimpleActivity() {
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
                 put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
-                put(CRYPTO_DUPLICATE_SOURCE_MODE, config.cryptoDuplicateSourceMode)
                 put(SKIPPED_ENCRYPT_FILES_MODE, config.skippedEncryptFilesMode)
                 put(SKIPPED_DECRYPT_FILES_MODE, config.skippedDecryptFilesMode)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
@@ -1766,7 +1751,6 @@ class SettingsActivity : SimpleActivity() {
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
-                CRYPTO_DUPLICATE_SOURCE_MODE -> config.cryptoDuplicateSourceMode = value.toInt()
                 SKIPPED_ENCRYPT_FILES_MODE -> config.skippedEncryptFilesMode = value.toInt()
                 SKIPPED_DECRYPT_FILES_MODE -> config.skippedDecryptFilesMode = value.toInt()
                 SKIPPED_CRYPTO_FILES_MODE -> {
