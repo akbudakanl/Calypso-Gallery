@@ -420,4 +420,65 @@
     <string name="lock_album">Bloquear álbum</string>
     <string name="unlock_album">Desbloquear álbum</string>
     <string name="auto_backup_prompt_message">¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto asegurará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento.</string>
+    <string name="access_storage_prompt">Por favor, permite que nuestra aplicación acceda a todos tus archivos; de lo contrario, es posible que no funcione bien.</string>
+    <string name="encrypt_info_title">Cómo funciona el cifrado</string>
+    <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Cipher_Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se manejan según tu configuración de resolución de conflictos.</string>
+    <string name="decrypt_info_title">Cómo funciona el descifrado</string>
+    <string name="decrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se descifra un álbum o archivo cifrado, se restaura con su nombre y formato originales en la carpeta de destino seleccionada y se elimina de la bóveda cifrada.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear una carpeta nueva como Álbum(1) o fusionarla con la carpeta de destino existente (configurable en Configuración).\n• Al fusionar, puedes elegir si las copias cifradas verificadas como 100% idénticas bit a bit al destino se eliminan de la bóveda o se conservan.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se manejan según tu configuración de resolución de conflictos.</string>
+    <string name="vault_location">Ubicación de la bóveda</string>
+    <string name="vault_location_standard_summary">Estándar (Almacenamiento interno)</string>
+    <string name="vault_location_unavailable_summary">Unidad externa desconectada (%s)</string>
+    <string name="select_vault_location">Seleccionar ubicación de la bóveda</string>
+    <string name="vault_setup_action_title">Bóveda cifrada</string>
+    <string name="create_new_vault_option">Crear bóveda nueva</string>
+    <string name="use_existing_vault_option">Usar bóveda existente</string>
+    <string name="where_to_create_vault_title">¿Dónde debería crearse la bóveda?</string>
+    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_short">Ubicación personalizada</string>
+    <string name="no_existing_vault_at_location">No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada.</string>
+    <string name="unlock_existing_vault_at_location_prompt">Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta.</string>
+    <string name="vault_location_standard_option">Ubicación estándar (Almacenamiento interno &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_option">Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada)</string>
+    <string name="external_vault_unavailable_title">Bóveda externa no disponible</string>
+    <string name="external_vault_unavailable_prompt">Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda.</string>
+    <string name="retry">Reintentar</string>
+    <string name="change_vault_location">Cambiar ubicación</string>
+    <string name="existing_vault_detected_at_location">Se encontró una bóveda existente en %s. Ingresa tu contraseña o PIN para desbloquearla.</string>
+    <string name="create_new_vault_at_location_prompt">No existe ninguna bóveda en %s. ¿Quieres crear una nueva bóveda cifrada en esta ubicación?</string>
+    <string name="usb_direct_filesystem_required">Esta ruta USB solo se expone a través del proveedor OTG virtual de Android y no es accesible directamente como ruta del sistema de archivos. Por favor, elige un directorio de almacenamiento montado o una carpeta en el almacenamiento interno o tarjeta SD.</string>
+    <string name="vault_location_not_writable">La carpeta seleccionada no existe o no se puede escribir en ella en este dispositivo.</string>
+    <string name="vault_location_not_readable">La carpeta seleccionada no existe o no se puede leer en este dispositivo.</string>
+    <string name="sync_vault_from_external">Sincronizar bóveda desde unidad externa</string>
+    <string name="sync_vault_select_source_prompt">Cómo funciona la sincronización de bóveda externa:\n\n1. Carpeta unificada Cipher_Secrets:\nMantén una carpeta llamada Cipher_Secrets en tu unidad externa (USB / SD). Puedes guardar allí una copia de seguridad completa de tu bóveda o colocar únicamente el archivo de encabezado .vault de tu bóveda.\n\n2. Cifrado de nuevos archivos multimedia (PC / CLI de Tails):\nLa herramienta CLI sin conexión guarda automáticamente los nuevos archivos cifrados directamente en Cipher_Secrets. Los archivos en la raíz van al Álbum secreto predeterminado; los archivos en subcarpetas van a los álbumes cifrados correspondientes (o crean otros nuevos).\n\n3. Sincronización inteligente bit a bit:\nSelecciona a continuación tu unidad externa o carpeta Cipher_Secrets. La aplicación compara la unidad externa con la bóveda de tu teléfono en la memoria RAM:\n• Solo se importan los archivos y álbumes nuevos.\n• Los archivos idénticos bit a bit que ya están en tu bóveda se omiten.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se importan de forma segura como download(1).jpg.</string>
+    <string name="conflict_handling_mode_label">Resolución de conflictos y duplicados de archivos</string>
+    <string name="conflict_handling_auto_short">Totalmente automático (Predeterminado: omitir idénticos, renombrar distintos como (1))</string>
+    <string name="conflict_handling_smart_dialog_short">Diálogo inteligente (Omitir idénticos automáticamente, preguntar si el contenido difiere)</string>
+    <string name="album_crypto_conflict_mode_label">Conflicto de álbum (Cifrar / Descifrar)</string>
+    <string name="album_crypto_conflict_ask">Preguntar siempre (Predeterminado)</string>
+    <string name="album_crypto_conflict_merge">Fusionar con el álbum existente</string>
+    <string name="album_crypto_conflict_rename">Crear álbum nuevo como (1)</string>
+    <string name="album_crypto_conflict_title">El álbum ya existe</string>
+    <string name="album_crypto_conflict_message">Ya existe un álbum llamado \"%s\" en el destino. ¿Cómo deseas continuar?</string>
+    <string name="album_crypto_conflict_message_multiple">%1$d álbumes seleccionados ya existen en el destino. ¿Cómo deseas continuar?\n\nTu elección se aplicará a todos los álbumes en conflicto. Para elegir por separado para cada álbum, selecciónalos y procésalos uno por uno.</string>
+    <string name="album_crypto_conflict_rename_option">Crear álbum nuevo como \"%s\"</string>
+    <string name="album_crypto_conflict_rename_option_multiple">Crear álbumes nuevos como (1), (2), …</string>
+    <string name="album_crypto_conflict_merge_option">Fusionar en el \"%s\" existente</string>
+    <string name="album_crypto_conflict_merge_option_multiple">Fusionar en los álbumes existentes</string>
+    <string name="album_crypto_delete_identical_source">Eliminar archivos de origen idénticos (100% verificados bit a bit)</string>
+    <string name="album_crypto_dont_ask_again">Recordar elección de conflicto de álbum (fusionar o renombrar)</string>
+    <string name="album_crypto_merge_identical_title">Archivos idénticos durante la fusión</string>
+    <string name="album_crypto_merge_identical_message">Al fusionar en \"%1$s\", si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen?</string>
+    <string name="album_crypto_merge_identical_message_multiple">Al fusionar los %1$d álbumes en conflicto, si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen?</string>
+    <string name="delete_identical_sources">Eliminar idénticos</string>
+    <string name="keep_identical_sources">Conservar en origen</string>
+    <string name="fast_large_duplicate_check_label">Comprobación rápida de duplicados para archivos grandes (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_hint">Crucial para transferencias con archivos grandes: comprueba 5 bloques (1.25 MB en total) por archivo en lugar de leer archivos completos, acelerando decenas de veces la comprobación de duplicados.</string>
+    <string name="fast_large_duplicate_check_info_title">Comprobación rápida de duplicados (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_info_message" formatted="false">Por qué esto importa en transferencias grandes de copia o movimiento:\n\nAl copiar o mover archivos grandes, como gigabytes de videos, la comprobación exacta bit a bit debe leer tanto el archivo de origen como el de destino de principio a fin cada vez que coinciden los nombres y tamaños, lo que toma minutos en almacenamiento rápido o mucho más en tarjetas SD.\n\nCómo funciona la comprobación rápida:\n• Los archivos menores de 8 MB SIEMPRE se comprueban al 100% bit a bit.\n• Para archivos de más de 8 MB, la aplicación compara el tamaño del archivo más cinco bloques de 256 KB distribuidos al inicio, 25%, 50%, 75% y final del archivo (1.25 MB en total por lado).\n• Para un archivo de 50 GB con videos de 50 MB–1 GB, esto reduce las lecturas en disco entre ~40× y ~800×.\n\nCuándo activarla o desactivarla:\n• Recomendado ACTIVADO: Si la mayor parte de tu galería consta de archivos grandes (&gt;8 MB), es prácticamente imposible que dos archivos intactos y distintos compartan el mismo nombre, el tamaño exacto en bytes y las 5 regiones muestreadas.\n• Recomendado DESACTIVADO (sin mejora de velocidad): Si tu galería consta principalmente de fotos o archivos menores de 8 MB, esta configuración no ofrece una ganancia de velocidad significativa, ya que los archivos menores de 8 MB siempre se comprueban al 100% bit a bit.\n• La sincronización de bóveda USB externa siempre mantiene autenticación Poly1305-AES completa.</string>
+    <string name="conflict_handling_explanation_title">Resolución de conflictos y duplicados de archivos</string>
+    <string name="conflict_handling_explanation_message" formatted="false">Al copiar, mover, cifrar o descifrar archivos y álbumes, si ya existe un archivo con el mismo nombre en el destino:\n\n1. Comprobación de duplicados bit a bit (RAM):\nLa aplicación comprueba primero los tamaños de archivo y, si coinciden, compara el contenido bit a bit en la RAM (los archivos cifrados se comprueban en memoria sin escribir texto sin cifrar en el disco). Al copiar o mover, los archivos idénticos se omiten y el original permanece intacto en la carpeta de origen. Al fusionar un álbum durante el cifrado o descifrado, puedes elegir si los archivos de origen 100% idénticos bit a bit se eliminan o se conservan.\n\n2. Mismo nombre, distinto contenido (p. ej., dos archivos download.jpg diferentes):\n• Totalmente automático (Predeterminado): Conserva ambos archivos sin interrumpirte nombrando al nuevo download(1).jpg, download(2).jpg.\n• Diálogo inteligente: Sigue omitiendo en silencio los archivos idénticos bit a bit y solo pregunta (Omitir / Sobrescribir / Conservar ambos) cuando dos archivos tienen el mismo nombre pero distinto contenido.</string>
+    <string name="syncing_vault_progress">Sincronizando bóveda desde unidad externa…</string>
+    <string name="vault_sync_summary_message">Sincronización de bóveda completada:\n• Copiados: %1$d\n• Renombrados (conflicto de nombre): %2$d\n• Omitidos (idénticos): %3$d\n• Fallidos: %4$d</string>
+    <string name="vault_sync_nothing_to_sync">No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada.</string>
+    <string name="vault_sync_same_folder_error">La carpeta de origen seleccionada es la misma que tu bóveda activa.</string>
 </resources>

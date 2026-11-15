@@ -398,4 +398,65 @@
     <string name="lock_album">Lås album</string>
     <string name="unlock_album">Lås opp album</string>
     <string name="auto_backup_prompt_message">Vil du at favorittene og de virtuelle albumene dine skal lagres regelmessig i systemlagringen utenfor appminnet? Dette sikrer at du ikke mister favorittlisten og de virtuelle albumene dine hvis du avinstallerer appen. Du kan når som helst opprette en sikkerhetskopi manuelt fra appinnstillingene.</string>
+    <string name="access_storage_prompt">Vennligst gi appen vår tilgang til alle filene dine, den fungerer kanskje ikke så bra uten dette.</string>
+    <string name="encrypt_info_title">Slik fungerer kryptering</string>
+    <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når et ukryptert album krypteres, gjøres det om til en kryptert undermappe inne i hvelvet (Cipher_Secrets).\n• Både mappenavnet og alle filnavn og filinnhold inni det krypteres, slik at ingenting er lesbart utenfor appen.\n\nHvis et album med samme navn allerede finnes:\n• Som standard spør appen om du vil opprette et nytt album som Album(1) eller slå sammen med det eksisterende krypterte albumet (kan konfigureres i Innstillinger).\n• Når du slår sammen, kan du velge om kildefiler som er bekreftet 100% bit-for-bit identiske med målet skal slettes eller beholdes i kildemappen.\n• Ulike filer med samme navn (f.eks. download.jpg) beholdes som download(1).jpg eller håndteres i henhold til innstillingen for konfliktløsning.</string>
+    <string name="decrypt_info_title">Slik fungerer dekryptering</string>
+    <string name="decrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når et kryptert album eller en kryptert fil dekrypteres, gjenopprettes det/den med sitt opprinnelige navn og format til den valgte målmappen og fjernes fra det krypterte hvelvet.\n\nHvis et album med samme navn allerede finnes:\n• Som standard spør appen om du vil opprette en ny mappe som Album(1) eller slå sammen med den eksisterende målmappen (kan konfigureres i Innstillinger).\n• Når du slår sammen, kan du velge om krypterte kopier som er bekreftet 100% bit-for-bit identiske med målet skal fjernes fra hvelvet eller beholdes.\n• Ulike filer med samme navn (f.eks. download.jpg) beholdes som download(1).jpg eller håndteres i henhold til innstillingen for konfliktløsning.</string>
+    <string name="vault_location">Hvelvplassering</string>
+    <string name="vault_location_standard_summary">Standard (Intern lagring)</string>
+    <string name="vault_location_unavailable_summary">Ekstern stasjon frakoblet (%s)</string>
+    <string name="select_vault_location">Velg hvelvplassering</string>
+    <string name="vault_setup_action_title">Kryptert hvelv</string>
+    <string name="create_new_vault_option">Opprett nytt hvelv</string>
+    <string name="use_existing_vault_option">Bruk eksisterende hvelv</string>
+    <string name="where_to_create_vault_title">Hvor skal hvelvet opprettes?</string>
+    <string name="vault_location_default_short">Standardplassering (Intern &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_short">Egendefinert plassering</string>
+    <string name="no_existing_vault_at_location">Ingen eksisterende kryptert hvelv (.vault) ble funnet i den valgte mappen.</string>
+    <string name="unlock_existing_vault_at_location_prompt">Et eksisterende kryptert hvelv ble funnet på %s. Vil du låse det opp og bruke det? Trykk på Nei for å velge en annen mappe.</string>
+    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_option">Egendefinert / Ekstern plassering (USB-stasjon, SD-kort eller egendefinert mappe)</string>
+    <string name="external_vault_unavailable_title">Eksternt hvelv utilgjengelig</string>
+    <string name="external_vault_unavailable_prompt">Den konfigurerte hvelvplasseringen din (%s) er for øyeblikket frakoblet eller utilgjengelig. Koble til stasjonen og trykk på Prøv på nytt, eller velg en annen hvelvplassering.</string>
+    <string name="retry">Prøv på nytt</string>
+    <string name="change_vault_location">Endre plassering</string>
+    <string name="existing_vault_detected_at_location">Eksisterende hvelv funnet på %s. Skriv inn passordet eller PIN-koden for å låse det opp.</string>
+    <string name="create_new_vault_at_location_prompt">Det finnes ingen hvelv på %s. Vil du opprette et nytt kryptert hvelv på denne plasseringen?</string>
+    <string name="usb_direct_filesystem_required">Denne USB-banen er bare eksponert gjennom Androids virtuelle OTG-leverandør og kan ikke åpnes direkte som en filsystembane. Vennligst velg en montert lagringskatalog eller en mappe på intern lagring / SD-kort.</string>
+    <string name="vault_location_not_writable">Den valgte mappen finnes ikke eller kan ikke skrives til på denne enheten.</string>
+    <string name="vault_location_not_readable">Den valgte mappen finnes ikke eller kan ikke leses på denne enheten.</string>
+    <string name="sync_vault_from_external">Synkroniser hvelv fra ekstern stasjon</string>
+    <string name="sync_vault_select_source_prompt">Slik fungerer synkronisering av eksternt hvelv:\n\n1. Enhetlig Cipher_Secrets-mappe:\nHa en mappe med navnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du enten ha en fullstendig sikkerhetskopi av hvelvet ditt, eller bare legge inn hvelvets .vault-headerfil.\n\n2. Kryptering av nye medier (PC / Tails CLI):\nDet frakoblede CLI-verktøyet lagrer automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappen havner i Default Secret Album; filer i undermapper havner i tilsvarende krypterte album (eller oppretter nye).\n\n3. Bit-for-bit smart synkronisering:\nVelg den eksterne stasjonen eller Cipher_Secrets-mappen nedenfor. Appen sammenligner den eksterne stasjonen med telefonens hvelv i RAM:\n• Bare nye filer og album importeres.\n• Bit-identiske filer som allerede finnes i hvelvet hoppes over.\n• Ulike filer med samme navn (f.eks. download.jpg) importeres trygt som download(1).jpg.</string>
+    <string name="conflict_handling_mode_label">Løsning av filkonflikter og duplikater</string>
+    <string name="conflict_handling_auto_short">Helautomatisk (Standard — Hopp over identiske, gi ulike nytt navn som (1))</string>
+    <string name="conflict_handling_smart_dialog_short">Smart dialog (Hopp over identiske automatisk, spør når innholdet er ulikt)</string>
+    <string name="album_crypto_conflict_mode_label">Albumkonflikt (Krypter / Dekrypter)</string>
+    <string name="album_crypto_conflict_ask">Spør alltid (Standard)</string>
+    <string name="album_crypto_conflict_merge">Slå sammen med eksisterende album</string>
+    <string name="album_crypto_conflict_rename">Opprett nytt album som (1)</string>
+    <string name="album_crypto_conflict_title">Albumet finnes allerede</string>
+    <string name="album_crypto_conflict_message">Et album med navnet \"%s\" finnes allerede på målet. Hvordan vil du fortsette?</string>
+    <string name="album_crypto_conflict_message_multiple">%1$d valgte album finnes allerede på målet. Hvordan vil du fortsette?\n\nValget ditt vil gjelde for alle album med konflikt. For å velge separat per album, velg og behandle dem ett og ett.</string>
+    <string name="album_crypto_conflict_rename_option">Opprett nytt album som \"%s\"</string>
+    <string name="album_crypto_conflict_rename_option_multiple">Opprett nye album som (1), (2), …</string>
+    <string name="album_crypto_conflict_merge_option">Slå sammen inn i eksisterende \"%s\"</string>
+    <string name="album_crypto_conflict_merge_option_multiple">Slå sammen inn i eksisterende album</string>
+    <string name="album_crypto_delete_identical_source">Slett identiske kildefiler (100% bit-for-bit bekreftet)</string>
+    <string name="album_crypto_dont_ask_again">Husk valg for albumkonflikt (slå sammen eller gi nytt navn)</string>
+    <string name="album_crypto_merge_identical_title">Identiske filer ved sammenslåing</string>
+    <string name="album_crypto_merge_identical_message">Når du slår sammen inn i \"%1$s\", hvis noen filer allerede er 100%% bit-identiske på målet, skal kildekopiene slettes eller beholdes?</string>
+    <string name="album_crypto_merge_identical_message_multiple">Når du slår sammen de %1$d albumene med konflikt, hvis noen filer allerede er 100%% bit-identiske på målet, skal kildekopiene slettes eller beholdes?</string>
+    <string name="delete_identical_sources">Slett identiske</string>
+    <string name="keep_identical_sources">Behold i kilde</string>
+    <string name="fast_large_duplicate_check_label">Rask duplikatsjekk for store filer (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_hint">Avgjørende for overføringer med store filer: sjekker 5 blokker (1,25 MB totalt) per fil i stedet for å lese hele filer, noe som gjør duplikatsjekken titalls ganger raskere.</string>
+    <string name="fast_large_duplicate_check_info_title">Rask duplikatsjekk (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_info_message" formatted="false">Hvorfor dette er viktig ved store kopierings-/flytteoverføringer:\n\nNår du kopierer eller flytter store filer, som gigabyte med videoer, må nøyaktig bit-for-bit-sjekk lese både kilde- og målfilen fra start til slutt hver gang filnavn og størrelser samsvarer—noe som tar minutter på rask lagring eller mye lenger på SD-kort.\n\nSlik fungerer rask sjekk:\n• Filer under 8 MB sjekkes ALLTID 100% bit-for-bit.\n• For filer over 8 MB sammenligner appen filstørrelse pluss fem 256 KB-blokker fordelt på start, 25%, 50%, 75% og slutt av filen (1,25 MB totalt per side).\n• For et 50 GB-arkiv med 50 MB–1 GB-videoer reduserer dette disklesing med ~40× til ~800×.\n\nNår den bør aktiveres eller deaktiveres:\n• Anbefalt PÅ: Hvis mesteparten av galleriet ditt består av store filer (&gt;8 MB), er det i praksis nærmest umulig at to intakte, ulike filer deler samme navn, nøyaktig bytestørrelse og alle 5 utvalgte områder.\n• Anbefalt AV (ingen hastighetsgevinst): Hvis galleriet ditt hovedsakelig består av bilder eller filer under 8 MB, gir denne innstillingen ingen merkbar hastighetsgevinst siden filer under 8 MB alltid sjekkes 100% bit-for-bit.\n• Synkronisering av eksternt USB-hvelv forblir alltid fullt Poly1305-AES-autentisert.</string>
+    <string name="conflict_handling_explanation_title">Løsning av filkonflikter og duplikater</string>
+    <string name="conflict_handling_explanation_message" formatted="false">Når du kopierer, flytter, krypterer eller dekrypterer filer og album, og en fil med samme navn allerede finnes på målet:\n\n1. Bit-for-bit duplikatsjekk (RAM):\nAppen sjekker filstørrelsene først, og hvis størrelsene samsvarer, sammenlignes filinnholdet bit-for-bit i RAM (krypterte filer sjekkes i minnet uten å skrive klartekst til disk). Under kopiering/flytting hoppes identiske filer over og originalen forblir urørt i kildemappen. Når du slår sammen et album under kryptering/dekryptering, kan du velge om 100% bit-identiske kildefiler skal slettes eller beholdes.\n\n2. Samme navn, ulikt innhold (f.eks. to forskjellige download.jpg-filer):\n• Helautomatisk (Standard): Beholder begge filene uten å avbryte deg ved å gi den nye filen navnet download(1).jpg, download(2).jpg.\n• Smart dialog: Hopper fortsatt stille over bit-identiske filer, og spør bare (Hopp over / Skriv over / Behold begge) når to filer har samme navn, men ulikt innhold.</string>
+    <string name="syncing_vault_progress">Synkroniserer hvelv fra ekstern stasjon…</string>
+    <string name="vault_sync_summary_message">Hvelvsynkronisering fullført:\n• Kopiert: %1$d\n• Gi nytt navn (navnekonflikt): %2$d\n• Hoppet over (identisk): %3$d\n• Mislyktes: %4$d</string>
+    <string name="vault_sync_nothing_to_sync">Ingen ventende CLI-krypterte medier (.pending_sync) ble funnet i den valgte mappen.</string>
+    <string name="vault_sync_same_folder_error">Den valgte kildemappen er den samme som det aktive hvelvet ditt.</string>
 </resources>
