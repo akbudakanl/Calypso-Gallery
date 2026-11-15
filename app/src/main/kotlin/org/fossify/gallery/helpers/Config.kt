@@ -411,6 +411,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)
         set(mode) = prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, mode).apply()
 
+    var cryptoDuplicateSourceMode: Int
+        get() = prefs.getInt(CRYPTO_DUPLICATE_SOURCE_MODE, CRYPTO_DUPLICATE_SOURCE_ASK)
+        set(mode) = prefs.edit().putInt(CRYPTO_DUPLICATE_SOURCE_MODE, mode).apply()
+
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()
