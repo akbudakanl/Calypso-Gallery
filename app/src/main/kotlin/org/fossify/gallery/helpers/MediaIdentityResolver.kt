@@ -26,7 +26,7 @@ object MediaIdentityResolver {
     private const val MAX_SCAN_DEPTH = 4
 
     /** Maximum number of files inspected (`stat()` only) during a single fallback scan. */
-    private const val MAX_FALLBACK_FILES_VISITED = 5000
+    private const val MAX_FALLBACK_FILES_VISITED = 15000
 
     /** Maximum number of size-matched candidates retained per size bucket. */
     private const val MAX_CANDIDATES_PER_SIZE = 40
@@ -910,6 +910,8 @@ object MediaIdentityResolver {
             CryptoManager.findVaultRoot(context)?.takeIf { it.isDirectory }?.let {
                 roots.add(it.absolutePath)
             }
+            roots.add(CryptoManager.getCipherRootDirectory().absolutePath)
+            return roots.toList()
         }
         try {
             val externalRoot = Environment.getExternalStorageDirectory()
@@ -926,7 +928,17 @@ object MediaIdentityResolver {
                         roots.add(sub.absolutePath)
                     }
                 }
-                roots.add(CryptoManager.getCipherRootDirectory().absolutePath)
+                // Include top-level storage roots after standard media directories so physical albums moved
+                // into custom folders (or external SD volumes) can still be recovered.
+                roots.add(externalRoot.absolutePath)
+            }
+        } catch (_: Exception) {
+        }
+        try {
+            CryptoManager.listExternalStorageVolumeRoots(context).forEach { volumeRoot ->
+                if (volumeRoot.isDirectory) {
+                    roots.add(volumeRoot.absolutePath)
+                }
             }
         } catch (_: Exception) {
         }
@@ -1010,6 +1022,7 @@ object MediaIdentityResolver {
         val visitedDirs = HashSet<String>()
         var filesVisited = 0
 
+        val explicitRootPaths = roots.mapTo(HashSet()) { it.absolutePath.lowercase() }
         val queue = ArrayDeque<Pair<File, Int>>()
         for (root in roots) {
             if (root.isDirectory && visitedDirs.add(root.absolutePath.lowercase())) {
@@ -1029,7 +1042,9 @@ object MediaIdentityResolver {
                     val lowerName = child.name.lowercase()
                     val isAndroidSystemDir = lowerName == "android" &&
                         (File(child, "data").isDirectory || File(child, "obb").isDirectory)
-                    if (lowerName in SKIPPED_DIR_NAMES || isAndroidSystemDir) continue
+                    val isForeignVaultContainer = child.absolutePath.lowercase() !in explicitRootPaths &&
+                        File(child, ".vault").isFile
+                    if (lowerName in SKIPPED_DIR_NAMES || isAndroidSystemDir || isForeignVaultContainer) continue
                     if (depth + 1 <= MAX_SCAN_DEPTH && visitedDirs.add(child.absolutePath.lowercase())) {
                         queue.add(child to (depth + 1))
                     }

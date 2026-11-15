@@ -199,4 +199,42 @@ interface VirtualAlbumsDao {
     /** The items of an album whose file could not be found. */
     @Query("SELECT * FROM virtual_album_items WHERE album_id = :albumId AND state = 'UNRESOLVED'")
     fun getUnresolvedItems(albumId: Long): List<VirtualAlbumItem>
+
+    /** Updates the lifecycle state (`OK`, `UNRESOLVED`, `ENCRYPTED`, `DECRYPTED`) of an item in an album. */
+    @Query(
+        """
+        UPDATE virtual_album_items SET state = :state
+         WHERE album_id = :albumId AND full_path = :fullPath COLLATE NOCASE
+        """
+    )
+    fun updateItemStateInAlbum(albumId: Long, fullPath: String, state: String)
+
+    /** Atomically updates an item's location and lifecycle state inside [albumId]. */
+    @Query(
+        """
+        UPDATE OR REPLACE virtual_album_items
+         SET full_path = :newPath, filename = :newFilename, parent_path = :newParentPath, state = :state
+         WHERE album_id = :albumId AND full_path = :oldPath COLLATE NOCASE
+        """
+    )
+    fun updateItemAndStateInAlbum(
+        albumId: Long,
+        oldPath: String,
+        newPath: String,
+        newFilename: String,
+        newParentPath: String,
+        state: String
+    )
+
+    /** Returns all items across all albums currently in [state]. */
+    @Query("SELECT * FROM virtual_album_items WHERE state = :state")
+    fun getItemsByState(state: String): List<VirtualAlbumItem>
+
+    /** Returns IDs of albums containing items inside [folderPrefix]. */
+    @Query("SELECT DISTINCT album_id FROM virtual_album_items WHERE instr(lower(full_path), lower(:folderPrefix) || '/') = 1")
+    fun getAlbumIdsWithFolderPrefix(folderPrefix: String): List<Long>
+
+    /** Deletes all items living strictly inside the physical folder [folderPrefix]. */
+    @Query("DELETE FROM virtual_album_items WHERE instr(lower(full_path), lower(:folderPrefix) || '/') = 1")
+    fun removeItemsByFolderPrefix(folderPrefix: String)
 }

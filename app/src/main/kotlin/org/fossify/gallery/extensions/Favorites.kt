@@ -5,6 +5,7 @@ import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getParentPath
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaIdentityResolver
+import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.models.Favorite
 import org.fossify.gallery.models.Medium
@@ -124,7 +125,12 @@ fun Context.repairFavorites(
     session: MediaIdentityResolver.ResolutionSession? = null
 ): Int {
     val favorites = try {
-        favoritesDB.getAll()
+        val deletedOrigPaths = try {
+            mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN) }
+        } catch (_: Exception) {
+            emptySet()
+        }
+        favoritesDB.getActive().filter { it.fullPath !in deletedOrigPaths }
     } catch (_: Exception) {
         return 0
     }
@@ -142,7 +148,7 @@ fun Context.repairFavorites(
  */
 fun Context.removeFavoritesOfDeletedFiles(): Int {
     val favorites = try {
-        favoritesDB.getAll()
+        favoritesDB.getActive()
     } catch (_: Exception) {
         return 0
     }
@@ -161,6 +167,13 @@ fun Context.removeFavoritesOfDeletedFiles(): Int {
             favoritesDB.deleteFavoritePath(favorite.fullPath)
             mediaDB.updateFavorite(favorite.fullPath, false)
             removed++
+        } catch (_: Exception) {
+        }
+    }
+
+    if (removed > 0) {
+        try {
+            ReferenceBackupManager.saveFavorites(this)
         } catch (_: Exception) {
         }
     }

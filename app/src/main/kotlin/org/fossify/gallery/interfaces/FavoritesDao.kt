@@ -17,11 +17,17 @@ interface FavoritesDao {
     @Query("SELECT * FROM favorites")
     fun getAll(): List<Favorite>
 
+    @Query("SELECT * FROM favorites WHERE state = 'OK'")
+    fun getActive(): List<Favorite>
+
+    @Query("SELECT * FROM favorites WHERE state = 'ENCRYPTED'")
+    fun getEncryptedDormant(): List<Favorite>
+
     @Query("SELECT * FROM favorites WHERE full_path = :path COLLATE NOCASE LIMIT 1")
     fun getFavorite(path: String): Favorite?
 
     /**
-     * The paths of all favorites that were not deleted.
+     * The paths of all favorites that were not deleted and are not dormant-encrypted.
      *
      * The media table only holds the non-hidden files, so a LEFT JOIN is used: a favorite pointing
      * at a file in a hidden folder must stay in the list instead of disappearing from it. Whether
@@ -31,7 +37,7 @@ interface FavoritesDao {
         """
         SELECT favorites.full_path FROM favorites
          LEFT JOIN media ON favorites.full_path = media.full_path
-         WHERE media.deleted_ts IS NULL OR media.deleted_ts = 0
+         WHERE favorites.state = 'OK' AND (media.deleted_ts IS NULL OR media.deleted_ts = 0)
         """
     )
     fun getValidFavoritePaths(): List<String>
@@ -42,10 +48,16 @@ interface FavoritesDao {
     @Query("UPDATE OR REPLACE favorites SET filename = :newFilename, full_path = :newFullPath, parent_path = :newParentPath WHERE full_path = :oldPath COLLATE NOCASE")
     fun updateFavorite(newFilename: String, newFullPath: String, newParentPath: String, oldPath: String)
 
+    @Query("UPDATE favorites SET state = :state WHERE full_path = :path COLLATE NOCASE")
+    fun updateFavoriteState(path: String, state: String)
+
+    @Query("UPDATE OR REPLACE favorites SET filename = :newFilename, full_path = :newFullPath, parent_path = :newParentPath, state = 'OK' WHERE full_path = :oldPath COLLATE NOCASE")
+    fun restoreEncryptedFavorite(oldPath: String, newFilename: String, newFullPath: String, newParentPath: String)
+
     @Query("DELETE FROM favorites WHERE full_path = :path COLLATE NOCASE")
     fun deleteFavoritePath(path: String)
 
-    @Query("DELETE FROM favorites WHERE full_path LIKE :pathPrefix || '%' COLLATE NOCASE")
+    @Query("DELETE FROM favorites WHERE instr(lower(full_path), lower(:pathPrefix) || '/') = 1")
     fun deleteFavoritesByPrefix(pathPrefix: String)
 
     @Query("DELETE FROM favorites")

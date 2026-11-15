@@ -447,5 +447,46 @@ class VaultRelativeSyncTest {
 
         override fun getUnresolvedItems(albumId: Long): List<VirtualAlbumItem> =
             items.filter { it.albumId == albumId && it.state == ITEM_STATE_UNRESOLVED }
+
+        override fun updateItemStateInAlbum(albumId: Long, fullPath: String, state: String) {
+            items.replaceAll {
+                if (it.albumId == albumId && it.fullPath.equals(fullPath, ignoreCase = true)) {
+                    it.copy(state = state)
+                } else it
+            }
+        }
+
+        override fun updateItemAndStateInAlbum(
+            albumId: Long,
+            oldPath: String,
+            newPath: String,
+            newFilename: String,
+            newParentPath: String,
+            state: String
+        ) {
+            items.removeAll {
+                it.albumId == albumId &&
+                    it.fullPath.equals(newPath, ignoreCase = true) &&
+                    !it.fullPath.equals(oldPath, ignoreCase = true)
+            }
+            items.replaceAll {
+                if (it.albumId == albumId && it.fullPath.equals(oldPath, ignoreCase = true)) {
+                    it.copy(fullPath = newPath, filename = newFilename, parentPath = newParentPath, state = state)
+                } else it
+            }
+        }
+
+        override fun getItemsByState(state: String): List<VirtualAlbumItem> =
+            items.filter { it.state == state }
+
+        override fun getAlbumIdsWithFolderPrefix(folderPrefix: String): List<Long> {
+            val prefix = folderPrefix.lowercase() + "/"
+            return items.filter { it.fullPath.lowercase().startsWith(prefix) }.map { it.albumId }.distinct()
+        }
+
+        override fun removeItemsByFolderPrefix(folderPrefix: String) {
+            val prefix = folderPrefix.lowercase() + "/"
+            items.removeAll { it.fullPath.lowercase().startsWith(prefix) }
+        }
     }
 }

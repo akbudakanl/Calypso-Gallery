@@ -11,6 +11,8 @@ import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.interfaces.VirtualAlbumsDao
+import org.fossify.gallery.models.ITEM_STATE_DECRYPTED
+import org.fossify.gallery.models.ITEM_STATE_ENCRYPTED
 import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import org.fossify.gallery.models.VirtualAlbum
@@ -477,16 +479,22 @@ object VirtualAlbumSyncManager {
                             if (path.isBlank()) continue
                             val targetFile = File(path)
                             val exists = targetFile.exists()
+                            val isDormantState = entry.state == ITEM_STATE_ENCRYPTED || entry.state == ITEM_STATE_DECRYPTED
                             val hasUsableIdentity = (entry.mediaStoreId ?: 0L) > 0L ||
                                 !entry.fingerprint.isNullOrEmpty() ||
                                 (entry.fileSize ?: 0L) > 0L
                             // Legacy path-only entries without identity cannot be relocated if missing.
-                            if (!exists && !hasUsableIdentity && targetFile.parentFile?.exists() == true) {
+                            if (!isDormantState && !exists && !hasUsableIdentity && targetFile.parentFile?.exists() == true) {
                                 hadNewlyUnresolved = true
                                 continue
                             }
 
                             if (!existingPaths.contains(path.lowercase())) {
+                                val resolvedState = when {
+                                    isDormantState -> entry.state!!
+                                    exists -> ITEM_STATE_OK
+                                    else -> ITEM_STATE_UNRESOLVED
+                                }
                                 itemsToInsert.add(
                                     VirtualAlbumItem(
                                         id = null,
@@ -499,7 +507,7 @@ object VirtualAlbumSyncManager {
                                         fileSize = entry.fileSize ?: 0L,
                                         lastModified = entry.lastModified ?: 0L,
                                         fingerprint = entry.fingerprint ?: "",
-                                        state = if (exists) ITEM_STATE_OK else ITEM_STATE_UNRESOLVED,
+                                        state = resolvedState,
                                         folderInode = entry.folderInode ?: 0L,
                                         folderSignature = entry.folderSignature ?: "",
                                         capturedAtSec = entry.capturedAtSec ?: 0L
@@ -517,7 +525,7 @@ object VirtualAlbumSyncManager {
                     }
 
                     val newlyMissingDbPaths = existingItems.filter {
-                        it.state != ITEM_STATE_UNRESOLVED && !File(it.fullPath).exists() && File(it.fullPath).parentFile?.exists() == true
+                        it.state == ITEM_STATE_OK && !File(it.fullPath).exists() && File(it.fullPath).parentFile?.exists() == true
                     }.map { it.fullPath }
                     if (newlyMissingDbPaths.isNotEmpty()) {
                         // The item is kept, only marked as unresolved. It may have been renamed or
@@ -634,10 +642,11 @@ object VirtualAlbumSyncManager {
                                 val targetFile = File(effectiveFullPath)
                                 val effectiveParentPath = targetFile.parent ?: effectiveFullPath.getParentPath()
                                 val exists = targetFile.exists()
+                                val isDormantState = entry.state == ITEM_STATE_ENCRYPTED || entry.state == ITEM_STATE_DECRYPTED
                                 val hasUsableIdentity = (entry.mediaStoreId ?: 0L) > 0L ||
                                     !entry.fingerprint.isNullOrEmpty() ||
                                     (entry.fileSize ?: 0L) > 0L
-                                if (!exists && !hasUsableIdentity && targetFile.parentFile?.exists() == true) {
+                                if (!isDormantState && !exists && !hasUsableIdentity && targetFile.parentFile?.exists() == true) {
                                     hadNewlyUnresolved = true
                                     continue
                                 }
@@ -653,13 +662,18 @@ object VirtualAlbumSyncManager {
                                             targetFile.name,
                                             effectiveParentPath
                                         )
-                                        if (exists) {
+                                        if (exists && matchingExisting.state == ITEM_STATE_UNRESOLVED) {
                                             dao.markItemResolved(albumId, effectiveFullPath)
                                         }
                                         existingPaths.remove(matchingExisting.fullPath.lowercase())
                                         existingPaths.add(effectiveFullPath.lowercase())
                                         hadPathRewrite = true
                                     } else {
+                                        val resolvedState = when {
+                                            isDormantState -> entry.state!!
+                                            exists -> ITEM_STATE_OK
+                                            else -> ITEM_STATE_UNRESOLVED
+                                        }
                                         itemsToInsert.add(
                                             VirtualAlbumItem(
                                                 id = null,
@@ -672,7 +686,7 @@ object VirtualAlbumSyncManager {
                                                 fileSize = entry.fileSize ?: 0L,
                                                 lastModified = entry.lastModified ?: 0L,
                                                 fingerprint = entry.fingerprint ?: "",
-                                                state = if (exists) ITEM_STATE_OK else ITEM_STATE_UNRESOLVED,
+                                                state = resolvedState,
                                                 folderInode = entry.folderInode ?: 0L,
                                                 folderSignature = entry.folderSignature ?: "",
                                                 capturedAtSec = entry.capturedAtSec ?: 0L
@@ -699,7 +713,7 @@ object VirtualAlbumSyncManager {
 
                         val refreshedItems = dao.getItems(albumId)
                         val newlyMissingDbPaths = refreshedItems.filter {
-                            it.state != ITEM_STATE_UNRESOLVED && !File(it.fullPath).exists() && File(it.fullPath).parentFile?.exists() == true
+                            it.state == ITEM_STATE_OK && !File(it.fullPath).exists() && File(it.fullPath).parentFile?.exists() == true
                         }.map { it.fullPath }
                         if (newlyMissingDbPaths.isNotEmpty()) {
                             // Kept, only marked as unresolved, so a renamed file can be found again.

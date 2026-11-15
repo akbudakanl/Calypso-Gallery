@@ -10,6 +10,8 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.favoritesDB
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.virtualAlbumsDB
+import org.fossify.gallery.models.ITEM_STATE_ENCRYPTED
+import org.fossify.gallery.models.ITEM_STATE_OK
 import java.io.File
 
 /**
@@ -43,7 +45,8 @@ object ReferenceBackupManager {
                     fingerprint = favorite.fingerprint,
                     folderInode = favorite.folderInode,
                     folderSignature = favorite.folderSignature.ifEmpty { null },
-                    capturedAtSec = favorite.capturedAtSec.takeIf { it > 0L }
+                    capturedAtSec = favorite.capturedAtSec.takeIf { it > 0L },
+                    state = favorite.state.takeIf { it != ITEM_STATE_OK }
                 )
             }
         )
@@ -64,7 +67,8 @@ object ReferenceBackupManager {
         @SerializedName("fingerprint") val fingerprint: String? = null,
         @SerializedName("folderInode") val folderInode: Long? = null,
         @SerializedName("folderSignature") val folderSignature: String? = null,
-        @SerializedName("capturedAtSec") val capturedAtSec: Long? = null
+        @SerializedName("capturedAtSec") val capturedAtSec: Long? = null,
+        @SerializedName("state") val state: String? = null
     )
 
     /**
@@ -177,18 +181,28 @@ object ReferenceBackupManager {
             var restored = 0
             for (entry in entries) {
                 val path = entry.fullPath ?: continue
-                if (!File(path).exists()) {
+                val isEncryptedDormant = entry.state == ITEM_STATE_ENCRYPTED
+                if (!isEncryptedDormant && !File(path).exists()) {
                     continue
                 }
 
                 try {
                     val existing = context.favoritesDB.getFavorite(path)
                     if (existing == null) {
-                        val identity = MediaIdentity.ofWithFolder(
-                            context,
-                            File(path),
-                            entry.mediaStoreId ?: 0L
-                        )
+                        val file = File(path)
+                        val identity = if (isEncryptedDormant || !file.isFile) {
+                            MediaIdentity(
+                                mediaStoreId = entry.mediaStoreId ?: 0L,
+                                size = entry.fileSize ?: 0L,
+                                lastModified = entry.lastModified ?: 0L,
+                                fingerprint = entry.fingerprint ?: "",
+                                folderInode = entry.folderInode ?: 0L,
+                                folderSignature = entry.folderSignature ?: "",
+                                capturedAtSec = entry.capturedAtSec ?: 0L
+                            )
+                        } else {
+                            MediaIdentity.ofWithFolder(context, file, entry.mediaStoreId ?: 0L)
+                        }
                         context.favoritesDB.insert(
                             org.fossify.gallery.models.Favorite(
                                 id = null,
@@ -201,12 +215,15 @@ object ReferenceBackupManager {
                                 fingerprint = if (identity.hasFingerprint) identity.fingerprint else entry.fingerprint ?: "",
                                 folderInode = if (identity.folderInode > 0L) identity.folderInode else entry.folderInode ?: 0L,
                                 folderSignature = identity.folderSignature.ifEmpty { entry.folderSignature ?: "" },
-                                capturedAtSec = entry.capturedAtSec ?: identity.capturedAtSec
+                                capturedAtSec = entry.capturedAtSec ?: identity.capturedAtSec,
+                                state = if (isEncryptedDormant) ITEM_STATE_ENCRYPTED else ITEM_STATE_OK
                             )
                         )
-                        try {
-                            context.mediaDB.updateFavorite(path, true)
-                        } catch (_: Exception) {
+                        if (!isEncryptedDormant) {
+                            try {
+                                context.mediaDB.updateFavorite(path, true)
+                            } catch (_: Exception) {
+                            }
                         }
                         restored++
                     } else {

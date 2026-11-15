@@ -43,5 +43,42 @@
                 android:paddingBottom="@dimen/medium_margin"
                 android:text="@string/conflict_handling_smart_dialog_short" />
         </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/fast_large_duplicate_check_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/medium_margin"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyAppCompatCheckbox
+                android:id="@+id/fast_large_duplicate_check_checkbox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingTop="@dimen/small_margin"
+                android:paddingBottom="@dimen/small_margin"
+                android:text="@string/fast_large_duplicate_check_label" />
+
+            <ImageView
+                android:id="@+id/fast_large_duplicate_check_info"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/fast_large_duplicate_check_info_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_info_vector" />
+        </LinearLayout>
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/fast_large_duplicate_check_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:alpha="0.75"
+            android:paddingStart="@dimen/big_margin"
+            android:paddingBottom="@dimen/small_margin"
+            android:text="@string/fast_large_duplicate_check_hint"
+            android:textSize="@dimen/smaller_text_size" />
     </LinearLayout>
 </ScrollView>

@@ -27,10 +27,10 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
 import org.fossify.gallery.extensions.directoryDB
 import org.fossify.gallery.extensions.isThisOrParentIncluded
+import org.fossify.gallery.extensions.markReferencesOnDecrypt
+import org.fossify.gallery.extensions.markReferencesOnEncrypt
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
-import org.fossify.gallery.extensions.updateVirtualAlbumItemPathOnDecrypt
-import org.fossify.gallery.extensions.updateVirtualAlbumItemPathOnEncrypt
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -2337,7 +2337,11 @@ object CryptoManager {
         targetDir: File,
         wipeSource: Boolean = true,
         clearCachesNow: Boolean = false,
-        conflictResolution: Int = CONFLICT_KEEP_BOTH
+        conflictResolution: Int = CONFLICT_KEEP_BOTH,
+        targetIndex: TargetEncryptedIndex? = null,
+        skipDuplicateCheck: Boolean = false,
+        deleteSourceOnIdentical: Boolean = true,
+        matchCollisionVariants: Boolean = true
     ): File? {
         if (!sourceFile.exists() || !sourceFile.isFile) return null
         if (isEncryptedFile(sourceFile.name)) return sourceFile
@@ -2365,52 +2369,53 @@ object CryptoManager {
         }
 
         var originalName = sourceFile.name
+        var activeIndex: TargetEncryptedIndex? = targetIndex
         if (masterKey != null) {
-            val existingEntries = targetDir.listFiles()
-                ?.filter { it.isFile && isEncryptedFile(it.name) }
-                ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
-                ?: emptyList()
+            val index = activeIndex ?: TargetEncryptedIndex(targetDir).also { activeIndex = it }
 
-            for ((existingBin, existingMeta) in existingEntries) {
-                if (isSameOrCollisionVariant(existingMeta.originalName, originalName) &&
-                    arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
-                ) {
-                    if (wipeSource) {
-                        val duplicateSourcePath = sourceFile.absolutePath
-                        runCatching {
-                            context.updateVirtualAlbumItemPathOnEncrypt(duplicateSourcePath, existingBin.absolutePath)
+            if (!skipDuplicateCheck) {
+                val candidates = index.findCandidates(originalName, matchCollisionVariants)
+                for ((existingBin, existingMeta) in candidates) {
+                    if (arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)) {
+                        if (wipeSource && deleteSourceOnIdentical) {
+                            val duplicateSourcePath = sourceFile.absolutePath
+                            val plainIdentity = runCatching {
+                                MediaIdentity.ofWithFolder(context, sourceFile)
+                            }.getOrNull()
+                            runCatching {
+                                context.markReferencesOnEncrypt(
+                                    sourcePath = duplicateSourcePath,
+                                    encPath = existingBin.absolutePath,
+                                    plaintextIdentity = plainIdentity,
+                                    markPlaintextDormant = true
+                                )
+                            }
+                            if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = true, purgeTraces = false)) {
+                                runCatching { purgeMediaTracesPreservingReferences(context, duplicateSourcePath) }
+                            }
                         }
-                        secureWipeAndDeleteFile(context, sourceFile)
+                        if (clearCachesNow && deleteSourceOnIdentical) {
+                            runCatching { clearAppImageCaches(context) }
+                        }
+                        return if (!deleteSourceOnIdentical) null else existingBin
                     }
-                    if (clearCachesNow) {
-                        runCatching { clearAppImageCaches(context) }
-                    }
-                    return existingBin
                 }
             }
 
-            val exactMatches = existingEntries.filter { (_, existingMeta) ->
-                existingMeta.originalName.equals(originalName, ignoreCase = true)
-            }
+            val exactMatches = index.findExactEntries(originalName)
             if (exactMatches.isNotEmpty()) {
                 when (conflictResolution) {
                     CONFLICT_SKIP -> return null
                     CONFLICT_OVERWRITE -> {
-                        exactMatches.forEach { (existingBin, _) ->
+                        val removed = index.removeExactEntries(originalName)
+                        removed.forEach { existingBin ->
                             metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
                             runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
                             existingBin.delete()
                         }
                     }
                     else -> {
-                        val existingNamesLower = existingEntries.map { it.second.originalName.lowercase() }.toHashSet()
-                        var copyIndex = 1
-                        var candidateName = formatCollisionFileName(originalName, copyIndex)
-                        while (existingNamesLower.contains(candidateName.lowercase())) {
-                            copyIndex++
-                            candidateName = formatCollisionFileName(originalName, copyIndex)
-                        }
-                        originalName = candidateName
+                        originalName = index.getAlternativeOriginalName(originalName)
                     }
                 }
             }
@@ -2484,7 +2489,7 @@ object CryptoManager {
                         dos.write(contentIv)
 
                         FileInputStream(sourceFile).use { fis ->
-                            val buffer = ByteArray(64 * 1024)
+                            val buffer = ByteArray(256 * 1024)
                             var read: Int
                             while (fis.read(buffer).also { read = it } != -1) {
                                 val out = contentCipher.update(buffer, 0, read)
@@ -2513,7 +2518,7 @@ object CryptoManager {
 
             if (masterKey != null) {
                 val payloadOffset = (MAGIC_V2.length + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
-                metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
+                val newMeta = EncryptedFileMetadata(
                     originalName = originalName,
                     lastModified = lastModified,
                     dateTaken = dateTaken,
@@ -2527,13 +2532,27 @@ object CryptoManager {
                     isMacAuthenticated = true,
                     thumbnailBytes = if (thumbBytes.isNotEmpty()) thumbBytes else null
                 )
+                metadataCache[encryptedFile.absolutePath] = newMeta
+                activeIndex?.addEntry(encryptedFile, newMeta)
             } else {
                 fileKey.fill(0)
             }
 
             if (wipeSource) {
-                runCatching { context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encryptedFile.absolutePath) }
-                secureWipeAndDeleteFile(context, sourceFile)
+                val plainIdentity = runCatching {
+                    MediaIdentity.ofWithFolder(context, sourceFile)
+                }.getOrNull()
+                runCatching {
+                    context.markReferencesOnEncrypt(
+                        sourcePath = sourcePath,
+                        encPath = encryptedFile.absolutePath,
+                        plaintextIdentity = plainIdentity,
+                        markPlaintextDormant = true
+                    )
+                }
+                if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = true, purgeTraces = false)) {
+                    runCatching { purgeMediaTracesPreservingReferences(context, sourcePath) }
+                }
             }
             if (clearCachesNow) {
                 runCatching { clearAppImageCaches(context) }
@@ -2770,12 +2789,16 @@ object CryptoManager {
         encryptedFile: File,
         targetDir: File,
         deleteEncryptedSource: Boolean = true,
-        conflictResolution: Int = CONFLICT_KEEP_BOTH
+        conflictResolution: Int = CONFLICT_KEEP_BOTH,
+        targetIndex: TargetPlainIndex? = null,
+        skipDuplicateCheck: Boolean = false,
+        deleteSourceOnIdentical: Boolean = true,
+        matchCollisionVariants: Boolean = true
     ): File? {
         if (!encryptedFile.exists() || !isEncryptedFile(encryptedFile.name)) return null
-        val meta = readMetadata(encryptedFile) ?: return null
+        val meta = readMetadata(encryptedFile, includeThumbnail = false, cacheResult = false) ?: return null
 
-        if (meta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile)) {
+        if (meta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile, meta)) {
             return null
         }
 
@@ -2783,44 +2806,63 @@ object CryptoManager {
             targetDir.mkdirs()
         }
 
+        val index = targetIndex ?: TargetPlainIndex(targetDir)
         val encCanon = runCatching { encryptedFile.canonicalPath }.getOrDefault(encryptedFile.absolutePath)
-        val existingVariants = targetDir.listFiles()?.filter {
-            it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, meta.originalName)
-        } ?: emptyList()
-        for (existingPlain in existingVariants) {
-            if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta)) {
-                val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
-                if (deleteEncryptedSource && encCanon != plainCanon) {
-                    val encPath = encryptedFile.absolutePath
-                    runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, existingPlain.absolutePath) }
-                    metadataCache.remove(encPath)?.fileKey?.fill(0)
-                    runCatching { context.mediaDB.deleteMediumPath(encPath) }
-                    encryptedFile.delete()
+
+        if (!skipDuplicateCheck) {
+            val existingVariants = index.findCandidates(meta.originalName, matchCollisionVariants)
+            for (existingPlain in existingVariants) {
+                if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta, verifyIntegrity = false)) {
+                    val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
+                    if (deleteEncryptedSource && deleteSourceOnIdentical && encCanon != plainCanon) {
+                        val encPath = encryptedFile.absolutePath
+                        runCatching {
+                            context.markReferencesOnDecrypt(
+                                encPath = encPath,
+                                decryptedFile = existingPlain,
+                                hideStealthReferences = true
+                            )
+                        }
+                        metadataCache.remove(encPath)?.fileKey?.fill(0)
+                        runCatching { context.mediaDB.deleteMediumPath(encPath) }
+                        encryptedFile.delete()
+                    } else if (deleteSourceOnIdentical && encCanon != plainCanon) {
+                        runCatching {
+                            context.markReferencesOnDecrypt(
+                                encPath = encryptedFile.absolutePath,
+                                decryptedFile = existingPlain,
+                                hideStealthReferences = false
+                            )
+                        }
+                    }
+                    if (deleteSourceOnIdentical) {
+                        runCatching { context.rescanPaths(arrayListOf(existingPlain.absolutePath)) }
+                    }
+                    return if (!deleteSourceOnIdentical) null else existingPlain
                 }
-                runCatching { context.rescanPaths(arrayListOf(existingPlain.absolutePath)) }
-                return existingPlain
             }
         }
 
-        var outFile = File(targetDir, meta.originalName)
+        var outFile = index.findExact(meta.originalName) ?: File(targetDir, meta.originalName)
         if (outFile.exists()) {
             when (conflictResolution) {
                 CONFLICT_SKIP -> return null
                 CONFLICT_OVERWRITE -> {
                     outFile.delete()
+                    index.removeFile(outFile)
                 }
                 else -> {
-                    outFile = getAlternativePlainFile(targetDir, meta.originalName)
+                    outFile = index.getAlternativeFile(meta.originalName)
                 }
             }
         }
 
         return try {
             val encPath = encryptedFile.absolutePath
-            openDecryptedContentStream(encryptedFile, 0L)?.use { cis ->
+            openDecryptedContentStream(encryptedFile, 0L, meta)?.use { cis ->
                 FileOutputStream(outFile).use { fos ->
-                    BufferedOutputStream(fos, 64 * 1024).use { bos ->
-                        val buffer = ByteArray(64 * 1024)
+                    BufferedOutputStream(fos, 256 * 1024).use { bos ->
+                        val buffer = ByteArray(256 * 1024)
                         var read: Int
                         while (cis.read(buffer).also { read = it } != -1) {
                             bos.write(buffer, 0, read)
@@ -2832,12 +2874,27 @@ object CryptoManager {
             } ?: return null
 
             outFile.setLastModified(meta.lastModified)
+            index.recordFile(outFile)
 
             if (deleteEncryptedSource) {
-                runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, outFile.absolutePath) }
+                runCatching {
+                    context.markReferencesOnDecrypt(
+                        encPath = encPath,
+                        decryptedFile = outFile,
+                        hideStealthReferences = true
+                    )
+                }
                 metadataCache.remove(encPath)?.fileKey?.fill(0)
                 runCatching { context.mediaDB.deleteMediumPath(encPath) }
                 encryptedFile.delete()
+            } else {
+                runCatching {
+                    context.markReferencesOnDecrypt(
+                        encPath = encPath,
+                        decryptedFile = outFile,
+                        hideStealthReferences = false
+                    )
+                }
             }
             runCatching { context.rescanPaths(arrayListOf(outFile.absolutePath)) }
             outFile
@@ -2865,7 +2922,12 @@ object CryptoManager {
      * The .bin filename on disk remains completely unrelated (random hex).
      * Re-encrypts only the header and shifts the authenticated payload without re-encrypting media bytes.
      */
-    fun renameEncryptedFile(encryptedFile: File, newOriginalName: String): Boolean {
+    fun renameEncryptedFile(
+        encryptedFile: File,
+        newOriginalName: String,
+        skipIntegrityCheck: Boolean = false,
+        syncParentDir: Boolean = true
+    ): Boolean {
         if (!encryptedFile.exists() || !encryptedFile.isFile || !isEncryptedFile(encryptedFile.name)) return false
         val trimmedName = newOriginalName.trim()
         if (trimmedName.isEmpty()) return false
@@ -2874,7 +2936,7 @@ object CryptoManager {
         val meta = readMetadata(encryptedFile) ?: return false
         if (meta.originalName == trimmedName) return true
 
-        if (meta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile)) {
+        if (!skipIntegrityCheck && meta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile)) {
             return false
         }
 
@@ -2992,7 +3054,9 @@ object CryptoManager {
 
                         dos.flush()
                         bos.flush()
-                        fos.fd.sync()
+                        if (syncParentDir) {
+                            fos.fd.sync()
+                        }
                     }
                 }
             }
@@ -3004,7 +3068,9 @@ object CryptoManager {
             )
 
             encryptedFile.setLastModified(meta.lastModified)
-            syncDir(parentDir)
+            if (syncParentDir) {
+                syncDir(parentDir)
+            }
 
             metadataCache[encryptedFile.absolutePath] = meta.copy(
                 originalName = trimmedName,
@@ -3097,6 +3163,160 @@ object CryptoManager {
             (indexStr.toIntOrNull() ?: 0) >= 1
     }
 
+    internal fun stripCollisionIndex(name: String): String {
+        val lastDot = name.lastIndexOf('.')
+        val body = if (lastDot > 0) name.substring(0, lastDot) else name
+        val ext = if (lastDot > 0) name.substring(lastDot) else ""
+        if (!body.endsWith(")")) return name
+        val openIdx = body.lastIndexOf('(')
+        if (openIdx <= 0) return name
+        val indexStr = body.substring(openIdx + 1, body.length - 1)
+        if (indexStr.isNotEmpty() && indexStr.all { it in '0'..'9' } && (indexStr.toIntOrNull() ?: 0) >= 1) {
+            return "${body.substring(0, openIdx)}$ext"
+        }
+        return name
+    }
+
+    class TargetPlainIndex(val targetDir: File) {
+        private val byExactNameLower = HashMap<String, File>()
+        private val byFamilyLower = HashMap<String, MutableList<File>>()
+
+        init {
+            if (targetDir.exists() && targetDir.isDirectory) {
+                targetDir.listFiles()?.forEach { file ->
+                    if (file.isFile && !isEncryptedFile(file.name)) {
+                        recordFile(file)
+                    }
+                }
+            }
+        }
+
+        fun recordFile(file: File) {
+            val exactLower = file.name.lowercase(Locale.ROOT)
+            byExactNameLower[exactLower] = file
+            byFamilyLower.getOrPut(exactLower) { ArrayList(1) }.add(file)
+            val strippedLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
+            if (strippedLower != exactLower) {
+                byFamilyLower.getOrPut(strippedLower) { ArrayList(2) }.add(file)
+            }
+        }
+
+        fun removeFile(file: File) {
+            val exactLower = file.name.lowercase(Locale.ROOT)
+            byExactNameLower.remove(exactLower)
+            byFamilyLower[exactLower]?.removeAll { it.name.equals(file.name, ignoreCase = true) }
+            val strippedLower = stripCollisionIndex(file.name).lowercase(Locale.ROOT)
+            if (strippedLower != exactLower) {
+                byFamilyLower[strippedLower]?.removeAll { it.name.equals(file.name, ignoreCase = true) }
+            }
+        }
+
+        fun findExact(desiredName: String): File? {
+            return byExactNameLower[desiredName.lowercase(Locale.ROOT)]
+        }
+
+        fun containsName(name: String): Boolean {
+            return byExactNameLower.containsKey(name.lowercase(Locale.ROOT))
+        }
+
+        fun findCandidates(desiredName: String, includeCollisionVariants: Boolean): List<File> {
+            if (!includeCollisionVariants) {
+                return findExact(desiredName)?.let { listOf(it) } ?: emptyList()
+            }
+            val list = byFamilyLower[desiredName.lowercase(Locale.ROOT)] ?: return emptyList()
+            return list.filter { isSameOrCollisionVariant(it.name, desiredName) }
+        }
+
+        fun getAlternativeFile(originalName: String): File {
+            var copyIndex = 1
+            var candidateName = formatCollisionFileName(originalName, copyIndex)
+            while (containsName(candidateName) || File(targetDir, candidateName).exists()) {
+                copyIndex++
+                candidateName = formatCollisionFileName(originalName, copyIndex)
+            }
+            return File(targetDir, candidateName)
+        }
+    }
+
+    class TargetEncryptedIndex(val targetDir: File) {
+        private val byBinNameLower = HashMap<String, File>()
+        private val byExactNameLower = HashMap<String, MutableList<Pair<File, EncryptedFileMetadata>>>()
+        private val byFamilyLower = HashMap<String, MutableList<Pair<File, EncryptedFileMetadata>>>()
+
+        init {
+            if (targetDir.exists() && targetDir.isDirectory) {
+                targetDir.listFiles()?.forEach { file ->
+                    if (isEncryptedBinFile(file)) {
+                        byBinNameLower[file.name.lowercase(Locale.ROOT)] = file
+                        readMetadata(file, includeThumbnail = false, cacheResult = false)?.let { meta ->
+                            indexMeta(file, meta)
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun indexMeta(binFile: File, meta: EncryptedFileMetadata) {
+            val exactLower = meta.originalName.lowercase(Locale.ROOT)
+            val entry = binFile to meta
+            byExactNameLower.getOrPut(exactLower) { ArrayList(1) }.add(entry)
+            byFamilyLower.getOrPut(exactLower) { ArrayList(1) }.add(entry)
+            val strippedLower = stripCollisionIndex(meta.originalName).lowercase(Locale.ROOT)
+            if (strippedLower != exactLower) {
+                byFamilyLower.getOrPut(strippedLower) { ArrayList(2) }.add(entry)
+            }
+        }
+
+        fun addEntry(binFile: File, meta: EncryptedFileMetadata) {
+            byBinNameLower[binFile.name.lowercase(Locale.ROOT)] = binFile
+            indexMeta(binFile, meta)
+        }
+
+        fun findMatchingMirrorBin(sourceBinName: String): File? {
+            return byBinNameLower[sourceBinName.lowercase(Locale.ROOT)]
+        }
+
+        fun findExactEntries(desiredName: String): List<Pair<File, EncryptedFileMetadata>> {
+            return byExactNameLower[desiredName.lowercase(Locale.ROOT)] ?: emptyList()
+        }
+
+        fun findCandidates(
+            desiredName: String,
+            includeCollisionVariants: Boolean
+        ): List<Pair<File, EncryptedFileMetadata>> {
+            if (!includeCollisionVariants) {
+                return findExactEntries(desiredName)
+            }
+            val list = byFamilyLower[desiredName.lowercase(Locale.ROOT)] ?: return emptyList()
+            return list.filter { (_, meta) -> isSameOrCollisionVariant(meta.originalName, desiredName) }
+        }
+
+        fun getAlternativeOriginalName(originalName: String): String {
+            var copyIndex = 1
+            var candidateName = formatCollisionFileName(originalName, copyIndex)
+            while (byExactNameLower.containsKey(candidateName.lowercase(Locale.ROOT))) {
+                copyIndex++
+                candidateName = formatCollisionFileName(originalName, copyIndex)
+            }
+            return candidateName
+        }
+
+        fun removeExactEntries(desiredName: String): List<File> {
+            val exactLower = desiredName.lowercase(Locale.ROOT)
+            val removed = byExactNameLower.remove(exactLower) ?: return emptyList()
+            val removedPaths = removed.mapTo(HashSet()) { it.first.absolutePath }
+            removed.forEach { (binFile, _) ->
+                byBinNameLower.remove(binFile.name.lowercase(Locale.ROOT))
+            }
+            byFamilyLower[exactLower]?.removeAll { it.first.absolutePath in removedPaths }
+            val strippedLower = stripCollisionIndex(desiredName).lowercase(Locale.ROOT)
+            if (strippedLower != exactLower) {
+                byFamilyLower[strippedLower]?.removeAll { it.first.absolutePath in removedPaths }
+            }
+            return removed.map { it.first }
+        }
+    }
+
     private fun readExactOrEof(stream: InputStream, buffer: ByteArray, length: Int): Int {
         var total = 0
         while (total < length) {
@@ -3107,23 +3327,78 @@ object CryptoManager {
         return total
     }
 
+    private const val FAST_SAMPLING_THRESHOLD_BYTES = 8L * 1024L * 1024L
+    private const val FAST_SAMPLING_CHUNK_BYTES = 256 * 1024
+
+    private fun bufferPrefixEquals(bufA: ByteArray, bufB: ByteArray, len: Int): Boolean {
+        return java.nio.ByteBuffer.wrap(bufA, 0, len) == java.nio.ByteBuffer.wrap(bufB, 0, len)
+    }
+
+    private fun computeFastSampleOffsets(size: Long, chunkSize: Int): LongArray {
+        val maxOffset = (size - chunkSize).coerceAtLeast(0L)
+        return longArrayOf(0L, size / 4L, size / 2L, (size * 3L) / 4L, maxOffset)
+    }
+
+    private inline fun filesMatchFastSampled(
+        totalSize: Long,
+        readChunkA: (offset: Long, buf: ByteArray, len: Int) -> Boolean,
+        readChunkB: (offset: Long, buf: ByteArray, len: Int) -> Boolean
+    ): Boolean {
+        val chunkSize = FAST_SAMPLING_CHUNK_BYTES
+        val bufA = ByteArray(chunkSize)
+        val bufB = ByteArray(chunkSize)
+        for (offset in computeFastSampleOffsets(totalSize, chunkSize)) {
+            if (!readChunkA(offset, bufA, chunkSize)) return false
+            if (!readChunkB(offset, bufB, chunkSize)) return false
+            if (!bufferPrefixEquals(bufA, bufB, chunkSize)) return false
+        }
+        return true
+    }
+
+    private fun readPlainChunk(raf: RandomAccessFile, offset: Long, buf: ByteArray, len: Int): Boolean {
+        return try {
+            raf.seek(offset)
+            raf.readFully(buf, 0, len)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun readEncryptedChunk(
+        file: File,
+        meta: EncryptedFileMetadata,
+        offset: Long,
+        buf: ByteArray,
+        len: Int
+    ): Boolean {
+        return try {
+            openDecryptedContentStream(file, offset, meta)?.use { decIn ->
+                readExactOrEof(decIn, buf, len) == len
+            } ?: false
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun streamsHaveEqualBytes(
         streamA: InputStream,
         streamB: InputStream,
         byteCount: Long,
-        bufferSize: Int = 64 * 1024
+        bufferSize: Int = 256 * 1024
     ): Boolean {
-        val bufA = ByteArray(bufferSize)
-        val bufB = ByteArray(bufferSize)
+        val effectiveBufSize = minOf(maxOf(byteCount, 1L), bufferSize.toLong()).toInt()
+        val bufA = ByteArray(effectiveBufSize)
+        val bufB = ByteArray(effectiveBufSize)
         var remaining = byteCount
         while (remaining > 0L) {
-            val toRead = minOf(remaining, bufferSize.toLong()).toInt()
+            val toRead = minOf(remaining, effectiveBufSize.toLong()).toInt()
             val readA = streamA.read(bufA, 0, toRead)
             if (readA <= 0) return false
             val readB = readExactOrEof(streamB, bufB, readA)
             if (readB != readA) return false
-            for (i in 0 until readA) {
-                if (bufA[i] != bufB[i]) return false
+            if (!bufferPrefixEquals(bufA, bufB, readA)) {
+                return false
             }
             remaining -= readA.toLong()
         }
@@ -3189,14 +3464,24 @@ object CryptoManager {
     private fun streamsMatchBitForBit(
         fileA: File,
         fileB: File,
-        originalSize: Long
+        originalSize: Long,
+        metaA: EncryptedFileMetadata? = null,
+        metaB: EncryptedFileMetadata? = null,
+        fastSampling: Boolean = false
     ): Boolean {
+        if (fastSampling && originalSize >= FAST_SAMPLING_THRESHOLD_BYTES && metaA != null && metaB != null) {
+            return filesMatchFastSampled(
+                totalSize = originalSize,
+                readChunkA = { offset, buf, len -> readEncryptedChunk(fileA, metaA, offset, buf, len) },
+                readChunkB = { offset, buf, len -> readEncryptedChunk(fileB, metaB, offset, buf, len) }
+            )
+        }
         return try {
-            val sA = openDecryptedContentStream(fileA, 0L) ?: return false
+            val sA = openDecryptedContentStream(fileA, 0L, metaA) ?: return false
             sA.use { streamA ->
-                val sB = openDecryptedContentStream(fileB, 0L) ?: return false
+                val sB = openDecryptedContentStream(fileB, 0L, metaB) ?: return false
                 sB.use { streamB ->
-                    streamsHaveEqualBytes(streamA, streamB, originalSize, bufferSize = 64 * 1024)
+                    streamsHaveEqualBytes(streamA, streamB, originalSize)
                 }
             }
         } catch (_: Exception) {
@@ -3208,7 +3493,8 @@ object CryptoManager {
         fileA: File,
         metaA: EncryptedFileMetadata,
         fileB: File,
-        metaB: EncryptedFileMetadata
+        metaB: EncryptedFileMetadata,
+        fastSampling: Boolean = false
     ): Boolean {
         if (metaA.originalSize != metaB.originalSize || metaA.mediaType != metaB.mediaType) {
             return false
@@ -3219,7 +3505,198 @@ object CryptoManager {
         if (isFastMacMatchDuplicate(fileA, metaA, fileB, metaB)) {
             return true
         }
-        return streamsMatchBitForBit(fileA, fileB, metaA.originalSize)
+        return streamsMatchBitForBit(fileA, fileB, metaA.originalSize, metaA, metaB, fastSampling = fastSampling)
+    }
+
+    private enum class StreamCompareMacResult {
+        MATCH_VALID,
+        SOURCE_MAC_INVALID,
+        MISMATCH
+    }
+
+    private fun compareEncryptedStreamAndVerifySourceMac(
+        sourceBin: File,
+        sourceMeta: EncryptedFileMetadata,
+        existingFile: File,
+        existingMeta: EncryptedFileMetadata
+    ): StreamCompareMacResult {
+        if (sourceMeta.originalSize != existingMeta.originalSize || sourceMeta.mediaType != existingMeta.mediaType) {
+            return StreamCompareMacResult.MISMATCH
+        }
+        if (sourceMeta.originalSize == 0L) {
+            return if (!sourceMeta.isMacAuthenticated || verifyFileIntegrity(sourceBin, sourceMeta)) {
+                StreamCompareMacResult.MATCH_VALID
+            } else {
+                StreamCompareMacResult.SOURCE_MAC_INVALID
+            }
+        }
+        if (sourceMeta.isMacAuthenticated) {
+            val expectedTotalSize = sourceMeta.payloadOffset + sourceMeta.originalSize + MAC_TAG_LENGTH
+            if (sourceBin.length() != expectedTotalSize) {
+                return StreamCompareMacResult.SOURCE_MAC_INVALID
+            }
+        }
+
+        return try {
+            val existingStream = openDecryptedContentStream(existingFile, 0L, existingMeta)
+                ?: return StreamCompareMacResult.MISMATCH
+            existingStream.use { otherDecIn ->
+                BufferedInputStream(FileInputStream(sourceBin), 256 * 1024).use { srcIn ->
+                    val headerLen = sourceMeta.payloadOffset.toInt()
+                    val headerBuf = ByteArray(headerLen)
+                    if (readExactOrEof(srcIn, headerBuf, headerLen) != headerLen) {
+                        return StreamCompareMacResult.SOURCE_MAC_INVALID
+                    }
+
+                    val poly: Poly1305? = if (sourceMeta.isMacAuthenticated) {
+                        val macKey = deriveSubkey(sourceMeta.fileKey, DOMAIN_CONTENT_MAC_KEY)
+                        Poly1305(AESEngine.newInstance()).apply {
+                            init(ParametersWithIV(KeyParameter(macKey), sourceMeta.contentIv))
+                            macKey.fill(0)
+                            if (sourceMeta.version == VERSION_V5_AUTH) {
+                                val headerIv = headerBuf.copyOfRange(9, 9 + GCM_IV_LENGTH)
+                                val encHeaderLen = java.nio.ByteBuffer.wrap(headerBuf, 9 + GCM_IV_LENGTH, 4).int
+                                val encHeader = headerBuf.copyOfRange(9 + GCM_IV_LENGTH + 4, 9 + GCM_IV_LENGTH + 4 + encHeaderLen)
+                                update(headerIv, 0, headerIv.size)
+                                update(encHeader, 0, encHeader.size)
+                            }
+                        }
+                    } else null
+
+                    val encKey = if (sourceMeta.isMacAuthenticated) {
+                        deriveSubkey(sourceMeta.fileKey, DOMAIN_CONTENT_ENC_KEY)
+                    } else {
+                        sourceMeta.fileKey
+                    }
+                    val sourceCipher = Cipher.getInstance("AES/CTR/NoPadding").apply {
+                        init(Cipher.DECRYPT_MODE, SecretKeySpec(encKey, "AES"), IvParameterSpec(sourceMeta.contentIv))
+                    }
+                    if (sourceMeta.isMacAuthenticated) {
+                        encKey.fill(0)
+                    }
+
+                    val bufSize = minOf(sourceMeta.originalSize, 256L * 1024L).toInt().coerceAtLeast(1)
+                    val srcCipherBuf = ByteArray(bufSize)
+                    val srcPlainBuf = ByteArray(bufSize)
+                    val otherPlainBuf = ByteArray(bufSize)
+                    var remaining = sourceMeta.originalSize
+
+                    while (remaining > 0L) {
+                        val toRead = minOf(remaining, bufSize.toLong()).toInt()
+                        val readA = srcIn.read(srcCipherBuf, 0, toRead)
+                        if (readA <= 0) return StreamCompareMacResult.SOURCE_MAC_INVALID
+
+                        poly?.update(srcCipherBuf, 0, readA)
+                        val decLen = sourceCipher.update(srcCipherBuf, 0, readA, srcPlainBuf, 0)
+                        val readB = readExactOrEof(otherDecIn, otherPlainBuf, decLen)
+                        if (readB != decLen) return StreamCompareMacResult.MISMATCH
+                        if (java.nio.ByteBuffer.wrap(srcPlainBuf, 0, decLen) != java.nio.ByteBuffer.wrap(otherPlainBuf, 0, decLen)) {
+                            return StreamCompareMacResult.MISMATCH
+                        }
+                        remaining -= readA.toLong()
+                    }
+
+                    if (poly != null) {
+                        val storedTag = ByteArray(MAC_TAG_LENGTH)
+                        if (readExactOrEof(srcIn, storedTag, MAC_TAG_LENGTH) != MAC_TAG_LENGTH) {
+                            return StreamCompareMacResult.SOURCE_MAC_INVALID
+                        }
+                        val computedTag = ByteArray(MAC_TAG_LENGTH)
+                        poly.doFinal(computedTag, 0)
+                        if (!MessageDigest.isEqual(computedTag, storedTag)) {
+                            return StreamCompareMacResult.SOURCE_MAC_INVALID
+                        }
+                    }
+                    StreamCompareMacResult.MATCH_VALID
+                }
+            }
+        } catch (_: Exception) {
+            StreamCompareMacResult.MISMATCH
+        }
+    }
+
+    private fun copyBinAndVerifyIntegritySinglePass(
+        sourceBin: File,
+        sourceMeta: EncryptedFileMetadata,
+        tempFile: File
+    ): Boolean {
+        if (sourceMeta.isMacAuthenticated) {
+            val expectedTotalSize = sourceMeta.payloadOffset + sourceMeta.originalSize + MAC_TAG_LENGTH
+            if (sourceBin.length() != expectedTotalSize) {
+                return false
+            }
+        }
+
+        return try {
+            BufferedInputStream(FileInputStream(sourceBin), 256 * 1024).use { bis ->
+                BufferedOutputStream(FileOutputStream(tempFile), 256 * 1024).use { bos ->
+                    if (!sourceMeta.isMacAuthenticated) {
+                        val buf = ByteArray(256 * 1024)
+                        var read: Int
+                        while (bis.read(buf).also { read = it } != -1) {
+                            bos.write(buf, 0, read)
+                        }
+                        bos.flush()
+                        return true
+                    }
+
+                    val headerLen = sourceMeta.payloadOffset.toInt()
+                    val headerBuf = ByteArray(headerLen)
+                    if (readExactOrEof(bis, headerBuf, headerLen) != headerLen) {
+                        tempFile.delete()
+                        return false
+                    }
+                    bos.write(headerBuf, 0, headerLen)
+
+                    val macKey = deriveSubkey(sourceMeta.fileKey, DOMAIN_CONTENT_MAC_KEY)
+                    val poly = Poly1305(AESEngine.newInstance())
+                    poly.init(ParametersWithIV(KeyParameter(macKey), sourceMeta.contentIv))
+                    macKey.fill(0)
+
+                    if (sourceMeta.version == VERSION_V5_AUTH) {
+                        val headerIv = headerBuf.copyOfRange(9, 9 + GCM_IV_LENGTH)
+                        val encHeaderLen = java.nio.ByteBuffer.wrap(headerBuf, 9 + GCM_IV_LENGTH, 4).int
+                        val encHeader = headerBuf.copyOfRange(9 + GCM_IV_LENGTH + 4, 9 + GCM_IV_LENGTH + 4 + encHeaderLen)
+                        poly.update(headerIv, 0, headerIv.size)
+                        poly.update(encHeader, 0, encHeader.size)
+                    }
+
+                    val bufSize = minOf(maxOf(sourceMeta.originalSize, 1L), 256L * 1024L).toInt()
+                    val buf = ByteArray(bufSize)
+                    var remaining = sourceMeta.originalSize
+                    while (remaining > 0L) {
+                        val toRead = minOf(remaining, bufSize.toLong()).toInt()
+                        val read = bis.read(buf, 0, toRead)
+                        if (read <= 0) {
+                            tempFile.delete()
+                            return false
+                        }
+                        bos.write(buf, 0, read)
+                        poly.update(buf, 0, read)
+                        remaining -= read.toLong()
+                    }
+
+                    val storedTag = ByteArray(MAC_TAG_LENGTH)
+                    if (readExactOrEof(bis, storedTag, MAC_TAG_LENGTH) != MAC_TAG_LENGTH) {
+                        tempFile.delete()
+                        return false
+                    }
+                    bos.write(storedTag, 0, MAC_TAG_LENGTH)
+                    bos.flush()
+
+                    val computedTag = ByteArray(MAC_TAG_LENGTH)
+                    poly.doFinal(computedTag, 0)
+                    if (!MessageDigest.isEqual(computedTag, storedTag)) {
+                        tempFile.delete()
+                        return false
+                    }
+                }
+            }
+            true
+        } catch (_: Exception) {
+            tempFile.delete()
+            false
+        }
     }
 
     private data class SyncPendingItem(
@@ -3280,7 +3757,7 @@ object CryptoManager {
         }
     }
 
-    fun arePlainFilesIdentical(fileA: File, fileB: File): Boolean {
+    fun arePlainFilesIdentical(fileA: File, fileB: File, fastSampling: Boolean = false): Boolean {
         if (!fileA.isFile || !fileB.isFile) return false
         val canonA = runCatching { fileA.canonicalPath }.getOrDefault(fileA.absolutePath)
         val canonB = runCatching { fileB.canonicalPath }.getOrDefault(fileB.absolutePath)
@@ -3288,6 +3765,21 @@ object CryptoManager {
         val size = fileA.length()
         if (size != fileB.length()) return false
         if (size == 0L) return true
+        if (fastSampling && size >= FAST_SAMPLING_THRESHOLD_BYTES) {
+            return try {
+                RandomAccessFile(fileA, "r").use { rafA ->
+                    RandomAccessFile(fileB, "r").use { rafB ->
+                        filesMatchFastSampled(
+                            totalSize = size,
+                            readChunkA = { offset, buf, len -> readPlainChunk(rafA, offset, buf, len) },
+                            readChunkB = { offset, buf, len -> readPlainChunk(rafB, offset, buf, len) }
+                        )
+                    }
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
         return try {
             FileInputStream(fileA).use { inA ->
                 FileInputStream(fileB).use { inB ->
@@ -3302,25 +3794,45 @@ object CryptoManager {
     fun arePlainAndEncryptedIdentical(
         plainFile: File,
         encryptedFile: File,
-        meta: EncryptedFileMetadata? = readMetadata(encryptedFile)
+        meta: EncryptedFileMetadata? = readMetadata(encryptedFile, includeThumbnail = false, cacheResult = false),
+        verifyIntegrity: Boolean = true,
+        fastSampling: Boolean = false
     ): Boolean {
         if (!plainFile.isFile || !encryptedFile.isFile) return false
         val resolvedMeta = meta ?: return false
         val size = plainFile.length()
         if (size != resolvedMeta.originalSize) return false
-        if (resolvedMeta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile)) {
+        if (size == 0L) {
+            return !verifyIntegrity || !resolvedMeta.isMacAuthenticated || verifyFileIntegrity(encryptedFile, resolvedMeta)
+        }
+        val bytesEqual = if (fastSampling && size >= FAST_SAMPLING_THRESHOLD_BYTES) {
+            try {
+                RandomAccessFile(plainFile, "r").use { raf ->
+                    filesMatchFastSampled(
+                        totalSize = size,
+                        readChunkA = { offset, buf, len -> readPlainChunk(raf, offset, buf, len) },
+                        readChunkB = { offset, buf, len -> readEncryptedChunk(encryptedFile, resolvedMeta, offset, buf, len) }
+                    )
+                }
+            } catch (_: Exception) {
+                false
+            }
+        } else {
+            try {
+                FileInputStream(plainFile).use { plainIn ->
+                    openDecryptedContentStream(encryptedFile, 0L, resolvedMeta)?.use { decIn ->
+                        streamsHaveEqualBytes(plainIn, decIn, size)
+                    } ?: false
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
+        if (!bytesEqual) return false
+        if (verifyIntegrity && resolvedMeta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile, resolvedMeta)) {
             return false
         }
-        if (size == 0L) return true
-        return try {
-            FileInputStream(plainFile).use { plainIn ->
-                openDecryptedContentStream(encryptedFile, 0L)?.use { decIn ->
-                    streamsHaveEqualBytes(plainIn, decIn, size)
-                } ?: false
-            }
-        } catch (_: Exception) {
-            false
-        }
+        return true
     }
 
     fun getAlternativePlainFile(targetDir: File, originalName: String): File {
@@ -3336,19 +3848,139 @@ object CryptoManager {
     fun findIdenticalPlainFileInDir(
         sourcePlainFile: File,
         targetDir: File,
-        desiredName: String = sourcePlainFile.name
+        desiredName: String = sourcePlainFile.name,
+        targetIndex: TargetPlainIndex? = null,
+        includeCollisionVariants: Boolean = true
     ): File? {
-        if (!sourcePlainFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
-        val candidates = targetDir.listFiles()?.filter {
-            it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, desiredName)
-        } ?: return null
+        if (!sourcePlainFile.isFile) return null
+        if (targetIndex != null) {
+            val candidates = targetIndex.findCandidates(desiredName, includeCollisionVariants)
+            return candidates.firstOrNull { arePlainFilesIdentical(sourcePlainFile, it) }
+        }
+        if (!targetDir.exists() || !targetDir.isDirectory) return null
+        val candidates = if (includeCollisionVariants) {
+            targetDir.listFiles()?.filter {
+                it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, desiredName)
+            } ?: return null
+        } else {
+            val exact = File(targetDir, desiredName)
+            if (exact.isFile && !isEncryptedFile(exact.name)) {
+                listOf(exact)
+            } else {
+                targetDir.listFiles()?.filter {
+                    it.isFile && !isEncryptedFile(it.name) && it.name.equals(desiredName, ignoreCase = true)
+                } ?: return null
+            }
+        }
         return candidates.firstOrNull { arePlainFilesIdentical(sourcePlainFile, it) }
+    }
+
+    enum class TransferConflictStatus {
+        NO_CONFLICT,
+        IDENTICAL_SKIP,
+        NAME_CONFLICT
+    }
+
+    data class TransferConflictCheck(
+        val status: TransferConflictStatus,
+        val displayName: String? = null
+    )
+
+    fun inspectTransferConflict(
+        sourceFile: File,
+        targetDir: File,
+        isTargetEncrypted: Boolean,
+        plainIndex: TargetPlainIndex? = null,
+        encryptedIndex: TargetEncryptedIndex? = null,
+        desiredPlainName: String? = null,
+        fastSampling: Boolean = false
+    ): TransferConflictCheck {
+        if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) {
+            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+        }
+        val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
+        val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+        if (srcParentCanon != null && srcParentCanon == targetCanon) {
+            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+        }
+
+        val isSourceEncrypted = isEncryptedFile(sourceFile.name)
+        val sourceMeta = if (isSourceEncrypted) {
+            readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+        } else {
+            null
+        }
+        if (isSourceEncrypted && sourceMeta == null) {
+            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+        }
+
+        val desiredName = desiredPlainName ?: sourceMeta?.originalName ?: sourceFile.name
+
+        if (isTargetEncrypted) {
+            if (unlockedMasterKey == null) {
+                return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+            }
+            val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+            val exactEntries = index.findExactEntries(desiredName)
+            if (exactEntries.isEmpty()) {
+                return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+            }
+
+            for ((existingBin, existingMeta) in exactEntries) {
+                val identical = if (isSourceEncrypted && sourceMeta != null) {
+                    areEncryptedFilesIdenticalContent(
+                        sourceFile,
+                        sourceMeta,
+                        existingBin,
+                        existingMeta,
+                        fastSampling = fastSampling
+                    )
+                } else {
+                    // Duplicate skip never deletes or trusts external data, so skip the redundant second MAC pass
+                    arePlainAndEncryptedIdentical(
+                        sourceFile,
+                        existingBin,
+                        existingMeta,
+                        verifyIntegrity = false,
+                        fastSampling = fastSampling
+                    )
+                }
+                if (identical) {
+                    return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
+                }
+            }
+            return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
+        } else {
+            val index = plainIndex ?: TargetPlainIndex(targetDir)
+            val existingPlain = index.findExact(desiredName)
+                ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+
+            val identical = if (isSourceEncrypted && sourceMeta != null) {
+                arePlainAndEncryptedIdentical(
+                    existingPlain,
+                    sourceFile,
+                    sourceMeta,
+                    verifyIntegrity = false,
+                    fastSampling = fastSampling
+                )
+            } else {
+                arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
+            }
+            return if (identical) {
+                TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName)
+            } else {
+                TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
+            }
+        }
     }
 
     fun findContentConflictInTarget(
         sourceFile: File,
         targetDir: File,
-        isTargetEncrypted: Boolean
+        isTargetEncrypted: Boolean,
+        plainIndex: TargetPlainIndex? = null,
+        encryptedIndex: TargetEncryptedIndex? = null,
+        includeCollisionVariants: Boolean = true
     ): String? {
         if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
         val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
@@ -3356,38 +3988,33 @@ object CryptoManager {
         if (srcParentCanon != null && srcParentCanon == targetCanon) return null
 
         val isSourceEncrypted = isEncryptedFile(sourceFile.name)
-        val sourceMeta = if (isSourceEncrypted) readMetadata(sourceFile) else null
+        val sourceMeta = if (isSourceEncrypted) {
+            readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+        } else {
+            null
+        }
         if (isSourceEncrypted && sourceMeta == null) return null
 
         val desiredName = sourceMeta?.originalName ?: sourceFile.name
 
         if (isTargetEncrypted) {
             if (unlockedMasterKey == null) return null
-            val existingEntries = targetDir.listFiles()
-                ?.filter { it.isFile && isEncryptedFile(it.name) }
-                ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
-                ?: return null
+            val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+            val candidates = index.findCandidates(desiredName, includeCollisionVariants)
 
-            for ((existingBin, existingMeta) in existingEntries) {
-                if (isSameOrCollisionVariant(existingMeta.originalName, desiredName)) {
-                    val identical = if (isSourceEncrypted && sourceMeta != null) {
-                        areEncryptedFilesIdenticalContent(sourceFile, sourceMeta, existingBin, existingMeta)
-                    } else {
-                        arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
-                    }
-                    if (identical) return null
+            for ((existingBin, existingMeta) in candidates) {
+                val identical = if (isSourceEncrypted && sourceMeta != null) {
+                    areEncryptedFilesIdenticalContent(sourceFile, sourceMeta, existingBin, existingMeta)
+                } else {
+                    arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
                 }
+                if (identical) return null
             }
 
-            return if (existingEntries.any { (_, meta) -> meta.originalName.equals(desiredName, ignoreCase = true) }) {
-                desiredName
-            } else {
-                null
-            }
+            return if (index.findExactEntries(desiredName).isNotEmpty()) desiredName else null
         } else {
-            val candidates = targetDir.listFiles()
-                ?.filter { it.isFile && !isEncryptedFile(it.name) && isSameOrCollisionVariant(it.name, desiredName) }
-                ?: emptyList()
+            val index = plainIndex ?: TargetPlainIndex(targetDir)
+            val candidates = index.findCandidates(desiredName, includeCollisionVariants)
 
             for (existingPlain in candidates) {
                 val identical = if (isSourceEncrypted && sourceMeta != null) {
@@ -3398,9 +4025,7 @@ object CryptoManager {
                 if (identical) return null
             }
 
-            val exactExists = File(targetDir, desiredName).exists() ||
-                candidates.any { it.name.equals(desiredName, ignoreCase = true) }
-            return if (exactExists) desiredName else null
+            return if (index.findExact(desiredName) != null) desiredName else null
         }
     }
 
@@ -3409,59 +4034,53 @@ object CryptoManager {
         sourceBin: File,
         targetDir: File,
         isMove: Boolean,
-        conflictResolution: Int = CONFLICT_KEEP_BOTH
+        conflictResolution: Int = CONFLICT_KEEP_BOTH,
+        targetIndex: TargetEncryptedIndex? = null,
+        skipDuplicateCheck: Boolean = false,
+        deleteSourceOnIdentical: Boolean = true,
+        matchCollisionVariants: Boolean = true
     ): File? {
         if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
-        val sourceMeta = readMetadata(sourceBin) ?: return null
-        if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin)) return null
+        val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false) ?: return null
+        if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin, sourceMeta)) return null
         if (!targetDir.exists() && !targetDir.mkdirs()) return null
 
         val srcParentCanon = runCatching { sourceBin.parentFile?.canonicalPath }.getOrNull()
         val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
         if (srcParentCanon != null && srcParentCanon == targetCanon) return sourceBin
 
-        val existingEntries = targetDir.listFiles()
-            ?.filter { it.isFile && isEncryptedFile(it.name) }
-            ?.mapNotNull { file -> readMetadata(file)?.let { meta -> file to meta } }
-            ?: emptyList()
+        val index = targetIndex ?: TargetEncryptedIndex(targetDir)
 
-        for ((existingBin, existingMeta) in existingEntries) {
-            if (isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName) &&
-                areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)
-            ) {
-                if (isMove) {
-                    runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
-                    runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
-                    metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
-                    sourceBin.delete()
+        if (!skipDuplicateCheck) {
+            val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
+            for ((existingBin, existingMeta) in candidates) {
+                if (areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta)) {
+                    if (isMove && deleteSourceOnIdentical) {
+                        runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
+                        runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
+                        metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+                        sourceBin.delete()
+                    }
+                    return if (!deleteSourceOnIdentical) null else existingBin
                 }
-                return existingBin
             }
         }
 
         var desiredName = sourceMeta.originalName
-        val exactMatches = existingEntries.filter { (_, existingMeta) ->
-            existingMeta.originalName.equals(desiredName, ignoreCase = true)
-        }
+        val exactMatches = index.findExactEntries(desiredName)
         if (exactMatches.isNotEmpty()) {
             when (conflictResolution) {
                 CONFLICT_SKIP -> return null
                 CONFLICT_OVERWRITE -> {
-                    exactMatches.forEach { (existingBin, _) ->
+                    val removed = index.removeExactEntries(desiredName)
+                    removed.forEach { existingBin ->
                         metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
                         runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
                         existingBin.delete()
                     }
                 }
                 else -> {
-                    val existingNamesLower = existingEntries.map { it.second.originalName.lowercase() }.toHashSet()
-                    var copyIndex = 1
-                    var candidateName = formatCollisionFileName(desiredName, copyIndex)
-                    while (existingNamesLower.contains(candidateName.lowercase())) {
-                        copyIndex++
-                        candidateName = formatCollisionFileName(desiredName, copyIndex)
-                    }
-                    desiredName = candidateName
+                    desiredName = index.getAlternativeOriginalName(desiredName)
                 }
             }
         }
@@ -3477,10 +4096,10 @@ object CryptoManager {
         } else {
             try {
                 FileInputStream(sourceBin).use { fis ->
-                    BufferedInputStream(fis, 64 * 1024).use { bis ->
+                    BufferedInputStream(fis, 256 * 1024).use { bis ->
                         FileOutputStream(destBin).use { fos ->
-                            BufferedOutputStream(fos, 64 * 1024).use { bos ->
-                                bis.copyTo(bos, 64 * 1024)
+                            BufferedOutputStream(fos, 256 * 1024).use { bos ->
+                                bis.copyTo(bos, 256 * 1024)
                                 bos.flush()
                                 fos.fd.sync()
                             }
@@ -3488,7 +4107,7 @@ object CryptoManager {
                     }
                 }
                 destBin.setLastModified(sourceBin.lastModified())
-                if (needsRename && !renameEncryptedFile(destBin, desiredName)) {
+                if (needsRename && !renameEncryptedFile(destBin, desiredName, skipIntegrityCheck = true, syncParentDir = false)) {
                     destBin.delete()
                     return null
                 }
@@ -3508,7 +4127,8 @@ object CryptoManager {
             runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, destBin.absolutePath) }
             runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
         }
-        readMetadata(destBin)
+        val destMeta = readMetadata(destBin, includeThumbnail = false, cacheResult = false) ?: sourceMeta.copy(originalName = desiredName)
+        index.addEntry(destBin, destMeta)
         return destBin
     }
 
@@ -3604,7 +4224,7 @@ object CryptoManager {
         runCryptoOperation {
             val resolvedAlbumMap = HashMap<String, File>()
             val existingAlbumLookedUp = HashSet<String>()
-            val albumEntriesIndex = HashMap<File, MutableList<Pair<File, EncryptedFileMetadata>>>()
+            val albumIndexMap = HashMap<File, TargetEncryptedIndex>()
             val albumBinNameIndex = HashMap<File, HashMap<String, File>>()
 
             var processed = 0
@@ -3624,7 +4244,7 @@ object CryptoManager {
                     }
                 }
 
-                // Stage 0: O(1) exact-mirror .bin fast skip before reading headers or full payload hashing
+                // Stage 0: O(1) exact-mirror .bin fast skip before reading headers or building metadata index
                 if (existingTarget != null) {
                     val binNameMap = albumBinNameIndex.getOrPut(existingTarget) {
                         val map = HashMap<String, File>()
@@ -3644,8 +4264,8 @@ object CryptoManager {
                     }
                 }
 
-                // Stage 1: Small GCM-authenticated header read only (no full-payload read yet)
-                val sourceMeta = readMetadata(sourceBin)
+                // Stage 1: Small GCM-authenticated header read only (no thumbnail allocation, no cache pollution)
+                val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false)
                 if (sourceMeta == null) {
                     metadataCache.remove(sourceBin.absolutePath)
                     failedCount++
@@ -3657,21 +4277,10 @@ object CryptoManager {
                 var integrityVerified = !sourceMeta.isMacAuthenticated
 
                 if (existingTarget != null) {
-                    val existingEntries = albumEntriesIndex.getOrPut(existingTarget) {
-                        val list = ArrayList<Pair<File, EncryptedFileMetadata>>()
-                        existingTarget.listFiles()
-                            ?.filter { isEncryptedBinFile(it) }
-                            ?.forEach { existingBin ->
-                                readMetadata(existingBin)?.let { existingMeta ->
-                                    list.add(existingBin to existingMeta)
-                                }
-                            }
-                        list
+                    val index = albumIndexMap.getOrPut(existingTarget) {
+                        TargetEncryptedIndex(existingTarget)
                     }
-
-                    val collisionCandidates = existingEntries.filter { (_, existingMeta) ->
-                        isSameOrCollisionVariant(existingMeta.originalName, sourceMeta.originalName)
-                    }
+                    val collisionCandidates = index.findCandidates(sourceMeta.originalName, includeCollisionVariants = true)
 
                     // Stage 2: O(1) length + contentIv + Poly1305 trailer match before full integrity scan
                     if (collisionCandidates.any { (existingFile, existingMeta) ->
@@ -3684,41 +4293,56 @@ object CryptoManager {
                         continue
                     }
 
-                    // Before Stage 4 bit-by-bit comparison or importing, verify MAC integrity of sourceBin
-                    if (!integrityVerified) {
-                        integrityVerified = verifyFileIntegrity(sourceBin)
-                        if (!integrityVerified) {
-                            metadataCache.remove(sourceBin.absolutePath)
-                            failedCount++
-                            processed++
-                            onProgress?.invoke(processed, total)
-                            continue
-                        }
+                    // Stage 3/4: Filter to exact size + mediaType matches and compare + verify MAC in 1 pass
+                    val sizeMatchingCandidates = collisionCandidates.filter { (_, existingMeta) ->
+                        existingMeta.originalSize == sourceMeta.originalSize &&
+                            existingMeta.mediaType == sourceMeta.mediaType
                     }
-
-                    // Stage 3/4: Full bit-by-bit decrypted stream comparison in RAM
-                    if (collisionCandidates.any { (existingFile, existingMeta) ->
-                            areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
+                    if (sizeMatchingCandidates.isNotEmpty()) {
+                        var matchOutcome = StreamCompareMacResult.MISMATCH
+                        for ((existingFile, existingMeta) in sizeMatchingCandidates) {
+                            matchOutcome = compareEncryptedStreamAndVerifySourceMac(
+                                sourceBin = sourceBin,
+                                sourceMeta = sourceMeta,
+                                existingFile = existingFile,
+                                existingMeta = existingMeta
+                            )
+                            if (matchOutcome != StreamCompareMacResult.MISMATCH) {
+                                break
+                            }
                         }
-                    ) {
-                        skippedDuplicateCount++
-                        processed++
-                        onProgress?.invoke(processed, total)
-                        continue
-                    }
-                } else {
-                    // Validate sourceBin cryptographically before lazily creating a new destination album
-                    if (!integrityVerified) {
-                        integrityVerified = verifyFileIntegrity(sourceBin)
-                        if (!integrityVerified) {
-                            metadataCache.remove(sourceBin.absolutePath)
-                            failedCount++
-                            processed++
-                            onProgress?.invoke(processed, total)
-                            continue
+                        when (matchOutcome) {
+                            StreamCompareMacResult.MATCH_VALID -> {
+                                skippedDuplicateCount++
+                                processed++
+                                onProgress?.invoke(processed, total)
+                                continue
+                            }
+                            StreamCompareMacResult.SOURCE_MAC_INVALID -> {
+                                metadataCache.remove(sourceBin.absolutePath)
+                                failedCount++
+                                processed++
+                                onProgress?.invoke(processed, total)
+                                continue
+                            }
+                            StreamCompareMacResult.MISMATCH -> Unit
                         }
                     }
                 }
+
+                // Single-pass copy + inline MAC verification before creating a new destination album
+                val stagingDir = existingTarget ?: vaultRoot
+                val tempFile = File(stagingDir, ".sync_tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
+                val copyVerified = copyBinAndVerifyIntegritySinglePass(sourceBin, sourceMeta, tempFile)
+                if (!copyVerified || !tempFile.exists()) {
+                    tempFile.delete()
+                    metadataCache.remove(sourceBin.absolutePath)
+                    failedCount++
+                    processed++
+                    onProgress?.invoke(processed, total)
+                    continue
+                }
+                integrityVerified = true
 
                 val targetAlbum = existingTarget ?: run {
                     val created = if (item.isDefaultTarget || item.sourceAlbumName.isNullOrBlank()) {
@@ -3733,84 +4357,49 @@ object CryptoManager {
                 }
 
                 if (targetAlbum == null) {
+                    tempFile.delete()
                     failedCount++
                     processed++
                     onProgress?.invoke(processed, total)
                     continue
                 }
 
-                val existingEntries = albumEntriesIndex.getOrPut(targetAlbum) {
-                    val list = ArrayList<Pair<File, EncryptedFileMetadata>>()
-                    targetAlbum.listFiles()
-                        ?.filter { isEncryptedBinFile(it) }
-                        ?.forEach { existingBin ->
-                            readMetadata(existingBin)?.let { existingMeta ->
-                                list.add(existingBin to existingMeta)
-                            }
-                        }
-                    list
+                val index = albumIndexMap.getOrPut(targetAlbum) {
+                    TargetEncryptedIndex(targetAlbum)
                 }
 
-                val tempFile = File(targetAlbum, ".sync_tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
                 var destBin = File(targetAlbum, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
                 while (destBin.exists()) {
                     destBin = File(targetAlbum, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
                 }
 
-                val copyOk = try {
-                    FileInputStream(sourceBin).use { fis ->
-                        FileOutputStream(tempFile).use { fos ->
-                            val buf = ByteArray(64 * 1024)
-                            var read: Int
-                            while (fis.read(buf).also { read = it } != -1) {
-                                fos.write(buf, 0, read)
-                            }
-                            fos.flush()
-                            fos.fd.sync()
-                        }
-                    }
-                    try {
-                        java.nio.file.Files.move(
-                            tempFile.toPath(),
-                            destBin.toPath(),
-                            java.nio.file.StandardCopyOption.REPLACE_EXISTING
-                        )
-                        true
-                    } catch (_: Exception) {
-                        tempFile.renameTo(destBin)
-                    }
+                val movedToDest = try {
+                    java.nio.file.Files.move(
+                        tempFile.toPath(),
+                        destBin.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                    )
+                    true
                 } catch (_: Exception) {
-                    tempFile.delete()
-                    destBin.delete()
-                    false
+                    tempFile.renameTo(destBin)
                 }
 
-                if (!copyOk || !destBin.exists()) {
+                if (!movedToDest || !destBin.exists()) {
                     tempFile.delete()
+                    destBin.delete()
                     failedCount++
                     processed++
                     onProgress?.invoke(processed, total)
                     continue
                 }
 
-                val exactNameTaken = existingEntries.any { (_, existingMeta) ->
-                    existingMeta.originalName.equals(sourceMeta.originalName, ignoreCase = true)
-                }
-
+                val exactNameTaken = index.findExactEntries(sourceMeta.originalName).isNotEmpty()
                 if (exactNameTaken) {
-                    var copyIndex = 1
-                    var renamedName = formatCollisionFileName(sourceMeta.originalName, copyIndex)
-                    while (existingEntries.any { (_, existingMeta) ->
-                            existingMeta.originalName.equals(renamedName, ignoreCase = true)
-                        }
-                    ) {
-                        copyIndex++
-                        renamedName = formatCollisionFileName(sourceMeta.originalName, copyIndex)
-                    }
-
-                    if (renameEncryptedFile(destBin, renamedName)) {
-                        val updatedMeta = readMetadata(destBin) ?: sourceMeta.copy(originalName = renamedName)
-                        existingEntries.add(destBin to updatedMeta)
+                    val renamedName = index.getAlternativeOriginalName(sourceMeta.originalName)
+                    if (renameEncryptedFile(destBin, renamedName, skipIntegrityCheck = integrityVerified, syncParentDir = false)) {
+                        val updatedMeta = readMetadata(destBin, includeThumbnail = false, cacheResult = false)
+                            ?: sourceMeta.copy(originalName = renamedName)
+                        index.addEntry(destBin, updatedMeta)
                         albumBinNameIndex[targetAlbum]?.put(destBin.name.lowercase(Locale.ROOT), destBin)
                         touchedTargetAlbums.add(targetAlbum.absolutePath)
                         renamedCount++
@@ -3821,9 +4410,7 @@ object CryptoManager {
                     }
                 } else {
                     destBin.setLastModified(sourceBin.lastModified())
-                    syncDir(targetAlbum)
-                    metadataCache[destBin.absolutePath] = sourceMeta
-                    existingEntries.add(destBin to sourceMeta)
+                    index.addEntry(destBin, sourceMeta)
                     albumBinNameIndex[targetAlbum]?.put(destBin.name.lowercase(Locale.ROOT), destBin)
                     touchedTargetAlbums.add(targetAlbum.absolutePath)
                     copiedCount++
@@ -3834,6 +4421,11 @@ object CryptoManager {
             }
         }
 
+        if (touchedTargetAlbums.isNotEmpty()) {
+            touchedTargetAlbums.forEach { albumPath ->
+                syncDir(File(albumPath))
+            }
+        }
         if (copiedCount + renamedCount > 0) {
             invalidateFolderCache()
             runCatching { clearAppImageCaches(context) }
@@ -3896,7 +4488,9 @@ object CryptoManager {
         val originalFolderName = existingAlbum?.let { getDecryptedFolderName(it, context) } ?: rawFolderName
 
         // Only formats supported by the gallery are encrypted; other files (pdf, md, ...) are left untouched.
-        val filesToEncrypt = folder.listFiles()?.filter { isEncryptableMediaFile(it) } ?: emptyList()
+        // Process pre-numbered (n) variants before base names so colliding base files cannot steal "(1)" slots.
+        val filesToEncrypt = (folder.listFiles()?.filter { isEncryptableMediaFile(it) } ?: emptyList())
+            .sortedWith(compareBy<File>({ stripCollisionIndex(it.name) == it.name }, { it.name }))
 
         val subfolder = existingAlbum ?: run {
             var candidate = File(vaultRoot, randomHex(6))
@@ -3924,6 +4518,7 @@ object CryptoManager {
         onProgress?.invoke(0, total)
 
         val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
+        val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder) else null
         val newlyCreatedBins = ArrayList<File>()
         val encryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false
@@ -3934,7 +4529,8 @@ object CryptoManager {
                 sourceFile = file,
                 targetDir = subfolder,
                 wipeSource = false,
-                clearCachesNow = false
+                clearCachesNow = false,
+                targetIndex = subfolderIndex
             )
             if (enc != null && enc.exists()) {
                 encryptedPairs.add(Pair(file, enc))
@@ -3964,12 +4560,25 @@ object CryptoManager {
         // ALL FILES ENCRYPTED SUCCESSFULLY! WIPE AND DELETE ORIGINAL MEDIA FILES:
         val wipedPaths = ArrayList<String>(encryptedPairs.size)
         val wipedFileNames = HashSet<String>(encryptedPairs.size)
+        val touchedAlbumIds = LinkedHashSet<Long>()
+        var favoritesChanged = false
         val encBaseProgress = (total * 7) / 10
         val wipeWeight = total - encBaseProgress
         for ((index, pair) in encryptedPairs.withIndex()) {
             val (sourceFile, encFile) = pair
             val sourcePath = sourceFile.absolutePath
-            runCatching { context.updateVirtualAlbumItemPathOnEncrypt(sourcePath, encFile.absolutePath) }
+            val plainIdentity = runCatching { MediaIdentity.ofWithFolder(context, sourceFile) }.getOrNull()
+            runCatching {
+                val res = context.markReferencesOnEncrypt(
+                    sourcePath = sourcePath,
+                    encPath = encFile.absolutePath,
+                    plaintextIdentity = plainIdentity,
+                    markPlaintextDormant = true,
+                    saveBackups = false
+                )
+                touchedAlbumIds.addAll(res.affectedAlbumIds)
+                if (res.favoritesChanged) favoritesChanged = true
+            }
             if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = false, purgeTraces = false)) {
                 wipedPaths.add(sourcePath)
                 wipedFileNames.add(sourceFile.name)
@@ -3982,6 +4591,13 @@ object CryptoManager {
             onProgress?.invoke(wipeProgress, total)
         }
         runCatching { syncDir(folder) }
+
+        for (albumId in touchedAlbumIds) {
+            runCatching { VirtualAlbumSyncManager.saveAlbumToFile(context, albumId) }
+        }
+        if (favoritesChanged) {
+            runCatching { ReferenceBackupManager.saveFavorites(context) }
+        }
 
         // Batch-purge MediaStore, Room DB, and thumbnail traces once for all wiped files
         if (wipedPaths.isNotEmpty()) {
@@ -3997,7 +4613,6 @@ object CryptoManager {
 
             runCatching {
                 context.mediaDB.deleteMediaFromPath(cleanFolderPath)
-                context.favoritesDB.deleteFavoritesByPrefix(cleanFolderPath)
                 GalleryDatabase.getInstance(context.applicationContext).DateTakensDao().deleteDateTakensFromPath(cleanFolderPath)
             }
 
@@ -4023,7 +4638,7 @@ object CryptoManager {
         } ?: emptyList()
         for (encFile in existingEncryptedFiles) {
             if (unlockedMasterKey != null) {
-                copyOrMoveEncryptedFileToDirectory(context, encFile, subfolder, isMove = true)
+                copyOrMoveEncryptedFileToDirectory(context, encFile, subfolder, isMove = true, targetIndex = subfolderIndex)
             } else {
                 var dest = File(subfolder, encFile.name)
                 while (dest.exists()) {
@@ -4176,14 +4791,28 @@ object CryptoManager {
         val targetExistedBefore = targetFolder.exists()
         if (!targetExistedBefore && !targetFolder.mkdirs()) return null
 
-        val filesToDecrypt = folder.listFiles()?.filter {
-            it.isFile && isEncryptedFile(it.name)
-        } ?: emptyList()
+        // Process pre-numbered (n) variants before base names so colliding base files do not steal "(1)" names.
+        val rawFilesToDecrypt = folder.listFiles()?.filter { it.isFile && isEncryptedFile(it.name) } ?: emptyList()
+        val origNameByPath = HashMap<String, String>(rawFilesToDecrypt.size)
+        for (file in rawFilesToDecrypt) {
+            origNameByPath[file.absolutePath] = readMetadata(file, includeThumbnail = false, cacheResult = false)?.originalName ?: file.name
+        }
+        val filesToDecrypt = rawFilesToDecrypt.sortedWith(
+            compareBy<File>(
+                {
+                    val orig = origNameByPath[it.absolutePath] ?: it.name
+                    stripCollisionIndex(orig) == orig
+                },
+                { origNameByPath[it.absolutePath] ?: it.name },
+                { it.name }
+            )
+        )
 
         val total = filesToDecrypt.size
         onProgress?.invoke(0, total)
 
         val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
+        val targetPlainIndex = TargetPlainIndex(targetFolder)
         val newlyCreatedPlainFiles = ArrayList<File>()
         val decryptedPairs = ArrayList<Pair<File, File>>()
         var failed = false
@@ -4193,7 +4822,8 @@ object CryptoManager {
                 context = context,
                 encryptedFile = file,
                 targetDir = targetFolder,
-                deleteEncryptedSource = false
+                deleteEncryptedSource = false,
+                targetIndex = targetPlainIndex
             )
             if (decrypted != null && decrypted.exists()) {
                 decryptedPairs.add(Pair(file, decrypted))
@@ -4219,12 +4849,29 @@ object CryptoManager {
         }
 
         // ALL FILES DECRYPTED! Now delete encrypted files:
+        val touchedAlbumIds = LinkedHashSet<Long>()
+        var favoritesChanged = false
         for ((encFile, decryptedFile) in decryptedPairs) {
             val encPath = encFile.absolutePath
-            runCatching { context.updateVirtualAlbumItemPathOnDecrypt(encPath, decryptedFile.absolutePath) }
+            runCatching {
+                val res = context.markReferencesOnDecrypt(
+                    encPath = encPath,
+                    decryptedFile = decryptedFile,
+                    hideStealthReferences = true,
+                    saveBackups = false
+                )
+                touchedAlbumIds.addAll(res.affectedAlbumIds)
+                if (res.favoritesChanged) favoritesChanged = true
+            }
             metadataCache.remove(encPath)?.fileKey?.fill(0)
             runCatching { context.mediaDB.deleteMediumPath(encPath) }
             encFile.delete()
+        }
+        for (albumId in touchedAlbumIds) {
+            runCatching { VirtualAlbumSyncManager.saveAlbumToFile(context, albumId) }
+        }
+        if (favoritesChanged) {
+            runCatching { ReferenceBackupManager.saveFavorites(context) }
         }
 
         runCatching {
@@ -4289,7 +4936,11 @@ object CryptoManager {
 
     // ==================== ON-THE-FLY HEADER & STREAM DECRYPTION ====================
 
-    fun readMetadata(file: File): EncryptedFileMetadata? {
+    fun readMetadata(
+        file: File,
+        includeThumbnail: Boolean = true,
+        cacheResult: Boolean = true
+    ): EncryptedFileMetadata? {
         metadataCache[file.absolutePath]?.let { return it }
         val masterKey = unlockedMasterKey ?: return null
         if (!file.exists() || !file.isFile) return null
@@ -4354,16 +5005,20 @@ object CryptoManager {
                         val originalSize = hdis.readLong()
                         val mediaType = hdis.readInt()
                         val videoDuration = hdis.readInt()
-                        val thumbBytes = try {
-                            if (hdis.available() >= 4) {
-                                val thumbLen = hdis.readInt()
-                                if (thumbLen in 1..(5 * 1024 * 1024) && hdis.available() >= thumbLen) {
-                                    val tb = ByteArray(thumbLen)
-                                    hdis.readFully(tb)
-                                    tb
+                        val thumbBytes = if (includeThumbnail) {
+                            try {
+                                if (hdis.available() >= 4) {
+                                    val thumbLen = hdis.readInt()
+                                    if (thumbLen in 1..(5 * 1024 * 1024) && hdis.available() >= thumbLen) {
+                                        val tb = ByteArray(thumbLen)
+                                        hdis.readFully(tb)
+                                        tb
+                                    } else null
                                 } else null
-                            } else null
-                        } catch (_: Exception) {
+                            } catch (_: Exception) {
+                                null
+                            }
+                        } else {
                             null
                         }
                         val payloadOffset = (8 + 1 + extraHeaderBytes + GCM_IV_LENGTH + 4 + encHeaderLen + CTR_IV_LENGTH).toLong()
@@ -4382,7 +5037,9 @@ object CryptoManager {
                             isMacAuthenticated = isMacAuth,
                             thumbnailBytes = thumbBytes
                         )
-                        metadataCache[file.absolutePath] = meta
+                        if (cacheResult && includeThumbnail) {
+                            metadataCache[file.absolutePath] = meta
+                        }
                         meta
                     }
                 }
@@ -4471,9 +5128,10 @@ object CryptoManager {
 
     fun openDecryptedContentStream(
         file: File,
-        startOffset: Long = 0L
+        startOffset: Long = 0L,
+        preloadedMeta: EncryptedFileMetadata? = null
     ): InputStream? {
-        val meta = readMetadata(file) ?: return null
+        val meta = preloadedMeta ?: readMetadata(file) ?: return null
         if (startOffset < 0L || startOffset >= meta.originalSize) {
             return ByteArrayInputStream(ByteArray(0))
         }
@@ -4527,8 +5185,11 @@ object CryptoManager {
      * Verifies cryptographic integrity of the encrypted payload using Poly1305-AES MAC.
      * Guarantees tamper-resistance, authentic data origin, and bit-rot detection.
      */
-    fun verifyFileIntegrity(file: File): Boolean {
-        val meta = readMetadata(file) ?: return false
+    fun verifyFileIntegrity(
+        file: File,
+        preloadedMeta: EncryptedFileMetadata? = null
+    ): Boolean {
+        val meta = preloadedMeta ?: readMetadata(file, includeThumbnail = false, cacheResult = false) ?: return false
         if (!meta.isMacAuthenticated) {
             // Legacy v1/v2 payload (authenticated via GCM header only)
             return true
@@ -4558,7 +5219,7 @@ object CryptoManager {
                     poly.update(encHeader, 0, encHeader.size)
                 }
                 raf.seek(meta.payloadOffset)
-                val buffer = ByteArray(64 * 1024)
+                val buffer = ByteArray(256 * 1024)
                 var remaining = meta.originalSize
                 while (remaining > 0) {
                     val toRead = minOf(buffer.size.toLong(), remaining).toInt()
@@ -4623,7 +5284,7 @@ object CryptoManager {
         }
     }
 
-    fun purgeTracesForFile(context: Context, plaintextPath: String) {
+    fun purgeMediaTracesPreservingReferences(context: Context, plaintextPath: String) {
         try {
             val contentResolver = context.contentResolver
             val filesUri = MediaStore.Files.getContentUri("external")
@@ -4661,10 +5322,7 @@ object CryptoManager {
 
         try {
             context.mediaDB.deleteMediumPath(plaintextPath)
-            context.favoritesDB.deleteFavoritePath(plaintextPath)
             GalleryDatabase.getInstance(context.applicationContext).DateTakensDao().deleteDateTaken(plaintextPath)
-            // The extension also rewrites the backup files, so they stay in sync with the database.
-            context.deleteVirtualAlbumItemFromAllAlbums(plaintextPath)
         } catch (_: Exception) {}
 
         try {
@@ -4680,6 +5338,16 @@ object CryptoManager {
                     }
                 }
             }
+        } catch (_: Exception) {}
+    }
+
+    fun purgeTracesForFile(context: Context, plaintextPath: String) {
+        purgeMediaTracesPreservingReferences(context, plaintextPath)
+
+        try {
+            context.favoritesDB.deleteFavoritePath(plaintextPath)
+            // The extension also rewrites the backup files, so they stay in sync with the database.
+            context.deleteVirtualAlbumItemFromAllAlbums(plaintextPath)
         } catch (_: Exception) {}
     }
 

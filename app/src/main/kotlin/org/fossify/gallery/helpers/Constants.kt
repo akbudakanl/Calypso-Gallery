@@ -129,6 +129,7 @@ const val DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS = "delete_original_f
 const val CONFLICT_HANDLING_MODE = "conflict_handling_mode"
 const val CONFLICT_HANDLING_AUTO = 0
 const val CONFLICT_HANDLING_SMART_DIALOG = 1
+const val FAST_LARGE_DUPLICATE_CHECK = "fast_large_duplicate_check"
 const val WAS_NOTIFICATION_PERMISSION_ASKED = "was_notification_permission_asked"
 const val WAS_AUTO_BACKUP_PROMPT_SHOWN = "was_auto_backup_prompt_shown"
 const val AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS = "auto_backup_favorites_and_virtual_albums"

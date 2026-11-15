@@ -90,6 +90,7 @@ import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.createDirectoryFromMedia
+import org.fossify.gallery.extensions.deleteDBPaths
 import org.fossify.gallery.extensions.directoryDB
 import org.fossify.gallery.extensions.getCachedDirectories
 import org.fossify.gallery.extensions.getCachedMedia
@@ -1304,11 +1305,26 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             }
 
             ensureBackgroundThread {
-                folders.filter { !getDoesFilePathExist(it.absolutePath, OTGPath) }.forEach {
+                val permanentlyDeleted = !config.useRecycleBin || config.tempSkipRecycleBin
+                val deletedFolders = folders.filter { !getDoesFilePathExist(it.absolutePath, OTGPath) }
+                deletedFolders.forEach {
                     directoryDB.deleteDirPath(it.absolutePath)
                 }
 
+                val deletedFilePaths = if (permanentlyDeleted) {
+                    fileDirItems.mapNotNull { item ->
+                        if (!item.isDirectory && !getDoesFilePathExist(item.path, OTGPath)) item.path else null
+                    }
+                } else {
+                    emptyList()
+                }
+                val deletedFolderPaths = deletedFolders.map { it.absolutePath }
+                if (deletedFilePaths.isNotEmpty() || deletedFolderPaths.isNotEmpty()) {
+                    deleteDBPaths(deletedFilePaths, deletedFolderPaths)
+                }
+
                 if (config.deleteEmptyFolders) {
+                    val autoDeletedFolders = ArrayList<String>()
                     folders.filter {
                         !it.absolutePath.isDownloadsFolder()
                                 && it.isDirectory
@@ -1316,7 +1332,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     }
                         .forEach {
                             tryDeleteFileDirItem(it.toFileDirItem(this), true, true)
+                            if (!getDoesFilePathExist(it.absolutePath, OTGPath)) {
+                                autoDeletedFolders.add(it.absolutePath)
+                            }
                         }
+                    if (autoDeletedFolders.isNotEmpty()) {
+                        deleteDBPaths(emptyList(), autoDeletedFolders)
+                    }
                 }
             }
         }
