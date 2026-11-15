@@ -1,11 +1,18 @@
 package org.fossify.gallery.extensions
 
 import android.content.Context
+import android.os.Environment
+import org.fossify.commons.extensions.getFilenameFromPath
+import org.fossify.commons.extensions.getParentPath
+import org.fossify.commons.extensions.recycleBinPath
+import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaIdentityResolver
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
+import org.fossify.gallery.models.ITEM_STATE_DECRYPTED
+import org.fossify.gallery.models.ITEM_STATE_ENCRYPTED
 import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import java.io.File
@@ -67,7 +74,11 @@ fun Context.repairReferencesAfterExternalChange(force: Boolean = false): Int {
         }
 
         val missingItems = allItems.filter {
-            it.state == ITEM_STATE_OK && it.fullPath !in deletedOrigPaths && !File(it.fullPath).isFile
+            (it.state == ITEM_STATE_OK || it.state == ITEM_STATE_UNRESOLVED) &&
+                it.fullPath !in deletedOrigPaths &&
+                !it.fullPath.startsWith(recycleBinPath) &&
+                !CryptoManager.isVaultRecycleBinPath(this, it.fullPath) &&
+                !File(it.fullPath).isFile
         }
         val reappearedAlbumIds = allItems
             .filter { it.state == ITEM_STATE_UNRESOLVED && File(it.fullPath).isFile }
@@ -112,11 +123,75 @@ fun Context.repairReferencesAfterExternalChange(force: Boolean = false): Int {
             }
         }
 
+        var favoritesChanged = favoritesRepaired > 0
+        if (allowFallback) {
+            for (fav in missingFavorites) {
+                if (fav.fullPath in deletedOrigPaths) continue
+                val stillMissing = try {
+                    val current = favoritesDB.getFavorite(fav.fullPath)
+                    current != null && current.state == ITEM_STATE_OK && !File(current.fullPath).isFile
+                } catch (_: Exception) {
+                    false
+                }
+                if (!stillMissing || !isStorageVolumeMountedAndReadable(fav.fullPath)) continue
+                if (CryptoManager.isVaultMediaPath(this, fav.fullPath) &&
+                    (!CryptoManager.isVaultUnlocked || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
+                ) {
+                    continue
+                }
+                try {
+                    favoritesDB.deleteFavoritePath(fav.fullPath)
+                    mediaDB.updateFavorite(fav.fullPath, false)
+                    favoritesChanged = true
+                } catch (_: Exception) {
+                }
+            }
+
+            val itemsByAlbum = missingItems.groupBy { it.albumId }
+            for ((albumId, origMissing) in itemsByAlbum) {
+                val album = albums.firstOrNull { it.id == albumId } ?: continue
+                if (album.isHidden && (!CryptoManager.isVaultUnlocked || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))) {
+                    continue
+                }
+                var removedFromAlbum = false
+                for (item in origMissing) {
+                    if (item.fullPath in deletedOrigPaths) continue
+                    val currentItems = try {
+                        virtualAlbumsDB.getItemsWithPath(albumId, item.fullPath)
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                    val stillUnresolvedMissing = currentItems.any {
+                        it.state != ITEM_STATE_ENCRYPTED &&
+                            it.state != ITEM_STATE_DECRYPTED &&
+                            !File(it.fullPath).isFile
+                    }
+                    if (!stillUnresolvedMissing || !isStorageVolumeMountedAndReadable(item.fullPath)) continue
+                    if (CryptoManager.isVaultMediaPath(this, item.fullPath) &&
+                        (!CryptoManager.isVaultUnlocked || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
+                    ) {
+                        continue
+                    }
+                    try {
+                        virtualAlbumsDB.removeItemFromAlbum(albumId, item.fullPath)
+                        removedFromAlbum = true
+                    } catch (_: Exception) {
+                    }
+                }
+                if (removedFromAlbum) {
+                    try {
+                        VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        }
+
         if (allowFallback && missingIdentities.isNotEmpty()) {
             lastFallbackScanTs = System.currentTimeMillis()
         }
 
-        if (favoritesRepaired > 0) {
+        if (favoritesChanged) {
             try {
                 ReferenceBackupManager.saveFavorites(this)
             } catch (_: Exception) {
@@ -124,6 +199,91 @@ fun Context.repairReferencesAfterExternalChange(force: Boolean = false): Int {
         }
 
         return favoritesRepaired + albumsRepaired
+    }
+}
+
+internal fun isStorageVolumeMountedAndReadable(path: String): Boolean {
+    val norm = path.replace('\\', '/')
+    val volumeRoot = when {
+        norm.startsWith("/storage/emulated/") -> {
+            val parts = norm.split('/').filter { it.isNotEmpty() }
+            if (parts.size >= 3) File("/${parts[0]}/${parts[1]}/${parts[2]}") else Environment.getExternalStorageDirectory()
+        }
+        norm.startsWith("/storage/") -> {
+            val parts = norm.split('/').filter { it.isNotEmpty() }
+            if (parts.size >= 2) File("/${parts[0]}/${parts[1]}") else return false
+        }
+        norm.startsWith("/mnt/media_rw/") -> {
+            val parts = norm.split('/').filter { it.isNotEmpty() }
+            if (parts.size >= 3) File("/${parts[0]}/${parts[1]}/${parts[2]}") else return false
+        }
+        else -> {
+            var candidate = File(path).parentFile
+            var steps = 0
+            while (candidate != null && !candidate.exists() && steps < 4) {
+                candidate = candidate.parentFile
+                steps++
+            }
+            candidate?.takeIf { it.exists() && it.parentFile != null } ?: return false
+        }
+    }
+    return volumeRoot.isDirectory && volumeRoot.canRead() && !(volumeRoot.listFiles().isNullOrEmpty())
+}
+
+/**
+ * Keeps Favorites and Virtual Album references synchronized when Recycle Bin items are restored
+ * back onto disk (including cases where collisions or Android storage rules altered the restored path).
+ */
+fun Context.restoreReferencesAfterRecycleBinRestore(restoredPairs: List<Pair<String, String>>) {
+    if (restoredPairs.isEmpty()) return
+    val touchedAlbumIds = LinkedHashSet<Long>()
+    var favoritesChanged = false
+
+    for ((origPath, restoredPath) in restoredPairs) {
+        if (!restoredPath.equals(origPath, ignoreCase = true)) {
+            val newName = restoredPath.getFilenameFromPath()
+            val newParent = restoredPath.getParentPath()
+            try {
+                if (favoritesDB.getFavorite(origPath) != null) {
+                    favoritesDB.updateFavorite(newName, restoredPath, newParent, origPath)
+                    favoritesChanged = true
+                }
+            } catch (_: Exception) {
+            }
+            try {
+                val albumIds = virtualAlbumsDB.getAlbumIdsWithItem(origPath)
+                if (albumIds.isNotEmpty()) {
+                    virtualAlbumsDB.updateItemPath(origPath, restoredPath, newName, newParent)
+                    touchedAlbumIds.addAll(albumIds)
+                }
+            } catch (_: Exception) {
+            }
+        } else {
+            try {
+                val albumIds = virtualAlbumsDB.getAlbumIdsWithItem(origPath)
+                for (albumId in albumIds) {
+                    val items = virtualAlbumsDB.getItemsWithPath(albumId, origPath)
+                    if (items.any { it.state == ITEM_STATE_UNRESOLVED }) {
+                        virtualAlbumsDB.markItemResolved(albumId, origPath)
+                        touchedAlbumIds.add(albumId)
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    for (albumId in touchedAlbumIds) {
+        try {
+            VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+        } catch (_: Exception) {
+        }
+    }
+    if (favoritesChanged) {
+        try {
+            ReferenceBackupManager.saveFavorites(this)
+        } catch (_: Exception) {
+        }
     }
 }
 

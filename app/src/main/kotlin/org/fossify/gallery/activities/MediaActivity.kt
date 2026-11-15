@@ -1491,7 +1491,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     for (item in encItems) {
                         val f = File(item.path)
                         CryptoManager.secureWipeAndDeleteFile(this, f)
-                        deleteVirtualAlbumItemFromAllAlbums(item.path)
+                        deleteDBPath(item.path)
                     }
                 }
 
@@ -1509,7 +1509,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
                     if (normalPlain.isNotEmpty()) {
                         runOnUiThread {
-                            deleteFilteredFiles(ArrayList(normalPlain))
+                            deleteFilteredFiles(ArrayList(normalPlain), isPermanentDelete = true)
                         }
                     }
                 }
@@ -1547,7 +1547,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         return intent.getBooleanExtra(SKIP_AUTHENTICATION, false)
     }
 
-    private fun deleteFilteredFiles(filtered: ArrayList<FileDirItem>) {
+    private fun deleteFilteredFiles(
+        filtered: ArrayList<FileDirItem>,
+        isPermanentDelete: Boolean = !config.useRecycleBin
+    ) {
         deleteFiles(filtered) {
             if (!it) {
                 toast(org.fossify.commons.R.string.unknown_error_occurred)
@@ -1557,9 +1560,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             mMedia.removeAll { filtered.map { it.path }.contains((it as? Medium)?.path) }
 
             ensureBackgroundThread {
-                val useRecycleBin = config.useRecycleBin
                 filtered.forEach {
-                    if (it.path.startsWith(recycleBinPath) || !useRecycleBin) {
+                    if (it.path.startsWith(recycleBinPath) || isPermanentDelete) {
                         deleteDBPath(it.path)
                     }
                 }

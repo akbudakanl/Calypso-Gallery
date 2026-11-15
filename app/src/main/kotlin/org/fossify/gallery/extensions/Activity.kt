@@ -2079,9 +2079,11 @@ fun BaseSimpleActivity.restoreRecycleBinPath(path: String, callback: () -> Unit)
 fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback: () -> Unit) {
     ensureBackgroundThread {
         val newPaths = ArrayList<String>()
+        val restoredPairs = ArrayList<Pair<String, String>>()
         var shownRestoringToPictures = false
         for (source in paths) {
-            var destination = source.removePrefix(recycleBinPath)
+            val origPath = source.removePrefix(recycleBinPath)
+            var destination = origPath
 
             val destinationParent = destination.getParentPath()
             if (isRestrictedWithSAFSdk30(destinationParent) && !isInDownloadDir(destinationParent)) {
@@ -2130,6 +2132,7 @@ fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback
 
                 if (File(source).length() == copiedSize) {
                     mediaDB.updateDeleted(destination.removePrefix(recycleBinPath), 0, "$RECYCLE_BIN${source.removePrefix(recycleBinPath)}")
+                    restoredPairs.add(origPath to destination)
                 }
                 newPaths.add(destination)
 
@@ -2142,6 +2145,10 @@ fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback
                 inputStream?.close()
                 out?.close()
             }
+        }
+
+        if (restoredPairs.isNotEmpty()) {
+            restoreReferencesAfterRecycleBinRestore(restoredPairs)
         }
 
         runOnUiThread {
