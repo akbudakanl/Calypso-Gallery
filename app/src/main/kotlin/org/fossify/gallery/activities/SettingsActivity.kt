@@ -100,6 +100,8 @@ class SettingsActivity : SimpleActivity() {
         setupFileDeletionPasswordProtection()
         setupVaultSettings()
         setupConflictHandlingMode()
+        setupSkippedEncryptFilesMode()
+        setupSkippedDecryptFilesMode()
         setupAlbumCryptoConflictMode()
         setupDeleteEmptyFolders()
         setupKeepScreenOn()
@@ -903,16 +905,66 @@ class SettingsActivity : SimpleActivity() {
         }
     )
 
+    private fun setupSkippedEncryptFilesMode() {
+        setupSkippedFilesSetting(
+            holderView = binding.settingsSkippedEncryptFilesHolder,
+            valueView = binding.settingsSkippedEncryptFiles,
+            infoIconView = binding.settingsSkippedEncryptFilesInfo,
+            isEncrypt = true,
+            titleResId = R.string.skipped_encrypt_files_mode_label,
+            infoMessageResId = R.string.skipped_encrypt_files_info_message
+        )
+    }
+
+    private fun setupSkippedDecryptFilesMode() {
+        setupSkippedFilesSetting(
+            holderView = binding.settingsSkippedDecryptFilesHolder,
+            valueView = binding.settingsSkippedDecryptFiles,
+            infoIconView = binding.settingsSkippedDecryptFilesInfo,
+            isEncrypt = false,
+            titleResId = R.string.skipped_decrypt_files_mode_label,
+            infoMessageResId = R.string.skipped_decrypt_files_info_message
+        )
+    }
+
+    private fun setupSkippedFilesSetting(
+        holderView: android.view.View,
+        valueView: MyTextView,
+        infoIconView: ImageView,
+        isEncrypt: Boolean,
+        @StringRes titleResId: Int,
+        @StringRes infoMessageResId: Int
+    ) {
+        valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
+        holderView.setOnClickListener {
+            showSkippedCryptoFilesSettingsDialog(this, isEncrypt = isEncrypt) {
+                valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
+            }
+        }
+        bindSettingInfoIcon(
+            iconView = infoIconView,
+            titleResId = titleResId,
+            messageResId = infoMessageResId
+        )
+    }
+
+    private fun getSkippedCryptoFilesModeText(isEncrypt: Boolean): String {
+        val mode = if (isEncrypt) config.skippedEncryptFilesMode else config.skippedDecryptFilesMode
+        return getString(
+            when (mode) {
+                CRYPTO_SKIPPED_FILES_KEEP -> R.string.skipped_crypto_files_keep
+                CRYPTO_SKIPPED_FILES_DELETE -> R.string.skipped_crypto_files_delete
+                else -> R.string.skipped_crypto_files_ask
+            }
+        )
+    }
+
     private fun setupAlbumCryptoConflictMode() {
         binding.settingsAlbumCryptoConflict.text = getAlbumCryptoConflictModeText()
         binding.settingsAlbumCryptoConflictHolder.setOnClickListener {
             val items = arrayListOf(
                 RadioItem(ALBUM_CRYPTO_CONFLICT_ASK, getString(R.string.album_crypto_conflict_ask)),
                 RadioItem(ALBUM_CRYPTO_CONFLICT_MERGE, getString(R.string.album_crypto_conflict_merge)),
-                RadioItem(
-                    ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL,
-                    getString(R.string.album_crypto_conflict_merge_delete_identical)
-                ),
                 RadioItem(ALBUM_CRYPTO_CONFLICT_RENAME, getString(R.string.album_crypto_conflict_rename))
             )
             RadioGroupDialog(this@SettingsActivity, items, config.albumCryptoConflictMode) {
@@ -925,7 +977,6 @@ class SettingsActivity : SimpleActivity() {
     private fun getAlbumCryptoConflictModeText() = getString(
         when (config.albumCryptoConflictMode) {
             ALBUM_CRYPTO_CONFLICT_MERGE -> R.string.album_crypto_conflict_merge
-            ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> R.string.album_crypto_conflict_merge_delete_identical
             ALBUM_CRYPTO_CONFLICT_RENAME -> R.string.album_crypto_conflict_rename
             else -> R.string.album_crypto_conflict_ask
         }
@@ -1555,6 +1606,8 @@ class SettingsActivity : SimpleActivity() {
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
                 put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
                 put(CRYPTO_DUPLICATE_SOURCE_MODE, config.cryptoDuplicateSourceMode)
+                put(SKIPPED_ENCRYPT_FILES_MODE, config.skippedEncryptFilesMode)
+                put(SKIPPED_DECRYPT_FILES_MODE, config.skippedDecryptFilesMode)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
                 put(SKIP_DELETE_CONFIRMATION, config.skipDeleteConfirmation)
                 put(DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS, config.deleteOriginalFromFavoritesAndVirtualAlbums)
@@ -1714,6 +1767,13 @@ class SettingsActivity : SimpleActivity() {
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
                 CRYPTO_DUPLICATE_SOURCE_MODE -> config.cryptoDuplicateSourceMode = value.toInt()
+                SKIPPED_ENCRYPT_FILES_MODE -> config.skippedEncryptFilesMode = value.toInt()
+                SKIPPED_DECRYPT_FILES_MODE -> config.skippedDecryptFilesMode = value.toInt()
+                SKIPPED_CRYPTO_FILES_MODE -> {
+                    val mode = value.toInt()
+                    config.skippedEncryptFilesMode = mode
+                    config.skippedDecryptFilesMode = mode
+                }
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()

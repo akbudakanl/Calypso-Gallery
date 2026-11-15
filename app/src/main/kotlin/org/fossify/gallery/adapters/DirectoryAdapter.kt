@@ -84,6 +84,8 @@ import org.fossify.gallery.dialogs.PickMediumDialog
 import org.fossify.gallery.dialogs.RenameEncryptedFolderDialog
 import org.fossify.gallery.dialogs.RenameVirtualAlbumDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
+import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
+import org.fossify.gallery.extensions.TransferPairSpec
 import org.fossify.gallery.extensions.addNoMedia
 import org.fossify.gallery.extensions.checkAppendingHidden
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
@@ -109,6 +111,7 @@ import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.promptCreateVault
 import org.fossify.gallery.extensions.removeNoMedia
 import org.fossify.gallery.extensions.rescanFolderMedia
+import org.fossify.gallery.extensions.resolveCryptoTransferConflicts
 import org.fossify.gallery.extensions.showRecycleBinEmptyingDialog
 import org.fossify.gallery.extensions.tryCopyMoveFilesTo
 import org.fossify.gallery.extensions.isHiddenVirtualAlbumPath
@@ -118,6 +121,7 @@ import org.fossify.gallery.extensions.updateFavoritePaths
 import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import org.fossify.gallery.helpers.AlbumTypeIcon
 import org.fossify.gallery.helpers.AlbumTypeIconPolicy
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.HiddenFoldersPolicy
@@ -655,52 +659,98 @@ class DirectoryAdapter(
             CryptoManager.previewEncryptAlbumConflict(activity, it)
         }
         resolveAlbumCryptoOptions(activity, conflicts) { albumOptions ->
-            val totalFilesCount = paths.sumOf { path ->
-                File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
-            }
+            val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
+            val isStandardMode = activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+            activity.resolveCryptoTransferConflicts(
+                buildPairs = {
+                    if (!isMerge) {
+                        emptyList()
+                    } else {
+                        val pairs = ArrayList<TransferPairSpec>()
+                        for (path in paths) {
+                            val mergeTarget = CryptoManager.findMergeTargetForEncryptFolder(activity, path)
+                            if (mergeTarget != null) {
+                                val (existingVaultAlbum, mediaFiles) = mergeTarget
+                                for (mediaFile in mediaFiles) {
+                                    pairs.add(TransferPairSpec(mediaFile, existingVaultAlbum, isTargetEncrypted = true))
+                                }
+                            }
+                        }
+                        pairs
+                    }
+                }
+            ) { scan ->
+                val totalFilesCount = paths.sumOf { path ->
+                    File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
+                }
 
-            activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                val progressDialog = CryptoProgressDialog(
-                    activity = activity,
-                    max = totalFilesCount,
-                    titleId = R.string.encrypting_folder,
-                    enableNotification = notificationsAllowed
-                )
+                activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                    val progressDialog = CryptoProgressDialog(
+                        activity = activity,
+                        max = totalFilesCount,
+                        titleId = R.string.encrypting_folder,
+                        enableNotification = notificationsAllowed
+                    )
 
-                ensureBackgroundThread {
-                    var globalProcessed = 0
-                    var allSuccess = true
-                    for (path in paths) {
-                        var folderLastCurrent = 0
-                        val result = CryptoManager.encryptFolder(activity, path, options = albumOptions) { current, _ ->
-                        val diff = current - folderLastCurrent
-                        if (diff > 0) {
-                            globalProcessed += diff
-                            folderLastCurrent = current
-                            activity.runOnUiThread {
-                                progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                    ensureBackgroundThread {
+                        var globalProcessed = 0
+                        var allSuccess = true
+                        val deferredSkippedFiles = java.util.Collections.synchronizedList(ArrayList<File>())
+                        val deferredIdenticalTargets = java.util.Collections.synchronizedMap(LinkedHashMap<String, File>())
+
+                        for (path in paths) {
+                            var folderLastCurrent = 0
+                            val folderOptions = albumOptions.copy(
+                                deleteIdenticalSource = false,
+                                conflictResolutions = scan.resolutions,
+                                skipDuplicateCheck = isStandardMode,
+                                precheckedNonIdenticalPaths = scan.nonIdenticalPaths,
+                                deferredSkippedSourceCollector = if (isMerge) deferredSkippedFiles else null,
+                                deferredIdenticalTargetMap = if (isMerge) deferredIdenticalTargets else null
+                            )
+                            val result = CryptoManager.encryptFolder(activity, path, options = folderOptions) { current, _ ->
+                                val diff = current - folderLastCurrent
+                                if (diff > 0) {
+                                    globalProcessed += diff
+                                    folderLastCurrent = current
+                                    activity.runOnUiThread {
+                                        progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                                    }
+                                }
+                            }
+                            if (result == null) {
+                                allSuccess = false
+                            }
+                        }
+                        val skippedSnapshot = deferredSkippedFiles.toList()
+                        val identicalMapSnapshot = HashMap(deferredIdenticalTargets)
+                        activity.runOnUiThread {
+                            try {
+                                progressDialog.dismiss()
+                            } catch (_: Exception) {}
+                            if (allSuccess && totalFilesCount > skippedSnapshot.size) {
+                                activity.toast(R.string.folder_encrypted_successfully)
+                            } else if (allSuccess && skippedSnapshot.isNotEmpty()) {
+                                // Skipped files handled by post-operation prompt below
+                            } else if (allSuccess) {
+                                activity.toast(R.string.folder_encrypted_successfully)
+                            } else {
+                                activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                            }
+                            activity.resolveSkippedCryptoFiles(
+                                isEncrypt = true,
+                                skippedFiles = skippedSnapshot,
+                                identicalTargetMap = identicalMapSnapshot,
+                                forceCleanupEmptyAlbum = true
+                            ) {
+                                finishActMode()
+                                listener?.refreshItems()
                             }
                         }
                     }
-                    if (result == null) {
-                        allSuccess = false
-                    }
-                }
-                activity.runOnUiThread {
-                    try {
-                        progressDialog.dismiss()
-                    } catch (_: Exception) {}
-                    if (allSuccess) {
-                        activity.toast(R.string.folder_encrypted_successfully)
-                    } else {
-                        activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
-                    }
-                    finishActMode()
-                    listener?.refreshItems()
                 }
             }
         }
-    }
 }
 
     private fun tryEmptyRecycleBin(askConfirmation: Boolean) {

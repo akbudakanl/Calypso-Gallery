@@ -437,12 +437,36 @@ class Config(context: Context) : BaseConfig(context) {
         set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
 
     var albumCryptoConflictMode: Int
-        get() = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)
-        set(mode) = prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, mode).apply()
+        get() = when (val raw = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)) {
+            LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> ALBUM_CRYPTO_CONFLICT_MERGE
+            else -> raw
+        }
+        set(mode) {
+            val normalized = if (mode == LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL) {
+                ALBUM_CRYPTO_CONFLICT_MERGE
+            } else {
+                mode
+            }
+            prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, normalized).apply()
+        }
 
     var cryptoDuplicateSourceMode: Int
         get() = prefs.getInt(CRYPTO_DUPLICATE_SOURCE_MODE, CRYPTO_DUPLICATE_SOURCE_ASK)
         set(mode) = prefs.edit().putInt(CRYPTO_DUPLICATE_SOURCE_MODE, mode).apply()
+
+    var skippedEncryptFilesMode: Int
+        get() = prefs.getInt(
+            SKIPPED_ENCRYPT_FILES_MODE,
+            prefs.getInt(SKIPPED_CRYPTO_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
+        )
+        set(mode) = prefs.edit().putInt(SKIPPED_ENCRYPT_FILES_MODE, mode).apply()
+
+    var skippedDecryptFilesMode: Int
+        get() = prefs.getInt(
+            SKIPPED_DECRYPT_FILES_MODE,
+            prefs.getInt(SKIPPED_CRYPTO_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
+        )
+        set(mode) = prefs.edit().putInt(SKIPPED_DECRYPT_FILES_MODE, mode).apply()
 
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
