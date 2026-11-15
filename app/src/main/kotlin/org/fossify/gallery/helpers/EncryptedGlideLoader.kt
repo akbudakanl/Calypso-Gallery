@@ -26,6 +26,8 @@ import java.io.InputStream
 object EncryptedGlideOptions {
     val PREFER_EMBEDDED_THUMBNAIL: Option<Boolean> =
         Option.memory("org.fossify.gallery.prefer_embedded_thumbnail", false)
+    val PREFER_FULL_DECRYPTED_CONTENT: Option<Boolean> =
+        Option.memory("org.fossify.gallery.prefer_full_decrypted_content", false)
 }
 
 class EncryptedStringModelLoader : ModelLoader<String, InputStream> {
@@ -43,9 +45,10 @@ class EncryptedStringModelLoader : ModelLoader<String, InputStream> {
         val cleanPath = model.removePrefix("file://")
         val file = File(cleanPath)
         val preferEmbeddedThumbnail = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
+        val preferFullDecryptedContent = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         return ModelLoader.LoadData(
-            ObjectKey("${file.absolutePath}_${file.lastModified()}_${width}x${height}_${preferEmbeddedThumbnail}"),
-            EncryptedStreamFetcher(file, width, height, preferEmbeddedThumbnail)
+            ObjectKey("${file.absolutePath}_${file.lastModified()}_${width}x${height}_${preferEmbeddedThumbnail}_${preferFullDecryptedContent}"),
+            EncryptedStreamFetcher(file, width, height, preferEmbeddedThumbnail, preferFullDecryptedContent)
         )
     }
 
@@ -70,9 +73,10 @@ class EncryptedFileModelLoader : ModelLoader<File, InputStream> {
         options: Options
     ): ModelLoader.LoadData<InputStream>? {
         val preferEmbeddedThumbnail = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
+        val preferFullDecryptedContent = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         return ModelLoader.LoadData(
-            ObjectKey("${model.absolutePath}_${model.lastModified()}_${width}x${height}_${preferEmbeddedThumbnail}"),
-            EncryptedStreamFetcher(model, width, height, preferEmbeddedThumbnail)
+            ObjectKey("${model.absolutePath}_${model.lastModified()}_${width}x${height}_${preferEmbeddedThumbnail}_${preferFullDecryptedContent}"),
+            EncryptedStreamFetcher(model, width, height, preferEmbeddedThumbnail, preferFullDecryptedContent)
         )
     }
 
@@ -89,7 +93,8 @@ class EncryptedStreamFetcher(
     private val file: File,
     private val width: Int,
     private val height: Int,
-    private val preferEmbeddedThumbnail: Boolean = false
+    private val preferEmbeddedThumbnail: Boolean = false,
+    private val preferFullDecryptedContent: Boolean = false
 ) : DataFetcher<InputStream> {
     private var stream: InputStream? = null
 
@@ -103,8 +108,13 @@ class EncryptedStreamFetcher(
             val meta = CryptoManager.readMetadata(file)
             val isThumbnailSize = width in 1..600 && height in 1..600
             val isVideo = meta?.mediaType == TYPE_VIDEOS
+            val shouldTryEmbedded = if (preferFullDecryptedContent) {
+                isVideo
+            } else {
+                isVideo || preferEmbeddedThumbnail || (isThumbnailSize && meta?.mediaType != TYPE_GIFS)
+            }
 
-            if (isVideo || preferEmbeddedThumbnail || (isThumbnailSize && meta?.mediaType != TYPE_GIFS)) {
+            if (shouldTryEmbedded) {
                 val thumbBytes = CryptoManager.readEmbeddedThumbnailBytes(file)
                 if (thumbBytes != null && thumbBytes.isNotEmpty()) {
                     stream = ByteArrayInputStream(thumbBytes)
