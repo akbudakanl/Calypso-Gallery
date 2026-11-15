@@ -666,7 +666,14 @@ class DirectoryAdapter(
         ) { albumOptions ->
             val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
             val isStandardMode = activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+            val initialProgressDialog = CryptoProgressDialog(
+                activity = activity,
+                max = 0,
+                titleId = R.string.encrypting_folder,
+                enableNotification = false
+            )
             activity.resolveCryptoTransferConflicts(
+                progressDialog = initialProgressDialog,
                 buildPairs = {
                     if (!isMerge) {
                         emptyList()
@@ -684,20 +691,23 @@ class DirectoryAdapter(
                         pairs
                     }
                 }
-            ) { scan ->
-                val totalFilesCount = paths.sumOf { path ->
-                    File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
-                }
-
+            ) { scan, activeProgressDialog ->
+                val progressDialog = activeProgressDialog ?: CryptoProgressDialog(
+                    activity = activity,
+                    max = 0,
+                    titleId = R.string.encrypting_folder,
+                    enableNotification = false
+                )
                 activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = activity,
-                        max = totalFilesCount,
-                        titleId = R.string.encrypting_folder,
-                        enableNotification = notificationsAllowed
-                    )
+                    progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
+                        val totalFilesCount = paths.sumOf { path ->
+                            File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
+                        }
+                        activity.runOnUiThread {
+                            progressDialog.updateProgress(0, totalFilesCount)
+                        }
                         var globalProcessed = 0
                         var allSuccess = true
                         val deferredSkippedFiles = java.util.Collections.synchronizedList(ArrayList<File>())
@@ -846,18 +856,22 @@ class DirectoryAdapter(
             return
         }
 
-        val folder = File(path)
-        val filesToEncrypt = folder.listFiles()?.filter { CryptoManager.isEncryptableMediaFile(it) } ?: emptyList()
+        val progressDialog = CryptoProgressDialog(
+            activity = activity,
+            max = 0,
+            titleId = R.string.encrypting_folder,
+            enableNotification = false
+        )
 
         activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-            val progressDialog = CryptoProgressDialog(
-                activity = activity,
-                max = filesToEncrypt.size,
-                titleId = R.string.encrypting_folder,
-                enableNotification = notificationsAllowed
-            )
+            progressDialog.ensureNotificationStarted(notificationsAllowed)
 
             ensureBackgroundThread {
+                val folder = File(path)
+                val totalFiles = folder.listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
+                activity.runOnUiThread {
+                    progressDialog.updateProgress(0, totalFiles)
+                }
                 val result = CryptoManager.encryptFolder(activity, path) { current, total ->
                     activity.runOnUiThread {
                         progressDialog.updateProgress(current, total)

@@ -704,7 +704,15 @@ class MediaAdapter(
                 }
             }
 
+            val initialProgressDialog = CryptoProgressDialog(
+                activity = activity,
+                max = totalFilesCount,
+                titleId = R.string.decrypting_files,
+                enableNotification = false
+            )
+
             activity.resolveCryptoTransferConflicts(
+                progressDialog = initialProgressDialog,
                 buildPairs = {
                     selectedMedia.mapNotNull { medium ->
                         val srcFile = File(medium.path)
@@ -718,14 +726,15 @@ class MediaAdapter(
                         TransferPairSpec(srcFile, targetDir, isTargetEncrypted = false, desiredPlainName = desiredName)
                     }
                 }
-            ) { scan ->
+            ) { scan, activeProgressDialog ->
+                val progressDialog = activeProgressDialog ?: CryptoProgressDialog(
+                    activity = activity,
+                    max = totalFilesCount,
+                    titleId = R.string.decrypting_files,
+                    enableNotification = false
+                )
                 activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = activity,
-                        max = totalFilesCount,
-                        titleId = R.string.decrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
+                    progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
                         var processedCount = 0
@@ -893,19 +902,27 @@ class MediaAdapter(
             onCancel = { VaultSessionManager.lockVaultIfOutsideSession(activity) }
         ) { targetDir, albumName ->
             val totalFilesCount = selectedMedia.size
+            val initialProgressDialog = CryptoProgressDialog(
+                activity = activity,
+                max = totalFilesCount,
+                titleId = R.string.encrypting_files,
+                enableNotification = false
+            )
             val runEncryptWithResolutions = {
                 conflictResolutions: LinkedHashMap<String, Int>,
                 precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
                 precheckedIdenticalTargets: Map<String, File>,
                 precheckedIdenticalPaths: Set<String>,
-                precheckedNonIdenticalPaths: Set<String> ->
+                precheckedNonIdenticalPaths: Set<String>,
+                existingProgressDialog: CryptoProgressDialog? ->
+                val progressDialog = existingProgressDialog ?: CryptoProgressDialog(
+                    activity = activity,
+                    max = totalFilesCount,
+                    titleId = R.string.encrypting_files,
+                    enableNotification = false
+                )
                 activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = activity,
-                        max = totalFilesCount,
-                        titleId = R.string.encrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
+                    progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
                         val execEncIndex = precheckedEncIndex ?: CryptoManager.TargetEncryptedIndex(targetDir)
@@ -996,6 +1013,7 @@ class MediaAdapter(
             }
 
             activity.resolveCryptoTransferConflicts(
+                progressDialog = initialProgressDialog,
                 buildPairs = {
                     selectedMedia.mapNotNull { medium ->
                         val srcFile = File(medium.path)
@@ -1006,13 +1024,14 @@ class MediaAdapter(
                         }
                     }
                 }
-            ) { scan ->
+            ) { scan, activeProgressDialog ->
                 runEncryptWithResolutions(
                     scan.resolutions,
                     scan.encIndexes[targetDir.absolutePath],
                     scan.identicalTargets,
                     scan.identicalPaths,
-                    scan.nonIdenticalPaths
+                    scan.nonIdenticalPaths,
+                    activeProgressDialog
                 )
             }
         }

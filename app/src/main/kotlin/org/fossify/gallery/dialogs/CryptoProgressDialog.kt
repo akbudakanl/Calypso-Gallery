@@ -1,6 +1,7 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.view.KeyEvent
 import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
@@ -13,8 +14,8 @@ class CryptoProgressDialog(
     private val activity: Activity,
     private val max: Int,
     private val titleId: Int = R.string.encrypting_folder,
-    notificationChannelId: String = OperationProgressNotifier.CHANNEL_CRYPTO,
-    notificationIconRes: Int = defaultNotificationIcon(titleId),
+    private val notificationChannelId: String = OperationProgressNotifier.CHANNEL_CRYPTO,
+    private val notificationIconRes: Int = defaultNotificationIcon(titleId),
     enableNotification: Boolean = true
 ) {
     private var dialog: AlertDialog? = null
@@ -22,7 +23,12 @@ class CryptoProgressDialog(
     @Volatile
     private var isDismissed = false
     private val binding = DialogCryptoProgressBinding.inflate(activity.layoutInflater)
-    private val notifier: OperationProgressNotifier?
+    private var notifier: OperationProgressNotifier? = null
+    private var lastCurrent = 0
+    private var lastTotal = max
+    private var lastBarCurrent = 0
+    private var lastBarMax = max
+    private var lastNotificationText: String? = null
 
     init {
         binding.cryptoProgressMessage.setText(titleId)
@@ -32,30 +38,18 @@ class CryptoProgressDialog(
         val initialSummary = OperationProgressFormatter.formatCountSummary(current = 0, total = max)
         binding.cryptoProgressCount.text = initialSummary
 
-        notifier = if (enableNotification) {
-            val title = activity.getString(titleId)
-            val channelName = if (notificationChannelId == OperationProgressNotifier.CHANNEL_COPY_MOVE) {
-                OperationProgressNotifier.CHANNEL_COPY_MOVE
-            } else {
-                activity.getString(R.string.encrypt_decrypt_notifications)
-            }
-            OperationProgressNotifier(
-                context = activity.applicationContext,
-                channelId = notificationChannelId,
-                channelName = channelName,
-                title = title,
-                smallIconRes = notificationIconRes
-            ).apply {
-                update(current = 0, max = max, contentText = initialSummary)
-                start()
-            }
-        } else {
-            null
+        if (enableNotification) {
+            ensureNotificationStarted(true)
         }
 
         activity.getAlertDialogBuilder().apply {
             setCancelable(false)
-            activity.setupDialogStuff(binding.root, this, titleId = titleId) { alertDialog ->
+            activity.setupDialogStuff(
+                view = binding.root,
+                dialog = this,
+                titleId = titleId,
+                cancelOnTouchOutside = false
+            ) { alertDialog ->
                 if (isDismissed || activity.isFinishing || activity.isDestroyed) {
                     try {
                         alertDialog.dismiss()
@@ -65,8 +59,46 @@ class CryptoProgressDialog(
                     dialog = alertDialog
                     alertDialog.setCanceledOnTouchOutside(false)
                     alertDialog.setCancelable(false)
+                    alertDialog.setOnKeyListener { _, keyCode, _ ->
+                        keyCode == KeyEvent.KEYCODE_BACK
+                    }
                 }
             }
+        }
+    }
+
+    fun ensureNotificationStarted(enable: Boolean) {
+        if (!enable || isDismissed || notifier != null) {
+            return
+        }
+        val title = activity.getString(titleId)
+        val channelName = if (notificationChannelId == OperationProgressNotifier.CHANNEL_COPY_MOVE) {
+            OperationProgressNotifier.CHANNEL_COPY_MOVE
+        } else {
+            activity.getString(R.string.encrypt_decrypt_notifications)
+        }
+        val isIndeterminate = lastBarMax <= 0 && lastTotal <= 0
+        val safeBarMax = maxOf(lastBarMax, 1)
+        val clampedBarCurrent = lastBarCurrent.coerceIn(0, safeBarMax)
+        val summary = OperationProgressFormatter.formatCountSummary(
+            current = lastCurrent,
+            total = lastTotal,
+            barCurrent = clampedBarCurrent,
+            barMax = lastBarMax
+        )
+        notifier = OperationProgressNotifier(
+            context = activity.applicationContext,
+            channelId = notificationChannelId,
+            channelName = channelName,
+            title = title,
+            smallIconRes = notificationIconRes
+        ).apply {
+            update(
+                current = clampedBarCurrent,
+                max = if (isIndeterminate) 0 else safeBarMax,
+                contentText = lastNotificationText ?: summary
+            )
+            start()
         }
     }
 
@@ -77,6 +109,15 @@ class CryptoProgressDialog(
         barMax: Int = total,
         notificationText: String? = null
     ) {
+        if (isDismissed) {
+            return
+        }
+        lastCurrent = current
+        lastTotal = total
+        lastBarCurrent = barCurrent
+        lastBarMax = barMax
+        lastNotificationText = notificationText
+
         val isIndeterminate = barMax <= 0 && total <= 0
         val safeBarMax = maxOf(barMax, 1)
         val clampedBarCurrent = barCurrent.coerceIn(0, safeBarMax)
