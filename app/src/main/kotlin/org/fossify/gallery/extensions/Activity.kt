@@ -1183,19 +1183,27 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                 srcFile.parentFile ?: File(oldPath.getParentPath())
             }
 
+            val initialProgressDialog = CryptoProgressDialog(
+                activity = this,
+                max = 1,
+                titleId = R.string.decrypting_files,
+                enableNotification = false
+            )
             val runSingleDecryptWithResolution = {
                 conflictResolution: Int,
                 precheckedIndex: CryptoManager.TargetPlainIndex?,
                 precheckedIdenticalTargets: Map<String, File>,
                 precheckedIdenticalPaths: Set<String>,
-                precheckedNonIdenticalPaths: Set<String> ->
+                precheckedNonIdenticalPaths: Set<String>,
+                existingProgressDialog: CryptoProgressDialog? ->
+                val progressDialog = existingProgressDialog ?: CryptoProgressDialog(
+                    activity = this,
+                    max = 1,
+                    titleId = R.string.decrypting_files,
+                    enableNotification = false
+                )
                 ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = this,
-                        max = 1,
-                        titleId = R.string.decrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
+                    progressDialog.ensureNotificationStarted(notificationsAllowed)
                     ensureBackgroundThread {
                         val identicalTarget = if (conflictResolution == CONFLICT_SKIP) {
                             null
@@ -1261,15 +1269,17 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
             }
 
             resolveCryptoTransferConflicts(
+                progressDialog = initialProgressDialog,
                 buildPairs = { listOf(TransferPairSpec(srcFile, targetDir, isTargetEncrypted = false)) }
-            ) { scan ->
+            ) { scan, activeProgressDialog ->
                 val resolution = scan.resolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
                 runSingleDecryptWithResolution(
                     resolution,
                     scan.plainIndexes[targetDir.absolutePath],
                     scan.identicalTargets,
                     scan.identicalPaths,
-                    scan.nonIdenticalPaths
+                    scan.nonIdenticalPaths,
+                    activeProgressDialog
                 )
             }
         } else if (srcFile.name.startsWith('.')) {
@@ -1339,19 +1349,27 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
             callback?.invoke(oldPath)
         }
     ) { targetDir, albumName ->
+        val initialProgressDialog = CryptoProgressDialog(
+            activity = this,
+            max = 1,
+            titleId = R.string.encrypting_files,
+            enableNotification = false
+        )
         val runSingleEncryptWithResolution = {
             conflictResolution: Int,
             precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
             precheckedIdenticalTargets: Map<String, File>,
             precheckedIdenticalPaths: Set<String>,
-            precheckedNonIdenticalPaths: Set<String> ->
+            precheckedNonIdenticalPaths: Set<String>,
+            existingProgressDialog: CryptoProgressDialog? ->
+            val progressDialog = existingProgressDialog ?: CryptoProgressDialog(
+                activity = this,
+                max = 1,
+                titleId = R.string.encrypting_files,
+                enableNotification = false
+            )
             ensureNotificationPermissionThenRun { notificationsAllowed ->
-                val progressDialog = CryptoProgressDialog(
-                    activity = this,
-                    max = 1,
-                    titleId = R.string.encrypting_files,
-                    enableNotification = notificationsAllowed
-                )
+                progressDialog.ensureNotificationStarted(notificationsAllowed)
                 ensureBackgroundThread {
                     val identicalTarget = if (conflictResolution == CONFLICT_SKIP) {
                         null
@@ -1415,15 +1433,17 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
         }
 
         resolveCryptoTransferConflicts(
+            progressDialog = initialProgressDialog,
             buildPairs = { listOf(TransferPairSpec(srcFile, targetDir, isTargetEncrypted = true)) }
-        ) { scan ->
+        ) { scan, activeProgressDialog ->
             val resolution = scan.resolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
             runSingleEncryptWithResolution(
                 resolution,
                 scan.encIndexes[targetDir.absolutePath],
                 scan.identicalTargets,
                 scan.identicalPaths,
-                scan.nonIdenticalPaths
+                scan.nonIdenticalPaths,
+                activeProgressDialog
             )
         }
     }
@@ -1569,12 +1589,13 @@ fun BaseSimpleActivity.resolveStandardFilenameConflicts(
 
 fun BaseSimpleActivity.resolveCryptoTransferConflicts(
     allowFastLargeCheck: Boolean = false,
+    progressDialog: CryptoProgressDialog? = null,
     buildPairs: () -> List<TransferPairSpec>,
-    onResolved: (TransferConflictScanResult) -> Unit
+    onResolved: (TransferConflictScanResult, CryptoProgressDialog?) -> Unit
 ) {
     val mode = config.conflictHandlingMode
     if (mode == CONFLICT_HANDLING_AUTO) {
-        onResolved(TransferConflictScanResult(LinkedHashMap(), HashSet(), HashSet(), HashMap(), HashMap()))
+        onResolved(TransferConflictScanResult(LinkedHashMap(), HashSet(), HashSet(), HashMap(), HashMap()), progressDialog)
         return
     }
 
@@ -1582,7 +1603,7 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
         val pairs = buildPairs()
         if (pairs.isEmpty()) {
             runOnUiThread {
-                onResolved(TransferConflictScanResult(LinkedHashMap(), HashSet(), HashSet(), HashMap(), HashMap()))
+                onResolved(TransferConflictScanResult(LinkedHashMap(), HashSet(), HashSet(), HashMap(), HashMap()), progressDialog)
             }
             return@ensureBackgroundThread
         }
@@ -1626,8 +1647,17 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
                     )
                 }
             }
-            resolveStandardFilenameConflicts(standardConflicts) { resolutions ->
-                onResolved(TransferConflictScanResult(resolutions, HashSet(), HashSet(), plainIndexes, encIndexes))
+            if (standardConflicts.isNotEmpty()) {
+                runOnUiThread {
+                    progressDialog?.dismiss()
+                    resolveStandardFilenameConflicts(standardConflicts) { resolutions ->
+                        onResolved(TransferConflictScanResult(resolutions, HashSet(), HashSet(), plainIndexes, encIndexes), null)
+                    }
+                }
+            } else {
+                runOnUiThread {
+                    onResolved(TransferConflictScanResult(LinkedHashMap(), HashSet(), HashSet(), plainIndexes, encIndexes), progressDialog)
+                }
             }
         } else {
             val smartConflicts = ArrayList<SmartConflictItem>()
@@ -1672,8 +1702,17 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
                     CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
                 }
             }
-            resolveSmartContentConflicts(smartConflicts) { resolutions ->
-                onResolved(TransferConflictScanResult(resolutions, identicalPaths, nonIdenticalPaths, plainIndexes, encIndexes, identicalTargets))
+            if (smartConflicts.isNotEmpty()) {
+                runOnUiThread {
+                    progressDialog?.dismiss()
+                    resolveSmartContentConflicts(smartConflicts) { resolutions ->
+                        onResolved(TransferConflictScanResult(resolutions, identicalPaths, nonIdenticalPaths, plainIndexes, encIndexes, identicalTargets), null)
+                    }
+                }
+            } else {
+                runOnUiThread {
+                    onResolved(TransferConflictScanResult(LinkedHashMap(), identicalPaths, nonIdenticalPaths, plainIndexes, encIndexes, identicalTargets), progressDialog)
+                }
             }
         }
     }
@@ -1829,19 +1868,27 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                 isDecrypt = true
             ) {
                 val destDir = File(destination)
+                val initialProgressDialog = CryptoProgressDialog(
+                    activity = this,
+                    max = fileDirItems.size,
+                    titleId = R.string.decrypting_files,
+                    enableNotification = false
+                )
                 val runWithResolutions = {
                     conflictResolutions: LinkedHashMap<String, Int>,
                     precheckedIndex: CryptoManager.TargetPlainIndex?,
                     precheckedIdenticalTargets: Map<String, File>,
                     precheckedIdenticalPaths: Set<String>,
-                    precheckedNonIdenticalPaths: Set<String> ->
+                    precheckedNonIdenticalPaths: Set<String>,
+                    existingProgressDialog: CryptoProgressDialog? ->
+                    val progressDialog = existingProgressDialog ?: CryptoProgressDialog(
+                        activity = this,
+                        max = fileDirItems.size,
+                        titleId = R.string.decrypting_files,
+                        enableNotification = false
+                    )
                     ensureNotificationPermissionThenRun { notificationsAllowed ->
-                        val progressDialog = CryptoProgressDialog(
-                            activity = this,
-                            max = fileDirItems.size,
-                            titleId = R.string.decrypting_files,
-                            enableNotification = notificationsAllowed
-                        )
+                        progressDialog.ensureNotificationStarted(notificationsAllowed)
                         ensureBackgroundThread {
                             if (!destDir.exists()) {
                                 destDir.mkdirs()
@@ -1987,6 +2034,7 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                 }
 
                 resolveCryptoTransferConflicts(
+                    progressDialog = initialProgressDialog,
                     buildPairs = {
                         fileDirItems.mapNotNull { item ->
                             val srcFile = File(item.path)
@@ -1999,13 +2047,14 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                             TransferPairSpec(srcFile, destDir, isTargetEncrypted = false, desiredPlainName = desiredName)
                         }
                     }
-                ) { scan ->
+                ) { scan, activeProgressDialog ->
                     runWithResolutions(
                         scan.resolutions,
                         scan.plainIndexes[destDir.absolutePath],
                         scan.identicalTargets,
                         scan.identicalPaths,
-                        scan.nonIdenticalPaths
+                        scan.nonIdenticalPaths,
+                        activeProgressDialog
                     )
                 }
                 }
@@ -2072,7 +2121,14 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
         resolveAlbumCryptoOptions(this, conflicts) { albumOptions ->
             val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
             val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+            val initialProgressDialog = CryptoProgressDialog(
+                activity = this,
+                max = 0,
+                titleId = R.string.decrypting_folder,
+                enableNotification = false
+            )
             resolveCryptoTransferConflicts(
+                progressDialog = initialProgressDialog,
                 buildPairs = {
                     if (!isMerge) {
                         emptyList()
@@ -2090,18 +2146,22 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
                         pairs
                     }
                 }
-            ) { scan ->
+            ) { scan, activeProgressDialog ->
+                val progressDialog = activeProgressDialog ?: CryptoProgressDialog(
+                    activity = this,
+                    max = 0,
+                    titleId = R.string.decrypting_folder,
+                    enableNotification = false
+                )
                 ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val totalFilesCount = folderPaths.sumOf { folderPath ->
-                        File(folderPath).listFiles()?.count { it.isFile && CryptoManager.isEncryptedFile(it.name) } ?: 0
-                    }
-                    val progressDialog = CryptoProgressDialog(
-                        activity = this,
-                        max = totalFilesCount,
-                        titleId = R.string.decrypting_folder,
-                        enableNotification = notificationsAllowed
-                    )
+                    progressDialog.ensureNotificationStarted(notificationsAllowed)
                     ensureBackgroundThread {
+                        val totalFilesCount = folderPaths.sumOf { folderPath ->
+                            File(folderPath).listFiles()?.count { it.isFile && CryptoManager.isEncryptedFile(it.name) } ?: 0
+                        }
+                        runOnUiThread {
+                            progressDialog.updateProgress(0, totalFilesCount)
+                        }
                         var globalProcessed = 0
                         var allSuccess = true
                         var lastDestination = targetDir?.absolutePath ?: ""
@@ -2269,20 +2329,28 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                 }
 
                 val destDir = File(destination)
+                val initialProgressDialog = CryptoProgressDialog(
+                    activity = this,
+                    max = cryptoItems.size,
+                    titleId = progressTitleId,
+                    enableNotification = false
+                )
                 val runCryptoWithResolutions = {
                     conflictResolutions: LinkedHashMap<String, Int>,
                     precheckedPlainIndex: CryptoManager.TargetPlainIndex?,
                     precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
                     precheckedIdenticalTargets: Map<String, File>,
                     precheckedIdenticalPaths: Set<String>,
-                    precheckedNonIdenticalPaths: Set<String> ->
+                    precheckedNonIdenticalPaths: Set<String>,
+                    existingProgressDialog: CryptoProgressDialog? ->
+                    val progressDialog = existingProgressDialog ?: CryptoProgressDialog(
+                        activity = this,
+                        max = cryptoItems.size,
+                        titleId = progressTitleId,
+                        enableNotification = false
+                    )
                     ensureNotificationPermissionThenRun { notificationsAllowed ->
-                        val progressDialog = CryptoProgressDialog(
-                            activity = this,
-                            max = cryptoItems.size,
-                            titleId = progressTitleId,
-                            enableNotification = notificationsAllowed
-                        )
+                        progressDialog.ensureNotificationStarted(notificationsAllowed)
                         ensureBackgroundThread {
                             if (!destDir.exists()) {
                                 destDir.mkdirs()
@@ -2486,6 +2554,7 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
 
                 resolveCryptoTransferConflicts(
                     allowFastLargeCheck = true,
+                    progressDialog = initialProgressDialog,
                     buildPairs = {
                         cryptoItems.mapNotNull { item ->
                             val srcFile = File(item.path)
@@ -2496,14 +2565,15 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                             }
                         }
                     }
-                ) { scan ->
+                ) { scan, activeProgressDialog ->
                     runCryptoWithResolutions(
                         scan.resolutions,
                         scan.plainIndexes[destDir.absolutePath],
                         scan.encIndexes[destDir.absolutePath],
                         scan.identicalTargets,
                         scan.identicalPaths,
-                        scan.nonIdenticalPaths
+                        scan.nonIdenticalPaths,
+                        activeProgressDialog
                     )
                 }
             } else {

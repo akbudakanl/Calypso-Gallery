@@ -142,12 +142,41 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
     copyHidden: Boolean,
     callback: (destinationPath: String) -> Unit
 ) {
+    val titleId = if (isCopyOperation) {
+        org.fossify.commons.R.string.copying
+    } else {
+        org.fossify.commons.R.string.moving
+    }
+    val initialProgressDialog = CryptoProgressDialog(
+        activity = this,
+        max = 0,
+        titleId = titleId,
+        notificationChannelId = OperationProgressNotifier.CHANNEL_COPY_MOVE,
+        notificationIconRes = org.fossify.commons.R.drawable.ic_copy_vector,
+        enableNotification = false
+    )
+
     val startAfterSpaceCheck = {
         val proceedAfterConflicts = {
             conflictResolutions: LinkedHashMap<String, Int>,
             precheckedIdenticalPaths: Set<String>,
-            precheckedNonIdenticalPaths: Set<String> ->
+            precheckedNonIdenticalPaths: Set<String>,
+            existingProgressDialog: CryptoProgressDialog? ->
+            val activeDialog = existingProgressDialog ?: CryptoProgressDialog(
+                activity = this,
+                max = fileDirItems.size,
+                titleId = titleId,
+                notificationChannelId = OperationProgressNotifier.CHANNEL_COPY_MOVE,
+                notificationIconRes = org.fossify.commons.R.drawable.ic_copy_vector,
+                enableNotification = false
+            )
             ensureNotificationPermissionThenRun { notificationsAllowed ->
+                if (isFinishing || isDestroyed) {
+                    activeDialog.dismiss()
+                    return@ensureNotificationPermissionThenRun
+                }
+                activeDialog.ensureNotificationStarted(notificationsAllowed)
+                activeDialog.updateProgress(0, fileDirItems.size)
                 executeCopyMoveWithProgress(
                     fileDirItems = fileDirItems,
                     destination = destination,
@@ -158,7 +187,7 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                     conflictResolutions = conflictResolutions,
                     precheckedIdenticalPaths = precheckedIdenticalPaths,
                     precheckedNonIdenticalPaths = precheckedNonIdenticalPaths,
-                    enableNotification = notificationsAllowed,
+                    progressDialog = activeDialog,
                     callback = callback
                 )
             }
@@ -216,8 +245,17 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                         }
                     }
 
-                    resolveStandardFilenameConflicts(standardConflicts) { resolutions ->
-                        proceedAfterConflicts(resolutions, emptySet(), emptySet())
+                    if (standardConflicts.isNotEmpty()) {
+                        runOnUiThread {
+                            initialProgressDialog.dismiss()
+                            resolveStandardFilenameConflicts(standardConflicts) { resolutions ->
+                                proceedAfterConflicts(resolutions, emptySet(), emptySet(), null)
+                            }
+                        }
+                    } else {
+                        runOnUiThread {
+                            proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), initialProgressDialog)
+                        }
                     }
                 }
             }
@@ -311,13 +349,22 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                         }
                     }
 
-                    resolveSmartContentConflicts(conflicts) { resolutions ->
-                        proceedAfterConflicts(resolutions, precheckedIdenticalPaths, precheckedNonIdenticalPaths)
+                    if (conflicts.isNotEmpty()) {
+                        runOnUiThread {
+                            initialProgressDialog.dismiss()
+                            resolveSmartContentConflicts(conflicts) { resolutions ->
+                                proceedAfterConflicts(resolutions, precheckedIdenticalPaths, precheckedNonIdenticalPaths, null)
+                            }
+                        }
+                    } else {
+                        runOnUiThread {
+                            proceedAfterConflicts(LinkedHashMap(), precheckedIdenticalPaths, precheckedNonIdenticalPaths, initialProgressDialog)
+                        }
                     }
                 }
             }
             else -> {
-                proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet())
+                proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), initialProgressDialog)
             }
         }
     }
@@ -337,9 +384,11 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
         }
         runOnUiThread {
             if (isFinishing || isDestroyed) {
+                initialProgressDialog.dismiss()
                 return@runOnUiThread
             }
             if (availableSpace != -1L && sumToCopy >= availableSpace) {
+                initialProgressDialog.dismiss()
                 val text = String.format(
                     getString(org.fossify.commons.R.string.no_space),
                     sumToCopy.formatSize(),
@@ -363,22 +412,9 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
     conflictResolutions: LinkedHashMap<String, Int>,
     precheckedIdenticalPaths: Set<String>,
     precheckedNonIdenticalPaths: Set<String>,
-    enableNotification: Boolean,
+    progressDialog: CryptoProgressDialog,
     callback: (destinationPath: String) -> Unit
 ) {
-    val titleId = if (isCopyOperation) {
-        org.fossify.commons.R.string.copying
-    } else {
-        org.fossify.commons.R.string.moving
-    }
-    val progressDialog = CryptoProgressDialog(
-        activity = this,
-        max = fileDirItems.size,
-        titleId = titleId,
-        notificationChannelId = OperationProgressNotifier.CHANNEL_COPY_MOVE,
-        notificationIconRes = org.fossify.commons.R.drawable.ic_copy_vector,
-        enableNotification = enableNotification
-    )
     val config = CopyMoveConfig(
         destination = destination,
         isCopyOperation = isCopyOperation,
