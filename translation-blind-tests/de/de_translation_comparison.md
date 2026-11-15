@@ -611,3 +611,4 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 438 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Tresor-Synchronisierung abgeschlossen:\n• Kopiert: %1$d\n• Umbenannt (Namenskonflikt): %2$d\n• Übersprungen (identisch): %3$d\n• Fehlgeschlagen: %4$d |
 | 439 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Im ausgewählten Ordner wurden keine ausstehenden CLI-verschlüsselten Medien (.pending_sync) gefunden. |
 | 440 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Der ausgewählte Quellordner ist identisch mit deinem aktiven Tresor. |
+| 441 | `use_for_this_album` | Use for this album only | Nur auf dieses Album anwenden |

@@ -445,4 +445,5 @@
     <string name="vault_sync_summary_message">保管庫の同期が完了しました:\n• コピー: %1$d\n• 名前変更（名前の競合）: %2$d\n• スキップ（同一）: %3$d\n• 失敗: %4$d</string>
     <string name="vault_sync_nothing_to_sync">選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。</string>
     <string name="vault_sync_same_folder_error">選択した参照元フォルダーは、現在有効な保管庫と同じです。</string>
+    <string name="use_for_this_album">このアルバムのみに適用</string>
 </resources>

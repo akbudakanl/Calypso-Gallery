@@ -393,7 +393,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         return VaultResumeState(
             albumPath = mPath,
             albumName = albumName,
-            sorting = config.getFolderSorting(mPath),
+            sorting = config.getEffectiveMediaSorting(mPath, mShowAll),
             viewType = config.getFolderViewType(mPath),
             grouping = config.getFolderGrouping(mPath),
             scrollPosition = scroll?.first ?: 0,
@@ -433,7 +433,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun applyResumedViewSettings() {
         val state = mVaultResume ?: return
-        if (config.getFolderSorting(mPath) != state.sorting) config.saveCustomSorting(mPath, state.sorting)
+        if (mShowAll) {
+            if (config.filesSorting != state.sorting) config.filesSorting = state.sorting
+        } else {
+            if (config.getFolderSorting(mPath) != state.sorting) config.saveCustomSorting(mPath, state.sorting)
+        }
         if (config.getFolderViewType(mPath) != state.viewType) config.saveFolderViewType(mPath, state.viewType)
         if (config.getFolderGrouping(mPath) != state.grouping) config.saveFolderGrouping(mPath, state.grouping)
     }
@@ -829,7 +833,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun showSortingDialog() {
-        ChangeSortingDialog(this, false, true, mPath) {
+        val isAlbumView = !mShowAll && mPath.isNotEmpty()
+        ChangeSortingDialog(this, false, isAlbumView, if (isAlbumView) mPath else SHOW_ALL) {
             mLoadedInitialPhotos = false
             binding.mediaGrid.adapter = null
             getMedia()

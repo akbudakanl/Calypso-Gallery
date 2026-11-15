@@ -301,7 +301,7 @@ fun Context.getDirsToShow(
 }
 
 private fun Context.addParentWithoutMediaFiles(into: ArrayList<Directory>, path: String): Boolean {
-    val isSortingAscending = config.sorting.isSortingAscending()
+    val isSortingAscending = config.directorySorting.isSortingAscending()
     val subDirs = into.filter { File(it.path).parent.equals(path, true) } as ArrayList<Directory>
     val newDirId = max(1000L, into.maxOfOrNull { it.id ?: 0L } ?: 0L)
     if (subDirs.isNotEmpty()) {
@@ -1464,7 +1464,7 @@ fun Context.getCachedMedia(
         }) as ArrayList<Medium>
 
         val pathToUse = path.ifEmpty { SHOW_ALL }
-        mediaFetcher.sortMedia(media, config.getFolderSorting(pathToUse), enableRandom)
+        mediaFetcher.sortMedia(media, config.getEffectiveMediaSorting(pathToUse), enableRandom)
         val grouped = mediaFetcher.groupMedia(media, pathToUse)
         callback(grouped.clone() as ArrayList<ThumbnailItem>)
         val OTGPath = config.OTGPath

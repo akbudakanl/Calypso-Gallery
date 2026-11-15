@@ -21,6 +21,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogChangeSortingBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.SHOW_ALL
+import org.fossify.gallery.helpers.SortingPolicy
 
 class ChangeSortingDialog(
     val activity: BaseSimpleActivity,
@@ -32,32 +33,33 @@ class ChangeSortingDialog(
     DialogInterface.OnClickListener {
     private var currSorting = 0
     private var config = activity.config
-    private var pathToUse = if (!isDirectorySorting && path.isEmpty()) SHOW_ALL else path
+    private val scope = SortingPolicy.resolveScope(isDirectorySorting = isDirectorySorting, path = path)
+    private val canShowAlbumCheckbox = SortingPolicy.shouldShowUseForThisAlbumCheckbox(scope, showFolderCheckbox)
+    private var pathToUse = if (scope == SortingPolicy.Scope.FILES_VIEW) SHOW_ALL else path
     private val binding: DialogChangeSortingBinding
 
     init {
-        currSorting = if (isDirectorySorting) {
-            config.directorySorting
-        } else {
-            config.getFolderSorting(pathToUse)
+        currSorting = when (scope) {
+            SortingPolicy.Scope.DIRECTORY_LIST -> config.directorySorting
+            SortingPolicy.Scope.FILES_VIEW -> config.filesSorting
+            SortingPolicy.Scope.ALBUM_CONTENT -> config.getFolderSorting(pathToUse)
         }
 
         binding = DialogChangeSortingBinding.inflate(activity.layoutInflater).apply {
             sortingDialogRadioNumberOfItems.beVisibleIf(isDirectorySorting)
             sortingDialogOrderDivider.beVisibleIf(
-                beVisible = showFolderCheckbox
+                beVisible = canShowAlbumCheckbox
                         || (currSorting and SORT_BY_NAME != 0 || currSorting and SORT_BY_PATH != 0)
             )
 
             sortingDialogNumericSorting.beVisibleIf(
-                beVisible = showFolderCheckbox
-                        && (currSorting and SORT_BY_NAME != 0 || currSorting and SORT_BY_PATH != 0)
+                beVisible = currSorting and SORT_BY_NAME != 0 || currSorting and SORT_BY_PATH != 0
             )
 
             sortingDialogNumericSorting.isChecked = currSorting and SORT_USE_NUMERIC_VALUE != 0
 
-            sortingDialogUseForThisFolder.beVisibleIf(showFolderCheckbox)
-            sortingDialogUseForThisFolder.isChecked = config.hasCustomSorting(pathToUse)
+            sortingDialogUseForThisFolder.beVisibleIf(canShowAlbumCheckbox)
+            sortingDialogUseForThisFolder.isChecked = canShowAlbumCheckbox && config.isAlbumCustomSortingEnabled(pathToUse)
             sortingDialogBottomNote.beVisibleIf(!isDirectorySorting)
             sortingDialogRadioCustom.beVisibleIf(isDirectorySorting)
         }
@@ -137,14 +139,17 @@ class ChangeSortingDialog(
             sorting = sorting or SORT_USE_NUMERIC_VALUE
         }
 
-        if (isDirectorySorting) {
-            config.directorySorting = sorting
-        } else {
-            if (binding.sortingDialogUseForThisFolder.isChecked) {
-                config.saveCustomSorting(pathToUse, sorting)
-            } else {
-                config.removeCustomSorting(pathToUse)
-                config.sorting = sorting
+        when (scope) {
+            SortingPolicy.Scope.DIRECTORY_LIST -> config.directorySorting = sorting
+            SortingPolicy.Scope.FILES_VIEW -> config.filesSorting = sorting
+            SortingPolicy.Scope.ALBUM_CONTENT -> {
+                if (canShowAlbumCheckbox && binding.sortingDialogUseForThisFolder.isChecked) {
+                    config.setAlbumCustomSortingEnabled(pathToUse, true)
+                    config.saveCustomSorting(pathToUse, sorting)
+                } else {
+                    config.setAlbumCustomSortingEnabled(pathToUse, false)
+                    config.sorting = sorting
+                }
             }
         }
 

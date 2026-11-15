@@ -660,3 +660,4 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 451 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保險箱同步完成：\n• 已複製：%1$d\n• 已重新命名（名稱衝突）：%2$d\n• 已略過（相同）：%3$d\n• 失敗：%4$d |
 | 452 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。 |
 | 453 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 所選的來源資料夾與您使用中的保險箱相同。 |
+| 454 | `use_for_this_album` | Use for this album only | 僅套用於此相簿 |

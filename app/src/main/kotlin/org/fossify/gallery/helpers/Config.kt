@@ -24,6 +24,55 @@ class Config(context: Context) : BaseConfig(context) {
         get(): Int = prefs.getInt(DIRECTORY_SORT_ORDER, SORT_BY_DATE_MODIFIED or SORT_DESCENDING)
         set(order) = prefs.edit().putInt(DIRECTORY_SORT_ORDER, order).apply()
 
+    var filesSorting: Int
+        get() {
+            if (prefs.contains(FILES_SORT_ORDER)) {
+                return prefs.getInt(FILES_SORT_ORDER, defaultSortingValue())
+            }
+            return if (hasCustomSorting(SHOW_ALL)) {
+                getFolderSorting(SHOW_ALL)
+            } else {
+                defaultSortingValue()
+            }
+        }
+        set(order) = prefs.edit().putInt(FILES_SORT_ORDER, order).apply()
+
+    private fun defaultSortingValue(): Int =
+        context.resources.getInteger(org.fossify.commons.R.integer.default_sorting)
+
+    fun getEffectiveMediaSorting(path: String, showAll: Boolean = false): Int {
+        return when (SortingPolicy.resolveScope(isDirectorySorting = false, path = path, showAll = showAll)) {
+            SortingPolicy.Scope.FILES_VIEW -> filesSorting
+            else -> getFolderSorting(path)
+        }
+    }
+
+    fun isAlbumCustomSortingEnabled(path: String): Boolean {
+        val scope = SortingPolicy.resolveScope(isDirectorySorting = false, path = path)
+        if (scope != SortingPolicy.Scope.ALBUM_CONTENT) {
+            return false
+        }
+        val normalized = path.lowercase(Locale.getDefault())
+        return SortingPolicy.resolveInitialAlbumOnlyChecked(
+            scope = scope,
+            hasCustomSorting = hasCustomSorting(path),
+            isCustomSortingDisabled = prefs.getBoolean(CUSTOM_SORTING_DISABLED_PREFIX + normalized, false)
+        )
+    }
+
+    fun setAlbumCustomSortingEnabled(path: String, enabled: Boolean) {
+        if (SortingPolicy.resolveScope(isDirectorySorting = false, path = path) != SortingPolicy.Scope.ALBUM_CONTENT) {
+            return
+        }
+        val normalized = path.lowercase(Locale.getDefault())
+        if (enabled) {
+            prefs.edit().remove(CUSTOM_SORTING_DISABLED_PREFIX + normalized).apply()
+        } else {
+            prefs.edit().putBoolean(CUSTOM_SORTING_DISABLED_PREFIX + normalized, true).apply()
+            removeCustomSorting(path)
+        }
+    }
+
     var lastSystemLocaleTag: String
         get() = prefs.getString(LAST_SYSTEM_LOCALE, "") ?: ""
         set(tag) = prefs.edit().putString(LAST_SYSTEM_LOCALE, tag).apply()

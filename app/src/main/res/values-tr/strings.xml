@@ -447,4 +447,5 @@
     <string name="cannot_mix_encrypted_and_unencrypted">Bu işlemde şifreli ve şifresiz öğeler birlikte kullanılamaz</string>
     <string name="lock_album">Albümü kilitle</string>
     <string name="unlock_album">Albümün kilidini aç</string>
+    <string name="use_for_this_album">Yalnızca bu albüm için kullan</string>
 </resources>

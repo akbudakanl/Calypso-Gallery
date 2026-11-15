@@ -80,7 +80,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
         }
 
-        sortMedia(curMedia, context.config.getFolderSorting(curPath), enableRandom)
+        sortMedia(curMedia, context.config.getEffectiveMediaSorting(curPath), enableRandom)
         return curMedia
     }
 
