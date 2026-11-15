@@ -48,6 +48,7 @@ import org.fossify.gallery.activities.VideoPlayerActivity
 import org.fossify.gallery.dialogs.AllFilesPermissionDialog
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.EncryptConfirmationDialog
+import org.fossify.gallery.dialogs.resolveAlbumCryptoOptions
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.dialogs.PickDirectoryDialog
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
@@ -1349,11 +1350,13 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
             isHiddenCopySource = false,
             mode = PickDirectoryMode.DECRYPT_MOVE
         ) { destination ->
-            getAlertDialogBuilder()
-                .setMessage(R.string.confirm_decrypt_hidden_file)
-                .setPositiveButton(org.fossify.commons.R.string.no, null)
-                .setNegativeButton(org.fossify.commons.R.string.yes) { _, _ ->
-                    val destDir = File(destination)
+            EncryptConfirmationDialog(
+                activity = this,
+                message = getString(R.string.confirm_decrypt_hidden_file),
+                infoTitleResId = R.string.decrypt_info_title,
+                infoMessageResId = R.string.decrypt_info_message
+            ) {
+                val destDir = File(destination)
                     val runWithResolutions = {
                         conflictResolutions: LinkedHashMap<String, Int>,
                         precheckedIndex: CryptoManager.TargetPlainIndex?,
@@ -1539,11 +1542,9 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                         runWithResolutions(LinkedHashMap(), null, emptySet(), emptySet())
                     }
                 }
-                .create()
-                .show()
+            }
         }
     }
-}
 
 fun BaseSimpleActivity.tryDecryptFolders(
     folderPaths: List<String>,
@@ -1591,10 +1592,16 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
     targetDir: File?,
     callback: (destinationPath: String) -> Unit
 ) {
-    getAlertDialogBuilder()
-        .setMessage(R.string.confirm_decrypt_hidden_file)
-        .setPositiveButton(org.fossify.commons.R.string.no, null)
-        .setNegativeButton(org.fossify.commons.R.string.yes) { _, _ ->
+    EncryptConfirmationDialog(
+        activity = this,
+        message = getString(R.string.confirm_decrypt_hidden_file),
+        infoTitleResId = R.string.decrypt_info_title,
+        infoMessageResId = R.string.decrypt_info_message
+    ) {
+        val conflicts = folderPaths.mapNotNull {
+            CryptoManager.previewDecryptAlbumConflict(this, it, targetDir)
+        }
+        resolveAlbumCryptoOptions(this, conflicts) { albumOptions ->
             ensureNotificationPermissionThenRun { notificationsAllowed ->
                 val totalFilesCount = folderPaths.sumOf { folderPath ->
                     File(folderPath).listFiles()?.count { it.isFile && CryptoManager.isEncryptedFile(it.name) } ?: 0
@@ -1616,7 +1623,8 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
                             CryptoManager.decryptFolder(
                                 context = this,
                                 folderPath = folderPath,
-                                targetFolderOverride = targetDir
+                                targetFolderOverride = targetDir,
+                                options = albumOptions
                             ) { current, _ ->
                                 val diff = current - folderLastCurrent
                                 if (diff > 0) {
@@ -1653,8 +1661,7 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
                 }
             }
         }
-        .create()
-        .show()
+    }
 }
 
 fun BaseSimpleActivity.tryCopyMoveFilesTo(
@@ -1973,14 +1980,14 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
         }
 
         if (needsDecryptionConfirmation) {
-            getAlertDialogBuilder()
-                .setMessage(R.string.confirm_decrypt_hidden_file)
-                .setPositiveButton(org.fossify.commons.R.string.no, null)
-                .setNegativeButton(org.fossify.commons.R.string.yes) { _, _ ->
-                    proceedWithCopyMove()
-                }
-                .create()
-                .show()
+            EncryptConfirmationDialog(
+                activity = this,
+                message = getString(R.string.confirm_decrypt_hidden_file),
+                infoTitleResId = R.string.decrypt_info_title,
+                infoMessageResId = R.string.decrypt_info_message
+            ) {
+                proceedWithCopyMove()
+            }
         } else if (needsEncryptionConfirmation) {
             EncryptConfirmationDialog(
                 activity = this,
