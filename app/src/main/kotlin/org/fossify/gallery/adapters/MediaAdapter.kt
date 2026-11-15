@@ -43,6 +43,9 @@ import org.fossify.commons.extensions.needsStupidWritePermissions
 import org.fossify.commons.extensions.recycleBinPath
 import org.fossify.commons.extensions.rescanPaths
 import org.fossify.commons.extensions.toast
+import org.fossify.commons.helpers.CONFLICT_OVERWRITE
+import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
+import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.commons.helpers.VIEW_TYPE_LIST
 import org.fossify.commons.helpers.ensureBackgroundThread
@@ -91,6 +94,9 @@ import org.fossify.commons.extensions.rescanPaths
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
 import org.fossify.gallery.dialogs.promptAutoBackupIfNeeded
 import org.fossify.gallery.dialogs.resolveCryptoDuplicateSourceOption
+import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
+import org.fossify.gallery.extensions.TransferPairSpec
+import org.fossify.gallery.extensions.resolveCryptoTransferConflicts
 import org.fossify.gallery.extensions.restoreRecycleBinPaths
 import org.fossify.gallery.extensions.saveRotatedImageToFile
 import org.fossify.gallery.extensions.setAs
@@ -103,6 +109,7 @@ import org.fossify.gallery.extensions.tryDecryptFilesTo
 import org.fossify.gallery.extensions.updateDBMediaPath
 import org.fossify.gallery.extensions.updateFavorite
 import org.fossify.gallery.extensions.updateFavoritePaths
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -687,6 +694,7 @@ class MediaAdapter(
             }
 
             val totalFilesCount = selectedMedia.size
+            val isStandardMode = activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
             val resolveTargetDir: (File, String) -> File = { encFile, fallbackParent ->
                 if (CryptoManager.isEncryptedFolderPath(activity, encFile.parent ?: "")) {
                     val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
@@ -697,94 +705,153 @@ class MediaAdapter(
                 }
             }
 
-            resolveCryptoDuplicateSourceOption(
-                activity = activity,
-                isEncrypt = false,
-                hasIdenticalInTarget = {
-                    val pairs = selectedMedia.mapNotNull { medium ->
-                        val encFile = File(medium.path)
-                        if (encFile.exists() && CryptoManager.isEncryptedFile(encFile.name)) {
-                            encFile to resolveTargetDir(encFile, medium.parentPath)
+            activity.resolveCryptoTransferConflicts(
+                buildPairs = {
+                    selectedMedia.mapNotNull { medium ->
+                        val srcFile = File(medium.path)
+                        if (!srcFile.exists() || !srcFile.isFile) return@mapNotNull null
+                        val targetDir = resolveTargetDir(srcFile, medium.parentPath)
+                        val desiredName = if (!CryptoManager.isEncryptedFile(srcFile.name) && srcFile.name.startsWith('.')) {
+                            srcFile.name.substring(1)
                         } else {
                             null
                         }
+                        TransferPairSpec(srcFile, targetDir, isTargetEncrypted = false, desiredPlainName = desiredName)
                     }
-                    CryptoManager.hasAnyIdenticalTransferMatch(
-                        sourceTargetPairs = pairs,
-                        isTargetEncrypted = false,
-                        fastSampling = activity.config.fastLargeDuplicateCheck,
-                        context = activity
-                    )
                 }
-            ) { deleteSourceOnIdentical ->
-                activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = activity,
-                        max = totalFilesCount,
-                        titleId = R.string.decrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
-
-                    ensureBackgroundThread {
-                        var processedCount = 0
-                        var allSuccess = true
-                        for (medium in selectedMedia) {
-                            val encFile = File(medium.path)
-                            if (!encFile.exists()) continue
-
-                            val targetDir = resolveTargetDir(encFile, medium.parentPath).apply { if (!exists()) mkdirs() }
-
-                            val decFile = if (CryptoManager.isEncryptedFile(encFile.name)) {
-                                CryptoManager.decryptFileToDirectory(
-                                    context = activity,
-                                    encryptedFile = encFile,
-                                    targetDir = targetDir,
-                                    deleteEncryptedSource = true,
-                                    deleteSourceOnIdentical = deleteSourceOnIdentical
+            ) { scan ->
+                resolveCryptoDuplicateSourceOption(
+                    activity = activity,
+                    isEncrypt = false,
+                    hasIdenticalInTarget = {
+                        when {
+                            isStandardMode -> false
+                            scan.identicalPaths.isNotEmpty() -> true
+                            scan.nonIdenticalPaths.size >= selectedMedia.size -> false
+                            else -> {
+                                val pairs = selectedMedia.mapNotNull { medium ->
+                                    val encFile = File(medium.path)
+                                    if (encFile.exists() && CryptoManager.isEncryptedFile(encFile.name)) {
+                                        encFile to resolveTargetDir(encFile, medium.parentPath)
+                                    } else {
+                                        null
+                                    }
+                                }
+                                CryptoManager.hasAnyIdenticalTransferMatch(
+                                    sourceTargetPairs = pairs,
+                                    isTargetEncrypted = false,
+                                    fastSampling = false,
+                                    context = activity
                                 )
-                            } else if (encFile.name.startsWith('.')) {
-                                val newName = encFile.name.substring(1)
-                                val target = File(targetDir, newName)
-                                if (encFile.renameTo(target)) {
-                                    activity.updateDBMediaPath(encFile.absolutePath, target.absolutePath)
-                                    activity.rescanPaths(arrayListOf(target.absolutePath))
-                                    target
-                                } else null
-                            } else {
-                                null
+                            }
+                        }
+                    }
+                ) { deleteSourceOnIdentical ->
+                    activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                        val progressDialog = CryptoProgressDialog(
+                            activity = activity,
+                            max = totalFilesCount,
+                            titleId = R.string.decrypting_files,
+                            enableNotification = notificationsAllowed
+                        )
+
+                        ensureBackgroundThread {
+                            var processedCount = 0
+                            var skippedCount = 0
+                            var allSuccess = true
+                            val skippedSourceFiles = ArrayList<File>()
+                            val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>(scan.plainIndexes)
+
+                            for (medium in selectedMedia) {
+                                val encFile = File(medium.path)
+                                if (!encFile.exists()) continue
+
+                                val targetDir = resolveTargetDir(encFile, medium.parentPath).apply { if (!exists()) mkdirs() }
+                                val execPlainIndex = targetIndexes.getOrPut(targetDir.absolutePath) {
+                                    CryptoManager.TargetPlainIndex(targetDir)
+                                }
+                                val resolution = scan.resolutions[encFile.absolutePath] ?: CONFLICT_KEEP_BOTH
+
+                                val decFile = if (resolution == CONFLICT_SKIP) {
+                                    null
+                                } else if (CryptoManager.isEncryptedFile(encFile.name)) {
+                                    CryptoManager.decryptFileToDirectory(
+                                        context = activity,
+                                        encryptedFile = encFile,
+                                        targetDir = targetDir,
+                                        deleteEncryptedSource = true,
+                                        conflictResolution = resolution,
+                                        targetIndex = execPlainIndex,
+                                        skipDuplicateCheck = isStandardMode || (encFile.absolutePath in scan.nonIdenticalPaths),
+                                        deleteSourceOnIdentical = deleteSourceOnIdentical
+                                    )
+                                } else if (encFile.name.startsWith('.')) {
+                                    val newName = encFile.name.substring(1)
+                                    val exactTarget = execPlainIndex.findExact(newName) ?: File(targetDir, newName)
+                                    val target = if (exactTarget.exists()) {
+                                        when (resolution) {
+                                            CONFLICT_OVERWRITE -> {
+                                                exactTarget.delete()
+                                                execPlainIndex.removeFile(exactTarget)
+                                                exactTarget
+                                            }
+                                            else -> execPlainIndex.getAlternativeFile(newName)
+                                        }
+                                    } else {
+                                        exactTarget
+                                    }
+                                    if (encFile.renameTo(target)) {
+                                        execPlainIndex.recordFile(target)
+                                        activity.updateDBMediaPath(encFile.absolutePath, target.absolutePath)
+                                        activity.rescanPaths(arrayListOf(target.absolutePath))
+                                        target
+                                    } else {
+                                        null
+                                    }
+                                } else {
+                                    null
+                                }
+
+                                if (decFile != null && decFile.exists()) {
+                                    processedCount++
+                                } else if (resolution == CONFLICT_SKIP) {
+                                    skippedCount++
+                                    skippedSourceFiles.add(encFile)
+                                } else {
+                                    allSuccess = false
+                                }
+
+                                activity.runOnUiThread {
+                                    progressDialog.updateProgress(processedCount + skippedCount, totalFilesCount)
+                                }
                             }
 
-                            if (decFile != null && decFile.exists()) {
-                                processedCount++
-                            } else {
-                                allSuccess = false
-                            }
+                            CryptoManager.clearAppImageCaches(activity)
 
                             activity.runOnUiThread {
-                                progressDialog.updateProgress(processedCount, totalFilesCount)
+                                try {
+                                    progressDialog.dismiss()
+                                } catch (_: Exception) {}
+
+                                if (allSuccess && processedCount > 0) {
+                                    activity.toast(if (processedCount == 1) R.string.file_decrypted_successfully else R.string.files_decrypted_successfully)
+                                } else if (allSuccess && skippedCount > 0) {
+                                    // Skipped conflicting items cleanly per user choice
+                                } else {
+                                    activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                }
+                                activity.resolveSkippedCryptoFiles(
+                                    isEncrypt = false,
+                                    skippedFiles = skippedSourceFiles
+                                ) {
+                                    finishActMode()
+                                    listener?.refreshItems()
+                                }
                             }
                         }
-
-                    CryptoManager.clearAppImageCaches(activity)
-
-                    activity.runOnUiThread {
-                        try {
-                            progressDialog.dismiss()
-                        } catch (_: Exception) {}
-
-                        if (allSuccess) {
-                            activity.toast(if (totalFilesCount == 1) R.string.file_decrypted_successfully else R.string.files_decrypted_successfully)
-                        } else if (processedCount > 0) {
-                            activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
-                        } else {
-                            activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
-                        }
-                        finishActMode()
-                        listener?.refreshItems()
                     }
                 }
             }
-        }
         }
     }
 
@@ -829,84 +896,137 @@ class MediaAdapter(
     private fun encryptFilesToAlbum(selectedMedia: List<Medium>) {
         PickVaultAlbumDialog(activity) { targetDir, albumName ->
             val totalFilesCount = selectedMedia.size
-            resolveCryptoDuplicateSourceOption(
-                activity = activity,
-                isEncrypt = true,
-                hasIdenticalInTarget = {
-                    val pairs = selectedMedia.mapNotNull { medium ->
+            val isStandardMode = activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+            val runEncryptWithResolutions = {
+                conflictResolutions: LinkedHashMap<String, Int>,
+                precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
+                precheckedIdenticalPaths: Set<String>,
+                precheckedNonIdenticalPaths: Set<String> ->
+                resolveCryptoDuplicateSourceOption(
+                    activity = activity,
+                    isEncrypt = true,
+                    hasIdenticalInTarget = {
+                        when {
+                            isStandardMode -> false
+                            precheckedIdenticalPaths.isNotEmpty() -> true
+                            precheckedNonIdenticalPaths.size >= selectedMedia.size -> false
+                            else -> {
+                                val pairs = selectedMedia.mapNotNull { medium ->
+                                    val srcFile = File(medium.path)
+                                    if (srcFile.exists() && !CryptoManager.isEncryptedFile(srcFile.name)) {
+                                        srcFile to targetDir
+                                    } else {
+                                        null
+                                    }
+                                }
+                                CryptoManager.hasAnyIdenticalTransferMatch(
+                                    sourceTargetPairs = pairs,
+                                    isTargetEncrypted = true,
+                                    fastSampling = false,
+                                    context = activity
+                                )
+                            }
+                        }
+                    }
+                ) { deleteSourceOnIdentical ->
+                    activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                        val progressDialog = CryptoProgressDialog(
+                            activity = activity,
+                            max = totalFilesCount,
+                            titleId = R.string.encrypting_files,
+                            enableNotification = notificationsAllowed
+                        )
+
+                        ensureBackgroundThread {
+                            val execEncIndex = precheckedEncIndex ?: CryptoManager.TargetEncryptedIndex(targetDir)
+                            var processedCount = 0
+                            var skippedCount = 0
+                            var allSuccess = true
+                            val skippedSourceFiles = ArrayList<File>()
+                            for (medium in selectedMedia) {
+                                val srcFile = File(medium.path)
+                                if (!srcFile.exists()) continue
+
+                                val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
+                                if (resolution == CONFLICT_SKIP) {
+                                    skippedCount++
+                                    skippedSourceFiles.add(srcFile)
+                                } else {
+                                    val encFile = CryptoManager.encryptFileToDirectory(
+                                        context = activity,
+                                        sourceFile = srcFile,
+                                        targetDir = targetDir,
+                                        wipeSource = true,
+                                        clearCachesNow = false,
+                                        conflictResolution = resolution,
+                                        targetIndex = execEncIndex,
+                                        skipDuplicateCheck = isStandardMode || (srcFile.absolutePath in precheckedNonIdenticalPaths),
+                                        deleteSourceOnIdentical = deleteSourceOnIdentical
+                                    )
+
+                                    if (encFile != null && encFile.exists() && encFile.length() > 0L) {
+                                        processedCount++
+                                    } else {
+                                        allSuccess = false
+                                    }
+                                }
+
+                                activity.runOnUiThread {
+                                    progressDialog.updateProgress(processedCount + skippedCount, totalFilesCount)
+                                }
+                            }
+
+                            CryptoManager.clearAppImageCaches(activity)
+
+                            activity.runOnUiThread {
+                                try {
+                                    progressDialog.dismiss()
+                                } catch (_: Exception) {}
+
+                                if (allSuccess && processedCount > 0) {
+                                    val msg = if (processedCount == 1) {
+                                        activity.getString(R.string.file_hidden_to_album, albumName)
+                                    } else {
+                                        activity.getString(R.string.files_hidden_to_album, processedCount, albumName)
+                                    }
+                                    activity.toast(msg)
+                                } else if (allSuccess && skippedCount > 0) {
+                                    // Skipped conflicting items cleanly per user choice
+                                } else {
+                                    activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                }
+                                activity.resolveSkippedCryptoFiles(
+                                    isEncrypt = true,
+                                    skippedFiles = skippedSourceFiles
+                                ) {
+                                    finishActMode()
+                                    listener?.refreshItems()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            activity.resolveCryptoTransferConflicts(
+                buildPairs = {
+                    selectedMedia.mapNotNull { medium ->
                         val srcFile = File(medium.path)
                         if (srcFile.exists() && !CryptoManager.isEncryptedFile(srcFile.name)) {
-                            srcFile to targetDir
+                            TransferPairSpec(srcFile, targetDir, isTargetEncrypted = true)
                         } else {
                             null
                         }
                     }
-                    CryptoManager.hasAnyIdenticalTransferMatch(
-                        sourceTargetPairs = pairs,
-                        isTargetEncrypted = true,
-                        fastSampling = activity.config.fastLargeDuplicateCheck,
-                        context = activity
-                    )
                 }
-            ) { deleteSourceOnIdentical ->
-                activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = activity,
-                        max = totalFilesCount,
-                        titleId = R.string.encrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
-
-                    ensureBackgroundThread {
-                        var processedCount = 0
-                        var allSuccess = true
-                        for (medium in selectedMedia) {
-                            val srcFile = File(medium.path)
-                            if (!srcFile.exists()) continue
-
-                            val encFile = CryptoManager.encryptFileToDirectory(
-                                context = activity,
-                                sourceFile = srcFile,
-                                targetDir = targetDir,
-                                wipeSource = true,
-                                clearCachesNow = false,
-                                deleteSourceOnIdentical = deleteSourceOnIdentical
-                            )
-
-                            if (encFile != null && encFile.exists() && encFile.length() > 0L) {
-                                processedCount++
-                            } else {
-                                allSuccess = false
-                            }
-
-                            activity.runOnUiThread {
-                                progressDialog.updateProgress(processedCount, totalFilesCount)
-                            }
-                        }
-
-                    CryptoManager.clearAppImageCaches(activity)
-
-                    activity.runOnUiThread {
-                        try {
-                            progressDialog.dismiss()
-                        } catch (_: Exception) {}
-
-                        if (allSuccess) {
-                            val msg = if (totalFilesCount == 1) {
-                                activity.getString(R.string.file_hidden_to_album, albumName)
-                            } else {
-                                activity.getString(R.string.files_hidden_to_album, totalFilesCount, albumName)
-                            }
-                            activity.toast(msg)
-                        } else {
-                            activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
-                        }
-                        finishActMode()
-                        listener?.refreshItems()
-                    }
-                }
+            ) { scan ->
+                runEncryptWithResolutions(
+                    scan.resolutions,
+                    scan.encIndexes[targetDir.absolutePath],
+                    scan.identicalPaths,
+                    scan.nonIdenticalPaths
+                )
             }
-        }
         }
     }
 

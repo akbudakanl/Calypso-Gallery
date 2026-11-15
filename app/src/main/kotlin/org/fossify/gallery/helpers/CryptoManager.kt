@@ -4325,7 +4325,13 @@ object CryptoManager {
             val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
             for ((existingBin, existingMeta) in candidates) {
                 if (areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
-                    areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingBin, existingMeta, fastSampling = fastSampling)
+                    areEncryptedFilesIdenticalContent(
+                        sourceBin,
+                        sourceMeta,
+                        existingBin,
+                        existingMeta,
+                        fastSampling = fastSampling
+                    )
                 ) {
                     if (isMove && deleteSourceOnIdentical) {
                         runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
@@ -4882,13 +4888,90 @@ object CryptoManager {
 
     data class AlbumCryptoOptions(
         val resolution: AlbumConflictResolution = AlbumConflictResolution.MERGE,
-        val deleteIdenticalSource: Boolean = true
+        val deleteIdenticalSource: Boolean = true,
+        val conflictResolutions: Map<String, Int> = emptyMap(),
+        val skipDuplicateCheck: Boolean = false,
+        val precheckedNonIdenticalPaths: Set<String> = emptySet(),
+        val deferredSkippedSourceCollector: MutableList<File>? = null,
+        val deferredIdenticalTargetMap: MutableMap<String, File>? = null
     )
 
     data class AlbumConflictPreview(
         val existingName: String,
         val renamedPreview: String
     )
+
+    private fun resolveExistingEncryptTargetAlbum(vaultRoot: File, rawFolderName: String): File? {
+        return if (rawFolderName.equals(VAULT_DEFAULT_ALBUM_NAME, ignoreCase = true)) {
+            findExistingDefaultHiddenAlbum(vaultRoot)
+        } else {
+            matchExistingDestinationAlbum(vaultRoot, rawFolderName)
+        }
+    }
+
+    private fun resolveDecryptTargetFolder(
+        context: Context,
+        folder: File,
+        targetFolderOverride: File?
+    ): File {
+        if (targetFolderOverride != null) return targetFolderOverride
+        val originalFolderName = getDecryptedFolderName(folder) ?: folder.name
+        val picturesDir = File(context.internalStoragePath, Environment.DIRECTORY_PICTURES)
+        if (!picturesDir.exists()) {
+            picturesDir.mkdirs()
+        }
+        var candidate = File(picturesDir, originalFolderName)
+        var idx = 1
+        while (candidate.exists() && !candidate.isDirectory) {
+            candidate = File(picturesDir, "$originalFolderName($idx)")
+            idx++
+        }
+        return candidate
+    }
+
+    private fun getSortedEncryptableMediaFiles(folder: File): List<File> {
+        return (folder.listFiles()?.filter { isEncryptableMediaFile(it) } ?: emptyList())
+            .sortedWith(compareBy<File>({ stripCollisionIndex(it.name) == it.name }, { it.name }))
+    }
+
+    private fun getSortedEncryptedFilesForDecrypt(folder: File): List<File> {
+        val rawFiles = folder.listFiles()?.filter { it.isFile && isEncryptedFile(it.name) } ?: emptyList()
+        val origNameByPath = HashMap<String, String>(rawFiles.size)
+        for (file in rawFiles) {
+            origNameByPath[file.absolutePath] = readMetadata(file, includeThumbnail = false, cacheResult = false)?.originalName ?: file.name
+        }
+        return rawFiles.sortedWith(
+            compareBy<File>(
+                {
+                    val orig = origNameByPath[it.absolutePath] ?: it.name
+                    stripCollisionIndex(orig) == orig
+                },
+                { origNameByPath[it.absolutePath] ?: it.name },
+                { it.name }
+            )
+        )
+    }
+
+    fun findMergeTargetForEncryptFolder(context: Context, folderPath: String): Pair<File, List<File>>? {
+        val folder = File(folderPath)
+        if (!folder.exists() || !folder.isDirectory) return null
+        val vaultRoot = findVaultRoot(context) ?: return null
+        val rawFolderName = getDecryptedFolderName(folder) ?: folder.name
+        val existingAlbum = resolveExistingEncryptTargetAlbum(vaultRoot, rawFolderName) ?: return null
+        return existingAlbum to getSortedEncryptableMediaFiles(folder)
+    }
+
+    fun findMergeTargetForDecryptFolder(
+        context: Context,
+        folderPath: String,
+        targetFolderOverride: File? = null
+    ): Pair<File, List<File>>? {
+        val folder = File(folderPath)
+        if (!folder.exists() || !folder.isDirectory) return null
+        val targetFolder = resolveDecryptTargetFolder(context, folder, targetFolderOverride)
+        if (!targetFolder.exists() || !targetFolder.isDirectory) return null
+        return targetFolder to getSortedEncryptedFilesForDecrypt(folder)
+    }
 
     private fun resolveUniqueEncryptedAlbumName(vaultRoot: File, baseName: String): String {
         var idx = 1
@@ -4977,11 +5060,7 @@ object CryptoManager {
             isPathOrParentHidden = isHiddenParent
         )
 
-        val existingAlbum = if (rawFolderName.equals(VAULT_DEFAULT_ALBUM_NAME, ignoreCase = true)) {
-            findExistingDefaultHiddenAlbum(vaultRoot)
-        } else {
-            matchExistingDestinationAlbum(vaultRoot, rawFolderName)
-        }
+        val existingAlbum = resolveExistingEncryptTargetAlbum(vaultRoot, rawFolderName)
         val shouldMergeIntoExisting = existingAlbum != null && options.resolution == AlbumConflictResolution.MERGE
         val targetAlbumExistedBefore = shouldMergeIntoExisting
         val originalFolderName = if (shouldMergeIntoExisting) {
@@ -4994,8 +5073,7 @@ object CryptoManager {
 
         // Only formats supported by the gallery are encrypted; other files (pdf, md, ...) are left untouched.
         // Process pre-numbered (n) variants before base names so colliding base files cannot steal "(1)" slots.
-        val filesToEncrypt = (folder.listFiles()?.filter { isEncryptableMediaFile(it) } ?: emptyList())
-            .sortedWith(compareBy<File>({ stripCollisionIndex(it.name) == it.name }, { it.name }))
+        val filesToEncrypt = getSortedEncryptableMediaFiles(folder)
 
         val subfolder = if (shouldMergeIntoExisting) {
             existingAlbum!!
@@ -5027,21 +5105,32 @@ object CryptoManager {
         val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
         val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder, preExistingBinPaths) else null
         val newlyCreatedBins = ArrayList<File>()
-        val encryptedPairs = ArrayList<Pair<File, File>>()
+        val encryptedPairs = ArrayList<Triple<File, File, Boolean>>()
+        val skippedConflictFiles = ArrayList<File>()
         var failed = false
 
         for ((index, file) in filesToEncrypt.withIndex()) {
+            val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
+            if (fileResolution == CONFLICT_SKIP) {
+                skippedConflictFiles.add(file)
+                options.deferredSkippedSourceCollector?.add(file)
+                onProgress?.invoke(((index + 1) * 7) / 10, total)
+                continue
+            }
             val enc = encryptFileToDirectory(
                 context = context,
                 sourceFile = file,
                 targetDir = subfolder,
                 wipeSource = false,
                 clearCachesNow = false,
-                targetIndex = subfolderIndex
+                conflictResolution = fileResolution,
+                targetIndex = subfolderIndex,
+                skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths)
             )
             if (enc != null && enc.exists()) {
-                encryptedPairs.add(Pair(file, enc))
-                if (enc.absolutePath !in preExistingBinPaths) {
+                val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
+                encryptedPairs.add(Triple(file, enc, isOverwritten))
+                if (enc.absolutePath !in preExistingBinPaths || isOverwritten) {
                     newlyCreatedBins.add(enc)
                 }
             } else {
@@ -5052,7 +5141,8 @@ object CryptoManager {
         }
 
         // ROLLBACK IF ENCRYPTION FAILED ON ANY FILE
-        if (failed || encryptedPairs.size != filesToEncrypt.size) {
+        val expectedProcessed = filesToEncrypt.size - skippedConflictFiles.size
+        if (failed || encryptedPairs.size != expectedProcessed) {
             if (targetAlbumExistedBefore) {
                 newlyCreatedBins.forEach { createdBin ->
                     metadataCache.remove(createdBin.absolutePath)?.fileKey?.fill(0)
@@ -5071,10 +5161,10 @@ object CryptoManager {
         var favoritesChanged = false
         val encBaseProgress = (total * 7) / 10
         val wipeWeight = total - encBaseProgress
-        for ((index, pair) in encryptedPairs.withIndex()) {
-            val (sourceFile, encFile) = pair
-            val isNewlyEncrypted = encFile.absolutePath !in preExistingBinPaths
-            if (isNewlyEncrypted || options.deleteIdenticalSource) {
+        for ((index, entry) in encryptedPairs.withIndex()) {
+            val (sourceFile, encFile, isOverwritten) = entry
+            val isIdenticalPreExisting = !isOverwritten && (encFile.absolutePath in preExistingBinPaths)
+            if (!isIdenticalPreExisting || options.deleteIdenticalSource) {
                 val sourcePath = sourceFile.absolutePath
                 val plainIdentity = runCatching { MediaIdentity.ofWithFolder(context, sourceFile) }.getOrNull()
                 runCatching {
@@ -5092,6 +5182,9 @@ object CryptoManager {
                     wipedPaths.add(sourcePath)
                     wipedFileNames.add(sourceFile.name)
                 }
+            } else {
+                options.deferredSkippedSourceCollector?.add(sourceFile)
+                options.deferredIdenticalTargetMap?.put(sourceFile.absolutePath, encFile)
             }
             val wipeProgress = if (encryptedPairs.isNotEmpty()) {
                 encBaseProgress + ((index + 1) * wipeWeight) / encryptedPairs.size
@@ -5283,22 +5376,7 @@ object CryptoManager {
         if (!isVaultUnlocked) return folderPath
 
         val hadNoMedia = File(folder, NOMEDIA).exists()
-        val initialTarget = if (targetFolderOverride != null) {
-            targetFolderOverride
-        } else {
-            val originalFolderName = getDecryptedFolderName(folder) ?: folder.name
-            val picturesDir = File(context.internalStoragePath, Environment.DIRECTORY_PICTURES)
-            if (!picturesDir.exists()) {
-                picturesDir.mkdirs()
-            }
-            var candidate = File(picturesDir, originalFolderName)
-            var idx = 1
-            while (candidate.exists() && !candidate.isDirectory) {
-                candidate = File(picturesDir, "$originalFolderName($idx)")
-                idx++
-            }
-            candidate
-        }
+        val initialTarget = resolveDecryptTargetFolder(context, folder, targetFolderOverride)
         val targetFolder = if (initialTarget.exists() && initialTarget.isDirectory && options.resolution == AlbumConflictResolution.RENAME) {
             val parent = initialTarget.parentFile ?: initialTarget
             resolveUniquePlainFolder(parent, initialTarget.name)
@@ -5309,21 +5387,7 @@ object CryptoManager {
         if (!targetExistedBefore && !targetFolder.mkdirs()) return null
 
         // Process pre-numbered (n) variants before base names so colliding base files do not steal "(1)" names.
-        val rawFilesToDecrypt = folder.listFiles()?.filter { it.isFile && isEncryptedFile(it.name) } ?: emptyList()
-        val origNameByPath = HashMap<String, String>(rawFilesToDecrypt.size)
-        for (file in rawFilesToDecrypt) {
-            origNameByPath[file.absolutePath] = readMetadata(file, includeThumbnail = false, cacheResult = false)?.originalName ?: file.name
-        }
-        val filesToDecrypt = rawFilesToDecrypt.sortedWith(
-            compareBy<File>(
-                {
-                    val orig = origNameByPath[it.absolutePath] ?: it.name
-                    stripCollisionIndex(orig) == orig
-                },
-                { origNameByPath[it.absolutePath] ?: it.name },
-                { it.name }
-            )
-        )
+        val filesToDecrypt = getSortedEncryptedFilesForDecrypt(folder)
 
         val total = filesToDecrypt.size
         onProgress?.invoke(0, total)
@@ -5331,19 +5395,30 @@ object CryptoManager {
         val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
         val targetPlainIndex = TargetPlainIndex(targetFolder, preExistingPlainPaths)
         val newlyCreatedPlainFiles = ArrayList<File>()
-        val decryptedPairs = ArrayList<Pair<File, File>>()
+        val decryptedPairs = ArrayList<Triple<File, File, Boolean>>()
+        val skippedConflictFiles = ArrayList<File>()
         var failed = false
 
         for ((index, file) in filesToDecrypt.withIndex()) {
+            val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
+            if (fileResolution == CONFLICT_SKIP) {
+                skippedConflictFiles.add(file)
+                options.deferredSkippedSourceCollector?.add(file)
+                onProgress?.invoke(index + 1, total)
+                continue
+            }
             val decrypted = decryptFileToDirectory(
                 context = context,
                 encryptedFile = file,
                 targetDir = targetFolder,
                 deleteEncryptedSource = false,
-                targetIndex = targetPlainIndex
+                conflictResolution = fileResolution,
+                targetIndex = targetPlainIndex,
+                skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths)
             )
             if (decrypted != null && decrypted.exists()) {
-                decryptedPairs.add(Pair(file, decrypted))
+                val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
+                decryptedPairs.add(Triple(file, decrypted, isOverwritten))
                 if (decrypted.absolutePath !in preExistingPlainPaths) {
                     newlyCreatedPlainFiles.add(decrypted)
                 }
@@ -5355,7 +5430,8 @@ object CryptoManager {
         }
 
         // ROLLBACK IF DECRYPTION FAILED
-        if (failed || decryptedPairs.size != filesToDecrypt.size) {
+        val expectedProcessed = filesToDecrypt.size - skippedConflictFiles.size
+        if (failed || decryptedPairs.size != expectedProcessed) {
             newlyCreatedPlainFiles.forEach { decryptedFile ->
                 try { decryptedFile.delete() } catch (_: Exception) {}
             }
@@ -5368,9 +5444,11 @@ object CryptoManager {
         // ALL FILES DECRYPTED! Now delete encrypted files:
         val touchedAlbumIds = LinkedHashSet<Long>()
         var favoritesChanged = false
-        for ((encFile, decryptedFile) in decryptedPairs) {
-            val isNewlyDecrypted = decryptedFile.absolutePath !in preExistingPlainPaths
-            if (!isNewlyDecrypted && !options.deleteIdenticalSource) {
+        for ((encFile, decryptedFile, isOverwritten) in decryptedPairs) {
+            val isIdenticalPreExisting = !isOverwritten && (decryptedFile.absolutePath in preExistingPlainPaths)
+            if (isIdenticalPreExisting && !options.deleteIdenticalSource) {
+                options.deferredSkippedSourceCollector?.add(encFile)
+                options.deferredIdenticalTargetMap?.put(encFile.absolutePath, decryptedFile)
                 continue
             }
             val encPath = encFile.absolutePath
@@ -5973,6 +6051,17 @@ object CryptoManager {
             runCatching { purgeTracesForFile(context, originalPath) }
         }
 
+        return deleted
+    }
+
+    fun deleteEncryptedFile(context: Context, file: File): Boolean {
+        val path = file.absolutePath
+        metadataCache.remove(path)?.fileKey?.fill(0)
+        if (!file.exists()) return true
+        var deleted = file.delete()
+        if (!deleted) {
+            deleted = context.tryFastDocumentDelete(path, false)
+        }
         return deleted
     }
 
