@@ -1,13 +1,44 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Fossify Gallery Cipher - Linux Quick Launcher
+# Fossify Gallery Cipher - Linux & macOS Quick Launcher
 # ==============================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
+OS_NAME="$(uname -s)"
+
+# 0. Select Python interpreter (prefer local .venv if present)
+PYTHON_BIN=""
+if [ -x "$DIR/.venv/bin/python3" ]; then
+    PYTHON_BIN="$DIR/.venv/bin/python3"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="$(command -v python3)"
+elif [ "$OS_NAME" = "Darwin" ]; then
+    for cand in /opt/homebrew/bin/python3 /usr/local/bin/python3; do
+        if [ -x "$cand" ]; then
+            PYTHON_BIN="$cand"
+            break
+        fi
+    done
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
+    echo "=========================================================="
+    echo "  [ERROR] Python 3 is not installed!"
+    echo "=========================================================="
+    if [ "$OS_NAME" = "Darwin" ]; then
+        echo "Install Python 3 via Homebrew ('brew install python') or https://www.python.org/downloads/"
+    else
+        echo "Please install python3 using your Linux package manager."
+    fi
+    exit 1
+fi
+
 # 1. Detect Desktop directory
-if command -v xdg-user-dir >/dev/null 2>&1; then
+if [ "$OS_NAME" = "Darwin" ]; then
+    DESKTOP_DIR="$HOME/Desktop"
+elif command -v xdg-user-dir >/dev/null 2>&1; then
     DESKTOP_DIR="$(xdg-user-dir DESKTOP)"
 elif [ -d "$HOME/Desktop" ]; then
     DESKTOP_DIR="$HOME/Desktop"
@@ -17,21 +48,23 @@ else
     DESKTOP_DIR="$HOME/Desktop"
 fi
 
-# 2. Check Python dependencies (cryptography, argon2, pillow) across apt / dnf / pacman / zypper
-python3 -c "import cryptography, argon2, PIL" 2>/dev/null
+# 2. Check Python dependencies (cryptography, argon2, pillow)
+"$PYTHON_BIN" -c "import cryptography, argon2, PIL" 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "=========================================================="
     echo "  [WARNING] Required Python libraries are missing!"
     echo "=========================================================="
     PKG_CMD=""
-    if command -v apt-get >/dev/null 2>&1; then
-        PKG_CMD="sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil"
-    elif command -v dnf >/dev/null 2>&1; then
-        PKG_CMD="sudo dnf install -y python3-cryptography python3-argon2-cffi python3-pillow"
-    elif command -v pacman >/dev/null 2>&1; then
-        PKG_CMD="sudo pacman -S --needed python-cryptography python-argon2-cffi python-pillow"
-    elif command -v zypper >/dev/null 2>&1; then
-        PKG_CMD="sudo zypper install -y python3-cryptography python3-argon2-cffi python3-Pillow"
+    if [ "$OS_NAME" = "Linux" ]; then
+        if command -v apt-get >/dev/null 2>&1; then
+            PKG_CMD="sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil"
+        elif command -v dnf >/dev/null 2>&1; then
+            PKG_CMD="sudo dnf install -y python3-cryptography python3-argon2-cffi python3-pillow"
+        elif command -v pacman >/dev/null 2>&1; then
+            PKG_CMD="sudo pacman -S --needed python-cryptography python-argon2-cffi python-pillow"
+        elif command -v zypper >/dev/null 2>&1; then
+            PKG_CMD="sudo zypper install -y python3-cryptography python3-argon2-cffi python3-Pillow"
+        fi
     fi
 
     if [ -n "$PKG_CMD" ]; then
@@ -46,12 +79,41 @@ if [ $? -ne 0 ]; then
             exit 1
         fi
     else
-        echo "Unsupported package manager. Please install: cryptography, argon2-cffi, pillow"
-        exit 1
+        echo "Will create a local virtual environment (.venv) and install dependencies from requirements.txt:"
+        echo "  \"$PYTHON_BIN\" -m venv \"$DIR/.venv\" && \"$DIR/.venv/bin/pip\" install -r \"$DIR/requirements.txt\""
+        echo ""
+        read -rp "Create .venv and install dependencies now? [Y/n]: " DO_VENV
+        if [[ "$DO_VENV" =~ ^([yY]|[yY][eE][sS]|[eE]|[eE][vV][eE][tT]|)$ ]]; then
+            "$PYTHON_BIN" -m venv "$DIR/.venv" || exit 1
+            "$DIR/.venv/bin/pip" install -r "$DIR/requirements.txt" || exit 1
+            PYTHON_BIN="$DIR/.venv/bin/python3"
+        else
+            echo "Cannot proceed without required cryptography libraries."
+            exit 1
+        fi
     fi
 fi
 
-# 3. Create double-clickable Desktop shortcut icon
+# 3. macOS fast path (no .desktop shortcut, /proc/swaps, or Linux bwrap namespaces)
+NEED_ADB=0
+for arg in "$@"; do
+    case "$arg" in
+        --adb)
+            NEED_ADB=1
+            ;;
+    esac
+done
+
+if [ "$OS_NAME" = "Darwin" ]; then
+    if [ "$NEED_ADB" -eq 1 ]; then
+        echo "[*] --adb specified: running with ADB network access allowed."
+    else
+        echo "[Sandbox] Python network audit hook active (OS-level bwrap sandbox is Linux-only)."
+    fi
+    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+fi
+
+# 4. Create double-clickable Desktop shortcut icon (Linux)
 DESKTOP_FILE="$DESKTOP_DIR/Fossify-Cipher.desktop"
 if [ ! -f "$DESKTOP_FILE" ] && [ -d "$DESKTOP_DIR" ]; then
     cat <<EOF > "$DESKTOP_FILE"
@@ -69,7 +131,7 @@ EOF
     gio set "$DESKTOP_FILE" metadata::trusted true 2>/dev/null || true
 fi
 
-# 4. Warn if non-zram disk swap is active (e.g., standard Live ISO that mounted host swap)
+# 5. Warn if non-zram disk swap is active (e.g., standard Live ISO that mounted host swap)
 if [ -r /proc/swaps ]; then
     DISK_SWAPS=$(awk 'NR>1 && $1 !~ /^\/dev\/zram/ {print $1}' /proc/swaps)
     if [ -n "$DISK_SWAPS" ]; then
@@ -81,19 +143,10 @@ if [ -r /proc/swaps ]; then
     fi
 fi
 
-# 5. Per-process Network & Disk Sandbox Wrapper (does not affect other Python processes)
-NEED_ADB=0
-for arg in "$@"; do
-    case "$arg" in
-        --adb)
-            NEED_ADB=1
-            ;;
-    esac
-done
-
+# 6. Per-process Network & Disk Sandbox Wrapper (does not affect other Python processes)
 if [ "$NEED_ADB" -eq 1 ]; then
     echo "[*] --adb specified: running without network namespace isolation."
-    exec python3 "$DIR/cipher_vault.py" "$@"
+    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
 elif command -v bwrap >/dev/null 2>&1; then
     mkdir -p "$DESKTOP_DIR" 2>/dev/null || true
     BWRAP_ARGS=(
@@ -178,14 +231,14 @@ elif command -v bwrap >/dev/null 2>&1; then
     done
 
     echo "[Sandbox] Network OFF + Restricted Disk (bwrap)"
-    exec bwrap "${BWRAP_ARGS[@]}" python3 "$DIR/cipher_vault.py" "$@"
+    exec bwrap "${BWRAP_ARGS[@]}" "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
 elif command -v firejail >/dev/null 2>&1; then
     echo "[Sandbox] Network OFF + Restricted Filesystem (firejail)"
-    exec firejail --quiet --net=none --private-tmp python3 "$DIR/cipher_vault.py" "$@"
+    exec firejail --quiet --net=none --private-tmp "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
 elif command -v unshare >/dev/null 2>&1 && unshare --user --net true 2>/dev/null; then
     echo "[Sandbox] Network OFF (Linux kernel unshare --user --net)"
-    exec unshare --user --net python3 "$DIR/cipher_vault.py" "$@"
+    exec unshare --user --net "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
 else
     echo "[!] Sandbox unavailable on this kernel; running Python directly."
-    exec python3 "$DIR/cipher_vault.py" "$@"
+    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
 fi
