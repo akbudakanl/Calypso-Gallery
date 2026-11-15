@@ -151,10 +151,10 @@ import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MONTH_MILLISECONDS
 import org.fossify.gallery.helpers.MediaFetcher
 import org.fossify.gallery.helpers.MediaUpdatePolicy
-import org.fossify.gallery.helpers.VAULT_EXIT_DOUBLE_BACK_WINDOW_MS
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
+import org.fossify.gallery.helpers.EXTRA_EXITED_FROM_VAULT
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
 import org.fossify.gallery.helpers.SET_WALLPAPER_INTENT
@@ -166,6 +166,7 @@ import org.fossify.gallery.helpers.TYPE_IMAGES
 import org.fossify.gallery.helpers.TYPE_RAWS
 import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
+import org.fossify.gallery.helpers.VaultExitBackHelper
 import org.fossify.gallery.helpers.VaultPullGestureHandler
 import org.fossify.gallery.helpers.VaultViewPolicy
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
@@ -242,7 +243,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mIsSecretVaultView = false
     private var mIsSwitchingVaultView = false
     private var mHiddenDisplayMode = DISPLAY_NONE
-    private var mLastVaultBackPressedAt = 0L
+    private val mVaultBackHelper = VaultExitBackHelper()
+    private var mNormalDirsSnapshot: ArrayList<Directory>? = null
 
     // "Continue where I left off" after the vault keys were wiped (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted one to apply.
@@ -529,7 +531,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             // process restart case: the in-memory state is gone, read the encrypted blob now that the key is back
             mVaultResume = VaultResumeState.decrypt(mVaultResumeBlob) ?: mVaultResume
             mVaultResumeBlob = null
-            mIsSecretVaultView = true
+            if (!mIsSecretVaultView && mDirs.isNotEmpty()) {
+            mNormalDirsSnapshot = mDirs
+                .filterNot { isEncryptedVaultAlbum(it.path) || CryptoManager.isVaultRecycleBinPath(this, it.path) }
+                .map { it.copy() } as ArrayList<Directory>
+        }
+        mVaultBackHelper.reset()
+        mIsSecretVaultView = true
             mHiddenDisplayMode = DISPLAY_SECRET_VAULT
             toast(R.string.secret_vault)
             ensureBackgroundThread {
@@ -558,6 +566,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     override fun onPause() {
         super.onPause()
+        mVaultBackHelper.cancelToast()
         binding.directoriesRefreshLayout.isRefreshing = false
         mFetchGeneration.incrementAndGet()
         mLastMediaFetcher?.shouldStop = true
@@ -651,7 +660,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             setupAdapter(mDirs)
             true
         } else if (mIsSecretVaultView) {
-            handleVaultBackPress()
+            mVaultBackHelper.handleBackPress(this) { exitSecretVault() }
+            true
+        } else if (mVaultBackHelper.isWithinExitGuard()) {
             true
         } else if (config.groupDirectSubfolders) {
             if (mCurrentPathPrefix.isEmpty()) {
@@ -669,18 +680,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
-    private fun handleVaultBackPress() {
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (now - mLastVaultBackPressedAt > VAULT_EXIT_DOUBLE_BACK_WINDOW_MS) {
-            mLastVaultBackPressedAt = now
-            toast(R.string.press_back_again_to_exit_vault)
-            return
-        }
-        mLastVaultBackPressedAt = 0L
-        exitSecretVault()
-    }
-
     private fun exitSecretVault() {
+        mVaultBackHelper.markExited()
         mIsSecretVaultView = false
         config.showAll = VaultViewPolicy.shouldExitVaultToFilesView(isExitingFromFilesView = false)
         mHiddenDisplayMode = DISPLAY_NONE
@@ -690,7 +691,18 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         CryptoManager.clearAppImageCaches(this)
         VaultSessionManager.onVaultExited()
         updateVaultModeUi()
-        binding.directoriesGrid.adapter = null
+
+        val snapshot = mNormalDirsSnapshot
+        mNormalDirsSnapshot = null
+        if (!snapshot.isNullOrEmpty()) {
+            mDirs = snapshot.map { it.copy() } as ArrayList<Directory>
+            mLoadedInitialPhotos = true
+            checkPlaceholderVisibility(mDirs)
+            setupAdapter(mDirs)
+        } else {
+            mLoadedInitialPhotos = false
+            binding.directoriesGrid.adapter = null
+        }
         getDirectories()
         refreshMenuItems()
     }
@@ -1072,11 +1084,21 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun handleVaultIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_EXITED_FROM_VAULT, false) == true) {
+            intent.removeExtra(EXTRA_EXITED_FROM_VAULT)
+            mVaultBackHelper.markExited()
+        }
         val canRestoreVault = CryptoManager.isVaultUnlocked && config.temporarilyShowHidden
         if (intent?.getBooleanExtra(EXTRA_OPEN_SECRET_VAULT_FOLDERS, false) == true) {
             intent.removeExtra(EXTRA_OPEN_SECRET_VAULT_FOLDERS)
             if (canRestoreVault) {
-                mIsSecretVaultView = true
+                if (!mIsSecretVaultView && mDirs.isNotEmpty()) {
+            mNormalDirsSnapshot = mDirs
+                .filterNot { isEncryptedVaultAlbum(it.path) || CryptoManager.isVaultRecycleBinPath(this, it.path) }
+                .map { it.copy() } as ArrayList<Directory>
+        }
+        mVaultBackHelper.reset()
+        mIsSecretVaultView = true
                 mHiddenDisplayMode = DISPLAY_SECRET_VAULT
             }
         } else if (!mIsSecretVaultView && mHiddenDisplayMode == DISPLAY_NONE && canRestoreVault) {
@@ -1132,6 +1154,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             return
         }
 
+        if (!mIsSecretVaultView && mDirs.isNotEmpty()) {
+            mNormalDirsSnapshot = mDirs
+                .filterNot { isEncryptedVaultAlbum(it.path) || CryptoManager.isVaultRecycleBinPath(this, it.path) }
+                .map { it.copy() } as ArrayList<Directory>
+        }
+        mVaultBackHelper.reset()
         mIsSecretVaultView = true
         mHiddenDisplayMode = DISPLAY_SECRET_VAULT
         toast(R.string.secret_vault)
