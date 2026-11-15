@@ -90,6 +90,7 @@ import java.io.File
 import org.fossify.commons.extensions.rescanPaths
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
 import org.fossify.gallery.dialogs.promptAutoBackupIfNeeded
+import org.fossify.gallery.dialogs.resolveCryptoDuplicateSourceOption
 import org.fossify.gallery.extensions.restoreRecycleBinPaths
 import org.fossify.gallery.extensions.saveRotatedImageToFile
 import org.fossify.gallery.extensions.setAs
@@ -686,58 +687,83 @@ class MediaAdapter(
             }
 
             val totalFilesCount = selectedMedia.size
-            activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                val progressDialog = CryptoProgressDialog(
-                    activity = activity,
-                    max = totalFilesCount,
-                    titleId = R.string.decrypting_files,
-                    enableNotification = notificationsAllowed
-                )
+            val resolveTargetDir: (File, String) -> File = { encFile, fallbackParent ->
+                if (CryptoManager.isEncryptedFolderPath(activity, encFile.parent ?: "")) {
+                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val originalFolderName = CryptoManager.getDecryptedFolderName(encFile.parentFile ?: File("")) ?: "Restored"
+                    File(picturesDir, originalFolderName)
+                } else {
+                    encFile.parentFile ?: File(fallbackParent)
+                }
+            }
 
-                ensureBackgroundThread {
-                    var processedCount = 0
-                    var allSuccess = true
-                    for (medium in selectedMedia) {
+            resolveCryptoDuplicateSourceOption(
+                activity = activity,
+                isEncrypt = false,
+                hasIdenticalInTarget = {
+                    val pairs = selectedMedia.mapNotNull { medium ->
                         val encFile = File(medium.path)
-                        if (!encFile.exists()) continue
-
-                        val targetDir = if (CryptoManager.isEncryptedFolderPath(activity, encFile.parent ?: "")) {
-                            val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                            val originalFolderName = CryptoManager.getDecryptedFolderName(encFile.parentFile ?: File("")) ?: "Restored"
-                            File(picturesDir, originalFolderName).apply { if (!exists()) mkdirs() }
-                        } else {
-                            encFile.parentFile ?: File(medium.parentPath)
-                        }
-
-                        val decFile = if (CryptoManager.isEncryptedFile(encFile.name)) {
-                            CryptoManager.decryptFileToDirectory(
-                                context = activity,
-                                encryptedFile = encFile,
-                                targetDir = targetDir,
-                                deleteEncryptedSource = true
-                            )
-                        } else if (encFile.name.startsWith('.')) {
-                            val newName = encFile.name.substring(1)
-                            val target = File(targetDir, newName)
-                            if (encFile.renameTo(target)) {
-                                activity.updateDBMediaPath(encFile.absolutePath, target.absolutePath)
-                                activity.rescanPaths(arrayListOf(target.absolutePath))
-                                target
-                            } else null
+                        if (encFile.exists() && CryptoManager.isEncryptedFile(encFile.name)) {
+                            encFile to resolveTargetDir(encFile, medium.parentPath)
                         } else {
                             null
                         }
-
-                        if (decFile != null && decFile.exists()) {
-                            processedCount++
-                        } else {
-                            allSuccess = false
-                        }
-
-                        activity.runOnUiThread {
-                            progressDialog.updateProgress(processedCount, totalFilesCount)
-                        }
                     }
+                    CryptoManager.hasAnyIdenticalTransferMatch(
+                        sourceTargetPairs = pairs,
+                        isTargetEncrypted = false,
+                        fastSampling = activity.config.fastLargeDuplicateCheck,
+                        context = activity
+                    )
+                }
+            ) { deleteSourceOnIdentical ->
+                activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                    val progressDialog = CryptoProgressDialog(
+                        activity = activity,
+                        max = totalFilesCount,
+                        titleId = R.string.decrypting_files,
+                        enableNotification = notificationsAllowed
+                    )
+
+                    ensureBackgroundThread {
+                        var processedCount = 0
+                        var allSuccess = true
+                        for (medium in selectedMedia) {
+                            val encFile = File(medium.path)
+                            if (!encFile.exists()) continue
+
+                            val targetDir = resolveTargetDir(encFile, medium.parentPath).apply { if (!exists()) mkdirs() }
+
+                            val decFile = if (CryptoManager.isEncryptedFile(encFile.name)) {
+                                CryptoManager.decryptFileToDirectory(
+                                    context = activity,
+                                    encryptedFile = encFile,
+                                    targetDir = targetDir,
+                                    deleteEncryptedSource = true,
+                                    deleteSourceOnIdentical = deleteSourceOnIdentical
+                                )
+                            } else if (encFile.name.startsWith('.')) {
+                                val newName = encFile.name.substring(1)
+                                val target = File(targetDir, newName)
+                                if (encFile.renameTo(target)) {
+                                    activity.updateDBMediaPath(encFile.absolutePath, target.absolutePath)
+                                    activity.rescanPaths(arrayListOf(target.absolutePath))
+                                    target
+                                } else null
+                            } else {
+                                null
+                            }
+
+                            if (decFile != null && decFile.exists()) {
+                                processedCount++
+                            } else {
+                                allSuccess = false
+                            }
+
+                            activity.runOnUiThread {
+                                progressDialog.updateProgress(processedCount, totalFilesCount)
+                            }
+                        }
 
                     CryptoManager.clearAppImageCaches(activity)
 
@@ -758,6 +784,7 @@ class MediaAdapter(
                     }
                 }
             }
+        }
         }
     }
 
@@ -802,39 +829,60 @@ class MediaAdapter(
     private fun encryptFilesToAlbum(selectedMedia: List<Medium>) {
         PickVaultAlbumDialog(activity) { targetDir, albumName ->
             val totalFilesCount = selectedMedia.size
-            activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-                val progressDialog = CryptoProgressDialog(
-                    activity = activity,
-                    max = totalFilesCount,
-                    titleId = R.string.encrypting_files,
-                    enableNotification = notificationsAllowed
-                )
-
-                ensureBackgroundThread {
-                    var processedCount = 0
-                    var allSuccess = true
-                    for (medium in selectedMedia) {
+            resolveCryptoDuplicateSourceOption(
+                activity = activity,
+                isEncrypt = true,
+                hasIdenticalInTarget = {
+                    val pairs = selectedMedia.mapNotNull { medium ->
                         val srcFile = File(medium.path)
-                        if (!srcFile.exists()) continue
-
-                        val encFile = CryptoManager.encryptFileToDirectory(
-                            context = activity,
-                            sourceFile = srcFile,
-                            targetDir = targetDir,
-                            wipeSource = true,
-                            clearCachesNow = false
-                        )
-
-                        if (encFile != null && encFile.exists() && encFile.length() > 0L) {
-                            processedCount++
+                        if (srcFile.exists() && !CryptoManager.isEncryptedFile(srcFile.name)) {
+                            srcFile to targetDir
                         } else {
-                            allSuccess = false
-                        }
-
-                        activity.runOnUiThread {
-                            progressDialog.updateProgress(processedCount, totalFilesCount)
+                            null
                         }
                     }
+                    CryptoManager.hasAnyIdenticalTransferMatch(
+                        sourceTargetPairs = pairs,
+                        isTargetEncrypted = true,
+                        fastSampling = activity.config.fastLargeDuplicateCheck,
+                        context = activity
+                    )
+                }
+            ) { deleteSourceOnIdentical ->
+                activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                    val progressDialog = CryptoProgressDialog(
+                        activity = activity,
+                        max = totalFilesCount,
+                        titleId = R.string.encrypting_files,
+                        enableNotification = notificationsAllowed
+                    )
+
+                    ensureBackgroundThread {
+                        var processedCount = 0
+                        var allSuccess = true
+                        for (medium in selectedMedia) {
+                            val srcFile = File(medium.path)
+                            if (!srcFile.exists()) continue
+
+                            val encFile = CryptoManager.encryptFileToDirectory(
+                                context = activity,
+                                sourceFile = srcFile,
+                                targetDir = targetDir,
+                                wipeSource = true,
+                                clearCachesNow = false,
+                                deleteSourceOnIdentical = deleteSourceOnIdentical
+                            )
+
+                            if (encFile != null && encFile.exists() && encFile.length() > 0L) {
+                                processedCount++
+                            } else {
+                                allSuccess = false
+                            }
+
+                            activity.runOnUiThread {
+                                progressDialog.updateProgress(processedCount, totalFilesCount)
+                            }
+                        }
 
                     CryptoManager.clearAppImageCaches(activity)
 
@@ -858,6 +906,7 @@ class MediaAdapter(
                     }
                 }
             }
+        }
         }
     }
 

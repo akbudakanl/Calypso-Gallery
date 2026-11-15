@@ -2405,7 +2405,7 @@ object CryptoManager {
                         if (clearCachesNow && deleteSourceOnIdentical) {
                             runCatching { clearAppImageCaches(context) }
                         }
-                        return if (!deleteSourceOnIdentical) null else existingBin
+                        return existingBin
                     }
                 }
             }
@@ -2830,7 +2830,7 @@ object CryptoManager {
                             }
                         }
                     }
-                    return if (!deleteSourceOnIdentical) null else existingPlain
+                    return existingPlain
                 }
             }
         }
@@ -4008,6 +4008,47 @@ object CryptoManager {
             }
             return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName)
         }
+    }
+
+    /**
+     * Returns true if at least one (source, targetDir) pair already has a bit-identical
+     * counterpart in its target directory.
+     */
+    fun hasAnyIdenticalTransferMatch(
+        sourceTargetPairs: List<Pair<File, File>>,
+        isTargetEncrypted: Boolean,
+        fastSampling: Boolean = false,
+        context: Context? = null
+    ): Boolean {
+        if (sourceTargetPairs.isEmpty()) return false
+        val plainIndexes = HashMap<String, TargetPlainIndex>()
+        val encIndexes = HashMap<String, TargetEncryptedIndex>()
+        for ((srcFile, targetDir) in sourceTargetPairs) {
+            if (!srcFile.isFile || !targetDir.exists() || !targetDir.isDirectory) continue
+            val plainIndex = if (!isTargetEncrypted) {
+                plainIndexes.getOrPut(targetDir.absolutePath) { TargetPlainIndex(targetDir) }
+            } else {
+                null
+            }
+            val encIndex = if (isTargetEncrypted) {
+                encIndexes.getOrPut(targetDir.absolutePath) { TargetEncryptedIndex(targetDir) }
+            } else {
+                null
+            }
+            val check = inspectTransferConflict(
+                sourceFile = srcFile,
+                targetDir = targetDir,
+                isTargetEncrypted = isTargetEncrypted,
+                plainIndex = plainIndex,
+                encryptedIndex = encIndex,
+                fastSampling = fastSampling,
+                context = context
+            )
+            if (check.status == TransferConflictStatus.IDENTICAL_SKIP) {
+                return true
+            }
+        }
+        return false
     }
 
     fun findContentConflictInTarget(

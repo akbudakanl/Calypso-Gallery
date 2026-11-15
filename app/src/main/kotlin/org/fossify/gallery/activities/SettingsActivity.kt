@@ -525,6 +525,9 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        // 4b) Şifreleme ve şifre çözme sırasında hedefte aynı dosya varsa
+        binding.settingsCryptoDuplicateSourceHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -534,6 +537,7 @@ class SettingsActivity : SimpleActivity() {
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupBlockVaultScreenshots()
+        setupCryptoDuplicateSourceMode()
         setupEmptyVault()
     }
 
@@ -859,6 +863,29 @@ class SettingsActivity : SimpleActivity() {
             ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> R.string.album_crypto_conflict_merge_delete_identical
             ALBUM_CRYPTO_CONFLICT_RENAME -> R.string.album_crypto_conflict_rename
             else -> R.string.album_crypto_conflict_ask
+        }
+    )
+
+    private fun setupCryptoDuplicateSourceMode() {
+        binding.settingsCryptoDuplicateSource.text = getCryptoDuplicateSourceModeText()
+        binding.settingsCryptoDuplicateSourceHolder.setOnClickListener {
+            val items = arrayListOf(
+                RadioItem(CRYPTO_DUPLICATE_SOURCE_ASK, getString(R.string.crypto_duplicate_source_ask)),
+                RadioItem(CRYPTO_DUPLICATE_SOURCE_KEEP, getString(R.string.crypto_duplicate_source_keep)),
+                RadioItem(CRYPTO_DUPLICATE_SOURCE_DELETE, getString(R.string.crypto_duplicate_source_delete))
+            )
+            RadioGroupDialog(this@SettingsActivity, items, config.cryptoDuplicateSourceMode) {
+                config.cryptoDuplicateSourceMode = it as Int
+                binding.settingsCryptoDuplicateSource.text = getCryptoDuplicateSourceModeText()
+            }
+        }
+    }
+
+    private fun getCryptoDuplicateSourceModeText() = getString(
+        when (config.cryptoDuplicateSourceMode) {
+            CRYPTO_DUPLICATE_SOURCE_KEEP -> R.string.crypto_duplicate_source_keep
+            CRYPTO_DUPLICATE_SOURCE_DELETE -> R.string.crypto_duplicate_source_delete
+            else -> R.string.crypto_duplicate_source_ask
         }
     )
 
@@ -1430,6 +1457,7 @@ class SettingsActivity : SimpleActivity() {
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
                 put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
+                put(CRYPTO_DUPLICATE_SOURCE_MODE, config.cryptoDuplicateSourceMode)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
                 put(SKIP_DELETE_CONFIRMATION, config.skipDeleteConfirmation)
                 put(DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS, config.deleteOriginalFromFavoritesAndVirtualAlbums)
@@ -1584,6 +1612,7 @@ class SettingsActivity : SimpleActivity() {
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
+                CRYPTO_DUPLICATE_SOURCE_MODE -> config.cryptoDuplicateSourceMode = value.toInt()
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()
