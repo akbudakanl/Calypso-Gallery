@@ -5984,7 +5984,23 @@ object CryptoManager {
 
     fun clearAppImageCaches(context: Context) {
         val appContext = context.applicationContext
+        val clearMemory = {
+            try {
+                Glide.get(appContext).clearMemory()
+            } catch (_: Exception) {}
+        }
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            clearMemory()
+        } else {
+            try {
+                android.os.Handler(android.os.Looper.getMainLooper()).post(clearMemory)
+            } catch (_: Exception) {}
+        }
+
         ensureBackgroundThread {
+            try {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_LOWEST)
+            } catch (_: Exception) {}
             try {
                 Glide.get(appContext).clearDiskCache()
             } catch (_: Exception) {}
@@ -6010,14 +6026,6 @@ object CryptoManager {
                 }
             } catch (_: Exception) {}
         }
-
-        try {
-            android.os.Handler(android.os.Looper.getMainLooper()).post {
-                try {
-                    Glide.get(appContext).clearMemory()
-                } catch (_: Exception) {}
-            }
-        } catch (_: Exception) {}
     }
 
     fun secureWipeAndDeleteFile(context: Context, file: File): Boolean {

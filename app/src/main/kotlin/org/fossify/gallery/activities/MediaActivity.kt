@@ -116,9 +116,10 @@ import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
+import org.fossify.gallery.helpers.EXTRA_EXITED_FROM_VAULT
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
-import org.fossify.gallery.helpers.VAULT_EXIT_DOUBLE_BACK_WINDOW_MS
+import org.fossify.gallery.helpers.VaultExitBackHelper
 import org.fossify.gallery.helpers.SET_WALLPAPER_INTENT
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.SHOW_FAVORITES
@@ -165,7 +166,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mIsVaultOpening = false
     private var mIsVaultFilesView = false
     private var mIsSwitchingVaultView = false
-    private var mLastVaultBackPressedAt = 0L
+    private val mVaultBackHelper = VaultExitBackHelper()
     private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart).
@@ -225,6 +226,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             mIsGetAnyIntent = getBooleanExtra(GET_ANY_INTENT, false)
             mAllowPickingMultiple = getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
             mIsVaultFilesView = getBooleanExtra(EXTRA_SECRET_VAULT_FILES, false)
+            if (getBooleanExtra(EXTRA_EXITED_FROM_VAULT, false)) {
+                removeExtra(EXTRA_EXITED_FROM_VAULT)
+                mVaultBackHelper.markExited()
+            }
         }
 
         binding.mediaRefreshLayout.setOnRefreshListener {
@@ -363,6 +368,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     override fun onPause() {
         super.onPause()
+        mVaultBackHelper.cancelToast()
         mIsGettingMedia = false
         mPendingMediaRefresh = false
         binding.mediaRefreshLayout.isRefreshing = false
@@ -512,7 +518,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             binding.mediaMenu.closeSearch()
             true
         } else if (mIsVaultFilesView && !isThirdPartyPickIntent()) {
-            handleVaultBackPress()
+            mVaultBackHelper.handleBackPress(this) { exitVaultToNormalGallery() }
+            true
+        } else if (mVaultBackHelper.isWithinExitGuard()) {
             true
         } else {
             if (config.showAll) {
@@ -526,17 +534,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun isThirdPartyPickIntent() =
         mIsGetImageIntent || mIsGetVideoIntent || mIsGetAnyIntent
 
-    private fun handleVaultBackPress() {
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (now - mLastVaultBackPressedAt > VAULT_EXIT_DOUBLE_BACK_WINDOW_MS) {
-            mLastVaultBackPressedAt = now
-            toast(R.string.press_back_again_to_exit_vault)
-            return
-        }
-        mLastVaultBackPressedAt = 0L
-        exitVaultToNormalGallery()
-    }
-
     private fun exitLockedVaultFilesView() {
         if (mIsVaultFilesView && !isThirdPartyPickIntent()) {
             exitVaultToNormalGallery()
@@ -546,8 +543,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun exitVaultToNormalGallery() {
+        if (mIsSwitchingVaultView) return
         hideKeyboard()
         mIsSwitchingVaultView = true
+        mVaultBackHelper.markExited()
         config.temporarilyShowHidden = false
         config.temporarilyShowVaultExcluded = false
         config.resetTempDeleteConfirmation()
@@ -559,12 +558,14 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             config.showAll = true
             Intent(this, MediaActivity::class.java).apply {
                 putExtra(DIRECTORY, "")
+                putExtra(EXTRA_EXITED_FROM_VAULT, true)
                 startActivity(this)
             }
         } else {
             config.showAll = false
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(EXTRA_EXITED_FROM_VAULT, true)
                 startActivity(this)
             }
         }
