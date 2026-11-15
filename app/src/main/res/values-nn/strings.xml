@@ -474,8 +474,8 @@
     <string name="usb_direct_filesystem_required">Denne USB-stien er berre eksponert gjennom Android sin virtuelle OTG-leverandør og kan ikkje opnast direkte som ein filsystemsti. Ver venleg og vel ein montert lagringskatalog eller ei mappe på intern lagring / SD-kort.</string>
     <string name="vault_location_not_writable">Den valde mappa finst ikkje eller kan ikkje skrivast til på denne eininga.</string>
     <string name="vault_location_not_readable">Den valde mappa finst ikkje eller kan ikkje lesast på denne eininga.</string>
-    <string name="sync_vault_from_external">Synkroniser kvelv frå ekstern stasjon</string>
-    <string name="sync_vault_select_source_prompt">Slik fungerer synkronisering av eksternt kvelv:\n\n1. Einskapleg Cipher_Secrets-mappe:\nHa ei mappe med namnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Cipher_Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg.</string>
+    <string name="sync_vault_from_external">Importer krypterte mediefiler til kryptert seksjon</string>
+    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medium:\n\n1. Einskapleg Cipher_Secrets-mappe:\nHa ei mappe med namnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Cipher_Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg.</string>
     <string name="conflict_handling_mode_label">Løysing av filkonfliktar og duplikat</string>
     <string name="conflict_handling_auto_short">Heilautomatisk (Standard — Hopp over identiske, gje ulike nytt namn som (1))</string>
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Hopp over identiske automatisk, spør når innhaldet er ulikt)</string>
@@ -518,4 +518,10 @@
     <string name="crypto_duplicate_source_decrypt_message">Nokre av filene du dekrypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa?</string>
     <string name="crypto_duplicate_source_encrypt_keep_warning">Åtvaring: Om du vel «Behald» for ukrypterte filer, vil kjeldefila bli liggjande ukryptert på disken.</string>
     <string name="crypto_duplicate_source_always_ask">Spør alltid</string>
+    <string name="export_encrypted_vault">Eksporter kryptert kvelv</string>
+    <string name="export_vault_only_header">Eksporter mappe som berre inneheld .vault-fil</string>
+    <string name="export_vault_entire_folder">Eksporter heile mappa</string>
+    <string name="export_vault_only_header_info">For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Cipher_Secrets som inneheld .vault-fila.</string>
+    <string name="exporting_vault_progress">Eksporterer kryptert kvelv…</string>
+    <string name="vault_export_same_folder_error">Eksportmålet kan ikkje vera den aktive kvelvmappa eller liggja inne i ho.</string>
 </resources>

@@ -129,6 +129,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(BLOCK_VAULT_SCREENSHOTS, true)
         set(blockVaultScreenshots) = prefs.edit().putBoolean(BLOCK_VAULT_SCREENSHOTS, blockVaultScreenshots).apply()
 
+    var hasShownVaultImportInfo: Boolean
+        get() = prefs.getBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, false)
+        set(hasShownVaultImportInfo) = prefs.edit().putBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, hasShownVaultImportInfo).apply()
+
     var temporarilyShowExcluded: Boolean
         get() = prefs.getBoolean(TEMPORARILY_SHOW_EXCLUDED, false)
         set(temporarilyShowExcluded) = prefs.edit().putBoolean(TEMPORARILY_SHOW_EXCLUDED, temporarilyShowExcluded).apply()

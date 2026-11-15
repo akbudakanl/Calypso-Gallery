@@ -4270,6 +4270,101 @@ object CryptoManager {
         return false
     }
 
+    data class VaultExportResult(
+        val exportedFilesCount: Int,
+        val failedFilesCount: Int,
+        val exportDirectory: File
+    )
+
+    fun resolveExportVaultTargetDir(targetDir: File): File {
+        return if (targetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true)) {
+            targetDir
+        } else {
+            File(targetDir, CIPHER_SECRETS_DIR_NAME)
+        }
+    }
+
+    fun exportEncryptedVault(
+        context: Context,
+        targetDir: File,
+        onlyVaultHeader: Boolean,
+        onProgress: ((processed: Int, total: Int) -> Unit)? = null
+    ): VaultExportResult? {
+        val vaultRoot = findVaultRoot(context) ?: return null
+        val exportDir = resolveExportVaultTargetDir(targetDir)
+
+        val vaultCanonical = runCatching { vaultRoot.canonicalPath }.getOrDefault(vaultRoot.absolutePath)
+        val exportCanonical = runCatching { exportDir.canonicalPath }.getOrDefault(exportDir.absolutePath)
+        if (exportCanonical == vaultCanonical || exportCanonical.startsWith("$vaultCanonical${File.separator}")) {
+            return null
+        }
+
+        if (!exportDir.exists() && !exportDir.mkdirs()) {
+            return null
+        }
+        if (!exportDir.isDirectory) {
+            return null
+        }
+
+        val nomediaFile = File(exportDir, ".nomedia")
+        if (!nomediaFile.exists()) {
+            runCatching { nomediaFile.createNewFile() }
+        }
+
+        if (onlyVaultHeader) {
+            val sourceVaultFile = File(vaultRoot, ".vault")
+            if (!sourceVaultFile.isFile) {
+                return null
+            }
+            onProgress?.invoke(0, 1)
+            val copied = runCatching {
+                sourceVaultFile.copyTo(File(exportDir, ".vault"), overwrite = true)
+                true
+            }.getOrDefault(false)
+            onProgress?.invoke(1, 1)
+            return if (copied) {
+                VaultExportResult(exportedFilesCount = 1, failedFilesCount = 0, exportDirectory = exportDir)
+            } else {
+                VaultExportResult(exportedFilesCount = 0, failedFilesCount = 1, exportDirectory = exportDir)
+            }
+        }
+
+        val allFiles = vaultRoot.walkTopDown().filter { it.isFile }.toList()
+        val total = allFiles.size
+        onProgress?.invoke(0, total)
+        var exportedCount = 0
+        var failedCount = 0
+
+        allFiles.forEachIndexed { index, srcFile ->
+            val relPath = srcFile.relativeTo(vaultRoot).path
+            val destFile = File(exportDir, relPath)
+            val copied = runCatching {
+                destFile.parentFile?.let { parent ->
+                    if (!parent.exists()) parent.mkdirs()
+                }
+                srcFile.copyTo(destFile, overwrite = true)
+                true
+            }.getOrDefault(false)
+
+            if (copied) {
+                exportedCount++
+            } else {
+                failedCount++
+            }
+            onProgress?.invoke(index + 1, total)
+        }
+
+        if (!nomediaFile.exists()) {
+            runCatching { nomediaFile.createNewFile() }
+        }
+
+        return VaultExportResult(
+            exportedFilesCount = exportedCount,
+            failedFilesCount = failedCount,
+            exportDirectory = exportDir
+        )
+    }
+
     private const val PENDING_SYNC_FILE_NAME = ".pending_sync"
 
     fun syncVaultFromExternalDirectory(

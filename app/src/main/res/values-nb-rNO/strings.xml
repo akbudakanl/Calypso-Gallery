@@ -420,8 +420,8 @@
     <string name="usb_direct_filesystem_required">Denne USB-banen er bare eksponert gjennom Androids virtuelle OTG-leverandør og kan ikke åpnes direkte som en filsystembane. Vennligst velg en montert lagringskatalog eller en mappe på intern lagring / SD-kort.</string>
     <string name="vault_location_not_writable">Den valgte mappen finnes ikke eller kan ikke skrives til på denne enheten.</string>
     <string name="vault_location_not_readable">Den valgte mappen finnes ikke eller kan ikke leses på denne enheten.</string>
-    <string name="sync_vault_from_external">Synkroniser hvelv fra ekstern stasjon</string>
-    <string name="sync_vault_select_source_prompt">Slik fungerer synkronisering av eksternt hvelv:\n\n1. Enhetlig Cipher_Secrets-mappe:\nHa en mappe med navnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du enten ha en fullstendig sikkerhetskopi av hvelvet ditt, eller bare legge inn hvelvets .vault-headerfil.\n\n2. Kryptering av nye medier (PC / Tails CLI):\nDet frakoblede CLI-verktøyet lagrer automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappen havner i Default Secret Album; filer i undermapper havner i tilsvarende krypterte album (eller oppretter nye).\n\n3. Bit-for-bit smart synkronisering:\nVelg den eksterne stasjonen eller Cipher_Secrets-mappen nedenfor. Appen sammenligner den eksterne stasjonen med telefonens hvelv i RAM:\n• Bare nye filer og album importeres.\n• Bit-identiske filer som allerede finnes i hvelvet hoppes over.\n• Ulike filer med samme navn (f.eks. download.jpg) importeres trygt som download(1).jpg.</string>
+    <string name="sync_vault_from_external">Importer krypterte mediefiler til kryptert seksjon</string>
+    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medier:\n\n1. Enhetlig Cipher_Secrets-mappe:\nHa en mappe med navnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du enten ha en fullstendig sikkerhetskopi av hvelvet ditt, eller bare legge inn hvelvets .vault-headerfil.\n\n2. Kryptering av nye medier (PC / Tails CLI):\nDet frakoblede CLI-verktøyet lagrer automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappen havner i Default Secret Album; filer i undermapper havner i tilsvarende krypterte album (eller oppretter nye).\n\n3. Bit-for-bit smart synkronisering:\nVelg den eksterne stasjonen eller Cipher_Secrets-mappen nedenfor. Appen sammenligner den eksterne stasjonen med telefonens hvelv i RAM:\n• Bare nye filer og album importeres.\n• Bit-identiske filer som allerede finnes i hvelvet hoppes over.\n• Ulike filer med samme navn (f.eks. download.jpg) importeres trygt som download(1).jpg.</string>
     <string name="conflict_handling_mode_label">Løsning av filkonflikter og duplikater</string>
     <string name="conflict_handling_auto_short">Helautomatisk (Standard — Hopp over identiske, gi ulike nytt navn som (1))</string>
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Hopp over identiske automatisk, spør når innholdet er ulikt)</string>
@@ -464,4 +464,10 @@
     <string name="crypto_duplicate_source_decrypt_message">Noen av filene du dekrypterer finnes allerede i målmappen. Hva skal skje med filene i kildemappen?</string>
     <string name="crypto_duplicate_source_encrypt_keep_warning">Advarsel: Hvis du velger «Behold» for ukrypterte filer, vil kildefilen bli liggende ukryptert på disken.</string>
     <string name="crypto_duplicate_source_always_ask">Spør alltid</string>
+    <string name="export_encrypted_vault">Eksporter kryptert hvelv</string>
+    <string name="export_vault_only_header">Eksporter mappe som kun inneholder .vault-fil</string>
+    <string name="export_vault_entire_folder">Eksporter hele mappen</string>
+    <string name="export_vault_only_header_info">For å legge til medieelementer som er kryptert på andre enheter med det støttede CLI-verktøyet i det krypterte hvelvet på telefonen din, trenger du bare å bruke en mappe kalt Cipher_Secrets som inneholder .vault-filen.</string>
+    <string name="exporting_vault_progress">Eksporterer kryptert hvelv…</string>
+    <string name="vault_export_same_folder_error">Eksportmålet kan ikke være den aktive hvelvmappen eller ligge inne i den.</string>
 </resources>

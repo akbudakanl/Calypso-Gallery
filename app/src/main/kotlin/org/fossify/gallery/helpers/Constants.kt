@@ -12,6 +12,7 @@ const val VIEW_TYPE_PREFIX = "view_type_folder_"
 const val SHOW_HIDDEN_MEDIA = "show_hidden_media"
 const val TEMPORARILY_SHOW_HIDDEN = "temporarily_show_hidden"
 const val BLOCK_VAULT_SCREENSHOTS = "block_vault_screenshots"
+const val HAS_SHOWN_VAULT_IMPORT_INFO = "has_shown_vault_import_info"
 const val VAULT_EXIT_DOUBLE_BACK_WINDOW_MS = 2000L
 const val TEMPORARILY_SHOW_EXCLUDED = "temporarily_show_excluded"
 const val TEMPORARILY_SHOW_VAULT_EXCLUDED = "temporarily_show_vault_excluded"

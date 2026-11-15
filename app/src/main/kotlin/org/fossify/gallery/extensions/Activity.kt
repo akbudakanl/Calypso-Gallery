@@ -947,97 +947,173 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = nul
     }
 
     ensureVaultUnlocked {
-        val promptView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-        promptView.findViewById<TextView>(org.fossify.commons.R.id.message)
-            .setText(R.string.sync_vault_select_source_prompt)
-        getAlertDialogBuilder()
-            .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
-                pickCustomVaultDirectory(
-                    initialPath = defaultSyncSourcePickerPath(),
-                    requireWritable = false,
-                    onPicked = { pickedDir ->
-                        val resolvedSource = CryptoManager.resolveSyncSourceRoot(pickedDir)
-                        val activeVaultRoot = CryptoManager.findVaultRoot(this)
-                        val sameVault = activeVaultRoot != null && runCatching {
-                            resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
-                        }.getOrDefault(false)
-                        if (sameVault) {
-                            showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, {})
-                            return@pickCustomVaultDirectory
-                        }
+        val startFolderPickerAndSync = {
+            pickCustomVaultDirectory(
+                initialPath = defaultSyncSourcePickerPath(),
+                requireWritable = false,
+                onPicked = { pickedDir ->
+                    val resolvedSource = CryptoManager.resolveSyncSourceRoot(pickedDir)
+                    val activeVaultRoot = CryptoManager.findVaultRoot(this)
+                    val sameVault = activeVaultRoot != null && runCatching {
+                        resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
+                    }.getOrDefault(false)
+                    if (sameVault) {
+                        showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, {})
+                        return@pickCustomVaultDirectory
+                    }
 
-                        ensureNotificationPermissionThenRun { notificationsAllowed ->
-                            val progressDialog = CryptoProgressDialog(
-                                activity = this,
-                                max = 0,
-                                titleId = R.string.syncing_vault_progress,
-                                enableNotification = notificationsAllowed
-                            )
-                            ensureBackgroundThread {
-                                val result = CryptoManager.syncVaultFromExternalDirectory(
-                                    context = this,
-                                    sourceDir = pickedDir
-                                ) { processed, total ->
-                                    runOnUiThread {
-                                        if (!isFinishing && !isDestroyed) {
-                                            progressDialog.updateProgress(processed, total)
-                                        }
+                    ensureNotificationPermissionThenRun { notificationsAllowed ->
+                        val progressDialog = CryptoProgressDialog(
+                            activity = this,
+                            max = 0,
+                            titleId = R.string.syncing_vault_progress,
+                            enableNotification = notificationsAllowed
+                        )
+                        ensureBackgroundThread {
+                            val result = CryptoManager.syncVaultFromExternalDirectory(
+                                context = this,
+                                sourceDir = pickedDir
+                            ) { processed, total ->
+                                runOnUiThread {
+                                    if (!isFinishing && !isDestroyed) {
+                                        progressDialog.updateProgress(processed, total)
                                     }
                                 }
-                                runOnUiThread {
-                                    progressDialog.dismiss()
-                                    if (isFinishing || isDestroyed) {
-                                        onSynced?.invoke()
-                                        return@runOnUiThread
-                                    }
-                                    when {
-                                        result == null -> toast(
-                                            if (sameVault) {
-                                                R.string.vault_sync_same_folder_error
-                                            } else {
-                                                org.fossify.commons.R.string.unknown_error_occurred
-                                            }
-                                        )
-                                        result.copiedCount == 0 &&
-                                            result.renamedCount == 0 &&
-                                            result.skippedDuplicateCount == 0 &&
-                                            result.failedCount == 0 -> toast(R.string.vault_sync_nothing_to_sync)
-                                        else -> {
-                                            val summaryView = layoutInflater.inflate(
-                                                org.fossify.commons.R.layout.dialog_message,
-                                                null
-                                            )
-                                            summaryView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
-                                                getString(
-                                                    R.string.vault_sync_summary_message,
-                                                    result.copiedCount,
-                                                    result.renamedCount,
-                                                    result.skippedDuplicateCount,
-                                                    result.failedCount
-                                                )
-                                            getAlertDialogBuilder()
-                                                .setPositiveButton(org.fossify.commons.R.string.ok, null)
-                                                .apply {
-                                                    setupDialogStuff(
-                                                        summaryView,
-                                                        this,
-                                                        titleId = R.string.sync_vault_from_external
-                                                    )
-                                                }
-                                        }
-                                    }
+                            }
+                            runOnUiThread {
+                                progressDialog.dismiss()
+                                if (isFinishing || isDestroyed) {
                                     onSynced?.invoke()
+                                    return@runOnUiThread
+                                }
+                                when {
+                                    result == null -> toast(
+                                        if (sameVault) {
+                                            R.string.vault_sync_same_folder_error
+                                        } else {
+                                            org.fossify.commons.R.string.unknown_error_occurred
+                                        }
+                                    )
+                                    result.copiedCount == 0 &&
+                                        result.renamedCount == 0 &&
+                                        result.skippedDuplicateCount == 0 &&
+                                        result.failedCount == 0 -> toast(R.string.vault_sync_nothing_to_sync)
+                                    else -> {
+                                        val summaryView = layoutInflater.inflate(
+                                            org.fossify.commons.R.layout.dialog_message,
+                                            null
+                                        )
+                                        summaryView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+                                            getString(
+                                                R.string.vault_sync_summary_message,
+                                                result.copiedCount,
+                                                result.renamedCount,
+                                                result.skippedDuplicateCount,
+                                                result.failedCount
+                                            )
+                                        getAlertDialogBuilder()
+                                            .setPositiveButton(org.fossify.commons.R.string.ok, null)
+                                            .apply {
+                                                setupDialogStuff(
+                                                    summaryView,
+                                                    this,
+                                                    titleId = R.string.sync_vault_from_external
+                                                )
+                                            }
+                                    }
+                                }
+                                onSynced?.invoke()
+                            }
+                        }
+                    }
+                },
+                onCancelled = {}
+            )
+        }
+
+        if (!config.hasShownVaultImportInfo) {
+            val promptView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
+            promptView.findViewById<TextView>(org.fossify.commons.R.id.message)
+                .setText(R.string.sync_vault_select_source_prompt)
+            getAlertDialogBuilder()
+                .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                    config.hasShownVaultImportInfo = true
+                    startFolderPickerAndSync()
+                }
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .apply {
+                    setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
+                }
+        } else {
+            startFolderPickerAndSync()
+        }
+    }
+}
+
+fun BaseSimpleActivity.promptExportEncryptedVault(
+    onlyVaultHeader: Boolean,
+    onExported: (() -> Unit)? = null
+) {
+    if (!hasVaultCreated()) {
+        toast(R.string.enable_hidden_protection_first_prompt)
+        return
+    }
+
+    ensureVaultUnlocked {
+        pickCustomVaultDirectory(
+            initialPath = defaultSyncSourcePickerPath(),
+            requireWritable = true,
+            onPicked = { pickedDir ->
+                val targetExportDir = CryptoManager.resolveExportVaultTargetDir(pickedDir)
+                val activeVaultRoot = CryptoManager.findVaultRoot(this)
+                val invalidTarget = activeVaultRoot != null && runCatching {
+                    val exportCanonical = targetExportDir.canonicalPath
+                    val vaultCanonical = activeVaultRoot.canonicalPath
+                    exportCanonical == vaultCanonical || exportCanonical.startsWith("$vaultCanonical${File.separator}")
+                }.getOrDefault(false)
+
+                if (invalidTarget) {
+                    showVaultLocationNoticeDialog(R.string.vault_export_same_folder_error, {})
+                    return@pickCustomVaultDirectory
+                }
+
+                ensureNotificationPermissionThenRun { notificationsAllowed ->
+                    val progressDialog = CryptoProgressDialog(
+                        activity = this,
+                        max = 0,
+                        titleId = R.string.exporting_vault_progress,
+                        enableNotification = notificationsAllowed
+                    )
+                    ensureBackgroundThread {
+                        val result = CryptoManager.exportEncryptedVault(
+                            context = this,
+                            targetDir = pickedDir,
+                            onlyVaultHeader = onlyVaultHeader
+                        ) { processed, total ->
+                            runOnUiThread {
+                                if (!isFinishing && !isDestroyed) {
+                                    progressDialog.updateProgress(processed, total)
                                 }
                             }
                         }
-                    },
-                    onCancelled = {}
-                )
-            }
-            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
-            .apply {
-                setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
-            }
+                        runOnUiThread {
+                            progressDialog.dismiss()
+                            if (!isFinishing && !isDestroyed) {
+                                when {
+                                    result == null -> toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                    result.failedFilesCount > 0 && result.exportedFilesCount == 0 -> {
+                                        toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                    }
+                                    else -> toast(org.fossify.commons.R.string.exporting_successful)
+                                }
+                            }
+                            onExported?.invoke()
+                        }
+                    }
+                }
+            },
+            onCancelled = {}
+        )
     }
 }
 

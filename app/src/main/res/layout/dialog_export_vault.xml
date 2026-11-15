@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/export_vault_scrollview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/export_vault_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/activity_margin"
+        android:paddingTop="@dimen/medium_margin"
+        android:paddingRight="@dimen/activity_margin"
+        android:paddingBottom="@dimen/medium_margin">
+
+        <LinearLayout
+            android:id="@+id/export_vault_only_header_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyCompatRadioButton
+                android:id="@+id/export_vault_only_header_radio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingTop="@dimen/medium_margin"
+                android:paddingBottom="@dimen/medium_margin"
+                android:text="@string/export_vault_only_header" />
+
+            <ImageView
+                android:id="@+id/export_vault_only_header_info"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/export_vault_only_header"
+                android:padding="8dp"
+                android:src="@drawable/ic_info_vector" />
+        </LinearLayout>
+
+        <org.fossify.commons.views.MyCompatRadioButton
+            android:id="@+id/export_vault_entire_folder_radio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/medium_margin"
+            android:paddingBottom="@dimen/medium_margin"
+            android:text="@string/export_vault_entire_folder" />
+
+    </LinearLayout>
+</ScrollView>
