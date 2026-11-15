@@ -137,6 +137,31 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(TEMPORARILY_SHOW_EXCLUDED, false)
         set(temporarilyShowExcluded) = prefs.edit().putBoolean(TEMPORARILY_SHOW_EXCLUDED, temporarilyShowExcluded).apply()
 
+    var temporarilyShowHiddenFolders: Boolean
+        get() = prefs.getBoolean(TEMPORARILY_SHOW_HIDDEN_FOLDERS, false)
+        set(temporarilyShowHiddenFolders) = prefs.edit().putBoolean(TEMPORARILY_SHOW_HIDDEN_FOLDERS, temporarilyShowHiddenFolders).apply()
+
+    var knownHiddenFolders: Set<String>
+        get() = prefs.getStringSet(KNOWN_HIDDEN_FOLDERS, HashSet()) ?: HashSet()
+        set(folders) = prefs.edit().remove(KNOWN_HIDDEN_FOLDERS).putStringSet(KNOWN_HIDDEN_FOLDERS, folders).apply()
+
+    fun addKnownHiddenFolder(path: String) {
+        val clean = path.trimEnd('/')
+        if (clean.isEmpty()) return
+        val updated = HashSet(knownHiddenFolders)
+        updated.add(clean)
+        knownHiddenFolders = updated
+    }
+
+    fun removeKnownHiddenFolder(path: String) {
+        val clean = path.trimEnd('/')
+        if (clean.isEmpty()) return
+        val updated = HashSet(knownHiddenFolders)
+        if (updated.removeAll { it.trimEnd('/').equals(clean, ignoreCase = true) }) {
+            knownHiddenFolders = updated
+        }
+    }
+
     var temporarilyShowVaultExcluded: Boolean
         get() = prefs.getBoolean(TEMPORARILY_SHOW_VAULT_EXCLUDED, false)
         set(temporarilyShowVaultExcluded) = prefs.edit().putBoolean(TEMPORARILY_SHOW_VAULT_EXCLUDED, temporarilyShowVaultExcluded).apply()
@@ -725,6 +750,22 @@ class Config(context: Context) : BaseConfig(context) {
     var autoBackupFavoritesAndVirtualAlbums: Boolean
         get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, false)
         set(autoBackupFavoritesAndVirtualAlbums) = prefs.edit().putBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, autoBackupFavoritesAndVirtualAlbums).apply()
+
+    var showVirtualAlbumIcon: Boolean
+        get() = prefs.getBoolean(SHOW_VIRTUAL_ALBUM_ICON, true)
+        set(show) = prefs.edit().putBoolean(SHOW_VIRTUAL_ALBUM_ICON, show).apply()
+
+    var showFavoritesAlbumIcon: Boolean
+        get() = prefs.getBoolean(SHOW_FAVORITES_ALBUM_ICON, true)
+        set(show) = prefs.edit().putBoolean(SHOW_FAVORITES_ALBUM_ICON, show).apply()
+
+    var showExcludedAlbumIcon: Boolean
+        get() = prefs.getBoolean(SHOW_EXCLUDED_ALBUM_ICON, true)
+        set(show) = prefs.edit().putBoolean(SHOW_EXCLUDED_ALBUM_ICON, show).apply()
+
+    var showHiddenAlbumIcon: Boolean
+        get() = prefs.getBoolean(SHOW_HIDDEN_ALBUM_ICON, true)
+        set(show) = prefs.edit().putBoolean(SHOW_HIDDEN_ALBUM_ICON, show).apply()
 
     var homeScreenViewOnLaunch: Int
         get() = prefs.getInt(HOME_SCREEN_VIEW_ON_LAUNCH, HOME_VIEW_FOLDERS)

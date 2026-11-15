@@ -3,6 +3,7 @@ package org.fossify.gallery.adapters
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Icon
 import android.text.TextUtils
@@ -78,6 +79,7 @@ import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.EncryptConfirmationDialog
 import org.fossify.gallery.dialogs.resolveAlbumCryptoOptions
 import org.fossify.gallery.dialogs.ExcludeFolderDialog
+import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.dialogs.PickMediumDialog
 import org.fossify.gallery.dialogs.RenameEncryptedFolderDialog
 import org.fossify.gallery.dialogs.RenameVirtualAlbumDialog
@@ -95,6 +97,10 @@ import org.fossify.gallery.extensions.fixDateTaken
 import org.fossify.gallery.extensions.getShortcutImage
 import org.fossify.gallery.extensions.getVirtualAlbumId
 import org.fossify.gallery.extensions.hasVaultCreated
+import org.fossify.gallery.extensions.isDirectoryExcludedForBadge
+import org.fossify.gallery.extensions.isDirectoryHiddenForBadge
+import org.fossify.gallery.extensions.isThisOrParentExcluded
+import org.fossify.gallery.extensions.isThisOrParentIncluded
 import org.fossify.gallery.extensions.isThisOrParentFolderHidden
 import org.fossify.gallery.extensions.isVirtualAlbum
 import org.fossify.gallery.extensions.isVirtualAlbumPath
@@ -110,8 +116,11 @@ import org.fossify.gallery.extensions.tryDecryptFolders
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.extensions.updateFavoritePaths
 import org.fossify.gallery.extensions.updateReferencesForFolderRename
+import org.fossify.gallery.helpers.AlbumTypeIcon
+import org.fossify.gallery.helpers.AlbumTypeIconPolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
+import org.fossify.gallery.helpers.HiddenFoldersPolicy
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
 import org.fossify.gallery.helpers.FOLDER_MEDIA_CNT_BRACKETS
 import org.fossify.gallery.helpers.FOLDER_MEDIA_CNT_LINE
@@ -136,6 +145,7 @@ import org.fossify.gallery.models.AlbumCover
 import org.fossify.gallery.models.Directory
 import java.io.File
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicInteger
 
 class DirectoryAdapter(
     activity: BaseSimpleActivity,
@@ -165,6 +175,13 @@ class DirectoryAdapter(
     private var showMediaCount = config.showFolderMediaCount
     private var folderStyle = config.folderStyle
     private var limitFolderTitle = config.limitFolderTitle
+    private var showVirtualAlbumIcon = config.showVirtualAlbumIcon
+    private var showFavoritesAlbumIcon = config.showFavoritesAlbumIcon
+    private var showExcludedAlbumIcon = config.showExcludedAlbumIcon
+    private var showHiddenAlbumIcon = config.showHiddenAlbumIcon
+    private var excludedFolderPaths = HashSet<String>()
+    private var hiddenFolderPaths = HashSet<String>()
+    private val badgeCheckGeneration = AtomicInteger(0)
     var directorySorting = config.directorySorting
     var dateFormat = config.dateFormat
     var timeFormat = activity.getTimeFormat()
@@ -172,6 +189,7 @@ class DirectoryAdapter(
     init {
         setupDragListener(true)
         fillLockedFolders()
+        fillAlbumBadgeStates()
     }
 
     override fun getActionMenuId() = R.menu.cab_directories
@@ -272,6 +290,9 @@ class DirectoryAdapter(
                 findItem(R.id.cab_hide).isVisible = false
                 findItem(R.id.cab_unhide).isVisible = false
                 findItem(R.id.cab_exclude).isVisible = false
+                findItem(R.id.cab_unexclude).isVisible = false
+                findItem(R.id.cab_hide_folder).isVisible = false
+                findItem(R.id.cab_unhide_folder).isVisible = false
                 findItem(R.id.cab_copy_to).isVisible = false
                 findItem(R.id.cab_move_to).isVisible = false
                 findItem(R.id.cab_create_shortcut).isVisible = false
@@ -284,6 +305,9 @@ class DirectoryAdapter(
                 findItem(R.id.cab_copy_to).isVisible = false
                 findItem(R.id.cab_move_to).isVisible = false
                 findItem(R.id.cab_exclude).isVisible = false
+                findItem(R.id.cab_unexclude).isVisible = false
+                findItem(R.id.cab_hide_folder).isVisible = false
+                findItem(R.id.cab_unhide_folder).isVisible = false
                 findItem(R.id.cab_properties).isVisible = false
             }
 
@@ -291,6 +315,9 @@ class DirectoryAdapter(
                 findItem(R.id.cab_hide).isVisible = false
                 findItem(R.id.cab_unhide).isVisible = false
                 findItem(R.id.cab_exclude).isVisible = false
+                findItem(R.id.cab_unexclude).isVisible = false
+                findItem(R.id.cab_hide_folder).isVisible = false
+                findItem(R.id.cab_unhide_folder).isVisible = false
                 findItem(R.id.cab_lock).isVisible = false
                 findItem(R.id.cab_unlock).isVisible = false
                 findItem(R.id.cab_create_shortcut).isVisible = false
@@ -316,6 +343,9 @@ class DirectoryAdapter(
             R.id.cab_hide -> toggleFoldersVisibility(true)
             R.id.cab_unhide -> toggleFoldersVisibility(false)
             R.id.cab_exclude -> tryExcludeFolder()
+            R.id.cab_unexclude -> tryUnexcludeFolder()
+            R.id.cab_hide_folder -> tryHideFoldersWithNoMedia()
+            R.id.cab_unhide_folder -> tryUnhideFoldersWithNoMedia()
             R.id.cab_lock -> tryLockFolder()
             R.id.cab_unlock -> unlockFolder()
             R.id.cab_copy_to -> copyFilesTo()
@@ -358,20 +388,20 @@ class DirectoryAdapter(
     }
 
     private fun checkHideBtnVisibility(menu: Menu, selectedPaths: ArrayList<String>) {
-        val hasVault = activity.hasVaultCreated()
         val hasForbidden = selectedPaths.any {
             it.isVirtualAlbumPath() || it == FAVORITES || CryptoManager.isVaultRecycleBinPath(activity, it)
         }
         val realUnencryptedPaths = selectedPaths.filter {
             !it.isVirtualAlbumPath() &&
                 it != FAVORITES &&
+                it != RECYCLE_BIN &&
                 !CryptoManager.isVaultRecycleBinPath(activity, it) &&
                 !CryptoManager.isEncryptedFolderPath(activity, it)
         }
         menu.findItem(R.id.cab_hide).isVisible =
             (!isRPlus() || isExternalStorageManager()) &&
             !hasForbidden &&
-            realUnencryptedPaths.any { !it.doesThisOrParentHaveNoMedia(HashMap(), null) || hasVault }
+            realUnencryptedPaths.isNotEmpty()
 
         val decryptablePaths = selectedPaths.filter {
             !it.isVirtualAlbumPath() &&
@@ -384,16 +414,37 @@ class DirectoryAdapter(
             (!isRPlus() || isExternalStorageManager()) &&
             !hasForbidden &&
             !selectedPaths.contains(RECYCLE_BIN) &&
-            decryptablePaths.any {
-                CryptoManager.isEncryptedFolderPath(activity, it) || (!hasVault && it.doesThisOrParentHaveNoMedia(HashMap(), null))
+            hasEncryptedFolder
+        menu.findItem(R.id.cab_unhide).title = activity.getString(R.string.decrypt_album)
+
+        val canUseNormalExcludeOrHide = !hasForbidden && !hasEncryptedFolder
+        val hasRecycleBin = selectedPaths.contains(RECYCLE_BIN)
+        val excludedFolders = config.excludedFolders
+        val includedFolders = config.includedFolders
+        menu.findItem(R.id.cab_exclude).isVisible =
+            canUseNormalExcludeOrHide &&
+            (hasRecycleBin || realUnencryptedPaths.any {
+                !activity.isDirectoryExcludedForBadge(it, excludedFolders, includedFolders)
+            })
+        menu.findItem(R.id.cab_unexclude).isVisible =
+            canUseNormalExcludeOrHide &&
+            !hasRecycleBin &&
+            realUnencryptedPaths.any {
+                activity.isDirectoryExcludedForBadge(it, excludedFolders, includedFolders)
             }
 
-        // encrypted albums are decrypted, while legacy .nomedia folders are just shown again
-        menu.findItem(R.id.cab_unhide).title = if (hasEncryptedFolder) {
-            activity.getString(R.string.decrypt_album)
-        } else {
-            activity.getString(org.fossify.commons.R.string.unhide)
+        val noMediaStatuses = HashMap<String, Boolean>()
+        val isPathHidden = { path: String ->
+            hiddenFolderPaths.contains(path) || activity.isDirectoryHiddenForBadge(path, includedFolders, noMediaStatuses)
         }
+        menu.findItem(R.id.cab_hide_folder).isVisible =
+            canUseNormalExcludeOrHide &&
+            !hasRecycleBin &&
+            realUnencryptedPaths.any { !isPathHidden(it) }
+        menu.findItem(R.id.cab_unhide_folder).isVisible =
+            canUseNormalExcludeOrHide &&
+            !hasRecycleBin &&
+            realUnencryptedPaths.any { isPathHidden(it) }
     }
 
     private fun checkPinBtnVisibility(menu: Menu, selectedPaths: ArrayList<String>) {
@@ -547,21 +598,14 @@ class DirectoryAdapter(
             }
         } else {
             val decryptablePaths = selectedPaths.filter {
-                it != FAVORITES &&
-                    it != RECYCLE_BIN &&
-                    !it.isVirtualAlbumPath() &&
-                    !CryptoManager.isVaultRecycleBinPath(activity, it)
+                CryptoManager.isEncryptedFolderPath(activity, it)
             }
             if (decryptablePaths.isEmpty()) {
                 return
             }
-            if (decryptablePaths.any { !CryptoManager.isEncryptedFolderPath(activity, it) && it.isThisOrParentFolderHidden() }) {
-                ConfirmationDialog(activity, "", R.string.cant_unhide_folder, org.fossify.commons.R.string.ok, 0) {}
-                return
-            }
 
             val encryptedPaths = decryptablePaths.filter {
-                CryptoManager.isEncryptedFolderPath(activity, it) && (decryptablePaths.size == 1 || !config.isFolderProtected(it))
+                decryptablePaths.size == 1 || !config.isFolderProtected(it)
             }
             if (encryptedPaths.isNotEmpty()) {
                 handleLockedFolderOpeningForFolders(encryptedPaths) { unlockedPaths ->
@@ -569,25 +613,6 @@ class DirectoryAdapter(
                         activity.tryDecryptFolders(unlockedPaths.toList()) {
                             listener?.refreshItems()
                             finishActMode()
-                        }
-                    }
-                }
-                return
-            }
-
-            decryptablePaths.filter { decryptablePaths.size == 1 || !config.isFolderProtected(it) }.forEach {
-                val path = it
-                activity.handleLockedFolderOpening(path) { success ->
-                    if (success && path.containsNoMedia()) {
-                        activity.removeNoMedia(path) {
-                            if (config.shouldShowHidden) {
-                                updateFolderNames()
-                            } else {
-                                activity.runOnUiThread {
-                                    listener?.refreshItems()
-                                    finishActMode()
-                                }
-                            }
                         }
                     }
                 }
@@ -800,7 +825,14 @@ class DirectoryAdapter(
 
     private fun tryExcludeFolder() {
         val selectedPaths = getSelectedPaths()
-        val paths = selectedPaths.filter { it != PATH && it != RECYCLE_BIN && it != FAVORITES }.toSet()
+        val paths = selectedPaths.filter {
+            it != PATH &&
+                it != RECYCLE_BIN &&
+                it != FAVORITES &&
+                !it.isVirtualAlbumPath() &&
+                !CryptoManager.isVaultRecycleBinPath(activity, it) &&
+                !CryptoManager.isEncryptedFolderPath(activity, it)
+        }.toSet()
         if (selectedPaths.contains(RECYCLE_BIN)) {
             config.showRecycleBinAtFolders = false
             if (selectedPaths.size == 1) {
@@ -818,6 +850,129 @@ class DirectoryAdapter(
             config.addExcludedFolders(paths)
             listener?.refreshItems()
             finishActMode()
+        }
+    }
+
+    private fun tryUnexcludeFolder() {
+        val paths = getSelectedPaths().filter {
+            it != PATH &&
+                it != RECYCLE_BIN &&
+                it != FAVORITES &&
+                !it.isVirtualAlbumPath() &&
+                !CryptoManager.isVaultRecycleBinPath(activity, it) &&
+                !CryptoManager.isEncryptedFolderPath(activity, it) &&
+                activity.isDirectoryExcludedForBadge(it)
+        }
+        if (paths.isEmpty()) {
+            return
+        }
+
+        paths.forEach { path ->
+            config.removeExcludedFolder(path)
+            if (activity.isDirectoryExcludedForBadge(path)) {
+                config.addIncludedFolder(path)
+            }
+        }
+        listener?.refreshItems()
+        finishActMode()
+    }
+
+    private fun collectUnlockedPaths(paths: List<String>, callback: (List<String>) -> Unit) {
+        val unlockedPaths = ArrayList<String>()
+        fun step(index: Int) {
+            if (index >= paths.size) {
+                callback(unlockedPaths)
+                return
+            }
+            val path = paths[index]
+            if (paths.size > 1 && config.isFolderProtected(path)) {
+                step(index + 1)
+                return
+            }
+            activity.handleLockedFolderOpening(path) { success ->
+                if (success) {
+                    unlockedPaths.add(path)
+                }
+                step(index + 1)
+            }
+        }
+        step(0)
+    }
+
+    private fun runFolderVisibilityAction(
+        paths: List<String>,
+        action: (folderPath: String, onDone: () -> Unit) -> Unit
+    ) {
+        collectUnlockedPaths(paths) { unlockedPaths ->
+            if (unlockedPaths.isEmpty()) {
+                return@collectUnlockedPaths
+            }
+            var remaining = unlockedPaths.size
+            unlockedPaths.forEach { folderPath ->
+                action(folderPath) {
+                    remaining--
+                    if (remaining <= 0) {
+                        activity.runOnUiThread {
+                            listener?.refreshItems()
+                            finishActMode()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun tryHideFoldersWithNoMedia() {
+        val paths = getSelectedPaths().filter {
+            it != FAVORITES &&
+                it != RECYCLE_BIN &&
+                !it.isVirtualAlbumPath() &&
+                !CryptoManager.isVaultRecycleBinPath(activity, it) &&
+                !CryptoManager.isEncryptedFolderPath(activity, it) &&
+                !activity.isDirectoryHiddenForBadge(it)
+        }
+        if (paths.isEmpty()) {
+            return
+        }
+        if (isRPlus() && !isExternalStorageManager()) {
+            GrantAllFilesDialog(activity)
+            return
+        }
+
+        runFolderVisibilityAction(paths) { folderPath, onDone ->
+            config.removeIncludedFolder(folderPath)
+            activity.addNoMedia(folderPath, onDone)
+        }
+    }
+
+    private fun tryUnhideFoldersWithNoMedia() {
+        val paths = getSelectedPaths().filter {
+            it != FAVORITES &&
+                it != RECYCLE_BIN &&
+                !it.isVirtualAlbumPath() &&
+                !CryptoManager.isVaultRecycleBinPath(activity, it) &&
+                !CryptoManager.isEncryptedFolderPath(activity, it) &&
+                activity.isDirectoryHiddenForBadge(it)
+        }
+        if (paths.isEmpty()) {
+            return
+        }
+        if (paths.any { HiddenFoldersPolicy.isDotHiddenPath(it) || it.isThisOrParentFolderHidden() }) {
+            ConfirmationDialog(activity, "", R.string.cant_unhide_folder, org.fossify.commons.R.string.ok, 0) {}
+            return
+        }
+        if (isRPlus() && !isExternalStorageManager()) {
+            GrantAllFilesDialog(activity)
+            return
+        }
+
+        runFolderVisibilityAction(paths) { folderPath, onDone ->
+            if (folderPath.containsNoMedia() || config.knownHiddenFolders.contains(folderPath)) {
+                activity.removeNoMedia(folderPath, onDone)
+            } else {
+                config.addIncludedFolder(folderPath)
+                onDone()
+            }
         }
     }
 
@@ -930,7 +1085,7 @@ class DirectoryAdapter(
         }
 
         val paths = ArrayList<String>()
-        val showHidden = config.shouldShowHidden
+        val showHidden = config.shouldShowHidden || config.temporarilyShowHiddenFolders
         validPaths.forEach {
             val filter = config.filterMedia
             File(it).listFiles()?.filter {
@@ -1235,6 +1390,52 @@ class DirectoryAdapter(
         }
     }
 
+    private fun fillAlbumBadgeStates() {
+        val currentDirs = dirs.map { it.path }
+        val excludedFolders = config.excludedFolders.toMutableSet()
+        val includedFolders = config.includedFolders.toMutableSet()
+
+        val fastExcluded = HashSet<String>()
+        val fastHidden = HashSet<String>()
+        currentDirs.forEach { path ->
+            if (activity.isDirectoryExcludedForBadge(path, excludedFolders, includedFolders)) {
+                fastExcluded.add(path)
+            }
+            if (!path.isVirtualAlbumPath() &&
+                path != FAVORITES &&
+                path != RECYCLE_BIN &&
+                !CryptoManager.isEncryptedFolderPath(activity, path) &&
+                !CryptoManager.isVaultRecycleBinPath(activity, path) &&
+                !path.isThisOrParentIncluded(includedFolders) &&
+                (HiddenFoldersPolicy.isDotHiddenPath(path) || path.isThisOrParentFolderHidden())
+            ) {
+                fastHidden.add(path)
+            }
+        }
+        excludedFolderPaths = fastExcluded
+        hiddenFolderPaths = fastHidden
+
+        val generation = badgeCheckGeneration.incrementAndGet()
+        ensureBackgroundThread {
+            if (activity.isDestroyed || activity.isFinishing) {
+                return@ensureBackgroundThread
+            }
+            val noMediaStatuses = HashMap<String, Boolean>()
+            val detectedHidden = HashSet<String>()
+            currentDirs.forEach { path ->
+                if (activity.isDirectoryHiddenForBadge(path, includedFolders, noMediaStatuses)) {
+                    detectedHidden.add(path)
+                }
+            }
+            activity.runOnUiThread {
+                if (generation == badgeCheckGeneration.get() && detectedHidden != hiddenFolderPaths) {
+                    hiddenFolderPaths = detectedHidden
+                    notifyDataSetChanged()
+                }
+            }
+        }
+    }
+
     fun updateDirs(newDirs: ArrayList<Directory>) {
         val directories = newDirs.clone() as ArrayList<Directory>
         val newDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(directories)
@@ -1248,7 +1449,12 @@ class DirectoryAdapter(
             currentDirectoriesHash = newDirsHash
             dirs = directories
             pinnedFolders = config.pinnedFolders
+            showVirtualAlbumIcon = config.showVirtualAlbumIcon
+            showFavoritesAlbumIcon = config.showFavoritesAlbumIcon
+            showExcludedAlbumIcon = config.showExcludedAlbumIcon
+            showHiddenAlbumIcon = config.showHiddenAlbumIcon
             fillLockedFolders()
+            fillAlbumBadgeStates()
             lastLongPressedSelectionKey = MediaAdapter.SelectionSync.remapLastLongPressedItem(this, lastLongPressedSelectionKey)
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedDirectoryKeys(selectedKeys, directories)
@@ -1353,6 +1559,40 @@ class DirectoryAdapter(
             }
 
             dirPin.beVisibleIf(pinnedFolders.contains(directory.path))
+            val albumTypeIcon = AlbumTypeIconPolicy.resolve(
+                isFavorites = directory.areFavorites(),
+                isVirtualAlbum = directory.isVirtualAlbum(),
+                isExcluded = excludedFolderPaths.contains(directory.path),
+                isHidden = hiddenFolderPaths.contains(directory.path),
+                isRecycleBin = directory.isRecycleBin(),
+                showFavoritesIcon = showFavoritesAlbumIcon,
+                showVirtualIcon = showVirtualAlbumIcon,
+                showExcludedIcon = showExcludedAlbumIcon,
+                showHiddenIcon = showHiddenAlbumIcon,
+                isSelected = isSelected
+            )
+            when (albumTypeIcon) {
+                AlbumTypeIcon.FAVORITES -> {
+                    dirTypeIcon.beVisible()
+                    dirTypeIcon.setImageResource(org.fossify.commons.R.drawable.ic_star_vector)
+                }
+                AlbumTypeIcon.VIRTUAL -> {
+                    dirTypeIcon.beVisible()
+                    dirTypeIcon.setImageResource(R.drawable.ic_album_virtual_vector)
+                }
+                AlbumTypeIcon.EXCLUDED -> {
+                    dirTypeIcon.beVisible()
+                    dirTypeIcon.setImageResource(R.drawable.ic_album_excluded_vector)
+                }
+                AlbumTypeIcon.HIDDEN -> {
+                    dirTypeIcon.beVisible()
+                    dirTypeIcon.setImageResource(R.drawable.ic_album_hidden_vector)
+                }
+                AlbumTypeIcon.NONE -> dirTypeIcon.beGone()
+            }
+            if (dirTypeIcon.isVisible()) {
+                dirTypeIcon.applyColorFilter(if (isListViewType) textColor else Color.WHITE)
+            }
             dirLocation.beVisibleIf(directory.location != LOCATION_INTERNAL)
             if (dirLocation.isVisible()) {
                 dirLocation.setImageResource(if (directory.location == LOCATION_SD) org.fossify.commons.R.drawable.ic_sd_card_vector else org.fossify.commons.R.drawable.ic_usb_vector)

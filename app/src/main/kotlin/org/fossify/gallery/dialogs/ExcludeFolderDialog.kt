@@ -42,7 +42,7 @@ class ExcludeFolderDialog(val activity: BaseSimpleActivity, val selectedPaths: L
 
     private fun dialogConfirmed() {
         val path = if (alternativePaths.isEmpty()) selectedPaths[0] else alternativePaths[radioGroup!!.checkedRadioButtonId]
-        activity.config.addExcludedFolder(path)
+        activity.config.addExcludedFolders(HashSet<String>(listOf(path)))
         callback()
     }
 

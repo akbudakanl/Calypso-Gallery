@@ -110,6 +110,10 @@ class SettingsActivity : SimpleActivity() {
         setupShowNotch()
         setupFileThumbnailStyle()
         setupFolderThumbnailStyle()
+        setupShowVirtualAlbumIcon()
+        setupShowFavoritesAlbumIcon()
+        setupShowExcludedAlbumIcon()
+        setupShowHiddenAlbumIcon()
         setupKeepLastModified()
         setupEnablePullToRefresh()
         setupAllowZoomingImages()
@@ -137,6 +141,7 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsGeneralSettingsLabel,
             binding.settingsVideosLabel,
             binding.settingsThumbnailsLabel,
+            binding.settingsAlbumTypeIconsLabel,
             binding.settingsScrollingLabel,
             binding.settingsFullscreenMediaLabel,
             binding.settingsDeepZoomableImagesLabel,
@@ -265,11 +270,9 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupManageHiddenFolders() {
-        binding.settingsManageHiddenFoldersHolder.beGoneIf(isQPlus())
+        binding.settingsManageHiddenFoldersHolder.beVisible()
         binding.settingsManageHiddenFoldersHolder.setOnClickListener {
-            handleHiddenFolderPasswordProtection {
-                startActivity(Intent(this, HiddenFoldersActivity::class.java))
-            }
+            startActivity(Intent(this, HiddenFoldersActivity::class.java))
         }
     }
 
@@ -1058,6 +1061,38 @@ class SettingsActivity : SimpleActivity() {
         }
     )
 
+    private fun setupShowVirtualAlbumIcon() {
+        binding.settingsShowVirtualAlbumIcon.isChecked = config.showVirtualAlbumIcon
+        binding.settingsShowVirtualAlbumIconHolder.setOnClickListener {
+            binding.settingsShowVirtualAlbumIcon.toggle()
+            config.showVirtualAlbumIcon = binding.settingsShowVirtualAlbumIcon.isChecked
+        }
+    }
+
+    private fun setupShowFavoritesAlbumIcon() {
+        binding.settingsShowFavoritesAlbumIcon.isChecked = config.showFavoritesAlbumIcon
+        binding.settingsShowFavoritesAlbumIconHolder.setOnClickListener {
+            binding.settingsShowFavoritesAlbumIcon.toggle()
+            config.showFavoritesAlbumIcon = binding.settingsShowFavoritesAlbumIcon.isChecked
+        }
+    }
+
+    private fun setupShowExcludedAlbumIcon() {
+        binding.settingsShowExcludedAlbumIcon.isChecked = config.showExcludedAlbumIcon
+        binding.settingsShowExcludedAlbumIconHolder.setOnClickListener {
+            binding.settingsShowExcludedAlbumIcon.toggle()
+            config.showExcludedAlbumIcon = binding.settingsShowExcludedAlbumIcon.isChecked
+        }
+    }
+
+    private fun setupShowHiddenAlbumIcon() {
+        binding.settingsShowHiddenAlbumIcon.isChecked = config.showHiddenAlbumIcon
+        binding.settingsShowHiddenAlbumIconHolder.setOnClickListener {
+            binding.settingsShowHiddenAlbumIcon.toggle()
+            config.showHiddenAlbumIcon = binding.settingsShowHiddenAlbumIcon.isChecked
+        }
+    }
+
     private fun setupKeepLastModified() {
         binding.settingsKeepLastModified.isChecked = config.keepLastModified
         binding.settingsKeepLastModifiedHolder.setOnClickListener {
@@ -1550,6 +1585,10 @@ class SettingsActivity : SimpleActivity() {
                 put(FOLDER_THUMBNAIL_STYLE, config.folderStyle)
                 put(FOLDER_MEDIA_COUNT, config.showFolderMediaCount)
                 put(LIMIT_FOLDER_TITLE, config.limitFolderTitle)
+                put(SHOW_VIRTUAL_ALBUM_ICON, config.showVirtualAlbumIcon)
+                put(SHOW_FAVORITES_ALBUM_ICON, config.showFavoritesAlbumIcon)
+                put(SHOW_EXCLUDED_ALBUM_ICON, config.showExcludedAlbumIcon)
+                put(SHOW_HIDDEN_ALBUM_ICON, config.showHiddenAlbumIcon)
                 put(THUMBNAIL_SPACING, config.thumbnailSpacing)
                 put(FILE_ROUNDED_CORNERS, config.fileRoundedCorners)
                 put(HOME_SCREEN_VIEW_ON_LAUNCH, config.homeScreenViewOnLaunch)
@@ -1704,6 +1743,10 @@ class SettingsActivity : SimpleActivity() {
                 FOLDER_THUMBNAIL_STYLE -> config.folderStyle = value.toInt()
                 FOLDER_MEDIA_COUNT -> config.showFolderMediaCount = value.toInt()
                 LIMIT_FOLDER_TITLE -> config.limitFolderTitle = value.toBoolean()
+                SHOW_VIRTUAL_ALBUM_ICON -> config.showVirtualAlbumIcon = value.toBoolean()
+                SHOW_FAVORITES_ALBUM_ICON -> config.showFavoritesAlbumIcon = value.toBoolean()
+                SHOW_EXCLUDED_ALBUM_ICON -> config.showExcludedAlbumIcon = value.toBoolean()
+                SHOW_HIDDEN_ALBUM_ICON -> config.showHiddenAlbumIcon = value.toBoolean()
                 THUMBNAIL_SPACING -> config.thumbnailSpacing = value.toInt()
                 FILE_ROUNDED_CORNERS -> config.fileRoundedCorners = value.toBoolean()
                 HOME_SCREEN_VIEW_ON_LAUNCH -> config.homeScreenViewOnLaunch = value.toInt()

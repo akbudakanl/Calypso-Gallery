@@ -46,10 +46,10 @@
     <string name="exclude_folder_parent">Bunun yerine bir üst dizin hariç tutulsun mu\?</string>
     <string name="excluded_activity_placeholder">Klasörleri hariç tutmak, onları yalnızca Fossify Galeri\'de gizlenen alt klasörleriyle bir araya getirecek, diğer uygulamalarda görünmeye devam edecektir.
 \n
-\nBunları diğer uygulamalardan gizlemek istiyorsanız, Gizle işlevini kullanın.</string>
+\nOnları diğer uygulamalardan gizlemek istiyorsanız, şifreleme işlevini kullanın.</string>
     <string name="hidden_folders">Gizli klasörler</string>
-    <string name="manage_hidden_folders">Gizli klasörleri yönet</string>
-    <string name="hidden_folders_placeholder">\".nomedia\" dosyasıyla gizlenmiş herhangi bir klasörünüz yok gibi görünüyor.</string>
+    <string name="manage_hidden_folders">Gizlenen klasörleri yönet</string>
+    <string name="hidden_folders_placeholder">\".nomedia\" dosyası veya nokta ile gizlenmiş herhangi bir klasörünüz yok gibi görünüyor.</string>
     <string name="hidden_all_files">Gizli dosyaları görmek için uygulamaya Tüm Dosyalar erişimi vermeniz gerekir, aksi takdirde çalışmaz.</string>
     <string name="cant_unhide_folder">Bir klasörün veya üst klasörlerinden birinin adından önce bir nokta varsa, bu klasör gizlidir ve bu şekilde gizliliği kaldırılamaz. Yeniden adlandırarak noktayı kaldırmanız gerekir.</string>
     <string name="include_folders">Dahil edilen klasörler</string>
@@ -460,4 +460,14 @@
     <string name="export_vault_only_header_info">Desteklenen CLI aracını kullanarak farklı cihazlarda şifrelediğiniz medya ögelerini telefondaki şifreli kasaya ekleyebilmeniz için içerisinde .vault dosyası bulunan Cipher_Secrets isminde bir klasör kullanmanız yeterlidir.</string>
     <string name="exporting_vault_progress">Şifreli kasa dışa aktarılıyor…</string>
     <string name="vault_export_same_folder_error">Dışa aktarma hedefi aktif kasa klasörü veya onun alt klasörü olamaz.</string>
+    <string name="album_type_icons">Albüm türü ikonları</string>
+    <string name="virtual_folders">Sanal klasörler</string>
+    <string name="favorites_album">Favoriler</string>
+    <string name="excluded_folders_album">Hariç tutulan klasörler</string>
+    <string name="hidden_folders_album">Gizli klasörler</string>
+    <string name="temporarily_show_hidden_folders">Gizli klasörleri geçici olarak göster</string>
+    <string name="stop_showing_hidden_folders">Gizli klasörleri göstermeyi bırak</string>
+    <string name="unexclude">Hariç tutmayı bırak</string>
+    <string name="hide_folder">Gizle</string>
+    <string name="unhide_folder">Gizlemeyi bırak</string>
 </resources>

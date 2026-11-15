@@ -232,6 +232,7 @@ fun AppCompatActivity.hideSystemUI() {
 fun BaseSimpleActivity.addNoMedia(path: String, callback: () -> Unit) {
     val file = File(path, NOMEDIA)
     if (getDoesFilePathExist(file.absolutePath)) {
+        config.addKnownHiddenFolder(path)
         callback()
         return
     }
@@ -246,6 +247,7 @@ fun BaseSimpleActivity.addNoMedia(path: String, callback: () -> Unit) {
             if (fileDocument?.exists() == true && fileDocument.isDirectory) {
                 fileDocument.createFile("", NOMEDIA)
                 addNoMediaIntoMediaStore(file.absolutePath)
+                config.addKnownHiddenFolder(path)
                 callback()
             } else {
                 toast(org.fossify.commons.R.string.unknown_error_occurred)
@@ -255,6 +257,7 @@ fun BaseSimpleActivity.addNoMedia(path: String, callback: () -> Unit) {
     } else {
         try {
             if (file.createNewFile()) {
+                config.addKnownHiddenFolder(path)
                 ensureBackgroundThread {
                     addNoMediaIntoMediaStore(file.absolutePath)
                 }
@@ -282,6 +285,7 @@ fun BaseSimpleActivity.addNoMediaIntoMediaStore(path: String) {
 }
 
 fun BaseSimpleActivity.removeNoMedia(path: String, callback: (() -> Unit)? = null) {
+    config.removeKnownHiddenFolder(path)
     val file = File(path, NOMEDIA)
     if (!getDoesFilePathExist(file.absolutePath)) {
         deleteFromMediaStore(file.absolutePath) {

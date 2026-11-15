@@ -29,6 +29,18 @@
         android:visibility="gone" />
 
     <ImageView
+        android:id="@+id/dir_type_icon"
+        android:layout_width="@dimen/selection_check_size"
+        android:layout_height="@dimen/selection_check_size"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/medium_margin"
+        android:background="@drawable/circle_black_background"
+        android:contentDescription="@null"
+        android:padding="@dimen/small_margin"
+        android:visibility="gone" />
+
+    <ImageView
         android:id="@+id/dir_check"
         android:layout_width="@dimen/selection_check_size"
         android:layout_height="@dimen/selection_check_size"
