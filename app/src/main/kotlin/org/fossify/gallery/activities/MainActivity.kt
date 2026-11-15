@@ -1311,16 +1311,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     directoryDB.deleteDirPath(it.absolutePath)
                 }
 
-                val deletedFilePaths = if (permanentlyDeleted) {
-                    fileDirItems.mapNotNull { item ->
+                if (permanentlyDeleted) {
+                    val deletedFilePaths = fileDirItems.mapNotNull { item ->
                         if (!item.isDirectory && !getDoesFilePathExist(item.path, OTGPath)) item.path else null
                     }
-                } else {
-                    emptyList()
-                }
-                val deletedFolderPaths = deletedFolders.map { it.absolutePath }
-                if (deletedFilePaths.isNotEmpty() || deletedFolderPaths.isNotEmpty()) {
-                    deleteDBPaths(deletedFilePaths, deletedFolderPaths)
+                    val deletedFolderPaths = deletedFolders.map { it.absolutePath }
+                    if (deletedFilePaths.isNotEmpty() || deletedFolderPaths.isNotEmpty()) {
+                        deleteDBPaths(deletedFilePaths, deletedFolderPaths)
+                    }
                 }
 
                 if (config.deleteEmptyFolders) {
@@ -1336,7 +1334,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                                 autoDeletedFolders.add(it.absolutePath)
                             }
                         }
-                    if (autoDeletedFolders.isNotEmpty()) {
+                    if (permanentlyDeleted && autoDeletedFolders.isNotEmpty()) {
                         deleteDBPaths(emptyList(), autoDeletedFolders)
                     }
                 }

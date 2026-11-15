@@ -2,6 +2,7 @@ package org.fossify.gallery
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import org.fossify.gallery.extensions.isStorageVolumeMountedAndReadable
 import org.fossify.gallery.helpers.FolderIdentity
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaIdentityResolver
@@ -215,5 +216,16 @@ class ReferenceLifecycleTest {
         assertFalse(matchesPrefix("/storage/emulated/0/Pictures/Trip2/a.jpg", deletedFolder))
         assertFalse(matchesPrefix("/storage/emulated/0/Pictures/Trip_Backup/a.jpg", deletedFolder))
         assertFalse(matchesPrefix("/storage/emulated/0/Pictures/Other/a.jpg", deletedFolder))
+    }
+
+    @Test
+    fun mountedStorageVolumeCheck_distinguishesUnmountedVolumesFromMountedDirectories() {
+        assertFalse(isStorageVolumeMountedAndReadable("/storage/USB-OFFLINE-1234/Trip/photo.jpg"))
+        assertFalse(isStorageVolumeMountedAndReadable("/mnt/media_rw/NO_DRIVE/Trip/photo.jpg"))
+
+        val mountedRoot = File(tempRoot, "mounted_vol").apply { mkdirs() }
+        val existingAlbum = File(mountedRoot, "Trip").apply { mkdirs() }
+        writeMediaFile(File(existingAlbum, "a.jpg"), 64, 1)
+        assertTrue(isStorageVolumeMountedAndReadable(File(existingAlbum, "deleted.jpg").absolutePath))
     }
 }

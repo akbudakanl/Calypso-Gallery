@@ -24,6 +24,7 @@ import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.deleteDBPaths
 import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
 import org.fossify.gallery.extensions.directoryDB
 import org.fossify.gallery.extensions.isThisOrParentIncluded
@@ -5345,7 +5346,11 @@ object CryptoManager {
         purgeMediaTracesPreservingReferences(context, plaintextPath)
 
         try {
+            val hadFav = context.favoritesDB.getFavorite(plaintextPath) != null
             context.favoritesDB.deleteFavoritePath(plaintextPath)
+            if (hadFav) {
+                ReferenceBackupManager.saveFavorites(context)
+            }
             // The extension also rewrites the backup files, so they stay in sync with the database.
             context.deleteVirtualAlbumItemFromAllAlbums(plaintextPath)
         } catch (_: Exception) {}
@@ -5354,11 +5359,9 @@ object CryptoManager {
     fun purgeFolderTraces(context: Context, folderPath: String) {
         val cleanPath = folderPath.trimEnd('/')
         try {
-            context.mediaDB.deleteMediaFromPath(cleanPath)
-            context.mediaDB.deleteMediaByPrefix(cleanPath)
+            context.deleteDBPaths(emptyList(), listOf(cleanPath))
             context.directoryDB.deleteDirPath(cleanPath)
             context.directoryDB.deleteDirPrefix(cleanPath)
-            context.favoritesDB.deleteFavoritesByPrefix(cleanPath)
             val db = GalleryDatabase.getInstance(context.applicationContext)
             db.DateTakensDao().deleteDateTakensFromPath(cleanPath)
             db.DateTakensDao().deleteDateTakensByPrefix(cleanPath)
