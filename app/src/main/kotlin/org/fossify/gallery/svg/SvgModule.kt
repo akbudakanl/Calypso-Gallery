@@ -1,6 +1,7 @@
 package org.fossify.gallery.svg
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.PictureDrawable
 
 import com.bumptech.glide.Glide
@@ -18,6 +19,7 @@ import com.bumptech.glide.module.AppGlideModule
 import com.caverock.androidsvg.SVG
 import org.fossify.gallery.helpers.EncryptedFileModelLoader
 import org.fossify.gallery.helpers.EncryptedStringModelLoader
+import org.fossify.gallery.helpers.GifBitmapStreamDecoder
 import java.io.File
 import java.io.InputStream
 
@@ -27,6 +29,11 @@ class SvgModule : AppGlideModule() {
         registry.replace(GlideUrl::class.java, InputStream::class.java, DisabledGlideNetworkLoader.Factory())
         registry.prepend(String::class.java, InputStream::class.java, EncryptedStringModelLoader.Factory())
         registry.prepend(File::class.java, InputStream::class.java, EncryptedFileModelLoader.Factory())
+        registry.prepend(
+            InputStream::class.java,
+            Bitmap::class.java,
+            GifBitmapStreamDecoder(registry.imageHeaderParsers, glide.bitmapPool, glide.arrayPool)
+        )
         registry.register(SVG::class.java, PictureDrawable::class.java, SvgDrawableTranscoder()).append(InputStream::class.java, SVG::class.java, SvgDecoder())
     }
 

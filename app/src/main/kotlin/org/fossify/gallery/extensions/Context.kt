@@ -58,6 +58,7 @@ import org.fossify.commons.extensions.isRawFast
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
 import org.fossify.commons.extensions.isWebP
+import org.fossify.gallery.helpers.EncryptedGlideOptions
 import org.fossify.commons.extensions.normalizeString
 import org.fossify.commons.extensions.otgPath
 import org.fossify.commons.extensions.recycleBinPath
@@ -1140,6 +1141,9 @@ fun Context.loadImageBase(
         options.dontAnimate()
         // don't animate is not enough for webp files, decode as bitmap forces first frame use in animated webps
         options.decode(Bitmap::class.java)
+        if (isEncrypted) {
+            options.set(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL, true)
+        }
     }
 
     if (roundCorners != ROUNDED_CORNERS_NONE) {
