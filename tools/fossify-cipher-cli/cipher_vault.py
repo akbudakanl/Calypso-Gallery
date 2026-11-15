@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """
-Fossify Gallery Cipher - Linux Offline Vault Encryptor CLI Tool
-----------------------------------------------------------------
-Encrypts plaintext media files (photos, videos) on Linux into .bin format,
+Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor CLI Tool
+-------------------------------------------------------------------------
+Encrypts plaintext media files (photos, videos) into .bin format,
 100% compatible with Android Fossify Gallery Cipher
 (AES-256-CTR + Poly1305-AES authenticated streaming encryption).
 
-IMPORTANT SECURITY NOTICE (LIVE BOOT / RAM-ONLY EXECUTION):
-  Always prefer running this tool inside a RAM-only Live Boot operating system
-  such as Tails OS when handling sensitive plaintext media.
-  On a standard disk-backed OS (Windows, macOS, or installed Linux on SSD/HDD),
-  copying or deleting plaintext media can leave forensic traces in filesystem
-  journals, swap/pagefile, thumbnail caches, and SSD wear-leveling blocks.
-  A Live Boot system keeps temporary plaintext operations strictly in volatile
-  RAM so traces vanish when you shut down.
+IMPORTANT SECURITY NOTICE (TIER 1 LIVE BOOT vs. TIER 2 STANDARD OS):
+  - Tier 1 (Recommended for maximum privacy): Run inside a RAM-only Live Boot OS
+    such as Tails OS or toram Linux. Temporary plaintext operations stay strictly
+    in volatile RAM and vanish on shutdown.
+  - Tier 2 (Standard / Convenience mode on Windows & macOS): Automatically
+    supported for bulk-encrypting media already stored on your PC without copying
+    plaintext to your phone first. Standard disk-backed OSes can leave forensic
+    traces in filesystem journals, swap/pagefile, thumbnail/search caches, cloud
+    Desktop sync (OneDrive/iCloud), and SSD wear-leveling blocks even after deletion.
 
 Features:
+- Automatic OS detection (Linux/Tails, macOS, Windows) with zero extra prompts.
 - Encrypt-Only workflow targeting either an external Cipher_Secrets vault
   directly or an output/delta folder (Encrypted_Output / Sifreli_Cikti).
 - Automatic .vault discovery across Desktop, persistent storage, and mounted USB drives.
@@ -56,12 +58,56 @@ try:
 except ImportError:
     HAS_PIL = False
 
+def get_platform_kind() -> str:
+    """Returns normalized platform identifier: 'windows', 'macos', or 'linux'."""
+    if os.name == "nt":
+        return "windows"
+    if sys.platform == "darwin":
+        return "macos"
+    return "linux"
+
+def get_platform_display_name() -> str:
+    """Returns a human-readable OS label for runtime notices."""
+    kind = get_platform_kind()
+    if kind == "windows":
+        return "Windows"
+    if kind == "macos":
+        return "macOS"
+    return "Linux"
+
+def configure_console():
+    """Ensures UTF-8 output and ANSI color support on Windows consoles."""
+    if os.name != "nt":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        enable_vt = 0x0004
+        for handle_id in (-11, -12):
+            handle = kernel32.GetStdHandle(handle_id)
+            if handle and handle != -1:
+                mode = ctypes.c_uint32()
+                if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                    kernel32.SetConsoleMode(handle, mode.value | enable_vt)
+    except Exception:
+        pass
+
 def check_dependencies():
     if not HAS_CRYPTO:
         print("[ERROR] Required Python packages are missing!", file=sys.stderr)
-        print("To install on Debian-based Linux (e.g., Debian, Ubuntu, Tails), run in terminal:", file=sys.stderr)
-        print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil", file=sys.stderr)
-        print("Or via pip:", file=sys.stderr)
+        kind = get_platform_kind()
+        if kind == "linux":
+            print("To install on Debian-based Linux (e.g., Debian, Ubuntu, Tails), run in terminal:", file=sys.stderr)
+            print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil", file=sys.stderr)
+        print("Or install via pip (recommended inside a venv on macOS/Windows):", file=sys.stderr)
+        print("  pip install -r requirements.txt", file=sys.stderr)
         print("  pip install cryptography argon2-cffi pillow", file=sys.stderr)
         sys.exit(1)
 
@@ -155,7 +201,10 @@ MESSAGES = {
         "vault_unlocked": "\033[1;32m[✓] Vault unlocked successfully! Master Key loaded into memory.\033[0m\n",
         "vault_unlock_err": "\033[1;31m[ERROR]\033[0m Could not unlock vault: {err}",
         "vault_retry": "\033[1;33m[i] Please try again (Ctrl+C to cancel).\033[0m\n",
-        "enc_title": "\033[1;36m       Fossify Gallery Cipher - Linux Offline Encryptor\033[0m",
+        "enc_title": "\033[1;36m      Fossify Gallery Cipher - Offline Vault Encryptor\033[0m",
+        "non_ram_os_notice": "\033[1;33m[i] Standard OS Mode ({os_name}):\033[0m Running on a disk-backed OS (not RAM-only Tails/Live Boot). Swap, thumbnails, and filesystem logs are not cleared; best suited for encrypting media already on this PC.",
+        "cloud_sync_warning": "\033[1;31m[WARNING]\033[0m Cloud-synced folder detected ({path})! Plaintext media or .vault here may upload to OneDrive/iCloud/Dropbox. Prefer a non-synced local folder or USB drive (-i / -o).",
+        "wipe_non_ram_disclaimer": "\033[1;33m[i] Note:\033[0m On {os_name} SSDs, overwriting removes the file entry but cannot erase SSD wear-leveling blocks, NTFS/APFS journals, shadow copies/snapshots, or OS thumbnail/search caches.",
         "folders_ready": "\033[1;32m[✓] Desktop folders are ready:\033[0m",
         "input_folder": "    📥 Input Folder:   \033[1;33m{path}\033[0m",
         "output_folder": "    📤 Output Folder:  \033[1;33m{path}\033[0m",
@@ -201,6 +250,9 @@ MESSAGES = {
         "vault_unlock_err": "\033[1;31m[HATA]\033[0m Kasa açılamadı: {err}",
         "vault_retry": "\033[1;33m[i] Lütfen tekrar deneyin (İptal için Ctrl+C).\033[0m\n",
         "enc_title": "\033[1;36m      Fossify Gallery Cipher - Çevrimdışı Şifreleme Aracı\033[0m",
+        "non_ram_os_notice": "\033[1;33m[i] Standart İşletim Sistemi Modu ({os_name}):\033[0m RAM tabanlı Tails/Live Boot yerine disk tabanlı sistemde çalışıyor. Takas alanı, küçük resim önbelleği ve dosya sistemi izleri silinmez; bilgisayarda zaten bulunan medyaları şifrelemek için uygundur.",
+        "cloud_sync_warning": "\033[1;31m[UYARI]\033[0m Bulutla eşitlenen klasör algılandı ({path})! Buradaki şifresiz medyalar veya .vault dosyası OneDrive/iCloud/Dropbox'a yüklenebilir. Bulut dışı yerel bir klasör veya USB (-i / -o) kullanmanız önerilir.",
+        "wipe_non_ram_disclaimer": "\033[1;33m[i] Not:\033[0m {os_name} SSD disklerde üzerine sıfır yazmak dosyayı siler; ancak SSD aşınma dengeleme bloklarını, NTFS/APFS günlüklerini, gölge kopyaları/anlık görüntüleri veya sistem önbelleklerini temizlemez.",
         "folders_ready": "\033[1;32m[✓] Masaüstü klasörleri hazır:\033[0m",
         "input_folder": "    📥 Girdi Klasörü:   \033[1;33m{path}\033[0m",
         "output_folder": "    📤 Çıktı Klasörü:   \033[1;33m{path}\033[0m",
@@ -260,37 +312,97 @@ def choose_language(args) -> str:
 
 # ==================== DESKTOP & DIRECTORY DISCOVERY ====================
 
-def get_desktop_dir() -> Path:
-    """Detects Desktop directory on Linux environments."""
-    # 1. xdg-user-dir DESKTOP check
-    try:
-        res = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True, check=False)
-        out = res.stdout.strip()
-        if out and Path(out).exists():
-            return Path(out)
-    except Exception:
-        pass
+CLOUD_SYNC_MARKERS = (
+    "onedrive",
+    "icloud",
+    "mobile documents",
+    "dropbox",
+    "google drive",
+    "googledrive",
+    "my drive",
+)
 
-    # 2. XDG user-dirs config (~/.config/user-dirs.dirs)
-    xdg_config = Path.home() / ".config" / "user-dirs.dirs"
-    if xdg_config.exists():
+def is_cloud_synced_path(path: Path) -> bool:
+    """
+    Heuristic check for paths inside common cloud-synced folders (OneDrive, iCloud Drive,
+    Dropbox, Google Drive) where staging plaintext media or .vault headers poses a leak risk.
+    """
+    try:
+        resolved_str = str(path.expanduser().resolve()).lower()
+    except Exception:
+        resolved_str = str(path).lower()
+
+    for part in Path(resolved_str).parts:
+        part_lower = part.lower()
+        if any(marker in part_lower for marker in CLOUD_SYNC_MARKERS):
+            return True
+
+    if os.name == "nt":
+        for env_key in ("OneDrive", "OneDriveCommercial", "OneDriveConsumer"):
+            env_val = os.environ.get(env_key)
+            if env_val:
+                try:
+                    env_resolved = str(Path(env_val).resolve()).lower()
+                    if resolved_str == env_resolved or resolved_str.startswith(env_resolved + os.sep):
+                        return True
+                except Exception:
+                    pass
+
+    return False
+
+def get_desktop_dir() -> Path:
+    """Detects Desktop directory across Windows, macOS, and Linux environments."""
+    kind = get_platform_kind()
+
+    if kind == "windows":
         try:
-            for line in xdg_config.read_text(encoding="utf-8").splitlines():
-                if line.startswith("XDG_DESKTOP_DIR="):
-                    val = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(Path.home()))
-                    p = Path(val)
-                    if p.exists():
-                        return p
+            import ctypes
+            buf = ctypes.create_unicode_buffer(260)
+            # CSIDL_DESKTOPDIRECTORY = 0x0010
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 0x0010, None, 0, buf) == 0 and buf.value:
+                p = Path(buf.value)
+                if p.exists() and p.is_dir():
+                    return p
         except Exception:
             pass
 
-    # 3. Common Desktop directory names
+        for candidate in [
+            Path(os.environ.get("USERPROFILE", "")) / "Desktop" if os.environ.get("USERPROFILE") else None,
+            Path.home() / "Desktop",
+        ]:
+            if candidate and candidate.exists() and candidate.is_dir():
+                return candidate
+
+    elif kind == "linux":
+        # 1. xdg-user-dir DESKTOP check
+        try:
+            res = subprocess.run(["xdg-user-dir", "DESKTOP"], capture_output=True, text=True, check=False)
+            out = res.stdout.strip()
+            if out and Path(out).exists():
+                return Path(out)
+        except Exception:
+            pass
+
+        # 2. XDG user-dirs config (~/.config/user-dirs.dirs)
+        xdg_config = Path.home() / ".config" / "user-dirs.dirs"
+        if xdg_config.exists():
+            try:
+                for line in xdg_config.read_text(encoding="utf-8").splitlines():
+                    if line.startswith("XDG_DESKTOP_DIR="):
+                        val = line.split("=", 1)[1].strip().strip('"').replace("$HOME", str(Path.home()))
+                        p = Path(val)
+                        if p.exists():
+                            return p
+            except Exception:
+                pass
+
+    # Common Desktop directory names (macOS / Linux / fallback)
     for candidate_name in ["Desktop", "Masaüstü", "desktop"]:
         candidate = Path.home() / candidate_name
         if candidate.exists() and candidate.is_dir():
             return candidate
 
-    # 4. Fallback: create ~/Desktop
+    # Fallback: create ~/Desktop
     fallback = Path.home() / "Desktop"
     try:
         fallback.mkdir(parents=True, exist_ok=True)
@@ -315,8 +427,58 @@ def is_valid_vault_file(path: Path) -> bool:
     except Exception:
         return False
 
+def _windows_external_drive_roots() -> list[Path]:
+    """Enumerates mounted non-system drive roots on Windows, prioritizing removable USB/SD drives."""
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        bitmask = kernel32.GetLogicalDrives()
+    except Exception:
+        bitmask = 0
+
+    system_drive = os.environ.get("SystemDrive", "C:").rstrip("\\/").upper()
+    removable: list[Path] = []
+    other_non_system: list[Path] = []
+
+    if bitmask:
+        for i in range(26):
+            if not (bitmask & (1 << i)):
+                continue
+            letter = chr(ord("A") + i)
+            drive_str = f"{letter}:\\"
+            if f"{letter}:".upper() == system_drive:
+                continue
+            try:
+                drive_type = ctypes.windll.kernel32.GetDriveTypeW(drive_str)
+            except Exception:
+                drive_type = 0
+            # DRIVE_REMOVABLE = 2, DRIVE_FIXED = 3 (external USB HDD/SSD often reports 3), DRIVE_REMOTE = 4
+            if drive_type == 2:
+                removable.append(Path(drive_str))
+            elif drive_type in (3, 4):
+                other_non_system.append(Path(drive_str))
+    else:
+        for i in range(26):
+            letter = chr(ord("A") + i)
+            if f"{letter}:".upper() == system_drive:
+                continue
+            p = Path(f"{letter}:\\")
+            try:
+                if p.exists():
+                    other_non_system.append(p)
+            except Exception:
+                pass
+
+    return removable + other_non_system
+
 def _external_mount_roots() -> list[Path]:
-    """Returns unique mount roots where external USB/SD drives may be mounted on Linux."""
+    """Returns unique mount roots where external USB/SD drives may be mounted across OSes."""
+    kind = get_platform_kind()
+    if kind == "windows":
+        return _windows_external_drive_roots()
+    if kind == "macos":
+        return [Path("/Volumes")]
+
     roots: list[Path] = [Path("/media/amnesia")]
     try:
         user = os.environ.get("USER") or getpass.getuser()
@@ -337,6 +499,7 @@ def _external_mount_roots() -> list[Path]:
 def find_vault_file() -> Path | None:
     """Searches for .vault header file across mounted vaults, Persistent storage, and Desktop."""
     desktop = get_desktop_dir()
+    kind = get_platform_kind()
     vault_dir_candidates: list[Path] = []
     standalone_candidates: list[Path] = []
 
@@ -348,25 +511,41 @@ def find_vault_file() -> Path | None:
         ])
 
     # 1. Tails / Live-Boot Persistent & external USB drives (Cipher_Secrets vaults first)
-    persistent_roots = [Path("/home/amnesia/Persistent"), Path.home() / "Persistent"]
-    for p_root in persistent_roots:
-        add_vault_dir_locations(p_root)
+    if kind == "linux":
+        persistent_roots = [Path("/home/amnesia/Persistent"), Path.home() / "Persistent"]
+        for p_root in persistent_roots:
+            add_vault_dir_locations(p_root)
 
+    windows_skip_dirs = {"system volume information", "$recycle.bin", "windows", "program files", "program files (x86)"}
     for mount_root in _external_mount_roots():
-        if not mount_root.exists() or not mount_root.is_dir():
+        try:
+            if not mount_root.exists() or not mount_root.is_dir():
+                continue
+        except Exception:
             continue
         add_vault_dir_locations(mount_root)
+        if kind == "windows":
+            standalone_candidates.append(mount_root / ".vault")
+            standalone_candidates.append(mount_root / "phone.vault")
         try:
             for usb_dir in sorted(mount_root.iterdir(), key=lambda p: p.name):
-                if usb_dir.is_dir():
+                try:
+                    if not usb_dir.is_dir():
+                        continue
+                    if kind == "macos" and usb_dir.is_symlink() and usb_dir.resolve() == Path("/"):
+                        continue
+                    if kind == "windows" and usb_dir.name.lower() in windows_skip_dirs:
+                        continue
                     add_vault_dir_locations(usb_dir)
                     standalone_candidates.append(usb_dir / ".vault")
                     standalone_candidates.append(usb_dir / "phone.vault")
+                except Exception:
+                    continue
         except Exception:
             pass
 
     # 2. Desktop, Persistent standalone, Home, CWD, and script directory
-    standalone_candidates = [
+    local_standalone: list[Path] = [
         # Desktop
         desktop / ".vault",
         desktop / "phone.vault",
@@ -377,12 +556,16 @@ def find_vault_file() -> Path | None:
         desktop / "Encrypted_Output" / ".vault",
         desktop / "Sifrelenecek" / ".vault",
         desktop / "Sifreli_Cikti" / ".vault",
-        # Tails Persistent Storage
-        Path("/home/amnesia/Persistent/.vault"),
-        Path("/home/amnesia/Persistent/phone.vault"),
-        Path("/home/amnesia/Persistent/vault.vault"),
-        Path.home() / "Persistent" / ".vault",
-        Path.home() / "Persistent" / "phone.vault",
+    ]
+    if kind == "linux":
+        local_standalone.extend([
+            Path("/home/amnesia/Persistent/.vault"),
+            Path("/home/amnesia/Persistent/phone.vault"),
+            Path("/home/amnesia/Persistent/vault.vault"),
+            Path.home() / "Persistent" / ".vault",
+            Path.home() / "Persistent" / "phone.vault",
+        ])
+    local_standalone.extend([
         # Home directory
         Path.home() / ".vault",
         Path.home() / "phone.vault",
@@ -391,7 +574,8 @@ def find_vault_file() -> Path | None:
         Path.cwd() / "phone.vault",
         Path(__file__).resolve().parent / ".vault",
         Path(__file__).resolve().parent / "phone.vault",
-    ] + standalone_candidates
+    ])
+    standalone_candidates = local_standalone + standalone_candidates
 
     for candidate in vault_dir_candidates + standalone_candidates:
         if is_valid_vault_file(candidate):
@@ -411,13 +595,18 @@ def prompt_for_vault_file(lang: str) -> Path:
             print(t(lang, "op_cancelled"))
             sys.exit(1)
 
-        clean_path = raw.strip("'\"")
+        clean_path = raw.strip().strip("'\"")
         p = Path(clean_path).expanduser().resolve()
         if is_valid_vault_file(p):
             desktop = get_desktop_dir()
             desktop_vault = desktop / ".vault"
             in_vault_dir = p.parent.name == "Cipher_Secrets" or (p.parent / ".nomedia").is_file()
-            if not in_vault_dir and not desktop_vault.exists() and p != desktop_vault:
+            if (
+                not in_vault_dir
+                and not desktop_vault.exists()
+                and p != desktop_vault
+                and not is_cloud_synced_path(desktop)
+            ):
                 try:
                     ans = input(t(lang, "vault_copy_prompt")).strip().lower()
                     if ans in ("", "y", "yes", "e", "evet"):
@@ -880,6 +1069,39 @@ class HorizontalProgressBar:
 
 # ==================== ENCRYPTION ENGINE ====================
 
+def append_pending_sync_entries(output_dir: Path, created_bins: list[Path]) -> Path | None:
+    """
+    Appends newly encrypted .bin relative POSIX paths to <output_dir>/.pending_sync
+    while preserving any existing unsynced entries from earlier CLI sessions.
+    """
+    if not created_bins:
+        return None
+    pending_file = output_dir / ".pending_sync"
+    existing: list[str] = []
+    seen: set[str] = set()
+    if pending_file.is_file():
+        try:
+            for line in pending_file.read_text(encoding="utf-8").splitlines():
+                clean = line.strip().replace("\\", "/")
+                if clean and clean not in seen:
+                    existing.append(clean)
+                    seen.add(clean)
+        except Exception:
+            pass
+
+    for bin_path in created_bins:
+        try:
+            rel = bin_path.relative_to(output_dir).as_posix()
+        except ValueError:
+            rel = bin_path.name
+        if rel and rel not in seen:
+            existing.append(rel)
+            seen.add(rel)
+
+    pending_file.write_text("\n".join(existing) + "\n", encoding="utf-8")
+    return pending_file
+
+
 def encrypt_file(
     source_path: Path,
     target_dir: Path,
@@ -1156,6 +1378,10 @@ def choose_encrypt_output_dir(
     return target_dir
 
 def run_encrypt_mode(args, desktop: Path, lang: str):
+    platform_kind = get_platform_kind()
+    if platform_kind in ("windows", "macos"):
+        print(t(lang, "non_ram_os_notice", os_name=get_platform_display_name()))
+
     input_path = Path(args.input).expanduser().resolve() if args.input else get_localized_desktop_dir(desktop, lang, "enc_in")
     if args.input:
         if not input_path.exists():
@@ -1163,6 +1389,9 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             sys.exit(1)
     else:
         input_path.mkdir(parents=True, exist_ok=True)
+
+    if is_cloud_synced_path(input_path):
+        print(t(lang, "cloud_sync_warning", path=input_path))
 
     items_to_encrypt: list[tuple[Path, str | None]] = []
     skipped_unsupported = 0
@@ -1210,8 +1439,13 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         sys.exit(0)
 
     master_key, vault_path = unlock_master_key_with_path(args, lang)
+    if vault_path is not None and is_cloud_synced_path(vault_path):
+        print(t(lang, "cloud_sync_warning", path=vault_path))
+
     output_dir = choose_encrypt_output_dir(args, desktop, lang, input_path, vault_path)
     output_dir.mkdir(parents=True, exist_ok=True)
+    if is_cloud_synced_path(output_dir):
+        print(t(lang, "cloud_sync_warning", path=output_dir))
 
     nomedia = output_dir / ".nomedia"
     if not nomedia.exists():
@@ -1249,6 +1483,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             progress.complete_file()
 
         progress.finish()
+        append_pending_sync_entries(output_dir, created_bins)
         print(t(lang, "enc_success", count=len(created_bins)))
         if skipped_unsupported > 0:
             print(t(lang, "enc_skipped_summary", count=skipped_unsupported))
@@ -1260,7 +1495,11 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             print(t(lang, "enc_tip2", app_dir=APP_DIR_NAME))
 
         delete_source = args.delete_source
+        shown_wipe_disclaimer = False
         if not delete_source and sys.stdin.isatty():
+            if platform_kind in ("windows", "macos"):
+                print("\n" + t(lang, "wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
+                shown_wipe_disclaimer = True
             try:
                 ans = input(t(lang, "wipe_prompt")).strip().lower()
                 if ans in ("y", "yes", "e", "evet"):
@@ -1269,9 +1508,16 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                 pass
 
         if delete_source:
+            if platform_kind in ("windows", "macos") and not shown_wipe_disclaimer:
+                print("\n" + t(lang, "wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
             print(t(lang, "wiping_start"))
             for src_file, _ in items_to_encrypt:
                 try:
+                    if not os.access(src_file, os.W_OK):
+                        try:
+                            os.chmod(src_file, 0o666)
+                        except Exception:
+                            pass
                     size = src_file.stat().st_size
                     if size > 0:
                         with open(src_file, "r+b") as wipe_f:
@@ -1299,7 +1545,11 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             phone_dest = f"/storage/emulated/0/{APP_DIR_NAME}/Cipher_Secrets/"
             print(t(lang, "adb_pushing", dest=phone_dest))
             res = subprocess.run(["adb", "devices"], capture_output=True, text=True)
-            if "device\n" not in res.stdout:
+            has_adb_device = any(
+                len(line.split()) >= 2 and line.split()[1] == "device"
+                for line in res.stdout.splitlines()[1:]
+            )
+            if not has_adb_device:
                 print(t(lang, "adb_no_device"))
             else:
                 pushed_dirs: set[Path] = set()
@@ -1319,22 +1569,23 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             master_key = bytearray(len(master_key))
 
 def main():
+    configure_console()
     desktop = get_desktop_dir()
 
     parser = argparse.ArgumentParser(
-        description="Fossify Gallery Cipher - Linux Offline Vault Encryptor",
+        description="Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-SECURITY NOTICE (Live Boot / RAM-Only Execution):
-  Always prefer a RAM-only Live Boot OS such as Tails when handling sensitive plaintext media.
-  Standard disk-backed systems can leave traces of plaintext files in
-  filesystem journals, swap/pagefile, and SSD blocks even after deletion.
+SECURITY NOTICE (Tier 1 Live Boot vs. Tier 2 Standard OS):
+  - Tier 1 (Recommended for maximum privacy): RAM-only Live Boot OS (Tails / toram Linux).
+  - Tier 2 (Standard / Convenience mode): Windows & macOS auto-detected for encrypting
+    media already stored on your PC (does not clear swap, thumbnails, or SSD blocks).
 
 Desktop Usage:
   Encrypt (English: To_Encrypt -> Vault or Encrypted_Output | Türkçe: Sifrelenecek -> Kasa veya Sifreli_Cikti):
      python3 cipher_vault.py --lang en
-  Direct external vault example:
-     python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -o /media/amnesia/USB/Cipher_Secrets -v /media/amnesia/USB/Cipher_Secrets/.vault
+  Direct external vault example (Linux / macOS / Windows):
+     python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Cipher_Secrets/.vault
         """
     )
     parser.add_argument("-e", "--encrypt", action="store_true", help="Encrypt plaintext media into .bin format (default)")

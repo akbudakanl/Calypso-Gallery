@@ -317,7 +317,11 @@ class CustomVaultLocationTest {
 
         var lastProgressTotal = -1
         var lastProgressProcessed = -1
-        val result = CryptoManager.syncVaultFromExternalDirectory(testContext, extDriveRoot) { processed, total ->
+        val result = CryptoManager.syncVaultFromExternalDirectory(
+            testContext,
+            extDriveRoot,
+            requirePendingManifest = false
+        ) { processed, total ->
             lastProgressProcessed = processed
             lastProgressTotal = total
         }
@@ -367,7 +371,7 @@ class CustomVaultLocationTest {
         val alienAlbum = File(alienDelta, "AlienAlbum").apply { mkdirs() }
         File(alienAlbum, "deadbeef.bin").writeBytes(ByteArray(128))
         val subfoldersBeforeAlien = phoneVault.listFiles()!!.count { it.isDirectory }
-        val alienResult = CryptoManager.syncVaultFromExternalDirectory(testContext, alienDelta)!!
+        val alienResult = CryptoManager.syncVaultFromExternalDirectory(testContext, alienDelta, requirePendingManifest = false)!!
         assertEquals(0, alienResult.copiedCount)
         assertEquals(1, alienResult.failedCount)
         assertEquals(subfoldersBeforeAlien, phoneVault.listFiles()!!.count { it.isDirectory })
@@ -412,7 +416,7 @@ class CustomVaultLocationTest {
             )
         )
 
-        val syncSame = CryptoManager.syncVaultFromExternalDirectory(testContext, extFolder.parentFile!!)!!
+        val syncSame = CryptoManager.syncVaultFromExternalDirectory(testContext, extFolder.parentFile!!, requirePendingManifest = false)!!
         assertEquals(0, syncSame.copiedCount)
         assertEquals(0, syncSame.renamedCount)
         assertEquals(2, syncSame.skippedDuplicateCount)
@@ -494,7 +498,7 @@ class CustomVaultLocationTest {
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 
-        val mirrorResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets)!!
+        val mirrorResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets, requirePendingManifest = false)!!
         assertEquals(0, mirrorResult.copiedCount)
         assertEquals(0, mirrorResult.renamedCount)
         assertEquals(1, mirrorResult.skippedDuplicateCount)
@@ -506,7 +510,7 @@ class CustomVaultLocationTest {
         }
         extMirrorBin.writeBytes(corruptedTrailerBytes)
 
-        val tamperedTrailerResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets)!!
+        val tamperedTrailerResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extMirrorSecrets, requirePendingManifest = false)!!
         assertEquals(0, tamperedTrailerResult.copiedCount)
         assertEquals(0, tamperedTrailerResult.skippedDuplicateCount)
         assertEquals(1, tamperedTrailerResult.failedCount)
@@ -522,7 +526,7 @@ class CustomVaultLocationTest {
         corruptNewBin.writeBytes(binBytes)
 
         val folderCountBefore = phoneVault.listFiles()!!.count { it.isDirectory }
-        val corruptNewResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extCorruptNewRoot)!!
+        val corruptNewResult = CryptoManager.syncVaultFromExternalDirectory(testContext, extCorruptNewRoot, requirePendingManifest = false)!!
         assertEquals(0, corruptNewResult.copiedCount)
         assertEquals(0, corruptNewResult.renamedCount)
         assertEquals(1, corruptNewResult.failedCount)
@@ -550,7 +554,7 @@ class CustomVaultLocationTest {
         val extCamera1 = File(extRoot1, "Camera").apply { mkdirs() }
         encryptBytesForTest(extCamera1, "photo.jpg", payload2)
 
-        val firstSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot1)!!
+        val firstSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot1, requirePendingManifest = false)!!
         assertEquals(0, firstSync.copiedCount)
         assertEquals(1, firstSync.renamedCount)
         assertEquals(0, firstSync.skippedDuplicateCount)
@@ -566,7 +570,7 @@ class CustomVaultLocationTest {
         assertArrayEquals(payload2, CryptoManager.openDecryptedContentStream(copy1Imported)!!.use { it.readBytes() })
 
         // Repeat sync of exact same external source -> skipped via collision-family deduplication, NO photo(2).jpg!
-        val repeatSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot1)!!
+        val repeatSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot1, requirePendingManifest = false)!!
         assertEquals(0, repeatSync.copiedCount)
         assertEquals(0, repeatSync.renamedCount)
         assertEquals(1, repeatSync.skippedDuplicateCount)
@@ -578,7 +582,7 @@ class CustomVaultLocationTest {
         val extCamera2 = File(extRoot2, "Camera").apply { mkdirs() }
         encryptBytesForTest(extCamera2, "photo.jpg", payload3)
 
-        val secondDistinctSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot2)!!
+        val secondDistinctSync = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot2, requirePendingManifest = false)!!
         assertEquals(0, secondDistinctSync.copiedCount)
         assertEquals(1, secondDistinctSync.renamedCount)
         assertEquals(0, secondDistinctSync.skippedDuplicateCount)
@@ -1077,11 +1081,50 @@ class CustomVaultLocationTest {
         val cacheMap = cacheField.get(CryptoManager) as MutableMap<*, *>
         cacheMap.clear()
 
-        val result = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot)
+        val result = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot, requirePendingManifest = false)
         assertTrue(result != null)
         assertEquals(1, result!!.copiedCount)
         assertEquals(1, result.failedCount)
         assertEquals(0, cacheMap.size)
+    }
+
+    @Test
+    fun syncVaultFromExternalDirectory_requiresAndConsumesPendingSyncManifest() {
+        val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        setMasterKey(masterKey)
+
+        val phoneVault = File(tempRoot, "phone_pending/Fossify Gallery Cipher/Cipher_Secrets").apply { mkdirs() }
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        CryptoManager.setVaultRootLocation(testContext, phoneVault)
+
+        val extSecrets = File(tempRoot, "ext_pending/Cipher_Secrets").apply { mkdirs() }
+        File(extSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        val extAlbum = File(extSecrets, "PendingAlbum").apply { mkdirs() }
+
+        // Unlisted corrupt .bin in archive (bit-rot) must be ignored when .pending_sync is used
+        val corruptArchiveBin = File(extAlbum, "corrupt_old.bin").apply { writeBytes(ByteArray(256) { 7 }) }
+        assertTrue(corruptArchiveBin.exists())
+
+        val newBin = encryptBytesForTest(extAlbum, "new_pending.jpg", "fresh-cli-photo".toByteArray())
+
+        // 1. Without .pending_sync, strict sync returns 0/0/0/0 and refuses to scan archive
+        val withoutManifest = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
+        assertEquals(0, withoutManifest.copiedCount)
+        assertEquals(0, withoutManifest.failedCount)
+
+        // 2. Write .pending_sync listing ONLY the newly encrypted .bin
+        val pendingFile = File(extSecrets, ".pending_sync")
+        pendingFile.writeText("PendingAlbum/${newBin.name}\n", Charsets.UTF_8)
+
+        val withManifest = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
+        assertEquals(1, withManifest.copiedCount)
+        assertEquals(0, withManifest.failedCount)
+        assertFalse(pendingFile.exists())
+
+        // 3. Repeating sync immediately after must do nothing
+        val repeatAfterClear = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
+        assertEquals(0, repeatAfterClear.copiedCount)
+        assertEquals(0, repeatAfterClear.failedCount)
     }
 
     @Test
