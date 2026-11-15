@@ -14,9 +14,11 @@ import java.io.File
 
 class PickVaultAlbumDialog(
     val activity: Activity,
+    val onCancel: (() -> Unit)? = null,
     val callback: (targetFolder: File, albumName: String) -> Unit
 ) {
     private var dialog: AlertDialog? = null
+    private var handled = false
 
     init {
         ensureBackgroundThread {
@@ -25,6 +27,7 @@ class PickVaultAlbumDialog(
 
             activity.runOnUiThread {
                 if (activity.isFinishing || activity.isDestroyed) {
+                    onCancel?.invoke()
                     return@runOnUiThread
                 }
                 show(albums)
@@ -39,9 +42,10 @@ class PickVaultAlbumDialog(
         val listView = ListView(activity).apply {
             adapter = ArrayAdapter(activity, android.R.layout.simple_list_item_1, labels)
             setOnItemClickListener { _, _, position, _ ->
+                handled = true
                 dialog?.dismiss()
                 if (position == albums.size) {
-                    CreateEncryptedAlbumDialog(activity, callback)
+                    CreateEncryptedAlbumDialog(activity, onCancel = onCancel, callback = callback)
                 } else {
                     val selected = albums[position]
                     callback(selected.folder, selected.name)
@@ -50,7 +54,18 @@ class PickVaultAlbumDialog(
         }
 
         activity.getAlertDialogBuilder()
-            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
+            .setOnCancelListener {
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
             .apply {
                 activity.setupDialogStuff(listView, this, R.string.select_hidden_album) { alertDialog ->
                     dialog = alertDialog

@@ -123,6 +123,7 @@ import org.fossify.gallery.helpers.AlbumTypeIcon
 import org.fossify.gallery.helpers.AlbumTypeIconPolicy
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.HiddenFoldersPolicy
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -658,7 +659,11 @@ class DirectoryAdapter(
         val conflicts = paths.mapNotNull {
             CryptoManager.previewEncryptAlbumConflict(activity, it)
         }
-        resolveAlbumCryptoOptions(activity, conflicts) { albumOptions ->
+        resolveAlbumCryptoOptions(
+            activity = activity,
+            conflicts = conflicts,
+            onCancel = { VaultSessionManager.lockVaultIfOutsideSession(activity) }
+        ) { albumOptions ->
             val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
             val isStandardMode = activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
             activity.resolveCryptoTransferConflicts(
@@ -743,6 +748,7 @@ class DirectoryAdapter(
                                 identicalTargetMap = identicalMapSnapshot,
                                 forceCleanupEmptyAlbum = true
                             ) {
+                                VaultSessionManager.lockVaultIfOutsideSession(activity)
                                 finishActMode()
                                 listener?.refreshItems()
                             }
@@ -866,6 +872,7 @@ class DirectoryAdapter(
                     } else {
                         activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
                     }
+                    VaultSessionManager.lockVaultIfOutsideSession(activity)
                     finishActMode()
                     listener?.refreshItems()
                 }
@@ -1305,6 +1312,7 @@ class DirectoryAdapter(
                 }
 
                 activity.runOnUiThread {
+                    VaultSessionManager.lockVaultIfOutsideSession(activity)
                     finishActMode()
                     listener?.refreshItems()
                 }

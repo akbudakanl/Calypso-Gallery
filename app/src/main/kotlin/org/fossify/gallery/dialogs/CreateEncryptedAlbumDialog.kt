@@ -21,8 +21,11 @@ import java.io.File
  */
 class CreateEncryptedAlbumDialog(
     val activity: Activity,
+    val onCancel: (() -> Unit)? = null,
     val callback: (targetFolder: File, albumName: String) -> Unit
 ) {
+    private var handled = false
+
     init {
         val padding = (20 * activity.resources.displayMetrics.density).toInt()
         val editText = AppCompatEditText(activity).apply {
@@ -40,7 +43,18 @@ class CreateEncryptedAlbumDialog(
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
-            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
+            .setOnCancelListener {
+                if (!handled) {
+                    handled = true
+                    onCancel?.invoke()
+                }
+            }
             .apply {
                 activity.setupDialogStuff(container, this, titleId = R.string.create_new_hidden_album) { alertDialog ->
                     alertDialog.showKeyboard(editText)
@@ -57,6 +71,7 @@ class CreateEncryptedAlbumDialog(
                                 if (newFolder == null) {
                                     activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
                                 } else {
+                                    handled = true
                                     alertDialog.dismiss()
                                     callback(newFolder, name)
                                 }

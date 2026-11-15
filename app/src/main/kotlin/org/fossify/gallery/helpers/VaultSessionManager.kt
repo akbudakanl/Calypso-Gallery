@@ -79,11 +79,15 @@ object VaultSessionManager {
 
     private fun armReauthIfNeeded(context: Context) {
         val appContext = context.applicationContext
-        if (VaultLockPolicy.shouldArmReauth(CryptoManager.isVaultUnlocked, CryptoManager.hasExistingVault(appContext))) {
+        val isInVaultSession = appContext.config.temporarilyShowHidden
+        if (VaultLockPolicy.shouldArmReauth(
+                isVaultUnlocked = CryptoManager.isVaultUnlocked,
+                hasExistingVault = CryptoManager.hasExistingVault(appContext),
+                isInVaultSession = isInVaultSession
+            )
+        ) {
             requiresVaultReauth = true
-            if (appContext.config.temporarilyShowHidden) {
-                restoreTemporarilyShowHidden = true
-            }
+            restoreTemporarilyShowHidden = true
         }
     }
 
@@ -180,6 +184,18 @@ object VaultSessionManager {
         lockScreenOpen = false
         lockScreenLaunching = false
         restoreTemporarilyShowHidden = false
+    }
+
+    /**
+     * Wipes the vault key from RAM and clears session state when the user is not in an active vault
+     * viewing session (e.g. after encrypting files or albums from the normal gallery).
+     */
+    fun lockVaultIfOutsideSession(context: Context) {
+        val appContext = context.applicationContext
+        if (!appContext.config.temporarilyShowHidden) {
+            CryptoManager.lockVault()
+            onVaultExited()
+        }
     }
 
     fun markUnlockDeclined() {
