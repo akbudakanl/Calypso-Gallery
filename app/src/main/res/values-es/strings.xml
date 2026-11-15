@@ -307,16 +307,9 @@
     <string name="confirm_checkbox_label">Confirmo</string>
     <string name="secret_vault">Bóveda cifrada</string>
     <string name="secret_vault_empty">La bóveda cifrada está vacía</string>
+    <string name="press_back_again_to_exit_vault">Pulsa atrás de nuevo para salir</string>
     <string name="confirm_decrypt_hidden_file">¿Está seguro de que desea descifrar los archivos ocultos?</string>
     <string name="copy_to_clipboard_disabled_in_vault">Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada.</string>
-    <string name="on_vault_exit">Al salir de la sección cifrada</string>
-    <string name="on_vault_exit_keep_showing">Seguir mostrando álbumes cifrados</string>
-    <string name="on_vault_exit_hide">Ocultar álbumes cifrados</string>
-    <string name="on_vault_exit_ask_every_time">Preguntar siempre</string>
-    <string name="vault_exit_dialog_title">Saliendo de la sección cifrada</string>
-    <string name="vault_exit_question_single">¿Mostrar el álbum cifrado junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender.</string>
-    <string name="vault_exit_question_multiple">¿Mostrar los álbumes cifrados junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender.</string>
-    <string name="vault_exit_settings_hint">Para más opciones, consulta Ajustes &gt; Al salir de la sección cifrada</string>
     <string name="stop_showing_hidden">Dejar de mostrar medios cifrados</string>
     <string name="system_default">Sistema por defecto</string>
     <string name="language">Idioma</string>
@@ -340,6 +333,7 @@
     <string name="create_encrypted_vault">Crear bóveda cifrada</string>
     <string name="change_encrypted_vault_password">Cambiar contraseña de la bóveda cifrada</string>
     <string name="biometric_access_to_encrypted_vault">Acceso biométrico a la bóveda cifrada</string>
+    <string name="block_vault_screenshots">Bloquear capturas de pantalla en la bóveda oculta</string>
     <string name="empty_encrypted_vault">Vaciar bóveda cifrada</string>
     <string name="enter_new_pin">Ingrese el nuevo PIN</string>
     <string name="repeat_new_pin">Repita el nuevo PIN</string>

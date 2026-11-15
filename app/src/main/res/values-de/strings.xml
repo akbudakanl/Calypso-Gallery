@@ -305,16 +305,9 @@
     <string name="confirm_checkbox_label">Ich bestätige</string>
     <string name="secret_vault">Verschlüsselter Tresor</string>
     <string name="secret_vault_empty">Verschlüsselter Tresor ist leer</string>
+    <string name="press_back_again_to_exit_vault">Zum Beenden erneut Zurück drücken</string>
     <string name="confirm_decrypt_hidden_file">Möchtest du die versteckte(n) Datei(en) wirklich entschlüsseln?</string>
     <string name="copy_to_clipboard_disabled_in_vault">Das Kopieren in die Zwischenablage ist aus Sicherheitsgründen deaktiviert, solange der Tresor entsperrt ist.</string>
-    <string name="on_vault_exit">Beim Verlassen des verschlüsselten Bereichs</string>
-    <string name="on_vault_exit_keep_showing">Verschlüsselte Alben weiterhin anzeigen</string>
-    <string name="on_vault_exit_hide">Verschlüsselte Alben ausblenden</string>
-    <string name="on_vault_exit_ask_every_time">Immer fragen</string>
-    <string name="vault_exit_dialog_title">Verschlüsselten Bereich verlassen</string>
-    <string name="vault_exit_question_single">Verschlüsseltes Album zusammen mit anderen Alben anzeigen?\n\nIn diesem Fall musst du während der App-Sitzung den versteckten Tresor jedes Mal entsperren, wenn du die App in den Hintergrund verschiebst und zu ihr zurückkehrst oder den Bildschirm aus- und wieder einschaltest.</string>
-    <string name="vault_exit_question_multiple">Verschlüsselte Alben zusammen mit anderen Alben anzeigen?\n\nIn diesem Fall musst du während der App-Sitzung den versteckten Tresor jedes Mal entsperren, wenn du die App in den Hintergrund verschiebst und zu ihr zurückkehrst oder den Bildschirm aus- und wieder einschaltest.</string>
-    <string name="vault_exit_settings_hint">Weitere Optionen findest du unter Einstellungen &gt; Beim Verlassen des verschlüsselten Bereichs</string>
     <string name="stop_showing_hidden">Verschlüsselte Medien nicht mehr anzeigen</string>
     <string name="system_default">Systemvorgabe</string>
     <string name="language">Sprache</string>
@@ -338,6 +331,7 @@
     <string name="create_encrypted_vault">Verschlüsselten Tresor erstellen</string>
     <string name="change_encrypted_vault_password">Passwort des verschlüsselten Tresors ändern</string>
     <string name="biometric_access_to_encrypted_vault">Biometrischer Zugriff auf den verschlüsselten Tresor</string>
+    <string name="block_vault_screenshots">Screenshots im versteckten Tresor blockieren</string>
     <string name="empty_encrypted_vault">Verschlüsselten Tresor leeren</string>
     <string name="enter_new_pin">Neue PIN eingeben</string>
     <string name="repeat_new_pin">Neue PIN wiederholen</string>

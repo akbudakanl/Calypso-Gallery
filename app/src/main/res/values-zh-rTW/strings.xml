@@ -303,16 +303,9 @@
     <string name="confirm_checkbox_label">我確認</string>
     <string name="secret_vault">加密保險箱</string>
     <string name="secret_vault_empty">加密保險箱為空</string>
+    <string name="press_back_again_to_exit_vault">再按一次返回鍵即可離開</string>
     <string name="confirm_decrypt_hidden_file">確定要解密隱藏的檔案嗎？</string>
     <string name="copy_to_clipboard_disabled_in_vault">基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。</string>
-    <string name="on_vault_exit">離開加密區域時</string>
-    <string name="on_vault_exit_keep_showing">繼續顯示加密相簿</string>
-    <string name="on_vault_exit_hide">隱藏加密相簿</string>
-    <string name="on_vault_exit_ask_every_time">每次詢問</string>
-    <string name="vault_exit_dialog_title">正在離開加密區域</string>
-    <string name="vault_exit_question_single">是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。</string>
-    <string name="vault_exit_question_multiple">是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。</string>
-    <string name="vault_exit_settings_hint">如需更多選項，請前往「設定」&gt;「離開加密區域時」</string>
     <string name="stop_showing_hidden">停止顯示已加密媒體</string>
     <string name="system_default">系統預設</string>
     <string name="language">語言</string>
@@ -336,6 +329,7 @@
     <string name="create_encrypted_vault">建立加密保險箱</string>
     <string name="change_encrypted_vault_password">變更加密保險箱密碼</string>
     <string name="biometric_access_to_encrypted_vault">透過生物辨識存取加密保險箱</string>
+    <string name="block_vault_screenshots">禁止在隱藏保險箱中擷取螢幕截圖</string>
     <string name="empty_encrypted_vault">清空加密保險箱</string>
     <string name="enter_new_pin">輸入新 PIN</string>
     <string name="repeat_new_pin">再次輸入新 PIN</string>

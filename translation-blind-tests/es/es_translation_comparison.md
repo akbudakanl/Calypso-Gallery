@@ -80,16 +80,10 @@ These 66 strings were introduced by this fork (Gallery-Cipher) and do not exist 
 | 31 | `confirm_checkbox_label` | I confirm | Confirmo | Checkbox label in `DeleteCipherSecretsDialog` |
 | 32 | `secret_vault` | Encrypted Vault | Bóveda cifrada | Vault section title |
 | 33 | `secret_vault_empty` | Encrypted Vault is empty | La bóveda cifrada está vacía | Empty state message |
+| - | `press_back_again_to_exit_vault` | Press back again to exit | Pulsa atrás de nuevo para salir | Toast shown on first back press in hidden vault |
+| - | `block_vault_screenshots` | Block screenshots in hidden vault | Bloquear capturas de pantalla en la bóveda oculta | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | ¿Está seguro de que desea descifrar los archivos ocultos? | Decryption confirmation (`usted` register) |
 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada. | Clipboard security notice |
-| 36 | `on_vault_exit` | On leaving encrypted section | Al salir de la sección cifrada | Settings title |
-| 37 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | Seguir mostrando álbumes cifrados | Radio option |
-| 38 | `on_vault_exit_hide` | Hide encrypted albums | Ocultar álbumes cifrados | Radio option |
-| 39 | `on_vault_exit_ask_every_time` | Always ask | Preguntar siempre | Radio option |
-| 40 | `vault_exit_dialog_title` | Exiting Encrypted Section | Saliendo de la sección cifrada | Dialog title |
-| 41 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | ¿Mostrar el álbum cifrado junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender. | Dialog question (single album) |
-| 42 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | ¿Mostrar los álbumes cifrados junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender. | Dialog question (multiple albums) |
-| 43 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | Para más opciones, consulta Ajustes &gt; Al salir de la sección cifrada | References `Ajustes` and `on_vault_exit` |
 | 44 | `open_system_language_settings` | Open system language settings | Abrir ajustes de idioma del sistema | Uses `ajustes` for `es` |
 | 45 | `file_encrypted_successfully` | File encrypted successfully | Archivo cifrado correctamente  | Success toast after encrypting a single file |
 | 46 | `files_encrypted_successfully` | Files encrypted successfully | Archivos cifrados correctamente  | Success toast after encrypting multiple files |
@@ -503,16 +497,10 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 294 | `confirm_checkbox_label` | I confirm | Confirmo |
 | 295 | `secret_vault` | Encrypted Vault | Bóveda cifrada |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | La bóveda cifrada está vacía |
+| - | `press_back_again_to_exit_vault` | Press back again to exit | Pulsa atrás de nuevo para salir |
+| - | `block_vault_screenshots` | Block screenshots in hidden vault | Bloquear capturas de pantalla en la bóveda oculta |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | ¿Está seguro de que desea descifrar los archivos ocultos? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada. |
-| 299 | `on_vault_exit` | On leaving encrypted section | Al salir de la sección cifrada |
-| 300 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | Seguir mostrando álbumes cifrados |
-| 301 | `on_vault_exit_hide` | Hide encrypted albums | Ocultar álbumes cifrados |
-| 302 | `on_vault_exit_ask_every_time` | Always ask | Preguntar siempre |
-| 303 | `vault_exit_dialog_title` | Exiting Encrypted Section | Saliendo de la sección cifrada |
-| 304 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | ¿Mostrar el álbum cifrado junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender. |
-| 305 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | ¿Mostrar los álbumes cifrados junto con otros álbumes?\n\nEn ese caso, durante la sesión de la aplicación, deberá desbloquear la bóveda oculta cada vez que envíe la aplicación a segundo plano y vuelva a ella, o cuando apague la pantalla y la vuelva a encender. |
-| 306 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | Para más opciones, consulta Ajustes &gt; Al salir de la sección cifrada |
 | 307 | `stop_showing_hidden` | Stop showing encrypted media | Dejar de mostrar medios cifrados |
 | 308 | `system_default` | System default | Sistema por defecto |
 | 309 | `language` | Language | Idioma |

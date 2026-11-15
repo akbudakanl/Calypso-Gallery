@@ -67,16 +67,10 @@ These 66 strings were introduced by this fork (Gallery-Cipher) and do not exist 
 | 31 | `confirm_checkbox_label` | I confirm | 我確認 | Checkbox label, suffixed with countdown `(10)` in dialog |
 | 32 | `secret_vault` | Encrypted Vault | 加密保險箱 | Vault feature title |
 | 33 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 | Empty state placeholder for Encrypted Vault |
+| - | `press_back_again_to_exit_vault` | Press back again to exit | 再按一次返回鍵即可離開 | Toast shown on first back press in hidden vault |
+| - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ | Confirmation prompt for decrypting hidden file(s) |
 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 | Security notice using `剪貼簿` matching `fossify-commons` |
-| 36 | `on_vault_exit` | On leaving encrypted section | 離開加密區域時 | Settings label for behavior when leaving encrypted section |
-| 37 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | 繼續顯示加密相簿 | Radio option |
-| 38 | `on_vault_exit_hide` | Hide encrypted albums | 隱藏加密相簿 | Radio option |
-| 39 | `on_vault_exit_ask_every_time` | Always ask | 每次詢問 | Radio option |
-| 40 | `vault_exit_dialog_title` | Exiting Encrypted Section | 正在離開加密區域 | Dialog title |
-| 41 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | 是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。 | Dialog question (single album) |
-| 42 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | 是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。 | Dialog question (multiple albums) |
-| 43 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | 如需更多選項，請前往「設定」&gt;「離開加密區域時」 | References `設定` and `離開加密區域時` |
 | 44 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 | Neutral dialog button in language picker |
 | 45 | `file_encrypted_successfully` | File encrypted successfully | 檔案加密成功  | Success toast after encrypting a single file |
 | 46 | `files_encrypted_successfully` | Files encrypted successfully | 檔案加密成功  | Success toast after encrypting multiple files |
@@ -503,16 +497,10 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 294 | `confirm_checkbox_label` | I confirm | 我確認 |
 | 295 | `secret_vault` | Encrypted Vault | 加密保險箱 |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 |
+| - | `press_back_again_to_exit_vault` | Press back again to exit | 再按一次返回鍵即可離開 |
+| - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 |
-| 299 | `on_vault_exit` | On leaving encrypted section | 離開加密區域時 |
-| 300 | `on_vault_exit_keep_showing` | Keep showing encrypted albums | 繼續顯示加密相簿 |
-| 301 | `on_vault_exit_hide` | Hide encrypted albums | 隱藏加密相簿 |
-| 302 | `on_vault_exit_ask_every_time` | Always ask | 每次詢問 |
-| 303 | `vault_exit_dialog_title` | Exiting Encrypted Section | 正在離開加密區域 |
-| 304 | `vault_exit_question_single` | Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | 是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。 |
-| 305 | `vault_exit_question_multiple` | Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on. | 是否將加密相簿與其他相簿一起顯示？\n\n在此情況下，於應用程式工作階段期間，每當您將應用程式切換至背景後再返回，或是關閉螢幕後再重新開啟時，都需要解鎖隱藏保險箱。 |
-| 306 | `vault_exit_settings_hint` | For more options, see Settings &gt; On leaving encrypted section | 如需更多選項，請前往「設定」&gt;「離開加密區域時」 |
 | 307 | `stop_showing_hidden` | Stop showing encrypted media | 停止顯示已加密媒體 |
 | 308 | `system_default` | System default | 系統預設 |
 | 309 | `language` | Language | 語言 |
