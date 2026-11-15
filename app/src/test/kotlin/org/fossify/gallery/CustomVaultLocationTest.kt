@@ -8,11 +8,14 @@ import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.NOMEDIA
+import org.fossify.gallery.dialogs.resolveSkippedCryptoMessageRes
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
 import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_ROOT_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DEFAULT_SECRET_ALBUM_NAME
@@ -1692,6 +1695,114 @@ class CustomVaultLocationTest {
         assertEquals(
             CryptoManager.SmartConflictDifference.CONTENT_DIFFERS,
             CryptoManager.compareFilesForSmartConflict(encTakenA, encContentAndDate).difference
+        )
+    }
+
+    @Test
+    fun resolveSkippedCryptoMessageRes_selectsDynamicMessageByModeAndSkipOrigin() {
+        // Standard mode: always uses user-skipped phrasing regardless of flags
+        assertEquals(
+            R.string.skipped_crypto_files_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_STANDARD_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = false
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_STANDARD_DIALOG,
+                hasUserSkipped = false,
+                hasIdenticalSkipped = true
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_decrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = false,
+                conflictHandlingMode = CONFLICT_HANDLING_STANDARD_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = true
+            )
+        )
+
+        // Smart dialog: user-only, identical-only, or both
+        assertEquals(
+            R.string.skipped_crypto_files_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = false
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_identical_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = false,
+                hasIdenticalSkipped = true
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_both_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = true
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_decrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = false,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = false
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_identical_decrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = false,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = false,
+                hasIdenticalSkipped = true
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_both_decrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = false,
+                conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG,
+                hasUserSkipped = true,
+                hasIdenticalSkipped = true
+            )
+        )
+
+        // Auto mode: always uses identical-only phrasing
+        assertEquals(
+            R.string.skipped_crypto_files_identical_encrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = true,
+                conflictHandlingMode = CONFLICT_HANDLING_AUTO,
+                hasUserSkipped = false,
+                hasIdenticalSkipped = true
+            )
+        )
+        assertEquals(
+            R.string.skipped_crypto_files_identical_decrypt_message,
+            resolveSkippedCryptoMessageRes(
+                isEncrypt = false,
+                conflictHandlingMode = CONFLICT_HANDLING_AUTO,
+                hasUserSkipped = false,
+                hasIdenticalSkipped = true
+            )
         )
     }
 

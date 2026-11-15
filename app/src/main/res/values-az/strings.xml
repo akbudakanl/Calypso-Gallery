@@ -508,15 +508,6 @@
     <string name="vault_sync_nothing_to_sync">Seçilmiş qovluqda gözləyən CLI ilə şifrələnmiş media (.pending_sync) tapılmadı.</string>
     <string name="vault_sync_same_folder_error">Seçilmiş mənbə qovluğu aktiv seyfinizlə eynidir.</string>
     <string name="use_for_this_album">Yalnız bu albom üçün işlət</string>
-    <string name="crypto_duplicate_source_mode_label">Şifrələmə və şifrə açma zamanı fayl hədəf qovluqda mövcud olduqda</string>
-    <string name="crypto_duplicate_source_ask">Həmişə soruş (Standart)</string>
-    <string name="crypto_duplicate_source_keep">Mənbə qovluqdakı faylı saxla</string>
-    <string name="crypto_duplicate_source_delete">Mənbə qovluqdakı faylı sil</string>
-    <string name="crypto_duplicate_source_title">Fayl hədəfdə artıq mövcuddur</string>
-    <string name="crypto_duplicate_source_encrypt_message">Şifrələdiyiniz faylların bəziləri hədəf qovluqda artıq mövcuddur. Mənbə qovluqdakı fayllarla nə edilsin?</string>
-    <string name="crypto_duplicate_source_decrypt_message">Şifrəsini açdığınız faylların bəziləri hədəf qovluqda artıq mövcuddur. Mənbə qovluqdakı fayllarla nə edilsin?</string>
-    <string name="crypto_duplicate_source_encrypt_keep_warning">Xəbərdarlıq: Şifrələnməmiş fayllar üçün \"Saxla\" seçilərsə, mənbə fayl şifrələnmədən diskdə qalacaq.</string>
-    <string name="crypto_duplicate_source_always_ask">Həmişə soruş</string>
     <string name="export_encrypted_vault">Şifrələnmiş seyfi ixrac et</string>
     <string name="export_vault_only_header">Yalnız .vault faylını ehtiva edən qovluğu ixrac et</string>
     <string name="export_vault_entire_folder">Bütün qovluğu ixrac et</string>

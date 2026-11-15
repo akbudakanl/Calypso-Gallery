@@ -49,7 +49,6 @@ import org.fossify.gallery.dialogs.AllFilesPermissionDialog
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.EncryptConfirmationDialog
 import org.fossify.gallery.dialogs.resolveAlbumCryptoOptions
-import org.fossify.gallery.dialogs.resolveCryptoDuplicateSourceOption
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.dialogs.PickDirectoryDialog
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
@@ -72,6 +71,7 @@ import org.fossify.gallery.helpers.PickDirectoryMode
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.TEMP_FOLDER_NAME
+import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
 import org.fossify.gallery.helpers.copyMoveFilesWithProgress
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -1183,76 +1183,77 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                 srcFile.parentFile ?: File(oldPath.getParentPath())
             }
 
-            val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
             val runSingleDecryptWithResolution = {
                 conflictResolution: Int,
                 precheckedIndex: CryptoManager.TargetPlainIndex?,
-                isPrecheckedIdentical: Boolean,
-                isPrecheckedNonIdentical: Boolean ->
-                resolveCryptoDuplicateSourceOption(
-                    activity = this,
-                    isEncrypt = false,
-                    hasIdenticalInTarget = {
-                        when {
-                            isStandardMode -> false
-                            isPrecheckedIdentical -> true
-                            isPrecheckedNonIdentical -> false
-                            else -> CryptoManager.hasAnyIdenticalTransferMatch(
-                                sourceTargetPairs = listOf(srcFile to targetDir),
+                precheckedIdenticalTargets: Map<String, File>,
+                precheckedIdenticalPaths: Set<String>,
+                precheckedNonIdenticalPaths: Set<String> ->
+                ensureNotificationPermissionThenRun { notificationsAllowed ->
+                    val progressDialog = CryptoProgressDialog(
+                        activity = this,
+                        max = 1,
+                        titleId = R.string.decrypting_files,
+                        enableNotification = notificationsAllowed
+                    )
+                    ensureBackgroundThread {
+                        val identicalTarget = if (conflictResolution == CONFLICT_SKIP) {
+                            null
+                        } else {
+                            findIdenticalTransferTarget(
+                                sourceFile = srcFile,
+                                targetDir = targetDir,
                                 isTargetEncrypted = false,
-                                fastSampling = false,
-                                context = this
+                                plainIndex = precheckedIndex,
+                                precheckedIdenticalTargets = precheckedIdenticalTargets,
+                                precheckedIdenticalPaths = precheckedIdenticalPaths,
+                                precheckedNonIdenticalPaths = precheckedNonIdenticalPaths
                             )
                         }
-                    },
-                    onCancelled = { callback?.invoke(oldPath) }
-                ) { deleteSourceOnIdentical ->
-                    ensureNotificationPermissionThenRun { notificationsAllowed ->
-                        val progressDialog = CryptoProgressDialog(
-                            activity = this,
-                            max = 1,
-                            titleId = R.string.decrypting_files,
-                            enableNotification = notificationsAllowed
-                        )
-                        ensureBackgroundThread {
-                            val decryptedFile = if (conflictResolution == CONFLICT_SKIP) {
+                        val isSkipped = conflictResolution == CONFLICT_SKIP || identicalTarget != null
+                        val decryptedFile = if (isSkipped) {
+                            null
+                        } else {
+                            try {
+                                CryptoManager.decryptFileToDirectory(
+                                    context = this,
+                                    encryptedFile = srcFile,
+                                    targetDir = targetDir,
+                                    deleteEncryptedSource = true,
+                                    conflictResolution = conflictResolution,
+                                    targetIndex = precheckedIndex,
+                                    skipDuplicateCheck = true,
+                                    deleteSourceOnIdentical = false
+                                )
+                            } catch (e: Exception) {
                                 null
-                            } else {
-                                try {
-                                    CryptoManager.decryptFileToDirectory(
-                                        context = this,
-                                        encryptedFile = srcFile,
-                                        targetDir = targetDir,
-                                        deleteEncryptedSource = true,
-                                        conflictResolution = conflictResolution,
-                                        targetIndex = precheckedIndex,
-                                        skipDuplicateCheck = isStandardMode || isPrecheckedNonIdentical,
-                                        deleteSourceOnIdentical = deleteSourceOnIdentical
-                                    )
-                                } catch (e: Exception) {
-                                    null
-                                }
                             }
-                            val resultPath = decryptedFile?.absolutePath ?: oldPath
-                            CryptoManager.clearAppImageCaches(this)
-                            runOnUiThread {
-                                progressDialog.updateProgress(if (decryptedFile != null) 1 else 0, 1)
-                                progressDialog.dismiss()
-                                if (conflictResolution == CONFLICT_SKIP) {
-                                    resolveSkippedCryptoFiles(
-                                        isEncrypt = false,
-                                        skippedFiles = listOf(srcFile)
-                                    ) { deletedCount ->
-                                        callback?.invoke(if (deletedCount > 0) "" else oldPath)
-                                    }
+                        }
+                        val resultPath = decryptedFile?.absolutePath ?: oldPath
+                        CryptoManager.clearAppImageCaches(this)
+                        runOnUiThread {
+                            progressDialog.updateProgress(if (isSkipped || decryptedFile != null) 1 else 0, 1)
+                            progressDialog.dismiss()
+                            if (isSkipped) {
+                                val identicalMap = if (identicalTarget != null) {
+                                    mapOf(srcFile.absolutePath to identicalTarget)
                                 } else {
-                                    if (decryptedFile != null && decryptedFile.exists()) {
-                                        toast(R.string.file_decrypted_successfully)
-                                    } else {
-                                        toast(org.fossify.commons.R.string.unknown_error_occurred)
-                                    }
-                                    callback?.invoke(resultPath)
+                                    emptyMap()
                                 }
+                                resolveSkippedCryptoFiles(
+                                    isEncrypt = false,
+                                    skippedFiles = listOf(srcFile),
+                                    identicalTargetMap = identicalMap
+                                ) { deletedCount ->
+                                    callback?.invoke(if (deletedCount > 0) "" else oldPath)
+                                }
+                            } else {
+                                if (decryptedFile != null && decryptedFile.exists()) {
+                                    toast(R.string.file_decrypted_successfully)
+                                } else {
+                                    toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                }
+                                callback?.invoke(resultPath)
                             }
                         }
                     }
@@ -1266,8 +1267,9 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                 runSingleDecryptWithResolution(
                     resolution,
                     scan.plainIndexes[targetDir.absolutePath],
-                    srcFile.absolutePath in scan.identicalPaths,
-                    srcFile.absolutePath in scan.nonIdenticalPaths
+                    scan.identicalTargets,
+                    scan.identicalPaths,
+                    scan.nonIdenticalPaths
                 )
             }
         } else if (srcFile.name.startsWith('.')) {
@@ -1330,73 +1332,82 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
         return
     }
 
-    PickVaultAlbumDialog(this) { targetDir, albumName ->
-        val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+    PickVaultAlbumDialog(
+        activity = this,
+        onCancel = {
+            VaultSessionManager.lockVaultIfOutsideSession(this)
+            callback?.invoke(oldPath)
+        }
+    ) { targetDir, albumName ->
         val runSingleEncryptWithResolution = {
             conflictResolution: Int,
             precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
-            isPrecheckedIdentical: Boolean,
-            isPrecheckedNonIdentical: Boolean ->
-            resolveCryptoDuplicateSourceOption(
-                activity = this,
-                isEncrypt = true,
-                hasIdenticalInTarget = {
-                    when {
-                        isStandardMode -> false
-                        isPrecheckedIdentical -> true
-                        isPrecheckedNonIdentical -> false
-                        else -> CryptoManager.hasAnyIdenticalTransferMatch(
-                            sourceTargetPairs = listOf(srcFile to targetDir),
+            precheckedIdenticalTargets: Map<String, File>,
+            precheckedIdenticalPaths: Set<String>,
+            precheckedNonIdenticalPaths: Set<String> ->
+            ensureNotificationPermissionThenRun { notificationsAllowed ->
+                val progressDialog = CryptoProgressDialog(
+                    activity = this,
+                    max = 1,
+                    titleId = R.string.encrypting_files,
+                    enableNotification = notificationsAllowed
+                )
+                ensureBackgroundThread {
+                    val identicalTarget = if (conflictResolution == CONFLICT_SKIP) {
+                        null
+                    } else {
+                        findIdenticalTransferTarget(
+                            sourceFile = srcFile,
+                            targetDir = targetDir,
                             isTargetEncrypted = true,
-                            fastSampling = false,
-                            context = this
+                            encryptedIndex = precheckedEncIndex,
+                            precheckedIdenticalTargets = precheckedIdenticalTargets,
+                            precheckedIdenticalPaths = precheckedIdenticalPaths,
+                            precheckedNonIdenticalPaths = precheckedNonIdenticalPaths
                         )
                     }
-                },
-                onCancelled = { callback?.invoke(oldPath) }
-            ) { deleteSourceOnIdentical ->
-                ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    val progressDialog = CryptoProgressDialog(
-                        activity = this,
-                        max = 1,
-                        titleId = R.string.encrypting_files,
-                        enableNotification = notificationsAllowed
-                    )
-                    ensureBackgroundThread {
-                        val encryptedFile = if (conflictResolution == CONFLICT_SKIP) {
-                            null
-                        } else {
-                            CryptoManager.encryptFileToDirectory(
-                                context = this,
-                                sourceFile = srcFile,
-                                targetDir = targetDir,
-                                wipeSource = true,
-                                clearCachesNow = true,
-                                conflictResolution = conflictResolution,
-                                targetIndex = precheckedEncIndex,
-                                skipDuplicateCheck = isStandardMode || isPrecheckedNonIdentical,
-                                deleteSourceOnIdentical = deleteSourceOnIdentical
-                            )
-                        }
-                        val resultPath = encryptedFile?.absolutePath ?: oldPath
-                        runOnUiThread {
-                            progressDialog.updateProgress(if (encryptedFile != null && encryptedFile.exists()) 1 else 0, 1)
-                            progressDialog.dismiss()
-                            if (conflictResolution == CONFLICT_SKIP) {
-                                resolveSkippedCryptoFiles(
-                                    isEncrypt = true,
-                                    skippedFiles = listOf(srcFile)
-                                ) { deletedCount ->
-                                    callback?.invoke(if (deletedCount > 0) "" else oldPath)
-                                }
+                    val isSkipped = conflictResolution == CONFLICT_SKIP || identicalTarget != null
+                    val encryptedFile = if (isSkipped) {
+                        null
+                    } else {
+                        CryptoManager.encryptFileToDirectory(
+                            context = this,
+                            sourceFile = srcFile,
+                            targetDir = targetDir,
+                            wipeSource = true,
+                            clearCachesNow = true,
+                            conflictResolution = conflictResolution,
+                            targetIndex = precheckedEncIndex,
+                            skipDuplicateCheck = true,
+                            deleteSourceOnIdentical = false
+                        )
+                    }
+                    val resultPath = encryptedFile?.absolutePath ?: oldPath
+                    runOnUiThread {
+                        progressDialog.updateProgress(if (isSkipped || (encryptedFile != null && encryptedFile.exists())) 1 else 0, 1)
+                        progressDialog.dismiss()
+                        if (isSkipped) {
+                            val identicalMap = if (identicalTarget != null) {
+                                mapOf(srcFile.absolutePath to identicalTarget)
                             } else {
-                                if (encryptedFile != null && encryptedFile.exists()) {
-                                    toast(getString(R.string.file_hidden_to_album, albumName))
-                                } else {
-                                    toast(org.fossify.commons.R.string.unknown_error_occurred)
-                                }
-                                callback?.invoke(resultPath)
+                                emptyMap()
                             }
+                            resolveSkippedCryptoFiles(
+                                isEncrypt = true,
+                                skippedFiles = listOf(srcFile),
+                                identicalTargetMap = identicalMap
+                            ) { deletedCount ->
+                                VaultSessionManager.lockVaultIfOutsideSession(this)
+                                callback?.invoke(if (deletedCount > 0) "" else oldPath)
+                            }
+                        } else {
+                            if (encryptedFile != null && encryptedFile.exists()) {
+                                toast(getString(R.string.file_hidden_to_album, albumName))
+                            } else {
+                                toast(org.fossify.commons.R.string.unknown_error_occurred)
+                            }
+                            VaultSessionManager.lockVaultIfOutsideSession(this)
+                            callback?.invoke(resultPath)
                         }
                     }
                 }
@@ -1410,8 +1421,9 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
             runSingleEncryptWithResolution(
                 resolution,
                 scan.encIndexes[targetDir.absolutePath],
-                srcFile.absolutePath in scan.identicalPaths,
-                srcFile.absolutePath in scan.nonIdenticalPaths
+                scan.identicalTargets,
+                scan.identicalPaths,
+                scan.nonIdenticalPaths
             )
         }
     }
@@ -1464,8 +1476,48 @@ data class TransferConflictScanResult(
     val identicalPaths: HashSet<String>,
     val nonIdenticalPaths: HashSet<String>,
     val plainIndexes: HashMap<String, CryptoManager.TargetPlainIndex>,
-    val encIndexes: HashMap<String, CryptoManager.TargetEncryptedIndex>
+    val encIndexes: HashMap<String, CryptoManager.TargetEncryptedIndex>,
+    val identicalTargets: HashMap<String, File> = HashMap()
 )
+
+fun Activity.findIdenticalTransferTarget(
+    sourceFile: File,
+    targetDir: File,
+    isTargetEncrypted: Boolean,
+    plainIndex: CryptoManager.TargetPlainIndex? = null,
+    encryptedIndex: CryptoManager.TargetEncryptedIndex? = null,
+    desiredPlainName: String? = null,
+    precheckedIdenticalTargets: Map<String, File> = emptyMap(),
+    precheckedIdenticalPaths: Set<String> = emptySet(),
+    precheckedNonIdenticalPaths: Set<String> = emptySet(),
+    allowFastSampling: Boolean = false
+): File? {
+    if (config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG) return null
+    val srcPath = sourceFile.absolutePath
+    precheckedIdenticalTargets[srcPath]?.let { return it }
+    if (srcPath in precheckedNonIdenticalPaths) return null
+
+    val useFastSampling = allowFastSampling &&
+        (CryptoManager.isEncryptedFile(sourceFile.name) == isTargetEncrypted) &&
+        config.fastLargeDuplicateCheck
+    val check = CryptoManager.inspectTransferConflict(
+        sourceFile = sourceFile,
+        targetDir = targetDir,
+        isTargetEncrypted = isTargetEncrypted,
+        plainIndex = plainIndex,
+        encryptedIndex = encryptedIndex,
+        desiredPlainName = desiredPlainName,
+        fastSampling = useFastSampling,
+        context = this
+    )
+    if (check.status == CryptoManager.TransferConflictStatus.IDENTICAL_SKIP) {
+        return check.existingFile
+    }
+    if (srcPath in precheckedIdenticalPaths) {
+        return check.existingFile ?: File(targetDir, desiredPlainName ?: sourceFile.name)
+    }
+    return null
+}
 
 data class SmartConflictScanResult(
     val conflicts: ArrayList<SmartConflictItem>,
@@ -1581,6 +1633,7 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
             val smartConflicts = ArrayList<SmartConflictItem>()
             val identicalPaths = HashSet<String>()
             val nonIdenticalPaths = HashSet<String>()
+            val identicalTargets = HashMap<String, File>()
             for (pair in pairs) {
                 val pIdx = if (!pair.isTargetEncrypted) getPlainIndex(pair.targetDir) else null
                 val eIdx = if (pair.isTargetEncrypted) getEncIndex(pair.targetDir) else null
@@ -1600,6 +1653,7 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
                 when (check.status) {
                     CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
                         identicalPaths.add(pair.sourceFile.absolutePath)
+                        check.existingFile?.let { identicalTargets[pair.sourceFile.absolutePath] = it }
                     }
                     CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
                         nonIdenticalPaths.add(pair.sourceFile.absolutePath)
@@ -1619,7 +1673,7 @@ fun BaseSimpleActivity.resolveCryptoTransferConflicts(
                 }
             }
             resolveSmartContentConflicts(smartConflicts) { resolutions ->
-                onResolved(TransferConflictScanResult(resolutions, identicalPaths, nonIdenticalPaths, plainIndexes, encIndexes))
+                onResolved(TransferConflictScanResult(resolutions, identicalPaths, nonIdenticalPaths, plainIndexes, encIndexes, identicalTargets))
             }
         }
     }
@@ -1775,94 +1829,64 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                 isDecrypt = true
             ) {
                 val destDir = File(destination)
-                val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
-                    val runWithResolutions = {
-                        conflictResolutions: LinkedHashMap<String, Int>,
-                        precheckedIndex: CryptoManager.TargetPlainIndex?,
-                        precheckedIdenticalPaths: Set<String>,
-                        precheckedNonIdenticalPaths: Set<String> ->
-                        resolveCryptoDuplicateSourceOption(
+                val runWithResolutions = {
+                    conflictResolutions: LinkedHashMap<String, Int>,
+                    precheckedIndex: CryptoManager.TargetPlainIndex?,
+                    precheckedIdenticalTargets: Map<String, File>,
+                    precheckedIdenticalPaths: Set<String>,
+                    precheckedNonIdenticalPaths: Set<String> ->
+                    ensureNotificationPermissionThenRun { notificationsAllowed ->
+                        val progressDialog = CryptoProgressDialog(
                             activity = this,
-                            isEncrypt = false,
-                            hasIdenticalInTarget = {
-                                when {
-                                    isStandardMode -> false
-                                    precheckedIdenticalPaths.isNotEmpty() -> true
-                                    precheckedNonIdenticalPaths.size >= fileDirItems.size -> false
-                                    else -> {
-                                        val pairs = fileDirItems.mapNotNull { item ->
-                                            val f = File(item.path)
-                                            if (f.exists() && f.isFile) f to destDir else null
-                                        }
-                                        CryptoManager.hasAnyIdenticalTransferMatch(
-                                            sourceTargetPairs = pairs,
-                                            isTargetEncrypted = false,
-                                            fastSampling = false,
-                                            context = this
-                                        )
-                                    }
-                                }
+                            max = fileDirItems.size,
+                            titleId = R.string.decrypting_files,
+                            enableNotification = notificationsAllowed
+                        )
+                        ensureBackgroundThread {
+                            if (!destDir.exists()) {
+                                destDir.mkdirs()
                             }
-                        ) { deleteSourceOnIdentical ->
-                        ensureNotificationPermissionThenRun { notificationsAllowed ->
-                            val progressDialog = CryptoProgressDialog(
-                                activity = this,
-                                max = fileDirItems.size,
-                                titleId = R.string.decrypting_files,
-                                enableNotification = notificationsAllowed
-                            )
-                            ensureBackgroundThread {
-                                if (!destDir.exists()) {
-                                    destDir.mkdirs()
+                            val execPlainIndex = precheckedIndex ?: CryptoManager.TargetPlainIndex(destDir)
+                            val sourceDirs = LinkedHashSet<File>()
+                            val skippedSourceFiles = ArrayList<File>()
+                            val identicalTargetMap = HashMap<String, File>()
+                            var processedCount = 0
+                            var skippedCount = 0
+                            var allSuccess = true
+                            var anyFavoriteUpdated = false
+                            var lastUiProgressMs = 0L
+
+                            for (item in fileDirItems) {
+                                val srcFile = File(item.path)
+                                if (!srcFile.exists()) continue
+                                srcFile.parentFile?.let { sourceDirs.add(it) }
+                                val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
+
+                                val isEnc = CryptoManager.isEncryptedFile(srcFile.name)
+                                val desiredHiddenName = if (!isEnc && srcFile.name.startsWith('.')) {
+                                    srcFile.name.substring(1)
+                                } else {
+                                    null
                                 }
-                                val execPlainIndex = precheckedIndex ?: CryptoManager.TargetPlainIndex(destDir)
-                                val sourceDirs = LinkedHashSet<File>()
-                                val skippedSourceFiles = ArrayList<File>()
-                                var processedCount = 0
-                                var skippedCount = 0
-                                var allSuccess = true
-                                var anyFavoriteUpdated = false
-                                var lastUiProgressMs = 0L
 
-                                for (item in fileDirItems) {
-                                    val srcFile = File(item.path)
-                                    if (!srcFile.exists()) continue
-                                    srcFile.parentFile?.let { sourceDirs.add(it) }
-                                    val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
-
-                                    val isEnc = CryptoManager.isEncryptedFile(srcFile.name)
-                                    val desiredHiddenName = if (!isEnc && srcFile.name.startsWith('.')) {
-                                        srcFile.name.substring(1)
-                                    } else {
-                                        null
-                                    }
-
-                                    val isHiddenIdenticalSkip = !isEnc && !isStandardMode && (
-                                        srcFile.absolutePath in precheckedIdenticalPaths || (
-                                            srcFile.absolutePath !in precheckedNonIdenticalPaths &&
-                                                CryptoManager.inspectTransferConflict(
-                                                    sourceFile = srcFile,
-                                                    targetDir = destDir,
-                                                    isTargetEncrypted = false,
-                                                    plainIndex = execPlainIndex,
-                                                    desiredPlainName = desiredHiddenName,
-                                                    fastSampling = false
-                                                ).status == CryptoManager.TransferConflictStatus.IDENTICAL_SKIP
-                                            )
-                                        )
-
-                                    if (isHiddenIdenticalSkip) {
-                                        if (deleteSourceOnIdentical && desiredHiddenName != null) {
-                                            val existingTarget = execPlainIndex.findExact(desiredHiddenName) ?: File(destDir, desiredHiddenName)
-                                            if (srcFile.delete()) {
-                                                updateDBMediaPath(srcFile.absolutePath, existingTarget.absolutePath)
-                                                processedCount++
-                                            } else {
-                                                allSuccess = false
-                                            }
-                                        } else {
-                                            skippedCount++
-                                        }
+                                if (resolution == CONFLICT_SKIP) {
+                                    skippedCount++
+                                    skippedSourceFiles.add(srcFile)
+                                } else {
+                                    val identicalTarget = findIdenticalTransferTarget(
+                                        sourceFile = srcFile,
+                                        targetDir = destDir,
+                                        isTargetEncrypted = false,
+                                        plainIndex = execPlainIndex,
+                                        desiredPlainName = desiredHiddenName,
+                                        precheckedIdenticalTargets = precheckedIdenticalTargets,
+                                        precheckedIdenticalPaths = precheckedIdenticalPaths,
+                                        precheckedNonIdenticalPaths = precheckedNonIdenticalPaths
+                                    )
+                                    if (identicalTarget != null) {
+                                        skippedCount++
+                                        skippedSourceFiles.add(srcFile)
+                                        identicalTargetMap[srcFile.absolutePath] = identicalTarget
                                     } else {
                                         val decFile = if (isEnc) {
                                             CryptoManager.decryptFileToDirectory(
@@ -1872,14 +1896,13 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                                                 deleteEncryptedSource = true,
                                                 conflictResolution = resolution,
                                                 targetIndex = execPlainIndex,
-                                                skipDuplicateCheck = isStandardMode || (srcFile.absolutePath in precheckedNonIdenticalPaths),
-                                                deleteSourceOnIdentical = deleteSourceOnIdentical
+                                                skipDuplicateCheck = true,
+                                                deleteSourceOnIdentical = false
                                             )
                                         } else if (desiredHiddenName != null) {
                                             val exactTarget = execPlainIndex.findExact(desiredHiddenName) ?: File(destDir, desiredHiddenName)
                                             val target = if (exactTarget.exists()) {
                                                 when (resolution) {
-                                                    CONFLICT_SKIP -> null
                                                     CONFLICT_OVERWRITE -> {
                                                         exactTarget.delete()
                                                         execPlainIndex.removeFile(exactTarget)
@@ -1890,7 +1913,7 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                                             } else {
                                                 exactTarget
                                             }
-                                            if (target != null && srcFile.renameTo(target)) {
+                                            if (srcFile.renameTo(target)) {
                                                 execPlainIndex.recordFile(target)
                                                 updateDBMediaPath(srcFile.absolutePath, target.absolutePath)
                                                 rescanPaths(arrayListOf(target.absolutePath))
@@ -1915,77 +1938,76 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                                                 }
                                             }
                                             processedCount++
-                                        } else if (resolution == CONFLICT_SKIP) {
-                                            skippedCount++
-                                            skippedSourceFiles.add(srcFile)
                                         } else {
                                             allSuccess = false
                                         }
                                     }
-
-                                    val doneCount = processedCount + skippedCount
-                                    val now = System.currentTimeMillis()
-                                    if (doneCount >= fileDirItems.size || now - lastUiProgressMs >= 80L) {
-                                        lastUiProgressMs = now
-                                        runOnUiThread {
-                                            progressDialog.updateProgress(doneCount, fileDirItems.size)
-                                        }
-                                    }
                                 }
 
-                                if (anyFavoriteUpdated) {
-                                    runCatching { ReferenceBackupManager.saveFavorites(this) }
-                                }
-                                sourceDirs.forEach { dir ->
-                                    CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(this, dir)
-                                }
-
-                                CryptoManager.clearAppImageCaches(this)
-                                runOnUiThread {
-                                    try {
-                                        progressDialog.dismiss()
-                                    } catch (_: Exception) {}
-
-                                    if (allSuccess && processedCount > 0) {
-                                        toast(if (processedCount == 1) R.string.file_decrypted_successfully else R.string.files_decrypted_successfully)
-                                    } else if (allSuccess && skippedCount > 0) {
-                                        // Skipped conflicting items cleanly per user choice
-                                    } else {
-                                        toast(org.fossify.commons.R.string.unknown_error_occurred)
-                                    }
-                                    resolveSkippedCryptoFiles(
-                                        isEncrypt = false,
-                                        skippedFiles = skippedSourceFiles
-                                    ) {
-                                        callback(destination)
+                                val doneCount = processedCount + skippedCount
+                                val now = System.currentTimeMillis()
+                                if (doneCount >= fileDirItems.size || now - lastUiProgressMs >= 80L) {
+                                    lastUiProgressMs = now
+                                    runOnUiThread {
+                                        progressDialog.updateProgress(doneCount, fileDirItems.size)
                                     }
                                 }
                             }
-                        }
-                        }
-                    }
 
-                    resolveCryptoTransferConflicts(
-                        buildPairs = {
-                            fileDirItems.mapNotNull { item ->
-                                val srcFile = File(item.path)
-                                if (!srcFile.exists() || !srcFile.isFile) return@mapNotNull null
-                                val desiredName = if (!CryptoManager.isEncryptedFile(srcFile.name) && srcFile.name.startsWith('.')) {
-                                    srcFile.name.substring(1)
+                            if (anyFavoriteUpdated) {
+                                runCatching { ReferenceBackupManager.saveFavorites(this) }
+                            }
+                            sourceDirs.forEach { dir ->
+                                CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(this, dir)
+                            }
+
+                            CryptoManager.clearAppImageCaches(this)
+                            runOnUiThread {
+                                try {
+                                    progressDialog.dismiss()
+                                } catch (_: Exception) {}
+
+                                if (allSuccess && processedCount > 0) {
+                                    toast(if (processedCount == 1) R.string.file_decrypted_successfully else R.string.files_decrypted_successfully)
+                                } else if (allSuccess && skippedCount > 0) {
+                                    // Skipped conflicting items cleanly per user choice
                                 } else {
-                                    null
+                                    toast(org.fossify.commons.R.string.unknown_error_occurred)
                                 }
-                                TransferPairSpec(srcFile, destDir, isTargetEncrypted = false, desiredPlainName = desiredName)
+                                resolveSkippedCryptoFiles(
+                                    isEncrypt = false,
+                                    skippedFiles = skippedSourceFiles,
+                                    identicalTargetMap = identicalTargetMap
+                                ) {
+                                    callback(destination)
+                                }
                             }
                         }
-                    ) { scan ->
-                        runWithResolutions(
-                            scan.resolutions,
-                            scan.plainIndexes[destDir.absolutePath],
-                            scan.identicalPaths,
-                            scan.nonIdenticalPaths
-                        )
                     }
+                }
+
+                resolveCryptoTransferConflicts(
+                    buildPairs = {
+                        fileDirItems.mapNotNull { item ->
+                            val srcFile = File(item.path)
+                            if (!srcFile.exists() || !srcFile.isFile) return@mapNotNull null
+                            val desiredName = if (!CryptoManager.isEncryptedFile(srcFile.name) && srcFile.name.startsWith('.')) {
+                                srcFile.name.substring(1)
+                            } else {
+                                null
+                            }
+                            TransferPairSpec(srcFile, destDir, isTargetEncrypted = false, desiredPlainName = desiredName)
+                        }
+                    }
+                ) { scan ->
+                    runWithResolutions(
+                        scan.resolutions,
+                        scan.plainIndexes[destDir.absolutePath],
+                        scan.identicalTargets,
+                        scan.identicalPaths,
+                        scan.nonIdenticalPaths
+                    )
+                }
                 }
             }
         }
@@ -2247,11 +2269,11 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                 }
 
                 val destDir = File(destination)
-                val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
                 val runCryptoWithResolutions = {
                     conflictResolutions: LinkedHashMap<String, Int>,
                     precheckedPlainIndex: CryptoManager.TargetPlainIndex?,
                     precheckedEncIndex: CryptoManager.TargetEncryptedIndex?,
+                    precheckedIdenticalTargets: Map<String, File>,
                     precheckedIdenticalPaths: Set<String>,
                     precheckedNonIdenticalPaths: Set<String> ->
                     ensureNotificationPermissionThenRun { notificationsAllowed ->
@@ -2279,6 +2301,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                             val pathsToRescan = ArrayList<String>()
                             val skippedEncryptFiles = ArrayList<File>()
                             val skippedDecryptFiles = ArrayList<File>()
+                            val identicalEncryptTargetMap = HashMap<String, File>()
+                            val identicalDecryptTargetMap = HashMap<String, File>()
                             var anyPlaintextWiped = false
                             var anyFavoriteUpdated = false
                             var lastUiProgressMs = 0L
@@ -2294,19 +2318,27 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                 srcFile.parentFile?.let { sourceDirs.add(it) }
                                 val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
 
-                                val isCopyMoveSameFormat = CryptoManager.isEncryptedFile(srcFile.name) == isDestEncrypted
-                                val isIdenticalSkip = !isStandardMode && (srcFile.absolutePath in precheckedIdenticalPaths || (
-                                    srcFile.absolutePath !in precheckedNonIdenticalPaths &&
-                                        CryptoManager.inspectTransferConflict(
-                                            sourceFile = srcFile,
-                                            targetDir = destDir,
-                                            isTargetEncrypted = isDestEncrypted,
-                                            plainIndex = plainIndex,
-                                            encryptedIndex = encIndex,
-                                            fastSampling = isCopyMoveSameFormat && config.fastLargeDuplicateCheck
-                                        ).status == CryptoManager.TransferConflictStatus.IDENTICAL_SKIP
-                                    ))
-                                if (isIdenticalSkip) {
+                                val identicalTarget = findIdenticalTransferTarget(
+                                    sourceFile = srcFile,
+                                    targetDir = destDir,
+                                    isTargetEncrypted = isDestEncrypted,
+                                    plainIndex = plainIndex,
+                                    encryptedIndex = encIndex,
+                                    precheckedIdenticalTargets = precheckedIdenticalTargets,
+                                    precheckedIdenticalPaths = precheckedIdenticalPaths,
+                                    precheckedNonIdenticalPaths = precheckedNonIdenticalPaths,
+                                    allowFastSampling = true
+                                )
+                                if (identicalTarget != null) {
+                                    if (!isCopyOperation) {
+                                        if (isDestEncrypted && !CryptoManager.isEncryptedFile(srcFile.name)) {
+                                            skippedEncryptFiles.add(srcFile)
+                                            identicalEncryptTargetMap[srcFile.absolutePath] = identicalTarget
+                                        } else if (!isDestEncrypted && CryptoManager.isEncryptedFile(srcFile.name)) {
+                                            skippedDecryptFiles.add(srcFile)
+                                            identicalDecryptTargetMap[srcFile.absolutePath] = identicalTarget
+                                        }
+                                    }
                                     continue
                                 }
 
@@ -2324,7 +2356,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                             clearCachesNow = false,
                                             conflictResolution = resolution,
                                             targetIndex = encIndex,
-                                            skipDuplicateCheck = true
+                                            skipDuplicateCheck = true,
+                                            deleteSourceOnIdentical = false
                                         )
                                         if (!isCopyOperation && encFile != null) {
                                             anyPlaintextWiped = true
@@ -2343,7 +2376,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                             deleteEncryptedSource = !isCopyOperation,
                                             conflictResolution = resolution,
                                             targetIndex = plainIndex,
-                                            skipDuplicateCheck = true
+                                            skipDuplicateCheck = true,
+                                            deleteSourceOnIdentical = false
                                         )
                                         if (!isCopyOperation && decFile != null && decFile.exists()) {
                                             runCatching {
@@ -2433,12 +2467,15 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                 progressDialog.dismiss()
                                 resolveSkippedCryptoFiles(
                                     isEncrypt = true,
-                                    skippedFiles = skippedEncryptFiles
+                                    skippedFiles = skippedEncryptFiles,
+                                    identicalTargetMap = identicalEncryptTargetMap
                                 ) {
                                     resolveSkippedCryptoFiles(
                                         isEncrypt = false,
-                                        skippedFiles = skippedDecryptFiles
+                                        skippedFiles = skippedDecryptFiles,
+                                        identicalTargetMap = identicalDecryptTargetMap
                                     ) {
+                                        VaultSessionManager.lockVaultIfOutsideSession(this)
                                         callback(destination)
                                     }
                                 }
@@ -2464,6 +2501,7 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                         scan.resolutions,
                         scan.plainIndexes[destDir.absolutePath],
                         scan.encIndexes[destDir.absolutePath],
+                        scan.identicalTargets,
                         scan.identicalPaths,
                         scan.nonIdenticalPaths
                     )

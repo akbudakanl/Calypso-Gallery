@@ -509,15 +509,6 @@
     <string name="vault_sync_nothing_to_sync">Ingen ventande CLI-krypterte medium (.pending_sync) vart funne i den valde mappa.</string>
     <string name="vault_sync_same_folder_error">Den valde kjeldemappa er den same som det aktive kvelvet ditt.</string>
     <string name="use_for_this_album">Bruk berre for dette albumet</string>
-    <string name="crypto_duplicate_source_mode_label">Når ei fil alt finst i målmappa under kryptering/dekryptering</string>
-    <string name="crypto_duplicate_source_ask">Spør alltid (Standard)</string>
-    <string name="crypto_duplicate_source_keep">Behald fila i kjeldemappa</string>
-    <string name="crypto_duplicate_source_delete">Slett fila frå kjeldemappa</string>
-    <string name="crypto_duplicate_source_title">Fila finst alt i målmappa</string>
-    <string name="crypto_duplicate_source_encrypt_message">Nokre av filene du krypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa?</string>
-    <string name="crypto_duplicate_source_decrypt_message">Nokre av filene du dekrypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa?</string>
-    <string name="crypto_duplicate_source_encrypt_keep_warning">Åtvaring: Om du vel «Behald» for ukrypterte filer, vil kjeldefila bli liggjande ukryptert på disken.</string>
-    <string name="crypto_duplicate_source_always_ask">Spør alltid</string>
     <string name="export_encrypted_vault">Eksporter kryptert kvelv</string>
     <string name="export_vault_only_header">Eksporter mappe som berre inneheld .vault-fil</string>
     <string name="export_vault_entire_folder">Eksporter heile mappa</string>

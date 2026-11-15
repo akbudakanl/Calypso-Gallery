@@ -450,10 +450,6 @@ class Config(context: Context) : BaseConfig(context) {
             prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, normalized).apply()
         }
 
-    var cryptoDuplicateSourceMode: Int
-        get() = prefs.getInt(CRYPTO_DUPLICATE_SOURCE_MODE, CRYPTO_DUPLICATE_SOURCE_ASK)
-        set(mode) = prefs.edit().putInt(CRYPTO_DUPLICATE_SOURCE_MODE, mode).apply()
-
     var skippedEncryptFilesMode: Int
         get() = prefs.getInt(
             SKIPPED_ENCRYPT_FILES_MODE,

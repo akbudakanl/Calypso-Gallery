@@ -440,15 +440,6 @@
     <string name="vault_sync_nothing_to_sync">Im ausgewählten Ordner wurden keine ausstehenden CLI-verschlüsselten Medien (.pending_sync) gefunden.</string>
     <string name="vault_sync_same_folder_error">Der ausgewählte Quellordner ist identisch mit deinem aktiven Tresor.</string>
     <string name="use_for_this_album">Nur auf dieses Album anwenden</string>
-    <string name="crypto_duplicate_source_mode_label">Wenn eine Datei beim Verschlüsseln/Entschlüsseln bereits im Zielordner existiert</string>
-    <string name="crypto_duplicate_source_ask">Immer fragen (Standard)</string>
-    <string name="crypto_duplicate_source_keep">Datei im Quellordner behalten</string>
-    <string name="crypto_duplicate_source_delete">Datei aus dem Quellordner löschen</string>
-    <string name="crypto_duplicate_source_title">Datei existiert bereits im Zielordner</string>
-    <string name="crypto_duplicate_source_encrypt_message">Einige der zu verschlüsselnden Dateien existieren bereits im Zielordner. Was soll mit den Dateien im Quellordner geschehen?</string>
-    <string name="crypto_duplicate_source_decrypt_message">Einige der zu entschlüsselnden Dateien existieren bereits im Zielordner. Was soll mit den Dateien im Quellordner geschehen?</string>
-    <string name="crypto_duplicate_source_encrypt_keep_warning">Warnung: Wenn du für unverschlüsselte Dateien „Behalten“ wählst, bleibt die Quelldatei unverschlüsselt auf dem Datenträger.</string>
-    <string name="crypto_duplicate_source_always_ask">Immer fragen</string>
     <string name="export_encrypted_vault">Verschlüsselten Tresor exportieren</string>
     <string name="export_vault_only_header">Ordner nur mit .vault-Datei exportieren</string>
     <string name="export_vault_entire_folder">Gesamten Ordner exportieren</string>
