@@ -11,17 +11,8 @@ const val GROUP_FOLDER_PREFIX = "group_folder_"
 const val VIEW_TYPE_PREFIX = "view_type_folder_"
 const val SHOW_HIDDEN_MEDIA = "show_hidden_media"
 const val TEMPORARILY_SHOW_HIDDEN = "temporarily_show_hidden"
-const val ON_VAULT_EXIT = "on_vault_exit"
-const val VAULT_EXIT_ASK_CHECKBOX_CHECKED = "vault_exit_ask_checkbox_checked"
-const val ON_VAULT_EXIT_KEEP_SHOWING = 0
-const val ON_VAULT_EXIT_HIDE = 1
-const val ON_VAULT_EXIT_ASK_EVERY_TIME = 2
-
-// Backward compatibility aliases
-const val ON_VAULT_EXIT_KEEP_SHOWING_ALL = ON_VAULT_EXIT_KEEP_SHOWING
-const val ON_VAULT_EXIT_SHOW_ENCRYPTED_ONLY = ON_VAULT_EXIT_KEEP_SHOWING
-const val ON_VAULT_EXIT_SHOW_OTHER_ONLY = ON_VAULT_EXIT_HIDE
-const val ON_VAULT_EXIT_HIDE_ALL = ON_VAULT_EXIT_HIDE
+const val BLOCK_VAULT_SCREENSHOTS = "block_vault_screenshots"
+const val VAULT_EXIT_DOUBLE_BACK_WINDOW_MS = 2000L
 const val TEMPORARILY_SHOW_EXCLUDED = "temporarily_show_excluded"
 const val TEMPORARILY_SHOW_VAULT_EXCLUDED = "temporarily_show_vault_excluded"
 const val EXTRA_SECRET_VAULT_FILES = "secret_vault_files"

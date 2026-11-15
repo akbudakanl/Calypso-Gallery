@@ -66,7 +66,6 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyVaultScreenProtection
-import org.fossify.gallery.extensions.askVaultExitOption
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.openSecretVaultPrompt
@@ -119,7 +118,7 @@ import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_KEEP_SHOWING
+import org.fossify.gallery.helpers.VAULT_EXIT_DOUBLE_BACK_WINDOW_MS
 import org.fossify.gallery.helpers.SET_WALLPAPER_INTENT
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.SHOW_FAVORITES
@@ -166,6 +165,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mIsVaultOpening = false
     private var mIsVaultFilesView = false
     private var mIsSwitchingVaultView = false
+    private var mLastVaultBackPressedAt = 0L
     private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart).
@@ -512,7 +512,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             binding.mediaMenu.closeSearch()
             true
         } else if (mIsVaultFilesView && !isThirdPartyPickIntent()) {
-            handleVaultExit()
+            handleVaultBackPress()
             true
         } else {
             if (config.showAll) {
@@ -526,39 +526,34 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun isThirdPartyPickIntent() =
         mIsGetImageIntent || mIsGetVideoIntent || mIsGetAnyIntent
 
-    private fun handleVaultExit() {
-        askVaultExitOption(
-            encryptedAlbumCount = { CryptoManager.getVaultDestinationAlbums(this).size }
-        ) { option ->
-            applyVaultExitOption(option)
+    private fun handleVaultBackPress() {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - mLastVaultBackPressedAt > VAULT_EXIT_DOUBLE_BACK_WINDOW_MS) {
+            mLastVaultBackPressedAt = now
+            toast(R.string.press_back_again_to_exit_vault)
+            return
         }
-    }
-
-    private fun applyVaultExitOption(option: Int) {
-        val keepShowing = option == ON_VAULT_EXIT_KEEP_SHOWING
-        exitVaultToNormalGallery(keepShowing)
+        mLastVaultBackPressedAt = 0L
+        exitVaultToNormalGallery()
     }
 
     private fun exitLockedVaultFilesView() {
         if (mIsVaultFilesView && !isThirdPartyPickIntent()) {
-            exitVaultToNormalGallery(keepShowing = false)
+            exitVaultToNormalGallery()
         } else {
             finish()
         }
     }
 
-    private fun exitVaultToNormalGallery(keepShowing: Boolean) {
+    private fun exitVaultToNormalGallery() {
         hideKeyboard()
         mIsSwitchingVaultView = true
-        if (keepShowing) {
-            config.temporarilyShowHidden = true
-        } else {
-            config.temporarilyShowHidden = false
-            config.temporarilyShowVaultExcluded = false
-            config.resetTempDeleteConfirmation()
-            CryptoManager.lockVault()
-            CryptoManager.clearAppImageCaches(this)
-        }
+        config.temporarilyShowHidden = false
+        config.temporarilyShowVaultExcluded = false
+        config.resetTempDeleteConfirmation()
+        CryptoManager.lockVault()
+        CryptoManager.clearAppImageCaches(this)
+        VaultSessionManager.onVaultExited()
 
         if (VaultViewPolicy.shouldExitVaultToFilesView(isExitingFromFilesView = true)) {
             config.showAll = true

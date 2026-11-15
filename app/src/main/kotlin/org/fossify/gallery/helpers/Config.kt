@@ -125,20 +125,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(TEMPORARILY_SHOW_HIDDEN, false)
         set(temporarilyShowHidden) = prefs.edit().putBoolean(TEMPORARILY_SHOW_HIDDEN, temporarilyShowHidden).apply()
 
-    var onVaultExit: Int
-        get() {
-            val value = prefs.getInt(ON_VAULT_EXIT, ON_VAULT_EXIT_ASK_EVERY_TIME)
-            return when (value) {
-                ON_VAULT_EXIT_KEEP_SHOWING -> ON_VAULT_EXIT_KEEP_SHOWING
-                ON_VAULT_EXIT_HIDE, 3 -> ON_VAULT_EXIT_HIDE
-                else -> ON_VAULT_EXIT_ASK_EVERY_TIME
-            }
-        }
-        set(onVaultExit) = prefs.edit().putInt(ON_VAULT_EXIT, onVaultExit).apply()
-
-    var vaultExitAskCheckboxChecked: Boolean
-        get() = prefs.getBoolean(VAULT_EXIT_ASK_CHECKBOX_CHECKED, true)
-        set(vaultExitAskCheckboxChecked) = prefs.edit().putBoolean(VAULT_EXIT_ASK_CHECKBOX_CHECKED, vaultExitAskCheckboxChecked).apply()
+    var blockVaultScreenshots: Boolean
+        get() = prefs.getBoolean(BLOCK_VAULT_SCREENSHOTS, true)
+        set(blockVaultScreenshots) = prefs.edit().putBoolean(BLOCK_VAULT_SCREENSHOTS, blockVaultScreenshots).apply()
 
     var temporarilyShowExcluded: Boolean
         get() = prefs.getBoolean(TEMPORARILY_SHOW_EXCLUDED, false)
