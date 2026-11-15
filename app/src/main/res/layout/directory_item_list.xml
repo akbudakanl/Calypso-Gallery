@@ -64,7 +64,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/dir_name"
         android:layout_alignStart="@+id/dir_name"
-        android:layout_marginEnd="@dimen/activity_margin"
+        android:layout_toStartOf="@+id/dir_icon_holder"
+        android:layout_marginEnd="@dimen/small_margin"
         android:alpha="0.4"
         android:ellipsize="end"
         android:maxLines="1"
@@ -110,6 +111,15 @@
             android:contentDescription="@string/pin"
             android:paddingBottom="@dimen/small_margin"
             android:src="@drawable/ic_pin_filled_vector"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/dir_type_icon"
+            android:layout_width="@dimen/sd_card_icon_size"
+            android:layout_height="@dimen/sd_card_icon_size"
+            android:layout_marginStart="@dimen/tiny_margin"
+            android:contentDescription="@null"
+            android:paddingBottom="@dimen/small_margin"
             android:visibility="gone" />
 
         <ImageView

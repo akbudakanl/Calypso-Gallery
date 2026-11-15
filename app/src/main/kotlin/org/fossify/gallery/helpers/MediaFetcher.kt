@@ -110,8 +110,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
                     }
                 }
                 return vaultFolders.filter {
-                    context.isEncryptedVaultAlbum(it) &&
-                        (config.temporarilyShowVaultExcluded || !context.isEncryptedAlbumExcluded(it))
+                    context.isEncryptedVaultAlbum(it)
                 }.toMutableList() as ArrayList<String>
             }
 
@@ -159,12 +158,11 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
 
             distinctPaths.filter {
                 if (CryptoManager.isEncryptedFolderPath(context, it)) {
-                    config.temporarilyShowHidden && CryptoManager.isVaultUnlocked &&
-                        (config.temporarilyShowExcluded || !context.isEncryptedAlbumExcluded(it))
+                    config.temporarilyShowHidden && CryptoManager.isVaultUnlocked
                 } else if (isSecretVaultView) {
                     context.isEncryptedVaultAlbum(it)
                 } else {
-                    it.shouldFolderBeVisible(excludedPaths, includedPaths, config.temporarilyShowExcluded, folderNoMediaStatuses) { path, hasNoMedia ->
+                    it.shouldFolderBeVisible(excludedPaths, includedPaths, config.temporarilyShowHiddenFolders, folderNoMediaStatuses) { path, hasNoMedia ->
                         folderNoMediaStatuses[path] = hasNoMedia
                     }
                 }
@@ -325,24 +323,28 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         }
 
         if (config.temporarilyShowExcluded) {
-            val noMediaFolders = context.getNoMediaFoldersSync()
-            noMediaFolders.forEach { noMediaFolder ->
-                if (!context.isCipherSystemPath(noMediaFolder) && context.getDoesFilePathExist(noMediaFolder, OTGPath)) {
-                    foldersToScan.add(noMediaFolder)
-                }
-            }
             config.excludedFolders.forEach { excludedFolder ->
                 val clean = excludedFolder.trimEnd('/')
                 if (clean.isNotEmpty() &&
                     clean != "/" &&
                     !clean.equals(context.internalStoragePath.trimEnd('/'), ignoreCase = true) &&
                     !context.isCipherSystemPath(clean) &&
+                    !HiddenFoldersPolicy.isAndroidRestrictedSubpath(clean, context.internalStoragePath) &&
                     context.getDoesFilePathExist(clean, OTGPath)
                 ) {
-                    foldersToScan.add(clean)
+                    addFolder(foldersToScan, clean)
                 }
             }
-            foldersToScan.addAll(context.findHiddenSubfoldersForExcludedView(foldersToScan))
+        }
+
+        if (config.temporarilyShowHiddenFolders) {
+            val noMediaFolders = context.getNoMediaFoldersSync()
+            noMediaFolders.forEach { noMediaFolder ->
+                if (!context.isCipherSystemPath(noMediaFolder) && context.getDoesFilePathExist(noMediaFolder, OTGPath)) {
+                    foldersToScan.add(noMediaFolder)
+                }
+            }
+            foldersToScan.addAll(context.findHiddenSubfoldersOnDisk(foldersToScan))
         }
 
         if (isSecretVaultView) {
@@ -379,6 +381,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         val checkProperFileSize = getProperFileSize || config.fileLoadingPriority == PRIORITY_COMPROMISE
         val checkFileExistence = config.fileLoadingPriority == PRIORITY_VALIDITY
         val showHidden = config.shouldShowHidden
+        val showHiddenFiles = showHidden || config.temporarilyShowHiddenFolders
         val showPortraits = filterMedia and TYPE_PORTRAITS != 0
         val fileSizes = if ((checkProperFileSize || checkFileExistence) && cachedFileSizes.isEmpty()) getFolderSizes(folder) else HashMap()
 
@@ -466,7 +469,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
                 continue
 
             val filename = file.name
-            if (!showHidden && filename.startsWith('.'))
+            if (!showHiddenFiles && filename.startsWith('.'))
                 continue
 
             var size = cachedFileSizes[path] ?: fileSizes[path] ?: 0L

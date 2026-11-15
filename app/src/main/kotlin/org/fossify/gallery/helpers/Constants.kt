@@ -136,6 +136,12 @@ const val CRYPTO_DUPLICATE_SOURCE_DELETE = 2
 const val WAS_NOTIFICATION_PERMISSION_ASKED = "was_notification_permission_asked"
 const val WAS_AUTO_BACKUP_PROMPT_SHOWN = "was_auto_backup_prompt_shown"
 const val AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS = "auto_backup_favorites_and_virtual_albums"
+const val SHOW_VIRTUAL_ALBUM_ICON = "show_virtual_album_icon"
+const val SHOW_FAVORITES_ALBUM_ICON = "show_favorites_album_icon"
+const val SHOW_EXCLUDED_ALBUM_ICON = "show_excluded_album_icon"
+const val SHOW_HIDDEN_ALBUM_ICON = "show_hidden_album_icon"
+const val TEMPORARILY_SHOW_HIDDEN_FOLDERS = "temporarily_show_hidden_folders"
+const val KNOWN_HIDDEN_FOLDERS = "known_hidden_folders"
 
 // AES-256 Vault Encryption
 const val PROTECTION_PASSWORD = 3

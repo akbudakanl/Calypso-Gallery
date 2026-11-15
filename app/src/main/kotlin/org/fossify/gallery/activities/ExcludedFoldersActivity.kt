@@ -2,14 +2,17 @@ package org.fossify.gallery.activities
 
 import android.os.Bundle
 import org.fossify.commons.dialogs.FilePickerDialog
-import org.fossify.commons.extensions.*
+import org.fossify.commons.extensions.beVisibleIf
+import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.internalStoragePath
+import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.NavigationIcon
-import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.gallery.R
 import org.fossify.gallery.adapters.ManageFoldersAdapter
 import org.fossify.gallery.databinding.ActivityManageFoldersBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.isCipherSystemPath
 
 class ExcludedFoldersActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
@@ -36,17 +39,14 @@ class ExcludedFoldersActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun updateFolders() {
         val folders = ArrayList<String>()
-        config.excludedFolders.mapTo(folders) { it }
-        var placeholderText = getString(R.string.excluded_activity_placeholder)
+        config.excludedFolders
+            .filterNot { isCipherSystemPath(it) }
+            .sortedWith(String.CASE_INSENSITIVE_ORDER)
+            .mapTo(folders) { it }
         binding.manageFoldersPlaceholder.apply {
             beVisibleIf(folders.isEmpty())
             setTextColor(getProperTextColor())
-
-            if (isRPlus() && !isExternalStorageManager()) {
-                placeholderText = placeholderText.substringBefore("\n")
-            }
-
-            text = placeholderText
+            text = getString(R.string.excluded_activity_placeholder)
         }
 
         val adapter = ManageFoldersAdapter(this, folders, true, this, binding.manageFoldersList) {}
@@ -72,7 +72,7 @@ class ExcludedFoldersActivity : SimpleActivity(), RefreshRecyclerViewListener {
             activity = this,
             internalStoragePath,
             pickFile = false,
-            config.shouldShowHidden,
+            config.shouldShowHidden || config.temporarilyShowHiddenFolders,
             showFAB = false,
             canAddShowHiddenButton = true,
             enforceStorageRestrictions = false,

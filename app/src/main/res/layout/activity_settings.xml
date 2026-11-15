@@ -450,6 +450,77 @@
                 layout="@layout/divider" />
 
             <TextView
+                android:id="@+id/settings_album_type_icons_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/album_type_icons" />
+
+            <RelativeLayout
+                android:id="@+id/settings_show_virtual_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_show_virtual_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/virtual_folders" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/settings_show_favorites_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_show_favorites_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/favorites_album" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/settings_show_excluded_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_show_excluded_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/excluded_folders_album" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/settings_show_hidden_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_show_hidden_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hidden_folders_album" />
+
+            </RelativeLayout>
+
+            <include
+                android:id="@+id/settings_album_type_icons_divider"
+                layout="@layout/divider" />
+
+            <TextView
                 android:id="@+id/settings_scrolling_label"
                 style="@style/SettingsSectionLabelStyle"
                 android:layout_width="match_parent"

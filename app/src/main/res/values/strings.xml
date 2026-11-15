@@ -54,10 +54,10 @@
     <!-- Hide / Exclude -->
     <string name="exclude_folder_description">This will exclude the selection together with its subfolders from Fossify Gallery only. You can manage excluded folders in Settings.</string>
     <string name="exclude_folder_parent">Exclude a parent instead?</string>
-    <string name="excluded_activity_placeholder">Excluding folders will make them together with their subfolders hidden just in Fossify Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Hide function.</string>
+    <string name="excluded_activity_placeholder">Excluding folders will make them together with their subfolders hidden just in Fossify Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Encrypt function.</string>
     <string name="hidden_folders">Hidden folders</string>
     <string name="manage_hidden_folders">Manage hidden folders</string>
-    <string name="hidden_folders_placeholder">Seems like you don\'t have any folders hidden with a \".nomedia\" file.</string>
+    <string name="hidden_folders_placeholder">Seems like you don\'t have any folders hidden with a \".nomedia\" file or dot prefix.</string>
     <string name="hidden_all_files">You have to grant the app All Files access to see hidden files, else it cannot work.</string>
     <string name="cant_unhide_folder">If a folder or one of its parent folders has a dot before its name, it is hidden and cannot be unhidden like this. You have to remove the dot by renaming it.</string>
 
@@ -491,4 +491,14 @@
     <string name="export_vault_only_header_info">To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Cipher_Secrets containing the .vault file.</string>
     <string name="exporting_vault_progress">Exporting encrypted vault…</string>
     <string name="vault_export_same_folder_error">The export destination cannot be the active vault folder or inside it.</string>
+    <string name="album_type_icons">Album type icons</string>
+    <string name="virtual_folders">Virtual folders</string>
+    <string name="favorites_album">Favorites</string>
+    <string name="excluded_folders_album">Excluded folders</string>
+    <string name="hidden_folders_album">Hidden folders</string>
+    <string name="temporarily_show_hidden_folders">Temporarily show hidden folders</string>
+    <string name="stop_showing_hidden_folders">Stop showing hidden folders</string>
+    <string name="unexclude">Stop excluding</string>
+    <string name="hide_folder">Hide</string>
+    <string name="unhide_folder">Unhide</string>
 </resources>

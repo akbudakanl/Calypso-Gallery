@@ -48,6 +48,7 @@ import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.extensions.getStringValue
 import org.fossify.commons.extensions.humanizePath
 import org.fossify.commons.extensions.internalStoragePath
+import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isGif
 import org.fossify.commons.extensions.isImageFast
 import org.fossify.commons.extensions.isPathOnOTG
@@ -78,6 +79,7 @@ import org.fossify.commons.helpers.SORT_BY_SIZE
 import org.fossify.commons.helpers.SORT_DESCENDING
 import org.fossify.commons.helpers.SORT_USE_NUMERIC_VALUE
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.helpers.sumByLong
 import org.fossify.commons.views.MySquareImageView
 import org.fossify.gallery.R
@@ -86,6 +88,7 @@ import org.fossify.gallery.databases.GalleryDatabase
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
+import org.fossify.gallery.helpers.HiddenFoldersPolicy
 import org.fossify.gallery.helpers.GROUP_BY_DATE_TAKEN_DAILY
 import org.fossify.gallery.helpers.GROUP_BY_DATE_TAKEN_MONTHLY
 import org.fossify.gallery.helpers.GROUP_BY_LAST_MODIFIED_DAILY
@@ -522,6 +525,7 @@ fun Context.getNoMediaFoldersSync(): ArrayList<String> {
     val selectionArgs = arrayOf(Files.FileColumns.MEDIA_TYPE_NONE.toString(), "%$NOMEDIA%")
     val sortOrder = "${Files.FileColumns.DATE_MODIFIED} DESC"
     val OTGPath = config.OTGPath
+    val canInspectNoMedia = !isRPlus() || isExternalStorageManager()
 
     var cursor: Cursor? = null
     try {
@@ -530,15 +534,22 @@ fun Context.getNoMediaFoldersSync(): ArrayList<String> {
             do {
                 val path = cursor.getStringValue(Files.FileColumns.DATA) ?: continue
                 val noMediaFile = File(path)
-                if (
-                    getDoesFilePathExist(noMediaFile.absolutePath, OTGPath)
-                    && noMediaFile.name == NOMEDIA
-                ) {
-                    noMediaFile.parent?.let { folders.add(it) }
-                } else if (!noMediaFile.exists()) {
-                    try {
-                        contentResolver.delete(uri, "${Files.FileColumns.DATA} = ?", arrayOf(path))
-                    } catch (_: Exception) {}
+                if (noMediaFile.name != NOMEDIA) continue
+                if (canInspectNoMedia) {
+                    if (getDoesFilePathExist(noMediaFile.absolutePath, OTGPath)) {
+                        noMediaFile.parent?.let { folders.add(it) }
+                    } else if (!noMediaFile.exists()) {
+                        try {
+                            contentResolver.delete(uri, "${Files.FileColumns.DATA} = ?", arrayOf(path))
+                        } catch (_: Exception) {}
+                    }
+                } else {
+                    noMediaFile.parent?.let { parentPath ->
+                        val parentDir = File(parentPath)
+                        if (parentDir.exists() || getDoesFilePathExist(parentPath, OTGPath)) {
+                            folders.add(parentPath)
+                        }
+                    }
                 }
             } while (cursor.moveToNext())
         }
@@ -778,51 +789,160 @@ fun Context.hasExcludedNormalFolders(): Boolean {
         return false
     }
 
+    val excludedFolders = config.excludedFolders
+    if (excludedFolders.isEmpty()) {
+        return false
+    }
+
     val otgPath = config.OTGPath
     val includedPaths = config.includedFolders
-    val showHiddenFiles = config.shouldShowHidden
+    val showHiddenFiles = config.shouldShowHidden || config.temporarilyShowHiddenFolders
+
+    for (rawPath in excludedFolders) {
+        val excludedPath = rawPath.trimEnd('/')
+        if (excludedPath.isEmpty() || isCipherSystemPath(excludedPath)) continue
+        if (excludedPath.isThisOrParentIncluded(includedPaths)) continue
+        if (!getDoesFilePathExist(excludedPath, otgPath)) continue
+        val dir = File(excludedPath)
+        if (!dir.isDirectory) continue
+        if (folderTreeHasDisplayableMedia(dir, filterMedia, showHiddenFiles) ||
+            hasMediaInExcludedSubtreeViaMediaStore(excludedPath, filterMedia, includedPaths, showHiddenFiles)
+        ) {
+            return true
+        }
+    }
+    return false
+}
+
+fun Context.hasHiddenNormalFolders(): Boolean {
+    val filterMedia = config.filterMedia
+    if (filterMedia == 0) {
+        return false
+    }
+
+    val otgPath = config.OTGPath
+    val includedPaths = config.includedFolders
+    val canInspectDisk = !isRPlus() || isExternalStorageManager()
 
     val noMediaFolders = getNoMediaFoldersSync()
-    for (folderPath in noMediaFolders) {
-        if (isCipherSystemPath(folderPath)) continue
-        if (folderPath.isThisOrParentIncluded(includedPaths)) continue
-        if (!getDoesFilePathExist(folderPath, otgPath)) continue
+    for (rawPath in noMediaFolders) {
+        val folderPath = rawPath.trimEnd('/')
+        if (folderPath.isEmpty() ||
+            isCipherSystemPath(folderPath) ||
+            HiddenFoldersPolicy.isAndroidRestrictedSubpath(folderPath, internalStoragePath) ||
+            folderPath.isThisOrParentIncluded(includedPaths) ||
+            !getDoesFilePathExist(folderPath, otgPath)
+        ) {
+            continue
+        }
         val dir = File(folderPath)
-        if (dir.isDirectory && directoryHasDirectDisplayableMedia(dir, filterMedia, showHiddenFiles)) {
+        if (!canInspectDisk) {
+            if (dir.exists()) return true
+        } else if (dir.isDirectory && folderTreeHasDisplayableMedia(dir, filterMedia, showHiddenFiles = true)) {
             return true
         }
     }
 
-    val excludedFolders = config.excludedFolders
-    if (excludedFolders.isNotEmpty()) {
-        for (excludedPath in excludedFolders) {
-            if (isCipherSystemPath(excludedPath)) continue
-            if (excludedPath.isThisOrParentIncluded(includedPaths)) continue
-            if (!getDoesFilePathExist(excludedPath, otgPath)) continue
-            val dir = File(excludedPath)
-            if (!dir.isDirectory) continue
-            if (hasMediaInExcludedSubtreeViaMediaStore(excludedPath, filterMedia, includedPaths, showHiddenFiles)) {
-                return true
-            }
-            if (directoryHasDirectDisplayableMedia(dir, filterMedia, showHiddenFiles)) {
-                return true
+    val knownParents = collectKnownNormalParentFolders()
+    if (findHiddenSubfoldersOnDisk(knownParents, requireDisplayableMedia = canInspectDisk).isNotEmpty()) {
+        return true
+    }
+
+    if (!canInspectDisk) {
+        return config.knownHiddenFolders.any { rawPath ->
+            val clean = rawPath.trimEnd('/')
+            clean.isNotEmpty() &&
+                !isCipherSystemPath(clean) &&
+                !HiddenFoldersPolicy.isAndroidRestrictedSubpath(clean, internalStoragePath) &&
+                !clean.isThisOrParentIncluded(includedPaths)
+        }
+    }
+
+    return false
+}
+
+fun Context.getHiddenFoldersList(callback: (folders: ArrayList<String>) -> Unit) {
+    ensureBackgroundThread {
+        callback(getHiddenFoldersListSync())
+    }
+}
+
+fun Context.getHiddenFoldersListSync(): ArrayList<String> {
+    val canInspectDisk = !isRPlus() || isExternalStorageManager()
+    val liveDetected = LinkedHashSet<String>()
+    val otgPath = config.OTGPath
+
+    getNoMediaFoldersSync().forEach { rawPath ->
+        val clean = rawPath.trimEnd('/')
+        if (clean.isNotEmpty() &&
+            !isCipherSystemPath(clean) &&
+            !HiddenFoldersPolicy.isAndroidRestrictedSubpath(clean, internalStoragePath)
+        ) {
+            if (!canInspectDisk || getDoesFilePathExist(clean, otgPath)) {
+                liveDetected.add(clean)
             }
         }
     }
 
     val knownParents = collectKnownNormalParentFolders()
-    return findHiddenSubfoldersForExcludedView(knownParents).isNotEmpty()
+    findHiddenSubfoldersOnDisk(knownParents, requireDisplayableMedia = false).forEach { rawPath ->
+        val clean = rawPath.trimEnd('/')
+        if (clean.isNotEmpty() &&
+            !isCipherSystemPath(clean) &&
+            !HiddenFoldersPolicy.isAndroidRestrictedSubpath(clean, internalStoragePath)
+        ) {
+            liveDetected.add(clean)
+        }
+    }
+
+    if (canInspectDisk) {
+        val roots = LinkedHashSet<String>()
+        if (internalStoragePath.isNotEmpty()) roots.add(internalStoragePath.trimEnd('/'))
+        if (sdCardPath.isNotEmpty()) roots.add(sdCardPath.trimEnd('/'))
+        val visited = HashSet<String>()
+        for (root in roots) {
+            val rootFile = File(root)
+            if (rootFile.isDirectory) {
+                collectNestedHiddenFolders(rootFile, depth = 0, maxDepth = 3, visited = visited, outFolders = liveDetected)
+            }
+        }
+    }
+
+    val noMediaCache = HashMap<String, Boolean>()
+    val merged = HiddenFoldersPolicy.mergeKnownHiddenFolders(
+        cachedKnownHidden = config.knownHiddenFolders,
+        liveDetectedHidden = liveDetected,
+        canInspectDisk = canInspectDisk,
+        isCipherSystemPath = { isCipherSystemPath(it) },
+        isRestrictedPath = { HiddenFoldersPolicy.isAndroidRestrictedSubpath(it, internalStoragePath) },
+        isStillHiddenOnDisk = { path ->
+            val dir = File(path)
+            dir.exists() && dir.isDirectory && (
+                HiddenFoldersPolicy.isDotHiddenPath(path) ||
+                    File(dir, NOMEDIA).exists() ||
+                    path.doesThisOrParentHaveNoMedia(noMediaCache, null)
+                )
+        }
+    )
+
+    if (merged != config.knownHiddenFolders) {
+        config.knownHiddenFolders = merged
+    }
+
+    return ArrayList(merged.sortedWith(String.CASE_INSENSITIVE_ORDER))
 }
 
-fun Context.findHiddenSubfoldersForExcludedView(knownParentFolders: Collection<String>): ArrayList<String> {
+fun Context.findHiddenSubfoldersOnDisk(
+    knownParentFolders: Collection<String>,
+    requireDisplayableMedia: Boolean = true
+): ArrayList<String> {
     val result = LinkedHashSet<String>()
     val filterMedia = config.filterMedia
-    if (filterMedia == 0) {
+    if (requireDisplayableMedia && filterMedia == 0) {
         return ArrayList()
     }
 
     val includedPaths = config.includedFolders
-    val showHiddenFiles = config.shouldShowHidden
     val parentCandidates = LinkedHashSet<String>()
 
     fun addStorageRoots(rootPath: String) {
@@ -860,7 +980,11 @@ fun Context.findHiddenSubfoldersForExcludedView(knownParentFolders: Collection<S
     val visitedDotDirs = HashSet<String>()
 
     for (parentPath in parentCandidates) {
-        if (isCipherSystemPath(parentPath)) continue
+        if (isCipherSystemPath(parentPath) ||
+            HiddenFoldersPolicy.isAndroidRestrictedSubpath(parentPath, internalStoragePath)
+        ) {
+            continue
+        }
         val parentDir = File(parentPath)
         if (!parentDir.isDirectory) continue
         val children = parentDir.listFiles() ?: continue
@@ -870,12 +994,20 @@ fun Context.findHiddenSubfoldersForExcludedView(knownParentFolders: Collection<S
                 continue
             }
             val childPath = child.absolutePath
-            if (isCipherSystemPath(childPath) || childPath.isThisOrParentIncluded(includedPaths)) continue
+            if (isCipherSystemPath(childPath) || (requireDisplayableMedia && childPath.isThisOrParentIncluded(includedPaths))) {
+                continue
+            }
 
             if (child.name.startsWith('.')) {
-                collectDotTreeMediaFolders(child, filterMedia, showHiddenFiles, includedPaths, depth = 0, maxDepth = 2, visitedDotDirs, result)
-            } else if (File(child, NOMEDIA).exists() && directoryHasDirectDisplayableMedia(child, filterMedia, showHiddenFiles)) {
-                result.add(childPath)
+                if (requireDisplayableMedia) {
+                    collectDotTreeMediaFolders(child, filterMedia, showHiddenFiles = true, includedPaths, depth = 0, maxDepth = 2, visitedDotDirs, result)
+                } else {
+                    result.add(childPath)
+                }
+            } else if (File(child, NOMEDIA).exists()) {
+                if (!requireDisplayableMedia || folderTreeHasDisplayableMedia(child, filterMedia, showHiddenFiles = true)) {
+                    result.add(childPath)
+                }
             }
         }
     }
@@ -938,6 +1070,95 @@ private fun Context.collectDotTreeMediaFolders(
     }
 }
 
+private fun Context.collectNestedHiddenFolders(
+    dir: File,
+    depth: Int,
+    maxDepth: Int,
+    visited: HashSet<String>,
+    outFolders: LinkedHashSet<String>
+) {
+    val path = dir.absolutePath.trimEnd('/')
+    val canonical = try {
+        dir.canonicalPath
+    } catch (_: Exception) {
+        path
+    }
+    if (!visited.add(canonical)) return
+    if (isCipherSystemPath(path) ||
+        HiddenFoldersPolicy.isAndroidRestrictedSubpath(path, internalStoragePath)
+    ) {
+        return
+    }
+
+    if (depth > 0 && (dir.name.startsWith('.') || File(dir, NOMEDIA).exists())) {
+        outFolders.add(path)
+        return
+    }
+
+    if (depth >= maxDepth) return
+    val children = dir.listFiles() ?: return
+    val internalRootClean = internalStoragePath.trimEnd('/')
+    for (child in children) {
+        if (!child.isDirectory) continue
+        if (depth == 0 && path.equals(internalRootClean, ignoreCase = true) && child.name.equals("Android", ignoreCase = true)) {
+            val androidMedia = File(child, "media")
+            if (androidMedia.isDirectory) {
+                collectNestedHiddenFolders(androidMedia, depth + 2, maxDepth + 2, visited, outFolders)
+            }
+            continue
+        }
+        collectNestedHiddenFolders(child, depth + 1, maxDepth, visited, outFolders)
+    }
+}
+
+fun Context.isDirectoryExcludedForBadge(
+    path: String,
+    excludedFolders: MutableSet<String> = config.excludedFolders,
+    includedFolders: MutableSet<String> = config.includedFolders
+): Boolean {
+    if (path.isEmpty() ||
+        path == FAVORITES ||
+        path == RECYCLE_BIN ||
+        path.isVirtualAlbumPath() ||
+        isCipherSystemPath(path) ||
+        isEncryptedVaultAlbum(path) ||
+        CryptoManager.isVaultRecycleBinPath(this, path)
+    ) {
+        return false
+    }
+    if (path.isThisOrParentIncluded(includedFolders)) {
+        return false
+    }
+    return path.isThisOrParentExcluded(excludedFolders)
+}
+
+fun Context.isDirectoryHiddenForBadge(
+    path: String,
+    includedFolders: MutableSet<String> = config.includedFolders,
+    noMediaStatuses: HashMap<String, Boolean> = HashMap()
+): Boolean {
+    if (path.isEmpty() ||
+        path == FAVORITES ||
+        path == RECYCLE_BIN ||
+        path.isVirtualAlbumPath() ||
+        isCipherSystemPath(path) ||
+        isEncryptedVaultAlbum(path) ||
+        CryptoManager.isVaultRecycleBinPath(this, path)
+    ) {
+        return false
+    }
+    if (path.isThisOrParentIncluded(includedFolders)) {
+        return false
+    }
+    if (HiddenFoldersPolicy.isDotHiddenPath(path) || path.isThisOrParentFolderHidden()) {
+        return true
+    }
+    if (File(path, NOMEDIA).exists() || path.doesThisOrParentHaveNoMedia(noMediaStatuses, null)) {
+        return true
+    }
+    return false
+}
+
 private fun Context.hasMediaInExcludedSubtreeViaMediaStore(
     excludedPath: String,
     filterMedia: Int,
@@ -988,6 +1209,28 @@ private fun folderHasMatchingVaultMedia(folder: File, filterMedia: Int): Boolean
             }
             if (matches) return true
         } else if (child.absolutePath.matchesFilterMedia(filterMedia)) {
+            return true
+        }
+    }
+    return false
+}
+
+private fun folderTreeHasDisplayableMedia(
+    dir: File,
+    filterMedia: Int,
+    showHiddenFiles: Boolean,
+    depth: Int = 0,
+    maxDepth: Int = 3
+): Boolean {
+    if (directoryHasDirectDisplayableMedia(dir, filterMedia, showHiddenFiles)) {
+        return true
+    }
+    if (depth >= maxDepth) {
+        return false
+    }
+    val children = dir.listFiles() ?: return false
+    for (child in children) {
+        if (child.isDirectory && folderTreeHasDisplayableMedia(child, filterMedia, showHiddenFiles, depth + 1, maxDepth)) {
             return true
         }
     }
@@ -1294,8 +1537,9 @@ fun Context.getCachedDirectories(
         directories.removeAll { it.isVirtualAlbum() }
 
         val shouldShowHidden = config.shouldShowHidden || forceShowHidden
-        val showExcludedInScope = if (isSecretVaultView) config.temporarilyShowVaultExcluded else config.temporarilyShowExcluded
-        val excludedPaths = if (showExcludedInScope || forceShowExcluded) {
+        val showExcludedInScope = !isSecretVaultView && (config.temporarilyShowExcluded || forceShowExcluded)
+        val showHiddenFoldersInScope = !isSecretVaultView && (config.temporarilyShowHiddenFolders || forceShowHidden)
+        val excludedPaths = if (showExcludedInScope) {
             HashSet()
         } else {
             config.excludedFolders
@@ -1311,13 +1555,12 @@ fun Context.getCachedDirectories(
 
         var filteredDirectories = directories.filter {
             if (CryptoManager.isEncryptedFolderPath(this, it.path)) {
-                shouldShowHidden && CryptoManager.isVaultUnlocked &&
-                    (!isEncryptedAlbumExcluded(it.path) || showExcludedInScope || forceShowExcluded)
+                shouldShowHidden && CryptoManager.isVaultUnlocked
             } else {
                 it.path.shouldFolderBeVisible(
                     excludedPaths = excludedPaths,
                     includedPaths = includedPaths,
-                    showHidden = shouldShowHidden || showExcludedInScope || forceShowExcluded,
+                    showHidden = showHiddenFoldersInScope,
                     folderNoMediaStatuses = folderNoMediaStatuses
                 ) { path, hasNoMedia ->
                     folderNoMediaStatuses[path] = hasNoMedia
@@ -1339,7 +1582,7 @@ fun Context.getCachedDirectories(
             }
         }) as ArrayList<Directory>
 
-        if (shouldShowHidden) {
+        if (shouldShowHidden || showHiddenFoldersInScope) {
             val hiddenString = resources.getString(R.string.hidden)
             filteredDirectories.forEach {
                 it.name = it.name.removeSuffix(hiddenString).trim()
@@ -1437,13 +1680,12 @@ fun Context.getCachedMedia(
                     }
                     val isVisible = if (CryptoManager.isEncryptedFolderPath(this, dirPath)) {
                         shouldShowHidden && CryptoManager.isVaultUnlocked &&
-                            (!isEncryptedAlbumExcluded(dirPath) || showExcluded) &&
                             !CryptoManager.isVaultRecycleBinPath(this, dirPath)
                     } else {
                         dirPath.shouldFolderBeVisible(
                             excludedPaths = excludedPaths,
                             includedPaths = includedPaths,
-                            showHidden = shouldShowHidden || showExcluded,
+                            showHidden = config.temporarilyShowHiddenFolders,
                             folderNoMediaStatuses = folderNoMediaStatuses
                         ) { noMediaPath, hasNoMedia ->
                             folderNoMediaStatuses[noMediaPath] = hasNoMedia
@@ -1530,6 +1772,8 @@ fun Context.getCachedMedia(
             val isExplicitlyReferenced = path == FAVORITES || path.isVirtualAlbumPath()
             media = if (isExplicitlyReferenced) {
                 media.filter { !CryptoManager.isVaultMediaPath(this, it.path) } as ArrayList<Medium>
+            } else if (config.temporarilyShowHiddenFolders) {
+                media.filter { !CryptoManager.isVaultMediaPath(this, it.path) && !CryptoManager.isEncryptedFile(it.path) } as ArrayList<Medium>
             } else {
                 media.filter { !it.path.contains("/.") && !CryptoManager.isEncryptedFile(it.path) } as ArrayList<Medium>
             }

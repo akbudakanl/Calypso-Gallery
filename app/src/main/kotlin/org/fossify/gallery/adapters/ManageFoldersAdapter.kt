@@ -110,11 +110,9 @@ class ManageFoldersAdapter(
     }
 
     private fun removeSelection() {
-        val removeFolders = ArrayList<String>(selectedKeys.size)
+        val selected = getSelectedItems()
         val positions = getSelectedItemPositions()
-
-        getSelectedItems().forEach {
-            removeFolders.add(it)
+        selected.forEach {
             if (isShowingExcludedFolders) {
                 config.removeExcludedFolder(it)
             } else {
@@ -122,10 +120,12 @@ class ManageFoldersAdapter(
             }
         }
 
-        folders.removeAll(removeFolders)
+        folders.removeAll(selected)
         removeSelectedItems(positions)
         if (folders.isEmpty()) {
             listener?.refreshItems()
+        } else {
+            finishActMode()
         }
     }
 }
