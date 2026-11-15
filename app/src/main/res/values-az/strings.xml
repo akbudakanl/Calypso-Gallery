@@ -451,4 +451,65 @@
     <string name="lock_album">Albomu kilidlə</string>
     <string name="unlock_album">Albomun kilidini aç</string>
     <string name="auto_backup_prompt_message">Sevimlilərinizin və virtual albomlarınızın tətbiq yaddaşından kənarda sistem yaddaşına müntəzəm olaraq yazılmasını istəyirsiniz? Bu, tətbiqi sildiyiniz halda sevimlilər siyahınızı və virtual albomlarınızı itirməməyinizi təmin edəcək. İstənilən vaxt tətbiq parametrlərindən əl ilə ehtiyat nüsxə yarada bilərsiniz.</string>
+    <string name="access_storage_prompt">Zəhmət olmasa, tətbiqimizə bütün fayllarınıza giriş icazəsi verin, bu olmadan düzgün işləməyə bilər.</string>
+    <string name="encrypt_info_title">Şifrləmə necə işləyir</string>
+    <string name="encrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Cipher_Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni albom yaratmağı və ya mövcud şifrələnmiş alboma birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən mənbə faylların silinməsini və ya mənbə qovluğunda saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
+    <string name="decrypt_info_title">Şifrə açma necə işləyir</string>
+    <string name="decrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnmiş albom və ya faylın şifrəsi açıldıqda, seçilmiş təyinat qovluğuna orijinal adı və formatı ilə bərpa olunur və şifrəli seyfdən silinir.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni qovluq yaratmağı və ya mövcud təyinat qovluğuna birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən şifrələnmiş nüsxələrin seyfdən silinməsini və ya saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
+    <string name="vault_location">Seyf yeri</string>
+    <string name="vault_location_standard_summary">Standart (Daxili yaddaş)</string>
+    <string name="vault_location_unavailable_summary">Xarici disk qoşulmayıb (%s)</string>
+    <string name="select_vault_location">Seyf yerini seçin</string>
+    <string name="vault_setup_action_title">Şifrəli seyf</string>
+    <string name="create_new_vault_option">Yeni seyf yarat</string>
+    <string name="use_existing_vault_option">Mövcud seyfdən istifadə et</string>
+    <string name="where_to_create_vault_title">Seyf harada yaradılsın?</string>
+    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_short">Fərdi yer</string>
+    <string name="no_existing_vault_at_location">Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı.</string>
+    <string name="unlock_existing_vault_at_location_prompt">%s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun.</string>
+    <string name="vault_location_standard_option">Standart yer (Daxili yaddaş &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_custom_option">Fərdi / Xarici yer (USB sürücü, SD kart və ya fərdi qovluq)</string>
+    <string name="external_vault_unavailable_title">Xarici seyf əlçatan deyil</string>
+    <string name="external_vault_unavailable_prompt">Tənzimlənmiş seyf yeriniz (%s) hazırda ayrılıb və ya əlçatan deyil. Sürücünü qoşub Yenidən cəhd et üzərinə toxunun və ya başqa seyf yeri seçin.</string>
+    <string name="retry">Yenidən cəhd et</string>
+    <string name="change_vault_location">Yeri dəyiş</string>
+    <string name="existing_vault_detected_at_location">%s ünvanında mövcud seyf tapıldı. Kilidini açmaq üçün parol və ya PIN daxil edin.</string>
+    <string name="create_new_vault_at_location_prompt">%s ünvanında seyf mövcud deyil. Bu yerdə yeni şifrəli seyf yaratmaq istəyirsiniz?</string>
+    <string name="usb_direct_filesystem_required">Bu USB yolu yalnız Android-in virtual OTG provayderi vasitəsilə təqdim olunur və birbaşa fayl sistemi yolu kimi əlçatan deyil. Zəhmət olmasa, qoşulmuş yaddaş kataloqu və ya daxili yaddaş / SD kart üzərində bir qovluq seçin.</string>
+    <string name="vault_location_not_writable">Seçilmiş qovluq mövcud deyil və ya bu cihazda yazıla bilən deyil.</string>
+    <string name="vault_location_not_readable">Seçilmiş qovluq mövcud deyil və ya bu cihazda oxuna bilən deyil.</string>
+    <string name="sync_vault_from_external">Xarici sürücüdən seyfi sinxronlaşdır</string>
+    <string name="sync_vault_select_source_prompt">Xarici Seyf Sinxronizasiyası Necə İşləyir:\n\n1. Vahid Cipher_Secrets Qovluğu:\nXarici sürücünüzdə (USB / SD) Cipher_Secrets adlı qovluq saxlayın. Orada ya seyfinizin tam ehtiyat nüsxəsini saxlaya, ya da yalnız seyfinizin .vault başlıq faylını yerləşdirə bilərsiniz.\n\n2. Yeni Medianın Şifrələnməsi (PC / Tails CLI):\nOflayn CLI aləti yeni şifrələnmiş faylları avtomatik olaraq birbaşa Cipher_Secrets qovluğuna saxlayır. Kök qovluğa yerləşdirilən fayllar Default Secret Album-a gedir; alt qovluqlardakı fayllar uyğun şifrələnmiş albomlara gedir (və ya yenilərini yaradır).\n\n3. Bit-bə-Bit Ağıllı Sinxronizasiya:\nNövbəti addımda xarici sürücünüzü və ya Cipher_Secrets qovluğunu seçin. Tətbiq xarici sürücünü telefonunuzdakı seyflə RAM-da müqayisə edir:\n• Yalnız yeni fayllar və albomlar idxal olunur.\n• Artıq seyfinizdə olan bit-bə-bit eyni fayllar ötürülür.\n• Eyni adda fərqli fayllar (məs., download.jpg) təhlükəsiz şəkildə download(1).jpg kimi idxal olunur.</string>
+    <string name="conflict_handling_mode_label">Fayl ziddiyyəti və dublikat həlli</string>
+    <string name="conflict_handling_auto_short">Tam avtomatik (Susmaya görə — Eyniləri ötür, fərqliləri (1) kimi adlandır)</string>
+    <string name="conflict_handling_smart_dialog_short">Ağıllı dialoq (Eyniləri avtomatik ötür, məzmun fərqli olduqda soruş)</string>
+    <string name="album_crypto_conflict_mode_label">Albom ziddiyyəti (Şifrələ / Şifrəsini aç)</string>
+    <string name="album_crypto_conflict_ask">Həmişə soruş (Susmaya görə)</string>
+    <string name="album_crypto_conflict_merge">Mövcud alboma birləşdir</string>
+    <string name="album_crypto_conflict_rename">Yeni albomu (1) kimi yarat</string>
+    <string name="album_crypto_conflict_title">Albom artıq mövcuddur</string>
+    <string name="album_crypto_conflict_message">Təyinat yerində \"%s\" adlı albom artıq mövcuddur. Necə davam etmək istəyirsiniz?</string>
+    <string name="album_crypto_conflict_message_multiple">Seçilmiş %1$d albom təyinat yerində artıq mövcuddur. Necə davam etmək istəyirsiniz?\n\nSeçiminiz bütün ziddiyyətli albomlara tətbiq olunacaq. Hər albom üçün ayrıca seçim etmək üçün onları bir-bir seçib icra edin.</string>
+    <string name="album_crypto_conflict_rename_option">Yeni albomu \"%s\" kimi yarat</string>
+    <string name="album_crypto_conflict_rename_option_multiple">Yeni albomları (1), (2), … kimi yarat</string>
+    <string name="album_crypto_conflict_merge_option">Mövcud \"%s\" albomuna birləşdir</string>
+    <string name="album_crypto_conflict_merge_option_multiple">Mövcud albomlara birləşdir</string>
+    <string name="album_crypto_delete_identical_source">Eyni mənbə fayllarını sil (100% bit-bə-bit təsdiqlənmiş)</string>
+    <string name="album_crypto_dont_ask_again">Albom ziddiyyəti seçimini yadda saxla (birləşdir və ya yenidən adlandır)</string>
+    <string name="album_crypto_merge_identical_title">Birləşdirmə Zamanı Eyni Fayllar</string>
+    <string name="album_crypto_merge_identical_message">\"%1$s\" albomuna birləşdirərkən, təyinat yerində artıq 100%% bit-bə-bit eyni olan fayllar varsa, onların mənbə nüsxələri silinsin, yoxsa saxlanılsın?</string>
+    <string name="album_crypto_merge_identical_message_multiple">%1$d ziddiyyətli albomu birləşdirərkən, təyinat yerində artıq 100%% bit-bə-bit eyni olan fayllar varsa, onların mənbə nüsxələri silinsin, yoxsa saxlanılsın?</string>
+    <string name="delete_identical_sources">Eyniləri sil</string>
+    <string name="keep_identical_sources">Mənbədə saxla</string>
+    <string name="fast_large_duplicate_check_label">Böyük fayllar üçün sürətli dublikat yoxlaması (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_hint">Böyük fayllar olan köçürmələr üçün vacibdir: bütün faylı oxumaq əvəzinə hər fayl üçün 5 bloku (cəmi 1.25 MB) yoxlayır və dublikat yoxlamasını onlarla dəfə sürətləndirir.</string>
+    <string name="fast_large_duplicate_check_info_title">Sürətli Dublikat Yoxlaması (&gt;8 MB)</string>
+    <string name="fast_large_duplicate_check_info_message" formatted="false">Böyük kopyalama/köçürmə əməliyyatları üçün bu niyə vacibdir:\n\nGiqabaytlarla video kimi böyük faylları kopyaladıqda və ya köçürdükdə, fayl adları və ölçüləri uyğun gəldiyi hər dəfə dəqiq bit-bə-bit yoxlama həm mənbə, həm də təyinat fayllarını başdan sona qədər oxumalıdır—bu isə sürətli yaddaşda dəqiqələr, SD kartlarda isə daha uzun çəkir.\n\nSürətli Yoxlama necə işləyir:\n• 8 MB-dan kiçik fayllar HƏMİŞƏ 100% bit-bə-bit yoxlanılır.\n• 8 MB-dan böyük fayllar üçün tətbiq fayl ölçüsünü və faylın başlanğıcı, 25%, 50%, 75% və sonu üzrə paylanmış beş 256 KB-lıq bloku (hər tərəf üçün cəmi 1.25 MB) müqayisə edir.\n• 50 MB–1 GB ölçülü videolardan ibarət 50 GB-lıq arxiv üçün bu, disk oxumalarını ~40×-dən ~800×-ə qədər azaldır.\n\nNə vaxt aktivləşdirməli və ya söndürməli:\n• AÇIQ tövsiyə olunur: Qalereyanızın əksəriyyəti böyük fayllardan (&gt;8 MB) ibarətdirsə, eyni ada, dəqiq bayt ölçüsünə və bütün 5 nümunə bölgəsinə malik iki zədələnməmiş, fərqli faylın olması praktikada demək olar ki, mümkünsüzdür.\n• QAPALI tövsiyə olunur (sürət artımı yoxdur): Qalereyanız əsasən fotolardan və ya 8 MB-dan kiçik fayllardan ibarətdirsə, 8 MB-dan kiçik fayllar həmişə 100% bit-bə-bit yoxlanıldığı üçün bu parametr əhəmiyyətli sürət artımı vermir.\n• Xarici USB seyf sinxronizasiyası həmişə tam Poly1305-AES autentifikasiyalı qalır.</string>
+    <string name="conflict_handling_explanation_title">Fayl Ziddiyyəti və Dublikat Həlli</string>
+    <string name="conflict_handling_explanation_message" formatted="false">Faylları və albomları kopyaladıqda, köçürdükdə, şifrələdikdə və ya şifrəsini açdıqda, təyinat yerində eyni adda fayl artıq mövcuddursa:\n\n1. Bit-bə-Bit Dublikat Yoxlaması (RAM):\nTətbiq əvvəlcə fayl ölçülərini yoxlayır və ölçülər uyğun gələrsə, fayl məzmununu RAM-da bit-bə-bit müqayisə edir (şifrələnmiş fayllar diskə açıq mətn yazılmadan yaddaşda yoxlanılır). Kopyalama/köçürmə zamanı eyni fayllar ötürülür və orijinal mənbə qovluğunda toxunulmaz qalır. Şifrələmə/şifrə açma zamanı albomu birləşdirərkən 100% bit-bə-bit eyni mənbə fayllarının silinməsini və ya saxlanmasını seçə bilərsiniz.\n\n2. Eyni Ad, Fərqli Məzmun (məs., iki fərqli download.jpg faylı):\n• Tam avtomatik (Susmaya görə): Yeni faylı download(1).jpg, download(2).jpg kimi adlandıraraq sizi bölmədən hər iki faylı saxlayır.\n• Ağıllı dialoq: Yenə də bit-bə-bit eyni faylları səssizcə ötürür və yalnız iki faylın adı eyni, lakin məzmunu fərqli olduqda soruşur (Ötür / Üzərinə yaz / Hər ikisini saxla).</string>
+    <string name="syncing_vault_progress">Xarici sürücüdən seyf sinxronlaşdırılır…</string>
+    <string name="vault_sync_summary_message">Seyf sinxronizasiyası tamamlandı:\n• Kopyalandı: %1$d\n• Yenidən adlandırıldı (ad ziddiyyəti): %2$d\n• Ötürüldü (eyni): %3$d\n• Uğursuz: %4$d</string>
+    <string name="vault_sync_nothing_to_sync">Seçilmiş qovluqda gözləyən CLI ilə şifrələnmiş media (.pending_sync) tapılmadı.</string>
+    <string name="vault_sync_same_folder_error">Seçilmiş mənbə qovluğu aktiv seyfinizlə eynidir.</string>
 </resources>
