@@ -735,7 +735,13 @@ fun Context.markReferencesOnEncrypt(
                 val exactMatch = candidates.firstOrNull { it.fullPath.equals(sourcePath, ignoreCase = true) }
                 val identityMatch = if (exactMatch == null && resolvedPlainIdentity != null && resolvedPlainIdentity.size > 0L && resolvedPlainIdentity.hasFingerprint) {
                     candidates
-                        .filter { it.fileSize == resolvedPlainIdentity.size && it.fingerprint == resolvedPlainIdentity.fingerprint }
+                        .filter {
+                            it.fileSize == resolvedPlainIdentity.size &&
+                                it.fingerprint == resolvedPlainIdentity.fingerprint &&
+                                (it.lastModified <= 0L ||
+                                    resolvedPlainIdentity.lastModified <= 0L ||
+                                    CryptoManager.areTimestampsEquivalent(it.lastModified, resolvedPlainIdentity.lastModified))
+                        }
                         .sortedByDescending { it.parentPath.getFilenameFromPath().equals(srcParentName, ignoreCase = true) }
                         .firstOrNull()
                 } else {
@@ -827,7 +833,13 @@ fun Context.markReferencesOnDecrypt(
                 val exactMatch = candidates.firstOrNull { it.fullPath.equals(decryptedPath, ignoreCase = true) }
                 val identityMatch = if (exactMatch == null && plainIdentity != null && plainIdentity.size > 0L && plainIdentity.hasFingerprint) {
                     candidates
-                        .filter { it.fileSize == plainIdentity.size && it.fingerprint == plainIdentity.fingerprint }
+                        .filter {
+                            it.fileSize == plainIdentity.size &&
+                                it.fingerprint == plainIdentity.fingerprint &&
+                                (it.lastModified <= 0L ||
+                                    plainIdentity.lastModified <= 0L ||
+                                    CryptoManager.areTimestampsEquivalent(it.lastModified, plainIdentity.lastModified))
+                        }
                         .sortedByDescending { it.parentPath.getFilenameFromPath().equals(decryptedFolderName, ignoreCase = true) }
                         .firstOrNull()
                 } else {
@@ -845,7 +857,13 @@ fun Context.markReferencesOnDecrypt(
             val exactFav = dormantFavs.firstOrNull { it.fullPath.equals(decryptedPath, ignoreCase = true) }
             val identityFav = if (exactFav == null && plainIdentity != null && plainIdentity.size > 0L && plainIdentity.hasFingerprint) {
                 dormantFavs
-                    .filter { it.fileSize == plainIdentity.size && it.fingerprint == plainIdentity.fingerprint }
+                    .filter {
+                        it.fileSize == plainIdentity.size &&
+                            it.fingerprint == plainIdentity.fingerprint &&
+                            (it.lastModified <= 0L ||
+                                plainIdentity.lastModified <= 0L ||
+                                CryptoManager.areTimestampsEquivalent(it.lastModified, plainIdentity.lastModified))
+                    }
                     .sortedByDescending { it.parentPath.getFilenameFromPath().equals(decryptedFolderName, ignoreCase = true) }
                     .firstOrNull()
             } else {

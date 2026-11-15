@@ -1598,8 +1598,11 @@ fun Context.updateDBMediaPath(oldPath: String, newPath: String) {
     try {
         if (!isPathHiddenOrEncrypted(newPath)) {
             mediaDB.updateMedium(oldPath, newParentPath, newFilename, newPath)
+            dateTakensDB.deleteDateTaken(newPath)
+            dateTakensDB.updateDateTakenPath(oldPath, newParentPath, newFilename, newPath)
         } else {
             mediaDB.deleteMediumPath(oldPath)
+            dateTakensDB.deleteDateTaken(oldPath)
         }
         favoritesDB.updateFavorite(newFilename, newPath, newParentPath, oldPath)
         virtualAlbumsDB.updateItemPath(oldPath, newPath, newFilename, newParentPath)

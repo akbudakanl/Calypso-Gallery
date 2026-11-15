@@ -643,7 +643,9 @@ object MediaIdentityResolver {
         folderMatchCache: MutableMap<String, FolderIdentity.MatchResult>
     ): CandidateScore {
         val exactMediaStoreId = if (identity.mediaStoreId > 0L && candidate.mediaStoreId == identity.mediaStoreId) 1 else 0
-        val lastModifiedMatch = if (identity.lastModified > 0L && candidate.lastModified == identity.lastModified) 1 else 0
+        val lastModifiedMatch = if (identity.lastModified > 0L &&
+            CryptoManager.areTimestampsEquivalent(candidate.lastModified, identity.lastModified)
+        ) 1 else 0
 
         val candFile = File(candidate.path)
         val candParent = candFile.parentFile
@@ -1077,7 +1079,9 @@ object MediaIdentityResolver {
             return false
         }
 
-        if (identity.lastModified > 0L && file.lastModified() != identity.lastModified) {
+        if (identity.lastModified > 0L &&
+            !CryptoManager.areTimestampsEquivalent(file.lastModified(), identity.lastModified)
+        ) {
             return false
         }
 

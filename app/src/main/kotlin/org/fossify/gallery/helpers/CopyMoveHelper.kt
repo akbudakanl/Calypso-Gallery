@@ -189,7 +189,8 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                                 targetDir = targetDir,
                                 isTargetEncrypted = false,
                                 plainIndex = index,
-                                fastSampling = useFastSampling
+                                fastSampling = useFastSampling,
+                                context = applicationContext
                             )
                             when (check.status) {
                                 CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
@@ -216,7 +217,8 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                             targetDir = destDir,
                             isTargetEncrypted = false,
                             plainIndex = index,
-                            fastSampling = useFastSampling
+                            fastSampling = useFastSampling,
+                            context = applicationContext
                         )
                         when (check.status) {
                             CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
@@ -422,7 +424,57 @@ private class CopyMoveRunner(
 
     private fun getDestIndex(dir: File): CryptoManager.TargetPlainIndex {
         return destIndexMap.getOrPut(dir.absolutePath) {
-            CryptoManager.TargetPlainIndex(dir)
+            val preExistingPaths = dir.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
+            CryptoManager.TargetPlainIndex(dir, preExistingPaths)
+        }
+    }
+
+    private fun isDuplicatePlainInTarget(
+        srcFile: File,
+        desiredName: String,
+        destIndex: CryptoManager.TargetPlainIndex
+    ): Boolean {
+        if (!srcFile.isFile) return false
+        if (srcFile.absolutePath in config.precheckedIdenticalPaths) return true
+        if (srcFile.absolutePath in config.precheckedNonIdenticalPaths) return false
+
+        val candidates = destIndex.findCandidates(desiredName, includeCollisionVariants = true)
+        if (candidates.isEmpty()) return false
+
+        val srcLastMod = srcFile.lastModified()
+        val srcSize = srcFile.length()
+        var resolvedSrcDateTaken: Long? = null
+        fun getSrcDateTaken(): Long {
+            return resolvedSrcDateTaken ?: CryptoManager.resolvePlaintextDateTaken(
+                context = activity.applicationContext,
+                sourceFile = srcFile,
+                fallbackLastModified = srcLastMod
+            ).also { resolvedSrcDateTaken = it }
+        }
+
+        return candidates.any { existing ->
+            if (!existing.isFile || existing.length() != srcSize) return@any false
+            val existingLastMod = existing.lastModified()
+            if (!CryptoManager.areTimestampsEquivalent(srcLastMod, existingLastMod)) return@any false
+            val existingTaken = CryptoManager.resolvePlaintextDateTaken(
+                context = activity.applicationContext,
+                sourceFile = existing,
+                fallbackLastModified = existingLastMod
+            )
+            if (!CryptoManager.areMediaTimestampsEquivalent(
+                    srcLastMod,
+                    getSrcDateTaken(),
+                    existingLastMod,
+                    existingTaken
+                )
+            ) {
+                return@any false
+            }
+            CryptoManager.arePlainFilesIdentical(
+                srcFile,
+                existing,
+                fastSampling = activity.config.fastLargeDuplicateCheck
+            )
         }
     }
 
@@ -499,23 +551,8 @@ private class CopyMoveRunner(
 
         val destIndex = getDestIndex(destDir)
         val srcFile = File(item.path)
-        if (srcFile.isFile) {
-            if (srcFile.absolutePath in config.precheckedIdenticalPaths) {
-                return TopLevelResolution.SkippedConflict
-            }
-            if (srcFile.absolutePath !in config.precheckedNonIdenticalPaths) {
-                val existing = destIndex.findExact(item.name)
-                if (existing != null &&
-                    srcFile.length() == existing.length() &&
-                    CryptoManager.arePlainFilesIdentical(
-                        srcFile,
-                        existing,
-                        fastSampling = activity.config.fastLargeDuplicateCheck
-                    )
-                ) {
-                    return TopLevelResolution.SkippedConflict
-                }
-            }
+        if (isDuplicatePlainInTarget(srcFile, item.name, destIndex)) {
+            return TopLevelResolution.SkippedConflict
         }
 
         val existingExact = destIndex.findExact(item.name)
@@ -657,19 +694,8 @@ private class CopyMoveRunner(
                 copy(srcChild, FileDirItem(targetDirPath, childName, true))
                 anyChildTransferred = true
             } else {
-                val isPrecheckedIdentical = srcFile.absolutePath in config.precheckedIdenticalPaths
                 val existing = destIndex.findExact(childName)
-                val isIdentical = isPrecheckedIdentical || (
-                    srcFile.absolutePath !in config.precheckedNonIdenticalPaths &&
-                        existing != null &&
-                        srcFile.isFile &&
-                        srcFile.length() == existing.length() &&
-                        CryptoManager.arePlainFilesIdentical(
-                            srcFile,
-                            existing,
-                            fastSampling = activity.config.fastLargeDuplicateCheck
-                        )
-                    )
+                val isIdentical = isDuplicatePlainInTarget(srcFile, childName, destIndex)
 
                 if (isIdentical) {
                     anyChildSkipped = true
@@ -719,6 +745,18 @@ private class CopyMoveRunner(
             return
         }
 
+        val sourceFile = File(source.path)
+        val capturedLastModified = sourceFile.lastModified().takeIf { it > 0L } ?: source.modified
+        val capturedDateTaken = if (activity.baseConfig.keepLastModified) {
+            CryptoManager.resolvePlaintextDateTaken(
+                context = activity.applicationContext,
+                sourceFile = sourceFile,
+                fallbackLastModified = capturedLastModified
+            )
+        } else {
+            0L
+        }
+
         var inputStream: InputStream? = null
         var outputStream: OutputStream? = null
         var transferSuccess = false
@@ -736,8 +774,6 @@ private class CopyMoveRunner(
 
             if (source.size == bytesCopied && activity.getDoesFilePathExist(dest.path)) {
                 transferSuccess = true
-                transferredFiles.add(source)
-                finalizeCopiedFile(source, dest)
             }
         } catch (e: Exception) {
             activity.showErrorToast(e)
@@ -746,10 +782,22 @@ private class CopyMoveRunner(
             closeQuietly(outputStream)
         }
 
-        if (transferSuccess && !config.isCopyOperation) {
-            runCatching { activity.updateDBMediaPath(source.path, dest.path) }
-            deleteSourceFile(source)
-            File(source.path).parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
+        if (transferSuccess) {
+            transferredFiles.add(source)
+            finalizeCopiedFile(dest, capturedLastModified, capturedDateTaken)
+            if (!config.isCopyOperation) {
+                runCatching { activity.updateDBMediaPath(source.path, dest.path) }
+                if (activity.baseConfig.keepLastModified && capturedDateTaken > 0L) {
+                    CryptoManager.persistDecryptedDateTaken(
+                        context = activity.applicationContext,
+                        outFile = File(dest.path),
+                        dateTaken = capturedDateTaken,
+                        lastModified = capturedLastModified
+                    )
+                }
+                deleteSourceFile(source)
+                sourceFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
+            }
         }
     }
 
@@ -775,17 +823,15 @@ private class CopyMoveRunner(
         return bytesCopied
     }
 
-    private fun finalizeCopiedFile(source: FileDirItem, dest: FileDirItem) {
-        if (config.isCopyOperation) {
-            activity.rescanPath(dest.path) {
-                if (activity.baseConfig.keepLastModified) {
-                    updateLastModifiedValues(source, dest)
-                    activity.rescanPath(dest.path)
-                }
+    private fun finalizeCopiedFile(dest: FileDirItem, lastModified: Long, dateTaken: Long) {
+        val keepLastModified = activity.baseConfig.keepLastModified
+        if (keepLastModified) {
+            updateLastModifiedValues(dest.path, lastModified, dateTaken)
+        }
+        activity.rescanPath(dest.path) {
+            if (keepLastModified) {
+                updateLastModifiedValues(dest.path, lastModified, dateTaken)
             }
-        } else if (activity.baseConfig.keepLastModified) {
-            updateLastModifiedValues(source, dest)
-            activity.rescanPath(dest.path)
         }
     }
 
@@ -805,47 +851,16 @@ private class CopyMoveRunner(
         }
     }
 
-    private fun updateLastModifiedValues(source: FileDirItem, dest: FileDirItem) {
-        copyOldLastModified(source.path, dest.path)
-        val newTimestamp = File(source.path).lastModified()
-        if (newTimestamp != 0L) {
-            File(dest.path).setLastModified(newTimestamp)
+    private fun updateLastModifiedValues(destPath: String, lastModified: Long, dateTaken: Long) {
+        if (lastModified > 0L) {
+            File(destPath).setLastModified(lastModified)
         }
-    }
-
-    private fun copyOldLastModified(sourcePath: String, destPath: String) {
-        val projection = arrayOf(
-            MediaStore.Images.Media.DATE_TAKEN,
-            MediaStore.Files.FileColumns.DATE_MODIFIED
+        CryptoManager.persistDecryptedDateTaken(
+            context = activity.applicationContext,
+            outFile = File(destPath),
+            dateTaken = dateTaken,
+            lastModified = lastModified
         )
-        val uri = MediaStore.Files.getContentUri("external")
-        val selection = "${MediaStore.MediaColumns.DATA} = ?"
-        try {
-            activity.applicationContext.contentResolver.query(
-                uri,
-                projection,
-                selection,
-                arrayOf(sourcePath),
-                null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val dateTakenIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_TAKEN)
-                    val dateModifiedIdx = cursor.getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED)
-                    val values = ContentValues().apply {
-                        if (dateTakenIdx >= 0) {
-                            put(MediaStore.Images.Media.DATE_TAKEN, cursor.getLong(dateTakenIdx))
-                        }
-                        if (dateModifiedIdx >= 0) {
-                            put(MediaStore.Files.FileColumns.DATE_MODIFIED, cursor.getInt(dateModifiedIdx))
-                        }
-                    }
-                    if (values.size() > 0) {
-                        activity.applicationContext.contentResolver.update(uri, values, selection, arrayOf(destPath))
-                    }
-                }
-            }
-        } catch (_: Exception) {
-        }
     }
 
     private fun publishProgress(forceUi: Boolean, filename: String) {
