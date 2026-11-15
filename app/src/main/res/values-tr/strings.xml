@@ -360,8 +360,8 @@
     <string name="usb_direct_filesystem_required">Bu USB yolu yalnızca Android\'in sanal OTG sağlayıcısı üzerinden erişilebilir ve doğrudan dosya sistemi yolu olarak kullanılamaz. Lütfen bağlanmış bir depolama dizini veya dahili depolama / SD kart üzerinde bir klasör seçin.</string>
     <string name="vault_location_not_writable">Seçilen klasör mevcut değil veya bu cihazda yazılabilir değil.</string>
     <string name="vault_location_not_readable">Seçilen klasör mevcut değil veya bu cihazda okunabilir değil.</string>
-    <string name="sync_vault_from_external">Harici diskten kasayı eşitle</string>
-    <string name="sync_vault_select_source_prompt">Harici Diskten Kasa Eşitleme Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Cipher_Secrets):\nHarici diskinizde (USB / SD) Cipher_Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Cipher_Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Cipher_Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
+    <string name="sync_vault_from_external">Şifreli medya dosyalarını şifreli bölüme aktar</string>
+    <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Cipher_Secrets):\nHarici diskinizde (USB / SD) Cipher_Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Cipher_Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Cipher_Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
     <string name="conflict_handling_mode_label">Dosya çakışması ve kopya kontrolü</string>
     <string name="conflict_handling_auto_summary">Tam otomatik</string>
     <string name="conflict_handling_smart_dialog_summary">Akıllı diyalog</string>
@@ -454,4 +454,10 @@
     <string name="crypto_duplicate_source_decrypt_message">Şifresini çözdüğünüz dosyaların bir kısmı hedef klasörde zaten var. Kaynak klasördeki dosyalara ne olsun?</string>
     <string name="crypto_duplicate_source_encrypt_keep_warning">Uyarı: Şifresiz dosyalarda \"Sakla\" seçeneğinin seçilmesi, dosyanın şifrelenmeden diskte kalmaya devam etmesine yol açar.</string>
     <string name="crypto_duplicate_source_always_ask">Her zaman sor</string>
+    <string name="export_encrypted_vault">Şifreli kasayı dışa aktar</string>
+    <string name="export_vault_only_header">Sadece .vault dosyası içeren klasörü dışa aktar</string>
+    <string name="export_vault_entire_folder">Tüm klasörü dışa aktar</string>
+    <string name="export_vault_only_header_info">Desteklenen CLI aracını kullanarak farklı cihazlarda şifrelediğiniz medya ögelerini telefondaki şifreli kasaya ekleyebilmeniz için içerisinde .vault dosyası bulunan Cipher_Secrets isminde bir klasör kullanmanız yeterlidir.</string>
+    <string name="exporting_vault_progress">Şifreli kasa dışa aktarılıyor…</string>
+    <string name="vault_export_same_folder_error">Dışa aktarma hedefi aktif kasa klasörü veya onun alt klasörü olamaz.</string>
 </resources>

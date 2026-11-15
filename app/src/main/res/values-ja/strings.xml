@@ -406,8 +406,8 @@
     <string name="usb_direct_filesystem_required">この USB パスは Android の仮想 OTG プロバイダー経由でのみ公開されており、ファイルシステムパスとして直接アクセスできません。マウントされたストレージディレクトリ、または内部ストレージ / SD カード上のフォルダーを選択してください。</string>
     <string name="vault_location_not_writable">選択したフォルダーは存在しないか、このデバイスでは書き込みできません。</string>
     <string name="vault_location_not_readable">選択したフォルダーは存在しないか、このデバイスでは読み取れません。</string>
-    <string name="sync_vault_from_external">外部ドライブから保管庫を同期</string>
-    <string name="sync_vault_select_source_prompt">外部保管庫の同期の仕組み:\n\n1. 統合 Cipher_Secrets フォルダー:\n外部ドライブ (USB / SD) に Cipher_Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Cipher_Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Cipher_Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。</string>
+    <string name="sync_vault_from_external">暗号化されたメディアファイルを暗号化セクションにインポート</string>
+    <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. 統合 Cipher_Secrets フォルダー:\n外部ドライブ (USB / SD) に Cipher_Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Cipher_Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Cipher_Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。</string>
     <string name="conflict_handling_mode_label">ファイルの競合と重複の解決</string>
     <string name="conflict_handling_auto_short">完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更）</string>
     <string name="conflict_handling_smart_dialog_short">スマートダイアログ（同一は自動スキップ、内容が異なる場合のみ確認）</string>
@@ -450,4 +450,10 @@
     <string name="crypto_duplicate_source_decrypt_message">復号しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？</string>
     <string name="crypto_duplicate_source_encrypt_keep_warning">警告：未暗号化ファイルで「残す」を選択すると、元のファイルは暗号化されないままディスク上に残ります。</string>
     <string name="crypto_duplicate_source_always_ask">毎回確認する</string>
+    <string name="export_encrypted_vault">暗号化された保管庫をエクスポート</string>
+    <string name="export_vault_only_header">.vault ファイルのみを含むフォルダーをエクスポート</string>
+    <string name="export_vault_entire_folder">フォルダー全体をエクスポート</string>
+    <string name="export_vault_only_header_info">対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Cipher_Secrets という名前のフォルダーを使用するだけで十分です。</string>
+    <string name="exporting_vault_progress">暗号化された保管庫をエクスポート中…</string>
+    <string name="vault_export_same_folder_error">エクスポート先に現在使用中の保管庫フォルダーまたはそのサブフォルダーを指定することはできません。</string>
 </resources>

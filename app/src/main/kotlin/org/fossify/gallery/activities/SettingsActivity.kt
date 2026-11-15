@@ -531,8 +531,12 @@ class SettingsActivity : SimpleActivity() {
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        // 6) Şifreli kasayı dışa aktar
+        binding.settingsExportVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
         setupVaultLocation()
         setupCreateVault()
+        setupExportVault()
         setupSyncVault()
         setupChangeVaultPassword()
         setupVaultBiometric()
@@ -590,7 +594,54 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupExportVault() {
+        binding.settingsExportVaultHolder.setOnClickListener {
+            if (!doesVaultExist()) return@setOnClickListener
+
+            val dialogBinding = org.fossify.gallery.databinding.DialogExportVaultBinding.inflate(layoutInflater)
+            dialogBinding.exportVaultOnlyHeaderRadio.isChecked = true
+            dialogBinding.exportVaultEntireFolderRadio.isChecked = false
+
+            val selectOnlyHeader = {
+                dialogBinding.exportVaultOnlyHeaderRadio.isChecked = true
+                dialogBinding.exportVaultEntireFolderRadio.isChecked = false
+            }
+            val selectEntireFolder = {
+                dialogBinding.exportVaultOnlyHeaderRadio.isChecked = false
+                dialogBinding.exportVaultEntireFolderRadio.isChecked = true
+            }
+
+            dialogBinding.exportVaultOnlyHeaderRow.setOnClickListener { selectOnlyHeader() }
+            dialogBinding.exportVaultOnlyHeaderRadio.setOnClickListener { selectOnlyHeader() }
+            dialogBinding.exportVaultEntireFolderRadio.setOnClickListener { selectEntireFolder() }
+
+            bindSettingInfoIcon(
+                iconView = dialogBinding.exportVaultOnlyHeaderInfo,
+                titleResId = R.string.export_vault_only_header,
+                messageResId = R.string.export_vault_only_header_info
+            )
+
+            getAlertDialogBuilder()
+                .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
+                    promptExportEncryptedVault(
+                        onlyVaultHeader = dialogBinding.exportVaultOnlyHeaderRadio.isChecked
+                    ) {
+                        setupVaultSettings()
+                    }
+                }
+                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .apply {
+                    setupDialogStuff(dialogBinding.root, this, R.string.export_encrypted_vault)
+                }
+        }
+    }
+
     private fun setupSyncVault() {
+        bindSettingInfoIcon(
+            iconView = binding.settingsSyncVaultInfo,
+            titleResId = R.string.sync_vault_from_external,
+            messageResId = R.string.sync_vault_select_source_prompt
+        )
         binding.settingsSyncVaultHolder.setOnClickListener {
             if (!doesVaultExist()) return@setOnClickListener
             promptSyncVaultFromExternal {

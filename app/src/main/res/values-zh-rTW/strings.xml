@@ -403,8 +403,8 @@
     <string name="usb_direct_filesystem_required">此 USB 路徑僅透過 Android 虛擬 OTG 提供者公開，無法直接作為檔案系統路徑存取。請選擇已掛載的儲存目錄，或內部儲存空間 / SD 卡上的資料夾。</string>
     <string name="vault_location_not_writable">所選資料夾不存在，或無法在此裝置上寫入。</string>
     <string name="vault_location_not_readable">所選資料夾不存在，或無法在此裝置上讀取。</string>
-    <string name="sync_vault_from_external">從外接磁碟機同步保險箱</string>
-    <string name="sync_vault_select_source_prompt">外部保險箱同步運作方式：\n\n1. 統一的 Cipher_Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Cipher_Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Cipher_Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Cipher_Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。</string>
+    <string name="sync_vault_from_external">將加密的媒體檔案匯入至加密區域</string>
+    <string name="sync_vault_select_source_prompt">加密媒體匯入運作方式：\n\n1. 統一的 Cipher_Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Cipher_Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Cipher_Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Cipher_Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。</string>
     <string name="conflict_handling_mode_label">檔案衝突與重複處理方式</string>
     <string name="conflict_handling_auto_short">全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)）</string>
     <string name="conflict_handling_smart_dialog_short">智慧對話方塊（自動略過相同檔案，僅在內容不同時詢問）</string>
@@ -447,4 +447,10 @@
     <string name="crypto_duplicate_source_decrypt_message">您要解密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？</string>
     <string name="crypto_duplicate_source_encrypt_keep_warning">警告：若對未加密的檔案選擇「保留」，來源檔案將以未加密狀態繼續留在儲存裝置上。</string>
     <string name="crypto_duplicate_source_always_ask">每次詢問</string>
+    <string name="export_encrypted_vault">匯出加密保險箱</string>
+    <string name="export_vault_only_header">僅匯出包含 .vault 檔案的資料夾</string>
+    <string name="export_vault_entire_folder">匯出整個資料夾</string>
+    <string name="export_vault_only_header_info">若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Cipher_Secrets 且包含 .vault 檔案的資料夾即可。</string>
+    <string name="exporting_vault_progress">正在匯出加密保險箱…</string>
+    <string name="vault_export_same_folder_error">匯出目的地不可為使用中的保險箱資料夾或其子資料夾。</string>
 </resources>
