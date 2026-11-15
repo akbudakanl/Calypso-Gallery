@@ -252,12 +252,18 @@ fun Context.getSortedDirectories(source: ArrayList<Directory>): ArrayList<Direct
                 }
             }
 
-            // SORT_BY_SIZE, SORT_BY_COUNT, SORT_BY_DATE_MODIFIED are numerical
-            else -> (o1.sortValue.toLongOrNull() ?: 0).compareTo(o2.sortValue.toLongOrNull() ?: 0)
+            sorting and SORT_BY_SIZE != 0 -> o1.size.compareTo(o2.size)
+            sorting and SORT_BY_COUNT != 0 -> o1.mediaCnt.compareTo(o2.mediaCnt)
+            sorting and SORT_BY_DATE_MODIFIED != 0 -> o1.modified.compareTo(o2.modified)
+            sorting and SORT_BY_DATE_TAKEN != 0 -> o1.taken.compareTo(o2.taken)
+            else -> (o1.sortValue.toLongOrNull() ?: 0L).compareTo(o2.sortValue.toLongOrNull() ?: 0L)
         }
 
         if (sorting and SORT_DESCENDING != 0) {
             result *= -1
+        }
+        if (result == 0) {
+            result = o1.path.lowercase(Locale.getDefault()).compareTo(o2.path.lowercase(Locale.getDefault()))
         }
         result
     }
@@ -1376,7 +1382,7 @@ fun Context.getCachedDirectories(
                     isSecretVaultView = isSecretVaultView,
                     getVideosOnly = getVideosOnly,
                     getImagesOnly = getImagesOnly,
-                    syncFromDisk = false
+                    syncFromDisk = true
                 )
             )
         }
@@ -1395,52 +1401,122 @@ fun Context.getCachedMedia(
 ) {
     ensureBackgroundThread {
         val mediaFetcher = MediaFetcher(this)
-        val foldersToScan = if (path.isEmpty()) {
-            mediaFetcher.getFoldersToScan().filter {
-                it != RECYCLE_BIN &&
-                    it != FAVORITES &&
-                    !config.isFolderProtected(it) &&
-                    (!CryptoManager.isVaultUnlocked || !CryptoManager.isVaultRecycleBinPath(this, it))
-            }.toMutableList() as ArrayList<String>
-        } else {
-            arrayListOf(path)
-        }
-
+        val shouldShowHidden = config.shouldShowHidden
         var media = ArrayList<Medium>()
-        if (path == FAVORITES) {
-            val validFavoritePaths = getFavoritePaths().toHashSet()
-            media.addAll(mediaDB.getFavorites().filter { it.path in validFavoritePaths })
-        }
+        var loadedFromFastAllMedia = false
 
-        if (path == RECYCLE_BIN) {
-            media.addAll(getUpdatedDeletedMedia())
-        }
-
-        val virtualAlbumId = path.getVirtualAlbumId()
-        if (virtualAlbumId != null) {
-            try {
-                media.addAll(getVirtualAlbumMedia(virtualAlbumId))
-            } catch (ignored: Exception) {
+        if (path.isEmpty()) {
+            val cachedDirs = try {
+                directoryDB.getAll()
+            } catch (_: Exception) {
+                emptyList()
             }
-        }
+            if (cachedDirs.isNotEmpty()) {
+                val showExcluded = config.temporarilyShowExcluded
+                val excludedPaths = if (showExcluded) {
+                    HashSet()
+                } else {
+                    config.excludedFolders
+                }
+                val includedPaths = config.includedFolders
+                val folderNoMediaStatuses = HashMap<String, Boolean>()
+                val noMediaFolders = getNoMediaFoldersSync()
+                noMediaFolders.forEach { folder ->
+                    folderNoMediaStatuses["$folder/$NOMEDIA"] = true
+                }
 
-        if (config.filterMedia and TYPE_PORTRAITS != 0) {
-            val foldersToAdd = ArrayList<String>()
-            for (folder in foldersToScan) {
-                val allFiles = File(folder).listFiles() ?: continue
-                allFiles.filter { it.name.startsWith("img_", true) && it.isDirectory }.forEach {
-                    foldersToAdd.add(it.absolutePath)
+                val visibleFoldersLower = HashSet<String>(cachedDirs.size)
+                for (dir in cachedDirs) {
+                    val dirPath = dir.path
+                    if (dir.isRecycleBin() || dir.areFavorites() || dir.isVirtualAlbum() || config.isFolderProtected(dirPath)) {
+                        continue
+                    }
+                    val isVisible = if (CryptoManager.isEncryptedFolderPath(this, dirPath)) {
+                        shouldShowHidden && CryptoManager.isVaultUnlocked &&
+                            (!isEncryptedAlbumExcluded(dirPath) || showExcluded) &&
+                            !CryptoManager.isVaultRecycleBinPath(this, dirPath)
+                    } else {
+                        dirPath.shouldFolderBeVisible(
+                            excludedPaths = excludedPaths,
+                            includedPaths = includedPaths,
+                            showHidden = shouldShowHidden || showExcluded,
+                            folderNoMediaStatuses = folderNoMediaStatuses
+                        ) { noMediaPath, hasNoMedia ->
+                            folderNoMediaStatuses[noMediaPath] = hasNoMedia
+                        }
+                    }
+                    if (isVisible) {
+                        visibleFoldersLower.add(dirPath.lowercase(Locale.getDefault()))
+                    }
+                }
+
+                if (visibleFoldersLower.isNotEmpty()) {
+                    val allCachedMedia = try {
+                        mediaDB.getAllMedia()
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                    for (item in allCachedMedia) {
+                        val parentLower = item.parentPath.lowercase(Locale.getDefault())
+                        if (parentLower in visibleFoldersLower ||
+                            (item.type == TYPE_PORTRAITS && File(item.parentPath).parent?.lowercase(Locale.getDefault()) in visibleFoldersLower)
+                        ) {
+                            media.add(item)
+                        }
+                    }
+                    if (media.isNotEmpty()) {
+                        loadedFromFastAllMedia = true
+                    }
                 }
             }
-            foldersToScan.addAll(foldersToAdd)
         }
 
-        val shouldShowHidden = config.shouldShowHidden
-        foldersToScan.filter { !it.isVirtualAlbumPath() && (path.isNotEmpty() || !config.isFolderProtected(it)) }.forEach {
-            try {
-                val currMedia = mediaDB.getMediaFromPath(it)
-                media.addAll(currMedia)
-            } catch (ignored: Exception) {
+        if (!loadedFromFastAllMedia) {
+            val foldersToScan = if (path.isEmpty()) {
+                mediaFetcher.getFoldersToScan().filter {
+                    it != RECYCLE_BIN &&
+                        it != FAVORITES &&
+                        !config.isFolderProtected(it) &&
+                        (!CryptoManager.isVaultUnlocked || !CryptoManager.isVaultRecycleBinPath(this, it))
+                }.toMutableList() as ArrayList<String>
+            } else {
+                arrayListOf(path)
+            }
+
+            if (path == FAVORITES) {
+                val validFavoritePaths = getFavoritePaths().toHashSet()
+                media.addAll(mediaDB.getFavorites().filter { it.path in validFavoritePaths })
+            }
+
+            if (path == RECYCLE_BIN) {
+                media.addAll(getUpdatedDeletedMedia())
+            }
+
+            val virtualAlbumId = path.getVirtualAlbumId()
+            if (virtualAlbumId != null) {
+                try {
+                    media.addAll(getVirtualAlbumMedia(virtualAlbumId))
+                } catch (ignored: Exception) {
+                }
+            }
+
+            if (config.filterMedia and TYPE_PORTRAITS != 0) {
+                val foldersToAdd = ArrayList<String>()
+                for (folder in foldersToScan) {
+                    val allFiles = File(folder).listFiles() ?: continue
+                    allFiles.filter { it.name.startsWith("img_", true) && it.isDirectory }.forEach {
+                        foldersToAdd.add(it.absolutePath)
+                    }
+                }
+                foldersToScan.addAll(foldersToAdd)
+            }
+
+            foldersToScan.filter { !it.isVirtualAlbumPath() && (path.isNotEmpty() || !config.isFolderProtected(it)) }.forEach {
+                try {
+                    val currMedia = mediaDB.getMediaFromPath(it)
+                    media.addAll(currMedia)
+                } catch (ignored: Exception) {
+                }
             }
         }
 
@@ -1892,23 +1968,20 @@ fun Context.createDirectoryFromMedia(
     }
 
     val isSortingAscending = config.directorySorting.isSortingAscending()
-    val defaultMedium = Medium(0, "", "", "", 0L, 0L, 0L, 0, 0, false, 0L, 0L)
-    val firstItem = curMedia.firstOrNull() ?: defaultMedium
-    val lastItem = curMedia.lastOrNull() ?: defaultMedium
     val dirName = checkAppendingHidden(path, hiddenString, includedFolders, noMediaFolders)
     val lastModified = if (isSortingAscending) {
-        min(firstItem.modified, lastItem.modified)
+        curMedia.minOfOrNull { it.modified } ?: 0L
     } else {
-        max(firstItem.modified, lastItem.modified)
+        curMedia.maxOfOrNull { it.modified } ?: 0L
     }
 
     val dateTaken = if (isSortingAscending) {
-        min(firstItem.taken, lastItem.taken)
+        curMedia.minOfOrNull { it.taken } ?: 0L
     } else {
-        max(firstItem.taken, lastItem.taken)
+        curMedia.maxOfOrNull { it.taken } ?: 0L
     }
 
-    val size = if (getProperFileSize) curMedia.sumByLong { it.size } else 0L
+    val size = curMedia.sumByLong { it.size }
     val mediaTypes = curMedia.getDirMediaTypes()
     val count = curMedia.size
     val sortValue = getDirectorySortingValue(curMedia, path, dirName, size, count)
@@ -1935,29 +2008,24 @@ fun Context.getDirectorySortingValue(
     count: Int
 ): String {
     val sorting = config.directorySorting
-    val sorted = when {
-        sorting and SORT_BY_NAME != 0 -> return name
-        sorting and SORT_BY_PATH != 0 -> return path
-        sorting and SORT_BY_SIZE != 0 -> return size.toString()
-        sorting and SORT_BY_COUNT != 0 -> return count.toString()
-        sorting and SORT_BY_DATE_MODIFIED != 0 -> media.sortedBy { it.modified }
-        sorting and SORT_BY_DATE_TAKEN != 0 -> media.sortedBy { it.taken }
-        else -> media
-    }
+    val isAscending = sorting.isSortingAscending()
+    return when {
+        sorting and SORT_BY_NAME != 0 -> name
+        sorting and SORT_BY_PATH != 0 -> path
+        sorting and SORT_BY_SIZE != 0 -> size.toString()
+        sorting and SORT_BY_COUNT != 0 -> count.toString()
+        sorting and SORT_BY_DATE_MODIFIED != 0 -> {
+            val v = (if (isAscending) media.minOfOrNull { it.modified } else media.maxOfOrNull { it.modified }) ?: return ""
+            v.toString()
+        }
 
-    val relevantMedium = if (sorting.isSortingAscending()) {
-        sorted.firstOrNull() ?: return ""
-    } else {
-        sorted.lastOrNull() ?: return ""
-    }
+        sorting and SORT_BY_DATE_TAKEN != 0 -> {
+            val v = (if (isAscending) media.minOfOrNull { it.taken } else media.maxOfOrNull { it.taken }) ?: return ""
+            v.toString()
+        }
 
-    val result: Any = when {
-        sorting and SORT_BY_DATE_MODIFIED != 0 -> relevantMedium.modified
-        sorting and SORT_BY_DATE_TAKEN != 0 -> relevantMedium.taken
-        else -> 0
+        else -> ""
     }
-
-    return result.toString()
 }
 
 fun Context.updateDirectoryPath(path: String) {

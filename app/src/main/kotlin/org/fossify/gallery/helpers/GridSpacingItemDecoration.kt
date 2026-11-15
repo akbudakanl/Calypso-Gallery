@@ -12,7 +12,7 @@ class GridSpacingItemDecoration(
 ) : RecyclerView.ItemDecoration() {
 
     override fun toString() = "spanCount: $spanCount, spacing: $spacing, isScrollingHorizontally: $isScrollingHorizontally, addSideSpacing: $addSideSpacing, " +
-        "items: ${items.hashCode()}, useGridPosition: $useGridPosition"
+        "useGridPosition: $useGridPosition"
 
     override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
         if (spacing <= 1) {

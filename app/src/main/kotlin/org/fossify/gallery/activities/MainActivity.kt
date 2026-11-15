@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
+import android.os.Process
 import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
@@ -1020,12 +1021,20 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
+    private fun stopDirectoryFetching() {
+        mFetchGeneration.incrementAndGet()
+        mLastMediaFetcher?.shouldStop = true
+        mShouldStopFetching = true
+        mIsGettingDirs = false
+    }
+
     private fun showAllMedia() {
         if (mIsSecretVaultView) {
             openVaultFilesView()
             return
         }
 
+        stopDirectoryFetching()
         if (CryptoManager.isVaultUnlocked && config.temporarilyShowHidden) {
             VaultSessionManager.markPreserveVaultOnSwitch()
             mIsSwitchingVaultView = true
@@ -1045,6 +1054,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun openVaultFilesView() {
+        stopDirectoryFetching()
         config.showAll = false
         Intent(this, MediaActivity::class.java).apply {
             putExtra(DIRECTORY, "")
@@ -1598,6 +1608,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mLastOpenedDirectoryPath = path
         handleLockedFolderOpening(path) { success ->
             if (success) {
+                stopDirectoryFetching()
                 Intent(this, MediaActivity::class.java).apply {
                     putExtra(SKIP_AUTHENTICATION, true)
                     putExtra(DIRECTORY, path)
@@ -1674,11 +1685,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         val dirs = getSortedDirectories(newDirs)
         val previousDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(mDirs)
+        val currentDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
         mDirs = dirs.clone() as ArrayList<Directory>
 
         var isPlaceholderVisible = dirs.isEmpty()
+        var lastDispatchedDirsHash = previousDirsHash
 
-        if (!isIncremental || MediaUpdatePolicy.computeDirectoryContentHash(dirs) != previousDirsHash) {
+        if (!isIncremental || currentDirsHash != previousDirsHash) {
+            lastDispatchedDirsHash = currentDirsHash
             runOnUiThread {
                 if (generation != mFetchGeneration.get() || isDestroyed || isFinishing) return@runOnUiThread
                 checkPlaceholderVisibility(dirs)
@@ -1713,8 +1727,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 val resorted = getSortedDirectories(dirs)
                 dirs.clear()
                 dirs.addAll(resorted)
+                val postRepairHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
                 mDirs = dirs.clone() as ArrayList<Directory>
-                setupAdapter(dirs.clone() as ArrayList<Directory>)
+                if (postRepairHash != lastDispatchedDirsHash) {
+                    lastDispatchedDirsHash = postRepairHash
+                    setupAdapter(dirs.clone() as ArrayList<Directory>)
+                }
             }
         }
 
@@ -1724,7 +1742,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val includedFolders = config.includedFolders
         val noMediaFolders = getNoMediaFoldersSync()
         val tempFolderPath = config.tempFolderPath
-        val getProperFileSize = config.directorySorting and SORT_BY_SIZE != 0
+        val getProperFileSize = true
         val dirPathsToRemove = ArrayList<String>()
         val lastModifieds = fetcher.getLastModifieds()
         val dateTakens = fetcher.getDateTakens()
@@ -1764,6 +1782,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             .filter { it !in existingPaths }
             .sortedByDescending { it in prioritySet }
 
+        val newDirsToInsert = ArrayList<Directory>()
+        val folderMediaToSync = ArrayList<Pair<Directory, List<Medium>>>()
+
         // Phase 1: check newly discovered / uncached folders FIRST so new albums appear immediately
         var newFoldersAdded = false
         for (folder in newFolders) {
@@ -1784,25 +1805,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 return
             }
 
-            val sorting = config.getFolderSorting(folder)
-            val grouping = config.getFolderGrouping(folder)
-            val getProperDateTaken = config.directorySorting and SORT_BY_DATE_TAKEN != 0
-                    || sorting and SORT_BY_DATE_TAKEN != 0
-                    || grouping and GROUP_BY_DATE_TAKEN_DAILY != 0
-                    || grouping and GROUP_BY_DATE_TAKEN_MONTHLY != 0
-
-            val getProperLastModified = config.directorySorting and SORT_BY_DATE_MODIFIED != 0
-                    || sorting and SORT_BY_DATE_MODIFIED != 0
-                    || grouping and GROUP_BY_LAST_MODIFIED_DAILY != 0
-                    || grouping and GROUP_BY_LAST_MODIFIED_MONTHLY != 0
-
             val newMedia = fetcher.getFilesFrom(
                 curPath = folder,
                 isPickImage = getImagesOnly,
                 isPickVideo = getVideosOnly,
-                getProperDateTaken = getProperDateTaken,
-                getProperLastModified = getProperLastModified,
-                getProperFileSize = getProperFileSize,
+                getProperDateTaken = true,
+                getProperLastModified = true,
+                getProperFileSize = true,
                 favoritePaths = favoritePaths,
                 getVideoDurations = false,
                 lastModifieds = lastModifieds,
@@ -1835,30 +1844,24 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             dirs.add(newDir)
             newFoldersAdded = true
 
-            // make sure to create a new thread for these operations, dont just use the common bg thread
             if (!newDir.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, folder)) {
-                Thread {
-                    try {
-                        directoryDB.insert(newDir)
-                        if (folder != RECYCLE_BIN && folder != FAVORITES) {
-                            val filteredMedia = newMedia.filterNot { isPathHiddenOrEncrypted(it.path) }
-                            val cachedFolderMedia = try {
-                                mediaDB.getMediaFromPath(folder)
-                            } catch (_: Exception) {
-                                emptyList()
-                            }
-                            MediaUpdatePolicy.mergeCachedMediaMetadata(filteredMedia, cachedFolderMedia)
-                            mediaDB.insertAll(filteredMedia)
-                        }
-                    } catch (ignored: Exception) {
-                    }
-                }.start()
+                newDirsToInsert.add(newDir)
+                if (folder != RECYCLE_BIN && folder != FAVORITES) {
+                    folderMediaToSync.add(newDir to newMedia)
+                }
             }
         }
 
         if (newFoldersAdded) {
+            val sortedDirs = getSortedDirectories(dirs)
+            dirs.clear()
+            dirs.addAll(sortedDirs)
+            val newHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
             mDirs = dirs.clone() as ArrayList<Directory>
-            setupAdapter(dirs)
+            if (newHash != lastDispatchedDirsHash) {
+                lastDispatchedDirsHash = newHash
+                setupAdapter(dirs.clone() as ArrayList<Directory>)
+            }
         }
 
         // Phase 2: recheck existing folders, prioritizing recently visited/modified folders first
@@ -1875,26 +1878,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     return
                 }
 
-                val sorting = config.getFolderSorting(directory.path)
-                val grouping = config.getFolderGrouping(directory.path)
-                val getProperDateTaken = config.directorySorting and SORT_BY_DATE_TAKEN != 0
-                        || sorting and SORT_BY_DATE_TAKEN != 0
-                        || grouping and GROUP_BY_DATE_TAKEN_DAILY != 0
-                        || grouping and GROUP_BY_DATE_TAKEN_MONTHLY != 0
-
-                val getProperLastModified =
-                    config.directorySorting and SORT_BY_DATE_MODIFIED != 0
-                            || sorting and SORT_BY_DATE_MODIFIED != 0
-                            || grouping and GROUP_BY_LAST_MODIFIED_DAILY != 0
-                            || grouping and GROUP_BY_LAST_MODIFIED_MONTHLY != 0
-
                 val curMedia = fetcher.getFilesFrom(
                     curPath = directory.path,
                     isPickImage = getImagesOnly,
                     isPickVideo = getVideosOnly,
-                    getProperDateTaken = getProperDateTaken,
-                    getProperLastModified = getProperLastModified,
-                    getProperFileSize = getProperFileSize,
+                    getProperDateTaken = true,
+                    getProperLastModified = true,
+                    getProperFileSize = true,
                     favoritePaths = favoritePaths,
                     getVideoDurations = false,
                     lastModifieds = lastModifieds,
@@ -1924,20 +1914,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                         includedFolders = includedFolders,
                         getProperFileSize = getProperFileSize,
                         noMediaFolders = noMediaFolders
-                    ).apply {
-                        if (!getProperLastModified && modified == 0L && directory.modified != 0L) {
-                            modified = directory.modified
-                        }
-                        if (!getProperDateTaken && taken == 0L && directory.taken != 0L) {
-                            taken = directory.taken
-                        }
-                        if (!getProperFileSize && size == 0L && directory.size != 0L) {
-                            size = directory.size
-                        }
-                    }
+                    )
                 }
 
-                // we are looping through the already displayed folders looking for changes, do not do anything if nothing changed
+                // we are looping through the already displayed folders looking for changes, do not re-index UI if nothing changed
                 val isRandomDirSort = config.directorySorting and SORT_BY_RANDOM != 0
                 val isUnchanged = directory.tmb == newDir.tmb
                         && directory.name == newDir.name
@@ -1945,7 +1925,15 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                         && directory.size == newDir.size
                         && directory.types == newDir.types
                         && (isRandomDirSort || directory.sortValue == newDir.sortValue)
+                val shouldSyncFolderMedia = !directory.isRecycleBin()
+                        && !directory.areFavorites()
+                        && !directory.isVirtualAlbum()
+                        && !CryptoManager.isEncryptedFolderPath(this, directory.path)
+                        && curMedia.isNotEmpty()
                 if (isUnchanged) {
+                    if (shouldSyncFolderMedia) {
+                        folderMediaToSync.add(directory to curMedia)
+                    }
                     continue
                 }
 
@@ -1965,39 +1953,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
 
                 existingDirsChanged = true
-
-                // update directories and media files in the local db, delete invalid items. Intentionally creating a new thread
                 updateDBDirectory(directory)
-                if (!directory.isRecycleBin() && !directory.areFavorites() && !directory.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, directory.path)) {
-                    Thread {
-                        try {
-                            val filteredMedia = curMedia.filterNot { isPathHiddenOrEncrypted(it.path) }
-                            val cachedFolderMedia = try {
-                                mediaDB.getMediaFromPath(directory.path)
-                            } catch (_: Exception) {
-                                emptyList()
-                            }
-                            MediaUpdatePolicy.mergeCachedMediaMetadata(filteredMedia, cachedFolderMedia)
-                            mediaDB.insertAll(filteredMedia)
-                        } catch (ignored: Exception) {
-                        }
-                    }.start()
-                }
-
-                if (!directory.isRecycleBin() && !directory.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, directory.path)) {
-                    getCachedMedia(directory.path, getVideosOnly, getImagesOnly) {
-                        val mediaToDelete = ArrayList<Medium>()
-                        it.forEach {
-                            if (!curMedia.contains(it)) {
-                                val medium = it as? Medium
-                                val path = medium?.path
-                                if (path != null) {
-                                    mediaToDelete.add(medium)
-                                }
-                            }
-                        }
-                        mediaDB.deleteMedia(*mediaToDelete.toTypedArray())
-                    }
+                if (shouldSyncFolderMedia) {
+                    folderMediaToSync.add(directory to curMedia)
                 }
             }
 
@@ -2011,10 +1969,66 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             }
 
             if (existingDirsChanged) {
+                val sortedDirs = getSortedDirectories(dirs)
+                dirs.clear()
+                dirs.addAll(sortedDirs)
+                val updatedHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
                 mDirs = dirs.clone() as ArrayList<Directory>
-                setupAdapter(dirs)
+                if (updatedHash != lastDispatchedDirsHash) {
+                    lastDispatchedDirsHash = updatedHash
+                    setupAdapter(dirs.clone() as ArrayList<Directory>)
+                }
             }
         } catch (ignored: Exception) {
+        }
+
+        if ((newDirsToInsert.isNotEmpty() || (!getImagesOnly && !getVideosOnly && folderMediaToSync.isNotEmpty())) &&
+            generation == mFetchGeneration.get() && !mShouldStopFetching && !isDestroyed && !isFinishing
+        ) {
+            Thread {
+                try {
+                    Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+                } catch (_: Exception) {
+                }
+                try {
+                    if (newDirsToInsert.isNotEmpty()) {
+                        directoryDB.insertAll(newDirsToInsert)
+                    }
+                    if (!getImagesOnly && !getVideosOnly) {
+                        val activeFilter = config.filterMedia
+                        for ((dir, scannedMedia) in folderMediaToSync) {
+                            if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed) {
+                                break
+                            }
+                            try {
+                                val filteredMedia = scannedMedia.filterNot { isPathHiddenOrEncrypted(it.path) }
+                                val cachedFolderMedia = try {
+                                    mediaDB.getMediaFromPath(dir.path)
+                                } catch (_: Exception) {
+                                    emptyList()
+                                }
+                                MediaUpdatePolicy.mergeCachedMediaMetadata(filteredMedia, cachedFolderMedia)
+
+                                val cachedInFilter = cachedFolderMedia.filter { cached ->
+                                    (activeFilter and cached.type) != 0
+                                }
+                                if (!MediaUpdatePolicy.isFolderMediaCacheInSync(filteredMedia, cachedInFilter)) {
+                                    if (filteredMedia.isNotEmpty()) {
+                                        mediaDB.insertAll(filteredMedia)
+                                    }
+                                    val freshPaths = filteredMedia.mapTo(HashSet(filteredMedia.size)) { it.path }
+                                    val staleMedia = cachedInFilter.filter { it.path !in freshPaths }
+                                    if (staleMedia.isNotEmpty()) {
+                                        mediaDB.deleteMedia(*staleMedia.toTypedArray())
+                                    }
+                                }
+                            } catch (_: Exception) {
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                }
+            }.start()
         }
 
         if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
