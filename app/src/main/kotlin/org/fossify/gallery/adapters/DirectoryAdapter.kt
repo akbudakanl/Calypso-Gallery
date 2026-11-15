@@ -75,6 +75,7 @@ import org.fossify.gallery.databinding.DirectoryItemListBinding
 import org.fossify.gallery.dialogs.ConfirmDeleteFolderDialog
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.EncryptConfirmationDialog
+import org.fossify.gallery.dialogs.resolveAlbumCryptoOptions
 import org.fossify.gallery.dialogs.ExcludeFolderDialog
 import org.fossify.gallery.dialogs.PickMediumDialog
 import org.fossify.gallery.dialogs.RenameEncryptedFolderDialog
@@ -608,24 +609,28 @@ class DirectoryAdapter(
             return
         }
 
-        val totalFilesCount = paths.sumOf { path ->
-            File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
+        val conflicts = paths.mapNotNull {
+            CryptoManager.previewEncryptAlbumConflict(activity, it)
         }
+        resolveAlbumCryptoOptions(activity, conflicts) { albumOptions ->
+            val totalFilesCount = paths.sumOf { path ->
+                File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
+            }
 
-        activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
-            val progressDialog = CryptoProgressDialog(
-                activity = activity,
-                max = totalFilesCount,
-                titleId = R.string.encrypting_folder,
-                enableNotification = notificationsAllowed
-            )
+            activity.ensureNotificationPermissionThenRun { notificationsAllowed ->
+                val progressDialog = CryptoProgressDialog(
+                    activity = activity,
+                    max = totalFilesCount,
+                    titleId = R.string.encrypting_folder,
+                    enableNotification = notificationsAllowed
+                )
 
-            ensureBackgroundThread {
-                var globalProcessed = 0
-                var allSuccess = true
-                for (path in paths) {
-                    var folderLastCurrent = 0
-                    val result = CryptoManager.encryptFolder(activity, path) { current, _ ->
+                ensureBackgroundThread {
+                    var globalProcessed = 0
+                    var allSuccess = true
+                    for (path in paths) {
+                        var folderLastCurrent = 0
+                        val result = CryptoManager.encryptFolder(activity, path, options = albumOptions) { current, _ ->
                         val diff = current - folderLastCurrent
                         if (diff > 0) {
                             globalProcessed += diff
@@ -654,6 +659,7 @@ class DirectoryAdapter(
             }
         }
     }
+}
 
     private fun tryEmptyRecycleBin(askConfirmation: Boolean) {
         if (askConfirmation) {

@@ -101,6 +101,7 @@ class SettingsActivity : SimpleActivity() {
         setupFileDeletionPasswordProtection()
         setupVaultSettings()
         setupConflictHandlingMode()
+        setupAlbumCryptoConflictMode()
         setupDeleteEmptyFolders()
         setupKeepScreenOn()
         setupAllowPhotoGestures()
@@ -860,6 +861,29 @@ class SettingsActivity : SimpleActivity() {
         }
     )
 
+    private fun setupAlbumCryptoConflictMode() {
+        binding.settingsAlbumCryptoConflict.text = getAlbumCryptoConflictModeText()
+        binding.settingsAlbumCryptoConflictHolder.setOnClickListener {
+            val items = arrayListOf(
+                RadioItem(ALBUM_CRYPTO_CONFLICT_ASK, getString(R.string.album_crypto_conflict_ask)),
+                RadioItem(ALBUM_CRYPTO_CONFLICT_MERGE, getString(R.string.album_crypto_conflict_merge)),
+                RadioItem(ALBUM_CRYPTO_CONFLICT_RENAME, getString(R.string.album_crypto_conflict_rename))
+            )
+            RadioGroupDialog(this@SettingsActivity, items, config.albumCryptoConflictMode) {
+                config.albumCryptoConflictMode = it as Int
+                binding.settingsAlbumCryptoConflict.text = getAlbumCryptoConflictModeText()
+            }
+        }
+    }
+
+    private fun getAlbumCryptoConflictModeText() = getString(
+        when (config.albumCryptoConflictMode) {
+            ALBUM_CRYPTO_CONFLICT_MERGE -> R.string.album_crypto_conflict_merge
+            ALBUM_CRYPTO_CONFLICT_RENAME -> R.string.album_crypto_conflict_rename
+            else -> R.string.album_crypto_conflict_ask
+        }
+    )
+
     /**
      * Tints an inline settings info icon and opens a scrollable explanation dialog when tapped.
      */
@@ -1427,6 +1451,7 @@ class SettingsActivity : SimpleActivity() {
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
+                put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
                 put(SKIP_DELETE_CONFIRMATION, config.skipDeleteConfirmation)
                 put(DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS, config.deleteOriginalFromFavoritesAndVirtualAlbums)
@@ -1579,6 +1604,7 @@ class SettingsActivity : SimpleActivity() {
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
+                ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()

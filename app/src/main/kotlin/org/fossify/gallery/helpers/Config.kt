@@ -369,6 +369,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, false)
         set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
 
+    var albumCryptoConflictMode: Int
+        get() = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)
+        set(mode) = prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, mode).apply()
+
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()
