@@ -3,8 +3,10 @@ package org.fossify.gallery.extensions
 import android.content.Context
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaIdentityResolver
+import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
+import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import java.io.File
 
@@ -40,8 +42,14 @@ fun Context.repairReferencesAfterExternalChange(force: Boolean = false): Int {
 
         val allowFallback = force || (now - lastFallbackScanTs >= MIN_FALLBACK_SCAN_INTERVAL_MS)
 
+        val deletedOrigPaths = try {
+            mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN) }
+        } catch (_: Exception) {
+            emptySet()
+        }
+
         val missingFavorites = try {
-            favoritesDB.getAll().filter { !File(it.fullPath).isFile }
+            favoritesDB.getActive().filter { it.fullPath !in deletedOrigPaths && !File(it.fullPath).isFile }
         } catch (_: Exception) {
             emptyList()
         }
@@ -58,7 +66,9 @@ fun Context.repairReferencesAfterExternalChange(force: Boolean = false): Int {
             emptyList()
         }
 
-        val missingItems = allItems.filter { !File(it.fullPath).isFile }
+        val missingItems = allItems.filter {
+            it.state == ITEM_STATE_OK && it.fullPath !in deletedOrigPaths && !File(it.fullPath).isFile
+        }
         val reappearedAlbumIds = allItems
             .filter { it.state == ITEM_STATE_UNRESOLVED && File(it.fullPath).isFile }
             .mapTo(HashSet()) { it.albumId }

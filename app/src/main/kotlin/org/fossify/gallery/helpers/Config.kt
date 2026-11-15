@@ -365,6 +365,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(CONFLICT_HANDLING_MODE, CONFLICT_HANDLING_AUTO)
         set(mode) = prefs.edit().putInt(CONFLICT_HANDLING_MODE, mode).apply()
 
+    var fastLargeDuplicateCheck: Boolean
+        get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, false)
+        set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
+
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()

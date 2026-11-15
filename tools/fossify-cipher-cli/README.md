@@ -62,10 +62,10 @@ Keep your primary `Cipher_Secrets` vault on your phone while encrypting new medi
 3. **Sync into your phone inside the Android app:**
    * Connect the USB/SD drive to your phone, open **Fossify Gallery Cipher**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
    * **Identical handling for both scenarios:** Whether your USB's `Cipher_Secrets/` holds a full vault mirror (Scenario 1) or only `.vault` plus newly encrypted additions (Scenario 2), Android sync processes it identically. In Scenario 2, once syncing completes, you can delete the synced `.bin` files and album subfolders from `<USB>/Cipher_Secrets/` while keeping only `.vault` for next time.
-   * **4-Stage Sync Optimization & Full Bit-by-Bit Safety:**
+   * **4-Stage Single-Pass Sync Optimization & Duplicate Checking:**
      * Unchanged mirrored `.bin` files already in the destination album skip in `O(1)` time (checking size + header version + trailing 16-byte `Poly1305-AES` tag) without decrypting headers or hashing gigabytes of video.
-     * Incoming `.bin` files with distinct filenames copy immediately after `Poly1305-AES` MAC verification (lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`).
-     * Same-name / same-size filename collisions undergo `Poly1305-AES` integrity verification followed by **full bit-by-bit decrypted comparison in RAM**: identical bits (even when re-encrypted with different random IVs) are skipped cleanly, while differing bits are safely preserved as `<name>(1)`, `<name>(2)`, etc.
+     * Incoming `.bin` files with distinct filenames stream-copy and verify `Poly1305-AES` MAC in a **single pass** (`copyBinAndVerifyIntegritySinglePass`), lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`.
+     * Same-name / same-size filename collisions verify incoming `Poly1305-AES` MAC and compare decrypted content in RAM in a **single pass** (`compareEncryptedStreamAndVerifySourceMac`, or 5 distributed `256 KB` checkpoints for `>8 MB` files when **Fast duplicate check** is enabled in Android Settings): identical bits (even across different random IVs) skip cleanly, while differing bits preserve as `<name>(1)`, `<name>(2)`, etc.
 
 ---
 
@@ -168,10 +168,10 @@ Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şi
 3. **Telefonda uygulama içinden eşitleyin:**
    * USB/SD diski telefonunuza bağlayın, **Fossify Gallery Cipher** uygulamasını açın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** (*"Settings > Encrypted vault > Sync vault from external drive"*) seçeneğine dokunun, istenirse kasanın kilidini açın ve `<USB>/Cipher_Secrets` (veya USB kökünü) seçin.
    * **Her iki senaryo tek yapıda aynı şekilde çalışır:** USB'de tam kopya (Senaryo 1) veya yalnızca `.vault` + yeni eklenenler (Senaryo 2) olması fark etmez. Senaryo 2'de eşitleme bittikten sonra isterseniz `<USB>/Cipher_Secrets/` içindeki aktarılmış `.bin`/alt klasörleri silip yalnızca `.vault` dosyasını bir sonraki aktarım için bırakabilirsiniz.
-   * **4 Aşamalı Optimizasyon ve Tam Bit Düzeyinde Güvenlik:**
+   * **Tek Geçişli 4 Aşamalı Optimizasyon ve Kopya Kontrolü:**
      * Telefonda zaten bulunan değişmemiş birebir `.bin` dosyaları başlık çözme veya gigabaytlarca video hash'leme yapmadan `O(1)` sürede (boyut + başlık sürümü + sondaki 16 baytlık `Poly1305-AES` etiketi kontrolüyle) atlanır.
-     * Farklı addaki yeni `.bin` dosyaları `Poly1305-AES` MAC doğrulamasından sonra doğrudan eşleşen veya yeni oluşturulan albümlere (ve kökteki dosyalar `Default Secret Album`'e) kopyalanır.
-     * Aynı ad / aynı boyuttaki çakışmalar önce `Poly1305-AES` bütünlük doğrulamasından geçer, ardından RAM'de **tam bit bit (byte-byte) şifre çözerek karşılaştırılır**: farklı IV ile yeniden şifrelenmiş olsalar bile aynı bitler atlanır; farklı içeriğe sahip dosyalar üzerine yazılmadan `<ad>(1)`, `<ad>(2)` olarak güvenle adlandırılır.
+     * Farklı addaki yeni `.bin` dosyaları **tek okuma geçişinde** `Poly1305-AES` MAC doğrulaması ve kopyalamayı birlikte yaparak (`copyBinAndVerifyIntegritySinglePass`) eşleşen veya yeni oluşturulan albümlere (kökteki dosyalar `Default Secret Album`'e) aktarılır.
+     * Aynı ad / aynı boyuttaki çakışmalar **tek okuma geçişinde** kaynak `Poly1305-AES` doğrulamasıyla birlikte RAM'de decrypted akışı karşılaştırır (Android Ayarlar'da **Büyük dosyalarda hızlı kopya kontrolü (>8 MB)** açıldığında 5 dağılmış `256 KB` nokta kontrolü, kapalıyken tam bit-bit karşılaştırma): farklı IV ile şifrelenmiş olsalar bile aynı bitler atlanır; farklı içeriğe sahip dosyalar üzerine yazılmadan `<ad>(1)`, `<ad>(2)` olarak güvenle adlandırılır.
 
 ### 📁 Desteklenen Medya Kontrolü ve Otomatik Albüm Yönlendirmesi
 * **Şifreleme Öncesi Format Doğrulaması:** Yalnızca Android uygulamasının desteklediği fotoğraf, GIF, SVG, RAW ve video uzantıları şifrelenir. `.txt`, `.pdf`, `.md`, `.zip` gibi desteklenmeyen dosyalar ile `.bin` ve `.` ile başlayan gizli dosyalar uyarı verilerek atlanır ve özet raporda belirtilir.

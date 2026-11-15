@@ -6,13 +6,18 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.TypedValue
+import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.Toast
+import androidx.annotation.StringRes
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.fossify.commons.dialogs.*
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.commons.models.RadioItem
+import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivitySettingsBinding
 import org.fossify.gallery.dialogs.*
@@ -823,6 +828,12 @@ class SettingsActivity : SimpleActivity() {
             } else {
                 dialogBinding.conflictHandlingAuto.isChecked = true
             }
+            dialogBinding.fastLargeDuplicateCheckCheckbox.isChecked = config.fastLargeDuplicateCheck
+            bindSettingInfoIcon(
+                iconView = dialogBinding.fastLargeDuplicateCheckInfo,
+                titleResId = R.string.fast_large_duplicate_check_info_title,
+                messageResId = R.string.fast_large_duplicate_check_info_message
+            )
 
             getAlertDialogBuilder()
                 .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
@@ -831,6 +842,7 @@ class SettingsActivity : SimpleActivity() {
                     } else {
                         CONFLICT_HANDLING_AUTO
                     }
+                    config.fastLargeDuplicateCheck = dialogBinding.fastLargeDuplicateCheckCheckbox.isChecked
                     binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
                 }
                 .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -847,6 +859,45 @@ class SettingsActivity : SimpleActivity() {
             R.string.conflict_handling_auto_short
         }
     )
+
+    /**
+     * Tints an inline settings info icon and opens a scrollable explanation dialog when tapped.
+     */
+    private fun bindSettingInfoIcon(
+        iconView: ImageView,
+        @StringRes titleResId: Int,
+        @StringRes messageResId: Int
+    ) {
+        iconView.applyColorFilter(getProperTextColor())
+        iconView.setOnClickListener {
+            showSettingInfoDialog(titleResId, messageResId)
+        }
+    }
+
+    /**
+     * Displays a themed scrollable information dialog describing a setting's purpose and trade-offs.
+     */
+    private fun showSettingInfoDialog(
+        @StringRes titleResId: Int,
+        @StringRes messageResId: Int
+    ) {
+        val paddingPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val mediumPadPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
+        val messageView = MyTextView(this).apply {
+            text = getString(messageResId)
+            setTextColor(getProperTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(org.fossify.commons.R.dimen.normal_text_size))
+            setPadding(paddingPx, mediumPadPx, paddingPx, mediumPadPx)
+        }
+        val scrollView = ScrollView(this).apply {
+            addView(messageView)
+        }
+        getAlertDialogBuilder()
+            .setPositiveButton(org.fossify.commons.R.string.ok, null)
+            .apply {
+                setupDialogStuff(scrollView, this, titleResId)
+            }
+    }
 
     private fun setupDeleteEmptyFolders() {
         binding.settingsDeleteEmptyFolders.isChecked = config.deleteEmptyFolders
@@ -1375,6 +1426,7 @@ class SettingsActivity : SimpleActivity() {
                 put(EXTENDED_DETAILS, config.extendedDetails)
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
+                put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
                 put(KEEP_LAST_MODIFIED, config.keepLastModified)
                 put(SKIP_DELETE_CONFIRMATION, config.skipDeleteConfirmation)
                 put(DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS, config.deleteOriginalFromFavoritesAndVirtualAlbums)
@@ -1526,6 +1578,7 @@ class SettingsActivity : SimpleActivity() {
                 EXTENDED_DETAILS -> config.extendedDetails = value.toInt()
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
+                FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()

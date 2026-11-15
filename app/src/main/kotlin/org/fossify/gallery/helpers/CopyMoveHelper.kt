@@ -49,7 +49,7 @@ import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 
-private const val COPY_BUFFER_SIZE = 8192
+private const val COPY_BUFFER_SIZE = 64 * 1024
 private const val BYTES_PER_KB = 1000L
 private const val UI_PROGRESS_UPDATE_INTERVAL_MS = 100L
 
@@ -140,7 +140,10 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
     callback: (destinationPath: String) -> Unit
 ) {
     val startAfterSpaceCheck = {
-        val proceedAfterConflicts = { conflictResolutions: LinkedHashMap<String, Int> ->
+        val proceedAfterConflicts = {
+            conflictResolutions: LinkedHashMap<String, Int>,
+            precheckedIdenticalPaths: Set<String>,
+            precheckedNonIdenticalPaths: Set<String> ->
             ensureNotificationPermissionThenRun { notificationsAllowed ->
                 executeCopyMoveWithProgress(
                     fileDirItems = fileDirItems,
@@ -150,6 +153,8 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                     copyMediaOnly = copyMediaOnly,
                     copyHidden = copyHidden,
                     conflictResolutions = conflictResolutions,
+                    precheckedIdenticalPaths = precheckedIdenticalPaths,
+                    precheckedNonIdenticalPaths = precheckedNonIdenticalPaths,
                     enableNotification = notificationsAllowed,
                     callback = callback
                 )
@@ -159,21 +164,42 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
         if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
             ensureBackgroundThread {
                 val conflicts = ArrayList<Pair<String, String>>()
+                val precheckedIdenticalPaths = HashSet<String>()
+                val precheckedNonIdenticalPaths = HashSet<String>()
+                val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>()
                 val destDir = File(destination)
+
+                fun getIndex(dir: File): CryptoManager.TargetPlainIndex {
+                    return targetIndexes.getOrPut(dir.absolutePath) {
+                        CryptoManager.TargetPlainIndex(dir)
+                    }
+                }
+
+                val useFastSampling = config.fastLargeDuplicateCheck
 
                 fun collectLocalConflicts(sourceDir: File, targetDir: File) {
                     if (!targetDir.exists() || !targetDir.isDirectory) return
+                    val index = getIndex(targetDir)
                     sourceDir.listFiles()?.forEach { child ->
                         if (child.isDirectory) {
                             collectLocalConflicts(child, File(targetDir, child.name))
                         } else if (!copyMediaOnly || child.absolutePath.isMediaFile()) {
-                            val conflictName = CryptoManager.findContentConflictInTarget(
+                            val check = CryptoManager.inspectTransferConflict(
                                 sourceFile = child,
                                 targetDir = targetDir,
-                                isTargetEncrypted = false
+                                isTargetEncrypted = false,
+                                plainIndex = index,
+                                fastSampling = useFastSampling
                             )
-                            if (conflictName != null) {
-                                conflicts.add(File(targetDir, child.name).absolutePath to conflictName)
+                            when (check.status) {
+                                CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
+                                    precheckedIdenticalPaths.add(child.absolutePath)
+                                }
+                                CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
+                                    precheckedNonIdenticalPaths.add(child.absolutePath)
+                                    conflicts.add(File(targetDir, child.name).absolutePath to (check.displayName ?: child.name))
+                                }
+                                CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
                             }
                         }
                     }
@@ -184,21 +210,33 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                     if (item.isDirectory) {
                         collectLocalConflicts(srcFile, File(destDir, item.name))
                     } else {
-                        val conflictName = CryptoManager.findContentConflictInTarget(
+                        val index = getIndex(destDir)
+                        val check = CryptoManager.inspectTransferConflict(
                             sourceFile = srcFile,
                             targetDir = destDir,
-                            isTargetEncrypted = false
+                            isTargetEncrypted = false,
+                            plainIndex = index,
+                            fastSampling = useFastSampling
                         )
-                        if (conflictName != null) {
-                            conflicts.add(File(destDir, item.name).absolutePath to conflictName)
+                        when (check.status) {
+                            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP -> {
+                                precheckedIdenticalPaths.add(srcFile.absolutePath)
+                            }
+                            CryptoManager.TransferConflictStatus.NAME_CONFLICT -> {
+                                precheckedNonIdenticalPaths.add(srcFile.absolutePath)
+                                conflicts.add(File(destDir, item.name).absolutePath to (check.displayName ?: item.name))
+                            }
+                            CryptoManager.TransferConflictStatus.NO_CONFLICT -> Unit
                         }
                     }
                 }
 
-                resolveSmartContentConflicts(conflicts, proceedAfterConflicts)
+                resolveSmartContentConflicts(conflicts) { resolutions ->
+                    proceedAfterConflicts(resolutions, precheckedIdenticalPaths, precheckedNonIdenticalPaths)
+                }
             }
         } else {
-            proceedAfterConflicts(LinkedHashMap())
+            proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet())
         }
     }
 
@@ -241,6 +279,8 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
     copyMediaOnly: Boolean,
     copyHidden: Boolean,
     conflictResolutions: LinkedHashMap<String, Int>,
+    precheckedIdenticalPaths: Set<String>,
+    precheckedNonIdenticalPaths: Set<String>,
     enableNotification: Boolean,
     callback: (destinationPath: String) -> Unit
 ) {
@@ -263,7 +303,9 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
         useStreamCopy = useStreamCopy,
         copyMediaOnly = copyMediaOnly,
         copyHidden = copyHidden,
-        conflictResolutions = conflictResolutions
+        conflictResolutions = conflictResolutions,
+        precheckedIdenticalPaths = precheckedIdenticalPaths,
+        precheckedNonIdenticalPaths = precheckedNonIdenticalPaths
     )
 
     ensureBackgroundThread {
@@ -343,7 +385,9 @@ private data class CopyMoveConfig(
     val useStreamCopy: Boolean,
     val copyMediaOnly: Boolean,
     val copyHidden: Boolean,
-    val conflictResolutions: LinkedHashMap<String, Int>
+    val conflictResolutions: LinkedHashMap<String, Int>,
+    val precheckedIdenticalPaths: Set<String> = emptySet(),
+    val precheckedNonIdenticalPaths: Set<String> = emptySet()
 )
 
 private data class CopyMoveResult(
@@ -356,7 +400,6 @@ private data class CopyMoveResult(
 
 private sealed class TopLevelResolution {
     data object SkippedConflict : TopLevelResolution()
-    data object DeduplicatedDuplicate : TopLevelResolution()
     data class Proceed(val destItem: FileDirItem) : TopLevelResolution()
 }
 
@@ -369,12 +412,19 @@ private class CopyMoveRunner(
     private val itemsToDeleteSdk30 = ArrayList<FileDirItem>()
     private val movedPathsToRescan = ArrayList<String>()
     private val documents = LinkedHashMap<String, DocumentFile?>()
+    private val destIndexMap = HashMap<String, CryptoManager.TargetPlainIndex>()
 
     private var totalItems = 0
     private var processedItems = 0
     private var totalBytes = 0L
     private var transferredBytes = 0L
     private var lastUiUpdateMs = 0L
+
+    private fun getDestIndex(dir: File): CryptoManager.TargetPlainIndex {
+        return destIndexMap.getOrPut(dir.absolutePath) {
+            CryptoManager.TargetPlainIndex(dir)
+        }
+    }
 
     fun execute(items: ArrayList<FileDirItem>): CopyMoveResult {
         totalItems = items.size
@@ -388,10 +438,6 @@ private class CopyMoveRunner(
                     TopLevelResolution.SkippedConflict -> {
                         expectedCount--
                         skippedConflictCount++
-                        processedItems++
-                        publishProgress(forceUi = true, filename = item.name)
-                    }
-                    TopLevelResolution.DeduplicatedDuplicate -> {
                         processedItems++
                         publishProgress(forceUi = true, filename = item.name)
                     }
@@ -422,13 +468,18 @@ private class CopyMoveRunner(
     }
 
     private fun computeTotalBytes(items: ArrayList<FileDirItem>): Long {
+        val destDir = File(config.destination)
+        val destIndex = getDestIndex(destDir)
         var bytes = 0L
         for (item in items) {
+            if (!item.isDirectory && item.path in config.precheckedIdenticalPaths) {
+                continue
+            }
             if (item.size == 0L) {
                 item.size = item.getProperSize(activity.applicationContext, config.copyHidden)
             }
-            val targetPath = File(config.destination, item.name).absolutePath
-            val exists = activity.getDoesFilePathExist(targetPath)
+            val targetPath = File(destDir, item.name).absolutePath
+            val exists = destIndex.containsName(item.name) || activity.getDoesFilePathExist(targetPath)
             val resolution = config.conflictResolutions[targetPath] ?: CONFLICT_KEEP_BOTH
             if (resolution != CONFLICT_SKIP || !exists) {
                 bytes += item.size
@@ -446,33 +497,38 @@ private class CopyMoveRunner(
             return TopLevelResolution.Proceed(destItem)
         }
 
+        val destIndex = getDestIndex(destDir)
         val srcFile = File(item.path)
         if (srcFile.isFile) {
-            val identical = CryptoManager.findIdenticalPlainFileInDir(srcFile, destDir, item.name)
-            if (identical != null) {
-                if (!config.isCopyOperation) {
-                    val srcCanon = runCatching { srcFile.canonicalPath }.getOrDefault(srcFile.absolutePath)
-                    val idCanon = runCatching { identical.canonicalPath }.getOrDefault(identical.absolutePath)
-                    if (srcCanon != idCanon) {
-                        runCatching { activity.updateDBMediaPath(srcFile.absolutePath, identical.absolutePath) }
-                        deleteSourceFile(item)
-                        srcFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
-                    }
+            if (srcFile.absolutePath in config.precheckedIdenticalPaths) {
+                return TopLevelResolution.SkippedConflict
+            }
+            if (srcFile.absolutePath !in config.precheckedNonIdenticalPaths) {
+                val existing = destIndex.findExact(item.name)
+                if (existing != null &&
+                    srcFile.length() == existing.length() &&
+                    CryptoManager.arePlainFilesIdentical(
+                        srcFile,
+                        existing,
+                        fastSampling = activity.config.fastLargeDuplicateCheck
+                    )
+                ) {
+                    return TopLevelResolution.SkippedConflict
                 }
-                transferredFiles.add(item)
-                transferredBytes += item.size
-                return TopLevelResolution.DeduplicatedDuplicate
             }
         }
 
-        if (!activity.getDoesFilePathExist(targetPath)) {
+        val existingExact = destIndex.findExact(item.name)
+        if (existingExact == null && !activity.getDoesFilePathExist(targetPath)) {
+            destIndex.recordFile(File(targetPath))
             return TopLevelResolution.Proceed(destItem)
         }
 
         when (config.conflictResolutions[targetPath] ?: CONFLICT_KEEP_BOTH) {
             CONFLICT_SKIP -> return TopLevelResolution.SkippedConflict
             CONFLICT_KEEP_BOTH -> {
-                val altFile = CryptoManager.getAlternativePlainFile(destDir, item.name)
+                val altFile = destIndex.getAlternativeFile(item.name)
+                destIndex.recordFile(altFile)
                 destItem = FileDirItem(altFile.path, altFile.name, false)
             }
             CONFLICT_OVERWRITE -> {
@@ -589,46 +645,64 @@ private class CopyMoveRunner(
         childNames: Array<String>
     ) {
         val destDir = File(destPath)
+        val destIndex = getDestIndex(destDir)
+        var anyChildSkipped = false
+        var anyChildTransferred = false
+
         childNames.forEach { childName ->
             val srcFile = File(source.path, childName)
             val srcChild = srcFile.toFileDirItem(activity)
             if (srcFile.isDirectory) {
                 val targetDirPath = File(destDir, childName).absolutePath
                 copy(srcChild, FileDirItem(targetDirPath, childName, true))
+                anyChildTransferred = true
             } else {
-                val identical = CryptoManager.findIdenticalPlainFileInDir(srcFile, destDir, childName)
-                if (identical != null) {
-                    if (!config.isCopyOperation) {
-                        val srcCanon = runCatching { srcFile.canonicalPath }.getOrDefault(srcFile.absolutePath)
-                        val idCanon = runCatching { identical.canonicalPath }.getOrDefault(identical.absolutePath)
-                        if (srcCanon != idCanon) {
-                            runCatching { activity.updateDBMediaPath(srcFile.absolutePath, identical.absolutePath) }
-                            deleteSourceFile(srcChild)
-                        }
-                    }
+                val isPrecheckedIdentical = srcFile.absolutePath in config.precheckedIdenticalPaths
+                val existing = destIndex.findExact(childName)
+                val isIdentical = isPrecheckedIdentical || (
+                    srcFile.absolutePath !in config.precheckedNonIdenticalPaths &&
+                        existing != null &&
+                        srcFile.isFile &&
+                        srcFile.length() == existing.length() &&
+                        CryptoManager.arePlainFilesIdentical(
+                            srcFile,
+                            existing,
+                            fastSampling = activity.config.fastLargeDuplicateCheck
+                        )
+                    )
+
+                if (isIdentical) {
+                    anyChildSkipped = true
                 } else {
-                    val exactTarget = File(destDir, childName)
-                    val targetFile = if (activity.getDoesFilePathExist(exactTarget.absolutePath)) {
+                    val exactTarget = existing ?: File(destDir, childName)
+                    val targetFile = if (existing != null || activity.getDoesFilePathExist(exactTarget.absolutePath)) {
                         when (config.conflictResolutions[exactTarget.absolutePath] ?: CONFLICT_KEEP_BOTH) {
-                            CONFLICT_SKIP -> null
+                            CONFLICT_SKIP -> {
+                                anyChildSkipped = true
+                                null
+                            }
                             CONFLICT_OVERWRITE -> exactTarget
-                            else -> CryptoManager.getAlternativePlainFile(destDir, childName)
+                            else -> destIndex.getAlternativeFile(childName).also { destIndex.recordFile(it) }
                         }
                     } else {
-                        exactTarget
+                        exactTarget.also { destIndex.recordFile(it) }
                     }
                     if (targetFile != null) {
                         val dstChild = FileDirItem(targetFile.absolutePath, targetFile.name, false)
                         copy(srcChild, dstChild)
+                        anyChildTransferred = true
                     }
                 }
             }
         }
-        if (!config.isCopyOperation) {
-            runCatching { activity.updateReferencesForFolderRename(source.path, destPath) }
-            activity.cleanupEmptyPlaintextAlbumIfNeeded(File(source.path), forceIfEmpty = true)
+        if (!config.isCopyOperation && !anyChildSkipped) {
+            if (activity.cleanupEmptyPlaintextAlbumIfNeeded(File(source.path), forceIfEmpty = true)) {
+                runCatching { activity.updateReferencesForFolderRename(source.path, destPath) }
+            }
         }
-        transferredFiles.add(source)
+        if (anyChildTransferred || !anyChildSkipped) {
+            transferredFiles.add(source)
+        }
     }
 
     private fun copyFile(source: FileDirItem, dest: FileDirItem) {

@@ -23,7 +23,9 @@ data class Favorite(
     @ColumnInfo(name = "fingerprint") var fingerprint: String = "",
     @ColumnInfo(name = "folder_inode") var folderInode: Long = 0L,
     @ColumnInfo(name = "folder_signature") var folderSignature: String = "",
-    @ColumnInfo(name = "captured_at_sec") var capturedAtSec: Long = 0L
+    @ColumnInfo(name = "captured_at_sec") var capturedAtSec: Long = 0L,
+    /** OK while active, ENCRYPTED while its plaintext source lives inside the encrypted vault. */
+    @ColumnInfo(name = "state") var state: String = ITEM_STATE_OK
 ) {
     fun toIdentity(): org.fossify.gallery.helpers.MediaIdentity {
         return org.fossify.gallery.helpers.MediaIdentity(

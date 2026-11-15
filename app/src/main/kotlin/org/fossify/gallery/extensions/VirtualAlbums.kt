@@ -14,6 +14,9 @@ import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
 import org.fossify.gallery.interfaces.VirtualAlbumsDao
 import org.fossify.gallery.models.Directory
+import org.fossify.gallery.models.ITEM_STATE_DECRYPTED
+import org.fossify.gallery.models.ITEM_STATE_ENCRYPTED
+import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.VirtualAlbum
@@ -184,11 +187,16 @@ fun Context.getVirtualAlbumMedia(albumId: Long, getVideoDurations: Boolean = fal
 
         val missingItems = items.filter { item ->
             val path = item.fullPath
-            !deletedPaths.contains(path) && !path.startsWith(recycleBinPath) && !File(path).exists()
+            item.state != ITEM_STATE_ENCRYPTED &&
+                item.state != ITEM_STATE_DECRYPTED &&
+                !deletedPaths.contains(path) &&
+                !path.startsWith(recycleBinPath) &&
+                !File(path).exists()
         }
         val resolvedMissingMap = resolveVirtualAlbumItemsTwoPass(items, missingItems, session = null, vaultOnly = album.isHidden)
 
         for (item in items) {
+            if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) continue
             var path = item.fullPath
             if (deletedPaths.contains(path) || path.startsWith(recycleBinPath)) continue
 
@@ -618,63 +626,258 @@ fun Context.updateVirtualAlbumItemPath(oldPath: String, newPath: String) {
     }
 }
 
+data class ReferenceTransitionResult(
+    val affectedAlbumIds: Set<Long> = emptySet(),
+    val favoritesChanged: Boolean = false
+)
+
+private fun Context.applyIdentityToVirtualItem(path: String, identity: MediaIdentity?) {
+    if (identity == null || !identity.isUsable) return
+    virtualAlbumsDB.updateItemIdentity(
+        path = path,
+        mediaStoreId = identity.mediaStoreId,
+        fileSize = identity.size,
+        lastModified = identity.lastModified,
+        fingerprint = identity.fingerprint,
+        folderInode = identity.folderInode,
+        folderSignature = identity.folderSignature,
+        capturedAtSec = identity.capturedAtSec
+    )
+}
+
+private fun Context.transitionVirtualItem(
+    albumId: Long,
+    oldPath: String,
+    newFile: File,
+    newState: String,
+    identity: MediaIdentity?
+) {
+    val newPath = newFile.absolutePath
+    virtualAlbumsDB.updateItemAndStateInAlbum(
+        albumId = albumId,
+        oldPath = oldPath,
+        newPath = newPath,
+        newFilename = newFile.name,
+        newParentPath = newFile.parent ?: newPath.getParentPath(),
+        state = newState
+    )
+    applyIdentityToVirtualItem(newPath, identity)
+}
+
+/**
+ * Transitions virtual album and favorite references when a plaintext media file is encrypted into [encPath].
+ *
+ * - Stealth (hidden) virtual albums re-link any active or dormant (`DECRYPTED`) matching entry to [encPath].
+ * - Public virtual albums and favorites preserve the entry covertly (`ITEM_STATE_ENCRYPTED`) rather than
+ *   deleting it when [markPlaintextDormant] is true, hiding it until the source is decrypted again.
+ */
+fun Context.markReferencesOnEncrypt(
+    sourcePath: String,
+    encPath: String,
+    plaintextIdentity: MediaIdentity? = null,
+    markPlaintextDormant: Boolean = true,
+    saveBackups: Boolean = true
+): ReferenceTransitionResult {
+    val touchedAlbums = LinkedHashSet<Long>()
+    var favoritesChanged = false
+    val plainFile = File(sourcePath)
+    val encFile = File(encPath)
+    val resolvedPlainIdentity = plaintextIdentity ?: if (plainFile.isFile) {
+        MediaIdentity.ofWithFolder(this, plainFile)
+    } else {
+        null
+    }
+    val encIdentity = if (encFile.isFile) MediaIdentity.ofWithFolder(this, encFile) else null
+
+    try {
+        val directAlbumIds = virtualAlbumsDB.getAlbumIdsWithItem(sourcePath)
+        for (albumId in directAlbumIds) {
+            val album = virtualAlbumsDB.getAlbumById(albumId) ?: continue
+            if (album.isHidden) {
+                transitionVirtualItem(albumId, sourcePath, encFile, ITEM_STATE_OK, encIdentity)
+                touchedAlbums.add(albumId)
+            } else if (markPlaintextDormant) {
+                val existingItem = virtualAlbumsDB.getItemsWithPath(albumId, sourcePath).firstOrNull()
+                if (existingItem != null && existingItem.fingerprint.isEmpty()) {
+                    applyIdentityToVirtualItem(sourcePath, resolvedPlainIdentity)
+                }
+                virtualAlbumsDB.updateItemStateInAlbum(albumId, sourcePath, ITEM_STATE_ENCRYPTED)
+                touchedAlbums.add(albumId)
+            }
+        }
+
+        // Reconnect stealth virtual album entries that were temporarily decrypted and are now re-encrypted,
+        // even if the decrypted file was renamed or moved before re-encryption.
+        val dormantDecrypted = virtualAlbumsDB.getItemsByState(ITEM_STATE_DECRYPTED)
+        if (dormantDecrypted.isNotEmpty()) {
+            val srcParentName = plainFile.parentFile?.name ?: ""
+            for ((albumId, candidates) in dormantDecrypted.groupBy { it.albumId }) {
+                if (albumId in touchedAlbums) continue
+                val album = virtualAlbumsDB.getAlbumById(albumId) ?: continue
+                if (!album.isHidden) continue
+
+                val exactMatch = candidates.firstOrNull { it.fullPath.equals(sourcePath, ignoreCase = true) }
+                val identityMatch = if (exactMatch == null && resolvedPlainIdentity != null && resolvedPlainIdentity.size > 0L && resolvedPlainIdentity.hasFingerprint) {
+                    candidates
+                        .filter { it.fileSize == resolvedPlainIdentity.size && it.fingerprint == resolvedPlainIdentity.fingerprint }
+                        .sortedByDescending { it.parentPath.getFilenameFromPath().equals(srcParentName, ignoreCase = true) }
+                        .firstOrNull()
+                } else {
+                    null
+                }
+                val match = exactMatch ?: identityMatch ?: continue
+                transitionVirtualItem(albumId, match.fullPath, encFile, ITEM_STATE_OK, encIdentity)
+                touchedAlbums.add(albumId)
+            }
+        }
+
+        if (markPlaintextDormant) {
+            val existingFav = favoritesDB.getFavorite(sourcePath)
+            if (existingFav != null) {
+                if (resolvedPlainIdentity != null && resolvedPlainIdentity.isUsable && existingFav.fingerprint.isEmpty()) {
+                    favoritesDB.updateFavoriteIdentity(
+                        path = sourcePath,
+                        mediaStoreId = resolvedPlainIdentity.mediaStoreId,
+                        fileSize = resolvedPlainIdentity.size,
+                        lastModified = resolvedPlainIdentity.lastModified,
+                        fingerprint = resolvedPlainIdentity.fingerprint,
+                        folderInode = resolvedPlainIdentity.folderInode,
+                        folderSignature = resolvedPlainIdentity.folderSignature,
+                        capturedAtSec = resolvedPlainIdentity.capturedAtSec
+                    )
+                }
+                favoritesDB.updateFavoriteState(sourcePath, ITEM_STATE_ENCRYPTED)
+                runCatching { mediaDB.updateFavorite(sourcePath, false) }
+                favoritesChanged = true
+            }
+        }
+
+        if (saveBackups) {
+            touchedAlbums.forEach { VirtualAlbumSyncManager.saveAlbumToFile(this, it) }
+            if (favoritesChanged) {
+                ReferenceBackupManager.saveFavorites(this)
+            }
+        }
+    } catch (_: Exception) {
+    }
+    return ReferenceTransitionResult(touchedAlbums, favoritesChanged)
+}
+
+/**
+ * Transitions virtual album and favorite references when an encrypted vault file at [encPath] is
+ * decrypted to [decryptedFile].
+ *
+ * - Stealth (hidden) virtual albums keep the reference in dormant `ITEM_STATE_DECRYPTED` state
+ *   (storing plaintext size + fingerprint so a subsequent re-encryption restores it cleanly).
+ * - Dormant (`ITEM_STATE_ENCRYPTED`) public virtual album items and favorites matching [decryptedFile]
+ *   are restored to `ITEM_STATE_OK` and become visible again.
+ */
+fun Context.markReferencesOnDecrypt(
+    encPath: String,
+    decryptedFile: File,
+    hideStealthReferences: Boolean = true,
+    saveBackups: Boolean = true
+): ReferenceTransitionResult {
+    val touchedAlbums = LinkedHashSet<Long>()
+    var favoritesChanged = false
+    val decryptedPath = decryptedFile.absolutePath
+    val decryptedParent = decryptedFile.parent ?: decryptedPath.getParentPath()
+    val decryptedFolderName = decryptedFile.parentFile?.name ?: ""
+    val plainIdentity = if (decryptedFile.isFile) MediaIdentity.ofWithFolder(this, decryptedFile) else null
+
+    try {
+        val directAlbumIds = virtualAlbumsDB.getAlbumIdsWithItem(encPath)
+        for (albumId in directAlbumIds) {
+            val album = virtualAlbumsDB.getAlbumById(albumId) ?: continue
+            if (album.isHidden) {
+                if (hideStealthReferences) {
+                    transitionVirtualItem(albumId, encPath, decryptedFile, ITEM_STATE_DECRYPTED, plainIdentity)
+                    touchedAlbums.add(albumId)
+                }
+            } else {
+                transitionVirtualItem(albumId, encPath, decryptedFile, ITEM_STATE_OK, plainIdentity)
+                touchedAlbums.add(albumId)
+            }
+        }
+
+        // Restore any dormant ENCRYPTED public virtual album items matching the decrypted file.
+        val dormantEncryptedItems = virtualAlbumsDB.getItemsByState(ITEM_STATE_ENCRYPTED)
+        if (dormantEncryptedItems.isNotEmpty()) {
+            for ((albumId, candidates) in dormantEncryptedItems.groupBy { it.albumId }) {
+                if (albumId in touchedAlbums) continue
+                val album = virtualAlbumsDB.getAlbumById(albumId) ?: continue
+                if (album.isHidden) continue
+
+                val exactMatch = candidates.firstOrNull { it.fullPath.equals(decryptedPath, ignoreCase = true) }
+                val identityMatch = if (exactMatch == null && plainIdentity != null && plainIdentity.size > 0L && plainIdentity.hasFingerprint) {
+                    candidates
+                        .filter { it.fileSize == plainIdentity.size && it.fingerprint == plainIdentity.fingerprint }
+                        .sortedByDescending { it.parentPath.getFilenameFromPath().equals(decryptedFolderName, ignoreCase = true) }
+                        .firstOrNull()
+                } else {
+                    null
+                }
+                val match = exactMatch ?: identityMatch ?: continue
+                transitionVirtualItem(albumId, match.fullPath, decryptedFile, ITEM_STATE_OK, plainIdentity)
+                touchedAlbums.add(albumId)
+            }
+        }
+
+        // Restore any dormant ENCRYPTED favorite matching the decrypted file.
+        val dormantFavs = favoritesDB.getEncryptedDormant()
+        if (dormantFavs.isNotEmpty()) {
+            val exactFav = dormantFavs.firstOrNull { it.fullPath.equals(decryptedPath, ignoreCase = true) }
+            val identityFav = if (exactFav == null && plainIdentity != null && plainIdentity.size > 0L && plainIdentity.hasFingerprint) {
+                dormantFavs
+                    .filter { it.fileSize == plainIdentity.size && it.fingerprint == plainIdentity.fingerprint }
+                    .sortedByDescending { it.parentPath.getFilenameFromPath().equals(decryptedFolderName, ignoreCase = true) }
+                    .firstOrNull()
+            } else {
+                null
+            }
+            val match = exactFav ?: identityFav
+            if (match != null) {
+                favoritesDB.restoreEncryptedFavorite(match.fullPath, decryptedFile.name, decryptedPath, decryptedParent)
+                if (plainIdentity != null && plainIdentity.isUsable) {
+                    favoritesDB.updateFavoriteIdentity(
+                        path = decryptedPath,
+                        mediaStoreId = plainIdentity.mediaStoreId,
+                        fileSize = plainIdentity.size,
+                        lastModified = plainIdentity.lastModified,
+                        fingerprint = plainIdentity.fingerprint,
+                        folderInode = plainIdentity.folderInode,
+                        folderSignature = plainIdentity.folderSignature,
+                        capturedAtSec = plainIdentity.capturedAtSec
+                    )
+                }
+                runCatching { mediaDB.updateFavorite(decryptedPath, true) }
+                favoritesChanged = true
+            }
+        }
+
+        if (saveBackups) {
+            touchedAlbums.forEach { VirtualAlbumSyncManager.saveAlbumToFile(this, it) }
+            if (favoritesChanged) {
+                ReferenceBackupManager.saveFavorites(this)
+            }
+        }
+    } catch (_: Exception) {
+    }
+    return ReferenceTransitionResult(touchedAlbums, favoritesChanged)
+}
+
 /**
  * Updates virtual album references when an encrypted vault file is decrypted back to plaintext.
- * Public virtual albums follow the decrypted file, while hidden (encrypted) virtual albums must
- * not expose decrypted files and therefore mark the item unresolved at its vault path.
  */
 fun Context.updateVirtualAlbumItemPathOnDecrypt(oldEncPath: String, newPlaintextPath: String) {
-    updateVirtualAlbumItemPathForBoundary(
-        oldPath = oldEncPath,
-        newPath = newPlaintextPath,
-        updateHiddenAlbums = false
-    )
+    markReferencesOnDecrypt(oldEncPath, File(newPlaintextPath), hideStealthReferences = true, saveBackups = true)
 }
 
 /**
  * Updates virtual album references when a plaintext file is encrypted into the vault.
- * Hidden (encrypted) virtual albums follow the encrypted file, while public virtual albums must
- * not expose vault files (even when unlocked) and therefore mark the item unresolved at its old path.
  */
 fun Context.updateVirtualAlbumItemPathOnEncrypt(oldPlaintextPath: String, newEncPath: String) {
-    updateVirtualAlbumItemPathForBoundary(
-        oldPath = oldPlaintextPath,
-        newPath = newEncPath,
-        updateHiddenAlbums = true
-    )
-}
-
-private fun Context.updateVirtualAlbumItemPathForBoundary(
-    oldPath: String,
-    newPath: String,
-    updateHiddenAlbums: Boolean
-) {
-    try {
-        val albumIds = virtualAlbumsDB.getAlbumIdsWithItem(oldPath)
-        if (albumIds.isEmpty()) return
-
-        var updatedAny = false
-        for (albumId in albumIds) {
-            val album = virtualAlbumsDB.getAlbumById(albumId) ?: continue
-            if (album.isHidden == updateHiddenAlbums) {
-                virtualAlbumsDB.updateItemPathInAlbum(
-                    albumId = albumId,
-                    oldPath = oldPath,
-                    newPath = newPath,
-                    newFilename = newPath.getFilenameFromPath(),
-                    newParentPath = newPath.getParentPath()
-                )
-                updatedAny = true
-            } else {
-                virtualAlbumsDB.markItemUnresolved(albumId, oldPath)
-            }
-            VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
-        }
-        if (updatedAny) {
-            updateReferenceIdentitiesForPath(newPath)
-        }
-    } catch (ignored: Exception) {
-    }
+    markReferencesOnEncrypt(oldPlaintextPath, newEncPath, markPlaintextDormant = true, saveBackups = true)
 }
 
 /**
@@ -724,6 +927,9 @@ fun Context.resolveVirtualAlbumItemPath(
     allowAmbiguous: Boolean = true,
     vaultOnly: Boolean = false
 ): String? {
+    if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) {
+        return null
+    }
     val identity = item.toIdentity()
     if (!identity.isUsable) {
         return null
@@ -869,6 +1075,9 @@ fun Context.repairVirtualAlbumItems(
     var repaired = 0
 
     for (item in items) {
+        if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) {
+            continue
+        }
         if (File(item.fullPath).isFile) {
             if (item.state == ITEM_STATE_UNRESOLVED) {
                 try {

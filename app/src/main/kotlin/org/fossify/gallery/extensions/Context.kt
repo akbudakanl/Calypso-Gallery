@@ -1640,8 +1640,86 @@ fun Context.getUpdatedDeletedMedia(): ArrayList<Medium> {
 }
 
 fun Context.deleteDBPath(path: String) {
-    deleteMediumWithPath(path.replaceFirst(recycleBinPath, RECYCLE_BIN))
-    deleteVirtualAlbumItemFromAllAlbums(path)
+    deleteDBPaths(listOf(path))
+}
+
+fun Context.deleteDBPaths(
+    paths: Collection<String>,
+    folderPrefixes: Collection<String> = emptyList()
+) {
+    val cleanFilePaths = LinkedHashSet<String>()
+    for (rawPath in paths) {
+        if (rawPath.isBlank()) continue
+        deleteMediumWithPath(rawPath.replaceFirst(recycleBinPath, RECYCLE_BIN))
+        val clean = if (rawPath.startsWith(recycleBinPath)) {
+            val stripped = rawPath.removePrefix(recycleBinPath)
+            if (stripped.startsWith("/")) stripped else "/$stripped"
+        } else {
+            rawPath
+        }
+        cleanFilePaths.add(clean)
+    }
+
+    val cleanFolderPrefixes = folderPrefixes
+        .map { it.trimEnd('/') }
+        .filter { it.isNotEmpty() }
+        .distinct()
+
+    if (cleanFilePaths.isEmpty() && cleanFolderPrefixes.isEmpty()) {
+        return
+    }
+
+    val affectedAlbumIds = LinkedHashSet<Long>()
+    val initialFavCount = try {
+        favoritesDB.getAll().size
+    } catch (_: Exception) {
+        0
+    }
+
+    for (path in cleanFilePaths) {
+        try {
+            favoritesDB.deleteFavoritePath(path)
+        } catch (_: Exception) {
+        }
+        try {
+            affectedAlbumIds.addAll(virtualAlbumsDB.getAlbumIdsWithItem(path))
+            virtualAlbumsDB.removeItemFromAllAlbums(path)
+        } catch (_: Exception) {
+        }
+    }
+
+    for (prefix in cleanFolderPrefixes) {
+        try {
+            mediaDB.deleteMediaFromPath(prefix)
+            mediaDB.deleteMediaByPrefix(prefix)
+        } catch (_: Exception) {
+        }
+        try {
+            favoritesDB.deleteFavoritesByPrefix(prefix)
+        } catch (_: Exception) {
+        }
+        try {
+            affectedAlbumIds.addAll(virtualAlbumsDB.getAlbumIdsWithFolderPrefix(prefix))
+            virtualAlbumsDB.removeItemsByFolderPrefix(prefix)
+        } catch (_: Exception) {
+        }
+    }
+
+    for (albumId in affectedAlbumIds) {
+        VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+    }
+
+    val afterFavCount = try {
+        favoritesDB.getAll().size
+    } catch (_: Exception) {
+        initialFavCount
+    }
+    if (afterFavCount != initialFavCount) {
+        try {
+            ReferenceBackupManager.saveFavorites(this)
+        } catch (_: Exception) {
+        }
+    }
 }
 
 fun Context.deleteMediumWithPath(path: String) {

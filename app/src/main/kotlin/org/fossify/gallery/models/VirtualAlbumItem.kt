@@ -13,6 +13,12 @@ const val ITEM_STATE_OK = "OK"
 /** The file of the item could not be found at the cached path. */
 const val ITEM_STATE_UNRESOLVED = "UNRESOLVED"
 
+/** The referenced plaintext file was encrypted into the vault; kept dormant until decrypted again. */
+const val ITEM_STATE_ENCRYPTED = "ENCRYPTED"
+
+/** The referenced encrypted vault file was decrypted to plaintext; kept dormant in stealth albums until re-encrypted. */
+const val ITEM_STATE_DECRYPTED = "DECRYPTED"
+
 /**
  * An item of a virtual album is a reference to a file, not a copy of it.
  *

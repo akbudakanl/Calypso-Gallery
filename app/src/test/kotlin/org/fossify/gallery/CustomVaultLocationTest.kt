@@ -941,6 +941,219 @@ class CustomVaultLocationTest {
         assertTrue(defaultAlbum.exists())
     }
 
+    @Test
+    fun inspectTransferConflict_plainAndEncryptedIndexesMatchExactNameSizeAndBytes() {
+        val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        setMasterKey(masterKey)
+
+        val srcDir = File(tempRoot, "conflict_src").apply { mkdirs() }
+        val plainDestDir = File(tempRoot, "conflict_plain_dest").apply { mkdirs() }
+        val encDestDir = File(tempRoot, "conflict_enc_dest").apply { mkdirs() }
+
+        val payloadA = ByteArray(256) { (it * 7 + 3).toByte() }
+        val payloadADiffByte = payloadA.copyOf().apply { this[200] = (this[200].toInt() xor 0x01).toByte() }
+        val payloadShort = ByteArray(128) { 1 }
+
+        val srcIdentical = File(srcDir, "same.jpg").apply { writeBytes(payloadA) }
+        val srcSameSizeDiffByte = File(srcDir, "diff_byte.jpg").apply { writeBytes(payloadADiffByte) }
+        val srcDiffSize = File(srcDir, "diff_size.jpg").apply { writeBytes(payloadShort) }
+        val srcVariantOnly = File(srcDir, "photo.jpg").apply { writeBytes(payloadA) }
+
+        File(plainDestDir, "same.jpg").writeBytes(payloadA)
+        File(plainDestDir, "diff_byte.jpg").writeBytes(payloadA)
+        File(plainDestDir, "diff_size.jpg").writeBytes(payloadA)
+        File(plainDestDir, "photo(1).jpg").writeBytes(payloadA)
+
+        val plainIndex = CryptoManager.TargetPlainIndex(plainDestDir)
+
+        val plainIdentical = CryptoManager.inspectTransferConflict(
+            sourceFile = srcIdentical,
+            targetDir = plainDestDir,
+            isTargetEncrypted = false,
+            plainIndex = plainIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.IDENTICAL_SKIP, plainIdentical.status)
+
+        val plainDiffByte = CryptoManager.inspectTransferConflict(
+            sourceFile = srcSameSizeDiffByte,
+            targetDir = plainDestDir,
+            isTargetEncrypted = false,
+            plainIndex = plainIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NAME_CONFLICT, plainDiffByte.status)
+
+        val plainDiffSize = CryptoManager.inspectTransferConflict(
+            sourceFile = srcDiffSize,
+            targetDir = plainDestDir,
+            isTargetEncrypted = false,
+            plainIndex = plainIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NAME_CONFLICT, plainDiffSize.status)
+
+        val plainVariantOnly = CryptoManager.inspectTransferConflict(
+            sourceFile = srcVariantOnly,
+            targetDir = plainDestDir,
+            isTargetEncrypted = false,
+            plainIndex = plainIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NO_CONFLICT, plainVariantOnly.status)
+
+        // Encrypted destination checks with TargetEncryptedIndex
+        encryptBytesForTest(encDestDir, "same.jpg", payloadA)
+        encryptBytesForTest(encDestDir, "diff_byte.jpg", payloadA)
+        encryptBytesForTest(encDestDir, "diff_size.jpg", payloadA)
+        encryptBytesForTest(encDestDir, "photo(1).jpg", payloadA)
+
+        val encIndex = CryptoManager.TargetEncryptedIndex(encDestDir)
+
+        val encIdentical = CryptoManager.inspectTransferConflict(
+            sourceFile = srcIdentical,
+            targetDir = encDestDir,
+            isTargetEncrypted = true,
+            encryptedIndex = encIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.IDENTICAL_SKIP, encIdentical.status)
+
+        val encDiffByte = CryptoManager.inspectTransferConflict(
+            sourceFile = srcSameSizeDiffByte,
+            targetDir = encDestDir,
+            isTargetEncrypted = true,
+            encryptedIndex = encIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NAME_CONFLICT, encDiffByte.status)
+
+        val encDiffSize = CryptoManager.inspectTransferConflict(
+            sourceFile = srcDiffSize,
+            targetDir = encDestDir,
+            isTargetEncrypted = true,
+            encryptedIndex = encIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NAME_CONFLICT, encDiffSize.status)
+
+        val encVariantOnly = CryptoManager.inspectTransferConflict(
+            sourceFile = srcVariantOnly,
+            targetDir = encDestDir,
+            isTargetEncrypted = true,
+            encryptedIndex = encIndex
+        )
+        assertEquals(CryptoManager.TransferConflictStatus.NO_CONFLICT, encVariantOnly.status)
+    }
+
+    @Test
+    fun syncVaultFromExternalDirectory_doesNotPolluteMetadataCacheAndRejectsCorruptMac() {
+        val random = SecureRandom()
+        val masterKey = ByteArray(32).also { random.nextBytes(it) }
+        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+
+        val vaultDir = File(tempRoot, "vault_sync_perf/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        File(vaultDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
+        setMasterKey(masterKey)
+        CryptoManager.setVaultRootLocation(testContext, vaultDir)
+
+        val extRoot = File(tempRoot, "ext_sync_perf").apply { mkdirs() }
+        val extSecrets = File(extRoot, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+
+        val albumName = "SyncTestAlbum"
+        val destAlbum = File(vaultDir, albumName).apply { mkdirs() }
+        val srcAlbum = File(extSecrets, albumName).apply { mkdirs() }
+
+        val payload1 = ByteArray(1024) { (it % 199).toByte() }
+        val payload2 = ByteArray(1024) { ((it + 50) % 199).toByte() }
+
+        // Pre-existing file with same name & size as payload2, so sync hits Stage 3 content comparison
+        encryptBytesForTest(destAlbum, "colliding.jpg", payload1)
+
+        // Fresh file in external album
+        encryptBytesForTest(srcAlbum, "fresh.jpg", payload1)
+
+        // Corrupt the final MAC byte of a colliding source file so Stage 3/4 rejects it cleanly
+        val corruptSrc = encryptBytesForTest(srcAlbum, "colliding.jpg", payload2)
+        val raw = corruptSrc.readBytes()
+        raw[raw.size - 1] = (raw[raw.size - 1].toInt() xor 0xFF).toByte()
+        corruptSrc.writeBytes(raw)
+
+        // Clear metadataCache before sync
+        val cacheField = CryptoManager::class.java.getDeclaredField("metadataCache").apply { isAccessible = true }
+        val cacheMap = cacheField.get(CryptoManager) as MutableMap<*, *>
+        cacheMap.clear()
+
+        val result = CryptoManager.syncVaultFromExternalDirectory(testContext, extRoot)
+        assertTrue(result != null)
+        assertEquals(1, result!!.copiedCount)
+        assertEquals(1, result.failedCount)
+        assertEquals(0, cacheMap.size)
+    }
+
+    @Test
+    fun inspectTransferConflict_fastSamplingModeAndExactModeBehavior() {
+        val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        setMasterKey(masterKey)
+
+        val srcDir = File(tempRoot, "fast_src").apply { mkdirs() }
+        val plainDestDir = File(tempRoot, "fast_plain_dest").apply { mkdirs() }
+        val encDestDir = File(tempRoot, "fast_enc_dest").apply { mkdirs() }
+
+        // 9 MB (> 8 MB threshold)
+        val totalSize = 9 * 1024 * 1024
+        val basePayload = ByteArray(totalSize) { (it % 251).toByte() }
+        val diffAtMiddleSample = basePayload.copyOf().apply {
+            val idx = totalSize / 2
+            this[idx] = (this[idx].toInt() xor 0xFF).toByte()
+        }
+        // Offset 512 KB lies strictly between offset 0..256 KB and size/4 (2.25 MB)
+        val diffBetweenSamples = basePayload.copyOf().apply {
+            val idx = 512 * 1024
+            this[idx] = (this[idx].toInt() xor 0xFF).toByte()
+        }
+
+        val srcIdentical = File(srcDir, "movie.mp4").apply { writeBytes(basePayload) }
+        val srcMiddleDiff = File(srcDir, "middle_diff.mp4").apply { writeBytes(diffAtMiddleSample) }
+        val srcInteriorDiff = File(srcDir, "interior_diff.mp4").apply { writeBytes(diffBetweenSamples) }
+
+        File(plainDestDir, "movie.mp4").writeBytes(basePayload)
+        File(plainDestDir, "middle_diff.mp4").writeBytes(basePayload)
+        File(plainDestDir, "interior_diff.mp4").writeBytes(basePayload)
+
+        val plainIndex = CryptoManager.TargetPlainIndex(plainDestDir)
+
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(srcIdentical, plainDestDir, isTargetEncrypted = false, plainIndex = plainIndex, fastSampling = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(srcMiddleDiff, plainDestDir, isTargetEncrypted = false, plainIndex = plainIndex, fastSampling = true).status
+        )
+        // Fast mode skips unsampled gap -> IDENTICAL_SKIP; exact mode catches 1-byte gap difference -> NAME_CONFLICT
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(srcInteriorDiff, plainDestDir, isTargetEncrypted = false, plainIndex = plainIndex, fastSampling = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(srcInteriorDiff, plainDestDir, isTargetEncrypted = false, plainIndex = plainIndex, fastSampling = false).status
+        )
+
+        // Plain -> Encrypted fast sampling vs exact check
+        encryptBytesForTest(encDestDir, "movie.mp4", basePayload)
+        encryptBytesForTest(encDestDir, "middle_diff.mp4", basePayload)
+        encryptBytesForTest(encDestDir, "interior_diff.mp4", basePayload)
+        val encIndex = CryptoManager.TargetEncryptedIndex(encDestDir)
+
+        assertEquals(
+            CryptoManager.TransferConflictStatus.IDENTICAL_SKIP,
+            CryptoManager.inspectTransferConflict(srcIdentical, encDestDir, isTargetEncrypted = true, encryptedIndex = encIndex, fastSampling = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(srcMiddleDiff, encDestDir, isTargetEncrypted = true, encryptedIndex = encIndex, fastSampling = true).status
+        )
+        assertEquals(
+            CryptoManager.TransferConflictStatus.NAME_CONFLICT,
+            CryptoManager.inspectTransferConflict(srcInteriorDiff, encDestDir, isTargetEncrypted = true, encryptedIndex = encIndex, fastSampling = false).status
+        )
+    }
+
     private fun encryptBytesForTest(targetDir: File, originalName: String, payload: ByteArray): File {
         return CryptoManager.encryptStreamToDirectory(
             context = null,

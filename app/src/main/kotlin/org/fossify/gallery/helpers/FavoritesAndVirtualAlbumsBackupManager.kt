@@ -134,7 +134,10 @@ object FavoritesAndVirtualAlbumsBackupManager {
             }
             val items = try {
                 context.virtualAlbumsDB.getItems(albumId).filter {
-                    !deletedPaths.contains(it.fullPath) && !it.fullPath.startsWith(context.recycleBinPath)
+                    !deletedPaths.contains(it.fullPath) &&
+                        !it.fullPath.startsWith(context.recycleBinPath) &&
+                        it.state != org.fossify.gallery.models.ITEM_STATE_ENCRYPTED &&
+                        it.state != org.fossify.gallery.models.ITEM_STATE_DECRYPTED
                 }
             } catch (_: Exception) {
                 emptyList()
