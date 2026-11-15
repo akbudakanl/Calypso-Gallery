@@ -77,7 +77,6 @@ class SettingsActivity : SimpleActivity() {
         setupManageIncludedFolders()
         setupManageExcludedFolders()
         setupManageHiddenFolders()
-        setupOnVaultExit()
         setupHomeScreenViewOnLaunch()
         setupShowHiddenItems()
         setupAutoplayVideos()
@@ -273,42 +272,6 @@ class SettingsActivity : SimpleActivity() {
             }
         }
     }
-
-    private fun setupOnVaultExit() {
-        binding.settingsOnVaultExit.text = getOnVaultExitText()
-        binding.settingsOnVaultExitHolder.setOnClickListener {
-            val items = arrayListOf(
-                RadioItem(ON_VAULT_EXIT_KEEP_SHOWING, getString(R.string.on_vault_exit_keep_showing)),
-                RadioItem(ON_VAULT_EXIT_HIDE, getString(R.string.on_vault_exit_hide)),
-                RadioItem(ON_VAULT_EXIT_ASK_EVERY_TIME, getString(R.string.on_vault_exit_ask_every_time_default))
-            )
-
-            RadioGroupDialog(
-                activity = this@SettingsActivity,
-                items = items,
-                checkedItemId = config.onVaultExit
-            ) {
-                val newChoice = it as Int
-                config.onVaultExit = newChoice
-                config.vaultExitAskCheckboxChecked = (newChoice == ON_VAULT_EXIT_ASK_EVERY_TIME)
-                binding.settingsOnVaultExit.text = getOnVaultExitText()
-                if (newChoice == ON_VAULT_EXIT_HIDE) {
-                    config.temporarilyShowHidden = false
-                    config.temporarilyShowVaultExcluded = false
-                    CryptoManager.lockVault()
-                    CryptoManager.clearAppImageCaches(this@SettingsActivity)
-                }
-            }
-        }
-    }
-
-    private fun getOnVaultExitText() = getString(
-        when (config.onVaultExit) {
-            ON_VAULT_EXIT_KEEP_SHOWING -> R.string.on_vault_exit_keep_showing
-            ON_VAULT_EXIT_HIDE -> R.string.on_vault_exit_hide
-            else -> R.string.on_vault_exit_ask_every_time
-        }
-    )
 
     private fun setupShowHiddenItems() {
         config.showHiddenMedia = false
@@ -559,7 +522,10 @@ class SettingsActivity : SimpleActivity() {
         // 3) Şifreli kasaya biyometrik ile giriş (sadece bu kaydırılabilir)
         binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 4) Şifreli kasayı boşalt
+        // 4) Gizli kasada ekran görüntüsü almayı yasakla
+        binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
+        // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         setupVaultLocation()
@@ -567,7 +533,16 @@ class SettingsActivity : SimpleActivity() {
         setupSyncVault()
         setupChangeVaultPassword()
         setupVaultBiometric()
+        setupBlockVaultScreenshots()
         setupEmptyVault()
+    }
+
+    private fun setupBlockVaultScreenshots() {
+        binding.settingsBlockVaultScreenshots.isChecked = config.blockVaultScreenshots
+        binding.settingsBlockVaultScreenshotsHolder.setOnClickListener {
+            binding.settingsBlockVaultScreenshots.toggle()
+            config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
+        }
     }
 
     private fun setupVaultLocation() {
@@ -1418,7 +1393,7 @@ class SettingsActivity : SimpleActivity() {
                 put(INCLUDED_FOLDERS, TextUtils.join(",", config.includedFolders))
                 put(EXCLUDED_FOLDERS, TextUtils.join(",", config.excludedFolders))
                 put(SHOW_HIDDEN_MEDIA, config.showHiddenMedia)
-                put(ON_VAULT_EXIT, config.onVaultExit)
+                put(BLOCK_VAULT_SCREENSHOTS, config.blockVaultScreenshots)
                 put(FILE_LOADING_PRIORITY, config.fileLoadingPriority)
                 put(AUTOPLAY_VIDEOS, config.autoplayVideos)
                 put(REMEMBER_LAST_VIDEO_POSITION, config.rememberLastVideoPosition)
@@ -1572,7 +1547,7 @@ class SettingsActivity : SimpleActivity() {
                 INCLUDED_FOLDERS -> config.addIncludedFolders(value.toStringSet())
                 EXCLUDED_FOLDERS -> config.addExcludedFolders(value.toStringSet())
                 SHOW_HIDDEN_MEDIA -> config.showHiddenMedia = value.toBoolean()
-                ON_VAULT_EXIT -> config.onVaultExit = value.toInt()
+                BLOCK_VAULT_SCREENSHOTS -> config.blockVaultScreenshots = value.toBoolean()
                 FILE_LOADING_PRIORITY -> config.fileLoadingPriority = value.toInt()
                 AUTOPLAY_VIDEOS -> config.autoplayVideos = value.toBoolean()
                 REMEMBER_LAST_VIDEO_POSITION -> config.rememberLastVideoPosition = value.toBoolean()

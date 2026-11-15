@@ -86,7 +86,6 @@ import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
-import org.fossify.gallery.dialogs.VaultExitDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
@@ -150,10 +149,7 @@ import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MONTH_MILLISECONDS
 import org.fossify.gallery.helpers.MediaFetcher
 import org.fossify.gallery.helpers.MediaUpdatePolicy
-import org.fossify.gallery.helpers.ON_VAULT_EXIT
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_KEEP_SHOWING
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_HIDE
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_ASK_EVERY_TIME
+import org.fossify.gallery.helpers.VAULT_EXIT_DOUBLE_BACK_WINDOW_MS
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
@@ -244,6 +240,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mIsSecretVaultView = false
     private var mIsSwitchingVaultView = false
     private var mHiddenDisplayMode = DISPLAY_NONE
+    private var mLastVaultBackPressedAt = 0L
 
     // "Continue where I left off" after the vault keys were wiped (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted one to apply.
@@ -609,6 +606,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 config.temporarilyShowVaultExcluded = false
                 CryptoManager.lockVault()
                 CryptoManager.clearAppImageCaches(this)
+                VaultSessionManager.onVaultExited()
             }
             mTempShowHiddenHandler.removeCallbacksAndMessages(null)
             removeTempFolder()
@@ -652,7 +650,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             setupAdapter(mDirs)
             true
         } else if (mIsSecretVaultView) {
-            handleVaultExit()
+            handleVaultBackPress()
             true
         } else if (config.groupDirectSubfolders) {
             if (mCurrentPathPrefix.isEmpty()) {
@@ -670,52 +668,27 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
-    private fun handleVaultExit() {
-        when (config.onVaultExit) {
-            ON_VAULT_EXIT_KEEP_SHOWING -> applyVaultExitOption(ON_VAULT_EXIT_KEEP_SHOWING)
-            ON_VAULT_EXIT_HIDE -> applyVaultExitOption(ON_VAULT_EXIT_HIDE)
-            else -> {
-                val encryptedCount = if (mDirs.isNotEmpty()) {
-                    mDirs.count { isEncryptedVaultAlbum(it) && !CryptoManager.isVaultRecycleBinPath(this, it.path) }
-                } else {
-                    CryptoManager.getVaultDestinationAlbums(this).size
-                }
-                VaultExitDialog(this, encryptedCount) { keepShowing, alwaysAsk ->
-                    val chosenOption = if (keepShowing) {
-                        ON_VAULT_EXIT_KEEP_SHOWING
-                    } else {
-                        ON_VAULT_EXIT_HIDE
-                    }
-                    if (!alwaysAsk) {
-                        config.onVaultExit = chosenOption
-                    } else {
-                        config.onVaultExit = ON_VAULT_EXIT_ASK_EVERY_TIME
-                    }
-                    applyVaultExitOption(chosenOption)
-                }
-            }
+    private fun handleVaultBackPress() {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - mLastVaultBackPressedAt > VAULT_EXIT_DOUBLE_BACK_WINDOW_MS) {
+            mLastVaultBackPressedAt = now
+            toast(R.string.press_back_again_to_exit_vault)
+            return
         }
+        mLastVaultBackPressedAt = 0L
+        exitSecretVault()
     }
 
-    private fun applyVaultExitOption(option: Int) {
+    private fun exitSecretVault() {
         mIsSecretVaultView = false
         config.showAll = VaultViewPolicy.shouldExitVaultToFilesView(isExitingFromFilesView = false)
-        when (option) {
-            ON_VAULT_EXIT_KEEP_SHOWING -> {
-                mHiddenDisplayMode = DISPLAY_ENCRYPTED_ONLY
-                config.temporarilyShowHidden = true
-            }
-            ON_VAULT_EXIT_HIDE -> {
-                mHiddenDisplayMode = DISPLAY_NONE
-                config.temporarilyShowHidden = false
-                config.temporarilyShowVaultExcluded = false
-                CryptoManager.lockVault()
-                CryptoManager.clearAppImageCaches(this)
-            }
-        }
-        if (option == ON_VAULT_EXIT_KEEP_SHOWING) {
-            config.temporarilyShowVaultExcluded = false
-        }
+        mHiddenDisplayMode = DISPLAY_NONE
+        config.temporarilyShowHidden = false
+        config.temporarilyShowVaultExcluded = false
+        config.resetTempDeleteConfirmation()
+        CryptoManager.lockVault()
+        CryptoManager.clearAppImageCaches(this)
+        VaultSessionManager.onVaultExited()
         updateVaultModeUi()
         binding.directoriesGrid.adapter = null
         getDirectories()

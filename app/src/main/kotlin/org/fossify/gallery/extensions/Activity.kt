@@ -54,7 +54,6 @@ import org.fossify.gallery.dialogs.PickDirectoryDialog
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
 import org.fossify.gallery.dialogs.ResizeMultipleImagesDialog
 import org.fossify.gallery.dialogs.ResizeWithPathDialog
-import org.fossify.gallery.dialogs.VaultExitDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
@@ -62,9 +61,6 @@ import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.ENCRYPTED_BIN_EXT
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_ASK_EVERY_TIME
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_HIDE
-import org.fossify.gallery.helpers.ON_VAULT_EXIT_KEEP_SHOWING
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.PickDirectoryMode
 import org.fossify.gallery.helpers.RECYCLE_BIN
@@ -2772,46 +2768,30 @@ fun Activity.proposeNewFilePath(uri: Uri): Pair<String, Boolean> {
     return Pair(newPath, shouldAppendFilename)
 }
 
-/**
- * Resolves what should happen with the encrypted albums when the person leaves the vault, honoring the
- * "upon exiting the encrypted section" setting. Asks with [VaultExitDialog] when the setting is "always ask".
- * The callback receives either ON_VAULT_EXIT_KEEP_SHOWING or ON_VAULT_EXIT_HIDE.
- */
-fun Activity.askVaultExitOption(encryptedAlbumCount: () -> Int, callback: (option: Int) -> Unit) {
-    when (config.onVaultExit) {
-        ON_VAULT_EXIT_KEEP_SHOWING -> callback(ON_VAULT_EXIT_KEEP_SHOWING)
-        ON_VAULT_EXIT_HIDE -> callback(ON_VAULT_EXIT_HIDE)
-        else -> VaultExitDialog(this, encryptedAlbumCount()) { keepShowing, alwaysAsk ->
-            val chosenOption = if (keepShowing) ON_VAULT_EXIT_KEEP_SHOWING else ON_VAULT_EXIT_HIDE
-            config.onVaultExit = if (alwaysAsk) ON_VAULT_EXIT_ASK_EVERY_TIME else chosenOption
-            callback(chosenOption)
-        }
-    }
-}
-
 fun Activity.applyVaultScreenProtection(enable: Boolean) {
+    val shouldProtect = enable && config.blockVaultScreenshots
     try {
-        if (enable) {
+        if (shouldProtect) {
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         } else {
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            window.setHideOverlayWindows(enable)
+            window.setHideOverlayWindows(shouldProtect)
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            setRecentsScreenshotEnabled(!enable)
+            setRecentsScreenshotEnabled(!shouldProtect)
         }
         val decorView = window.decorView
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            decorView.importantForAutofill = if (enable) {
+            decorView.importantForAutofill = if (shouldProtect) {
                 android.view.View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
             } else {
                 android.view.View.IMPORTANT_FOR_AUTOFILL_AUTO
             }
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            decorView.importantForContentCapture = if (enable) {
+            decorView.importantForContentCapture = if (shouldProtect) {
                 android.view.View.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS
             } else {
                 android.view.View.IMPORTANT_FOR_CONTENT_CAPTURE_AUTO
@@ -2819,7 +2799,7 @@ fun Activity.applyVaultScreenProtection(enable: Boolean) {
         }
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             decorView.setAccessibilityDataSensitive(
-                if (enable) {
+                if (shouldProtect) {
                     android.view.View.ACCESSIBILITY_DATA_SENSITIVE_YES
                 } else {
                     android.view.View.ACCESSIBILITY_DATA_SENSITIVE_AUTO

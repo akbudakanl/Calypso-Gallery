@@ -364,19 +364,11 @@
     <string name="confirm_checkbox_label">I confirm</string>
     <string name="secret_vault">Encrypted Vault</string>
     <string name="secret_vault_empty">Encrypted Vault is empty</string>
+    <string name="press_back_again_to_exit_vault">Press back again to exit</string>
     <string name="confirm_decrypt_hidden_file">Are you sure you want to decrypt the hidden file(s)?</string>
     <string name="decrypt_info_title">How Decryption Works</string>
     <string name="decrypt_info_message" formatted="false">Folder &amp; File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting.</string>
     <string name="copy_to_clipboard_disabled_in_vault">Copying to clipboard is disabled while vault is unlocked for security.</string>
-    <string name="on_vault_exit">On leaving encrypted section</string>
-    <string name="on_vault_exit_keep_showing">Keep showing encrypted albums</string>
-    <string name="on_vault_exit_hide">Hide encrypted albums</string>
-    <string name="on_vault_exit_ask_every_time">Always ask</string>
-    <string name="on_vault_exit_ask_every_time_default">Always ask (Default)</string>
-    <string name="vault_exit_dialog_title">Exiting Encrypted Section</string>
-    <string name="vault_exit_question_single">Show encrypted album together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on.</string>
-    <string name="vault_exit_question_multiple">Show encrypted albums together with other albums?\n\nIn this case, during the app session, you will need to unlock the hidden vault whenever you send the app to the background and return to it, or turn the screen off and back on.</string>
-    <string name="vault_exit_settings_hint">For more options, see Settings &gt; On leaving encrypted section</string>
     <string name="stop_showing_hidden">Stop showing encrypted media</string>
     <string name="system_default">System default</string>
     <string name="language">Language</string>
@@ -460,6 +452,7 @@
     <string name="vault_sync_same_folder_error">The selected source folder is the same as your active vault.</string>
     <string name="change_encrypted_vault_password">Change encrypted vault password</string>
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>
+    <string name="block_vault_screenshots">Block screenshots in hidden vault</string>
     <string name="empty_encrypted_vault">Empty encrypted vault</string>
     <string name="enter_new_pin">Enter new PIN</string>
     <string name="repeat_new_pin">Repeat new PIN</string>

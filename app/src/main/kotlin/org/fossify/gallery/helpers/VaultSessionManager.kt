@@ -172,6 +172,16 @@ object VaultSessionManager {
         autoWiped = false
     }
 
+    fun onVaultExited() {
+        handler.removeCallbacksAndMessages(null)
+        requiresVaultReauth = false
+        autoWiped = false
+        preserveVaultOnSwitch = false
+        lockScreenOpen = false
+        lockScreenLaunching = false
+        restoreTemporarilyShowHidden = false
+    }
+
     fun markUnlockDeclined() {
         unlockDeclinedAt = SystemClock.elapsedRealtime()
     }
