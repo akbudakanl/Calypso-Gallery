@@ -319,6 +319,7 @@
     <string name="on_vault_exit_keep_showing">Şifreli albümleri göstermeye devam et</string>
     <string name="on_vault_exit_hide">Şifreli albümleri gizle</string>
     <string name="on_vault_exit_ask_every_time">Her zaman sor</string>
+    <string name="on_vault_exit_ask_every_time_default">Her zaman sor (Varsayılan)</string>
     <string name="vault_exit_dialog_title">Şifreli Bölümden Çıkış</string>
     <string name="vault_exit_question_single">Şifreli albüm, diğer albümlerle birlikte gösterilmeye devam edilsin mi?\n\nBu durumda uygulama oturumu boyunca uygulamayı arka plana atıp tekrar döndüğünüzde veya ekranı kapatıp tekrar açtığınızda gizli kasa şifresini açmanız gerekir.</string>
     <string name="vault_exit_question_multiple">Şifreli albümler, diğer albümlerle birlikte gösterilmeye devam edilsin mi?\n\nBu durumda uygulama oturumu boyunca uygulamayı arka plana atıp tekrar döndüğünüzde veya ekranı kapatıp tekrar açtığınızda gizli kasa şifresini açmanız gerekir.</string>
@@ -370,6 +371,8 @@
     <string name="sync_vault_from_external">Harici diskten kasayı eşitle</string>
     <string name="sync_vault_select_source_prompt">Harici Diskten Kasa Eşitleme Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Cipher_Secrets):\nHarici diskinizde (USB / SD) Cipher_Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Cipher_Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Cipher_Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
     <string name="conflict_handling_mode_label">Dosya çakışması ve kopya kontrolü</string>
+    <string name="conflict_handling_auto_summary">Tam otomatik</string>
+    <string name="conflict_handling_smart_dialog_summary">Akıllı diyalog</string>
     <string name="conflict_handling_auto_short">Tam otomatik (Varsayılan — Aynıları atla, farklıları (1) olarak kaydet)</string>
     <string name="conflict_handling_smart_dialog_short">Akıllı diyalog (Aynıları otomatik atla, içerik farklıysa sor)</string>
     <string name="album_crypto_conflict_mode_label">Albüm çakışması (Şifrele / Şifre Çöz)</string>

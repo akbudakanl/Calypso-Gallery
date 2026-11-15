@@ -137,7 +137,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(onVaultExit) = prefs.edit().putInt(ON_VAULT_EXIT, onVaultExit).apply()
 
     var vaultExitAskCheckboxChecked: Boolean
-        get() = prefs.getBoolean(VAULT_EXIT_ASK_CHECKBOX_CHECKED, false)
+        get() = prefs.getBoolean(VAULT_EXIT_ASK_CHECKBOX_CHECKED, true)
         set(vaultExitAskCheckboxChecked) = prefs.edit().putBoolean(VAULT_EXIT_ASK_CHECKBOX_CHECKED, vaultExitAskCheckboxChecked).apply()
 
     var temporarilyShowExcluded: Boolean

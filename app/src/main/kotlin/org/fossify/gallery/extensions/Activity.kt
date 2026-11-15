@@ -1354,7 +1354,8 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                 activity = this,
                 message = getString(R.string.confirm_decrypt_hidden_file),
                 infoTitleResId = R.string.decrypt_info_title,
-                infoMessageResId = R.string.decrypt_info_message
+                infoMessageResId = R.string.decrypt_info_message,
+                isDecrypt = true
             ) {
                 val destDir = File(destination)
                     val runWithResolutions = {
@@ -1596,7 +1597,8 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
         activity = this,
         message = getString(R.string.confirm_decrypt_hidden_file),
         infoTitleResId = R.string.decrypt_info_title,
-        infoMessageResId = R.string.decrypt_info_message
+        infoMessageResId = R.string.decrypt_info_message,
+        isDecrypt = true
     ) {
         val conflicts = folderPaths.mapNotNull {
             CryptoManager.previewDecryptAlbumConflict(this, it, targetDir)
@@ -1984,7 +1986,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                 activity = this,
                 message = getString(R.string.confirm_decrypt_hidden_file),
                 infoTitleResId = R.string.decrypt_info_title,
-                infoMessageResId = R.string.decrypt_info_message
+                infoMessageResId = R.string.decrypt_info_message,
+                isDecrypt = true
             ) {
                 proceedWithCopyMove()
             }

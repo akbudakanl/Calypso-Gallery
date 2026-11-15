@@ -280,7 +280,7 @@ class SettingsActivity : SimpleActivity() {
             val items = arrayListOf(
                 RadioItem(ON_VAULT_EXIT_KEEP_SHOWING, getString(R.string.on_vault_exit_keep_showing)),
                 RadioItem(ON_VAULT_EXIT_HIDE, getString(R.string.on_vault_exit_hide)),
-                RadioItem(ON_VAULT_EXIT_ASK_EVERY_TIME, getString(R.string.on_vault_exit_ask_every_time))
+                RadioItem(ON_VAULT_EXIT_ASK_EVERY_TIME, getString(R.string.on_vault_exit_ask_every_time_default))
             )
 
             RadioGroupDialog(
@@ -290,9 +290,7 @@ class SettingsActivity : SimpleActivity() {
             ) {
                 val newChoice = it as Int
                 config.onVaultExit = newChoice
-                if (newChoice != ON_VAULT_EXIT_ASK_EVERY_TIME) {
-                    config.vaultExitAskCheckboxChecked = false
-                }
+                config.vaultExitAskCheckboxChecked = (newChoice == ON_VAULT_EXIT_ASK_EVERY_TIME)
                 binding.settingsOnVaultExit.text = getOnVaultExitText()
                 if (newChoice == ON_VAULT_EXIT_HIDE) {
                     config.temporarilyShowHidden = false
@@ -855,9 +853,9 @@ class SettingsActivity : SimpleActivity() {
 
     private fun getConflictHandlingModeText() = getString(
         if (config.conflictHandlingMode == CONFLICT_HANDLING_SMART_DIALOG) {
-            R.string.conflict_handling_smart_dialog_short
+            R.string.conflict_handling_smart_dialog_summary
         } else {
-            R.string.conflict_handling_auto_short
+            R.string.conflict_handling_auto_summary
         }
     )
 
