@@ -1,21 +1,19 @@
-# Fossify Gallery Cipher - Live-Boot RAM-Only Vault Encryptor CLI
+# Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor CLI
 
-This **Encrypt-Only** offline Linux CLI tool encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Fossify Gallery Cipher** application (`AES-256-CTR` + `Poly1305-AES` authenticated streaming encryption, plus `FGMETA2` AES-GCM encrypted album `.meta` folders).
+This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, and Windows** with automatic OS detection) encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Fossify Gallery Cipher** application (`AES-256-CTR` + `Poly1305-AES` authenticated streaming encryption, plus `FGMETA2` AES-GCM encrypted album `.meta` folders).
 
 > 🇹🇷 **Türkçe kılavuz** için sayfanın altındaki [Türkçe Kullanım Kılavuzu](#-türkçe-kullanım-kılavuzu) bölümüne geçebilirsiniz.
 
 ---
 
-## 🛡️ Recommended Operating Systems (RAM-Only Live Boot)
+## 🛡️ Recommended Operating Systems (Tier 1 vs. Tier 2)
 
-This CLI tool is designed **exclusively for RAM-only Live Boot Linux environments**. Handling or deleting sensitive plaintext media on a standard disk-backed OS (Windows, macOS, or installed Linux on SSD/HDD) leaves permanent forensic traces in filesystem journals, swap/pagefile, thumbnail caches, and SSD wear-leveling blocks—even after deletion.
+The CLI detects your operating system automatically with **no extra CLI prompts**:
 
-### 1. Primary Recommendation: **Tails OS** (Amnesic, Zero-Config)
-* **Why Tails?** Everything runs strictly in volatile RAM (`tmpfs`/`overlayfs`), internal drives and swap partitions are never mounted automatically, and RAM is wiped on shutdown.
-* Uses `apt` (supports Tails Persistent Storage + Additional Software for offline dependency persistence).
-
-### 2. Alternatives: Copy-to-RAM (`toram`) Linux Live ISOs
-If you prefer another Linux Live USB, boot with its **copy-to-RAM** and **no-swap** parameters so the entire OS lives in RAM:
+### Tier 1 — Maximum Forensic Privacy: **RAM-Only Live Boot (Tails OS / `toram` Linux)**
+Handling or deleting sensitive plaintext media on a standard disk-backed OS leaves forensic traces in filesystem journals, swap/pagefile, thumbnail/search caches, and SSD wear-leveling blocks—even after deletion.
+* **Primary Recommendation — Tails OS:** Everything runs strictly in volatile RAM (`tmpfs`/`overlayfs`), internal drives and swap partitions are never mounted automatically, and RAM is wiped on shutdown. Uses `apt` (supports Tails Persistent Storage + Additional Software).
+* **Alternatives (`toram` Linux Live ISOs):** Boot with **copy-to-RAM** and **no-swap** parameters:
 
 | Distribution | Boot Parameters | Package Manager (`run.sh` auto-supported) |
 | :--- | :--- | :--- |
@@ -25,15 +23,23 @@ If you prefer another Linux Live USB, boot with its **copy-to-RAM** and **no-swa
 | **Arch / EndeavourOS Live** | `copytoram=y` | `pacman` |
 | **openSUSE Live** | `rd.live.ram=1` | `zypper` |
 
+### Tier 2 — Standard / Convenience Mode: **Windows & macOS**
+If you already have photos/videos stored on a Windows or macOS computer and want to encrypt them directly onto an external USB/SD `Cipher_Secrets` vault (or push via `--adb`) without copying plaintext files onto your phone first:
+* **Automatic adaptation:** `cipher_vault.py` automatically detects Windows drive letters (`D:\`, `E:\`, ...) or macOS `/Volumes/<USB>` mounts, enables Windows UTF-8/ANSI console support, and uses local `.venv` via `run.bat` (Windows) or `run.sh` (macOS).
+* **Important caveats (shown automatically by the CLI):**
+  * Standard disk-backed mode does **not** clear OS thumbnail caches (`Thumbs.db`, QuickLook), search indexes (Windows Search / Spotlight), swap/pagefile, NTFS/APFS journals, shadow copies/Time Machine snapshots, or SSD wear-leveling blocks—even with `--delete-source`.
+  * **Cloud-sync warning (OneDrive / iCloud Drive):** If your `Desktop` is synced to OneDrive or iCloud, staging plaintext files or copying `.vault` onto the Desktop may upload them to the cloud. The CLI warns when a cloud-synced path is detected and skips auto-copying `.vault` to cloud-synced Desktops—prefer `-i` / `-o` on a local non-synced folder or external USB drive.
+
 ---
 
 ## 🔒 Built-In Per-Process Isolation
 
-`run.sh` automatically wraps **only this single `cipher_vault.py` process** (without affecting any other Python processes on your system):
-1. **`bwrap` (`bubblewrap`):** Cuts off all network access (`--unshare-net`) and restricts filesystem access strictly to system libraries, your Desktop, and mounted external drives / CLI-specified folders (blocking `~/.ssh`, `~/.gnupg`, `~/.config`, etc.).
-2. **`firejail` (`--net=none`):** Used if `bwrap` is unavailable.
-3. **`unshare --user --net`:** Kernel-level network namespace isolation fallback available on almost all Linux distributions.
-4. **Python `sys.addaudithook`:** Defense-in-depth fallback inside `cipher_vault.py` that blocks socket/network operations unless `--adb` is explicitly passed.
+* **Linux (`run.sh`):** Automatically wraps **only this single `cipher_vault.py` process** using:
+  1. **`bwrap` (`bubblewrap`):** Cuts off all network access (`--unshare-net`) and restricts filesystem access strictly to system libraries, your Desktop, and mounted external drives / CLI-specified folders (blocking `~/.ssh`, `~/.gnupg`, `~/.config`, etc.).
+  2. **`firejail` (`--net=none`):** Used if `bwrap` is unavailable.
+  3. **`unshare --user --net`:** Kernel-level network namespace isolation fallback available on almost all Linux distributions.
+* **All OSes — Linux, macOS, Windows (`cipher_vault.py`):**
+  4. **Python `sys.addaudithook`:** Defense-in-depth guard inside `cipher_vault.py` that blocks socket/network operations unless `--adb` is explicitly passed. *(Note: OS-level `bwrap`/`unshare` filesystem/network sandboxing is Linux-only.)*
 
 ---
 
@@ -62,6 +68,10 @@ Keep your primary `Cipher_Secrets` vault on your phone while encrypting new medi
 3. **Sync into your phone inside the Android app:**
    * Connect the USB/SD drive to your phone, open **Fossify Gallery Cipher**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
    * **Identical handling for both scenarios:** Whether your USB's `Cipher_Secrets/` holds a full vault mirror (Scenario 1) or only `.vault` plus newly encrypted additions (Scenario 2), Android sync processes it identically. In Scenario 2, once syncing completes, you can delete the synced `.bin` files and album subfolders from `<USB>/Cipher_Secrets/` while keeping only `.vault` for next time.
+   * **Incremental `.pending_sync` Manifest (Zero Archive Re-Scan):**
+     * After encrypting new media, `cipher_vault.py` **appends** the newly created `.bin` relative paths to `<output_dir>/.pending_sync` (preserving any earlier unsynced CLI batches).
+     * When you run **Sync vault from external drive** on Android, the app **only** processes entries listed in `.pending_sync`—it does not scan older archive files (avoiding wasted I/O and false `Failed` warnings from bit-rot in unrelated archive files), removes successfully synced entries, and deletes `.pending_sync` once empty. Without `.pending_sync`, sync is rejected so the same batch is not re-synced twice.
+     * **Note for Future Desktop Clients:** Any separate desktop application/client must maintain its **own** independent pending-sync queue (e.g., `.pending_sync_desktop`) rather than consuming or deleting `.pending_sync`, so files already synced to the phone remain pending for the desktop client (and vice versa).
    * **4-Stage Single-Pass Sync Optimization & Duplicate Checking:**
      * Unchanged mirrored `.bin` files already in the destination album skip in `O(1)` time (checking size + header version + trailing 16-byte `Poly1305-AES` tag) without decrypting headers or hashing gigabytes of video.
      * Incoming `.bin` files with distinct filenames stream-copy and verify `Poly1305-AES` MAC in a **single pass** (`copyBinAndVerifyIntegritySinglePass`), lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`.
@@ -106,23 +116,31 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
 ## 🚀 Quick Start & CLI Examples
 
 1. **Mount USB `Cipher_Secrets/` (Full Vault or Header-Only `.vault`):** Plug in your external USB/SD drive containing `Cipher_Secrets/.vault` (either a full vault copy or just `.vault`), or copy `.vault` to `~/Desktop/.vault` from your phone (`Internal Storage > Fossify Gallery Cipher > Cipher_Secrets > .vault`).
-2. **Run Launcher:**
-   ```bash
-   chmod +x run.sh cipher_vault.py
-   ./run.sh
-   ```
-   *(Automatically detects `apt`, `dnf`, `pacman`, or `zypper` if dependencies are missing, creates the Desktop shortcut, and starts the sandboxed CLI.)*
+2. **Run Launcher (auto-detects your OS with no extra prompts):**
+   * **Linux / Tails / macOS:**
+     ```bash
+     chmod +x run.sh cipher_vault.py
+     ./run.sh
+     ```
+     *(On Linux: auto-detects `apt`/`dnf`/`pacman`/`zypper`, creates the Desktop shortcut, and starts the sandboxed CLI. On macOS: creates a local `.venv` if needed and activates the Python network audit hook.)*
+   * **Windows (double-click `run.bat` or run from Command Prompt / PowerShell):**
+     ```bat
+     run.bat
+     ```
+     *(Auto-detects Python 3.9+, sets up `.venv` if dependencies are missing, scans mounted USB drive letters `D:\`–`Z:\`, and runs with UTF-8 + ANSI color support.)*
 
 ```bash
-# Interactive mode (prompts for Language, .vault secret with retry, and optional secure wipe; no output prompt)
-./run.sh
+# Interactive mode (prompts for Language, .vault secret with retry, and optional wipe; no OS or output prompt)
+./run.sh          # Linux / macOS
+run.bat           # Windows
 
 # English or Turkish interactive folder workflow (-e/--encrypt is optional default)
 ./run.sh --lang en
-./run.sh --lang tr
 
-# Auto-target <USB>/Cipher_Secrets directly (works identically for full vault copy or header-only .vault)
+# Auto-target <USB>/Cipher_Secrets directly (Linux / macOS / Windows)
 ./run.sh --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Cipher_Secrets/.vault
+./run.sh --lang en -i ~/Desktop/To_Encrypt -v /Volumes/USB/Cipher_Secrets/.vault
+run.bat  --lang en -i C:\LocalMedia\To_Encrypt -v E:\Cipher_Secrets\.vault
 
 # Explicit custom -o override (for example writing to a custom USB transfer folder)
 ./run.sh --lang en -i ~/Desktop/To_Encrypt -o /media/amnesia/USB/Custom_Output -v /media/amnesia/USB/Cipher_Secrets/.vault
@@ -138,12 +156,19 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
 
 ## 🇹🇷 Türkçe Kullanım Kılavuzu
 
-Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı Linux CLI aracı, medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Fossify Gallery Cipher** uygulamasıyla **%100 uyumlu** şekilde `.bin` formatında (`AES-256-CTR` + `Poly1305-AES`) ve `FGMETA2` şifreli `.meta` albümleriyle şifreler.
+Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı CLI aracı (**Linux / Tails OS, macOS ve Windows** üzerinde işletim sistemini otomatik algılar), medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Fossify Gallery Cipher** uygulamasıyla **%100 uyumlu** şekilde `.bin` formatında (`AES-256-CTR` + `Poly1305-AES`) ve `FGMETA2` şifreli `.meta` albümleriyle şifreler.
 
-### 🛡️ RAM Tabanlı Live Boot (Tails OS / `toram`)
-Bu CLI aracı **yalnızca RAM üzerinde çalışan Live Boot Linux sistemler** için tasarlanmıştır. Standart diske kurulu işletim sistemlerinde (Windows, macOS veya SSD/HDD kurulu Linux) şifresiz medyalar silinse bile dosya sistemi günlüğünde, swap/pagefile alanında, küçük resim önbelleklerinde ve SSD bloklarında kalıcı adli izler bırakır.
-* **Önerilen Sistem:** **Tails OS** (Tüm çalışma geçici RAM'dedir, dahili disk ve swap otomatik bağlanmaz, kapatınca her şey silinir).
-* **Alternatif:** Debian/Ubuntu (`toram noswap`), Fedora/openSUSE (`rd.live.ram=1`) veya Arch (`copytoram=y`) Live ISO'ları.
+### 🛡️ Önerilen İşletim Sistemleri (1. Seviye RAM vs. 2. Seviye Standart Mod)
+CLI çalıştığında işletim sisteminizi **ek bir soru sormadan** otomatik algılar:
+
+* **1. Seviye — En Yüksek Adli Gizlilik (Tails OS / `toram` Linux):**
+  * **Neden Tails OS?** Tüm çalışma geçici RAM'dedir (`tmpfs`/`overlayfs`), dahili disk ve swap otomatik bağlanmaz, kapatınca her şey silinir.
+  * **Alternatif:** Debian/Ubuntu (`toram noswap`), Fedora/openSUSE (`rd.live.ram=1`) veya Arch (`copytoram=y`) Live ISO'ları.
+* **2. Seviye — Standart / Pratik Mod (Windows & macOS):**
+  * Bilgisayarınızda zaten bulunan medyaları önce telefona şifresiz kopyalamadan doğrudan harici USB/SD `Cipher_Secrets` kasasına şifrelemek (veya `--adb` ile aktarmak) için otomatik desteklenir.
+  * **Önemli Uyarılar (CLI tarafından otomatik gösterilir):**
+    * Standart disk tabanlı sistemlerde `--delete-source` kullanılsa bile SSD aşınma dengeleme blokları, NTFS/APFS günlükleri, Volume Shadow Copy / Time Machine anlık görüntüleri, takas alanı (pagefile/swap) ve küçük resim/arama önbellekleri (`Thumbs.db`, QuickLook, Spotlight) temizlenmez.
+    * **Bulut Senkronizasyonu (OneDrive / iCloud Drive):** Windows veya macOS Masaüstünüz OneDrive/iCloud ile eşitleniyorsa şifresiz medyalar veya `.vault` dosyası buluta yüklenebilir. CLI bulutla eşitlenen bir yol algıladığında uyarı verir ve `.vault` dosyasını bulutlu Masaüstüne kopyalamayı önermez; bulut dışı yerel bir klasör veya harici USB (`-i` / `-o`) kullanın.
 
 ### 💾 Birleşik `Cipher_Secrets` Harici Disk İş Akışları (Tails OS RAM Üzerinde)
 
@@ -186,14 +211,20 @@ Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şi
 
 ### 🚀 Hızlı Başlangıç ve Komut Örnekleri
 ```bash
+# Linux / Tails / macOS
 chmod +x run.sh cipher_vault.py
 ./run.sh
 
-# Türkçe arayüz ile etkileşimli şifreleme (ek çıktı hedefi sormaz)
+# Windows (çift tıklayarak veya Komut İstemi / PowerShell içinden)
+run.bat
+
+# Türkçe arayüz ile etkileşimli şifreleme (işletim sistemi veya çıktı hedefi sormaz)
 ./run.sh --lang tr
 
-# Harici USB Cipher_Secrets kasasına (tam kopya veya yalnızca .vault içeren) otomatik yönlendirme
+# Harici USB Cipher_Secrets kasasına (Linux / macOS / Windows) otomatik yönlendirme
 ./run.sh --lang tr -i ~/Desktop/Sifrelenecek -v /media/amnesia/USB/Cipher_Secrets/.vault
+./run.sh --lang tr -i ~/Desktop/Sifrelenecek -v /Volumes/USB/Cipher_Secrets/.vault
+run.bat  --lang tr -i C:\YerelMedya\Sifrelenecek -v E:\Cipher_Secrets\.vault
 
 # İsteğe bağlı özel -o çıktı klasörü ile geçersiz kılma
 ./run.sh --lang tr -i ~/Desktop/Sifrelenecek -o /media/amnesia/USB/Ozel_Cikti -v /media/amnesia/USB/Cipher_Secrets/.vault
