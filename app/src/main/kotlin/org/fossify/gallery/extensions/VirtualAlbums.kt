@@ -1163,7 +1163,7 @@ fun Context.getVirtualAlbumDirectories(
     val albumCovers = config.parseAlbumCovers()
     val includedFolders = config.includedFolders
     val canAccessHidden = canAccessHiddenVirtualAlbums()
-    val getProperFileSize = config.directorySorting and SORT_BY_SIZE != 0
+    val getProperFileSize = true
     val filterMedia = config.filterMedia
     val hiddenString = getString(R.string.hidden)
     val mediaFetcher = MediaFetcher(this)

@@ -239,4 +239,69 @@ class MediaUpdatePolicyTest {
         assertTrue(MediaUpdatePolicy.haveSameDirectoryPaths(listOf(a, b), listOf(aUpdated, b)))
         assertFalse(MediaUpdatePolicy.haveSameDirectoryPaths(listOf(a, b), listOf(b, a)))
     }
+
+    @Test
+    fun mergeCachedMediaMetadataPreservesDistinctCachedTakenOverModifiedFallback() {
+        val cachedItem = medium(id = 10L, path = "/a/1.jpg", modified = 2000L).copy(taken = 1500L)
+        val scannedFallback = medium(id = null, path = "/a/1.jpg", modified = 2000L) // taken == modified == 2000L
+
+        MediaUpdatePolicy.mergeCachedMediaMetadata(listOf(scannedFallback), listOf(cachedItem))
+
+        assertEquals(1500L, scannedFallback.taken)
+
+        val cachedZeroTaken = medium(id = 11L, path = "/a/2.jpg", modified = 3000L).copy(taken = 0L)
+        val scannedReal = medium(id = null, path = "/a/2.jpg", modified = 3000L).copy(taken = 2500L)
+
+        MediaUpdatePolicy.mergeCachedMediaMetadata(listOf(scannedReal), listOf(cachedZeroTaken))
+
+        assertEquals(2500L, scannedReal.taken)
+    }
+
+    @Test
+    fun isFolderMediaCacheInSyncDetectsMatchingAndDriftedCaches() {
+        val a = medium(id = 1L, path = "/a/1.jpg", modified = 1000L).copy(taken = 900L, size = 500L)
+        val b = medium(id = 2L, path = "/a/2.jpg", modified = 2000L, isFavorite = true).copy(taken = 1800L, size = 800L)
+
+        assertTrue(MediaUpdatePolicy.isFolderMediaCacheInSync(listOf(a, b), listOf(b.copy(), a.copy())))
+        assertFalse(MediaUpdatePolicy.isFolderMediaCacheInSync(listOf(a, b), listOf(a.copy())))
+        assertFalse(MediaUpdatePolicy.isFolderMediaCacheInSync(listOf(a, b), listOf(a.copy(), b.copy(size = 999L))))
+        assertFalse(MediaUpdatePolicy.isFolderMediaCacheInSync(listOf(a, b), listOf(a.copy(), b.copy(path = "/a/3.jpg"))))
+    }
+
+    @Test
+    fun findVisualChangedIndicesSkipsNonVisualMetadataChanges() {
+        val m0 = medium(id = 1L, path = "/a/1.jpg", modified = 1000L)
+        val m1 = medium(id = 2L, path = "/a/2.jpg", modified = 2000L, isFavorite = false)
+        assertEquals(
+            emptyList<Int>(),
+            MediaUpdatePolicy.findVisualChangedMediaIndices(
+                listOf(m0, m1),
+                listOf(m0.copy(taken = 500L), m1.copy(taken = 600L))
+            )
+        )
+        assertEquals(
+            listOf(1),
+            MediaUpdatePolicy.findVisualChangedMediaIndices(
+                listOf(m0, m1),
+                listOf(m0.copy(taken = 500L), m1.copy(isFavorite = true))
+            )
+        )
+
+        val d0 = directory(id = 1L, path = "/d0", mediaCnt = 5, modified = 1000L, sortValue = "1000")
+        val d1 = directory(id = 2L, path = "/d1", tmb = "/d1/a.jpg", mediaCnt = 3)
+        assertEquals(
+            emptyList<Int>(),
+            MediaUpdatePolicy.findVisualChangedDirectoryIndices(
+                listOf(d0, d1),
+                listOf(d0.copy(modified = 9999L, sortValue = "9999"), d1.copy(taken = 1234L))
+            )
+        )
+        assertEquals(
+            listOf(0, 1),
+            MediaUpdatePolicy.findVisualChangedDirectoryIndices(
+                listOf(d0, d1),
+                listOf(d0.copy(mediaCnt = 6), d1.copy(tmb = "/d1/b.jpg"))
+            )
+        )
+    }
 }

@@ -65,7 +65,7 @@ object MediaUpdatePolicy {
                 if (item.modified == 0L && cached.modified != 0L) {
                     item.modified = cached.modified
                 }
-                if (item.taken == 0L && cached.taken != 0L) {
+                if ((item.taken == 0L || (item.taken == item.modified && cached.taken != cached.modified)) && cached.taken != 0L) {
                     item.taken = cached.taken
                 }
                 if (item.size == 0L && cached.size != 0L) {
@@ -183,5 +183,82 @@ object MediaUpdatePolicy {
             validKeys.add(dir.path.hashCode())
         }
         selectedKeys.retainAll(validKeys)
+    }
+
+    /**
+     * Returns true when [freshItems] and [cachedItems] have identical counts and matching
+     * persisted metadata for every path.
+     */
+    fun isFolderMediaCacheInSync(freshItems: List<Medium>, cachedItems: List<Medium>): Boolean {
+        if (freshItems.size != cachedItems.size) {
+            return false
+        }
+
+        val cachedByPath = HashMap<String, Medium>(cachedItems.size)
+        for (cached in cachedItems) {
+            cachedByPath[cached.path] = cached
+        }
+
+        for (fresh in freshItems) {
+            val cached = cachedByPath[fresh.path] ?: return false
+            if (cached.name != fresh.name ||
+                cached.modified != fresh.modified ||
+                cached.taken != fresh.taken ||
+                cached.size != fresh.size ||
+                cached.type != fresh.type ||
+                cached.videoDuration != fresh.videoDuration ||
+                cached.isFavorite != fresh.isFavorite
+            ) {
+                return false
+            }
+        }
+        return true
+    }
+
+    /**
+     * Returns indices in [oldItems]/[newItems] (assuming [haveSameMediaPaths] is true) whose
+     * visual display fields changed.
+     */
+    fun findVisualChangedMediaIndices(oldItems: List<ThumbnailItem>, newItems: List<ThumbnailItem>): List<Int> {
+        val changedIndices = ArrayList<Int>()
+        for (i in oldItems.indices) {
+            val oldItem = oldItems[i]
+            val newItem = newItems.getOrNull(i) ?: break
+            if (oldItem is Medium && newItem is Medium) {
+                if (oldItem.modified != newItem.modified ||
+                    oldItem.size != newItem.size ||
+                    oldItem.videoDuration != newItem.videoDuration ||
+                    oldItem.isFavorite != newItem.isFavorite ||
+                    oldItem.name != newItem.name ||
+                    oldItem.type != newItem.type
+                ) {
+                    changedIndices.add(i)
+                }
+            }
+        }
+        return changedIndices
+    }
+
+    /**
+     * Returns indices in [oldDirs]/[newDirs] (assuming [haveSameDirectoryPaths] is true) whose
+     * visual display fields changed.
+     */
+    fun findVisualChangedDirectoryIndices(oldDirs: List<Directory>, newDirs: List<Directory>): List<Int> {
+        val changedIndices = ArrayList<Int>()
+        for (i in oldDirs.indices) {
+            val oldDir = oldDirs[i]
+            val newDir = newDirs.getOrNull(i) ?: break
+            if (oldDir.tmb != newDir.tmb ||
+                oldDir.name != newDir.name ||
+                oldDir.mediaCnt != newDir.mediaCnt ||
+                oldDir.subfoldersCount != newDir.subfoldersCount ||
+                oldDir.subfoldersMediaCount != newDir.subfoldersMediaCount ||
+                oldDir.location != newDir.location ||
+                oldDir.types != newDir.types
+            ) {
+                changedIndices.add(i)
+            }
+        }
+        return changedIndices
     }
 }

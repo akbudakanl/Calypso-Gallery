@@ -148,6 +148,124 @@ class MediaAdapter(
     private val isListViewType = viewType == VIEW_TYPE_LIST
     private var rotatedImagePaths = ArrayList<String>()
     private var currentMediaHash = MediaUpdatePolicy.computeMediaContentHash(media)
+    private var lastLongPressedSelectionKey: Int? = null
+
+    /**
+     * Shared selection-preservation and NO_POSITION-safe click/long-click helpers
+     * reused by both MediaAdapter and DirectoryAdapter.
+     */
+    internal object SelectionSync {
+        private val lastLongPressedItemField by lazy(LazyThreadSafetyMode.NONE) {
+            runCatching {
+                MyRecyclerViewAdapter::class.java.getDeclaredField("lastLongPressedItem").apply {
+                    isAccessible = true
+                }
+            }.getOrNull()
+        }
+
+        fun clearLastLongPressedItem(adapter: MyRecyclerViewAdapter) {
+            runCatching { lastLongPressedItemField?.setInt(adapter, -1) }
+        }
+
+        fun remapLastLongPressedItem(adapter: MyRecyclerViewAdapter, lastKey: Int?): Int? {
+            val field = lastLongPressedItemField ?: return lastKey
+            val current = runCatching { field.getInt(adapter) }.getOrDefault(-1)
+            if (current == -1 || lastKey == null) {
+                return null
+            }
+            val newPos = adapter.getItemKeyPosition(lastKey)
+            runCatching { field.setInt(adapter, newPos) }
+            return if (newPos >= 0) lastKey else null
+        }
+
+        fun bindSafeClickAndLongClick(
+            adapter: MyRecyclerViewAdapter,
+            holder: MyRecyclerViewAdapter.ViewHolder,
+            item: Any,
+            itemKey: Int,
+            allowLongPress: Boolean,
+            positionOffset: Int,
+            isSelectable: () -> Boolean,
+            isSelected: () -> Boolean,
+            startSelectionMode: () -> Unit,
+            toggleSelection: (Boolean, Int) -> Unit,
+            setLastLongPressedKey: (Int?) -> Unit
+        ) {
+            fun handleSafeClick() {
+                setLastLongPressedKey(null)
+                val directPos = holder.adapterPosition - positionOffset
+                if (directPos >= 0) {
+                    holder.viewClicked(item)
+                    return
+                }
+                if (!isSelectable()) {
+                    adapter.itemClick(item)
+                    clearLastLongPressedItem(adapter)
+                    return
+                }
+                val fallbackPos = adapter.getItemKeyPosition(itemKey)
+                if (fallbackPos >= 0) {
+                    toggleSelection(!isSelected(), fallbackPos)
+                    clearLastLongPressedItem(adapter)
+                }
+            }
+
+            holder.itemView.setOnClickListener { handleSafeClick() }
+            holder.itemView.setOnLongClickListener {
+                if (!allowLongPress) {
+                    handleSafeClick()
+                    return@setOnLongClickListener true
+                }
+                val directPos = holder.adapterPosition - positionOffset
+                if (directPos >= 0) {
+                    setLastLongPressedKey(itemKey)
+                    holder.viewLongClicked()
+                } else {
+                    val fallbackPos = adapter.getItemKeyPosition(itemKey)
+                    if (fallbackPos >= 0) {
+                        if (!isSelectable()) {
+                            startSelectionMode()
+                        }
+                        setLastLongPressedKey(itemKey)
+                        toggleSelection(true, fallbackPos)
+                        adapter.itemLongClicked(fallbackPos)
+                    }
+                }
+                true
+            }
+        }
+
+        fun applyListUpdate(
+            adapter: MyRecyclerViewAdapter,
+            samePaths: Boolean,
+            changedVisualIndices: List<Int>,
+            positionOffset: Int,
+            isSelectable: Boolean,
+            selectedKeysCount: Int,
+            actMode: android.view.ActionMode?
+        ) {
+            if (!samePaths) {
+                adapter.notifyDataSetChanged()
+            } else {
+                for (idx in changedVisualIndices) {
+                    adapter.notifyItemChanged(idx + positionOffset)
+                }
+            }
+
+            if (isSelectable) {
+                if (selectedKeysCount == 0) {
+                    adapter.finishActMode()
+                } else {
+                    val selectableCount = adapter.getSelectableItemCount()
+                    val selectedCount = minOf(selectedKeysCount, selectableCount)
+                    (actMode?.customView as? TextView)?.text = "$selectedCount / $selectableCount"
+                    actMode?.invalidate()
+                }
+            } else if (!samePaths) {
+                adapter.finishActMode()
+            }
+        }
+    }
     private val hasOTGConnected = activity.hasOTGConnected()
 
     private var scrollHorizontally = config.scrollHorizontally
@@ -190,12 +308,28 @@ class MediaAdapter(
     override fun onBindViewHolder(holder: MyRecyclerViewAdapter.ViewHolder, position: Int) {
         val tmbItem = media.getOrNull(position) ?: return
         val allowLongPress = (!isAGetIntent || allowMultiplePicks) && tmbItem is Medium
-        holder.bindView(tmbItem, tmbItem is Medium, allowLongPress) { itemView, adapterPosition ->
+        holder.bindView(tmbItem, false, false) { itemView, _ ->
             if (tmbItem is Medium) {
                 setupThumbnail(itemView, tmbItem)
             } else {
                 setupSection(itemView, tmbItem as ThumbnailSection)
             }
+        }
+        if (tmbItem is Medium) {
+            val itemKey = tmbItem.path.hashCode()
+            SelectionSync.bindSafeClickAndLongClick(
+                adapter = this,
+                holder = holder,
+                item = tmbItem,
+                itemKey = itemKey,
+                allowLongPress = allowLongPress,
+                positionOffset = positionOffset,
+                isSelectable = { actModeCallback.isSelectable },
+                isSelected = { selectedKeys.contains(itemKey) },
+                startSelectionMode = { activity.startActionMode(actModeCallback) },
+                toggleSelection = { select, pos -> toggleItemSelection(select, pos, true) },
+                setLastLongPressedKey = { lastLongPressedSelectionKey = it }
+            )
         }
         bindViewHolder(holder)
     }
@@ -1121,25 +1255,26 @@ class MediaAdapter(
         val newMediaHash = MediaUpdatePolicy.computeMediaContentHash(thumbnailItems)
         if (newMediaHash != currentMediaHash) {
             val samePaths = MediaUpdatePolicy.haveSameMediaPaths(media, thumbnailItems)
+            val changedVisualIndices = if (samePaths) {
+                MediaUpdatePolicy.findVisualChangedMediaIndices(media, thumbnailItems)
+            } else {
+                emptyList()
+            }
             currentMediaHash = newMediaHash
             media = thumbnailItems
+            lastLongPressedSelectionKey = SelectionSync.remapLastLongPressedItem(this, lastLongPressedSelectionKey)
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedKeys(selectedKeys, thumbnailItems)
-                if (!samePaths) {
-                    notifyDataSetChanged()
-                }
-                if (selectedKeys.isEmpty()) {
-                    finishActMode()
-                } else {
-                    val selectableCount = getSelectableItemCount()
-                    val selectedCount = minOf(selectedKeys.size, selectableCount)
-                    (actMode?.customView as? TextView)?.text = "$selectedCount / $selectableCount"
-                    actMode?.invalidate()
-                }
-            } else {
-                notifyDataSetChanged()
-                finishActMode()
             }
+            SelectionSync.applyListUpdate(
+                adapter = this,
+                samePaths = samePaths,
+                changedVisualIndices = changedVisualIndices,
+                positionOffset = positionOffset,
+                isSelectable = actModeCallback.isSelectable,
+                selectedKeysCount = selectedKeys.size,
+                actMode = actMode
+            )
         }
     }
 

@@ -157,6 +157,7 @@ class DirectoryAdapter(
     private var cropThumbnails = config.cropThumbnails
     private var groupDirectSubfolders = config.groupDirectSubfolders
     private var currentDirectoriesHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
+    private var lastLongPressedSelectionKey: Int? = null
     private var lockedFolderPaths = ArrayList<String>()
     private var isDragAndDropping = false
     private var startReorderDragListener: StartReorderDragListener? = null
@@ -187,9 +188,23 @@ class DirectoryAdapter(
 
     override fun onBindViewHolder(holder: MyRecyclerViewAdapter.ViewHolder, position: Int) {
         val dir = dirs.getOrNull(position) ?: return
-        holder.bindView(dir, true, !isPickIntent) { itemView, adapterPosition ->
+        holder.bindView(dir, false, false) { itemView, _ ->
             setupView(itemView, dir, holder)
         }
+        val itemKey = dir.path.hashCode()
+        MediaAdapter.SelectionSync.bindSafeClickAndLongClick(
+            adapter = this,
+            holder = holder,
+            item = dir,
+            itemKey = itemKey,
+            allowLongPress = !isPickIntent,
+            positionOffset = positionOffset,
+            isSelectable = { actModeCallback.isSelectable },
+            isSelected = { selectedKeys.contains(itemKey) },
+            startSelectionMode = { activity.startActionMode(actModeCallback) },
+            toggleSelection = { select, pos -> toggleItemSelection(select, pos, true) },
+            setLastLongPressedKey = { lastLongPressedSelectionKey = it }
+        )
         bindViewHolder(holder)
     }
 
@@ -1225,27 +1240,28 @@ class DirectoryAdapter(
         val newDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(directories)
         if (newDirsHash != currentDirectoriesHash) {
             val samePaths = MediaUpdatePolicy.haveSameDirectoryPaths(dirs, directories)
+            val changedVisualIndices = if (samePaths) {
+                MediaUpdatePolicy.findVisualChangedDirectoryIndices(dirs, directories)
+            } else {
+                emptyList()
+            }
             currentDirectoriesHash = newDirsHash
             dirs = directories
             pinnedFolders = config.pinnedFolders
             fillLockedFolders()
+            lastLongPressedSelectionKey = MediaAdapter.SelectionSync.remapLastLongPressedItem(this, lastLongPressedSelectionKey)
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedDirectoryKeys(selectedKeys, directories)
-                if (!samePaths) {
-                    notifyDataSetChanged()
-                }
-                if (selectedKeys.isEmpty()) {
-                    finishActMode()
-                } else {
-                    val selectableCount = getSelectableItemCount()
-                    val selectedCount = minOf(selectedKeys.size, selectableCount)
-                    (actMode?.customView as? TextView)?.text = "$selectedCount / $selectableCount"
-                    actMode?.invalidate()
-                }
-            } else {
-                notifyDataSetChanged()
-                finishActMode()
             }
+            MediaAdapter.SelectionSync.applyListUpdate(
+                adapter = this,
+                samePaths = samePaths,
+                changedVisualIndices = changedVisualIndices,
+                positionOffset = positionOffset,
+                isSelectable = actModeCallback.isSelectable,
+                selectedKeysCount = selectedKeys.size,
+                actMode = actMode
+            )
         }
     }
 
