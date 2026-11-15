@@ -444,4 +444,5 @@
     <string name="vault_sync_summary_message">Tresor-Synchronisierung abgeschlossen:\n• Kopiert: %1$d\n• Umbenannt (Namenskonflikt): %2$d\n• Übersprungen (identisch): %3$d\n• Fehlgeschlagen: %4$d</string>
     <string name="vault_sync_nothing_to_sync">Im ausgewählten Ordner wurden keine ausstehenden CLI-verschlüsselten Medien (.pending_sync) gefunden.</string>
     <string name="vault_sync_same_folder_error">Der ausgewählte Quellordner ist identisch mit deinem aktiven Tresor.</string>
+    <string name="use_for_this_album">Nur auf dieses Album anwenden</string>
 </resources>

@@ -459,4 +459,5 @@
     <string name="vault_sync_summary_message">Hvelvsynkronisering fullført:\n• Kopiert: %1$d\n• Gi nytt navn (navnekonflikt): %2$d\n• Hoppet over (identisk): %3$d\n• Mislyktes: %4$d</string>
     <string name="vault_sync_nothing_to_sync">Ingen ventende CLI-krypterte medier (.pending_sync) ble funnet i den valgte mappen.</string>
     <string name="vault_sync_same_folder_error">Den valgte kildemappen er den samme som det aktive hvelvet ditt.</string>
+    <string name="use_for_this_album">Bruk kun for dette albumet</string>
 </resources>

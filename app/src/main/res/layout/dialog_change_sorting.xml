@@ -115,7 +115,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="@dimen/min_radio_checkbox_height"
-            android:text="@string/use_for_this_folder" />
+            android:text="@string/use_for_this_album" />
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/sorting_dialog_bottom_note"

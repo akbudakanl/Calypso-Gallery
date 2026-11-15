@@ -649,3 +649,4 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 440 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Sincronización de bóveda completada:\n• Copiados: %1$d\n• Renombrados (conflicto de nombre): %2$d\n• Omitidos (idénticos): %3$d\n• Fallidos: %4$d |
 | 441 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada. |
 | 442 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | La carpeta de origen seleccionada es la misma que su bóveda activa. |
+| 443 | `use_for_this_album` | Use for this album only | Solo para este álbum |

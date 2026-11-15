@@ -156,7 +156,7 @@ class MediaAdapter(
     private var displayFilenames = config.displayFileNames
     private var showFileTypes = config.showThumbnailFileTypes
 
-    var sorting = config.getFolderSorting(if (config.showAll || path.isEmpty()) SHOW_ALL else path)
+    var sorting = config.getEffectiveMediaSorting(path, (config.showAll && path != RECYCLE_BIN) || path.isEmpty())
     var dateFormat = config.dateFormat
     var timeFormat = activity.getTimeFormat()
 

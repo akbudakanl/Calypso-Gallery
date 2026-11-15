@@ -446,4 +446,5 @@
     <string name="vault_sync_summary_message">Sincronización de bóveda completada:\n• Copiados: %1$d\n• Renombrados (conflicto de nombre): %2$d\n• Omitidos (idénticos): %3$d\n• Fallidos: %4$d</string>
     <string name="vault_sync_nothing_to_sync">No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada.</string>
     <string name="vault_sync_same_folder_error">La carpeta de origen seleccionada es la misma que su bóveda activa.</string>
+    <string name="use_for_this_album">Solo para este álbum</string>
 </resources>

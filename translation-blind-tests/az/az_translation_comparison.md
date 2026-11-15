@@ -645,3 +645,4 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 453 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Seyf sinxronizasiyası tamamlandı:\n• Kopyalandı: %1$d\n• Yenidən adlandırıldı (ad ziddiyyəti): %2$d\n• Ötürüldü (eyni): %3$d\n• Uğursuz: %4$d |
 | 454 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Seçilmiş qovluqda gözləyən CLI ilə şifrələnmiş media (.pending_sync) tapılmadı. |
 | 455 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Seçilmiş mənbə qovluğu aktiv seyfinizlə eynidir. |
+| 456 | `use_for_this_album` | Use for this album only | Yalnız bu albom üçün işlət |

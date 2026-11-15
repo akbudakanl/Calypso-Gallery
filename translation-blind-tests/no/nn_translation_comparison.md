@@ -661,3 +661,4 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 454 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Kvelvsynkronisering fullført:\n• Kopiert: %1$d\n• Gjeve nytt namn (namnekonflikt): %2$d\n• Hoppa over (identisk): %3$d\n• Mislykkast: %4$d |
 | 455 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Ingen ventande CLI-krypterte medium (.pending_sync) vart funne i den valde mappa. |
 | 456 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Den valde kjeldemappa er den same som det aktive kvelvet ditt. |
+| 457 | `use_for_this_album` | Use for this album only | Bruk berre for dette albumet |

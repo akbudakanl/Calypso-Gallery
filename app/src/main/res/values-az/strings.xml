@@ -512,4 +512,5 @@
     <string name="vault_sync_summary_message">Seyf sinxronizasiyası tamamlandı:\n• Kopyalandı: %1$d\n• Yenidən adlandırıldı (ad ziddiyyəti): %2$d\n• Ötürüldü (eyni): %3$d\n• Uğursuz: %4$d</string>
     <string name="vault_sync_nothing_to_sync">Seçilmiş qovluqda gözləyən CLI ilə şifrələnmiş media (.pending_sync) tapılmadı.</string>
     <string name="vault_sync_same_folder_error">Seçilmiş mənbə qovluğu aktiv seyfinizlə eynidir.</string>
+    <string name="use_for_this_album">Yalnız bu albom üçün işlət</string>
 </resources>

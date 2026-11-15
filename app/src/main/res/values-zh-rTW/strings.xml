@@ -442,4 +442,5 @@
     <string name="vault_sync_summary_message">保險箱同步完成：\n• 已複製：%1$d\n• 已重新命名（名稱衝突）：%2$d\n• 已略過（相同）：%3$d\n• 失敗：%4$d</string>
     <string name="vault_sync_nothing_to_sync">在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。</string>
     <string name="vault_sync_same_folder_error">所選的來源資料夾與您使用中的保險箱相同。</string>
+    <string name="use_for_this_album">僅套用於此相簿</string>
 </resources>

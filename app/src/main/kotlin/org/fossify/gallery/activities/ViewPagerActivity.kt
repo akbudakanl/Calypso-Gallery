@@ -526,7 +526,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 albumPath = mDirectory,
                 openedFilePath = currentPath,
                 openedFileName = CryptoManager.getDisplayName(currentPath),
-                sorting = config.getFolderSorting(mDirectory),
+                sorting = config.getEffectiveMediaSorting(mDirectory, mShowAll),
                 viewType = config.getFolderViewType(mDirectory),
                 grouping = config.getFolderGrouping(mDirectory),
                 scrollPosition = mPos.coerceAtLeast(0)
@@ -1902,7 +1902,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
-    private fun isRandomSortingEnabled() = config.getFolderSorting(mDirectory) and SORT_BY_RANDOM != 0
+    private fun isRandomSortingEnabled() = config.getEffectiveMediaSorting(mDirectory, mShowAll) and SORT_BY_RANDOM != 0
 
     /**
      * Re-randomizes the order of the album's items while keeping the currently displayed item on screen,
@@ -1933,7 +1933,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     private fun refreshViewPager(refetchPosition: Boolean = false) {
-        val isRandomSorting = config.getFolderSorting(mDirectory) and SORT_BY_RANDOM != 0
+        val isRandomSorting = config.getEffectiveMediaSorting(mDirectory, mShowAll) and SORT_BY_RANDOM != 0
         if (!isRandomSorting || isExternalIntent() || !mHasCachedAlbumMedia) {
             GetMediaAsynctask(
                 applicationContext, mDirectory, isPickImage = false, isPickVideo = false,
