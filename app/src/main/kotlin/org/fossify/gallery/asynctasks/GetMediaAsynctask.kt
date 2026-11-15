@@ -53,12 +53,13 @@ class GetMediaAsynctask(
             foldersToScan.forEach {
                 val newMedia = mediaFetcher.getFilesFrom(
                     it, isPickImage, isPickVideo, getProperDateTaken, getProperLastModified, getProperFileSize,
-                    favoritePaths, getVideoDurations, lastModifieds, dateTakens.clone() as HashMap<String, Long>, null
+                    favoritePaths, getVideoDurations, lastModifieds.clone() as HashMap<String, Long>, dateTakens.clone() as HashMap<String, Long>, null
                 )
                 media.addAll(newMedia)
             }
 
-            mediaFetcher.sortMedia(media, context.config.filesSorting, enableRandom = true)
+            val scopeKey = if (isSecretVaultView) "vault_show_all" else SHOW_ALL
+            mediaFetcher.sortMedia(media, context.config.filesSorting, enableRandom = true, scopeKey = scopeKey)
             media
         } else {
             mediaFetcher.getFilesFrom(

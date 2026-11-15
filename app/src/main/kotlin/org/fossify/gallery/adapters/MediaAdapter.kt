@@ -1120,11 +1120,14 @@ class MediaAdapter(
         val thumbnailItems = newMedia.clone() as ArrayList<ThumbnailItem>
         val newMediaHash = MediaUpdatePolicy.computeMediaContentHash(thumbnailItems)
         if (newMediaHash != currentMediaHash) {
+            val samePaths = MediaUpdatePolicy.haveSameMediaPaths(media, thumbnailItems)
             currentMediaHash = newMediaHash
             media = thumbnailItems
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedKeys(selectedKeys, thumbnailItems)
-                notifyDataSetChanged()
+                if (!samePaths) {
+                    notifyDataSetChanged()
+                }
                 if (selectedKeys.isEmpty()) {
                     finishActMode()
                 } else {

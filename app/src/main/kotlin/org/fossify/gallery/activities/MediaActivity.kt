@@ -112,9 +112,11 @@ import org.fossify.gallery.helpers.GridSpacingItemDecoration
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
 import org.fossify.gallery.helpers.ON_VAULT_EXIT_KEEP_SHOWING
@@ -164,6 +166,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mIsVaultOpening = false
     private var mIsVaultFilesView = false
     private var mIsSwitchingVaultView = false
+    private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted/live one.
@@ -187,6 +190,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             },
             onListRefresh = {
                 if (config.enablePullToRefresh) {
+                    RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
                     binding.mediaRefreshLayout.isRefreshing = true
                     getMedia()
                 }
@@ -223,7 +227,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             mIsVaultFilesView = getBooleanExtra(EXTRA_SECRET_VAULT_FILES, false)
         }
 
-        binding.mediaRefreshLayout.setOnRefreshListener { getMedia() }
+        binding.mediaRefreshLayout.setOnRefreshListener {
+            RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
+            getMedia()
+        }
         try {
             mPath = intent.getStringExtra(DIRECTORY) ?: ""
         } catch (e: Exception) {
@@ -327,7 +334,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         binding.mediaEmptyTextPlaceholder2.setTextColor(getProperPrimaryColor())
         binding.mediaEmptyTextPlaceholder2.bringToFront()
 
+        val wasFullscreenViewOpen = mWasFullscreenViewOpen
         mWasFullscreenViewOpen = false
+        val currentRandomGeneration = RandomOrderManager.getSessionGeneration()
+        val randomSessionExpired = mLastRandomSessionGeneration != currentRandomGeneration
+        if (randomSessionExpired) {
+            mLastRandomSessionGeneration = currentRandomGeneration
+            if (config.getEffectiveMediaSorting(mPath, mShowAll) and SORT_BY_RANDOM != 0) {
+                mLoadedInitialPhotos = false
+            }
+        }
+        if (wasFullscreenViewOpen && !randomSessionExpired && mLoadedInitialPhotos && mMedia.isNotEmpty()) {
+            setupAdapter()
+        }
+
         if (shouldSkipAuthentication()) {
             tryLoadGallery()
         } else {
@@ -615,6 +635,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         binding.mediaMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.refresh_menu -> {
+                    RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
                     getMedia()
                     true
                 }
@@ -832,9 +853,16 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }, LAST_MEDIA_CHECK_PERIOD)
     }
 
+    private fun getRandomOrderScopeKey(): String = when {
+        mIsVaultFilesView -> "vault_show_all"
+        mShowAll -> SHOW_ALL
+        else -> mPath
+    }
+
     private fun showSortingDialog() {
         val isAlbumView = !mShowAll && mPath.isNotEmpty()
         ChangeSortingDialog(this, false, isAlbumView, if (isAlbumView) mPath else SHOW_ALL) {
+            RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
             mLoadedInitialPhotos = false
             binding.mediaGrid.adapter = null
             getMedia()
@@ -1347,6 +1375,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         runOnUiThread {
             if (isDestroyed || isFinishing) {
                 return@runOnUiThread
+            }
+            if (!isFromCache && mMedia.isNotEmpty()) {
+                MediaUpdatePolicy.mergeCachedMediaMetadata(media, mMedia)
             }
             mMedia = media
             binding.loadingIndicator.hide()

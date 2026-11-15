@@ -17,6 +17,7 @@ import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.SplashActivity
 import org.fossify.gallery.activities.VaultLockActivity
+import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.VaultSessionManager
 import java.io.IOException
 import java.net.Proxy
@@ -68,6 +69,7 @@ class App : FossifyApp() {
                 if (startedActivities == 1) {
                     // Back in the foreground: wipe only if the 30 minute background deadline has passed.
                     VaultSessionManager.onAppForegrounded(this@App)
+                    RandomOrderManager.onAppForegrounded()
                 }
                 syncPrivacyCurtain(activity)
                 maybeLaunchVaultLockScreen(activity)
@@ -85,6 +87,7 @@ class App : FossifyApp() {
                         // No immediate wipe on onStop / screen off / UI hidden any more. Only remember the last
                         // active time; the vault is wiped after VAULT_AUTO_LOCK_TIMEOUT_MS in the background.
                         VaultSessionManager.onAppBackgrounded(this@App)
+                        RandomOrderManager.onAppBackgrounded()
                         syncPrivacyCurtainForTrackedActivities()
                     }
                 }
