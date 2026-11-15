@@ -8,6 +8,8 @@ import org.fossify.commons.helpers.SORT_BY_DATE_TAKEN
 import org.fossify.commons.helpers.SORT_BY_SIZE
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.getFavoritePaths
+import org.fossify.gallery.extensions.isVirtualAlbumPath
+import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.helpers.*
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
@@ -32,6 +34,9 @@ class GetMediaAsynctask(
             folderGrouping and GROUP_BY_LAST_MODIFIED_MONTHLY != 0
 
         val getProperFileSize = folderSorting and SORT_BY_SIZE != 0
+        if (!showAll && (mPath == FAVORITES || mPath.isVirtualAlbumPath())) {
+            context.repairReferencesAfterExternalChange()
+        }
         val favoritePaths = context.getFavoritePaths()
         val getVideoDurations = context.config.showThumbnailVideoDuration
         val lastModifieds = if (getProperLastModified) mediaFetcher.getLastModifieds() else HashMap()

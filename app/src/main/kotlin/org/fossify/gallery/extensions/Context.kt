@@ -1370,7 +1370,14 @@ fun Context.getCachedDirectories(
         val clone = ArrayList(filteredDirectories)
         val result = ArrayList(clone.distinctBy { it.path.getDistinctPath() })
         if (includeVirtualAlbums) {
-            result.addAll(getVirtualAlbumDirectories(isSecretVaultView = isSecretVaultView))
+            result.addAll(
+                getVirtualAlbumDirectories(
+                    isSecretVaultView = isSecretVaultView,
+                    getVideosOnly = getVideosOnly,
+                    getImagesOnly = getImagesOnly,
+                    syncFromDisk = false
+                )
+            )
         }
 
         callback(result)

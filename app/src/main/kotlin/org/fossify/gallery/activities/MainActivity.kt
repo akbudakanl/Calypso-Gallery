@@ -80,7 +80,6 @@ import org.fossify.commons.views.MyRecyclerView
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
 import org.fossify.gallery.adapters.DirectoryAdapter
-import org.fossify.gallery.databases.GalleryDatabase
 import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
@@ -167,6 +166,7 @@ import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.helpers.VaultPullGestureHandler
 import org.fossify.gallery.helpers.VaultViewPolicy
+import org.fossify.gallery.helpers.VirtualAlbumSyncManager
 import org.fossify.gallery.helpers.getDefaultFileFilter
 import org.fossify.gallery.helpers.getPermissionToRequest
 import org.fossify.gallery.helpers.getPermissionsToRequest
@@ -477,7 +477,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         if (!binding.mainMenu.isSearchOpen) {
             refreshMenuItems()
-            updateExcludedFoldersAvailability()
             tryLoadGallery()
         }
 
@@ -600,7 +599,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
             if (!config.showAll) {
                 mLastMediaFetcher?.shouldStop = true
-                GalleryDatabase.destroyInstance()
             }
         }
     }
@@ -921,7 +919,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun getDirectories(prioritizedPaths: Collection<String> = emptyList(), forceRepair: Boolean = false) {
-        updateExcludedFoldersAvailability()
         val prioritySet = LinkedHashSet<String>()
         mLastOpenedDirectoryPath?.let {
             prioritySet.add(it)
@@ -957,7 +954,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
                 repairReferencesAfterExternalChange(force = forceRepair)
                 val liveDirs = currentDirsSnapshot.filterNot { it.isVirtualAlbum() }.toMutableList() as ArrayList<Directory>
-                liveDirs.addAll(getVirtualAlbumDirectories(isSecretVaultView = mIsSecretVaultView))
+                liveDirs.addAll(
+                    getVirtualAlbumDirectories(
+                        isSecretVaultView = mIsSecretVaultView,
+                        getVideosOnly = getVideos && !getImages,
+                        getImagesOnly = getImages && !getVideos
+                    )
+                )
                 gotDirectories(addTempFolderIfNeeded(liveDirs), generation, prioritySet, isIncremental = true, forceRepair = false)
             }
         }
@@ -1664,6 +1667,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 setupAdapter(dirs.clone() as ArrayList<Directory>)
             }
         }
+        updateExcludedFoldersAvailability()
 
         // cached folders have been loaded, prioritize new/recent folders before scanning unchanged ones
         mLastMediaFetcher?.shouldStop = true
@@ -1676,15 +1680,23 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         // Repair stale references sequentially before scanning FAVORITES / virtual albums so both
         // reflect externally moved folders immediately without racing against the cache load.
         if (!isIncremental) {
+            val synced = VirtualAlbumSyncManager.syncVirtualAlbums(this)
             val repaired = repairReferencesAfterExternalChange(force = forceRepair)
-            if (repaired > 0 && generation == mFetchGeneration.get() && !isDestroyed && !isFinishing) {
+            if ((synced || repaired > 0) && generation == mFetchGeneration.get() && !isDestroyed && !isFinishing) {
                 dirs.removeAll { it.isVirtualAlbum() }
-                dirs.addAll(getVirtualAlbumDirectories(isSecretVaultView = mIsSecretVaultView))
+                dirs.addAll(
+                    getVirtualAlbumDirectories(
+                        isSecretVaultView = mIsSecretVaultView,
+                        getVideosOnly = getVideosOnly,
+                        getImagesOnly = getImagesOnly,
+                        syncFromDisk = false
+                    )
+                )
                 val resorted = getSortedDirectories(dirs)
                 dirs.clear()
                 dirs.addAll(resorted)
                 mDirs = dirs.clone() as ArrayList<Directory>
-                setupAdapter(dirs)
+                setupAdapter(dirs.clone() as ArrayList<Directory>)
             }
         }
 
@@ -1856,9 +1868,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         // Phase 2: recheck existing folders, prioritizing recently visited/modified folders first
         val existingDirsOrdered = dirs
-            .filter { it.path in existingPaths }
+            .filter { it.path in existingPaths && !it.isVirtualAlbum() }
             .sortedByDescending {
-                it.path in prioritySet || it.isVirtualAlbum() || it.areFavorites() || it.isRecycleBin()
+                it.path in prioritySet || it.areFavorites() || it.isRecycleBin()
             }
 
         try {
