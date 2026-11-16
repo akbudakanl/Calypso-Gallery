@@ -1,6 +1,6 @@
 # Fossify Gallery Cipher — Security Hardening and Secure Deletion Guide
 
-Scope: static code analysis (CryptoManager, VirtualAlbumSyncManager, EncryptedMediaDataSource, Glide/ExoPlayer paths, AndroidManifest.xml, DOCS.md). The application was not built or run. Platform-dependent items (SQLite build flags, MediaStore behavior, fstrim scheduling) must be verified on a target device.
+Scope: static code analysis (CryptoManager, VirtualAlbumSyncManager, EncryptedMediaDataSource, Glide/ExoPlayer paths, AndroidManifest.xml, DOCS.md). Platform-dependent items (SQLite build flags, MediaStore behavior, fstrim scheduling) must be verified on a target device.
 
 ## 1. Objectives and Honest Threat Model
 
