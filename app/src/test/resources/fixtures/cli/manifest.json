@@ -1,0 +1,78 @@
+{
+  "files": {
+    "block_exact.bin": {
+      "bin_len": 142,
+      "bin_sha256": "b5a15b69fb5d1b7570f87f9d9f5474fed5d49e25ed20f772a1b0f62ee1e0f62c",
+      "plaintext_len": 16,
+      "plaintext_sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+      "source_name": "block_exact.jpg"
+    },
+    "block_minus1.bin": {
+      "bin_len": 142,
+      "bin_sha256": "7c44b65a77fc26f1dbcc8117445515152bbf38dfea113b94b502826a94cbf63b",
+      "plaintext_len": 15,
+      "plaintext_sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+      "source_name": "block_minus1.jpg"
+    },
+    "block_plus1.bin": {
+      "bin_len": 143,
+      "bin_sha256": "5e067ee845ec3e2c72e77d7c492d9742f244eab4702e92dbcb128749d0375a4b",
+      "plaintext_len": 17,
+      "plaintext_sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+      "source_name": "block_plus1.jpg"
+    },
+    "chunk_exact.bin": {
+      "bin_len": 65662,
+      "bin_sha256": "5f20714466b87f36ee8aea6850ad7f1e50ae9a2173ce0f31470f1da6c765940f",
+      "plaintext_len": 65536,
+      "plaintext_sha256": "7daca2095d0438260fa849183dfc67faa459fdf4936e1bc91eec6b281b27e4c2",
+      "source_name": "chunk_exact.jpg"
+    },
+    "chunk_minus1.bin": {
+      "bin_len": 65662,
+      "bin_sha256": "8c69c404cf2593dc0f9d09400157159a2578f223eda8729a861547447672de5a",
+      "plaintext_len": 65535,
+      "plaintext_sha256": "5f1bf999bcba5e05d4c34a13710d2e4bff005877874dcce49ac87af61076231e",
+      "source_name": "chunk_minus1.jpg"
+    },
+    "chunk_plus1.bin": {
+      "bin_len": 65663,
+      "bin_sha256": "35256e86cfa63ea75cc858de4346af4504ec9376bb390dec9ac07d05aa4ec0ab",
+      "plaintext_len": 65537,
+      "plaintext_sha256": "2deb0bd2129a9d3aed91e3cff58b3993752be549642890a3e853ec1065f9b617",
+      "source_name": "chunk_plus1.jpg"
+    },
+    "empty.bin": {
+      "bin_len": 120,
+      "bin_sha256": "adc49182dea8bc69f71dcb5eb24dcf3292e7182ac267bdbdb3cb544832fa3603",
+      "plaintext_len": 0,
+      "plaintext_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_name": "empty.jpg"
+    },
+    "multi_mb.bin": {
+      "bin_len": 1100123,
+      "bin_sha256": "e2676edc5a50da98fc9c140214dafcfe70a8fd1aaf413a5df2758539f28e183e",
+      "plaintext_len": 1100000,
+      "plaintext_sha256": "0307dfdaf3ba23ec188749214591c8904b45783806fa1b84f3a8694922562ddb",
+      "source_name": "multi_mb.jpg"
+    },
+    "one_byte.bin": {
+      "bin_len": 124,
+      "bin_sha256": "fbf8c5037e979245e151d140b89c556792f8ab5b617dcdcbea3c6ecdf6ad1ef7",
+      "plaintext_len": 1,
+      "plaintext_sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "source_name": "one_byte.jpg"
+    },
+    "real_image_with_thumbnail.bin": {
+      "bin_len": 976,
+      "bin_sha256": "6457b9048729cdaab7697927433eb3bb89321f373823762a8c4fd632bd12904f",
+      "plaintext_len": 160,
+      "plaintext_sha256": "4dbb800cec670a752b44fcfa034423662df78a10b6fc55edbb5b43224a2ad0c2",
+      "source_name": "real_image_with_thumbnail.jpg"
+    }
+  },
+  "format": "FGVLTENC",
+  "mac": "Poly1305-AES128 (restic / BouncyCastle Poly1305(AESEngine) uyumlu)",
+  "master_key_hex": "00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f",
+  "version": 3
+}
