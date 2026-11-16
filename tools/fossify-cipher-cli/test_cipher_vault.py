@@ -15,6 +15,7 @@ from pathlib import Path
 from unittest import mock
 
 import cipher_vault as cv
+from test_poly1305_aes import poly1305_aes_tag
 
 
 def decrypt_bin_for_test(bin_path: Path, master_key: bytes) -> dict:
@@ -68,9 +69,9 @@ def decrypt_bin_for_test(bin_path: Path, master_key: bytes) -> dict:
     expected_mac = data[-16:]
 
     content_mac_key = cv.derive_subkey(master_key, cv.DOMAIN_CONTENT_MAC_KEY)
-    poly_mac = cv.Poly1305AES(content_mac_key, content_iv)
-    poly_mac.update(enc_payload)
-    if poly_mac.finalize() != expected_mac:
+    # MAC dogrulamasi BAGIMSIZ bir uygulamadan yapilir (pycryptodome).
+    # Aksi halde test, ayni hatali MAC kodunu iki kez kullanir ve hata gorunmez.
+    if poly1305_aes_tag(content_mac_key, content_iv, enc_payload) != expected_mac:
         raise ValueError("Poly1305 MAC mismatch")
 
     content_enc_key = cv.derive_subkey(master_key, cv.DOMAIN_CONTENT_ENC_KEY)

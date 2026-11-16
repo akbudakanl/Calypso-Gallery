@@ -1,3 +1,6 @@
 cryptography>=41.0.0
 argon2-cffi>=23.1.0
 pillow>=10.0.0
+# Poly1305-AES MAC cekirdegi icin. Elle yazilmis MAC implementasyonu
+# kullanmamak adina zorunludur (BouncyCastle ile birebir uyumlu).
+pycryptodome>=3.20.0
