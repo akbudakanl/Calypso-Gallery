@@ -1,0 +1,642 @@
+package org.fossify.gallery.helpers
+
+import android.content.ContentValues
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.net.Uri
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
+import android.system.Os
+import java.util.Base64
+import androidx.annotation.VisibleForTesting
+import androidx.exifinterface.media.ExifInterface
+import com.bumptech.glide.Glide
+import org.bouncycastle.crypto.engines.AESEngine
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator
+import org.bouncycastle.crypto.macs.Poly1305
+import org.bouncycastle.crypto.params.Argon2Parameters
+import org.bouncycastle.crypto.params.KeyParameter
+import org.bouncycastle.crypto.params.ParametersWithIV
+import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.*
+import org.fossify.commons.helpers.*
+import org.fossify.gallery.R
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.dateTakensDB
+import org.fossify.gallery.extensions.deleteDBPaths
+import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
+import org.fossify.gallery.extensions.directoryDB
+import org.fossify.gallery.extensions.isThisOrParentIncluded
+import org.fossify.gallery.extensions.markReferencesOnDecrypt
+import org.fossify.gallery.extensions.markReferencesOnEncrypt
+import org.fossify.gallery.extensions.mediaDB
+import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
+import org.fossify.gallery.extensions.virtualAlbumsDB
+import org.fossify.gallery.helpers.vault.VaultContainer
+import org.fossify.gallery.helpers.vault.VaultContainerWriter
+import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
+import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
+import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
+import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.*
+import java.math.BigInteger
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import javax.crypto.Cipher
+import javax.crypto.CipherInputStream
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import android.media.MediaScannerConnection
+import android.os.Build
+import androidx.biometric.BiometricManager
+import android.security.keystore.KeyInfo
+import android.security.keystore.KeyPermanentlyInvalidatedException
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import org.fossify.gallery.databases.GalleryDatabase
+import org.fossify.gallery.extensions.favoritesDB
+import org.fossify.gallery.fragments.VideoFragment
+import org.fossify.gallery.models.DateTaken
+import java.security.KeyStore
+import java.text.SimpleDateFormat
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
+import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
+import org.fossify.gallery.helpers.CryptoManager.TransferConflictStatus
+import org.fossify.gallery.helpers.CryptoManager.TransferConflictCheck
+import org.fossify.gallery.helpers.CryptoManager.SmartConflictDifference
+import org.fossify.gallery.helpers.CryptoManager.SmartConflictComparison
+import org.fossify.gallery.helpers.CryptoManager.VaultExportResult
+import org.fossify.gallery.helpers.CryptoManager.AlbumConflictResolution
+import org.fossify.gallery.helpers.CryptoManager.AlbumCryptoOptions
+import org.fossify.gallery.helpers.CryptoManager.AlbumConflictPreview
+import org.fossify.gallery.helpers.CryptoManager.StreamCompareMacResult
+import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
+
+/**
+ * Extracted from [CryptoManager]. Feature group: CryptoManagerConflict.
+ */
+
+/**
+ * Classifies why two conflicting files differ for SmartFileConflictDialog:
+ * byte/size mismatch takes precedence over timestamp differences.
+ */
+fun CryptoManager.compareFilesForSmartConflict(
+    sourceFile: File,
+    existingFile: File,
+    fastSampling: Boolean = false,
+    context: Context? = null
+): SmartConflictComparison {
+    val isSrcEnc = isEncryptedFile(sourceFile.name)
+    val isExistEnc = isEncryptedFile(existingFile.name)
+    val srcMeta = if (isSrcEnc && sourceFile.isFile) {
+        readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+    } else {
+        null
+    }
+    val existMeta = if (isExistEnc && existingFile.isFile) {
+        readMetadata(existingFile, includeThumbnail = false, cacheResult = false)
+    } else {
+        null
+    }
+
+    val srcSize = srcMeta?.originalSize ?: if (sourceFile.isFile) sourceFile.length() else -1L
+    val existSize = existMeta?.originalSize ?: if (existingFile.isFile) existingFile.length() else -1L
+    val srcLastMod = srcMeta?.lastModified ?: if (sourceFile.exists()) sourceFile.lastModified() else 0L
+    val existLastMod = existMeta?.lastModified ?: if (existingFile.exists()) existingFile.lastModified() else 0L
+    val srcDateTaken = srcMeta?.dateTaken ?: if (sourceFile.isFile) {
+        resolvePlaintextDateTaken(context, sourceFile, srcLastMod)
+    } else {
+        0L
+    }
+    val existDateTaken = existMeta?.dateTaken ?: if (existingFile.isFile) {
+        resolvePlaintextDateTaken(context, existingFile, existLastMod)
+    } else {
+        0L
+    }
+
+    val eitherHasSeparateTaken =
+        (srcDateTaken > 0L && !areTimestampsEquivalent(srcDateTaken, srcLastMod)) ||
+            (existDateTaken > 0L && !areTimestampsEquivalent(existDateTaken, existLastMod))
+
+    val bytesMatch = when {
+        !sourceFile.isFile || !existingFile.isFile -> false
+        isSrcEnc && srcMeta == null -> false
+        isExistEnc && existMeta == null -> false
+        srcSize < 0L || existSize < 0L || srcSize != existSize -> false
+        isSrcEnc && isExistEnc -> areEncryptedFilesIdenticalContent(
+            fileA = sourceFile,
+            metaA = srcMeta!!,
+            fileB = existingFile,
+            metaB = existMeta!!,
+            fastSampling = fastSampling
+        )
+        !isSrcEnc && !isExistEnc -> arePlainFilesIdentical(
+            fileA = sourceFile,
+            fileB = existingFile,
+            fastSampling = fastSampling
+        )
+        isSrcEnc && !isExistEnc -> arePlainAndEncryptedIdentical(
+            plainFile = existingFile,
+            encryptedFile = sourceFile,
+            meta = srcMeta!!,
+            verifyIntegrity = false,
+            fastSampling = fastSampling
+        )
+        else -> arePlainAndEncryptedIdentical(
+            plainFile = sourceFile,
+            encryptedFile = existingFile,
+            meta = existMeta!!,
+            verifyIntegrity = false,
+            fastSampling = fastSampling
+        )
+    }
+
+    val difference = if (!bytesMatch) {
+        SmartConflictDifference.CONTENT_DIFFERS
+    } else {
+        val modifiedDiffers = !areTimestampsEquivalent(srcLastMod, existLastMod)
+        val rawTakenDiffers = srcDateTaken > 0L &&
+            existDateTaken > 0L &&
+            !areTimestampsEquivalent(srcDateTaken, existDateTaken)
+        val takenDiffers = rawTakenDiffers && eitherHasSeparateTaken
+        when {
+            takenDiffers && modifiedDiffers -> SmartConflictDifference.BOTH_DATES_DIFFER
+            takenDiffers -> SmartConflictDifference.DATE_TAKEN_DIFFERS
+            modifiedDiffers -> SmartConflictDifference.MODIFIED_DATE_DIFFERS
+            else -> SmartConflictDifference.IDENTICAL_MATCH
+        }
+    }
+
+    return SmartConflictComparison(
+        difference = difference,
+        sourceSize = srcSize,
+        existingSize = existSize,
+        sourceLastModified = srcLastMod,
+        existingLastModified = existLastMod,
+        sourceDateTaken = srcDateTaken,
+        existingDateTaken = existDateTaken,
+        hasDistinctDateTaken = eitherHasSeparateTaken
+    )
+}
+
+
+internal fun CryptoManager.resolveTransferDesiredName(
+    sourceFile: File,
+    targetDir: File,
+    desiredPlainName: String? = null
+): Triple<Boolean, EncryptedFileMetadata?, String>? {
+    if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) {
+        return null
+    }
+    val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
+    val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+    if (srcParentCanon != null && srcParentCanon == targetCanon) {
+        return null
+    }
+
+    val isSourceEncrypted = isEncryptedFile(sourceFile.name)
+    val sourceMeta = if (isSourceEncrypted) {
+        readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+    } else {
+        null
+    }
+    if (isSourceEncrypted && sourceMeta == null) {
+        return null
+    }
+
+    val desiredName = desiredPlainName ?: sourceMeta?.originalName ?: sourceFile.name
+    return Triple(isSourceEncrypted, sourceMeta, desiredName)
+}
+
+
+/**
+ * Checks only whether a file with the same target filename already exists at [targetDir],
+ * without comparing sizes, timestamps, or contents (Fossify standard conflict mode).
+ */
+fun CryptoManager.inspectStandardFilenameConflict(
+    sourceFile: File,
+    targetDir: File,
+    isTargetEncrypted: Boolean,
+    plainIndex: TargetPlainIndex? = null,
+    encryptedIndex: TargetEncryptedIndex? = null,
+    desiredPlainName: String? = null
+): String? {
+    val (_, _, desiredName) = resolveTransferDesiredName(sourceFile, targetDir, desiredPlainName)
+        ?: return null
+    return if (isTargetEncrypted) {
+        if (unlockedMasterKey == null) return null
+        val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+        if (index.findExactEntries(desiredName).isNotEmpty()) desiredName else null
+    } else {
+        val index = plainIndex ?: TargetPlainIndex(targetDir)
+        if (index.findExact(desiredName) != null) desiredName else null
+    }
+}
+
+
+fun CryptoManager.inspectTransferConflict(
+    sourceFile: File,
+    targetDir: File,
+    isTargetEncrypted: Boolean,
+    plainIndex: TargetPlainIndex? = null,
+    encryptedIndex: TargetEncryptedIndex? = null,
+    desiredPlainName: String? = null,
+    fastSampling: Boolean = false,
+    context: Context? = null
+): TransferConflictCheck {
+    val (isSourceEncrypted, sourceMeta, desiredName) = resolveTransferDesiredName(
+        sourceFile,
+        targetDir,
+        desiredPlainName
+    ) ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+    val sourceLastMod = sourceMeta?.lastModified ?: sourceFile.lastModified()
+    val sourceOrigSize = sourceMeta?.originalSize ?: sourceFile.length()
+    val sourceMediaType = sourceMeta?.mediaType ?: getMediaTypeForName(desiredName)
+    var resolvedSourceDateTaken: Long? = sourceMeta?.dateTaken
+    fun getSourceDateTaken(): Long {
+        return resolvedSourceDateTaken ?: resolvePlaintextDateTaken(
+            context = context,
+            sourceFile = sourceFile,
+            fallbackLastModified = sourceLastMod
+        ).also { resolvedSourceDateTaken = it }
+    }
+
+    if (isTargetEncrypted) {
+        if (unlockedMasterKey == null) {
+            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+        }
+        val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+        val exactEntries = index.findExactEntries(desiredName)
+        if (exactEntries.isEmpty()) {
+            return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+        }
+
+        val candidates = index.findCandidates(desiredName, includeCollisionVariants = true)
+        for ((existingBin, existingMeta) in candidates) {
+            if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
+                continue
+            }
+            if (!areMediaTimestampsEquivalent(
+                    sourceLastMod,
+                    getSourceDateTaken(),
+                    existingMeta.lastModified,
+                    existingMeta.dateTaken
+                )
+            ) {
+                continue
+            }
+            val identical = if (isSourceEncrypted && sourceMeta != null) {
+                areEncryptedFilesIdenticalContent(
+                    sourceFile,
+                    sourceMeta,
+                    existingBin,
+                    existingMeta,
+                    fastSampling = fastSampling
+                )
+            } else {
+                // Duplicate skip never deletes or trusts external data, so skip the redundant second MAC pass
+                arePlainAndEncryptedIdentical(
+                    sourceFile,
+                    existingBin,
+                    existingMeta,
+                    verifyIntegrity = false,
+                    fastSampling = fastSampling
+                )
+            }
+            if (identical) {
+                return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingBin)
+            }
+        }
+        return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName, exactEntries.firstOrNull()?.first)
+    } else {
+        val index = plainIndex ?: TargetPlainIndex(targetDir)
+        val exactTarget = index.findExact(desiredName)
+            ?: return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
+
+        val candidates = index.findCandidates(desiredName, includeCollisionVariants = true)
+        for (existingPlain in candidates) {
+            if (existingPlain.length() != sourceOrigSize) continue
+            val existingLastMod = existingPlain.lastModified()
+            if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+            val srcTaken = getSourceDateTaken()
+            val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
+            if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+                continue
+            }
+            val identical = if (isSourceEncrypted && sourceMeta != null) {
+                arePlainAndEncryptedIdentical(
+                    existingPlain,
+                    sourceFile,
+                    sourceMeta,
+                    verifyIntegrity = false,
+                    fastSampling = fastSampling
+                )
+            } else {
+                arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
+            }
+            if (identical) {
+                return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingPlain)
+            }
+        }
+        return TransferConflictCheck(TransferConflictStatus.NAME_CONFLICT, desiredName, exactTarget)
+    }
+}
+
+
+/**
+ * Returns true if at least one (source, targetDir) pair already has a bit-identical
+ * counterpart in its target directory.
+ */
+fun CryptoManager.hasAnyIdenticalTransferMatch(
+    sourceTargetPairs: List<Pair<File, File>>,
+    isTargetEncrypted: Boolean,
+    fastSampling: Boolean = false,
+    context: Context? = null
+): Boolean {
+    if (sourceTargetPairs.isEmpty()) return false
+    val plainIndexes = HashMap<String, TargetPlainIndex>()
+    val encIndexes = HashMap<String, TargetEncryptedIndex>()
+    for ((srcFile, targetDir) in sourceTargetPairs) {
+        if (!srcFile.isFile || !targetDir.exists() || !targetDir.isDirectory) continue
+        val plainIndex = if (!isTargetEncrypted) {
+            plainIndexes.getOrPut(targetDir.absolutePath) { TargetPlainIndex(targetDir) }
+        } else {
+            null
+        }
+        val encIndex = if (isTargetEncrypted) {
+            encIndexes.getOrPut(targetDir.absolutePath) { TargetEncryptedIndex(targetDir) }
+        } else {
+            null
+        }
+        val check = inspectTransferConflict(
+            sourceFile = srcFile,
+            targetDir = targetDir,
+            isTargetEncrypted = isTargetEncrypted,
+            plainIndex = plainIndex,
+            encryptedIndex = encIndex,
+            fastSampling = fastSampling,
+            context = context
+        )
+        if (check.status == TransferConflictStatus.IDENTICAL_SKIP) {
+            return true
+        }
+    }
+    return false
+}
+
+
+fun CryptoManager.findContentConflictInTarget(
+    sourceFile: File,
+    targetDir: File,
+    isTargetEncrypted: Boolean,
+    plainIndex: TargetPlainIndex? = null,
+    encryptedIndex: TargetEncryptedIndex? = null,
+    includeCollisionVariants: Boolean = true,
+    context: Context? = null
+): String? {
+    if (!sourceFile.isFile || !targetDir.exists() || !targetDir.isDirectory) return null
+    val srcParentCanon = runCatching { sourceFile.parentFile?.canonicalPath }.getOrNull()
+    val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+    if (srcParentCanon != null && srcParentCanon == targetCanon) return null
+
+    val isSourceEncrypted = isEncryptedFile(sourceFile.name)
+    val sourceMeta = if (isSourceEncrypted) {
+        readMetadata(sourceFile, includeThumbnail = false, cacheResult = false)
+    } else {
+        null
+    }
+    if (isSourceEncrypted && sourceMeta == null) return null
+
+    val desiredName = sourceMeta?.originalName ?: sourceFile.name
+    val sourceLastMod = sourceMeta?.lastModified ?: sourceFile.lastModified()
+    val sourceOrigSize = sourceMeta?.originalSize ?: sourceFile.length()
+    val sourceMediaType = sourceMeta?.mediaType ?: getMediaTypeForName(desiredName)
+    var resolvedSourceDateTaken: Long? = sourceMeta?.dateTaken
+    fun getSourceDateTaken(): Long {
+        return resolvedSourceDateTaken ?: resolvePlaintextDateTaken(
+            context = context,
+            sourceFile = sourceFile,
+            fallbackLastModified = sourceLastMod
+        ).also { resolvedSourceDateTaken = it }
+    }
+
+    if (isTargetEncrypted) {
+        if (unlockedMasterKey == null) return null
+        val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
+        val candidates = index.findCandidates(desiredName, includeCollisionVariants)
+
+        for ((existingBin, existingMeta) in candidates) {
+            if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
+                continue
+            }
+            if (!areMediaTimestampsEquivalent(
+                    sourceLastMod,
+                    getSourceDateTaken(),
+                    existingMeta.lastModified,
+                    existingMeta.dateTaken
+                )
+            ) {
+                continue
+            }
+            val identical = if (isSourceEncrypted && sourceMeta != null) {
+                areEncryptedFilesIdenticalContent(sourceFile, sourceMeta, existingBin, existingMeta)
+            } else {
+                arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)
+            }
+            if (identical) return null
+        }
+
+        return if (index.findExactEntries(desiredName).isNotEmpty()) desiredName else null
+    } else {
+        val index = plainIndex ?: TargetPlainIndex(targetDir)
+        val candidates = index.findCandidates(desiredName, includeCollisionVariants)
+
+        for (existingPlain in candidates) {
+            if (existingPlain.length() != sourceOrigSize) continue
+            val existingLastMod = existingPlain.lastModified()
+            if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+            val srcTaken = getSourceDateTaken()
+            val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
+            if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+                continue
+            }
+            val identical = if (isSourceEncrypted && sourceMeta != null) {
+                arePlainAndEncryptedIdentical(existingPlain, sourceFile, sourceMeta)
+            } else {
+                arePlainFilesIdentical(sourceFile, existingPlain)
+            }
+            if (identical) return null
+        }
+
+        return if (index.findExact(desiredName) != null) desiredName else null
+    }
+}
+
+
+fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
+    context: Context,
+    sourceBin: File,
+    targetDir: File,
+    isMove: Boolean,
+    conflictResolution: Int = CONFLICT_KEEP_BOTH,
+    targetIndex: TargetEncryptedIndex? = null,
+    skipDuplicateCheck: Boolean = false,
+    deleteSourceOnIdentical: Boolean = true,
+    matchCollisionVariants: Boolean = true,
+    fastSampling: Boolean = false
+): File? {
+    if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
+    val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false) ?: return null
+    if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin, sourceMeta)) return null
+    if (!targetDir.exists() && !targetDir.mkdirs()) return null
+
+    val srcParentCanon = runCatching { sourceBin.parentFile?.canonicalPath }.getOrNull()
+    val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
+    if (srcParentCanon != null && srcParentCanon == targetCanon) return sourceBin
+
+    val index = targetIndex ?: TargetEncryptedIndex(targetDir)
+
+    if (!skipDuplicateCheck) {
+        val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
+        for ((existingBin, existingMeta) in candidates) {
+            if (areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
+                areEncryptedFilesIdenticalContent(
+                    sourceBin,
+                    sourceMeta,
+                    existingBin,
+                    existingMeta,
+                    fastSampling = fastSampling
+                )
+            ) {
+                if (isMove && deleteSourceOnIdentical) {
+                    runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
+                    runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
+                    metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+                    sourceBin.delete()
+                }
+                return if (!deleteSourceOnIdentical) null else existingBin
+            }
+        }
+    }
+
+    var desiredName = sourceMeta.originalName
+    val exactMatches = index.findExactEntries(desiredName)
+    if (exactMatches.isNotEmpty()) {
+        when (conflictResolution) {
+            CONFLICT_SKIP -> return null
+            CONFLICT_OVERWRITE -> {
+                val removed = index.removeExactEntries(desiredName)
+                removed.forEach { existingBin ->
+                    metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+                    runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
+                    existingBin.delete()
+                }
+            }
+            else -> {
+                desiredName = index.getAlternativeOriginalName(desiredName)
+            }
+        }
+    }
+
+    var destBin = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+    while (destBin.exists()) {
+        destBin = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+    }
+
+    val needsRename = desiredName != sourceMeta.originalName
+    val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
+        true
+    } else {
+        try {
+            FileInputStream(sourceBin).use { fis ->
+                BufferedInputStream(fis, 256 * 1024).use { bis ->
+                    FileOutputStream(destBin).use { fos ->
+                        BufferedOutputStream(fos, 256 * 1024).use { bos ->
+                            bis.copyTo(bos, 256 * 1024)
+                            bos.flush()
+                            fos.fd.sync()
+                        }
+                    }
+                }
+            }
+            destBin.setLastModified(sourceBin.lastModified())
+            if (needsRename && !renameEncryptedFile(destBin, desiredName, skipIntegrityCheck = true, syncParentDir = false)) {
+                destBin.delete()
+                return null
+            }
+            if (isMove) {
+                sourceBin.delete()
+            }
+            true
+        } catch (_: Exception) {
+            destBin.delete()
+            false
+        }
+    }
+    if (!transferred) return null
+
+    if (isMove) {
+        metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+        runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, destBin.absolutePath) }
+        runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
+    }
+    val destMeta = readMetadata(destBin, includeThumbnail = false, cacheResult = false) ?: sourceMeta.copy(originalName = desiredName)
+    index.addEntry(destBin, destMeta)
+    return destBin
+}
+
+
+fun CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(context: Context, albumDir: File): Boolean {
+    if (!albumDir.exists() || !albumDir.isDirectory || !isEncryptedFolder(albumDir)) return false
+    val vaultRoot = findVaultRoot(context)
+    if (vaultRoot != null) {
+        val rootCanon = runCatching { vaultRoot.canonicalPath }.getOrDefault(vaultRoot.absolutePath)
+        val dirCanon = runCatching { albumDir.canonicalPath }.getOrDefault(albumDir.absolutePath)
+        if (rootCanon == dirCanon) return false
+    }
+    if (isVaultRecycleBin(albumDir) || isDefaultHiddenAlbum(albumDir)) {
+        return false
+    }
+    val metaNames = setOf(VAULT_SUBFOLDER_META_FILE, ENCRYPTED_FOLDER_META_FILE, NOMEDIA, VAULT_RESTORE_INFO_FILE)
+    val remaining = albumDir.listFiles() ?: emptyArray()
+    if (remaining.any { it.name !in metaNames }) {
+        return false
+    }
+    val deleted = runCatching { albumDir.deleteRecursively() }.getOrDefault(false)
+    if (deleted || !albumDir.exists()) {
+        folderNameCache.remove(albumDir.absolutePath)
+        encryptedFolderCache[albumDir.absolutePath] = false
+        runCatching { context.config.removeEncryptedFolder(albumDir.absolutePath) }
+        runCatching { context.directoryDB.deleteDirPath(albumDir.absolutePath) }
+        return true
+    }
+    return false
+}
+

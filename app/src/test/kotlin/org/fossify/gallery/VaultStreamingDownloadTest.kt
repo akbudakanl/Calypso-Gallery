@@ -6,6 +6,9 @@ import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.SecureRandom
+import org.fossify.gallery.helpers.encryptStreamToDirectory
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.verifyFileIntegrity
 
 class VaultStreamingDownloadTest {
 

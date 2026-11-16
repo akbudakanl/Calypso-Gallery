@@ -15,6 +15,13 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.fossify.gallery.helpers.encryptStreamToDirectory
+import org.fossify.gallery.helpers.getDecryptedFolderName
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.isDefaultHiddenAlbum
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.renameEncryptedFile
+import org.fossify.gallery.helpers.verifyFileIntegrity
 
 class EncryptedRenameAndDefaultAlbumTest {
 

@@ -134,6 +134,18 @@ import org.fossify.gallery.models.Favorite
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
 import org.fossify.gallery.models.ThumbnailSection
+import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
+import org.fossify.gallery.helpers.clearAppImageCaches
+import org.fossify.gallery.helpers.decryptFileToDirectory
+import org.fossify.gallery.helpers.encryptFileToDirectory
+import org.fossify.gallery.helpers.getDecryptedFolderName
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.getVaultProtectionType
+import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultMediaPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
 
 class MediaAdapter(
     activity: BaseSimpleActivity,

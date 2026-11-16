@@ -13,6 +13,9 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.renameEncryptedFile
+import org.fossify.gallery.helpers.verifyFileIntegrity
 
 /**
  * `CryptoManager.renameEncryptedFile` - sifreli dosyanin gorunen adini degistirme.

@@ -12,6 +12,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.security.MessageDigest
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.verifyFileIntegrity
 
 /**
  * CLI (tools/fossify-cipher-cli) ile uretilen .bin dosyalarinin Android tarafi

@@ -29,6 +29,7 @@ import java.net.URLConnection
 import java.net.URLStreamHandler
 import java.util.Collections
 import java.util.WeakHashMap
+import org.fossify.gallery.helpers.processPendingWipeJournal
 
 class App : FossifyApp() {
 

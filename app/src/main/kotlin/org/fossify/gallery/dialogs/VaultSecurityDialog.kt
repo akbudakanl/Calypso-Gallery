@@ -23,6 +23,10 @@ import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
 import java.io.File
+import org.fossify.gallery.helpers.canUnlockWithBiometrics
+import org.fossify.gallery.helpers.getVaultProtectionType
+import org.fossify.gallery.helpers.hasExistingVault
+import org.fossify.gallery.helpers.setupOrUpdateCredentials
 
 class VaultSecurityDialog(
     private val activity: BaseSimpleActivity,

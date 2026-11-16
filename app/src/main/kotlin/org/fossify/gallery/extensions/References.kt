@@ -16,6 +16,9 @@ import org.fossify.gallery.models.ITEM_STATE_ENCRYPTED
 import org.fossify.gallery.models.ITEM_STATE_OK
 import org.fossify.gallery.models.ITEM_STATE_UNRESOLVED
 import java.io.File
+import org.fossify.gallery.helpers.isConfiguredVaultTemporarilyUnavailable
+import org.fossify.gallery.helpers.isVaultMediaPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
 
 private const val MIN_REPAIR_INTERVAL_MS = 5_000L
 private const val MIN_FALLBACK_SCAN_INTERVAL_MS = 30_000L

@@ -151,6 +151,20 @@ import org.fossify.gallery.models.Directory
 import java.io.File
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
+import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
+import org.fossify.gallery.helpers.emptyVaultRecycleBin
+import org.fossify.gallery.helpers.encryptFolder
+import org.fossify.gallery.helpers.findMergeTargetForEncryptFolder
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.getVaultProtectionType
+import org.fossify.gallery.helpers.isDefaultHiddenAlbum
+import org.fossify.gallery.helpers.isDefaultHiddenAlbumPath
+import org.fossify.gallery.helpers.isEncryptableMediaFile
+import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultRecycleBin
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
+import org.fossify.gallery.helpers.previewEncryptAlbumConflict
 
 class DirectoryAdapter(
     activity: BaseSimpleActivity,

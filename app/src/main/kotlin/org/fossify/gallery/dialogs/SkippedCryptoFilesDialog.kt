@@ -30,6 +30,11 @@ import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_KEEP
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.MediaIdentity
 import java.io.File
+import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
+import org.fossify.gallery.helpers.clearAppImageCaches
+import org.fossify.gallery.helpers.deleteEncryptedFile
+import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 fun resolveSkippedCryptoMessageRes(
     isEncrypt: Boolean,

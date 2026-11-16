@@ -8,6 +8,7 @@ import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.getVaultProtectionType
 
 /**
  * Asks for the vault password again after the vault was wiped from RAM (30 minutes in the background, process

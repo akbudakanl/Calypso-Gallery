@@ -43,6 +43,11 @@ import org.fossify.gallery.helpers.TYPE_IMAGES
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.models.Directory
 import java.io.File
+import org.fossify.gallery.helpers.getHiddenPhysicalAlbums
+import org.fossify.gallery.helpers.getVaultDestinationAlbums
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultRecycleBin
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
 
 class PickDirectoryDialog(
     val activity: BaseSimpleActivity,
