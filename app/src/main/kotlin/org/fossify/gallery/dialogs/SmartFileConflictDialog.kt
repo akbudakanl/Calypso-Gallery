@@ -45,6 +45,8 @@ import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.svg.SvgSoftwareLayerSetter
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+import org.fossify.gallery.helpers.compareFilesForSmartConflict
+import org.fossify.gallery.helpers.verifyFileIntegrity
 
 data class SmartConflictItem(
     val resolutionKey: String,

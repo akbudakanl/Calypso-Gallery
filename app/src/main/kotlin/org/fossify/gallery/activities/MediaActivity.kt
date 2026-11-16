@@ -139,6 +139,16 @@ import org.fossify.gallery.models.ThumbnailItem
 import org.fossify.gallery.models.ThumbnailSection
 import java.io.File
 import java.io.IOException
+import org.fossify.gallery.helpers.clearAppImageCaches
+import org.fossify.gallery.helpers.emptyVaultRecycleBin
+import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
+import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
+import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
+import org.fossify.gallery.helpers.purgeTracesForFile
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 class MediaActivity : SimpleActivity(), MediaOperationsListener {
     override var isSearchBarEnabled = true

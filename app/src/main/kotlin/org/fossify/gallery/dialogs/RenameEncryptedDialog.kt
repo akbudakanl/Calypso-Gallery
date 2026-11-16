@@ -22,6 +22,10 @@ import org.fossify.gallery.databinding.DialogRenameEncryptedItemBinding
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import java.io.File
+import org.fossify.gallery.helpers.getDecryptedFolderName
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.renameEncryptedFile
+import org.fossify.gallery.helpers.renameEncryptedFolder
 
 class RenameEncryptedItemDialog(
     val activity: BaseSimpleActivity,

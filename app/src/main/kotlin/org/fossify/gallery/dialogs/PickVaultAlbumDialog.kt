@@ -11,6 +11,8 @@ import org.fossify.gallery.R
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.VaultPhysicalAlbum
 import java.io.File
+import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
+import org.fossify.gallery.helpers.getVaultDestinationAlbums
 
 class PickVaultAlbumDialog(
     val activity: Activity,

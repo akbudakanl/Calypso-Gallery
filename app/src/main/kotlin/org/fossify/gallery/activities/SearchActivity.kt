@@ -30,6 +30,9 @@ import org.fossify.gallery.interfaces.MediaOperationsListener
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
 import java.io.File
+import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
+import org.fossify.gallery.helpers.purgeTracesForFile
+import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 class SearchActivity : SimpleActivity(), MediaOperationsListener {
     override var isSearchBarEnabled = true

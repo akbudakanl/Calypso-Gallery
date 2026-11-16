@@ -47,6 +47,40 @@ import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import org.fossify.gallery.helpers.areEncryptedFilesIdenticalContent
+import org.fossify.gallery.helpers.arePlainFilesIdentical
+import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
+import org.fossify.gallery.helpers.compareFilesForSmartConflict
+import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
+import org.fossify.gallery.helpers.createHiddenPhysicalAlbum
+import org.fossify.gallery.helpers.createVaultRoot
+import org.fossify.gallery.helpers.decryptFileToDirectory
+import org.fossify.gallery.helpers.decryptFolder
+import org.fossify.gallery.helpers.encryptFileToDirectory
+import org.fossify.gallery.helpers.encryptFolder
+import org.fossify.gallery.helpers.encryptStreamToDirectory
+import org.fossify.gallery.helpers.findCandidateExternalVaultRoots
+import org.fossify.gallery.helpers.findIdenticalPlainFileInDir
+import org.fossify.gallery.helpers.findMergeTargetForDecryptFolder
+import org.fossify.gallery.helpers.findMergeTargetForEncryptFolder
+import org.fossify.gallery.helpers.getAlternativePlainFile
+import org.fossify.gallery.helpers.getDecryptedFolderName
+import org.fossify.gallery.helpers.getDecryptedRawFolderName
+import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
+import org.fossify.gallery.helpers.inspectStandardFilenameConflict
+import org.fossify.gallery.helpers.inspectTransferConflict
+import org.fossify.gallery.helpers.isConfiguredCustomVaultPath
+import org.fossify.gallery.helpers.isConfiguredVaultTemporarilyUnavailable
+import org.fossify.gallery.helpers.locateVaultRootOnDisk
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.prepareVaultLocationSwitch
+import org.fossify.gallery.helpers.resolveExistingVaultInDirectory
+import org.fossify.gallery.helpers.resolvePickedPathToFile
+import org.fossify.gallery.helpers.resolveSyncSourceRoot
+import org.fossify.gallery.helpers.setVaultRootLocation
+import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
+import org.fossify.gallery.helpers.verifyFileIntegrity
+import org.fossify.gallery.helpers.verifyVaultOnDisk
 
 class CustomVaultLocationTest {
 

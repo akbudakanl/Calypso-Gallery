@@ -15,6 +15,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.CryptoManager
 import java.io.File
+import org.fossify.gallery.helpers.createHiddenPhysicalAlbum
 
 /**
  * Prompts the user for a name and creates a new encrypted physical album in the vault.

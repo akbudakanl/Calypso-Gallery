@@ -183,6 +183,11 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicLong
+import org.fossify.gallery.helpers.clearAppImageCaches
+import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
+import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
 
 class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     override var isSearchBarEnabled = true

@@ -211,6 +211,15 @@ import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
 import java.io.File
 import kotlin.math.min
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultMediaPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
+import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
+import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
+import org.fossify.gallery.helpers.purgeTracesForFile
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 @Suppress("UNCHECKED_CAST")
 class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, ViewPagerFragment.FragmentListener {

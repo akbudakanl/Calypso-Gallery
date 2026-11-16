@@ -26,6 +26,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import kotlin.io.path.createTempDirectory
+import org.fossify.gallery.helpers.prepareVaultLocationSwitch
 
 class VaultRelativeSyncTest {
 

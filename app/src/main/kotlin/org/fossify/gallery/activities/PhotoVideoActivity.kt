@@ -78,6 +78,7 @@ import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.models.Medium
 import java.io.File
+import org.fossify.gallery.helpers.isVaultMediaPath
 
 open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.FragmentListener {
     private var mMedium: Medium? = null

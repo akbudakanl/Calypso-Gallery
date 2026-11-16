@@ -16,6 +16,8 @@ import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.canUnlockWithBiometrics
+import org.fossify.gallery.helpers.getVaultProtectionType
 
 /**
  * Isolated full-screen lock gate shown when the user returns from background or turns the screen

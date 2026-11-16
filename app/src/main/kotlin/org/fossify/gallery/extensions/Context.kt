@@ -133,6 +133,18 @@ import java.nio.channels.FileChannel
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
+import org.fossify.gallery.helpers.findVaultRoot
+import org.fossify.gallery.helpers.getCipherRootDirectory
+import org.fossify.gallery.helpers.getDecryptedFolderName
+import org.fossify.gallery.helpers.getDisplayName
+import org.fossify.gallery.helpers.getVaultRecycleBin
+import org.fossify.gallery.helpers.getVaultRecycleBinCount
+import org.fossify.gallery.helpers.isDefaultHiddenAlbum
+import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.isEncryptedFolderPath
+import org.fossify.gallery.helpers.isVaultMediaPath
+import org.fossify.gallery.helpers.isVaultRecycleBin
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
 
 val Context.audioManager get() = getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
