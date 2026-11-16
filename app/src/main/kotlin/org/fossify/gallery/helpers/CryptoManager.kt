@@ -71,6 +71,7 @@ import javax.crypto.spec.PBEKeySpec
 import android.media.MediaScannerConnection
 import android.os.Build
 import androidx.biometric.BiometricManager
+import android.security.keystore.KeyInfo
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -1203,10 +1204,36 @@ object CryptoManager {
         }
     }
 
+    private fun isBiometricKeyHardwareBacked(key: SecretKey): Boolean {
+        return try {
+            val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
+            val keyInfo = factory.getKeySpec(key, KeyInfo::class.java) as? KeyInfo ?: return false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE
+            } else {
+                @Suppress("DEPRECATION")
+                keyInfo.isInsideSecureHardware
+            }
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
     fun canUnlockWithBiometrics(context: Context): Boolean {
-        return context.config.isVaultBiometricEnabled &&
-            context.config.vaultBiometricWrappedBundle.isNotEmpty() &&
-            isBiometricHardwareAvailable(context)
+        if (!context.config.isVaultBiometricEnabled ||
+            context.config.vaultBiometricWrappedBundle.isEmpty() ||
+            !isBiometricHardwareAvailable(context)
+        ) {
+            return false
+        }
+        return try {
+            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+            keyStore.load(null)
+            val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return false
+            isBiometricKeyHardwareBacked(key)
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     fun getOrCreateBiometricKey(): SecretKey? {
@@ -1216,7 +1243,12 @@ object CryptoManager {
             if (!keyStore.containsAlias(BIOMETRIC_KEYSTORE_ALIAS)) {
                 generateBiometricKeyInternal(keyStore)
             }
-            keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey
+            val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return null
+            if (!isBiometricKeyHardwareBacked(key)) {
+                keyStore.deleteEntry(BIOMETRIC_KEYSTORE_ALIAS)
+                return null
+            }
+            key
         } catch (_: Throwable) {
             null
         }
@@ -1234,6 +1266,10 @@ object CryptoManager {
                 .setKeySize(256)
                 .setUserAuthenticationRequired(true)
                 .setInvalidatedByBiometricEnrollment(true)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                builder.setUnlockedDeviceRequired(true)
+            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 builder.setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG)
@@ -1300,6 +1336,10 @@ object CryptoManager {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
             keyStore.load(null)
             val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return null
+            if (!isBiometricKeyHardwareBacked(key)) {
+                clearBiometricKey(context)
+                return null
+            }
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
             cipher
