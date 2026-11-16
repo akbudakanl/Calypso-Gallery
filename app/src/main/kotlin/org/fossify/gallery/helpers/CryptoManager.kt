@@ -10,7 +10,7 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.system.Os
-import android.util.Base64
+import java.util.Base64
 import androidx.annotation.VisibleForTesting
 import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
@@ -35,6 +35,25 @@ import org.fossify.gallery.extensions.markReferencesOnEncrypt
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
+import org.fossify.gallery.helpers.vault.VaultContainer
+import org.fossify.gallery.helpers.vault.VaultContainerWriter
+import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
+import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
+import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
+import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -148,15 +167,6 @@ data class VaultSyncResult(
 )
 
 object CryptoManager {
-    private const val MAGIC_V1 = "FVLTENC1"
-    private const val MAGIC_V2 = "FGVLTENC"
-    private const val VERSION_SYMMETRIC: Byte = 1
-    private const val VERSION_SYMMETRIC_AUTH: Byte = 3
-    private const val VERSION_V5_AUTH: Byte = 5
-    private const val META_MAGIC_SYM = "FVLTMETA"
-    private const val META_MAGIC_V2 = "FGMETA2"
-    private const val VAULT_HEADER_MAGIC = "FGVLT2"
-    private const val VAULT_STR_PREFIX = "FVSTR1:"
     const val VAULT_RECYCLE_BIN_NAME = "\$\$VAULT_RECYCLE_BIN\$\$"
     const val VAULT_RESTORE_INFO_FILE = ".restore_info"
     const val TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 2_000L
@@ -354,16 +364,8 @@ object CryptoManager {
     }
 
     // Cryptographic Key Separation Domains & MAC Specifications
-    private const val DOMAIN_HEADER_KEY = "FossifyGallery:Header:AES256GCM"
-    private const val DOMAIN_CONTENT_ENC_KEY = "FossifyGallery:Payload:AES256CTR"
-    private const val DOMAIN_CONTENT_MAC_KEY = "FossifyGallery:Payload:Poly1305"
-    private const val MAC_TAG_LENGTH = 16
-
-    private fun deriveSubkey(key: ByteArray, domain: String): ByteArray {
-        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
-        mac.init(SecretKeySpec(key, "HmacSHA256"))
-        return mac.doFinal(domain.toByteArray(Charsets.UTF_8))
-    }
+    // -> org.fossify.gallery.helpers.vault.VaultKeyDerivation
+    //    (alan adlari ve deriveSubkey orada tanimlidir)
 
     // Argon2id Parameters (Memory-Hard Key Derivation)
     private const val ARGON2_MEMORY_KB = 65536 // 64 MB RAM cost
@@ -373,9 +375,6 @@ object CryptoManager {
 
     private const val PBKDF2_ITERATIONS = 100_000
     private const val KEY_LENGTH_BITS = 256
-    private const val GCM_IV_LENGTH = 12
-    private const val GCM_TAG_BITS = 128
-    private const val CTR_IV_LENGTH = 16
     private const val THUMB_MAX_DIMENSION = 320
     private const val THUMB_JPEG_QUALITY = 75
 
@@ -1278,7 +1277,7 @@ object CryptoManager {
             System.arraycopy(iv, 0, combined, 0, iv.size)
             System.arraycopy(encrypted, 0, combined, iv.size, encrypted.size)
 
-            context.config.vaultBiometricWrappedBundle = Base64.encodeToString(combined, Base64.NO_WRAP)
+            context.config.vaultBiometricWrappedBundle = Base64.getEncoder().encodeToString(combined)
             context.config.isVaultBiometricEnabled = true
             true
         } catch (_: Throwable) {
@@ -1290,7 +1289,7 @@ object CryptoManager {
         val wrappedB64 = context.config.vaultBiometricWrappedBundle
         if (wrappedB64.isEmpty()) return null
         val combined = try {
-            Base64.decode(wrappedB64, Base64.NO_WRAP)
+            Base64.getMimeDecoder().decode(wrappedB64)
         } catch (_: Throwable) {
             return null
         }
@@ -1317,7 +1316,7 @@ object CryptoManager {
         val wrappedB64 = context.config.vaultBiometricWrappedBundle
         if (wrappedB64.isEmpty()) return false
         val combined = try {
-            Base64.decode(wrappedB64, Base64.NO_WRAP)
+            Base64.getMimeDecoder().decode(wrappedB64)
         } catch (_: Throwable) {
             return false
         }
@@ -1584,9 +1583,9 @@ object CryptoManager {
         val vaultHeader = File(vaultRoot, VAULT_HEADER_FILE)
         writeVaultHeader(vaultHeader, salt, ARGON2_MEMORY_KB, ARGON2_ITERATIONS, ARGON2_PARALLELISM, iv, wrapped, protectionType)
 
-        val data = Base64.encodeToString(salt, Base64.NO_WRAP) + ":" +
-            Base64.encodeToString(iv, Base64.NO_WRAP) + ":" +
-            Base64.encodeToString(wrapped, Base64.NO_WRAP)
+        val data = Base64.getEncoder().encodeToString(salt) + ":" +
+            Base64.getEncoder().encodeToString(iv) + ":" +
+            Base64.getEncoder().encodeToString(wrapped)
         context.config.vaultWrappedKeyData = data
         context.config.vaultRootPath = vaultRoot.absolutePath
         cachedVaultRoot = vaultRoot
@@ -1639,7 +1638,7 @@ object CryptoManager {
             }
             baos.toByteArray()
         }
-        return VAULT_STR_PREFIX + Base64.encodeToString(payload, Base64.NO_WRAP)
+        return VAULT_STR_PREFIX + Base64.getEncoder().encodeToString(payload)
     }
 
     fun decryptStringFromVault(storedText: String): String? {
@@ -1647,7 +1646,7 @@ object CryptoManager {
         val masterKey = unlockedMasterKey ?: return null
         val b64 = storedText.removePrefix(VAULT_STR_PREFIX)
         return try {
-            val raw = Base64.decode(b64, Base64.NO_WRAP)
+            val raw = Base64.getMimeDecoder().decode(b64)
             DataInputStream(ByteArrayInputStream(raw)).use { dis ->
                 val version = dis.readByte()
                 if (version != VERSION_SYMMETRIC) return null
@@ -1697,9 +1696,9 @@ object CryptoManager {
         val parts = context.config.vaultWrappedKeyData.split(":")
         if (parts.size != 3) return false
         return try {
-            val salt = Base64.decode(parts[0], Base64.NO_WRAP)
-            val iv = Base64.decode(parts[1], Base64.NO_WRAP)
-            val ciphertext = Base64.decode(parts[2], Base64.NO_WRAP)
+            val salt = Base64.getMimeDecoder().decode(parts[0])
+            val iv = Base64.getMimeDecoder().decode(parts[1])
+            val ciphertext = Base64.getMimeDecoder().decode(parts[2])
 
             fun tryDecrypt(wrappingKey: SecretKeySpec): ByteArray? = try {
                 val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -2455,24 +2454,7 @@ object CryptoManager {
             baos.toByteArray()
         }
 
-        val headerKey = deriveSubkey(fileKey, DOMAIN_HEADER_KEY)
-        val contentEncKey = deriveSubkey(fileKey, DOMAIN_CONTENT_ENC_KEY)
-        val contentMacKey = deriveSubkey(fileKey, DOMAIN_CONTENT_MAC_KEY)
-
-        val headerIv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val headerCipher = Cipher.getInstance("AES/GCM/NoPadding")
-        headerCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(headerKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, headerIv))
-        val encryptedHeader = headerCipher.doFinal(headerPlainBytes)
-        headerKey.fill(0)
-
-        val contentIv = ByteArray(CTR_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val contentCipher = Cipher.getInstance("AES/CTR/NoPadding")
-        contentCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(contentEncKey, "AES"), IvParameterSpec(contentIv))
-        contentEncKey.fill(0)
-
-        val poly1305 = Poly1305(AESEngine.newInstance())
-        poly1305.init(ParametersWithIV(KeyParameter(contentMacKey), contentIv))
-        contentMacKey.fill(0)
+        val prepared = VaultContainerWriter.prepare(headerPlainBytes, fileKey, versionByte)
 
         var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
         while (encryptedFile.exists()) {
@@ -2481,45 +2463,19 @@ object CryptoManager {
 
         return try {
             val sourcePath = sourceFile.absolutePath
-            FileOutputStream(encryptedFile).use { fos ->
-                BufferedOutputStream(fos, 64 * 1024).use { bos ->
-                    DataOutputStream(bos).use { dos ->
-                        dos.write(MAGIC_V2.toByteArray(Charsets.US_ASCII))
-                        dos.writeByte(versionByte.toInt())
-                        dos.write(headerIv)
-                        dos.writeInt(encryptedHeader.size)
-                        dos.write(encryptedHeader)
-                        dos.write(contentIv)
-
-                        FileInputStream(sourceFile).use { fis ->
-                            val buffer = ByteArray(256 * 1024)
-                            var read: Int
-                            while (fis.read(buffer).also { read = it } != -1) {
-                                val out = contentCipher.update(buffer, 0, read)
-                                if (out != null && out.isNotEmpty()) {
-                                    dos.write(out)
-                                    poly1305.update(out, 0, out.size)
-                                }
-                            }
-                            val finalBytes = contentCipher.doFinal()
-                            if (finalBytes != null && finalBytes.isNotEmpty()) {
-                                dos.write(finalBytes)
-                                poly1305.update(finalBytes, 0, finalBytes.size)
-                            }
-                        }
-                        val macTag = ByteArray(MAC_TAG_LENGTH)
-                        poly1305.doFinal(macTag, 0)
-                        dos.write(macTag)
-                        dos.flush()
-                        bos.flush()
-                        fos.fd.sync()
-                    }
-                }
+            FileInputStream(sourceFile).use { fis ->
+                VaultContainerWriter.writeContainer(
+                    target = encryptedFile,
+                    prepared = prepared,
+                    fileKey = fileKey,
+                    payloadProvider = { fis },
+                    bufferSize = 256 * 1024
+                )
             }
 
             encryptedFile.setLastModified(lastModified)
 
-            val payloadOffset = (MAGIC_V2.length + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
+            val payloadOffset = VaultContainer.payloadOffset(prepared.encryptedHeader.size)
             val newMeta = EncryptedFileMetadata(
                 originalName = originalName,
                 lastModified = lastModified,
@@ -2528,7 +2484,7 @@ object CryptoManager {
                 mediaType = mediaType,
                 videoDuration = videoDuration,
                 payloadOffset = payloadOffset,
-                contentIv = contentIv,
+                contentIv = prepared.contentIv,
                 fileKey = fileKey.copyOf(),
                 version = versionByte,
                 isMacAuthenticated = true,
@@ -2614,83 +2570,32 @@ object CryptoManager {
 
         val headerPlainBytes = buildHeaderBytes(initialSize)
 
-        val headerKey = deriveSubkey(fileKey, DOMAIN_HEADER_KEY)
-        val contentEncKey = deriveSubkey(fileKey, DOMAIN_CONTENT_ENC_KEY)
-        val contentMacKey = deriveSubkey(fileKey, DOMAIN_CONTENT_MAC_KEY)
-
-        val headerIv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val headerCipher = Cipher.getInstance("AES/GCM/NoPadding")
-        headerCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(headerKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, headerIv))
-        val encryptedHeader = headerCipher.doFinal(headerPlainBytes)
-
-        val contentIv = ByteArray(CTR_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val contentCipher = Cipher.getInstance("AES/CTR/NoPadding")
-        contentCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(contentEncKey, "AES"), IvParameterSpec(contentIv))
-        contentEncKey.fill(0)
-
-        val poly1305 = Poly1305(AESEngine.newInstance())
-        poly1305.init(ParametersWithIV(KeyParameter(contentMacKey), contentIv))
-        contentMacKey.fill(0)
+        val prepared = VaultContainerWriter.prepare(headerPlainBytes, fileKey, versionByte)
 
         var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
         while (encryptedFile.exists()) {
             encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
         }
 
-        val headerIvOffset = MAGIC_V2.length + 1
-
         return try {
-            var totalBytesRead = 0L
-            FileOutputStream(encryptedFile).use { fos ->
-                BufferedOutputStream(fos, 64 * 1024).use { bos ->
-                    DataOutputStream(bos).use { dos ->
-                        dos.write(MAGIC_V2.toByteArray(Charsets.US_ASCII))
-                        dos.writeByte(versionByte.toInt())
-                        dos.write(headerIv)
-                        dos.writeInt(encryptedHeader.size)
-                        dos.write(encryptedHeader)
-                        dos.write(contentIv)
-
-                        val buffer = ByteArray(64 * 1024)
-                        var read: Int
-                        while (inputStream.read(buffer).also { read = it } != -1) {
-                            totalBytesRead += read
-                            val out = contentCipher.update(buffer, 0, read)
-                            if (out != null && out.isNotEmpty()) {
-                                dos.write(out)
-                                poly1305.update(out, 0, out.size)
-                            }
-                            onProgress?.invoke(totalBytesRead, contentLength)
-                        }
-                        val finalBytes = contentCipher.doFinal()
-                        if (finalBytes != null && finalBytes.isNotEmpty()) {
-                            dos.write(finalBytes)
-                            poly1305.update(finalBytes, 0, finalBytes.size)
-                        }
-                        val macTag = ByteArray(MAC_TAG_LENGTH)
-                        poly1305.doFinal(macTag, 0)
-                        dos.write(macTag)
-                        dos.flush()
-                        bos.flush()
-                        fos.fd.sync()
-                    }
-                }
-            }
+            val totalBytesRead = VaultContainerWriter.writeContainer(
+                target = encryptedFile,
+                prepared = prepared,
+                fileKey = fileKey,
+                payloadProvider = { inputStream },
+                bufferSize = 64 * 1024,
+                onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
+            )
 
             if (contentLength <= 0L || contentLength != totalBytesRead) {
-                val finalHeaderPlain = buildHeaderBytes(totalBytesRead)
-                val newHeaderIv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-                headerCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(headerKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, newHeaderIv))
-                val newEncryptedHeader = headerCipher.doFinal(finalHeaderPlain)
-                RandomAccessFile(encryptedFile, "rw").use { raf ->
-                    raf.seek(headerIvOffset.toLong())
-                    raf.write(newHeaderIv)
-                    raf.writeInt(newEncryptedHeader.size)
-                    raf.write(newEncryptedHeader)
-                    raf.fd.sync()
-                }
+                // Gercek boyut bastan bilinmiyordu: header icindeki boyut alanini
+                // duzelt. Header alanlari sabit boyutlu oldugu icin payload ofseti kaymaz.
+                VaultContainerWriter.rewriteHeaderInPlace(
+                    encryptedFile,
+                    buildHeaderBytes(totalBytesRead),
+                    fileKey
+                )
             }
-            headerKey.fill(0)
 
             encryptedFile.setLastModified(lastModified)
 
@@ -2698,7 +2603,7 @@ object CryptoManager {
                 generateEmbeddedThumbnailFromEncryptedFile(encryptedFile)
             } else null
 
-            val payloadOffset = (headerIvOffset + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
+            val payloadOffset = VaultContainer.payloadOffset(prepared.encryptedHeader.size)
             metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
                 originalName = originalName,
                 lastModified = lastModified,
@@ -2707,7 +2612,7 @@ object CryptoManager {
                 mediaType = mediaType,
                 videoDuration = videoDuration,
                 payloadOffset = payloadOffset,
-                contentIv = contentIv,
+                contentIv = prepared.contentIv,
                 fileKey = fileKey.copyOf(),
                 version = versionByte,
                 isMacAuthenticated = true,
@@ -2716,7 +2621,6 @@ object CryptoManager {
 
             encryptedFile
         } catch (e: Exception) {
-            headerKey.fill(0)
             encryptedFile.delete()
             null
         }
@@ -2977,74 +2881,20 @@ object CryptoManager {
                 baos.toByteArray()
             }
 
-            val headerKey = if (meta.isMacAuthenticated) {
-                deriveSubkey(meta.fileKey, DOMAIN_HEADER_KEY)
-            } else {
-                meta.fileKey
-            }
-            val headerIv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-            val headerCipher = Cipher.getInstance("AES/GCM/NoPadding")
-            headerCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(headerKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, headerIv))
-            val encryptedHeader = headerCipher.doFinal(headerPlainBytes)
-            if (meta.isMacAuthenticated) {
-                headerKey.fill(0)
-            }
-
-            val newPayloadOffset = (8 + 1 + GCM_IV_LENGTH + 4 + encryptedHeader.size + CTR_IV_LENGTH).toLong()
-
-            FileOutputStream(tempFile).use { fos ->
-                BufferedOutputStream(fos, 64 * 1024).use { bos ->
-                    DataOutputStream(bos).use { dos ->
-                        dos.write(magicBytes)
-                        dos.writeByte(version.toInt())
-                        dos.write(headerIv)
-                        dos.writeInt(encryptedHeader.size)
-                        dos.write(encryptedHeader)
-                        dos.write(meta.contentIv)
-
-                        RandomAccessFile(encryptedFile, "r").use { raf ->
-                            raf.seek(meta.payloadOffset)
-                            val buffer = ByteArray(64 * 1024)
-                            if (version == VERSION_V5_AUTH) {
-                                val macKey = deriveSubkey(meta.fileKey, DOMAIN_CONTENT_MAC_KEY)
-                                val poly = Poly1305(AESEngine.newInstance())
-                                poly.init(ParametersWithIV(KeyParameter(macKey), meta.contentIv))
-                                macKey.fill(0)
-                                poly.update(headerIv, 0, headerIv.size)
-                                poly.update(encryptedHeader, 0, encryptedHeader.size)
-
-                                var remaining = meta.originalSize
-                                while (remaining > 0) {
-                                    val toRead = minOf(buffer.size.toLong(), remaining).toInt()
-                                    val read = raf.read(buffer, 0, toRead)
-                                    if (read == -1) throw EOFException("Unexpected EOF copying encrypted payload")
-                                    dos.write(buffer, 0, read)
-                                    poly.update(buffer, 0, read)
-                                    remaining -= read
-                                }
-                                val newTag = ByteArray(MAC_TAG_LENGTH)
-                                poly.doFinal(newTag, 0)
-                                dos.write(newTag)
-                            } else {
-                                var remaining = encryptedFile.length() - meta.payloadOffset
-                                while (remaining > 0) {
-                                    val toRead = minOf(buffer.size.toLong(), remaining).toInt()
-                                    val read = raf.read(buffer, 0, toRead)
-                                    if (read == -1) break
-                                    dos.write(buffer, 0, read)
-                                    remaining -= read
-                                }
-                            }
-                        }
-
-                        dos.flush()
-                        bos.flush()
-                        if (syncParentDir) {
-                            fos.fd.sync()
-                        }
-                    }
-                }
-            }
+            val newPayloadOffset = VaultContainerWriter.rewriteContainer(
+                source = encryptedFile,
+                target = tempFile,
+                sourcePayloadOffset = meta.payloadOffset,
+                sourcePayloadLength = meta.originalSize,
+                sourceContentIv = meta.contentIv,
+                newHeaderPlainBytes = headerPlainBytes,
+                fileKey = meta.fileKey,
+                version = version,
+                macCoversHeader = version == VERSION_V5_AUTH,
+                magic = magicBytes,
+                useDerivedHeaderKey = meta.isMacAuthenticated,
+                syncFile = syncParentDir
+            )
 
             java.nio.file.Files.move(
                 tempFile.toPath(),
@@ -5576,6 +5426,12 @@ object CryptoManager {
                     val contentIv = ByteArray(CTR_IV_LENGTH)
                     dis.readFully(contentIv)
 
+                    // Content IV dosyanin icinde acik tutulur. Tamamen sifir bir IV,
+                    // Poly1305-AES icin tekrar eden one-time key demektir; reddet.
+                    if (!VaultContainer.isValidContentIv(contentIv)) {
+                        return null
+                    }
+
                     val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_V5_AUTH)
                     val headerKey = if (isMacAuth) {
                         deriveSubkey(fileKey, DOMAIN_HEADER_KEY)
@@ -5613,7 +5469,7 @@ object CryptoManager {
                         } else {
                             null
                         }
-                        val payloadOffset = (8 + 1 + GCM_IV_LENGTH + 4 + encHeaderLen + CTR_IV_LENGTH).toLong()
+                        val payloadOffset = VaultContainer.payloadOffset(encHeaderLen)
 
                         val meta = EncryptedFileMetadata(
                             originalName = originalName,
