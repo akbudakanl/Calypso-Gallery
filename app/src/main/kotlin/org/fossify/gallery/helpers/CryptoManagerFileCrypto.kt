@@ -245,7 +245,8 @@ fun CryptoManager.encryptFileToDirectory(
                 if (existingMeta.originalSize != originalSize || existingMeta.mediaType != sourceMediaType) {
                     continue
                 }
-                if (!areMediaTimestampsEquivalent(
+                if (context.shouldGateDuplicatesByDate() &&
+                    !areMediaTimestampsEquivalent(
                         sourceLastModified,
                         getSourceDateTaken(),
                         existingMeta.lastModified,
@@ -255,6 +256,7 @@ fun CryptoManager.encryptFileToDirectory(
                     continue
                 }
                 if (arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)) {
+                    applyDuplicateDateToEncryptedFile(context, existingBin, sourceLastModified)
                     if (wipeSource && deleteSourceOnIdentical) {
                         val duplicateSourcePath = sourceFile.absolutePath
                         val plainIdentity = runCatching {
@@ -569,15 +571,17 @@ fun CryptoManager.decryptFileToDirectory(
         val existingVariants = index.findCandidates(meta.originalName, matchCollisionVariants)
         for (existingPlain in existingVariants) {
             if (existingPlain.length() != meta.originalSize) continue
+            val gateByDate = context.shouldGateDuplicatesByDate()
             val existingLastMod = existingPlain.lastModified()
-            if (!areTimestampsEquivalent(existingLastMod, meta.lastModified)) continue
-            if (meta.dateTaken > 0L) {
+            if (gateByDate && !areTimestampsEquivalent(existingLastMod, meta.lastModified)) continue
+            if (gateByDate && meta.dateTaken > 0L) {
                 val existingDateTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
                 if (!areMediaTimestampsEquivalent(existingLastMod, existingDateTaken, meta.lastModified, meta.dateTaken)) {
                     continue
                 }
             }
             if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta, verifyIntegrity = false)) {
+                applyDuplicateDateToPlainFile(context, existingPlain, meta.lastModified, meta.dateTaken)
                 val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
                 if (deleteEncryptedSource && deleteSourceOnIdentical && encCanon != plainCanon) {
                     val encPath = encryptedFile.absolutePath

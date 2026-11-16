@@ -436,6 +436,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, false)
         set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
 
+    var dateTieBreakMode: Int
+        get() = prefs.getInt(DATE_TIE_BREAK_MODE, DATE_TIE_BREAK_KEEP_TARGET)
+        set(mode) = prefs.edit().putInt(DATE_TIE_BREAK_MODE, mode).apply()
+
     var albumCryptoConflictMode: Int
         get() = when (val raw = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)) {
             LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> ALBUM_CRYPTO_CONFLICT_MERGE

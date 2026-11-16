@@ -569,16 +569,17 @@ private class CopyMoveRunner(
             ).also { resolvedSrcDateTaken = it }
         }
 
+        val gateByDate = activity.applicationContext.shouldGateDuplicatesByDate()
         return candidates.any { existing ->
             if (!existing.isFile || existing.length() != srcSize) return@any false
             val existingLastMod = existing.lastModified()
-            if (!CryptoManager.areTimestampsEquivalent(srcLastMod, existingLastMod)) return@any false
+            if (gateByDate && !CryptoManager.areTimestampsEquivalent(srcLastMod, existingLastMod)) return@any false
             val existingTaken = CryptoManager.resolvePlaintextDateTaken(
                 context = activity.applicationContext,
                 sourceFile = existing,
                 fallbackLastModified = existingLastMod
             )
-            if (!CryptoManager.areMediaTimestampsEquivalent(
+            if (gateByDate && !CryptoManager.areMediaTimestampsEquivalent(
                     srcLastMod,
                     getSrcDateTaken(),
                     existingLastMod,
@@ -587,11 +588,20 @@ private class CopyMoveRunner(
             ) {
                 return@any false
             }
-            CryptoManager.arePlainFilesIdentical(
+            val identical = CryptoManager.arePlainFilesIdentical(
                 srcFile,
                 existing,
                 fastSampling = activity.config.fastLargeDuplicateCheck
             )
+            if (identical) {
+                CryptoManager.applyDuplicateDateToPlainFile(
+                    context = activity.applicationContext,
+                    target = existing,
+                    lastModified = srcLastMod,
+                    dateTaken = getSrcDateTaken()
+                )
+            }
+            identical
         }
     }
 

@@ -303,7 +303,8 @@ fun CryptoManager.inspectTransferConflict(
             if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
                 continue
             }
-            if (!areMediaTimestampsEquivalent(
+            if (context?.shouldGateDuplicatesByDate() != false &&
+                !areMediaTimestampsEquivalent(
                     sourceLastMod,
                     getSourceDateTaken(),
                     existingMeta.lastModified,
@@ -331,6 +332,9 @@ fun CryptoManager.inspectTransferConflict(
                 )
             }
             if (identical) {
+                if (context != null) {
+                    applyDuplicateDateToEncryptedFile(context, existingBin, sourceLastMod)
+                }
                 return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingBin)
             }
         }
@@ -344,10 +348,11 @@ fun CryptoManager.inspectTransferConflict(
         for (existingPlain in candidates) {
             if (existingPlain.length() != sourceOrigSize) continue
             val existingLastMod = existingPlain.lastModified()
-            if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+            val gateByDate = context?.shouldGateDuplicatesByDate() != false
+            if (gateByDate && !areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
             val srcTaken = getSourceDateTaken()
             val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
-            if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+            if (gateByDate && !areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
                 continue
             }
             val identical = if (isSourceEncrypted && sourceMeta != null) {
@@ -362,6 +367,9 @@ fun CryptoManager.inspectTransferConflict(
                 arePlainFilesIdentical(sourceFile, existingPlain, fastSampling = fastSampling)
             }
             if (identical) {
+                if (context != null) {
+                    applyDuplicateDateToPlainFile(context, existingPlain, sourceLastMod, srcTaken)
+                }
                 return TransferConflictCheck(TransferConflictStatus.IDENTICAL_SKIP, desiredName, existingPlain)
             }
         }
@@ -456,7 +464,8 @@ fun CryptoManager.findContentConflictInTarget(
             if (existingMeta.originalSize != sourceOrigSize || existingMeta.mediaType != sourceMediaType) {
                 continue
             }
-            if (!areMediaTimestampsEquivalent(
+            if (context?.shouldGateDuplicatesByDate() != false &&
+                !areMediaTimestampsEquivalent(
                     sourceLastMod,
                     getSourceDateTaken(),
                     existingMeta.lastModified,
@@ -481,10 +490,11 @@ fun CryptoManager.findContentConflictInTarget(
         for (existingPlain in candidates) {
             if (existingPlain.length() != sourceOrigSize) continue
             val existingLastMod = existingPlain.lastModified()
-            if (!areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
+            val gateByDate = context?.shouldGateDuplicatesByDate() != false
+            if (gateByDate && !areTimestampsEquivalent(sourceLastMod, existingLastMod)) continue
             val srcTaken = getSourceDateTaken()
             val existingTaken = resolvePlaintextDateTaken(context, existingPlain, existingLastMod)
-            if (!areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
+            if (gateByDate && !areMediaTimestampsEquivalent(sourceLastMod, srcTaken, existingLastMod, existingTaken)) {
                 continue
             }
             val identical = if (isSourceEncrypted && sourceMeta != null) {
@@ -525,8 +535,9 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
 
     if (!skipDuplicateCheck) {
         val candidates = index.findCandidates(sourceMeta.originalName, matchCollisionVariants)
+        val gateByDate = context.shouldGateDuplicatesByDate()
         for ((existingBin, existingMeta) in candidates) {
-            if (areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
+            if ((!gateByDate || areEncryptedTimestampsEquivalent(sourceMeta, existingMeta)) &&
                 areEncryptedFilesIdenticalContent(
                     sourceBin,
                     sourceMeta,
@@ -535,6 +546,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                     fastSampling = fastSampling
                 )
             ) {
+                applyDuplicateDateToEncryptedFile(context, existingBin, sourceMeta.lastModified)
                 if (isMove && deleteSourceOnIdentical) {
                     runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
                     runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }

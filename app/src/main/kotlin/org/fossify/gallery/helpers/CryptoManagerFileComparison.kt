@@ -661,13 +661,18 @@ fun CryptoManager.findIdenticalPlainFileInDir(
 
     fun matchesPlain(candidate: File): Boolean {
         if (!candidate.isFile || candidate.length() != sourcePlainFile.length()) return false
+        val gateByDate = context?.shouldGateDuplicatesByDate() != false
         val candLastMod = candidate.lastModified()
-        if (!areTimestampsEquivalent(srcLastMod, candLastMod)) return false
+        if (gateByDate && !areTimestampsEquivalent(srcLastMod, candLastMod)) return false
         val candTaken = resolvePlaintextDateTaken(context, candidate, candLastMod)
-        if (!areMediaTimestampsEquivalent(srcLastMod, getSrcDateTaken(), candLastMod, candTaken)) {
+        if (gateByDate && !areMediaTimestampsEquivalent(srcLastMod, getSrcDateTaken(), candLastMod, candTaken)) {
             return false
         }
-        return arePlainFilesIdentical(sourcePlainFile, candidate)
+        val identical = arePlainFilesIdentical(sourcePlainFile, candidate)
+        if (identical && context != null) {
+            applyDuplicateDateToPlainFile(context, candidate, srcLastMod, getSrcDateTaken())
+        }
+        return identical
     }
 
     if (targetIndex != null) {

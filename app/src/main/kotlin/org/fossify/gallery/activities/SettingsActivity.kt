@@ -878,15 +878,47 @@ class SettingsActivity : SimpleActivity() {
                 messageResId = R.string.fast_large_duplicate_check_info_message
             )
 
-            fun updateFastCheckState() {
+            val tieBreakRadios = listOf(
+                dialogBinding.dateTieBreakKeepTarget,
+                dialogBinding.dateTieBreakUseSource,
+                dialogBinding.dateTieBreakAsk
+            )
+            when (config.dateTieBreakMode) {
+                DATE_TIE_BREAK_USE_SOURCE -> dialogBinding.dateTieBreakUseSource.isChecked = true
+                DATE_TIE_BREAK_ASK -> dialogBinding.dateTieBreakAsk.isChecked = true
+                else -> dialogBinding.dateTieBreakKeepTarget.isChecked = true
+            }
+            bindSettingInfoIcon(
+                iconView = dialogBinding.dateTieBreakAskInfo,
+                titleResId = R.string.date_tie_break_ask_info_title,
+                messageResId = R.string.date_tie_break_ask_info_message
+            )
+
+            fun updateDependentState() {
                 val usesDuplicateCheck = !dialogBinding.conflictHandlingStandardDialog.isChecked
                 dialogBinding.fastLargeDuplicateCheckCheckbox.isEnabled = usesDuplicateCheck
                 dialogBinding.fastLargeDuplicateCheckRow.alpha = if (usesDuplicateCheck) 1f else 0.45f
                 dialogBinding.fastLargeDuplicateCheckHint.alpha = if (usesDuplicateCheck) 0.75f else 0.35f
+
+                dialogBinding.dateTieBreakLabel.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                tieBreakRadios.forEach { radio ->
+                    radio.isEnabled = usesDuplicateCheck
+                    radio.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                }
+                dialogBinding.dateTieBreakAskInfo.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                dialogBinding.dateTieBreakHint.alpha = if (usesDuplicateCheck) 0.75f else 0.35f
             }
-            updateFastCheckState()
+            updateDependentState()
+
             dialogBinding.conflictHandlingRadioGroup.setOnCheckedChangeListener { _, _ ->
-                updateFastCheckState()
+                updateDependentState()
+            }
+            tieBreakRadios.forEach { radio ->
+                radio.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked) {
+                        tieBreakRadios.filter { it !== radio }.forEach { it.isChecked = false }
+                    }
+                }
             }
 
             getAlertDialogBuilder()
@@ -897,6 +929,11 @@ class SettingsActivity : SimpleActivity() {
                         else -> CONFLICT_HANDLING_STANDARD_DIALOG
                     }
                     config.fastLargeDuplicateCheck = dialogBinding.fastLargeDuplicateCheckCheckbox.isChecked
+                    config.dateTieBreakMode = when {
+                        dialogBinding.dateTieBreakAsk.isChecked -> DATE_TIE_BREAK_ASK
+                        dialogBinding.dateTieBreakUseSource.isChecked -> DATE_TIE_BREAK_USE_SOURCE
+                        else -> DATE_TIE_BREAK_KEEP_TARGET
+                    }
                     binding.settingsConflictHandlingMode.text = getConflictHandlingModeText()
                 }
                 .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -1590,6 +1627,7 @@ class SettingsActivity : SimpleActivity() {
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
+                put(DATE_TIE_BREAK_MODE, config.dateTieBreakMode)
                 put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
                 put(SKIPPED_ENCRYPT_FILES_MODE, config.skippedEncryptFilesMode)
                 put(SKIPPED_DECRYPT_FILES_MODE, config.skippedDecryptFilesMode)
@@ -1750,6 +1788,7 @@ class SettingsActivity : SimpleActivity() {
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
+                DATE_TIE_BREAK_MODE -> config.dateTieBreakMode = value.toInt()
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
                 SKIPPED_ENCRYPT_FILES_MODE -> config.skippedEncryptFilesMode = value.toInt()
                 SKIPPED_DECRYPT_FILES_MODE -> config.skippedDecryptFilesMode = value.toInt()
