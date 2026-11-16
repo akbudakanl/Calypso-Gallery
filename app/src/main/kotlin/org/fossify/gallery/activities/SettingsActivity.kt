@@ -705,7 +705,7 @@ class SettingsActivity : SimpleActivity() {
                 applyVaultScreenProtection(false)
                 updateVaultBiometricSwitch()
             } else {
-                if (!CryptoManager.isBiometricHardwareAvailable(this)) {
+                if (!CryptoManager.isBiometricHardwareAvailable(this) || CryptoManager.getOrCreateBiometricKey() == null) {
                     toast(R.string.no_biometric_hardware_or_enrolled)
                     return@setOnClickListener
                 }
