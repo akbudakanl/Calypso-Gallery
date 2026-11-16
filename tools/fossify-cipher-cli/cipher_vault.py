@@ -53,6 +53,16 @@ try:
 except ImportError:
     HAS_CRYPTO = False
 
+# Poly1305-AES (Bernstein 2005) cekirdegi icin pycryptodome.
+# Elle yazilmis bir MAC implementasyonu kullanmamak icin zorunludur:
+# bu paket Poly1305'i C seviyesinde, denetlenmis bir kutuphanede sunar.
+HAS_POLY1305 = True
+try:
+    from Crypto.Hash import Poly1305
+    from Crypto.Cipher import AES as PolyAes
+except ImportError:
+    HAS_POLY1305 = False
+
 try:
     from PIL import Image
     HAS_PIL = True
@@ -109,7 +119,14 @@ def check_dependencies():
             print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil", file=sys.stderr)
         print("Or install via pip (recommended inside a venv on macOS/Windows):", file=sys.stderr)
         print("  pip install -r requirements.txt", file=sys.stderr)
-        print("  pip install cryptography argon2-cffi pillow", file=sys.stderr)
+        print("  pip install cryptography argon2-cffi pillow pycryptodome", file=sys.stderr)
+        sys.exit(1)
+
+    if not HAS_POLY1305:
+        print("[ERROR] Required Python packages are missing!", file=sys.stderr)
+        print("The Poly1305-AES MAC is provided by 'pycryptodome'.", file=sys.stderr)
+        print("Install it with:", file=sys.stderr)
+        print("  pip install pycryptodome", file=sys.stderr)
         sys.exit(1)
 
 def install_network_audit_hook(allow_adb: bool):
@@ -625,55 +642,53 @@ def derive_subkey(key: bytes, domain: bytes) -> bytes:
     """HKDF-style domain separation via HMAC-SHA256."""
     return hmac.new(key, domain, hashlib.sha256).digest()
 
-class Poly1305AES:
+def poly1305_aes_mac(mac_key: bytes, nonce: bytes, data: bytes) -> bytes:
     """
-    Streaming Poly1305-AES MAC calculator 100% compatible with Bouncy Castle Poly1305(AESEngine).
-    RFC 8439 / DJB 2005 Poly1305-AES specification.
+    Poly1305-AES (Bernstein 2005) MAC - BouncyCastle `Poly1305(AESEngine)` ile birebir uyumlu.
+
+    Anahtar duzeni (Android/BC ve restic ile ayni):
+        mac_key[0:16]  -> r  (Poly1305 polinom katsayisi; kutup icinde clamp edilir)
+        mac_key[16:32] -> K  (AES-128 anahtari; s = AES-128_K(nonce))
+
+    pycryptodome'un duzeni farklidir: `Poly1305.new(key=..., cipher=AES)` icinde
+    key[:16] AES anahtari (K), key[16:32] ise r olarak kullanilir.
+    Bu yuzden iki yarim yer degistirilerek verilir.
+
+    Not: Elle yazilmis bir MAC implementasyonu kullanmamak icin pycryptodome
+    tercih edilir; boylece cekirdek C seviyesinde ve denetlenmis bir kutuphanede kalir.
     """
-    def __init__(self, key: bytes, nonce: bytes):
-        if len(key) != 32 or len(nonce) != 16:
-            raise ValueError("Poly1305-AES requires 32-byte key and 16-byte nonce.")
+    if len(mac_key) != 32:
+        raise ValueError("Poly1305-AES requires a 32-byte MAC key.")
+    if len(nonce) != 16:
+        raise ValueError("Poly1305-AES requires a 16-byte nonce.")
 
-        r_bar = bytearray(key[:16])
-        r_bar[3] &= 15
-        r_bar[7] &= 15
-        r_bar[11] &= 15
-        r_bar[15] &= 15
-        r_bar[4] &= 252
-        r_bar[8] &= 252
-        r_bar[12] &= 252
-        self.r = int.from_bytes(r_bar, "little")
+    r_part = mac_key[:16]
+    k_part = mac_key[16:32]
+    mac = Poly1305.new(key=k_part + r_part, cipher=PolyAes, nonce=nonce)
+    mac.update(data)
+    return mac.digest()
 
-        k_aes = key[16:32]
-        aes = Cipher(algorithms.AES(k_aes), modes.ECB(), backend=default_backend()).encryptor()
-        s_bytes = aes.update(nonce) + aes.finalize()
-        self.s = int.from_bytes(s_bytes, "little")
 
-        self.p = (1 << 130) - 5
-        self.accumulator = 0
-        self.buffer = bytearray()
+def poly1305_aes_mac_stream(mac_key: bytes, nonce: bytes):
+    """
+    Akis (streaming) Poly1305-AES MAC hesaplayici.
 
-    def update(self, data: bytes):
-        self.buffer.extend(data)
-        buf_len = len(self.buffer)
-        offset = 0
-        while buf_len - offset >= 16:
-            chunk = self.buffer[offset:offset + 16]
-            chunk_num = int.from_bytes(chunk, "little") + (1 << 128)
-            self.accumulator = ((self.accumulator + chunk_num) * self.r) % self.p
-            offset += 16
-        if offset > 0:
-            del self.buffer[:offset]
+    Kullanim:
+        mac = poly1305_aes_mac_stream(mac_key, nonce)
+        mac.update(chunk)
+        tag = mac.digest()
 
-    def finalize(self) -> bytes:
-        if len(self.buffer) > 0:
-            pad_bit = 1 << (len(self.buffer) * 8)
-            chunk_num = int.from_bytes(self.buffer, "little") + pad_bit
-            self.accumulator = ((self.accumulator + chunk_num) * self.r) % self.p
-            self.buffer.clear()
+    Tek gecisli yazma akisini korumak icin kullanilir; poly1305_aes_mac() ile
+    ayni sonucu uretir.
+    """
+    if len(mac_key) != 32:
+        raise ValueError("Poly1305-AES requires a 32-byte MAC key.")
+    if len(nonce) != 16:
+        raise ValueError("Poly1305-AES requires a 16-byte nonce.")
 
-        tag_num = (self.accumulator + self.s) % (1 << 128)
-        return tag_num.to_bytes(16, "little")
+    r_part = mac_key[:16]
+    k_part = mac_key[16:32]
+    return Poly1305.new(key=k_part + r_part, cipher=PolyAes, nonce=nonce)
 
 def unlock_vault_header(vault_path: Path, secret: str) -> bytes:
     """
@@ -1199,7 +1214,7 @@ def encrypt_file(
     # 5. Payload Encryption (AES-256-CTR + Poly1305-AES Streaming)
     content_iv = secrets.token_bytes(16)
     c_cipher = Cipher(algorithms.AES(content_enc_key), modes.CTR(content_iv), backend=default_backend()).encryptor()
-    poly_mac = Poly1305AES(content_mac_key, content_iv)
+    poly_mac = poly1305_aes_mac_stream(content_mac_key, content_iv)
 
     with open(output_file, "wb") as fout:
         fout.write(MAGIC_V2)                                     # 8B ("FGVLTENC")
@@ -1227,7 +1242,7 @@ def encrypt_file(
                 fout.write(final_enc)
                 poly_mac.update(final_enc)
 
-        mac_tag = poly_mac.finalize()
+        mac_tag = poly_mac.digest()
         fout.write(mac_tag)
 
     try:
