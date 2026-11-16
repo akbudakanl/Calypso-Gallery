@@ -16,6 +16,7 @@ import org.fossify.commons.helpers.LICENSE_FILTERS
 import org.fossify.commons.helpers.LICENSE_GESTURE_VIEWS
 import org.fossify.commons.helpers.LICENSE_GIF_DRAWABLE
 import org.fossify.commons.helpers.LICENSE_GLIDE
+import org.fossify.commons.helpers.LICENSE_GSON
 import org.fossify.commons.helpers.LICENSE_PATTERN
 import org.fossify.commons.helpers.LICENSE_PICASSO
 import org.fossify.commons.helpers.LICENSE_REPRINT
@@ -77,6 +78,7 @@ class AboutActivity : SimpleActivity() {
 
         listOf(
             binding.aboutGplLicense,
+            binding.aboutTinkLicense,
             binding.aboutForkSource,
             binding.aboutReleaseSources,
             binding.aboutForkIssues,
@@ -90,6 +92,9 @@ class AboutActivity : SimpleActivity() {
     private fun setupActions() {
         binding.aboutGplLicense.setOnClickListener {
             startActivity(Intent(this, GplLicenseActivity::class.java))
+        }
+        binding.aboutTinkLicense.setOnClickListener {
+            startActivity(Intent(this, TinkLicenseActivity::class.java))
         }
         binding.aboutForkSource.setOnClickListener {
             launchViewIntent(FORK_REPOSITORY_URL)
@@ -126,7 +131,7 @@ class AboutActivity : SimpleActivity() {
         val licenses = LICENSE_GLIDE or LICENSE_CROPPER or LICENSE_RTL or LICENSE_SUBSAMPLING or
             LICENSE_PATTERN or LICENSE_REPRINT or LICENSE_GIF_DRAWABLE or LICENSE_PICASSO or
             LICENSE_EXOPLAYER or LICENSE_SANSELAN or LICENSE_FILTERS or LICENSE_GESTURE_VIEWS or
-            LICENSE_APNG
+            LICENSE_APNG or LICENSE_GSON
 
         startActivity(Intent(this, LicenseActivity::class.java).apply {
             putExtra("app_icon_ids", getAppIconIDs())

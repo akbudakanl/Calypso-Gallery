@@ -525,6 +525,7 @@
     <string name="about_license_heading">License</string>
     <string name="about_gpl_notice" formatted="false">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Read the GNU GPL v3 license</string>
+    <string name="about_read_tink_license">Read the Tink Apache 2.0 license and attribution</string>
     <string name="about_source_heading">Source code</string>
     <string name="about_corresponding_source_notice">The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project.</string>
     <string name="about_fork_source">Fork source code and corresponding source</string>
@@ -536,6 +537,7 @@
     <string name="about_faq">Frequently asked questions</string>
     <string name="about_third_party_licenses">Third-party licenses</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
+    <string name="tink_license_title">Tink license and attribution</string>
 
     <!-- Fork disclaimer, shown once before any runtime permission is requested -->
     <string name="fork_disclaimer_title">Fork notice</string>

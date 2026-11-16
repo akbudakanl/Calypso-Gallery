@@ -28,6 +28,10 @@ The complete corresponding source for this fork is available in the [fork reposi
 
 The inherited upstream source remains available from [FossifyOrg/Gallery](https://github.com/FossifyOrg/Gallery). Fork changes are identified in the fork history and [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
 
+## Third-party cryptographic components
+
+The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0, and the companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) package (`tink>=1.16.1,<2`). Both implementations are licensed under the Apache License, Version 2.0. The bundled Android attribution and complete Apache 2.0 license text are available in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt) and in the app under **About → Read the Tink Apache 2.0 license and attribution**. Gson attribution is also included under **About → Third-party licenses**.
+
 ## Features
 
 **🖼️ PHOTO EDITING AT YOUR FINGERTIPS:**  
