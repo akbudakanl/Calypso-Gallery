@@ -32,6 +32,12 @@ The inherited upstream source remains available from [FossifyOrg/Gallery](https:
 
 The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0, and the companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) package (`tink>=1.16.1,<2`). Both implementations are licensed under the Apache License, Version 2.0. The bundled Android attribution and complete Apache 2.0 license text are available in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt) and in the app under **About → Read the Tink Apache 2.0 license and attribution**. Gson attribution is also included under **About → Third-party licenses**.
 
+## Android package identity and upgrades
+
+The release application ID is `com.calypso.gallery`; the Kotlin namespace remains `org.fossify.gallery` to retain compatibility with the inherited Fossify code and resources. This differs from the earlier `org.fossify.gallery` application ID, so Android installs Calypso Gallery as a separate application and does not offer an in-place upgrade from that package. Restoring the old ID alone would not guarantee an in-place update: Android also requires signing-key continuity with the installed build.
+
+Existing user-created media and vault containers in ordinary shared storage remain accessible subject to Android permissions, but package-scoped locations such as `Android/data/org.fossify.gallery` remain owned by the old package. Android also does not transfer app-private data between package identities. Preferences, the Room database, saved app state, vault credentials, and Android Keystore-bound keys are package-scoped and are not migrated automatically. Users moving from `org.fossify.gallery` must recreate or separately migrate those items. Debug builds use `com.calypso.gallery.debug`.
+
 ## Features
 
 **🖼️ PHOTO EDITING AT YOUR FINGERTIPS:**  
