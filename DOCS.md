@@ -104,6 +104,53 @@ Monolithic container formats (such as Veracrypt volumes or ZIP archives) risk to
 2. **CTR Mode Error Isolation:** `AES-256-CTR` operates as a stream cipher (`Ciphertext = Plaintext ⊕ Keystream`). A 1-bit corruption in ciphertext affects **only that exact single bit** upon decryption. Adjacent bytes and the rest of the file remain intact. In JPEG photos, bit-rot results only in a minor visual artifact rather than complete decode failure; in MP4 videos, only a single corrupted microsecond frame occurs while the rest of the stream continues playing.
 3. **Hardware-Bound & Redundant Keying:** Vault credentials on disk (`.vault`) are backed by an Android Keystore hardware-bound wrapping layer (`vaultWrappedKeyData`) with StrongBox / TEE enforcement. If the master header file suffers physical sector loss, the application can recover the master key bundle on the authenticated device.
 
+### 2.1 `Poly1305-AES` Compatibility (restic)
+
+The payload MAC uses the **Poly1305-AES128** construction (Bernstein, 2005) exactly as implemented by [restic](https://github.com/restic/restic) in `internal/repository/crypto`:
+
+```
+one-time key = clamp(r) || s
+  r = macKey[0:16]                       (fixed per vault)
+  s = AES-128_K(macKey[16:32], contentIv) (derived per file from the random 16-byte IV)
+```
+
+BouncyCastle's `Poly1305(AESEngine)` implements the identical construction (`key[0:16]` → `r`, `key[16:32]` → AES-128 key), so the Android app, the desktop CLI (`tools/fossify-cipher-cli`) and restic produce byte-identical containers. The four published test vectors from the original paper (`cr.yp.to/mac/poly1305-20050329.pdf`) are asserted on **both** sides:
+
+- `app/src/test/kotlin/org/fossify/gallery/Poly1305AesVectorsTest.kt`
+- `tools/fossify-cipher-cli/test_poly1305_aes.py`
+
+The CLI computes the MAC with **pycryptodome** (`Poly1305.new(key=..., cipher=AES, nonce=...)`); no hand-written MAC implementation remains.
+
+### 2.2 Container Format Contract (`helpers/vault/`)
+
+The on-disk container format is defined in exactly one place, `app/src/main/kotlin/org/fossify/gallery/helpers/vault/`:
+
+| File | Responsibility |
+| :--- | :--- |
+| `VaultContainer.kt` | Magic bytes, versions, IV/tag lengths, `payloadOffset()`, version/MAC lookup, content-IV validation |
+| `VaultKeyDerivation.kt` | Key-separation domains and `deriveSubkey()` (HMAC-SHA256) |
+| `VaultContainerWriter.kt` | The **single write path** for containers (`writeContainer`, `rewriteContainer`, `rewriteHeaderInPlace`) |
+
+v3 container layout:
+
+```
+offset  size  content
+0       8     magic "FGVLTENC"
+8       1     version (3)
+9       12    header IV (AES-256-GCM)
+21      4     encrypted header length (big-endian)
+25      N     encrypted header (GCM ciphertext + 16-byte GCM tag)
+25+N    16    content IV (AES-256-CTR initial counter)
+41+N    M     encrypted payload (M = original file size)
+41+N+M  16    Poly1305-AES MAC tag
+```
+
+**All three write paths funnel through `VaultContainerWriter`:** file→file encryption, stream→file encryption, and rename (which rewrites the header while copying the payload verbatim, without re-encrypting media bytes).
+
+### 2.3 Cross-Implementation Test Fixtures
+
+`tools/fossify-cipher-cli/make_fixtures.py` produces `.bin` containers with the CLI and stores them under `app/src/test/resources/fixtures/cli/`. `CliFixtureCompatibilityTest` then asserts that the Android app can read, authenticate and decrypt every one of them, and that tampered payloads / MAC tags / content IVs / headers are rejected. This pins the "encrypt on the desktop CLI → open on the phone" workflow against regressions.
+
 ---
 
 ## 3. Application Operating Modes (Mode 1, Mode 2, Mode 3)

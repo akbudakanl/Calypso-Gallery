@@ -12,7 +12,26 @@ For full architectural details, cryptography specifications, and user guides, se
 ---
 
 ## [Unreleased]
+### Changed
+- **Hand-Written Poly1305-AES MAC Replaced with pycryptodome (`cipher_vault.py`, `test_cipher_vault.py`, `requirements.txt`):**
+  - Removed the hand-written `Poly1305AES` class from `tools/fossify-cipher-cli/cipher_vault.py` (the MAC core was re-implemented in Python); the CLI now uses `pycryptodome`'s `Poly1305.new(key=..., cipher=AES, nonce=...)`, which implements the same Bernstein Poly1305-AES construction as BouncyCastle.
+  - Updated the test-only decryption helper in `test_cipher_vault.py` to verify the MAC with an **independent** implementation (pycryptodome) instead of the same code path used for encryption, so a broken MAC implementation can no longer pass the CLI's own round-trip tests.
+  - Added `pycryptodome>=3.20.0` to `tools/fossify-cipher-cli/requirements.txt` and a dedicated dependency check in `check_dependencies()`.
+  - The on-disk container format is **unchanged**; existing vaults and existing CLI output remain fully readable.
+- **`android.util.Base64` → `java.util.Base64` (`CryptoManager`):** vault header and biometric bundle encoding now uses the JVM standard library (`minSdk 26`), removing an Android-only dependency from the key-management path so it can be exercised in JVM unit tests.
+
 ### Added
+- **Cross-Implementation Test Fixtures & Published Poly1305-AES Vectors (`helpers/vault/`, `test_poly1305_aes.py`, `make_fixtures.py`, `Poly1305AesVectorsTest`, `CliFixtureCompatibilityTest`, `VaultContainerWriterTest`, `VaultRenameTest`):**
+  - Added the four published Poly1305-AES128 test vectors (Bernstein 2005, `cr.yp.to/mac/poly1305-20050329.pdf`, also used by restic) as assertions on **both** sides: `app/src/test/kotlin/org/fossify/gallery/Poly1305AesVectorsTest.kt` (BouncyCastle `Poly1305(AESEngine)`) and `tools/fossify-cipher-cli/test_poly1305_aes.py` (pycryptodome).
+  - Added `tools/fossify-cipher-cli/make_fixtures.py`, which generates CLI-produced `.bin` containers for the edge sizes that break naive MAC implementations (0, 1, 15, 16, 17, 65535, 65536, 65537 bytes, ~1.1 MB, plus a real image exercising the embedded-thumbnail path) and stores them under `app/src/test/resources/fixtures/cli/` with a `manifest.json`.
+  - Added `CliFixtureCompatibilityTest`: asserts that the Android app can read, authenticate (Poly1305-AES MAC) and decrypt every CLI fixture byte-for-byte, and that tampered payloads, tampered MAC tags, tampered content IVs, tampered headers, truncated files and a wrong master key are all rejected.
+  - Added `VaultContainerWriterTest` and `VaultRenameTest`, covering the container writer (round-trip for all payload sizes, payload offset arithmetic, tamper rejection, header rewrite) and the rename path (payload preserved verbatim, integrity still valid, tampered files refused).
+- **Container Format Contract Extracted to `helpers/vault/` (`VaultContainer`, `VaultKeyDerivation`, `VaultContainerWriter`, `CryptoManager`):**
+  - Added `helpers/vault/VaultContainer.kt` as the single source of truth for the on-disk container format: magic bytes, version constants, IV/tag lengths, `payloadOffset()`, version/MAC lookup and `isValidContentIv()`.
+  - Added `helpers/vault/VaultKeyDerivation.kt` holding the key-separation domains (`DOMAIN_HEADER_KEY`, `DOMAIN_CONTENT_ENC_KEY`, `DOMAIN_CONTENT_MAC_KEY`) and `deriveSubkey()` (HMAC-SHA256).
+  - Added `helpers/vault/VaultContainerWriter.kt` as the **single write path** for containers: `writeContainer()` (file→file and stream→file encryption), `rewriteContainer()` (rename: rewrites the header while copying the payload verbatim, preserving legacy v1 magic/header-key semantics) and `rewriteHeaderInPlace()`.
+  - Updated `CryptoManager` to delegate all container writing to `VaultContainerWriter` and to read every layout constant from `VaultContainer` (the four duplicated `payloadOffset` calculations now use one formula).
+  - Added content-IV validation in `readMetadata`: an all-zero content IV is rejected, since it would repeat a Poly1305-AES one-time key.
 - **Incremental `.pending_sync` External Vault Sync (`cipher_vault.py`, `CryptoManager`, `strings.xml`, `CustomVaultLocationTest`, `test_cipher_vault.py`):**
   - Updated `tools/fossify-cipher-cli/cipher_vault.py` (`append_pending_sync_entries`) to append newly encrypted `.bin` relative paths to `<output_dir>/.pending_sync` across CLI sessions without overwriting prior unsynced batches.
   - Updated `CryptoManager.syncVaultFromExternalDirectory` (`requirePendingManifest = true` by default) to strictly process only entries listed in `.pending_sync` (refusing to scan the full external archive when `.pending_sync` is missing or empty, removing succeeded entries, retaining failed entries, and deleting `.pending_sync` once empty).
