@@ -14,6 +14,8 @@ import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
 import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_ROOT_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.DATE_TIE_BREAK_ASK
+import org.fossify.gallery.helpers.DATE_TIE_BREAK_KEEP_TARGET
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
@@ -1240,9 +1242,11 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun timestampEquivalence_keepsOldAndNewBitIdenticalCopies_and_deduplicatesMatchingTimestamps() {
+    fun dateTieBreak_ask_keepsOldAndNewBitIdenticalCopies_and_deduplicatesMatchingTimestamps() {
         val masterKey = ByteArray(32) { (it + 7).toByte() }
         setMasterKey(masterKey)
+        testContext.config.conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_ASK
 
         val payload = ByteArray(4096) { (it * 13 + 3).toByte() }
         val ts2021 = 1_620_000_000_000L // May 2021
@@ -1357,6 +1361,41 @@ class CustomVaultLocationTest {
             CryptoManager.inspectTransferConflict(probe2021Tolerance, probeDir, isTargetEncrypted = false).status
         )
         assertTrue(probe2021.exists())
+    }
+
+    @Test
+    fun dateTieBreak_keepTarget_deduplicatesIdenticalContentWithDifferentDates() {
+        val masterKey = ByteArray(32) { (it + 5).toByte() }
+        setMasterKey(masterKey)
+        testContext.config.conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_KEEP_TARGET
+
+        val payload = ByteArray(4096) { (it * 3 + 1).toByte() }
+        val srcDir = File(tempRoot, "tie_src").apply { mkdirs() }
+        val target = File(tempRoot, "tie_target").apply { mkdirs() }
+
+        val first = CryptoManager.encryptFileToDirectory(
+            testContext,
+            File(srcDir, "photo.jpg").apply {
+                writeBytes(payload)
+                setLastModified(1_620_000_000_000L)
+            },
+            target,
+            wipeSource = false
+        )
+        assertNotNull(first)
+
+        val second = CryptoManager.encryptFileToDirectory(
+            testContext,
+            File(srcDir, "photo.jpg").apply {
+                writeBytes(payload)
+                setLastModified(1_770_000_000_000L)
+            },
+            target,
+            wipeSource = false
+        )
+        assertEquals(first!!.absolutePath, second?.absolutePath)
+        assertEquals(1, target.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
     }
 
     @Test

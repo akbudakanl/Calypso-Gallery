@@ -88,5 +88,64 @@
             android:paddingBottom="@dimen/small_margin"
             android:text="@string/fast_large_duplicate_check_hint"
             android:textSize="@dimen/smaller_text_size" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/date_tie_break_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/medium_margin"
+            android:text="@string/date_tie_break_label"
+            android:textSize="@dimen/normal_text_size" />
+
+        <org.fossify.commons.views.MyCompatRadioButton
+            android:id="@+id/date_tie_break_keep_target"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/small_margin"
+            android:paddingBottom="@dimen/small_margin"
+            android:text="@string/date_tie_break_keep_target" />
+
+        <org.fossify.commons.views.MyCompatRadioButton
+            android:id="@+id/date_tie_break_use_source"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/small_margin"
+            android:paddingBottom="@dimen/small_margin"
+            android:text="@string/date_tie_break_use_source" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyCompatRadioButton
+                android:id="@+id/date_tie_break_ask"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:paddingTop="@dimen/small_margin"
+                android:paddingBottom="@dimen/small_margin"
+                android:text="@string/date_tie_break_ask" />
+
+            <ImageView
+                android:id="@+id/date_tie_break_ask_info"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/date_tie_break_ask_info_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_info_vector" />
+        </LinearLayout>
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/date_tie_break_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:alpha="0.75"
+            android:paddingStart="@dimen/big_margin"
+            android:paddingBottom="@dimen/small_margin"
+            android:text="@string/date_tie_break_hint"
+            android:textSize="@dimen/smaller_text_size" />
     </LinearLayout>
 </ScrollView>

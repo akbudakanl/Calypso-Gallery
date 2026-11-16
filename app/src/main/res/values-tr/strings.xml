@@ -491,3 +491,10 @@
     <string name="fork_disclaimer_message">Bu uygulama, Fossify ekibi tarafından geliştirilmemiştir. Calypso Gallery, Fossify Gallery uygulamasının bağımsız olarak sürdürülen resmi olmayan bir forkudur; orijinal geliştiriciye yalnızca kaynak göstermek amacıyla referans verilmektedir. Fossify ile herhangi bir bağlantısı, onayı veya desteği yoktur.\n\nDevam ederek bu uyarıyı onaylamış olursunuz. Fork ile ilgili değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
     <string name="fork_disclaimer_acknowledge">Anladım</string>
 </resources>
+    <string name="date_tie_break_label">İçerik aynı, tarih farklıysa</string>
+    <string name="date_tie_break_keep_target">Hedefteki dosyanın tarihi kalsın (varsayılan)</string>
+    <string name="date_tie_break_use_source">Kaynak dosyanın tarihi kullanılsın</string>
+    <string name="date_tie_break_ask">Her zaman sor</string>
+    <string name="date_tie_break_hint">Yalnızca Akıllı diyalog ve Otomatik modda geçerlidir. Standart diyalog etkilenmez.</string>
+    <string name="date_tie_break_ask_info_title">&quot;Her zaman sor&quot; akıllı diyaloğu ve otomatik modu neden işlevsiz kılar?</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Akıllı diyalog ve Otomatik modun tek amacı vardır: içeriği zaten mevcut olan dosyaları atlamak. Böylece yalnızca gerçekten ilgilenmeniz gereken dosyaları görürsünüz — adı aynı, içeriği farklı olanlar. Bit-rot tespiti de tam bu durumda, thumbnail\'leri karşılaştırılarak yapılır.\n\nBurada &quot;Her zaman sor&quot; seçerseniz, içeriği aynı olup yalnızca tarihi farklı olan her dosya tekrar çakışma olarak karşınıza çıkar. Akıllı diyalogda aynı fotoğrafın iki thumbnail\'ini görürsünüz, kontrol edecek bir şey yoktur. Otomatik modda ise aynı dosya name(1) olarak yeniden yazılır ve klasörünüz gereksiz kopyalarla dolar.\n\nBu seçeneği yalnızca her tarih farkını bilerek incelemek istiyorsanız kullanın; örneğin yanlış bir tarihi elle düzeltmek için.\n\nNot: İçerik bit-to-bit aynıysa EXIF çekim tarihi de aynıdır. Tarih farkı, taraflardan birinin EXIF verisini kaybedip dosya değiştirme tarihine (kopyalama tarihi) düştüğünü gösterir.</string>

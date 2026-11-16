@@ -544,3 +544,10 @@
     <string name="fork_disclaimer_message">This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">I understand</string>
 </resources>
+    <string name="date_tie_break_label">When content is identical but dates differ</string>
+    <string name="date_tie_break_keep_target">Keep the existing file\'s date (default)</string>
+    <string name="date_tie_break_use_source">Use the source file\'s date</string>
+    <string name="date_tie_break_ask">Always ask</string>
+    <string name="date_tie_break_hint">Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected.</string>
+    <string name="date_tie_break_ask_info_title">Why &quot;Always ask&quot; disables Smart dialog and Automatic mode</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose &quot;Always ask&quot; here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date).</string>
