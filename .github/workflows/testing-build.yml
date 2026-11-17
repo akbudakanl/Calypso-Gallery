@@ -7,6 +7,7 @@ on:
         paths-ignore:
             - ".github/**"
             - "CHANGELOG.md"
+            - "FORK_CHANGELOG.md"
             - "docs/**"
             - "fastlane/**"
             - "LICENSE"

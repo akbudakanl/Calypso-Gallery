@@ -1,18 +1,214 @@
-name: Release
+name: Release Calypso Gallery
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - ".fossify/release-marker.txt"
 
+permissions:
+  contents: write
+
+concurrency:
+  group: calypso-release-${{ github.repository }}
+  cancel-in-progress: true
+
 jobs:
-  call-release-workflow:
-    name: Release
-    uses: FossifyOrg/.github/.github/workflows/release.yml@main
-    with:
-      abi_apks: true
-      track: ${{ vars.GPLAY_TRACK || 'beta' }}
-      rollout: ${{ vars.GPLAY_ROLLOUT || '0.05' }}
-      validate_only: ${{ vars.GPLAY_DRY_RUN == 'true' }}
-    secrets: inherit
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version_name: ${{ steps.extract.outputs.version_name }}
+      package_name: ${{ steps.extract.outputs.package_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Test fork release tooling
+        run: python -m unittest discover -s .github/scripts/tests -v
+
+      - name: Extract and validate release version
+        id: extract
+        run: |
+          set -euo pipefail
+          version_name=$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)
+          version_code=$(grep '^VERSION_CODE=' gradle.properties | cut -d= -f2)
+          package_name=$(grep '^APPLICATION_ID=' gradle.properties | cut -d= -f2)
+          marker_version=$(sed -n '2p' .fossify/release-marker.txt | tr -d '\r')
+
+          if [[ -z "$version_name" || -z "$version_code" || -z "$package_name" ]]; then
+            echo "::error::VERSION_NAME, VERSION_CODE, or APPLICATION_ID is missing from gradle.properties"
+            exit 1
+          fi
+
+          if [[ ! "$version_name" =~ ^[0-9]+\.[0-9]+\.[0-9]+-cipher$ ]]; then
+            echo "::error::Invalid fork release version: $version_name"
+            exit 1
+          fi
+
+          if [[ "$marker_version" != "$version_name ($version_code)" ]]; then
+            echo "::error::Release marker '$marker_version' does not match '$version_name ($version_code)'"
+            exit 1
+          fi
+
+          echo "version_name=$version_name" >> "$GITHUB_OUTPUT"
+          echo "package_name=$package_name" >> "$GITHUB_OUTPUT"
+
+      - name: Create version-specific source tag
+        env:
+          VERSION_NAME: ${{ steps.extract.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          head_commit=$(git rev-parse HEAD)
+          if git rev-parse --verify --quiet "refs/tags/$VERSION_NAME" >/dev/null; then
+            tagged_commit=$(git rev-list -n 1 "refs/tags/$VERSION_NAME")
+            if [[ "$tagged_commit" != "$head_commit" ]]; then
+              echo "::error::Tag $VERSION_NAME already exists at $tagged_commit, not $head_commit"
+              exit 1
+            fi
+          else
+            git tag "$VERSION_NAME" "$head_commit"
+            git push origin "refs/tags/$VERSION_NAME"
+          fi
+
+  release_gplay:
+    name: Google Play
+    needs: [prepare, release_foss]
+    if: vars.RELEASE_TARGET == 'gplay'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden the runner (audit outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Checkout Fossify release utilities
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: FossifyOrg/.github
+          ref: a5aa5c5191edab24a7a011dfa20c945b06e475fe
+          path: .github-repo
+
+      - uses: FossifyOrg/.github/.github/actions/gradle-cache@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+      - uses: FossifyOrg/.github/.github/actions/decode-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+
+      - name: Set up Ruby & Bundler
+        uses: ruby/setup-ruby@e81a8fa391b11a595c1b7ed84177cc0fe02faf83
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Set up JDK
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+
+      - name: Prepare Play Store metadata
+        run: python ./.github-repo/scripts/prepare_metadata.py
+
+      - name: Install Fastlane
+        run: bundle install
+
+      - name: Decode Play Store JSON key
+        run: |
+          echo "$SERVICE_ACCOUNT_JSON_KEY_BASE64" | base64 --decode > fastlane/service-account.json
+        env:
+          SERVICE_ACCOUNT_JSON_KEY_BASE64: ${{ secrets.SERVICE_ACCOUNT_JSON_KEY_BASE64 }}
+
+      - name: Build AAB and upload to Play Store
+        run: bundle exec fastlane android deploy
+        env:
+          FLAVOR: "gplay"
+          PACKAGE_NAME: ${{ needs.prepare.outputs.package_name }}
+          JSON_KEY: fastlane/service-account.json
+          TRACK: ${{ vars.GPLAY_TRACK || 'beta' }}
+          ROLLOUT: ${{ vars.GPLAY_ROLLOUT || '0.05' }}
+          VALIDATE_ONLY: ${{ vars.GPLAY_DRY_RUN == 'true' }}
+
+      - name: Clean up secrets
+        if: always()
+        uses: FossifyOrg/.github/.github/actions/cleanup-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+
+  release_foss:
+    name: GitHub
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Harden the runner (audit outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Checkout Fossify release utilities
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: FossifyOrg/.github
+          ref: a5aa5c5191edab24a7a011dfa20c945b06e475fe
+          path: .github-repo
+
+      - uses: FossifyOrg/.github/.github/actions/gradle-cache@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+      - uses: FossifyOrg/.github/.github/actions/decode-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Build Release APKs
+        run: ./gradlew assembleFossRelease -PABI_SPLITS=true
+
+      - name: Extract fork release notes
+        id: extract-changelog
+        env:
+          VERSION_NAME: ${{ needs.prepare.outputs.version_name }}
+        run: |
+          set -euo pipefail
+          notes=$(mktemp)
+          python .github/scripts/fork_changelog.py format \
+            --version "$VERSION_NAME" --format github \
+            --repository "${{ github.repository }}" --output "$notes"
+          {
+            echo "changelog<<CALYPSO_RELEASE_NOTES"
+            cat "$notes"
+            echo "CALYPSO_RELEASE_NOTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.prepare.outputs.version_name }}
+          name: ${{ needs.prepare.outputs.version_name }}
+          body: ${{ steps.extract-changelog.outputs.changelog }}
+          draft: false
+          files: app/build/outputs/apk/foss/release/*release.apk
+
+      - name: Clean up secrets
+        if: always()
+        uses: FossifyOrg/.github/.github/actions/cleanup-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
