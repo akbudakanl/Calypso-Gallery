@@ -407,6 +407,33 @@ The application transitions through three distinct operational states to balance
 
 ## 4. Virtual Album Rules & File Identity
 
+**Core model — an album is bound to the file, not to its folder.** A virtual album does not own a
+directory and never copies media. Each entry in `virtual_album_items` is a *direct relationship*
+between the album and one specific file, described by that file's content and folder identity
+(`MediaIdentity` + `FolderIdentity`, see item 4 below). The stored `full_path` and `parent_path`
+are only a **cache of where that file currently lives** and are intentionally treated as mutable.
+
+This distinction is the source of every rule in this section:
+
+```text
+  virtual album  ──(identity: mediaStoreId / size / fingerprint / folder inode+anchors)──▶  FILE
+        │                                                                                     │
+        └── cached full_path ──▶ /Pictures/Trip/IMG_1042.jpg   (may become stale after a move) ──┘
+```
+
+Because the relationship points at the file itself, the album survives everything that changes
+the file's *address*: a rename, a move to a different real album, a move across storage volumes,
+an encrypt/decrypt round trip, or a restore from the Recycle Bin. The resolver re-finds the same
+file and rewrites the cached path; it never needs the user to re-add the file. Conversely, when
+the file is genuinely gone (permanent deletion), the relationship is removed outright and a
+same-named file appearing later at the old path is a *different* file, so it is not re-linked
+(items 2 and 3 below). The only thing that is deliberately not forgiving is identity: an
+identical-looking copy elsewhere on disk is never substituted for the original.
+
+This model also has a direct UI consequence: **when a file is opened from a virtual album, the
+viewer must page through that album's members rather than the neighbours of the file's real
+folder** (see item 6).
+
 1. **Multi-Source Albums:**
    - A virtual album may hold items from **any number of physical folders**, exactly like the favorites do.
    - The folder the items came from is only remembered as a hint for the copy dialog. It never rejects new items, so a folder that was renamed or moved can no longer leave an album that refuses to accept any file.
@@ -492,6 +519,12 @@ The application transitions through three distinct operational states to balance
      - **Known Physical Edge Case:** If a standalone single-file `.nomedia`/unindexed folder with zero sibling anchors, no `MediaStore._ID`, and no preserved inode is renamed to a completely unrelated name *or* duplicated to a sibling folder before deletion, both states are indistinguishable on disk; the resolver prioritizes data safety and keeps the item `UNRESOLVED` rather than hijacking another folder's file.
 5. **Non-Destructive Favorites Deletion:**
    - Deleting the Favorites virtual directory confirms with the same non-destructive prompt as virtual albums and clears only Favorites metadata and `favorites.json`, leaving original media files untouched in their physical folders.
+6. **Viewer Album Context — Following the Album–File Relationship into the Full-Screen Viewer:**
+   - Because the album is bound to the file and not to the file's folder, opening a member from a virtual album must keep the viewer inside **that album's membership list**. The neighbours shown while swiping, the per-album sort order, and the availability of the **Shuffle** action all belong to the album the file was opened from — never to the real directory the file happens to live in.
+   - Album identity is passed explicitly as the `EXTRA_ALBUM_PATH` intent extra (`helpers/Constants.kt`). Every viewer launch site supplies it: the normal file tap and the slideshow in `MediaActivity`, the shortcuts created in `MediaActivity`/`MediaAdapter`, and the external-intent relay in `PhotoVideoActivity`. `ViewPagerActivity.initContinue` resolves `mDirectory` from this extra, so the fallback `mPath.getParentPath()` (the file's *real* parent) is only used for third-party intents that carry no album at all. Without this, a file whose cached path had been relocated by the identity resolver (item 4) would silently open "as if" it were still in its original physical album — showing that album's neighbours and hiding Shuffle because the wrong sort scope was read.
+   - The "Show all folders content" flag is explicitly suppressed for virtual albums, both in `MediaActivity` (`mShowAll`) and in `ViewPagerActivity`. Otherwise the global media list would replace the album's own member list, again breaking the direct album–file relationship in the UI.
+   - Shuffling a virtual album writes its order only into that album's `RandomOrderManager` scope. It no longer overwrites the global `SHOW_ALL` order or the process-wide `MediaActivity.mMedia` grid cache, which otherwise leaked the album's list into the next album that was opened.
+   - This is strictly a viewer-context fix: reference repair, the two-pass ambiguous-duplicate resolution, and the identity-driven path rewrites described in item 4 are unchanged. Those mechanisms are precisely what keep the album connected to the file after a move, so limiting them would break rule 4.
 
 ---
 

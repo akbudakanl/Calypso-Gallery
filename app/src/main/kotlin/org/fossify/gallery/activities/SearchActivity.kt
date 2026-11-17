@@ -7,6 +7,7 @@ import android.widget.RelativeLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.extensions.*
+import org.fossify.commons.helpers.IS_FROM_GALLERY
 import org.fossify.commons.helpers.VIEW_TYPE_GRID
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.FileDirItem
@@ -192,8 +193,11 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
     private fun openInViewPager(path: String) {
         Intent(this, ViewPagerActivity::class.java).apply {
             putExtra(PATH, path)
+            // Search has no enclosing album to carry, so the viewer keeps its existing
+            // real-parent fallback for results; only the gallery-origin flag is made explicit.
             putExtra(SHOW_ALL, false)
             putExtra(EXTRA_SECRET_VAULT_FILES, mIsVaultFilesView)
+            putExtra(IS_FROM_GALLERY, true)
             if (mIsVaultFilesView) {
                 putExtra(SKIP_AUTHENTICATION, true)
             }

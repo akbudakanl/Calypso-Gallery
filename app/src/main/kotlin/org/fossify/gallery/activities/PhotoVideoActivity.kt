@@ -65,6 +65,7 @@ import org.fossify.gallery.helpers.BOTTOM_ACTION_SET_AS
 import org.fossify.gallery.helpers.BOTTOM_ACTION_SHARE
 import org.fossify.gallery.helpers.BOTTOM_ACTION_SHOW_ON_MAP
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
+import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.IS_VIEW_INTENT
 import org.fossify.gallery.helpers.MEDIUM
 import org.fossify.gallery.helpers.PATH
@@ -331,6 +332,9 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
             Intent(this, ViewPagerActivity::class.java).apply {
                 putExtra(SKIP_AUTHENTICATION, intent.getBooleanExtra(SKIP_AUTHENTICATION, false))
                 putExtra(SHOW_FAVORITES, intent.getBooleanExtra(SHOW_FAVORITES, false))
+                // Preserve the caller's album identity when available so the viewer does not
+                // silently switch to the file's real parent folder.
+                putExtra(EXTRA_ALBUM_PATH, intent.getStringExtra(EXTRA_ALBUM_PATH).orEmpty())
                 putExtra(IS_VIEW_INTENT, true)
                 putExtra(IS_FROM_GALLERY, mIsFromGallery)
                 putExtra(PATH, path)
