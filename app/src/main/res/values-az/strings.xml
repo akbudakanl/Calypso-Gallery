@@ -2,6 +2,8 @@
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
     <string name="space_unverified_warning">Boş yer yoxlanıla bilmədi (%2$s). Təxminən %1$s tələb olunur; əməliyyat cəhd ediləcək, lakin yer çatmazsa dayana bilər.</string>
+    <string name="space_unverified_title">Boş yer doğrulanamadı</string>
+    <string name="space_continue_anyway">Yine də davam et</string>
     <string name="resume_operations_title">Kəsilmiş əməliyyatlar</string>
     <string name="resume_operations_message">%1$d əməliyyat kəsilib. Məlumat itkisi olmayıb; dayandığınız yerdən davam edilsin?</string>
     <string name="resume_continue">Davam et</string>

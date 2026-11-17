@@ -2,6 +2,8 @@
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
     <string name="space_unverified_warning">Boş alan doğrulanamıyor (%2$s). Yaklaşık %1$s gerekli; işlem denenecek ancak alan yetersiz kalırsa yarıda kesilebilir.</string>
+    <string name="space_unverified_title">Boş alan doğrulanamadı</string>
+    <string name="space_continue_anyway">Yine de devam et</string>
     <string name="resume_operations_title">Yarım kalan işlemler</string>
     <string name="resume_operations_message">%1$d işlem yarıda kaldı. Veri kaybı yok; kaldığınız yerden devam edilsin mi?</string>
     <string name="resume_continue">Devam et</string>
