@@ -550,19 +550,37 @@ class SettingsActivity : SimpleActivity() {
         setupEmptyVault()
     }
 
+    /**
+     * Vault-wide switches and the destructive "empty vault" action always re-verify the password, even when the
+     * vault is already unlocked because the person is viewing an encrypted album. The ordinary vault-session state
+     * is intentionally ignored here.
+     */
+    private fun requireVaultPassword(onAuthorized: () -> Unit) {
+        if (!doesVaultExist()) return
+        val currentType = CryptoManager.getVaultProtectionType(this)
+            ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
+        VaultSecurityDialog(this, config.hiddenPasswordHash, currentType, minimalist = false) { _, _, success ->
+            if (success) onAuthorized()
+        }
+    }
+
     private fun setupBlockVaultScreenshots() {
         binding.settingsBlockVaultScreenshots.isChecked = config.blockVaultScreenshots
         binding.settingsBlockVaultScreenshotsHolder.setOnClickListener {
-            binding.settingsBlockVaultScreenshots.toggle()
-            config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
+            requireVaultPassword {
+                binding.settingsBlockVaultScreenshots.toggle()
+                config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
+            }
         }
     }
 
     private fun setupVaultUpgradeWarning() {
         binding.settingsVaultUpgradeWarning.isChecked = config.vaultUpgradeWarningAlwaysShow
         binding.settingsVaultUpgradeWarningHolder.setOnClickListener {
-            binding.settingsVaultUpgradeWarning.toggle()
-            config.vaultUpgradeWarningAlwaysShow = binding.settingsVaultUpgradeWarning.isChecked
+            requireVaultPassword {
+                binding.settingsVaultUpgradeWarning.toggle()
+                config.vaultUpgradeWarningAlwaysShow = binding.settingsVaultUpgradeWarning.isChecked
+            }
         }
     }
 
@@ -752,9 +770,14 @@ class SettingsActivity : SimpleActivity() {
         )
         binding.settingsSyncVaultHolder.setOnClickListener {
             if (!doesVaultExist()) return@setOnClickListener
-            promptSyncVaultFromExternal {
-                setupVaultSettings()
-            }
+            // While the person is inside an encrypted album the key already sits in RAM and stays there until they
+            // leave that album, so no extra prompt is needed. Outside that session every visit must re-enter the
+            // password first, and the key is wiped again when the flow ends.
+            val inEncryptedAlbum = config.temporarilyShowHidden
+            promptSyncVaultFromExternal(
+                forcePasswordPrompt = !inEncryptedAlbum,
+                onSynced = { setupVaultSettings() }
+            )
         }
     }
 
@@ -888,12 +911,14 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsEmptyVaultHolder.setOnClickListener {
             if (!doesVaultExist()) return@setOnClickListener
 
-            DeleteCipherSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
-                ensureBackgroundThread {
-                    CryptoManager.deleteExistingVault(this)
-                    runOnUiThread {
-                        toast(R.string.encrypted_vault_emptied)
-                        setupVaultSettings()
+            requireVaultPassword {
+                DeleteCipherSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
+                    ensureBackgroundThread {
+                        CryptoManager.deleteExistingVault(this)
+                        runOnUiThread {
+                            toast(R.string.encrypted_vault_emptied)
+                            setupVaultSettings()
+                        }
                     }
                 }
             }
