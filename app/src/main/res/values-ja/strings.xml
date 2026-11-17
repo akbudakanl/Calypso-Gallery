@@ -298,8 +298,8 @@
     <string name="decrypting_files">ファイルを復号しています…</string>
     <string name="place_finger_prompt">指紋センサーに指を置いてください</string>
     <string name="connect_at_least_4_dots_prompt">4つ以上の点をつなげてください</string>
-    <string name="access_existing_cipher_secrets_prompt">既存の Cipher_Secrets フォルダーにアクセスしますか？</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">既存の Cipher_Secrets フォルダーは削除され、新しく作成されます。よろしいですか？</string>
+    <string name="access_existing_cipher_secrets_prompt">既存の Secrets フォルダーにアクセスしますか？</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">既存の Secrets フォルダーは削除され、新しく作成されます。よろしいですか？</string>
     <string name="confirm_checkbox_label">確認しました</string>
     <string name="secret_vault">暗号化された保管庫</string>
     <string name="secret_vault_empty">暗号化された保管庫は空です</string>
@@ -337,7 +337,7 @@
     <string name="repeat_new_password">新しいパスワードを再入力</string>
     <string name="password_changed_successfully">パスワードが正常に変更されました</string>
     <string name="encrypted_vault_emptied">暗号化された保管庫を空にしました</string>
-    <string name="empty_encrypted_vault_warning">暗号化された保管庫（Cipher_Secrets）とすべてのファイルが完全に削除されます。よろしいですか？</string>
+    <string name="empty_encrypted_vault_warning">暗号化された保管庫（Secrets）とすべてのファイルが完全に削除されます。よろしいですか？</string>
     <string name="refresh">更新</string>
     <string name="pull_down_to_open_vault">暗号化された保管庫を開くには引き下げ続けてください</string>
     <string name="keep_holding_to_open_vault">暗号化された保管庫を開くには押し続けてください</string>
@@ -380,7 +380,7 @@
     <string name="unlock_album">アルバムのロックを解除</string>
     <string name="auto_backup_prompt_message">お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。</string>
     <string name="encrypt_info_title">暗号化の仕組み</string>
-    <string name="encrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Cipher_Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
+    <string name="encrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
     <string name="decrypt_info_title">復号の仕組み</string>
     <string name="decrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 暗号化されたアルバムまたはファイルを復号すると、元の名前と形式で選択した保存先フォルダーに復元され、暗号化された保管庫から削除されます。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいフォルダーを作成するか、既存の保存先フォルダーに統合するかを確認します（設定で変更可能）。\n• 統合時は、保存先とビット単位で100%一致することが確認された暗号化コピーを保管庫から削除するか残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
     <string name="vault_location">保管庫の場所</string>
@@ -391,11 +391,11 @@
     <string name="create_new_vault_option">新しい保管庫を作成</string>
     <string name="use_existing_vault_option">既存の保管庫を使用</string>
     <string name="where_to_create_vault_title">保管庫をどこに作成しますか？</string>
-    <string name="vault_location_default_short">既定の場所 (内部 &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">既定の場所 (内部 &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">カスタムの場所</string>
     <string name="no_existing_vault_at_location">選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。</string>
     <string name="unlock_existing_vault_at_location_prompt">%s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。</string>
-    <string name="vault_location_standard_option">標準の場所 (内部ストレージ &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">標準の場所 (内部ストレージ &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">カスタム / 外部の場所（USB ドライブ、SD カード、またはカスタムフォルダー）</string>
     <string name="external_vault_unavailable_title">外部保管庫を利用できません</string>
     <string name="external_vault_unavailable_prompt">設定された保管庫の場所 (%s) は現在切断されているか利用できません。ドライブを接続して「再試行」をタップするか、別の保管庫の場所を選択してください。</string>
@@ -407,7 +407,7 @@
     <string name="vault_location_not_writable">選択したフォルダーは存在しないか、このデバイスでは書き込みできません。</string>
     <string name="vault_location_not_readable">選択したフォルダーは存在しないか、このデバイスでは読み取れません。</string>
     <string name="sync_vault_from_external">暗号化されたメディアファイルを暗号化セクションにインポート</string>
-    <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. 統合 Cipher_Secrets フォルダー:\n外部ドライブ (USB / SD) に Cipher_Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Cipher_Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Cipher_Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。</string>
+    <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. 統合 Secrets フォルダー:\n外部ドライブ (USB / SD) に Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。</string>
     <string name="conflict_handling_mode_label">ファイルの競合と重複の解決</string>
     <string name="conflict_handling_auto_short">完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更）</string>
     <string name="conflict_handling_smart_dialog_short">スマートダイアログ（同一は自動スキップ、内容が異なる場合のみ確認）</string>
@@ -444,7 +444,7 @@
     <string name="export_encrypted_vault">暗号化された保管庫をエクスポート</string>
     <string name="export_vault_only_header">.vault ファイルのみを含むフォルダーをエクスポート</string>
     <string name="export_vault_entire_folder">フォルダー全体をエクスポート</string>
-    <string name="export_vault_only_header_info">対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Cipher_Secrets という名前のフォルダーを使用するだけで十分です。</string>
+    <string name="export_vault_only_header_info">対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Secrets という名前のフォルダーを使用するだけで十分です。</string>
     <string name="exporting_vault_progress">暗号化された保管庫をエクスポート中…</string>
     <string name="vault_export_same_folder_error">エクスポート先に現在使用中の保管庫フォルダーまたはそのサブフォルダーを指定することはできません。</string>
 </resources>

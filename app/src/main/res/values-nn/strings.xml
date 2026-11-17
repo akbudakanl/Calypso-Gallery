@@ -334,8 +334,8 @@
     <string name="decrypting_files">Dekrypterer filer…</string>
     <string name="place_finger_prompt">Plasser fingeren på fingeravtrykkssensoren</string>
     <string name="connect_at_least_4_dots_prompt">Kopla saman minst 4 punkt</string>
-    <string name="access_existing_cipher_secrets_prompt">Vil du få tilgang til den eksisterande Cipher_Secrets-mappa di?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Eksisterande Cipher_Secrets-mappe vert sletta og ei ny vert laga. Er du sikker?</string>
+    <string name="access_existing_cipher_secrets_prompt">Vil du få tilgang til den eksisterande Secrets-mappa di?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Eksisterande Secrets-mappe vert sletta og ei ny vert laga. Er du sikker?</string>
     <string name="confirm_checkbox_label">Eg stadfestar</string>
     <string name="secret_vault">Kryptert kvelv</string>
     <string name="secret_vault_empty">Det krypterte kvelvet er tomt</string>
@@ -407,7 +407,7 @@
     <string name="repeat_new_password">Gjenta nytt passord</string>
     <string name="password_changed_successfully">Passordet er endra</string>
     <string name="encrypted_vault_emptied">Kryptert kvelv tømt</string>
-    <string name="empty_encrypted_vault_warning">Det krypterte kvelvet (Cipher_Secrets) og alle filene i det vert sletta permanent. Er du sikker?</string>
+    <string name="empty_encrypted_vault_warning">Det krypterte kvelvet (Secrets) og alle filene i det vert sletta permanent. Er du sikker?</string>
     <string name="refresh">Oppdater</string>
     <string name="pull_down_to_open_vault">Hald fram med å dra ned for kryptert kvelv</string>
     <string name="keep_holding_to_open_vault">Hald fram med å halde for å opne kryptert kvelv</string>
@@ -448,7 +448,7 @@
     <string name="auto_backup_prompt_message">Vil du at favorittane og dei virtuelle albuma dine skal lagrast regelmessig i systemlagringa utanfor appminnet? Dette sikrar at du ikkje mistar favorittlista og dei virtuelle albuma dine om du avinstallerer appen. Du kan når som helst laga ei tryggingskopi manuelt frå appinnstillingane.</string>
     <string name="access_storage_prompt">Ver venleg og gje appen vår tilgang til alle filene dine, han fungerer kanskje ikkje så godt utan dette.</string>
     <string name="encrypt_info_title">Korleis kryptering fungerer</string>
-    <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Cipher_Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
+    <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
     <string name="decrypt_info_title">Korleis dekryptering fungerer</string>
     <string name="decrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit kryptert album eller ei kryptert fil blir dekryptert, blir det/ho gjenoppretta med opphavleg namn og format til den valde målmappa og fjerna frå det krypterte kvelvet.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta ei ny mappe som Album(1) eller slå saman med den eksisterande målmappa (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om krypterte kopiar som er stadfesta 100% bit-for-bit identiske med målet skal fjernast frå kvelvet eller behaldast.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
     <string name="vault_location">Kvelvplassering</string>
@@ -459,11 +459,11 @@
     <string name="create_new_vault_option">Opprett nytt kvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterande kvelv</string>
     <string name="where_to_create_vault_title">Kvar skal kvelvet opprettast?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Eigendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa.</string>
     <string name="unlock_existing_vault_at_location_prompt">Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe.</string>
-    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Eigendefinert / Ekstern plassering (USB-stasjon, SD-kort eller eigendefinert mappe)</string>
     <string name="external_vault_unavailable_title">Eksternt kvelv utilgjengeleg</string>
     <string name="external_vault_unavailable_prompt">Den konfigurerte kvelvplasseringa di (%s) er for tida fråkopla eller utilgjengeleg. Kopla til stasjonen og trykk på Prøv på nytt, eller vel ei anna kvelvplassering.</string>
@@ -475,7 +475,7 @@
     <string name="vault_location_not_writable">Den valde mappa finst ikkje eller kan ikkje skrivast til på denne eininga.</string>
     <string name="vault_location_not_readable">Den valde mappa finst ikkje eller kan ikkje lesast på denne eininga.</string>
     <string name="sync_vault_from_external">Importer krypterte mediefiler til kryptert seksjon</string>
-    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medium:\n\n1. Einskapleg Cipher_Secrets-mappe:\nHa ei mappe med namnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Cipher_Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg.</string>
+    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medium:\n\n1. Einskapleg Secrets-mappe:\nHa ei mappe med namnet Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg.</string>
     <string name="conflict_handling_mode_label">Løysing av filkonfliktar og duplikat</string>
     <string name="conflict_handling_auto_short">Heilautomatisk (Standard — Hopp over identiske, gje ulike nytt namn som (1))</string>
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Hopp over identiske automatisk, spør når innhaldet er ulikt)</string>
@@ -512,7 +512,7 @@
     <string name="export_encrypted_vault">Eksporter kryptert kvelv</string>
     <string name="export_vault_only_header">Eksporter mappe som berre inneheld .vault-fil</string>
     <string name="export_vault_entire_folder">Eksporter heile mappa</string>
-    <string name="export_vault_only_header_info">For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Cipher_Secrets som inneheld .vault-fila.</string>
+    <string name="export_vault_only_header_info">For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Secrets som inneheld .vault-fila.</string>
     <string name="exporting_vault_progress">Eksporterer kryptert kvelv…</string>
     <string name="vault_export_same_folder_error">Eksportmålet kan ikkje vera den aktive kvelvmappa eller liggja inne i ho.</string>
 </resources>

@@ -306,8 +306,8 @@
     <string name="encrypt_decrypt_notifications">Şifreleme / Şifre Çözme</string>
     <string name="place_finger_prompt">Lütfen parmağınızı parmak izi sensörüne yerleştirin</string>
     <string name="connect_at_least_4_dots_prompt">En az 4 noktayı birleştirin</string>
-    <string name="access_existing_cipher_secrets_prompt">Mevcut Cipher_Secrets klasörünüze erişmek istiyor musunuz?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Mevcut Cipher_Secrets klasörü silinecek ve yenisi oluşturulacak, emin misiniz?</string>
+    <string name="access_existing_cipher_secrets_prompt">Mevcut Secrets klasörünüze erişmek istiyor musunuz?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Mevcut Secrets klasörü silinecek ve yenisi oluşturulacak, emin misiniz?</string>
     <string name="confirm_checkbox_label">Onaylıyorum</string>
     <string name="secret_vault">Şifreli Kasa</string>
     <string name="secret_vault_empty">Şifreli Kasa boş</string>
@@ -345,11 +345,11 @@
     <string name="create_new_vault_option">Yeni kasa oluştur</string>
     <string name="use_existing_vault_option">Mevcut kasayı kullan</string>
     <string name="where_to_create_vault_title">Kasa nerede oluşturulsun?</string>
-    <string name="vault_location_default_short">Varsayılan Konum (Dahili &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Varsayılan Konum (Dahili &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Özel Konum</string>
     <string name="no_existing_vault_at_location">Seçilen klasörde mevcut bir şifreli kasa (.vault) bulunamadı.</string>
     <string name="unlock_existing_vault_at_location_prompt">%s konumunda mevcut bir şifreli kasa bulundu. Kilidini açıp kullanmak istiyor musunuz? Farklı bir klasör seçmek için Hayır\'a dokunun.</string>
-    <string name="vault_location_standard_option">Varsayılan konum (Dahili Depolama &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Varsayılan konum (Dahili Depolama &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Özel / Harici konum (USB bellek, SD kart veya özel klasör)</string>
     <string name="external_vault_unavailable_title">Harici kasaya erişilemiyor</string>
     <string name="external_vault_unavailable_prompt">Ayarlı kasa konumunuza (%s) şu anda ulaşılamıyor veya harici disk çıkarılmış. Diski takıp Tekrar dene butonuna dokunun ya da farklı bir kasa konumu seçin.</string>
@@ -361,7 +361,7 @@
     <string name="vault_location_not_writable">Seçilen klasör mevcut değil veya bu cihazda yazılabilir değil.</string>
     <string name="vault_location_not_readable">Seçilen klasör mevcut değil veya bu cihazda okunabilir değil.</string>
     <string name="sync_vault_from_external">şifrelenmiş yeni medya dosyalarını şifreli alana aktar</string>
-    <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Cipher_Secrets):\nHarici diskinizde (USB / SD) Cipher_Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Cipher_Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Cipher_Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
+    <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Secrets):\nHarici diskinizde (USB / SD) Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
     <string name="conflict_handling_mode_label">Dosya çakışması ve kopya kontrolü</string>
     <string name="conflict_handling_standard_dialog_summary">Standart diyalog</string>
     <string name="conflict_handling_smart_dialog_summary">Akıllı diyalog</string>
@@ -437,7 +437,7 @@
     <string name="repeat_new_password">Yeni şifreyi tekrarlayın</string>
     <string name="password_changed_successfully">Şifre başarıyla değiştirildi</string>
     <string name="encrypted_vault_emptied">Şifreli kasa boşaltıldı</string>
-    <string name="empty_encrypted_vault_warning">Şifreli kasa (Cipher_Secrets) ve içindeki tüm dosyalar kalıcı olarak silinecektir. Emin misiniz?</string>
+    <string name="empty_encrypted_vault_warning">Şifreli kasa (Secrets) ve içindeki tüm dosyalar kalıcı olarak silinecektir. Emin misiniz?</string>
     <string name="refresh">Yenile</string>
     <string name="pull_down_to_open_vault">Şifreli kasa için çekmeye devam edin</string>
     <string name="keep_holding_to_open_vault">Şifreli kasayı açmak için basılı tutun</string>
@@ -466,7 +466,7 @@
     <string name="confirm_encrypt_files">Seçilen dosyaları şifrelemek istediğinizden emin misiniz? Dosyalar şifrelenecek ve şifreli kasaya taşınacaktır. Orijinal dosyalar silinecektir.</string>
     <string name="confirm_encrypt_files_to_vault">Seçilen dosyalar şifreli kasaya kopyalanırken şifrelenecektir. Devam etmek istiyor musunuz?</string>
     <string name="encrypt_info_title">Şifreleme Nasıl Çalışır?</string>
-    <string name="encrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifresiz bir albüm şifrelendiğinde, kasa klasörü (Cipher_Secrets) içinde şifreli bir alt klasöre dönüştürülür.\n• Hem klasör adı hem de içindeki tüm dosya adları ve içerikler şifrelenir; uygulama dışında okunamaz.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir albüm mü oluşturulacağını yoksa mevcut şifreli albümle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan kaynak dosyaların silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
+    <string name="encrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifresiz bir albüm şifrelendiğinde, kasa klasörü (Secrets) içinde şifreli bir alt klasöre dönüştürülür.\n• Hem klasör adı hem de içindeki tüm dosya adları ve içerikler şifrelenir; uygulama dışında okunamaz.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir albüm mü oluşturulacağını yoksa mevcut şifreli albümle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan kaynak dosyaların silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
     <string name="allow_batch_renaming">Birden fazla dosya seçildiğinde toplu yeniden adlandırmaya izin ver</string>
     <string name="keep_original_remove_from_virtual_album">Orijinal dosyayı koru, yalnızca bu sanal albümden kaldır</string>
     <string name="keep_original_remove_from_favorites">Orijinal dosyayı koru, yalnızca favorilerden kaldır</string>
@@ -479,7 +479,7 @@
     <string name="export_encrypted_vault">Şifreli kasayı dışa aktar</string>
     <string name="export_vault_only_header">Sadece .vault dosyası içeren klasörü dışa aktar</string>
     <string name="export_vault_entire_folder">Tüm klasörü dışa aktar</string>
-    <string name="export_vault_only_header_info">Desteklenen CLI aracını kullanarak farklı cihazlarda şifrelediğiniz medya ögelerini telefondaki şifreli kasaya ekleyebilmeniz için içerisinde .vault dosyası bulunan Cipher_Secrets isminde bir klasör kullanmanız yeterlidir.</string>
+    <string name="export_vault_only_header_info">Desteklenen CLI aracını kullanarak farklı cihazlarda şifrelediğiniz medya ögelerini telefondaki şifreli kasaya ekleyebilmeniz için içerisinde .vault dosyası bulunan Secrets isminde bir klasör kullanmanız yeterlidir.</string>
     <string name="exporting_vault_progress">Şifreli kasa dışa aktarılıyor…</string>
     <string name="vault_export_same_folder_error">Dışa aktarma hedefi aktif kasa klasörü veya onun alt klasörü olamaz.</string>
     <string name="album_type_icons">Albüm türü ikonları</string>

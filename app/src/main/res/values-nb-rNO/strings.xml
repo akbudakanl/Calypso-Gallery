@@ -304,8 +304,8 @@
     <string name="decrypting_files">Dekrypterer filer…</string>
     <string name="place_finger_prompt">Plasser fingeren på fingeravtrykkssensoren</string>
     <string name="connect_at_least_4_dots_prompt">Koble sammen minst 4 punkter</string>
-    <string name="access_existing_cipher_secrets_prompt">Vil du få tilgang til din eksisterende Cipher_Secrets-mappe?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Eksisterende Cipher_Secrets-mappe vil bli slettet og en ny vil bli opprettet. Er du sikker?</string>
+    <string name="access_existing_cipher_secrets_prompt">Vil du få tilgang til din eksisterende Secrets-mappe?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Eksisterende Secrets-mappe vil bli slettet og en ny vil bli opprettet. Er du sikker?</string>
     <string name="confirm_checkbox_label">Jeg bekrefter</string>
     <string name="secret_vault">Kryptert hvelv</string>
     <string name="secret_vault_empty">Det krypterte hvelvet er tomt</string>
@@ -353,7 +353,7 @@
     <string name="repeat_new_password">Gjenta nytt passord</string>
     <string name="password_changed_successfully">Passordet er endret</string>
     <string name="encrypted_vault_emptied">Kryptert hvelv tømt</string>
-    <string name="empty_encrypted_vault_warning">Det krypterte hvelvet (Cipher_Secrets) og alle filene i det vil bli slettet permanent. Er du sikker?</string>
+    <string name="empty_encrypted_vault_warning">Det krypterte hvelvet (Secrets) og alle filene i det vil bli slettet permanent. Er du sikker?</string>
     <string name="refresh">Oppdater</string>
     <string name="pull_down_to_open_vault">Fortsett å dra ned for kryptert hvelv</string>
     <string name="keep_holding_to_open_vault">Fortsett å holde for å åpne kryptert hvelv</string>
@@ -394,7 +394,7 @@
     <string name="auto_backup_prompt_message">Vil du at favorittene og de virtuelle albumene dine skal lagres regelmessig i systemlagringen utenfor appminnet? Dette sikrer at du ikke mister favorittlisten og de virtuelle albumene dine hvis du avinstallerer appen. Du kan når som helst opprette en sikkerhetskopi manuelt fra appinnstillingene.</string>
     <string name="access_storage_prompt">Vennligst gi appen vår tilgang til alle filene dine, den fungerer kanskje ikke så bra uten dette.</string>
     <string name="encrypt_info_title">Slik fungerer kryptering</string>
-    <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når et ukryptert album krypteres, gjøres det om til en kryptert undermappe inne i hvelvet (Cipher_Secrets).\n• Både mappenavnet og alle filnavn og filinnhold inni det krypteres, slik at ingenting er lesbart utenfor appen.\n\nHvis et album med samme navn allerede finnes:\n• Som standard spør appen om du vil opprette et nytt album som Album(1) eller slå sammen med det eksisterende krypterte albumet (kan konfigureres i Innstillinger).\n• Når du slår sammen, kan du velge om kildefiler som er bekreftet 100% bit-for-bit identiske med målet skal slettes eller beholdes i kildemappen.\n• Ulike filer med samme navn (f.eks. download.jpg) beholdes som download(1).jpg eller håndteres i henhold til innstillingen for konfliktløsning.</string>
+    <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når et ukryptert album krypteres, gjøres det om til en kryptert undermappe inne i hvelvet (Secrets).\n• Både mappenavnet og alle filnavn og filinnhold inni det krypteres, slik at ingenting er lesbart utenfor appen.\n\nHvis et album med samme navn allerede finnes:\n• Som standard spør appen om du vil opprette et nytt album som Album(1) eller slå sammen med det eksisterende krypterte albumet (kan konfigureres i Innstillinger).\n• Når du slår sammen, kan du velge om kildefiler som er bekreftet 100% bit-for-bit identiske med målet skal slettes eller beholdes i kildemappen.\n• Ulike filer med samme navn (f.eks. download.jpg) beholdes som download(1).jpg eller håndteres i henhold til innstillingen for konfliktløsning.</string>
     <string name="decrypt_info_title">Slik fungerer dekryptering</string>
     <string name="decrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når et kryptert album eller en kryptert fil dekrypteres, gjenopprettes det/den med sitt opprinnelige navn og format til den valgte målmappen og fjernes fra det krypterte hvelvet.\n\nHvis et album med samme navn allerede finnes:\n• Som standard spør appen om du vil opprette en ny mappe som Album(1) eller slå sammen med den eksisterende målmappen (kan konfigureres i Innstillinger).\n• Når du slår sammen, kan du velge om krypterte kopier som er bekreftet 100% bit-for-bit identiske med målet skal fjernes fra hvelvet eller beholdes.\n• Ulike filer med samme navn (f.eks. download.jpg) beholdes som download(1).jpg eller håndteres i henhold til innstillingen for konfliktløsning.</string>
     <string name="vault_location">Hvelvplassering</string>
@@ -405,11 +405,11 @@
     <string name="create_new_vault_option">Opprett nytt hvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterende hvelv</string>
     <string name="where_to_create_vault_title">Hvor skal hvelvet opprettes?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Egendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterende kryptert hvelv (.vault) ble funnet i den valgte mappen.</string>
     <string name="unlock_existing_vault_at_location_prompt">Et eksisterende kryptert hvelv ble funnet på %s. Vil du låse det opp og bruke det? Trykk på Nei for å velge en annen mappe.</string>
-    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Egendefinert / Ekstern plassering (USB-stasjon, SD-kort eller egendefinert mappe)</string>
     <string name="external_vault_unavailable_title">Eksternt hvelv utilgjengelig</string>
     <string name="external_vault_unavailable_prompt">Den konfigurerte hvelvplasseringen din (%s) er for øyeblikket frakoblet eller utilgjengelig. Koble til stasjonen og trykk på Prøv på nytt, eller velg en annen hvelvplassering.</string>
@@ -421,7 +421,7 @@
     <string name="vault_location_not_writable">Den valgte mappen finnes ikke eller kan ikke skrives til på denne enheten.</string>
     <string name="vault_location_not_readable">Den valgte mappen finnes ikke eller kan ikke leses på denne enheten.</string>
     <string name="sync_vault_from_external">Importer krypterte mediefiler til kryptert seksjon</string>
-    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medier:\n\n1. Enhetlig Cipher_Secrets-mappe:\nHa en mappe med navnet Cipher_Secrets på den eksterne stasjonen din (USB / SD). Der kan du enten ha en fullstendig sikkerhetskopi av hvelvet ditt, eller bare legge inn hvelvets .vault-headerfil.\n\n2. Kryptering av nye medier (PC / Tails CLI):\nDet frakoblede CLI-verktøyet lagrer automatisk nye krypterte filer direkte i Cipher_Secrets. Filer i rotmappen havner i Default Secret Album; filer i undermapper havner i tilsvarende krypterte album (eller oppretter nye).\n\n3. Bit-for-bit smart synkronisering:\nVelg den eksterne stasjonen eller Cipher_Secrets-mappen nedenfor. Appen sammenligner den eksterne stasjonen med telefonens hvelv i RAM:\n• Bare nye filer og album importeres.\n• Bit-identiske filer som allerede finnes i hvelvet hoppes over.\n• Ulike filer med samme navn (f.eks. download.jpg) importeres trygt som download(1).jpg.</string>
+    <string name="sync_vault_select_source_prompt">Slik fungerer import av krypterte medier:\n\n1. Enhetlig Secrets-mappe:\nHa en mappe med navnet Secrets på den eksterne stasjonen din (USB / SD). Der kan du enten ha en fullstendig sikkerhetskopi av hvelvet ditt, eller bare legge inn hvelvets .vault-headerfil.\n\n2. Kryptering av nye medier (PC / Tails CLI):\nDet frakoblede CLI-verktøyet lagrer automatisk nye krypterte filer direkte i Secrets. Filer i rotmappen havner i Default Secret Album; filer i undermapper havner i tilsvarende krypterte album (eller oppretter nye).\n\n3. Bit-for-bit smart synkronisering:\nVelg den eksterne stasjonen eller Secrets-mappen nedenfor. Appen sammenligner den eksterne stasjonen med telefonens hvelv i RAM:\n• Bare nye filer og album importeres.\n• Bit-identiske filer som allerede finnes i hvelvet hoppes over.\n• Ulike filer med samme navn (f.eks. download.jpg) importeres trygt som download(1).jpg.</string>
     <string name="conflict_handling_mode_label">Løsning av filkonflikter og duplikater</string>
     <string name="conflict_handling_auto_short">Helautomatisk (Standard — Hopp over identiske, gi ulike nytt navn som (1))</string>
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Hopp over identiske automatisk, spør når innholdet er ulikt)</string>
@@ -458,7 +458,7 @@
     <string name="export_encrypted_vault">Eksporter kryptert hvelv</string>
     <string name="export_vault_only_header">Eksporter mappe som kun inneholder .vault-fil</string>
     <string name="export_vault_entire_folder">Eksporter hele mappen</string>
-    <string name="export_vault_only_header_info">For å legge til medieelementer som er kryptert på andre enheter med det støttede CLI-verktøyet i det krypterte hvelvet på telefonen din, trenger du bare å bruke en mappe kalt Cipher_Secrets som inneholder .vault-filen.</string>
+    <string name="export_vault_only_header_info">For å legge til medieelementer som er kryptert på andre enheter med det støttede CLI-verktøyet i det krypterte hvelvet på telefonen din, trenger du bare å bruke en mappe kalt Secrets som inneholder .vault-filen.</string>
     <string name="exporting_vault_progress">Eksporterer kryptert hvelv…</string>
     <string name="vault_export_same_folder_error">Eksportmålet kan ikke være den aktive hvelvmappen eller ligge inne i den.</string>
 </resources>

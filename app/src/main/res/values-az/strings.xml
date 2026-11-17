@@ -334,8 +334,8 @@
     <string name="decrypting_files">Faylların şifrəsi açılır…</string>
     <string name="place_finger_prompt">Zəhmət olmasa, barmağınızı barmaq izi sensoruna qoyun</string>
     <string name="connect_at_least_4_dots_prompt">Ən azı 4 nöqtəni birləşdirin</string>
-    <string name="access_existing_cipher_secrets_prompt">Mövcud Cipher_Secrets qovluğunuza daxil olmaq istəyirsiniz?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Mövcud Cipher_Secrets qovluğu silinəcək və yenisi yaradılacaq. Əminsiniz?</string>
+    <string name="access_existing_cipher_secrets_prompt">Mövcud Secrets qovluğunuza daxil olmaq istəyirsiniz?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Mövcud Secrets qovluğu silinəcək və yenisi yaradılacaq. Əminsiniz?</string>
     <string name="confirm_checkbox_label">Təsdiqləyirəm</string>
     <string name="secret_vault">Şifrəli Seyf</string>
     <string name="secret_vault_empty">Şifrəli Seyf boşdur</string>
@@ -406,7 +406,7 @@
     <string name="repeat_new_password">Yeni şifrəni təkrarlayın</string>
     <string name="password_changed_successfully">Şifrə uğurla dəyişdirildi</string>
     <string name="encrypted_vault_emptied">Şifrəli seyf boşaldıldı</string>
-    <string name="empty_encrypted_vault_warning">Şifrəli seyf (Cipher_Secrets) və daxilindəki bütün fayllar birdəfəlik silinəcək. Əminsiniz?</string>
+    <string name="empty_encrypted_vault_warning">Şifrəli seyf (Secrets) və daxilindəki bütün fayllar birdəfəlik silinəcək. Əminsiniz?</string>
     <string name="refresh">Yenilə</string>
     <string name="pull_down_to_open_vault">Şifrəli seyf üçün aşağı çəkməyə davam edin</string>
     <string name="keep_holding_to_open_vault">Şifrəli seyfi açmaq üçün basılı saxlayın</string>
@@ -447,7 +447,7 @@
     <string name="auto_backup_prompt_message">Sevimlilərinizin və virtual albomlarınızın tətbiq yaddaşından kənarda sistem yaddaşına müntəzəm olaraq yazılmasını istəyirsiniz? Bu, tətbiqi sildiyiniz halda sevimlilər siyahınızı və virtual albomlarınızı itirməməyinizi təmin edəcək. İstənilən vaxt tətbiq parametrlərindən əl ilə ehtiyat nüsxə yarada bilərsiniz.</string>
     <string name="access_storage_prompt">Zəhmət olmasa, tətbiqimizə bütün fayllarınıza giriş icazəsi verin, bu olmadan düzgün işləməyə bilər.</string>
     <string name="encrypt_info_title">Şifrləmə necə işləyir</string>
-    <string name="encrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Cipher_Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni albom yaratmağı və ya mövcud şifrələnmiş alboma birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən mənbə faylların silinməsini və ya mənbə qovluğunda saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
+    <string name="encrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni albom yaratmağı və ya mövcud şifrələnmiş alboma birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən mənbə faylların silinməsini və ya mənbə qovluğunda saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
     <string name="decrypt_info_title">Şifrə açma necə işləyir</string>
     <string name="decrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnmiş albom və ya faylın şifrəsi açıldıqda, seçilmiş təyinat qovluğuna orijinal adı və formatı ilə bərpa olunur və şifrəli seyfdən silinir.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni qovluq yaratmağı və ya mövcud təyinat qovluğuna birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən şifrələnmiş nüsxələrin seyfdən silinməsini və ya saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
     <string name="vault_location">Seyf yeri</string>
@@ -458,11 +458,11 @@
     <string name="create_new_vault_option">Yeni seyf yarat</string>
     <string name="use_existing_vault_option">Mövcud seyfdən istifadə et</string>
     <string name="where_to_create_vault_title">Seyf harada yaradılsın?</string>
-    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Fərdi yer</string>
     <string name="no_existing_vault_at_location">Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı.</string>
     <string name="unlock_existing_vault_at_location_prompt">%s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun.</string>
-    <string name="vault_location_standard_option">Standart yer (Daxili yaddaş &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standart yer (Daxili yaddaş &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Fərdi / Xarici yer (USB sürücü, SD kart və ya fərdi qovluq)</string>
     <string name="external_vault_unavailable_title">Xarici seyf əlçatan deyil</string>
     <string name="external_vault_unavailable_prompt">Tənzimlənmiş seyf yeriniz (%s) hazırda ayrılıb və ya əlçatan deyil. Sürücünü qoşub Yenidən cəhd et üzərinə toxunun və ya başqa seyf yeri seçin.</string>
@@ -474,7 +474,7 @@
     <string name="vault_location_not_writable">Seçilmiş qovluq mövcud deyil və ya bu cihazda yazıla bilən deyil.</string>
     <string name="vault_location_not_readable">Seçilmiş qovluq mövcud deyil və ya bu cihazda oxuna bilən deyil.</string>
     <string name="sync_vault_from_external">Şifrələnmiş media fayllarını şifrələnmiş bölməyə idxal et</string>
-    <string name="sync_vault_select_source_prompt">Şifrələnmiş Medianın İdxalı Necə İşləyir:\n\n1. Vahid Cipher_Secrets Qovluğu:\nXarici sürücünüzdə (USB / SD) Cipher_Secrets adlı qovluq saxlayın. Orada ya seyfinizin tam ehtiyat nüsxəsini saxlaya, ya da yalnız seyfinizin .vault başlıq faylını yerləşdirə bilərsiniz.\n\n2. Yeni Medianın Şifrələnməsi (PC / Tails CLI):\nOflayn CLI aləti yeni şifrələnmiş faylları avtomatik olaraq birbaşa Cipher_Secrets qovluğuna saxlayır. Kök qovluğa yerləşdirilən fayllar Default Secret Album-a gedir; alt qovluqlardakı fayllar uyğun şifrələnmiş albomlara gedir (və ya yenilərini yaradır).\n\n3. Bit-bə-Bit Ağıllı Sinxronizasiya:\nNövbəti addımda xarici sürücünüzü və ya Cipher_Secrets qovluğunu seçin. Tətbiq xarici sürücünü telefonunuzdakı seyflə RAM-da müqayisə edir:\n• Yalnız yeni fayllar və albomlar idxal olunur.\n• Artıq seyfinizdə olan bit-bə-bit eyni fayllar ötürülür.\n• Eyni adda fərqli fayllar (məs., download.jpg) təhlükəsiz şəkildə download(1).jpg kimi idxal olunur.</string>
+    <string name="sync_vault_select_source_prompt">Şifrələnmiş Medianın İdxalı Necə İşləyir:\n\n1. Vahid Secrets Qovluğu:\nXarici sürücünüzdə (USB / SD) Secrets adlı qovluq saxlayın. Orada ya seyfinizin tam ehtiyat nüsxəsini saxlaya, ya da yalnız seyfinizin .vault başlıq faylını yerləşdirə bilərsiniz.\n\n2. Yeni Medianın Şifrələnməsi (PC / Tails CLI):\nOflayn CLI aləti yeni şifrələnmiş faylları avtomatik olaraq birbaşa Secrets qovluğuna saxlayır. Kök qovluğa yerləşdirilən fayllar Default Secret Album-a gedir; alt qovluqlardakı fayllar uyğun şifrələnmiş albomlara gedir (və ya yenilərini yaradır).\n\n3. Bit-bə-Bit Ağıllı Sinxronizasiya:\nNövbəti addımda xarici sürücünüzü və ya Secrets qovluğunu seçin. Tətbiq xarici sürücünü telefonunuzdakı seyflə RAM-da müqayisə edir:\n• Yalnız yeni fayllar və albomlar idxal olunur.\n• Artıq seyfinizdə olan bit-bə-bit eyni fayllar ötürülür.\n• Eyni adda fərqli fayllar (məs., download.jpg) təhlükəsiz şəkildə download(1).jpg kimi idxal olunur.</string>
     <string name="conflict_handling_mode_label">Fayl ziddiyyəti və dublikat həlli</string>
     <string name="conflict_handling_auto_short">Tam avtomatik (Susmaya görə — Eyniləri ötür, fərqliləri (1) kimi adlandır)</string>
     <string name="conflict_handling_smart_dialog_short">Ağıllı dialoq (Eyniləri avtomatik ötür, məzmun fərqli olduqda soruş)</string>
@@ -511,7 +511,7 @@
     <string name="export_encrypted_vault">Şifrələnmiş seyfi ixrac et</string>
     <string name="export_vault_only_header">Yalnız .vault faylını ehtiva edən qovluğu ixrac et</string>
     <string name="export_vault_entire_folder">Bütün qovluğu ixrac et</string>
-    <string name="export_vault_only_header_info">Dəstəklənən CLI alətindən istifadə edərək digər cihazlarda şifrələdiyiniz media elementlərini telefonunuzdakı şifrələnmiş seyfə əlavə etmək üçün tərkibində .vault faylı olan Cipher_Secrets adlı qovluqdan istifadə etməyiniz kifayətdir.</string>
+    <string name="export_vault_only_header_info">Dəstəklənən CLI alətindən istifadə edərək digər cihazlarda şifrələdiyiniz media elementlərini telefonunuzdakı şifrələnmiş seyfə əlavə etmək üçün tərkibində .vault faylı olan Secrets adlı qovluqdan istifadə etməyiniz kifayətdir.</string>
     <string name="exporting_vault_progress">Şifrələnmiş seyf ixrac olunur…</string>
     <string name="vault_export_same_folder_error">İxrac hədəfi aktiv seyf qovluğu və ya onun alt qovluğu ola bilməz.</string>
 </resources>
