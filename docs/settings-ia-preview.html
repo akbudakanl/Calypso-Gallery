@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Calypso Gallery — ayarlar bilgi mimarisi önerisi</title>
+<style>
+  body{margin:0;padding:28px;font-family:Roboto,"Segoe UI",system-ui,sans-serif;background:#e9ebf3;color:#17182B}
+  h1{font-size:20px;margin:0 0 6px}
+  p.lead{color:#5d6378;font-size:14px;margin:0 0 24px;max-width:1050px;line-height:1.5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1100px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:0 10px 30px rgba(20,25,60,.12)}
+  .card h2{font-size:15px;margin:0 0 14px;color:#303F9F}
+  .old{color:#7b8196}
+  .new li{margin-bottom:10px;line-height:1.4}
+  .tag{display:inline-block;background:#EEF0FB;color:#303F9F;border-radius:6px;padding:1px 7px;font-size:11px;margin-left:6px}
+  .arrow{color:#6C5AB5;font-weight:700}
+  ul{margin:0;padding-left:20px;font-size:14px}
+  .note{max-width:1100px;margin-top:22px;background:#fff;border-radius:14px;padding:18px 20px;font-size:13px;line-height:1.7;color:#4c5268}
+  .note b{color:#17182B}
+  .appearance{background:#F5F6FC;border-left:3px solid #6C5AB5;padding:12px 14px;border-radius:8px;margin-top:12px;font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+<h1>Ayarlar bilgi mimarisi — 14 başlıktan 9'a</h1>
+<p class="lead">Solda şu anki başlıklar, sağda önerilen düzen. Birleşmeler <span class="arrow">→</span> ile gösterildi.</p>
+
+<div class="grid">
+  <div class="card">
+    <h2>Şu an (14)</h2>
+    <ul class="old">
+      <li>Görünüm ve hissiyat</li>
+      <li>Uygulama</li>
+      <li>Videolar</li>
+      <li>Küçük resimler</li>
+      <li>Albüm türü ikonları</li>
+      <li>Kaydırma</li>
+      <li>Tam ekran medya</li>
+      <li>Derin yakınlaştırılabilir resimler</li>
+      <li>Genişletilmiş ayrıntılar</li>
+      <li>Güvenlik</li>
+      <li>Şifreli kasa</li>
+      <li>Dosya işlemleri</li>
+      <li>Geri dönüşüm kutusu</li>
+      <li>Geçiş</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Önerilen (9)</h2>
+    <ul class="new">
+      <li><b>Görünüm ve hissiyat</b> <span class="tag">+ albüm ikonları → Görünümü özelleştir</span></li>
+      <li><b>Uygulama</b></li>
+      <li><b>Küçük resimler ve kaydırma</b> <span class="arrow">←</span> Küçük resimler + Kaydırma</li>
+      <li><b>Video oynatma</b> <span class="arrow">←</span> Videolar</li>
+      <li><b>Medya görüntüleyici</b> <span class="arrow">←</span> Tam ekran medya + Derin yakınlaştırma + Genişletilmiş ayrıntılar</li>
+      <li><b>Güvenlik ve şifreli kasa</b> <span class="arrow">←</span> Güvenlik + Şifreli kasa</li>
+      <li><b>Dosya işlemleri</b></li>
+      <li><b>Geri dönüşüm kutusu</b></li>
+      <li><b>Geçiş</b></li>
+    </ul>
+
+    <div class="appearance">
+      <b>Görünümü özelleştir</b> ekranındaki alt başlıklar:<br>
+      1. Tema ve renkler &nbsp; 2. Yazı tipi &nbsp; 3. <b>Albüm türü ikonları</b> (yeni)
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <b>Neden bu gruplama?</b><br>
+  • <b>Küçük resimler ve kaydırma:</b> küçük resim stilleri ve kaydırma davranışı aynı yüzeyde (grid) çalışıyor; "ızgara" yerine içeriği doğrudan anlatan bu ad seçildi.<br>
+  • <b>Video oynatma:</b> videolara özgü 8 ayar zaten kendi içinde tutarlı, ayrı başlık olarak kalmalı.<br>
+  • <b>Medya görüntüleyici:</b> tam ekran, yakınlaştırma ve genişletilmiş ayrıntılar aynı tam ekran viewer'da kullanılıyor. Üçünü birleştirmek en doğal eşleşme.<br>
+  • <b>Güvenlik ve şifreli kasa:</b> tek başlık altında önce şifre ayarları (uygulama / gizli ögeler / silme), sonra kasa satırları (konum, oluştur, şifre, biyometri, yükseltme, boşalt, dışa aktar) sıralanır. Böylece bölüm ayırıcısına geri dönmeden okunabilir kalır.<br><br>
+  <b>Bir sonraki adım:</b> "Medya görüntüleyici" veya "Güvenlik ve kasa" listesi uzun gelirse, kasa ayarlarını kendi alt ekranına taşımak (tıpkı Görünüm ekranı gibi) ikinci aşama olabilir. Şimdilik sadece başlık birleştirme öneriyorum.
+</div>
+</body>
+</html>

@@ -31,12 +31,11 @@ import javax.crypto.spec.SecretKeySpec
  */
 internal fun readContainerMetadata(
     dis: DataInputStream,
-    kekFor: (Short) -> ByteArray?,
+    kek: ByteArray,
     version: Byte,
     includeThumbnail: Boolean
 ): EncryptedFileMetadata? {
     val keyId = dis.readUnsignedShort().toShort()
-    val kek = kekFor(keyId) ?: return null
 
     val fileId = ByteArray(FILE_ID_LENGTH)
     dis.readFully(fileId)

@@ -28,31 +28,15 @@ def create_test_vault_file(
     secret: str,
     vmk: bytes | None = None,
     kek: bytes | None = None,
-    *,
-    active_key_id: int = 1,
-    keyring: dict[int, bytes] | None = None,
-    legacy_keyring: bool = False,
 ) -> tuple[bytes, bytes]:
-    """Builds a canonical v1 .vault header (PDK -> VMK -> keyring -> KEK).
-
-    By default the keyring uses the new multi-key layout with a single entry
-    (count=1). Pass ``keyring``/``active_key_id`` to simulate KEK rotation, or
-    ``legacy_keyring=True`` to emit the old 34-byte single-key layout for
-    backward-compatibility coverage.
-    """
+    """Builds a canonical v1 .vault header (PDK -> VMK -> keyring -> KEK)."""
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from argon2.low_level import hash_secret_raw, Type
 
     if vmk is None:
         vmk = secrets.token_bytes(32)
-    if keyring is None:
-        if kek is None:
-            kek = secrets.token_bytes(32)
-        keyring = {active_key_id: kek}
-    else:
-        keyring = dict(keyring)
-        if kek is None:
-            kek = keyring.get(active_key_id) or next(iter(keyring.values()))
+    if kek is None:
+        kek = secrets.token_bytes(32)
 
     iterations = 1
     memory_kb = 8192
@@ -71,13 +55,8 @@ def create_test_vault_file(
     wrapped_vmk = AESGCM(pdk).encrypt(iv_pdk, vmk, b"")
 
     iv_vmk = secrets.token_bytes(12)
-    if legacy_keyring:
-        keyring_bytes = struct.pack(">H", active_key_id) + kek
-    else:
-        keyring_bytes = struct.pack(">HH", active_key_id, len(keyring))
-        for key_id in sorted(keyring):
-            keyring_bytes += struct.pack(">H", key_id) + keyring[key_id]
-    wrapped_keyring = AESGCM(vmk).encrypt(iv_vmk, keyring_bytes, b"")
+    keyring = struct.pack(">H", 1) + kek
+    wrapped_keyring = AESGCM(vmk).encrypt(iv_vmk, keyring, b"")
 
     with open(vault_path, "wb") as f:
         f.write(cv.VAULT_HEADER_MAGIC)               # 5B "FGVLT"
@@ -734,83 +713,9 @@ class TestCipherVaultCLI(unittest.TestCase):
         keys = cv.unwrap_vault_keys(raw, self.secret)
         self.assertEqual(keys.vmk, self.vmk)
         self.assertEqual(keys.kek, self.kek)
-        self.assertEqual(keys.active_key_id, 1)
-        self.assertEqual(keys.keyring, {1: self.kek})
         self.assertEqual(cv.unlock_vault_header_bytes(raw, self.secret), self.kek)
         with self.assertRaises(ValueError):
             cv.unwrap_vault_keys(raw, "wrong-secret")
-
-    def test_legacy_single_key_keyring_still_supported(self):
-        """Old 34-byte keyrings (used by existing fixtures) remain readable."""
-        legacy_kek = secrets.token_bytes(32)
-        vault = self.root / "legacy.vault"
-        create_test_vault_file(vault, self.secret, kek=legacy_kek, legacy_keyring=True)
-
-        keys = cv.unwrap_vault_keys(vault.read_bytes(), self.secret)
-        self.assertEqual(keys.active_key_id, 1)
-        self.assertEqual(keys.kek, legacy_kek)
-        self.assertEqual(keys.keyring, {1: legacy_kek})
-
-    def test_two_key_keyring_selects_active_kek_and_writes_active_key_id(self):
-        """After rotation the active KEK is used and new files carry its keyId."""
-        kek1 = secrets.token_bytes(32)
-        kek2 = secrets.token_bytes(32)
-        vault = self.root / "rotated.vault"
-        create_test_vault_file(vault, self.secret, keyring={1: kek1, 2: kek2}, active_key_id=2)
-
-        keys = cv.unwrap_vault_keys(vault.read_bytes(), self.secret)
-        self.assertEqual(keys.active_key_id, 2)
-        self.assertEqual(keys.kek, kek2)                 # active KEK is KEK2
-        self.assertEqual(keys.keyring, {1: kek1, 2: kek2})  # old KEK is retained
-        self.assertEqual(keys.kek_for(1), kek1)
-        self.assertEqual(keys.kek_for(2), kek2)
-
-        source = self.root / "rotated.jpg"
-        payload = b"post-rotation-payload"
-        source.write_bytes(payload)
-        out = cv.encrypt_file(source, self.root, keys.kek, key_id=keys.active_key_id)
-        data = out.read_bytes()
-        self.assertEqual(struct.unpack(">H", data[9:11])[0], 2)
-        parsed = parse_container(data, kek2, expected_key_id=2)
-        self.assertEqual(parsed["payload"], payload)
-
-    def test_run_encrypt_mode_writes_active_key_id_after_rotation(self):
-        """The CLI encryption path uses the rotated vault's active keyId."""
-        kek1 = secrets.token_bytes(32)
-        kek2 = secrets.token_bytes(32)
-        vault = self.root / "rotated-cli.vault"
-        create_test_vault_file(vault, self.secret, keyring={1: kek1, 2: kek2}, active_key_id=2)
-
-        input_dir = self.root / "rotated_input"
-        input_dir.mkdir()
-        payload = b"rotated-cli-payload"
-        (input_dir / "photo.jpg").write_bytes(payload)
-        output_dir = self.root / "rotated_output"
-        output_dir.mkdir()
-
-        with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(
-                self._make_encrypt_args(input_dir, output_dir=output_dir, vault_file=vault),
-                self.desktop,
-                "en",
-            )
-
-        bins = list(output_dir.rglob("*.bin"))
-        self.assertEqual(len(bins), 1)
-        data = bins[0].read_bytes()
-        self.assertEqual(struct.unpack(">H", data[9:11])[0], 2)
-        parsed = parse_container(data, kek2, expected_key_id=2)
-        self.assertEqual(parsed["payload"], payload)
-
-    def test_missing_active_key_falls_back_to_available_key(self):
-        """A keyring whose activeKeyId is absent still yields a usable KEK."""
-        fallback_kek = secrets.token_bytes(32)
-        vault = self.root / "partially-rotated.vault"
-        create_test_vault_file(vault, self.secret, keyring={7: fallback_kek}, active_key_id=99)
-
-        keys = cv.unwrap_vault_keys(vault.read_bytes(), self.secret)
-        self.assertEqual(keys.kek, fallback_kek)
-        self.assertEqual(keys.active_key_id, 7)
 
     def test_encrypt_file_uses_kek_not_vmk(self):
         """A container encrypted with the KEK must not open with the VMK."""
