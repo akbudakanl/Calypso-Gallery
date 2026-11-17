@@ -1,70 +1,74 @@
 # Crypto design review — Calypso Gallery 1.0.0
 
-Kısa tasarım gözden geçirme notu. Uygulamanın kullandığı primitifler ve dosya formatı hakkında
-`DOCS.md` bölüm 2 ve ADR 0001 referans alınmalıdır. Bu belge **tehdit modeli**, **AAD
-gerekçeleri** ve **bilinçli sınırlamalar** üzerine odaklanır.
+Short design review note. Refer to `DOCS.md` section 2 and ADR 0001 for the primitives and file
+format used by the application. This document focuses on the **threat model**, **AAD rationale**
+and **deliberate limitations**.
 
-> **Formal durum:** Bu formata bağımsız, harici bir kriptografik denetim uygulanmamıştır.
-> Tink, AES-256-GCM ve Argon2id gibi iyi bilinen primitifler kullanılsa da, konteyner yerleşimi,
-> AAD yapısı ve anahtar hiyerarşisi proje özgüdür. Çapraz dil golden fixture testleri
-> implementasyon hatalarını yakalar; tasarım kusurlarını kanıtlamaz.
+> **Formal status:** No independent external cryptographic audit has been performed on this format.
+> Although well-known primitives such as Tink, AES-256-GCM and Argon2id are used, the container
+> layout, AAD structure and key hierarchy are project-specific. Cross-language golden fixture
+> tests catch implementation errors; they do not prove the absence of design flaws.
 
-## 1. Varlıklar ve tehdit modeli
+## 1. Assets and threat model
 
-| Varlık | Koruma hedefi |
+| Asset | Protection goal |
 |---|---|
-| Medya payload'ı (`*.bin` içindeki Tink akışı) | Gizlilik + bütünlük; parça parça doğrulama |
-| Dosya başlığı (ad, boyut, tarih, thumbnail, DEK) | Gizlilik + başlığın kendi dosyasına bağlanması |
-| `.vault` başlığı (VMK, KEK keyring, Argon2 parametreleri) | Çevrimdışı brute-force direnci + anahtar bütünlüğü |
-| Klasör `.meta` (şifreli klasör adı) | Gizlilik |
-| `FVSTR:` kayıtları (albüm adı, JSON, resume) | Gizlilik + kategoribazında ayrım |
+| Media payload (the Tink stream inside `*.bin`) | Confidentiality + integrity; segment-by-segment verification |
+| File header (name, size, date, thumbnail, DEK) | Confidentiality + binding the header to its own file |
+| `.vault` header (VMK, KEK keyring, Argon2 parameters) | Offline brute-force resistance + key integrity |
+| Folder `.meta` (encrypted folder name) | Confidentiality |
+| `FVSTR:` records (album name, JSON, resume) | Confidentiality + per-purpose separation |
 
-**Düşman modeli:** cihaz veya USB/SD üzerinde şifreli dosyalara erişimi olan, ancak çalışan
-uygulamanın belleğine veya Android Keystore'a erişemeyen bir saldırgan. Çevrimdışı kaba kuvvet,
-dosya değiştirme/değiştirme (swap), kesme/uzatma ve kategoriler arası kayıt taşıma kapsamdadır.
-Bellek, işletim sistemi çekirdeği ve yasal zorlama bu modelin dışındadır.
+**Adversary model:** an attacker who has access to the encrypted files on the device or on USB/SD
+media, but cannot access the running application's memory or the Android Keystore. Offline brute
+force, file substitution/swapping, truncation/extension and moving records between categories are
+in scope. Memory, the operating-system kernel and legal coercion are outside this model.
 
-## 2. Anahtar hiyerarşisi
+## 2. Key hierarchy
 
 ```
-parola/PIN --Argon2id(salt, params)--> PDK --AES-GCM--> VMK        (.vault)
+password/PIN --Argon2id(salt, params)--> PDK --AES-GCM--> VMK        (.vault)
 VMK --AES-GCM--> keyring { keyId -> KEK }                         (.vault)
-KEK --HKDF(domain|fileId)--> headerKey --AES-GCM--> başlık (içinde DEK)
-KEK --HKDF(domain|purpose)--> metadataKey --AES-GCM--> FVSTR: kaydı
+KEK --HKDF(domain|fileId)--> headerKey --AES-GCM--> header (contains DEK)
+KEK --HKDF(domain|purpose)--> metadataKey --AES-GCM--> FVSTR: record
 DEK --Tink AES256_GCM_HKDF(fileId AAD)--> payload
-VMK --AES-GCM--> klasör .meta
-Keystore (opsiyonel, donanım) --AES-GCM--> VMK                     (biyometrik)
+VMK --AES-GCM--> folder .meta
+Keystore (optional, hardware) --AES-GCM--> VMK                     (biometric)
 ```
 
-## 3. Veri (payload) şifrelemesi
+## 3. Payload encryption
 
-- Her dosya için rastgele 16 bayt `fileId` ve 32 bayt DEK üretilir.
-- DEK, Tink `AesGcmHkdfStreaming` primitifine verilir; AAD = `fileId`.
-- Tink akışı 40 baytlık header (salt + noncePrefix) yazar, 256 KiB segmentlerle şifreler,
-  her segmentin GCM etiketini doğrular ve kesin uzunluk kontrolü yapar.
-- Başlıkta DEK ve dosya bilgileri saklanır; payload başlığa **bit-identical** kopyalanabilir
-  (rename ve KEK rotasyonu bunu kullanır).
+- A random 16-byte `fileId` and a 32-byte DEK are generated for every file.
+- The DEK is passed to the Tink `AesGcmHkdfStreaming` primitive; AAD = `fileId`.
+- The Tink stream writes a 40-byte header (salt + noncePrefix), encrypts in 256 KiB segments,
+  verifies each segment's GCM tag and enforces an exact-length check.
+- The header stores the DEK and the file metadata; the payload can be copied **bit-identically**
+  when the header is rewritten (used by rename and KEK rotation).
 
-## 4. Metadata şifrelemesi ve AAD gerekçeleri
+## 4. Metadata encryption and AAD rationale
 
-| Kanal | AAD | Neden |
+| Channel | AAD | Reason |
 |---|---|---|
-| Konteyner başlığı | `magic \| version \| keyId \| fileId \| N` | Başlık başka bir dosyaya, sürüme veya keyId'ye taşınamaz. `N` (şifreli başlık uzunluğu) dahil edilerek uzunluk karışıklığı engellenir. IV ayrıca GCM nonce'u olduğundan AAD'ye gerek yok; değiştirilmesi tag'i bozar. |
-| `FVSTR:` kaydı | `CalypsoGallery:Metadata:AESGCM \| purpose` | `purpose` açıkta saklanır ve AAD olarak bağlanır; bir albüm adı JSON olarak, bir resume kaydı gibi okunamaz. |
-| `.vault` keyring | AAD yok | Salt/Argon2 parametreleri AAD'de değil; yanlış parametre yanlış PDK üretir ve AEAD doğrulaması zaten başarısız olur. Saldırgana brute-force avantajı vermez. |
-| Klasör `.meta` | AAD yok | Dosya başka bir klasöre kopyalanırsa yine çözülür; etkisi yalnızca görünen klasör adıdır, veri gizliliği/bütünlüğü etkilenmez. |
+| Container header | `magic \| version \| keyId \| fileId \| N` | The header cannot be moved to another file, version or keyId. Including `N` (encrypted header length) prevents length confusion. The IV needs no AAD entry because it is the GCM nonce; modifying it already breaks the tag. |
+| `FVSTR:` record | `CalypsoGallery:Metadata:AESGCM \| purpose` | `purpose` is stored in the clear and bound as AAD; an album name cannot be read as a JSON document or as a resume record, and vice versa. |
+| `.vault` keyring | No AAD | Salt/Argon2 parameters are not part of AAD; wrong parameters derive a wrong PDK and AEAD verification already fails. This gives the attacker no brute-force advantage. |
+| Folder `.meta` | No AAD | If the file is copied to another folder it still decrypts; the effect is limited to the displayed folder name. Data confidentiality and integrity are unaffected. |
 
-Bilinçli sınırlama: aynı dosyanın eski bir başlığına geri dönme (rollback) tespit edilmez;
-taşınabilir bir dosyada güvenilir monoton durum veya sabit header yok. Bu, kabul edilen ve
-belgelenmiş bir sınırlamadır (ADR 0001).
+Deliberate limitation: rolling back to an older header of the same file is not detected; a portable
+file has no reliable monotonic state or fixed header. This is an accepted and documented limitation
+(ADR 0001).
 
-## 5. KEK rotasyonu
+## 5. KEK rotation
 
-KEK rotasyonu tasarımı, riskleri ve zorunlu test planı [ADR 0005](adr/0005-kek-rotation.md) içinde korunmaktadır. Bu sürümde uygulanmamıştır; tek aktif KEK ve tek keyring kullanılır.
+The KEK rotation design, risks and mandatory test plan are kept in
+[ADR 0005](adr/0005-kek-rotation.md). It is not implemented in this release; a single active KEK
+and a single keyring are used.
 
-## 6. Doğrulama
+## 6. Verification
 
-- Golden fixture'lar Python CLI ile üretilir, Android uygulaması tarafından okunur (`CliFixtureCompatibilityTest`).
-- Gerçek Tink Java/Python kütüphaneleriyle çapraz doğrulama yapılmıştır.
-- Test kapsamı: segment sınırı boyutları, bozuk segment/uzatma/kesme, başlık değiştirme ve
-  payload'ın bit-identical kalması. Rotasyon test planı ADR 0005'te tanımlıdır.
+- Golden fixtures are produced with the Python CLI and consumed by the Android application
+  (`CliFixtureCompatibilityTest`).
+- Cross-verified against the real Tink Java and Python libraries.
+- Test coverage: segment-boundary sizes, corrupt segment / extension / truncation, header
+  substitution and bit-identical payload preservation. The rotation test plan is defined in
+  ADR 0005.

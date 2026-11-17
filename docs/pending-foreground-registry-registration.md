@@ -1,53 +1,54 @@
-# Bekleyen iş: albüm/Activity işlemlerinin foreground registry'ye kaydı
+# Pending work: register album/Activity operations with the foreground registry
 
-- **Durum:** Yapılmadı — bilinçli olarak sonraki bir tura bırakıldı.
-- **İlgili ADR'ler:** [ADR 0002 §7](adr/0002-operational-security-hardening.md) (foreground
+- **Status:** Not done — deliberately deferred to a later session.
+- **Related ADRs:** [ADR 0002 §7](adr/0002-operational-security-hardening.md) (foreground
   operation exception), [ADR 0003 §7](adr/0003-resumable-file-operations.md) (single owner token).
 
-## Ne eksik?
+## What is missing?
 
-`ForegroundOperationRegistry` şu an yalnızca iki yere bağlı:
+`ForegroundOperationRegistry` is currently wired into only two places:
 
-- `CopyMoveHelper.executeCopyMoveWithProgress` (düz kopya/taşıma),
-- `OperationRecovery.resume` (süreç ölümü sonrası devam).
+- `CopyMoveHelper.executeCopyMoveWithProgress` (plain copy/move),
+- `OperationRecovery.resume` (continuation after process death).
 
-Şu yollar **kayıtlı değil**:
+The following paths are **not registered**:
 
 - `CryptoManager.encryptFolder`,
 - `CryptoManager.decryptFolder`,
-- `BaseSimpleActivity.tryCopyMoveFilesTo` (şifreli kasa içi/dışı karma batch).
+- `BaseSimpleActivity.tryCopyMoveFilesTo` (mixed batch into or out of the encrypted vault).
 
-Bu yollar zaten staging + atomik commit + journal + doğrulama kullanıyor; yani **veri kaybı riski
-yok**. Eksik olan yalnızca foreground servis / wake lock / owner token kapsamı.
+These paths already use staging + atomic commit + journal + verification, so there is **no data-loss
+risk**. What is missing is only the foreground service / wake lock / owner-token coverage.
 
-## Pratik etki
+## Practical impact
 
-Kayıt olmadığı için bu işlemler sırasında uygulama arka plana alınırsa veya ekran kapanırsa
-ADR 0002 §7'deki "anahtarlar RAM'de kalır" istisnası uygulanmaz. Kasa kilitlenebilir, işlem yarım
-kalabilir ve resume için kullanıcının kasayı yeniden açması gerekir. Yarım kalan öğeler journal'da
-`PENDING`'e sıfırlanır ve sağlam kaynaktan yeniden yazılır — **bozuk dosya veya veri kaybı oluşmaz**,
-sadece işlem kullanıcı müdahalesi gerektirir.
+Without registration, if the app is backgrounded or the screen turns off during one of these
+operations, the ADR 0002 §7 exception ("keys remain in RAM") does not apply. The vault may lock,
+the operation may be interrupted, and the user must unlock the vault again before resuming.
+Interrupted items are reset to `PENDING` in the journal and rewritten from their intact source —
+**no corrupted file and no data loss**, only the need for user intervention.
 
-## Neden ertelendi?
+## Why it was deferred
 
-Bu üç fonksiyon çok sayıda erken `return`, iç içe callback ve async katman içeriyor. registry'ye
-almanın iki yolu var:
+All three functions contain many early `return` statements, nested callbacks and async layers.
+There are two ways to register them:
 
-1. tüm gövdeyi `ForegroundOperationRegistry.withOperation(context, owner) { ... }` ile sarmak —
-   dönüş tipleri ve callback'ler nedeniyle geniş bir kontrol akışı değişikliği gerekir;
-2. her çıkış noktasına `release()` eklemek — kaçırılan bir çıkışta servis açık kalabilir.
+1. wrap the whole body in `ForegroundOperationRegistry.withOperation(context, owner) { ... }` —
+   this requires a broad control-flow change because of the return types and callbacks;
+2. add `release()` to every exit point — a missed exit could leave the service running.
 
-İkisi de dikkatli bir regresyon turu istediği için "invaziv" olarak değerlendirildi.
+Both need a careful regression pass, so the change was judged "invasive".
 
-## Yapılacaklar (önerilen sıra)
+## To do (recommended order)
 
-1. Her üç fonksiyon için tek bir `owner` adı belirle (örn. `album-encrypt`, `album-decrypt`,
-   `crypto-copy-move`).
-2. Ana çalışma bloğunu `withOperation` ile sar; erken `return` noktalarını `withOperation`'ın
-   `null` dönüşüyle ele al.
-3. İki işlem aynı anda başlatılırsa ikincisinin `null` dönüp kullanıcıya bilgi vermesini doğrula.
-4. Testler: albüm şifreleme sırasında force-stop, arka plana alma, ikinci işlem denemesi,
-   servis bildiriminin kapanması.
+1. Pick a single `owner` name for each of the three functions (e.g. `album-encrypt`,
+   `album-decrypt`, `crypto-copy-move`).
+2. Wrap the main working block in `withOperation`; handle early `return` points through the
+   `null` result of `withOperation`.
+3. Verify that if two operations are started at once, the second one returns `null` and informs
+   the user.
+4. Tests: force-stop during album encryption, backgrounding, a second concurrent operation,
+   and dismissal of the service notification.
 
-> Bu not, eksikliğin farkında olunduğunu ve veri güvenliği açısından kritik olmadığını kaydetmek
-> içindir. Tamamlandığında dosya güncellenmeli veya kaldırılmalıdır.
+> This note exists to record that the gap is known and is not critical for data safety.
+> Once the work is complete, update or remove this file.
