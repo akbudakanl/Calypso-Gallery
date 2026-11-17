@@ -1,5 +1,19 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-az/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | Boş yer yoxlanıla bilmədi (%2$s). Təxminən %1$s tələb olunur; əməliyyat cəhd ediləcək, lakin yer çatmazsa dayana bilər. | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | Kəsilmiş əməliyyatlar | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | %1$d əməliyyat kəsilib. Məlumat itkisi olmayıb; dayandığınız yerdən davam edilsin? | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | Davam et | Positive dialog button |
+| 5 | `resume_later` | Not now | İndi deyil | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | Əməliyyatlar tamamlandı. | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | Bəzi əməliyyatlar tamamlanamadı; mənbə fayllar qorunub. | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-az/strings.xml` was reviewed from scratch: existing inaccurate translations were corrected, and all missing keys from `values/strings.xml` (347 `<string>` + 2 `<plurals>` = 349 app resource entries; `search` and 17 previously overridden shared UI keys from `fossify-commons` plus the `skip_the_recycle_bin` override, and 13 additional `fossify-commons` UI keys (`manage_excluded_folders`, `exclude`, `exclude_folder`, `lock_folder`, `change_cover_image`, `select_photo`, `use_default`, `column_count`, `open_the_recycle_bin`, `grid`, `list`, `resize`, `version_placeholder`) newly overridden because they are missing in `fossify-commons` `values-az`; 373 total comparison rows) were completed. Nine keys that were missing from `values-az/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-az/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-az/strings.xml` to 403 `<string>` + 2 `<plurals>` = 405 resource entries and 394 total comparison rows.
 > **Key Terminology:** `Settings` → `Parametrlər` · `Default` → `Susmaya görə` · `Folder` → `Qovluq` · `Encrypted Vault` → `Şifrəli Seyf` · `Password` → `Parol` · `Encrypt/Decrypt` → `Şifrələ / Şifrəsini aç` · `Thumbnails` → `Miniatürlər` · `Recycle bin` → `Zibil qutusu` · `Clipboard` → `Mübadilə buferi`
 

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">Der freie Speicherplatz konnte nicht überprüft werden (%2$s). Es werden etwa %1$s benötigt; der Vorgang wird versucht und kann bei Speichermangel abgebrochen werden.</string>
+    <string name="resume_operations_title">Unterbrochene Vorgänge</string>
+    <string name="resume_operations_message">%1$d Vorgang/Vorgänge wurden unterbrochen. Keine Daten verloren – dort fortfahren, wo sie standen?</string>
+    <string name="resume_continue">Fortfahren</string>
+    <string name="resume_later">Später</string>
+    <string name="resume_done">Vorgänge abgeschlossen.</string>
+    <string name="resume_failed">Einige Vorgänge konnten nicht abgeschlossen werden; die Quelldateien wurden beibehalten.</string>
     <string name="edit">Bearbeiten</string>
     <string name="open_camera">Kamera öffnen</string>
     <string name="hidden">(versteckt)</string>

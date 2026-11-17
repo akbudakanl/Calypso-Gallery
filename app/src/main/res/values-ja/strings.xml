@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">空き領域を確認できませんでした（%2$s）。約 %1$s が必要です。操作を試行しますが、領域が不足すると途中で停止する場合があります。</string>
+    <string name="resume_operations_title">中断された操作</string>
+    <string name="resume_operations_message">%1$d 件の操作が中断されました。データの損失はありません。中断した場所から続けますか？</string>
+    <string name="resume_continue">続ける</string>
+    <string name="resume_later">後で</string>
+    <string name="resume_done">操作が完了しました。</string>
+    <string name="resume_failed">一部の操作を完了できませんでした。元のファイルは保持されています。</string>
     <string name="edit">編集</string>
     <string name="open_camera">カメラを開く</string>
     <string name="hidden">(非表示)</string>

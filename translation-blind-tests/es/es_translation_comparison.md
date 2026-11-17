@@ -1,5 +1,19 @@
 # Spanish (Standard, values-es) Translation Audit, Revision & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-es/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (`values-es/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | No se pudo verificar el espacio libre (%2$s). Se requieren aproximadamente %1$s; se intentará la operación y podría detenerse si se agota el espacio. | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | Operaciones interrumpidas | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | Se interrumpieron %1$d operación(es). No se perdió ningún dato; ¿desea continuar donde se detuvieron? | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | Continuar | Positive dialog button |
+| 5 | `resume_later` | Not now | Ahora no | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | Operaciones completadas. | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | No se pudieron completar algunas operaciones; los archivos de origen se conservaron. | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-es/strings.xml` was audited against `app/src/main/res/values/strings.xml` and `fossify-commons` (`values-es`). Previously, `values-es` contained 257 `<string>` and 2 `<plurals>` entries (missing all 50 fork/new strings). 29 existing entries with mistranslations, typos, missing clauses, formatting bugs, or terminology inconsistencies were fixed, and all 50 missing strings were translated into Standard Spanish (`es`), bringing `values-es` to full parity (347 `<string>` + 2 `<plurals>` = 349 resource entries; `search` and 14 shared UI keys from `fossify-commons`; 361 total comparison rows with Spanish CLDR `one`/`many`/`other` plural forms expanded). Nine keys that were missing from `values-es/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-es/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-es/strings.xml` to 372 `<string>` + 2 `<plurals>` = 374 resource entries and 382 total comparison rows.
 > **Key Terminology:** `Settings` → `Ajustes` · `Default` → `Predeterminado` / `Sistema por defecto` · `Folder` → `Carpeta` · `Album` → `Álbum` · `Encrypted Vault` → `Bóveda cifrada` · `Hidden` → `Oculto` · `Excluded` → `Excluido` · `Password` → `Contraseña` · `Encrypt / Decrypt` → `Cifrar / Descifrar` · `Copy to` → `Copiar a` (matches `fossify-commons`) · `Clipboard` → `Portapapeles` · `Search` → `Buscar` (inherited from `fossify-commons`)
 

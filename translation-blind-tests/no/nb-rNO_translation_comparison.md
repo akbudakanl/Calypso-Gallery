@@ -1,5 +1,19 @@
 # Norwegian Bokmål (values-nb-rNO) Translation Completion & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-nb-rNO/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | Kunne ikke bekrefte ledig lagringsplass (%2$s). Omtrent %1$s trengs; operasjonen forsøkes, men kan stoppe hvis plassen tar slutt. | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | Avbrutte operasjoner | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | %1$d operasjon(er) ble avbrutt. Ingen data gikk tapt – fortsett der de stoppet? | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | Fortsett | Positive dialog button |
+| 5 | `resume_later` | Not now | Ikke nå | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | Operasjonene er fullført. | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | Noen operasjoner kunne ikke fullføres; kildefilene ble beholdt. | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-nb-rNO/strings.xml` was audited against `app/src/main/res/values/strings.xml`. Three existing errors/typos were corrected, two multiline placeholders were normalized, and all 91 missing strings were translated into Norwegian Bokmål and added, bringing `values-nb-rNO` to full parity (363 `<string>` + 2 `<plurals>` = 365 app resource entries; `search` and 17 previously overridden shared UI keys from `fossify-commons` plus 4 additional `fossify-commons` UI keys (`exclude_folder`, `column_count`, `open_the_recycle_bin`, `version_placeholder`) newly overridden because they are missing in `fossify-commons` `values-nb-rNO`; 364 total comparison rows with plural forms expanded). Nine keys that were missing from `values-nb-rNO/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-nb-rNO/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-nb-rNO/strings.xml` to 384 `<string>` + 2 `<plurals>` = 386 resource entries and 385 total comparison rows.
 > **Key Terminology:** `Settings` → `Innstillinger` · `Default` → `Standard` / `Systemstandard` · `Folder` → `Mappe` · `Album` → `Album` · `Encrypted Vault` → `Kryptert hvelv` · `Hidden` → `Skjult` · `Excluded` → `Ekskludert` · `Password` → `Passord` · `Encrypt / Decrypt` → `Krypter / Dekrypter` · `Thumbnails` → `Minibilder` · `Recycle bin` → `Papirkurv` · `Clipboard` → `Utklippstavlen`
 

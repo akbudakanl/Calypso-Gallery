@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">Boş yer yoxlanıla bilmədi (%2$s). Təxminən %1$s tələb olunur; əməliyyat cəhd ediləcək, lakin yer çatmazsa dayana bilər.</string>
+    <string name="resume_operations_title">Kəsilmiş əməliyyatlar</string>
+    <string name="resume_operations_message">%1$d əməliyyat kəsilib. Məlumat itkisi olmayıb; dayandığınız yerdən davam edilsin?</string>
+    <string name="resume_continue">Davam et</string>
+    <string name="resume_later">İndi deyil</string>
+    <string name="resume_done">Əməliyyatlar tamamlandı.</string>
+    <string name="resume_failed">Bəzi əməliyyatlar tamamlanamadı; mənbə fayllar qorunub.</string>
     <string name="edit">Redaktə</string>
     <string name="open_camera">Kameranı aç</string>
     <string name="hidden">(gizli)</string>

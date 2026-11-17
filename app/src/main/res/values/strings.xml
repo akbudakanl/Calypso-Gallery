@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <!-- ADR 0003 §3a: free space could not be verified (SAF/OTG). %1$s = required size, %2$s = reason. -->
+    <string name="space_unverified_warning">Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out.</string>
+    <!-- ADR 0003 process-death resume dialog -->
+    <string name="resume_operations_title">Interrupted operations</string>
+    <string name="resume_operations_message">%1$d operation(s) were interrupted. No data was lost — continue where they stopped?</string>
+    <string name="resume_continue">Continue</string>
+    <string name="resume_later">Not now</string>
+    <string name="resume_done">Operations completed.</string>
+    <string name="resume_failed">Some operations could not be completed; source files were preserved.</string>
     <string name="appearance_title">Appearance</string>
     <string name="application_settings">Application</string>
     <string name="saved_themes">Saved themes</string>
