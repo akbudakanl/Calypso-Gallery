@@ -184,6 +184,7 @@ import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ROTATE_BY_ASPECT_RATIO
 import org.fossify.gallery.helpers.ROTATE_BY_DEVICE_ROTATION
 import org.fossify.gallery.helpers.ROTATE_BY_SYSTEM_SETTING
+import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.SHOW_FAVORITES
@@ -595,7 +596,11 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
                 // make sure "Open Recycle Bin" works well with "Show all folders content"
                 mIsVaultFilesView = intent.getBooleanExtra(EXTRA_SECRET_VAULT_FILES, false)
-                mShowAll = (config.showAll || mIsVaultFilesView) && (mPath.isNotEmpty() && !mPath.startsWith(recycleBinPath))
+                // A virtual album is its own scope even when "Show all folders content" is enabled;
+                // otherwise its files would be paged with the global media list instead of its own.
+                val isVirtualAlbumContext = intent.getStringExtra(EXTRA_ALBUM_PATH).orEmpty().isVirtualAlbumPath() ||
+                    intent.getStringExtra(SHOW_VIRTUAL_ALBUM).orEmpty().isVirtualAlbumPath()
+                mShowAll = (config.showAll || mIsVaultFilesView) && (mPath.isNotEmpty() && !mPath.startsWith(recycleBinPath)) && !isVirtualAlbumContext
             } catch (e: Exception) {
                 showErrorToast(e)
                 finish()
@@ -658,7 +663,12 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         val isShowingFavorites = intent.getBooleanExtra(SHOW_FAVORITES, false)
         val isShowingRecycleBin = intent.getBooleanExtra(SHOW_RECYCLE_BIN, false)
         val virtualAlbumPath = intent.getStringExtra(SHOW_VIRTUAL_ALBUM) ?: ""
+        // The album identity is passed explicitly by the caller. Falling back to the file's real
+        // parent folder would page through the real album instead of the virtual album the file
+        // was opened from, and would read the wrong per-album sort setting (hiding shuffle).
+        val albumPath = intent.getStringExtra(EXTRA_ALBUM_PATH).orEmpty()
         mDirectory = when {
+            albumPath.isNotEmpty() -> albumPath
             isShowingFavorites -> FAVORITES
             virtualAlbumPath.isVirtualAlbumPath() -> virtualAlbumPath
             isShowingRecycleBin -> RECYCLE_BIN
@@ -1130,9 +1140,13 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             getShortcutImage(path, drawable) {
                 val intent = Intent(this, ViewPagerActivity::class.java).apply {
                     putExtra(PATH, path)
-                    putExtra(SHOW_ALL, config.showAll)
+                    // Pin the album identity into the shortcut so reopening it still pages
+                    // through the album the file was viewed from.
+                    putExtra(EXTRA_ALBUM_PATH, mDirectory)
+                    putExtra(SHOW_ALL, mShowAll)
                     putExtra(SHOW_FAVORITES, path == FAVORITES)
                     putExtra(SHOW_RECYCLE_BIN, path == RECYCLE_BIN)
+                    putExtra(IS_FROM_GALLERY, true)
                     action = Intent.ACTION_VIEW
                     flags = flags or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
@@ -1939,13 +1953,19 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         mPos = shuffled.indexOfFirst { it.path == currentPath }.takeIf { it != -1 } ?: 0
 
         if (!isExternalIntent()) {
-            val scopeKey = if (mShowAll) (if (mIsVaultFilesView) "vault_show_all" else SHOW_ALL) else mDirectory
+            // A virtual album's shuffle order belongs to that album only. It must not overwrite
+            // the global "show all" order or the process-wide grid cache, which would make other
+            // albums inherit this album's list when they are opened next.
+            val isVirtualAlbum = mDirectory.isVirtualAlbumPath()
+            val scopeKey = if (mShowAll && !isVirtualAlbum) (if (mIsVaultFilesView) "vault_show_all" else SHOW_ALL) else mDirectory
             RandomOrderManager.setMediaOrder(scopeKey, mMediaFiles.map { it.path })
-            val pathToUse = if (mShowAll) SHOW_ALL else mDirectory.ifEmpty { SHOW_ALL }
-            MediaActivity.mMedia = MediaFetcher(applicationContext, mIsVaultFilesView).groupMedia(
-                ArrayList(mMediaFiles),
-                pathToUse
-            )
+            if (!isVirtualAlbum) {
+                val pathToUse = if (mShowAll) SHOW_ALL else mDirectory.ifEmpty { SHOW_ALL }
+                MediaActivity.mMedia = MediaFetcher(applicationContext, mIsVaultFilesView).groupMedia(
+                    ArrayList(mMediaFiles),
+                    pathToUse
+                )
+            }
         }
 
         updatePagerItems(mMediaFiles.toMutableList())

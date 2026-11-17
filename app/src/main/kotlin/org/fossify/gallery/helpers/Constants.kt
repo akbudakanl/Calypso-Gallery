@@ -209,6 +209,8 @@ const val SLIDESHOW_ANIMATION_FADE = 2
 const val RECYCLE_BIN = "recycle_bin"
 const val SHOW_FAVORITES = "show_favorites"
 const val SHOW_VIRTUAL_ALBUM = "show_virtual_album"
+/** The album whose item list the media viewer must page through, independent of the file's real folder. */
+const val EXTRA_ALBUM_PATH = "album_path"
 
 // virtual albums use a slash-less pseudo path, same as FAVORITES and RECYCLE_BIN, followed by the album id
 const val VIRTUAL_ALBUM_PREFIX = "virtual_album_"

@@ -47,6 +47,7 @@ import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.FAVORITES
+import org.fossify.commons.helpers.IS_FROM_GALLERY
 import org.fossify.commons.helpers.VIEW_TYPE_LIST
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
@@ -113,6 +114,7 @@ import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
 import org.fossify.gallery.helpers.DeleteBehaviorHelper
+import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.DeleteOriginType
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaUpdatePolicy
@@ -1254,9 +1256,13 @@ class MediaAdapter(
             activity.getShortcutImage(path, drawable) {
                 val intent = Intent(activity, ViewPagerActivity::class.java).apply {
                     putExtra(PATH, path)
+                    // A pinned shortcut must reopen in the album it was created from, not in the
+                    // file's real parent folder.
+                    putExtra(EXTRA_ALBUM_PATH, this@MediaAdapter.path)
                     putExtra(SHOW_ALL, config.showAll || this@MediaAdapter.path.isEmpty())
                     putExtra(SHOW_FAVORITES, path == FAVORITES)
                     putExtra(SHOW_RECYCLE_BIN, path == RECYCLE_BIN)
+                    putExtra(IS_FROM_GALLERY, true)
                     action = Intent.ACTION_VIEW
                     flags = flags or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }

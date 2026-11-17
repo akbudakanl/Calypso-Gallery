@@ -116,6 +116,7 @@ import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
+import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.EXTRA_EXITED_FROM_VAULT
 import org.fossify.gallery.helpers.EXTRA_OPEN_SECRET_VAULT_FOLDERS
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
@@ -679,8 +680,15 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 val item = mMedia.firstOrNull { it is Medium } as? Medium ?: return
                 putExtra(SKIP_AUTHENTICATION, shouldSkipAuthentication())
                 putExtra(PATH, item.path)
+                // A slideshow started from a virtual album must keep that album's item list and
+                // sort scope instead of falling back to the file's real parent folder.
+                putExtra(EXTRA_ALBUM_PATH, mPath)
                 putExtra(SHOW_ALL, mShowAll)
                 putExtra(EXTRA_SECRET_VAULT_FILES, mIsVaultFilesView)
+                putExtra(SHOW_FAVORITES, mPath == FAVORITES)
+                putExtra(SHOW_VIRTUAL_ALBUM, if (mPath.isVirtualAlbumPath()) mPath else "")
+                putExtra(SHOW_RECYCLE_BIN, mPath == RECYCLE_BIN)
+                putExtra(IS_FROM_GALLERY, true)
                 putExtra(SLIDESHOW_START_ON_ENTER, true)
                 startActivity(this)
             }
@@ -702,7 +710,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             mStoredMarkFavoriteItems = markFavoriteItems
             mStoredThumbnailSpacing = thumbnailSpacing
             mStoredRoundedCorners = fileRoundedCorners
-            mShowAll = (showAll || mIsVaultFilesView) && mPath != RECYCLE_BIN
+            // A virtual album is a file-bound collection, not a physical folder. Keep its own
+            // album scope even with "Show all folders content" enabled, so it is not replaced
+            // by the global media list.
+            mShowAll = (showAll || mIsVaultFilesView) && mPath != RECYCLE_BIN && !mPath.isVirtualAlbumPath()
         }
     }
 
@@ -1353,6 +1364,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         Intent(this, ViewPagerActivity::class.java).apply {
             putExtra(SKIP_AUTHENTICATION, shouldSkipAuthentication())
             putExtra(PATH, path)
+            // Carry the album identity explicitly: the viewer pages through this album's items
+            // and uses its sort setting, regardless of the file's real filesystem folder.
+            putExtra(EXTRA_ALBUM_PATH, mPath)
             putExtra(SHOW_ALL, mShowAll)
             putExtra(EXTRA_SECRET_VAULT_FILES, mIsVaultFilesView)
             putExtra(SHOW_FAVORITES, mPath == FAVORITES)
