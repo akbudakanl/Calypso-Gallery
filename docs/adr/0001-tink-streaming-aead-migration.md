@@ -3,10 +3,10 @@
 - **Status:** **Accepted** (rev 6 — final; bit-rot/corruption UX fully specified)
 - **Date:** 2026-11-16
 - **Target release:** 1.20
-- **Scope:** `Cipher_Secrets` container format, metadata record format, `.vault` key header, desktop CLI, encrypted-area upgrade UX
+- **Scope:** vault container format (`Secrets/`, formerly `Cipher_Secrets/` — the rename is path-only), metadata record format, `.vault` key header, desktop CLI, encrypted-area upgrade UX
 - **Supersedes / relates to:** DOCS.md §2, §2.2, §2.3, §5; FORK_CHANGELOG.md `[Unreleased]`; [ADR 0002](0002-operational-security-hardening.md) (operational security; wins on the foreground-service exception)
 
-> **Terminology.** The app's canonical user-facing term remains **"Encrypted Vault" / "Şifreli Kasa"**. All new UI strings, warnings and user docs must use it, as must this ADR's prose. "Vault" is also the established name for internal identifiers (`Cipher_Secrets`, `VAULT_HEADER_FILE`, `.vault`, `VaultContainer`). The temporary "encrypted area / şifreli alan" wording from earlier revisions is fully reverted.
+> **Terminology.** The app's canonical user-facing term remains **"Encrypted Vault" / "Şifreli Kasa"**. All new UI strings, warnings and user docs must use it, as must this ADR's prose. "Vault" is also the established name for internal identifiers (`Secrets`, `VAULT_HEADER_FILE`, `.vault`, `VaultContainer`). The on-disk folder was renamed from `Cipher_Secrets` to `Secrets` after this ADR was accepted; that change is path-only and the legacy name is still recognised for detection and migration. The temporary "encrypted area / şifreli alan" wording from earlier revisions is fully reverted.
 
 ---
 
