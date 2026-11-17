@@ -294,7 +294,7 @@ private fun CryptoManager.unpackKeyring(bytes: ByteArray): Pair<Short, Map<Short
         DataInputStream(ByteArrayInputStream(bytes)).use { dis ->
             val activeId = dis.readUnsignedShort().toShort()
             val count = dis.readUnsignedShort()
-            if (count <= 0 || count > 16) return null
+            if (count <= 0 || count > 256) return null
             val result = LinkedHashMap<Short, ByteArray>()
             repeat(count) {
                 val id = dis.readUnsignedShort().toShort()
