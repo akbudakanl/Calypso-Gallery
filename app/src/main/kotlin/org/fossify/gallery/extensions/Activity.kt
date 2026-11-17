@@ -964,13 +964,29 @@ private fun BaseSimpleActivity.defaultSyncSourcePickerPath(): String {
         ?: internalStoragePath
 }
 
-fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = null) {
+fun BaseSimpleActivity.promptSyncVaultFromExternal(
+    forcePasswordPrompt: Boolean = false,
+    onSynced: (() -> Unit)? = null,
+    onCancelled: (() -> Unit)? = null
+) {
     if (!hasVaultCreated()) {
         toast(R.string.enable_hidden_protection_first_prompt)
         return
     }
 
-    ensureVaultUnlocked {
+    // Outside an active encrypted-album session the vault is unlocked only for the duration of this flow.
+    // Wiping the key on every exit (success or cancel) guarantees the next visit has to prompt again.
+    val wipeKeysOnExit: () -> Unit = { VaultSessionManager.lockVaultIfOutsideSession(this) }
+    val onFlowCancelled: () -> Unit = {
+        wipeKeysOnExit()
+        onCancelled?.invoke()
+    }
+    val onFlowFinished: () -> Unit = {
+        wipeKeysOnExit()
+        onSynced?.invoke()
+    }
+
+    ensureVaultUnlocked(forcePrompt = forcePasswordPrompt, onCancelled = onFlowCancelled) {
         val startFolderPickerAndSync = {
             pickCustomVaultDirectory(
                 initialPath = defaultSyncSourcePickerPath(),
@@ -982,7 +998,7 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = nul
                         resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
                     }.getOrDefault(false)
                     if (sameVault) {
-                        showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, {})
+                        showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, onFlowCancelled)
                         return@pickCustomVaultDirectory
                     }
 
@@ -1007,7 +1023,7 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = nul
                             runOnUiThread {
                                 progressDialog.dismiss()
                                 if (isFinishing || isDestroyed) {
-                                    onSynced?.invoke()
+                                    onFlowFinished()
                                     return@runOnUiThread
                                 }
                                 when {
@@ -1046,12 +1062,12 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = nul
                                             }
                                     }
                                 }
-                                onSynced?.invoke()
+                                onFlowFinished()
                             }
                         }
                     }
                 },
-                onCancelled = {}
+                onCancelled = onFlowCancelled
             )
         }
 
@@ -1064,7 +1080,7 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(onSynced: (() -> Unit)? = nul
                     config.hasShownVaultImportInfo = true
                     startFolderPickerAndSync()
                 }
-                .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ -> onFlowCancelled() }
                 .apply {
                     setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
                 }
@@ -1465,10 +1481,14 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
 }
 
 fun BaseSimpleActivity.ensureVaultUnlocked(
+    forcePrompt: Boolean = false,
     onCancelled: () -> Unit = {},
     onUnlocked: () -> Unit
 ) {
-    if (CryptoManager.isVaultUnlocked) {
+    // forcePrompt is used by settings that must re-verify the password on every visit even when the vault key
+    // happens to still be in RAM from another operation. Being inside an encrypted album (temporarilyShowHidden)
+    // is handled by the caller, which simply skips the force prompt while that session is active.
+    if (!forcePrompt && CryptoManager.isVaultUnlocked) {
         onUnlocked()
         return
     }
