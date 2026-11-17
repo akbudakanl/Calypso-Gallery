@@ -37,6 +37,9 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
+import org.fossify.gallery.helpers.vault.TinkStreamSpec
+import org.fossify.gallery.helpers.vault.openV4PayloadChannel
+import org.fossify.gallery.helpers.vault.v4HeaderAad
 import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
@@ -50,6 +53,11 @@ import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_TINK_STREAM
+import org.fossify.gallery.helpers.vault.VaultContainer.FILE_ID_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.ALGORITHM_PARAMS_V4
+import org.fossify.gallery.helpers.vault.VaultContainer.payloadOffsetV4
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveFileHeaderKey
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
@@ -102,6 +110,107 @@ import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerStreams.
  */
+
+/**
+ * v4 (Tink streaming AEAD) konteynerinin basligini okur.
+ *
+ * Duzen: magic(8) | version(1) | keyId(2) | fileId(16) | headerIv(12) | N(4) |
+ *        encHeader(N) | Tink ciphertext(T)
+ * Header GCM AAD'si cleartext onektir: magic | version | keyId | fileId | N.
+ */
+internal fun readV4Metadata(
+    dis: DataInputStream,
+    kek: ByteArray,
+    version: Byte,
+    includeThumbnail: Boolean
+): EncryptedFileMetadata? {
+    val keyId = dis.readUnsignedShort().toShort()
+
+    val fileId = ByteArray(FILE_ID_LENGTH)
+    dis.readFully(fileId)
+    if (fileId.all { it == 0.toByte() }) return null
+
+    val headerIv = ByteArray(GCM_IV_LENGTH)
+    dis.readFully(headerIv)
+
+    val encHeaderLen = dis.readInt()
+    if (encHeaderLen <= 0 || encHeaderLen > 5 * 1024 * 1024) return null
+    val encHeader = ByteArray(encHeaderLen)
+    dis.readFully(encHeader)
+
+    val headerKey = deriveFileHeaderKey(kek, fileId)
+    try {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            SecretKeySpec(headerKey, "AES"),
+            GCMParameterSpec(GCM_TAG_BITS, headerIv)
+        )
+        cipher.updateAAD(
+            v4HeaderAad(
+                VaultContainer.MAGIC_V2.toByteArray(Charsets.US_ASCII),
+                version, keyId, fileId, encHeaderLen
+            )
+        )
+        val plainHeader = cipher.doFinal(encHeader)
+
+        DataInputStream(ByteArrayInputStream(plainHeader)).use { hdis ->
+            if (hdis.readUnsignedShort() != ALGORITHM_PARAMS_V4.toInt()) return null
+            val segmentSize = hdis.readInt()
+            if (!TinkStreamSpec.isSupportedSegmentSize(segmentSize)) return null
+
+            val ciphertextLength = hdis.readLong()
+            if (ciphertextLength <= 0L || ciphertextLength > Int.MAX_VALUE.toLong() * 8L) return null
+
+            val dek = ByteArray(TinkStreamSpec.KEY_SIZE_BYTES)
+            hdis.readFully(dek)
+
+            val originalName = hdis.readUTF()
+            val lastModified = hdis.readLong()
+            val dateTaken = hdis.readLong()
+            val originalSize = hdis.readLong()
+            val mediaType = hdis.readInt()
+            val videoDuration = hdis.readInt()
+
+            // Tink akis uzunlugu tam olmali: truncation / eklenen bayt tespiti.
+            if (ciphertextLength != TinkStreamSpec.expectedCiphertextSize(originalSize, segmentSize)) return null
+
+            val thumbBytes = if (includeThumbnail && hdis.available() >= 4) {
+                val thumbLen = hdis.readInt()
+                if (thumbLen in 1..(5 * 1024 * 1024) && hdis.available() >= thumbLen) {
+                    ByteArray(thumbLen).also { hdis.readFully(it) }
+                } else null
+            } else null
+
+            return EncryptedFileMetadata(
+                originalName = originalName,
+                lastModified = lastModified,
+                dateTaken = dateTaken,
+                originalSize = originalSize,
+                mediaType = mediaType,
+                videoDuration = videoDuration,
+                payloadOffset = payloadOffsetV4(encHeaderLen),
+                contentIv = ByteArray(0),
+                fileKey = dek,
+                version = version,
+                isMacAuthenticated = true,
+                thumbnailBytes = thumbBytes,
+                fileId = fileId,
+                keyId = keyId,
+                ciphertextLength = ciphertextLength,
+                isV4 = true,
+                segmentSize = segmentSize
+            )
+        }
+    } catch (_: Exception) {
+        // Bozuk/yanlis AAD/anahtar: ust okuyucu da null dondurur; yardimci fonksiyon
+        // kendi basina da guvenli olmali (direkt cagrilar ve testler icin).
+        return null
+    } finally {
+        headerKey.fill(0)
+    }
+}
+
 
 fun CryptoManager.readEmbeddedThumbnailBytes(file: File): ByteArray? {
     val meta = readMetadata(file) ?: return null
@@ -188,6 +297,29 @@ fun CryptoManager.openDecryptedContentStream(
         return ByteArrayInputStream(ByteArray(0))
     }
 
+    if (meta.isV4) {
+        val fileId = meta.fileId ?: return null
+        return try {
+            // Tink'in kendi seekable kanali: key derivation / IV / segment decode
+            // tamamen kutuphanede. incrementCounter bu yolda kullanilmaz.
+            val channel = openV4PayloadChannel(
+                file = file,
+                payloadOffset = meta.payloadOffset,
+                ciphertextLength = meta.ciphertextLength,
+                dek = meta.fileKey,
+                fileId = fileId,
+                segmentSize = meta.segmentSize
+            )
+            channel.position(startOffset)
+            BoundedInputStream(
+                java.nio.channels.Channels.newInputStream(channel),
+                meta.originalSize - startOffset
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     return try {
         val blockIndex = startOffset / CTR_IV_LENGTH
         val byteSkipInBlock = (startOffset % CTR_IV_LENGTH).toInt()
@@ -243,6 +375,32 @@ fun CryptoManager.verifyFileIntegrity(
     preloadedMeta: EncryptedFileMetadata? = null
 ): Boolean {
     val meta = preloadedMeta ?: readMetadata(file, includeThumbnail = false, cacheResult = false) ?: return false
+
+    if (meta.isV4) {
+        val fileId = meta.fileId ?: return false
+        if (file.length() != meta.payloadOffset + meta.ciphertextLength) return false
+        return try {
+            val channel = openV4PayloadChannel(
+                file = file,
+                payloadOffset = meta.payloadOffset,
+                ciphertextLength = meta.ciphertextLength,
+                dek = meta.fileKey,
+                fileId = fileId,
+                segmentSize = meta.segmentSize
+            )
+            channel.use { ch ->
+                val buf = java.nio.ByteBuffer.allocate(256 * 1024)
+                while (ch.read(buf) != -1) {
+                    buf.clear()
+                }
+                // Tink, -1 dondurerek son segmentin tag'ini dogrular ( authenticated EOF ).
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     if (!meta.isMacAuthenticated) {
         // Legacy v1/v2 payload (authenticated via GCM header only)
         return true

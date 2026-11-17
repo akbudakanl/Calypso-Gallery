@@ -14,6 +14,7 @@ import java.io.InputStream
 
 @UnstableApi
 class EncryptedMediaDataSource : BaseDataSource(false) {
+    private val readProbe = MediaReadPatternProbe()
     private var uri: Uri? = null
     private var inputStream: InputStream? = null
     private var bytesRemaining: Long = 0L
@@ -36,8 +37,9 @@ class EncryptedMediaDataSource : BaseDataSource(false) {
             throw EOFException("Position out of range: ${dataSpec.position} > ${meta.originalSize}")
         }
 
+        readProbe.onOpen(dataSpec.position)
         inputStream = CryptoManager.openDecryptedContentStream(file, dataSpec.position)
-            ?: throw IOException("Failed to open decrypted AES-CTR stream")
+            ?: throw IOException("Failed to open decrypted stream")
 
         bytesRemaining = if (dataSpec.length != C.LENGTH_UNSET.toLong()) {
             dataSpec.length
@@ -71,6 +73,7 @@ class EncryptedMediaDataSource : BaseDataSource(false) {
         if (bytesRemaining != C.LENGTH_UNSET.toLong()) {
             bytesRemaining -= read
         }
+        readProbe.onRead(bytesToRead, read)
         bytesTransferred(read)
         return read
     }
@@ -88,6 +91,7 @@ class EncryptedMediaDataSource : BaseDataSource(false) {
                 opened = false
                 transferEnded()
             }
+            readProbe.dumpIfEnabled()
         }
     }
 

@@ -4,3 +4,5 @@ pillow>=10.0.0
 # Poly1305-AES MAC cekirdegi icin. Elle yazilmis MAC implementasyonu
 # kullanmamak adina zorunludur (BouncyCastle ile birebir uyumlu).
 pycryptodome>=3.20.0
+# Tink streaming AEAD (v4 konteyner) - Java tink-android 1.24.0 ile tel uyumludur.
+tink>=1.16.1,<2
