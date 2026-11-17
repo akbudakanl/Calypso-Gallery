@@ -665,3 +665,106 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 468 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Secrets 且包含 .vault 檔案的資料夾即可。 |
 | 469 | `exporting_vault_progress` | Exporting encrypted vault… | 正在匯出加密保險箱… |
 | 470 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | 匯出目的地不可為使用中的保險箱資料夾或其子資料夾。 |
+| 471 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準對話方塊 |
+| 472 | `conflict_handling_smart_dialog_summary` | Smart dialog | 智慧對話方塊 |
+| 473 | `conflict_handling_auto_summary` | Automatic (Experimental) | 全自動（實驗性） |
+| 474 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準對話方塊（預設 — 僅檢查檔名，與原始 Fossify Gallery 相同） |
+| 475 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 管理加密期間略過的檔案 |
+| 476 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | 管理解密期間略過的檔案 |
+| 477 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 選擇加密期間在來源資料夾中略過的檔案要保留還是刪除，以確保安全性。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿加密期間的相簿衝突（請參閱下方設定）。 |
+| 478 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | 選擇解密期間在來源資料夾中略過的檔案要保留還是刪除。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿解密期間的相簿衝突（請參閱下方設定）。 |
+| 479 | `skipped_crypto_files_ask` | Always ask (Default) | 一律詢問（預設） |
+| 480 | `skipped_crypto_files_keep` | Keep | 保留 |
+| 481 | `skipped_crypto_files_delete` | Delete | 刪除 |
+| 482 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | 您略過的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 483 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | 您略過的檔案未被轉移。您可以刪除這些檔案。 |
+| 484 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 485 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
+| 486 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 487 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
+| 488 | `skipped_crypto_files_always_ask` | Always ask | 一律詢問 |
+| 489 | `delete_skipped_files_confirm_title` | Are you sure? | 確定要繼續嗎？ |
+| 490 | `delete_skipped_files_confirm_message` | Your files will be deleted! | 您的檔案將會被刪除！ |
+| 491 | `date_tie_break_label` | When content is identical but dates differ | 當內容相同但日期不同時 |
+| 492 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 保留現有檔案的日期（預設） |
+| 493 | `date_tie_break_use_source` | Use the source file\'s date | 使用來源檔案的日期 |
+| 494 | `date_tie_break_ask` | Always ask | 一律詢問 |
+| 495 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | 僅適用於智慧對話方塊與全自動模式。標準對話方塊不受影響。 |
+| 496 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | 為何「一律詢問」會停用智慧對話方塊與全自動模式 |
+| 497 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異。在全自動模式中，相同的檔案會再次寫入為 name(1)，讓資料夾塞滿毫無意義的副本。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 |
+| 498 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 499 | `smart_conflict_incoming_label` | Incoming (New) | 傳入（新） |
+| 500 | `smart_conflict_existing_label` | Existing (Target) | 現有（目標） |
+| 501 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 已損毀或無法讀取 |
+| 502 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 完整性檢查失敗（位元腐壞／損毀） |
+| 503 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | 輕觸任一縮圖以檢視全尺寸預覽 |
+| 504 | `smart_conflict_comparing` | Comparing file contents and dates… | 正在比較檔案內容與日期… |
+| 505 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | 檔案內容不同。\n若這兩個檔案原本應該相同，可能發生了資料損毀。建議保留兩者並加以檢視。 |
+| 506 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | 檔案內容相同，但建立（拍攝日期）時間戳記不同。 |
+| 507 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | 檔案內容相同，但修改日期不同。 |
+| 508 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | 檔案內容相同，但建立與修改日期不同。 |
+| 509 | `smart_conflict_meta_date_taken` | Taken: %s | 拍攝日期：%s |
+| 510 | `smart_conflict_meta_date_modified` | Modified: %s | 修改日期：%s |
+| 511 | `album_type_icons` | Album type icons | 相簿類型圖示 |
+| 512 | `virtual_folders` | Virtual folders | 虛擬資料夾 |
+| 513 | `favorites_album` | Favorites | 我的最愛 |
+| 514 | `excluded_folders_album` | Excluded folders | 已排除的資料夾 |
+| 515 | `hidden_folders_album` | Hidden folders | 隱藏資料夾 |
+| 516 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 暫時顯示隱藏資料夾 |
+| 517 | `stop_showing_hidden_folders` | Stop showing hidden folders | 停止顯示隱藏資料夾 |
+| 518 | `unexclude` | Stop excluding | 停止排除 |
+| 519 | `hide_folder` | Hide | 隱藏 |
+| 520 | `unhide_folder` | Unhide | 取消隱藏 |
+| 521 | `about_title` | About Calypso Gallery | 關於 Calypso Gallery |
+| 522 | `about_version` | Version %1$s (%2$s) | 版本 %1$s (%2$s) |
+| 523 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。 |
+| 524 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | 此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。 |
+| 525 | `about_license_heading` | License | 授權條款 |
+| 526 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。 |
+| 527 | `about_read_gpl_license` | Read the GNU GPL v3 license | 閱讀 GNU GPL v3 授權條款 |
+| 528 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | 閱讀 Tink Apache 2.0 授權條款與歸屬聲明 |
+| 529 | `about_source_heading` | Source code | 原始碼 |
+| 530 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | 本分支完整的對應原始碼保存在分支儲存庫中。已標記的發行版本也提供相對應的原始碼封存檔。該儲存庫包含檢視與重新建置專案所需的建置指令碼、相依性宣告及完整的分支歷史。 |
+| 531 | `about_fork_source` | Fork source code and corresponding source | 分支原始碼與對應原始碼 |
+| 532 | `about_release_sources` | Release source archives | 發行版本原始碼封存檔 |
+| 533 | `about_fork_issues` | Fork issue tracker | 分支問題追蹤器 |
+| 534 | `about_upstream_source` | Upstream Fossify Gallery source code | 上游 Fossify Gallery 原始碼 |
+| 535 | `about_upstream_project` | Upstream Fossify project | 上游 Fossify 專案 |
+| 536 | `about_help_heading` | Help and legal information | 說明與法律資訊 |
+| 537 | `about_faq` | Frequently asked questions | 常見問題 |
+| 538 | `about_third_party_licenses` | Third-party licenses | 第三方授權條款 |
+| 539 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 540 | `tink_license_title` | Tink license and attribution | Tink 授權與歸屬聲明 |
+| 541 | `fork_disclaimer_title` | Fork notice | 分支聲明 |
+| 542 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | 本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。 |
+| 543 | `fork_disclaimer_acknowledge` | I understand | 我瞭解 |
+| 544 | `vault_upgrade_entry_title` | Encrypted Vault update available | 加密保險箱更新可用 |
+| 545 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | 您的加密保險箱是以舊版應用程式建立，並使用舊的加密演算法。若您願意，可以依目前版本的加密演算法重新建立加密保險箱。 |
+| 546 | `vault_upgrade_always_show` | Always show | 一律顯示 |
+| 547 | `vault_upgrade_settings_title` | Always show vault update warning | 一律顯示保險箱更新警告 |
+| 548 | `vault_upgrade_details_title` | Before updating | 更新前 |
+| 549 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | 建議先備份，再更新加密保險箱以使用目前的加密演算法。如此一來，即可消除因更新中斷而導致資料遺失的風險；若您願意，也可以在舊版應用程式中繼續使用未更新的加密保險箱。 |
+| 550 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | 您的電量偏低，請將裝置充電至至少 20%。 |
+| 551 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | 可用空間不足，無法更新加密保險箱。 |
+| 552 | `vault_upgrade_continue` | Continue | 繼續 |
+| 553 | `vault_upgrade_progress` | Converted %1$d of %2$d files | 已轉換 %1$d / %2$d 個檔案 |
+| 554 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | 更新完成。請重新開啟加密保險箱以啟用新的金鑰環。 |
+| 555 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | 更新已停止：有 %1$d 個檔案無法驗證。 |
+| 556 | `vault_upgrade_resume_title` | Vault update was interrupted | 保險箱更新已中斷 |
+| 557 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | 加密保險箱更新已中斷。加密保險箱中的部分檔案已更新為新的加密演算法。沒有任何資料遺失。您要繼續更新其餘的檔案嗎？ |
+| 558 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | 更新期間請勿離開應用程式或關閉螢幕。 |
+| 559 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | 加密保險箱已中斷連線。正在等待重新連線... |
+| 560 | `argon2_profile_title` | Brute-Force resistance | 暴力破解防護 |
+| 561 | `brute_force_mode_title` | Calibration mode | 校正模式 |
+| 562 | `brute_force_mode_time` | Via vault unlock time | 透過保險箱解鎖時間 |
+| 563 | `brute_force_mode_presets` | Via ready-made modes | 透過現成模式 |
+| 564 | `brute_force_time_title` | Target vault unlock time | 目標保險箱解鎖時間 |
+| 565 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | 秒數（2.0–7.0）。應用程式會對此裝置進行一次測量，並將產生的 KDF 參數儲存在保險箱中；實際解鎖時間在其他裝置上會有所不同。 |
+| 566 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
+| 567 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 已儲存：%1$d MiB / %2$d 回合 |
+| 568 | `brute_force_clamped` |  (clamped) |  （已限制） |
+| 569 | `argon2_profile_low` | Low-end device (not recommended) | 低階裝置（不建議） |
+| 570 | `argon2_profile_default` | Default | 預設 |
+| 571 | `argon2_profile_high` | High security | 高安全性 |
+| 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。 |
+| 573 | `argon2_profile_current` | Current: %s | 目前：%s |

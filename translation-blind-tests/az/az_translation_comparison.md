@@ -650,3 +650,106 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 470 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | Dəstəklənən CLI alətindən istifadə edərək digər cihazlarda şifrələdiyiniz media elementlərini telefonunuzdakı şifrələnmiş seyfə əlavə etmək üçün tərkibində .vault faylı olan Secrets adlı qovluqdan istifadə etməyiniz kifayətdir. |
 | 471 | `exporting_vault_progress` | Exporting encrypted vault… | Şifrələnmiş seyf ixrac olunur… |
 | 472 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | İxrac hədəfi aktiv seyf qovluğu və ya onun alt qovluğu ola bilməz. |
+| 473 | `conflict_handling_standard_dialog_summary` | Standard dialog | Standart dialoq |
+| 474 | `conflict_handling_smart_dialog_summary` | Smart dialog | Ağıllı dialoq |
+| 475 | `conflict_handling_auto_summary` | Automatic (Experimental) | Avtomatik (Eksperimental) |
+| 476 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Standart dialoq (Susmaya görə — yalnız fayl adını yoxlayır, orijinal Fossify Gallery kimi) |
+| 477 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Şifrələmə zamanı atlanan faylları idarə et |
+| 478 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | Şifrə açma zamanı atlanan faylları idarə et |
+| 479 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Şifrələmə zamanı mənbə qovluqda atlanan faylların təhlükəsizlik məqsədilə saxlanılacağını və ya silinəcəyini seçin. Bu seçim, həmçinin mənbə albomu təyinat yerində mövcud albomla birləşdirildikdə, albom şifrələməsi zamanı yaranan albom ziddiyyətlərinə də tətbiq olunur (aşağıdakı parametra baxın). |
+| 480 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | Şifrə açma zamanı mənbə qovluqda atlanan faylların saxlanılacağını və ya silinəcəyini seçin. Bu seçim, həmçinin mənbə albomu təyinat yerində mövcud albomla birləşdirildikdə, albomun şifrəsi açılarkən yaranan albom ziddiyyətlərinə də tətbiq olunur (aşağıdakı parametra baxın). |
+| 481 | `skipped_crypto_files_ask` | Always ask (Default) | Həmişə soruş (Susmaya görə) |
+| 482 | `skipped_crypto_files_keep` | Keep | Saxla |
+| 483 | `skipped_crypto_files_delete` | Delete | Sil |
+| 484 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Atladığınız fayllar köçürülmədi. Məxfilikiniz üçün bu faylları silə bilərsiniz. |
+| 485 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Atladığınız fayllar köçürülmədi. Bu faylları silə bilərsiniz. |
+| 486 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Təyinat qovluğunda artıq mövcud olan fayllar köçürülmədi. Məxfilikiniz üçün bu faylları silə bilərsiniz. |
+| 487 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Təyinat qovluğunda artıq mövcud olan fayllar köçürülmədi. Bu faylları silə bilərsiniz. |
+| 488 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Atladığınız fayllar və təyinat qovluğunda artıq mövcud olan fayllar köçürülmədi. Məxfilikiniz üçün bu faylları silə bilərsiniz. |
+| 489 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Atladığınız fayllar və təyinat qovluğunda artıq mövcud olan fayllar köçürülmədi. Bu faylları silə bilərsiniz. |
+| 490 | `skipped_crypto_files_always_ask` | Always ask | Həmişə soruş |
+| 491 | `delete_skipped_files_confirm_title` | Are you sure? | Əminsiniz? |
+| 492 | `delete_skipped_files_confirm_message` | Your files will be deleted! | Fayllarınız silinəcək! |
+| 493 | `date_tie_break_label` | When content is identical but dates differ | Məzmun eyni, lakin tarixlər fərqli olduqda |
+| 494 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Mövcud faylın tarixini saxla (susmaya görə) |
+| 495 | `date_tie_break_use_source` | Use the source file\'s date | Mənbə faylın tarixindən istifadə et |
+| 496 | `date_tie_break_ask` | Always ask | Həmişə soruş |
+| 497 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Yalnız Ağıllı dialoq və Avtomatik rejimə tətbiq olunur. Standart dialoq təsirlənmir. |
+| 498 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Niyə "Həmişə soruş" Ağıllı dialoq və Avtomatik rejimi deaktiv edir |
+| 499 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | Ağıllı dialoq və Avtomatik rejim yalnız bir səbəbdən mövcuddur: məzmunu artıq mövcud olan faylları ötürmək, beləliklə yalnız həqiqətən diqqətinizi tələb edən faylları görəsiniz — eyni adda, lakin fərqli məzmunlu. Miniatürlərin müqayisəsi məhz belə hallarda bit çürüməsini (bit-rot) aşkar edə bilər.\n\nBurada "Həmişə soruş" seçsəniz, fərqli tarixli hər eyni fayl sizə ziddiyyət kimi qayıdacaq. Ağıllı dialoqda tam eyni şəklin iki miniatürünü görəcəksiniz, lakin yoxlayacaq heç nə olmayacaq. Avtomatik rejimdə eyni fayl name(1) olaraq yenidən yazılır və qovluqlarınız mənasız nüsxələrlə dolur.\n\nBu seçimdən yalnız hər bir tarix fərqini qəsdən nəzərdən keçirmək istədiyinizdə, məsələn yanlış tarixi əl ilə düzəltmək üçün istifadə edin.\n\nQeyd: məzmun bit-bə-bit eyni olduqda, EXIF çəkilmə tarixi də eyni olur. Tarix fərqi o deməkdir ki, bir tərəf EXIF məlumatını itirib və faylın dəyişdirilmə tarixinə (köçürmə tarixinə) qayıdıb. |
+| 500 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 501 | `smart_conflict_incoming_label` | Incoming (New) | Gələn (Yeni) |
+| 502 | `smart_conflict_existing_label` | Existing (Target) | Mövcud (Hədəf) |
+| 503 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Zədələnmiş və ya oxuna bilməyən |
+| 504 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Bütövlük yoxlaması uğursuz oldu (Bit çürüməsi / Zədələnmiş) |
+| 505 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Tam ölçülü önizləmə üçün istənilən miniatürə toxunun |
+| 506 | `smart_conflict_comparing` | Comparing file contents and dates… | Fayl məzmunları və tarixləri müqayisə edilir… |
+| 507 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | Fayl məzmunları fərqlidir.\nBu iki fayl eyni olmalı idisə, məlumat zədələnməsi baş verə bilər. Hər ikisini saxlayıb yoxlamaq tövsiyə olunur. |
+| 508 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | Fayl məzmunları eynidir, yaratma (çəkilmə tarixi) vaxt damğaları fərqlidir. |
+| 509 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | Fayl məzmunları eynidir, dəyişdirilmə tarixləri fərqlidir. |
+| 510 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | Fayl məzmunları eynidir, yaratma və dəyişdirilmə tarixləri fərqlidir. |
+| 511 | `smart_conflict_meta_date_taken` | Taken: %s | Çəkilib: %s |
+| 512 | `smart_conflict_meta_date_modified` | Modified: %s | Dəyişdirilib: %s |
+| 513 | `album_type_icons` | Album type icons | Albom növü nişanları |
+| 514 | `virtual_folders` | Virtual folders | Virtual qovluqlar |
+| 515 | `favorites_album` | Favorites | Sevimlilər |
+| 516 | `excluded_folders_album` | Excluded folders | İstisna edilmiş qovluqlar |
+| 517 | `hidden_folders_album` | Hidden folders | Gizli qovluqlar |
+| 518 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Gizli qovluqları müvəqqəti göstər |
+| 519 | `stop_showing_hidden_folders` | Stop showing hidden folders | Gizli qovluqları göstərməyi dayandır |
+| 520 | `unexclude` | Stop excluding | İstisna etməyi dayandır |
+| 521 | `hide_folder` | Hide | Gizlət |
+| 522 | `unhide_folder` | Unhide | Gizlətməni ləğv et |
+| 523 | `about_title` | About Calypso Gallery | Calypso Gallery haqqında |
+| 524 | `about_version` | Version %1$s (%2$s) | Versiya %1$s (%2$s) |
+| 525 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi şəxsi forkudur. Fossify ilə heç bir əlaqəsi yoxdur və onun tərəfindən dəstəklənmir. |
+| 526 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Bu paylama Fossify Gallery-nin dəyişdirilmiş versiyasıdır. Fork, 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) upstream kommitindən yaradılmışdır və fork-a xas bütün dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur. |
+| 527 | `about_license_heading` | License | Lisenziya |
+| 528 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Bu proqram sərbəst proqramdır: siz onu Free Software Foundation tərəfindən nəşr olunan GNU General Public License-ın (Lisenziyanın 3-cü versiyası) şərtlərinə əsasən yenidən paylaya və/və ya dəyişdirə bilərsiniz.\n\nBu proqram faydalı olacağı ümidi ilə paylanır, lakin HEÇ BİR ZƏMANƏT YOXDUR; hətta SATILA BİLƏRLİK və ya MÜƏYYƏN MƏQSƏDƏ YARARLILIQ barədə dolayı zəmanət də verilmir. Ətraflı məlumat üçün GNU General Public License-a baxın.\n\nBu proqramla birlikdə GNU General Public License-ın surətini almalısınız. Əgər almamısınızsa, aşağıdakı lisenziya əməliyyatından istifadə edin və ya https://www.gnu.org/licenses/ ünvanına baş çəkin. |
+| 529 | `about_read_gpl_license` | Read the GNU GPL v3 license | GNU GPL v3 lisenziyasını oxu |
+| 530 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Tink Apache 2.0 lisenziyasını və müəlliflik qeydini oxu |
+| 531 | `about_source_heading` | Source code | Mənbə kodu |
+| 532 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | Bu fork-un tam müvafiq mənbə kodu fork deposunda saxlanılır. Etiketli buraxılışlarda uyğun mənbə arxivi də mövcuddur. Depoda layihəni yoxlamaq və yenidən qurmaq üçün tələb olunan qurma skriptləri, asılılıq bəyannamələri və tam fork tarixçəsi var. |
+| 533 | `about_fork_source` | Fork source code and corresponding source | Fork mənbə kodu və müvafiq mənbə |
+| 534 | `about_release_sources` | Release source archives | Buraxılış mənbə arxivləri |
+| 535 | `about_fork_issues` | Fork issue tracker | Fork problem izləyicisi |
+| 536 | `about_upstream_source` | Upstream Fossify Gallery source code | Upstream Fossify Gallery mənbə kodu |
+| 537 | `about_upstream_project` | Upstream Fossify project | Upstream Fossify layihəsi |
+| 538 | `about_help_heading` | Help and legal information | Kömək və hüquqi məlumat |
+| 539 | `about_faq` | Frequently asked questions | Tez-tez verilən suallar |
+| 540 | `about_third_party_licenses` | Third-party licenses | Üçüncü tərəf lisenziyaları |
+| 541 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 542 | `tink_license_title` | Tink license and attribution | Tink lisenziyası və müəlliflik qeydi |
+| 543 | `fork_disclaimer_title` | Fork notice | Fork bildirimi |
+| 544 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Bu tətbiq Fossify komandası tərəfindən hazırlanmamışdır. Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi forkudur; orijinal tərtibatçı yalnız müəlliflik qeydi məqsədilə göstərilir. Fossify ilə heç bir əlaqəsi yoxdur, o tərəfindən dəstəklənmir və ya dəstək verilmir.\n\nDavam edərək bu bildirimi qəbul etdiyinizi təsdiq edirsiniz. Fork-a xas dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur. |
+| 545 | `fork_disclaimer_acknowledge` | I understand | Başa düşdüm |
+| 546 | `vault_upgrade_entry_title` | Encrypted Vault update available | Şifrəli Seyf üçün yeniləmə mövcuddur |
+| 547 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | Şifrəli Seyfiniz tətbiqin köhnə versiyası ilə yaradılmışdır və köhnə şifrələmə alqoritmindən istifadə edir. İstəsəniz, Şifrəli Seyfinizi cari versiyanın şifrələmə alqoritminə uyğun olaraq yenidən yarada bilərsiniz. |
+| 548 | `vault_upgrade_always_show` | Always show | Həmişə göstər |
+| 549 | `vault_upgrade_settings_title` | Always show vault update warning | Seyf yeniləmə xəbərdarlığını həmişə göstər |
+| 550 | `vault_upgrade_details_title` | Before updating | Yeniləmədən əvvəl |
+| 551 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | Şifrəli Seyfi cari şifrələmə alqoritminə keçirməzdən əvvəl ehtiyat nüsxə yaratmaq tövsiyə olunur. Beləliklə, yeniləmənin kəsilməsi nəticəsində məlumat itkisi riski aradan qaldırılır və istəsəniz, tətbiqin köhnə versiyalarında yenilənməmiş Şifrəli Seyfdən istifadə etməyə davam edə bilərsiniz. |
+| 552 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | Batareyanız azdır, zəhmət olmasa cihazınızı ən azı 20%-ə qədər doldurun. |
+| 553 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | Şifrəli Seyfi yeniləmək üçün kifayət qədər boş yer yoxdur. |
+| 554 | `vault_upgrade_continue` | Continue | Davam et |
+| 555 | `vault_upgrade_progress` | Converted %1$d of %2$d files | Faylların %1$d / %2$d hissəsi çevrildi |
+| 556 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | Yeniləmə tamamlandı. Yeni açar dəstəsini aktivləşdirmək üçün Şifrəli Seyfi yenidən açın. |
+| 557 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | Yeniləmə dayandırıldı: %1$d fayl təsdiqlənə bilmədi. |
+| 558 | `vault_upgrade_resume_title` | Vault update was interrupted | Seyf yeniləməsi kəsildi |
+| 559 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | Şifrəli Seyfin yeniləməsi kəsildi. Şifrəli Seyfinizdəki bəzi fayllar yeni şifrələmə alqoritminə keçirildi. Heç bir məlumat itirilmədi. Qalan faylları yeniləmək istəyirsiniz? |
+| 560 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | Yeniləmə zamanı tətbiqdən çıxmayın və ekranı söndürməyin. |
+| 561 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | Şifrəli Seyf ayrılıb. Yenidən qoşulması gözlənilir... |
+| 562 | `argon2_profile_title` | Brute-Force resistance | Brute-Force direnci |
+| 563 | `brute_force_mode_title` | Calibration mode | Kalibrasiya rejimi |
+| 564 | `brute_force_mode_time` | Via vault unlock time | Seyfin kilidini açma vaxtı ilə |
+| 565 | `brute_force_mode_presets` | Via ready-made modes | Hazır rejimlərlə |
+| 566 | `brute_force_time_title` | Target vault unlock time | Seyfin kilidini açmaq üçün hədəf vaxt |
+| 567 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | Saniyələr (2.0–7.0). Tətbiq bu cihazı bir dəfə ölçür və əldə edilən KDF parametrlərini seyfdə saxlayır; real açılma vaxtı digər cihazlarda fərqli ola bilər. |
+| 568 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
+| 569 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Saxlanılıb: %1$d MiB / %2$d dövr |
+| 570 | `brute_force_clamped` |  (clamped) |  (məhdudlaşdırılıb) |
+| 571 | `argon2_profile_low` | Low-end device (not recommended) | Aşağı səviyyəli cihaz (tövsiyə olunmur) |
+| 572 | `argon2_profile_default` | Default | Susmaya görə |
+| 573 | `argon2_profile_high` | High security | Yüksək təhlükəsizlik |
+| 574 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Nə etdiyinizi bilmirsinizsə, susmaya görə parametri saxlamaq tövsiyə olunur. Bu, yalnız yeni yaradılan seyflərə və parol dəyişikliklərinə təsir edir. |
+| 575 | `argon2_profile_current` | Current: %s | Cari: %s |

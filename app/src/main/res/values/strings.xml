@@ -568,7 +568,7 @@
     <string name="vault_upgrade_resume_message">The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files?</string>
     <string name="vault_upgrade_progress_warning">Please do not exit the app or turn off the screen during the update.</string>
     <string name="vault_upgrade_waiting">Encrypted Vault is disconnected. Waiting for it to reconnect...</string>
-    <string name="argon2_profile_title">Brute-Force direnci</string>
+    <string name="argon2_profile_title">Brute-Force resistance</string>
     <string name="brute_force_mode_title">Calibration mode</string>
     <string name="brute_force_mode_time">Via vault unlock time</string>
     <string name="brute_force_mode_presets">Via ready-made modes</string>

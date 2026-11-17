@@ -529,4 +529,24 @@
     <string name="argon2_profile_high">Yüksek güvenlik</string>
     <string name="argon2_profile_hint">Ne yaptığınızı bilmiyorsanız varsayılan ayarda kalmanız önerilir. Bu ayar yalnızca yeni kasaları ve parola değişikliklerini etkiler.</string>
     <string name="argon2_profile_current">Mevcut: %s</string>
+    <string name="about_title">Calypso Gallery Hakkında</string>
+    <string name="about_version">Sürüm %1$s (%2$s)</string>
+    <string name="about_fork_description">Calypso Gallery, Fossify Gallery\'nin bağımsız olarak sürdürülen, resmi olmayan kişisel bir forkudur. Fossify ile herhangi bir bağlantısı veya onayı yoktur.</string>
+    <string name="about_modification_notice">Bu dağıtım, Fossify Gallery\'nin değiştirilmiş bir sürümüdür. Fork, 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) yukarı akış commit\'inden oluşturulmuştur ve fork\'a özgü tüm değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
+    <string name="about_license_heading">Lisans</string>
+    <string name="about_gpl_notice" formatted="false">Bu program özgür yazılımdır: GNU Yazılım Vakfı tarafından yayımlanan GNU Genel Kamu Lisansı\'nın 3. sürümü koşulları altında yeniden dağıtabilir ve/veya değiştirebilirsiniz.\n\nBu program, yararlı olacağı umuduyla dağıtılmaktadır; ancak HİÇBİR GARANTİ YOKTUR; hatta TİCARİLİK ve BELİRLİ BİR AMACA UYGUNLUK için zımni garanti bile yoktur. Ayrıntılar için GNU Genel Kamu Lisansı\'na bakın.\n\nBu programla birlikte GNU Genel Kamu Lisansı\'nın bir kopyasını almış olmanız gerekir. Almadıysanız aşağıdaki lisans eylemini kullanın veya https://www.gnu.org/licenses/ adresini ziyaret edin.</string>
+    <string name="about_read_gpl_license">GNU GPL v3 lisansını oku</string>
+    <string name="about_read_tink_license">Tink Apache 2.0 lisansını ve atıf bilgilerini oku</string>
+    <string name="about_source_heading">Kaynak kodu</string>
+    <string name="about_corresponding_source_notice">Bu fork\'un eksiksiz karşılık gelen kaynak kodu fork deposunda tutulur. Etiketlenmiş sürümlerin ayrıca eşleşen bir kaynak arşivi vardır. Depo, projeyi incelemek ve yeniden derlemek için gereken derleme betiklerini, bağımlılık bildirimlerini ve eksiksiz fork geçmişini içerir.</string>
+    <string name="about_fork_source">Fork kaynak kodu ve karşılık gelen kaynak</string>
+    <string name="about_release_sources">Sürüm kaynak arşivleri</string>
+    <string name="about_fork_issues">Fork sorun izleyicisi</string>
+    <string name="about_upstream_source">Yukarı akış Fossify Gallery kaynak kodu</string>
+    <string name="about_upstream_project">Yukarı akış Fossify projesi</string>
+    <string name="about_help_heading">Yardım ve yasal bilgiler</string>
+    <string name="about_faq">Sıkça sorulan sorular</string>
+    <string name="about_third_party_licenses">Üçüncü taraf lisansları</string>
+    <string name="gpl_license_title">GNU Genel Kamu Lisansı v3</string>
+    <string name="tink_license_title">Tink lisansı ve atıf bilgileri</string>
 </resources>
