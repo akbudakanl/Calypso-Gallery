@@ -34,6 +34,7 @@ import java.net.URLStreamHandler
 import java.util.Collections
 import java.util.WeakHashMap
 import org.fossify.gallery.helpers.processPendingWipeJournal
+import org.fossify.gallery.helpers.operations.OperationJournal
 
 class App : FossifyApp() {
 
@@ -47,6 +48,8 @@ class App : FossifyApp() {
 
     override fun onCreate() {
         super.onCreate()
+        // ADR 0003: durable operation journal must be available before any file operation starts.
+        OperationJournal.init(this)
         // Neutralize Commons' fake-app warning before any activity can query the cached verdict.
         SideloadCheck.disable(this)
         // Commons' legacy launcher-icon migration in appLaunched() builds alias ComponentNames
