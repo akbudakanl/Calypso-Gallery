@@ -56,7 +56,7 @@ def encrypt_tink_stream(plain: bytes, dek: bytes, file_id: bytes) -> bytes:
     return out.getvalue()
 
 
-def parse_container(data: bytes, kek: bytes) -> dict:
+def parse_container(data: bytes, kek: bytes, expected_key_id: int = 1) -> dict:
     """Test-only parser/decryptor for a canonical FGVLTENC v1 container."""
     pos = 0
 
@@ -111,7 +111,7 @@ def parse_container(data: bytes, kek: bytes) -> dict:
 
     assert algorithm_params == 1
     assert segment_size == 262144
-    assert key_id == 1
+    assert key_id == expected_key_id
     assert ciphertext_length == len(stream)
     assert ciphertext_length == reference_expected_ciphertext_size(orig_size)
 

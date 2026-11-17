@@ -503,6 +503,10 @@
     <string name="vault_sync_nothing_to_sync">No pending CLI-encrypted media (.pending_sync) was found in the selected folder.</string>
     <string name="vault_sync_same_folder_error">The selected source folder is the same as your active vault.</string>
     <string name="change_encrypted_vault_password">Change encrypted vault password</string>
+    <string name="settings_rotate_vault_key">Rotate vault encryption key</string>
+    <string name="rotating_vault_key_progress">Rotating vault encryption key…</string>
+    <string name="vault_key_rotated_successfully">Vault encryption key rotated successfully</string>
+    <string name="vault_key_rotation_failed">Failed to rotate vault encryption key</string>
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>
     <string name="block_vault_screenshots">Block screenshots in hidden vault</string>
     <string name="empty_encrypted_vault">Empty encrypted vault</string>
