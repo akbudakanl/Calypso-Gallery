@@ -525,8 +525,12 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 4b) Kasa guncelleme uyarisini her zaman goster
-        binding.settingsVaultUpgradeWarningHolder.beVisibleIf(hasStoragePermission && vaultExists)
+        // 4b) Kasa guncelleme uyarisini her zaman goster (sadece guncel olmayan v3 kasalarda;
+        //     v4 kasalarda guncelleme uyarisina gerek yok). doesVaultExist() yukarida
+        //     cachedVaultRoot'u secili kasaya ayarladigi icin getVaultFormat() o kasayi okur.
+        binding.settingsVaultUpgradeWarningHolder.beVisibleIf(
+            hasStoragePermission && vaultExists && CryptoManager.getVaultFormat() == 3
+        )
 
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
