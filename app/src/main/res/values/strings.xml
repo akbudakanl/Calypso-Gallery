@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="application_settings">Application</string>
+    <string name="saved_themes">Saved themes</string>
+    <string name="save_theme">Save theme</string>
+    <string name="discard_changes_question">Değişikliklerinizi kaydetmek ister misiniz?</string>
+    <string name="continue_without_saving">Kaydetmeden devam et</string>
+    <string name="theme_saved">Tema kaydedildi</string>
+    <string name="theme_already_saved">Bu tema zaten kayıtlı</string>
+    <string name="custom_theme_name">Özel tema</string>
+    <string name="no_saved_themes">Henüz kayıtlı tema yok</string>
+    <string name="search_settings">Ayarlarda ara</string>
+    <string name="video_playback_settings">Video playback</string>
+    <string name="thumbnails_and_scrolling_settings">Thumbnails &amp; scrolling</string>
+    <string name="media_viewer_settings">Media viewer</string>
+    <string name="security_and_vault_settings">Security &amp; encrypted vault</string>
+    <string name="custom_colors">Custom colors</string>
+    <string name="font_system_default">System default</string>
+    <string name="appearance_preview">Preview</string>
+    <string name="appearance_preview_text">Your memories, your colors</string>
+    <string name="appearance_preview_button">Sample button</string>
+    <string name="appearance_contrast_warning">Low contrast: text %1$.1f:1, button %2$.1f:1. Increase it for readability.</string>
     <string name="edit">Edit</string>
     <string name="open_camera">Open camera</string>
     <string name="hidden">(hidden)</string>
@@ -552,22 +573,6 @@
     <string name="fork_disclaimer_acknowledge">I understand</string>
 
     <!-- Encrypted Vault format upgrade (v3 -> v4) -->
-    <string name="vault_upgrade_entry_title">Encrypted Vault update available</string>
-    <string name="vault_upgrade_entry_message">Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm.</string>
-    <string name="vault_upgrade_always_show">Always show</string>
-    <string name="vault_upgrade_settings_title">Always show vault update warning</string>
-    <string name="vault_upgrade_details_title">Before updating</string>
-    <string name="vault_upgrade_details_message">It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app.</string>
-    <string name="vault_upgrade_low_battery">Your battery is low, please charge your device to at least 20%.</string>
-    <string name="vault_upgrade_low_space">Not enough free space to update the Encrypted Vault.</string>
-    <string name="vault_upgrade_continue">Continue</string>
-    <string name="vault_upgrade_progress">Converted %1$d of %2$d files</string>
-    <string name="vault_upgrade_finished">Update complete. Reopen the Encrypted Vault to activate the new keyring.</string>
-    <string name="vault_upgrade_failed_count">Update stopped: %1$d file(s) could not be verified.</string>
-    <string name="vault_upgrade_resume_title">Vault update was interrupted</string>
-    <string name="vault_upgrade_resume_message">The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files?</string>
-    <string name="vault_upgrade_progress_warning">Please do not exit the app or turn off the screen during the update.</string>
-    <string name="vault_upgrade_waiting">Encrypted Vault is disconnected. Waiting for it to reconnect...</string>
     <string name="argon2_profile_title">Brute-Force resistance</string>
     <string name="brute_force_mode_title">Calibration mode</string>
     <string name="brute_force_mode_time">Via vault unlock time</string>

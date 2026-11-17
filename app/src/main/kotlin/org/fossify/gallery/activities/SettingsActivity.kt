@@ -3,14 +3,28 @@ package org.fossify.gallery.activities
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Build
 import android.os.Bundle
+import android.text.Editable
 import android.text.TextUtils
+import android.text.TextWatcher
 import android.util.TypedValue
+import android.view.View
+import android.view.ViewGroup
+import android.widget.CompoundButton
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.isVisible
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.fossify.commons.dialogs.*
@@ -40,9 +54,54 @@ class SettingsActivity : SimpleActivity() {
         private const val PICK_IMPORT_SOURCE_INTENT = 1
         private const val SELECT_EXPORT_FAVORITES_FILE_INTENT = 2
         private const val SELECT_IMPORT_FAVORITES_FILE_INTENT = 3
+        private const val ROW_DECORATION_TAG = "settings_row_decoration"
+
+        /** Rows that perform an immediate action instead of opening a sub-screen. */
+        private val ACTION_ROW_IDS = setOf(
+            R.id.settings_create_vault_holder,
+            R.id.settings_export_vault_holder,
+            R.id.settings_sync_vault_holder,
+            R.id.settings_empty_vault_holder,
+            R.id.settings_empty_recycle_bin_holder,
+            R.id.settings_clear_cache_holder,
+            R.id.settings_export_favorites_holder,
+            R.id.settings_import_favorites_holder,
+            R.id.settings_export_holder,
+            R.id.settings_import_holder,
+        )
+
+        private val SECTION_LABEL_IDS = setOf(
+            R.id.settings_color_customization_section_label,
+            R.id.settings_general_settings_label,
+            R.id.settings_videos_label,
+            R.id.settings_thumbnails_label,
+            R.id.settings_fullscreen_media_label,
+            R.id.settings_security_label,
+            R.id.settings_file_operations_label,
+            R.id.settings_recycle_bin_label,
+            R.id.settings_migrating_label,
+            R.id.settings_vault_subheading,
+            R.id.settings_fullscreen_subheading,
+            R.id.settings_deep_zoom_subheading,
+            R.id.settings_extended_details_subheading,
+        )
+
+        private val SECTION_ICONS = listOf(
+            R.drawable.ic_section_appearance,
+            R.drawable.ic_section_application,
+            R.drawable.ic_section_video,
+            R.drawable.ic_section_thumbnails,
+            R.drawable.ic_section_viewer,
+            R.drawable.ic_section_security,
+            R.drawable.ic_section_files,
+            R.drawable.ic_section_recycle,
+            R.drawable.ic_section_migration,
+        )
     }
 
     private var mRecycleBinContentSize = 0L
+    private var activeSettingsSearch = ""
+    private val originalSettingsVisibility = mutableMapOf<View, Int>()
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +113,7 @@ class SettingsActivity : SimpleActivity() {
             padBottomSystem = listOf(binding.settingsNestedScrollview)
         )
         setupMaterialScrollListener(binding.settingsNestedScrollview, binding.settingsAppbar)
+        setupSettingsSearch()
     }
 
     override fun onResume() {
@@ -112,10 +172,6 @@ class SettingsActivity : SimpleActivity() {
         setupShowNotch()
         setupFileThumbnailStyle()
         setupFolderThumbnailStyle()
-        setupShowVirtualAlbumIcon()
-        setupShowFavoritesAlbumIcon()
-        setupShowExcludedAlbumIcon()
-        setupShowHiddenAlbumIcon()
         setupKeepLastModified()
         setupEnablePullToRefresh()
         setupAllowZoomingImages()
@@ -138,22 +194,208 @@ class SettingsActivity : SimpleActivity() {
         setupExportSettings()
         setupImportSettings()
 
-        arrayOf(
+        val mainLabels = listOf(
             binding.settingsColorCustomizationSectionLabel,
             binding.settingsGeneralSettingsLabel,
             binding.settingsVideosLabel,
             binding.settingsThumbnailsLabel,
-            binding.settingsAlbumTypeIconsLabel,
-            binding.settingsScrollingLabel,
             binding.settingsFullscreenMediaLabel,
-            binding.settingsDeepZoomableImagesLabel,
-            binding.settingsExtendedDetailsLabel,
             binding.settingsSecurityLabel,
             binding.settingsFileOperationsLabel,
             binding.settingsRecycleBinLabel,
             binding.settingsMigratingLabel
+        )
+        mainLabels.zip(SECTION_ICONS).forEach { (label, iconRes) ->
+            label.setTextColor(getProperPrimaryColor())
+            label.isAllCaps = true
+            label.textSize = 13f
+            label.letterSpacing = 0.08f
+            label.setTypeface(null, android.graphics.Typeface.BOLD)
+            val density = resources.displayMetrics
+            val side = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20f, density).toInt()
+            val top = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18f, density).toInt()
+            val bottom = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, density).toInt()
+            label.setPadding(side, top, side, bottom)
+            label.compoundDrawablePadding = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, 8f, density,
+            ).toInt()
+            ContextCompat.getDrawable(this, iconRes)?.mutate()?.apply {
+                setTint(getProperPrimaryColor())
+                label.setCompoundDrawablesRelativeWithIntrinsicBounds(this, null, null, null)
+            }
+        }
+
+        listOf(
+            binding.settingsVaultSubheading,
+            binding.settingsFullscreenSubheading,
+            binding.settingsDeepZoomSubheading,
+            binding.settingsExtendedDetailsSubheading,
         ).forEach {
-            it.setTextColor(getProperPrimaryColor())
+            it.setTextColor(ColorUtils.setAlphaComponent(getProperTextColor(), 170))
+            it.setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        refreshRowDecorations()
+        applySettingsSearch()
+    }
+
+    private fun setupSettingsSearch() {
+        binding.settingsSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                activeSettingsSearch = s?.toString()?.trim().orEmpty()
+                applySettingsSearch()
+            }
+        })
+        binding.settingsSearch.setTextColor(getProperTextColor())
+        binding.settingsSearch.setHintTextColor(
+            ColorUtils.blendARGB(getProperTextColor(), getProperBackgroundColor(), 0.45f),
+        )
+        binding.settingsSearch.compoundDrawablesRelative[0]?.setTint(getProperPrimaryColor())
+    }
+
+    private fun viewText(view: View): String {
+        val result = StringBuilder()
+        fun collect(current: View) {
+            if (current is TextView) {
+                result.append(current.text).append(' ')
+            }
+            if (current is ViewGroup) {
+                for (i in 0 until current.childCount) {
+                    collect(current.getChildAt(i))
+                }
+            }
+        }
+        collect(view)
+        return result.toString()
+    }
+
+    /** Filters settings rows by their visible labels; section headers follow their rows. */
+    private fun applySettingsSearch() {
+        val holder = binding.settingsHolder
+        val children = (0 until holder.childCount).map { holder.getChildAt(it) }
+        if (activeSettingsSearch.isEmpty()) {
+            originalSettingsVisibility.forEach { (view, visibility) -> view.visibility = visibility }
+            originalSettingsVisibility.clear()
+            return
+        }
+        if (originalSettingsVisibility.isEmpty()) {
+            children.forEach { originalSettingsVisibility[it] = it.visibility }
+        }
+        val query = activeSettingsSearch.lowercase()
+        val isLabel = { view: View -> view is TextView && view.id in SECTION_LABEL_IDS }
+        val isRow = { view: View ->
+            view is ViewGroup && view.id != View.NO_ID &&
+                resources.getResourceEntryName(view.id).let { it.startsWith("settings_") && it.endsWith("_holder") }
+        }
+
+        children.forEach { child ->
+            if (child === binding.settingsSearch) {
+                return@forEach
+            }
+            if (isRow(child)) {
+                child.isVisible = viewText(child).lowercase().contains(query) &&
+                    originalSettingsVisibility[child] == View.VISIBLE
+            }
+        }
+        for (index in children.indices) {
+            val label = children[index]
+            if (!isLabel(label)) {
+                continue
+            }
+            var hasVisibleRow = false
+            for (nextIndex in index + 1 until children.size) {
+                val next = children[nextIndex]
+                if (isLabel(next)) {
+                    break
+                }
+                if (isRow(next) && next.isVisible) {
+                    hasVisibleRow = true
+                    break
+                }
+            }
+            label.isVisible = hasVisibleRow && originalSettingsVisibility[label] == View.VISIBLE
+        }
+        // Dividers would be orphaned during filtering; section headers carry the grouping.
+        children.filterIsInstance<ImageView>().forEach { it.isVisible = false }
+    }
+
+    /**
+     * Fork-specific settings row language: a chevron on rows that actually open a sub-screen.
+     * Switch rows and immediate actions keep their own affordance so the chevron stays truthful.
+     * Section separation is handled by the divider views declared in the layout.
+     */
+    private fun refreshRowDecorations() {
+        val holder = binding.settingsHolder
+        for (i in holder.childCount - 1 downTo 0) {
+            val child = holder.getChildAt(i)
+            if (child.tag == ROW_DECORATION_TAG) {
+                holder.removeViewAt(i)
+            } else if (child is ViewGroup) {
+                for (j in child.childCount - 1 downTo 0) {
+                    if (child.getChildAt(j).tag == ROW_DECORATION_TAG) {
+                        child.removeViewAt(j)
+                    }
+                }
+            }
+        }
+
+        val palette = AppearanceManager.resolve(this, config)
+        val visibleChildren = (0 until holder.childCount)
+            .map { holder.getChildAt(it) }
+            .filter { it.isVisible && it.tag != ROW_DECORATION_TAG }
+        val isRow = { view: View ->
+            view is ViewGroup && view.id != View.NO_ID &&
+                resources.getResourceEntryName(view.id).let { it.startsWith("settings_") && it.endsWith("_holder") }
+        }
+
+        for (current in visibleChildren) {
+            if (!isRow(current)) {
+                continue
+            }
+            val row = current as ViewGroup
+            if (!hasSwitch(row) && row.id !in ACTION_ROW_IDS) {
+                row.addView(createChevron(row, palette))
+            }
+        }
+    }
+
+    private fun hasSwitch(view: ViewGroup): Boolean {
+        for (i in 0 until view.childCount) {
+            val child = view.getChildAt(i)
+            if (child is CompoundButton || (child is ViewGroup && hasSwitch(child))) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun createChevron(row: ViewGroup, palette: org.fossify.gallery.helpers.AppearancePalette): ImageView {
+        val size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18f, resources.displayMetrics).toInt()
+        val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14f, resources.displayMetrics).toInt()
+        val tint = ColorStateList.valueOf(ColorUtils.blendARGB(palette.text, palette.background, 0.4f))
+        return AppCompatImageView(this).apply {
+            tag = ROW_DECORATION_TAG
+            setImageResource(R.drawable.ic_settings_chevron)
+            imageTintList = tint
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            // Branch on the row's own type: its layoutParams describe how the row sits in the
+            // outer LinearLayout, so inspecting those would always pick the wrong LayoutParams
+            // class and drop the chevron at the top-left corner of the row.
+            layoutParams = if (row is ConstraintLayout) {
+                ConstraintLayout.LayoutParams(size, size).apply {
+                    endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+                    topToTop = ConstraintLayout.LayoutParams.PARENT_ID
+                    bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
+                    rightMargin = margin
+                }
+            } else {
+                RelativeLayout.LayoutParams(size, size).apply {
+                    addRule(RelativeLayout.ALIGN_PARENT_END)
+                    addRule(RelativeLayout.CENTER_VERTICAL)
+                    rightMargin = margin
+                }
+            }
         }
     }
 
@@ -173,7 +415,7 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupCustomizeColors() {
         binding.settingsColorCustomizationHolder.setOnClickListener {
-            startCustomizationActivity()
+            startActivity(Intent(this, AppearanceActivity::class.java))
         }
     }
 
@@ -460,26 +702,31 @@ class SettingsActivity : SimpleActivity() {
 
     // Not setOnScrollChangeListener(): setupMaterialScrollListener() already owns that slot.
     private val vaultSectionScrollListener = android.view.ViewTreeObserver.OnScrollChangedListener {
-        val label = binding.settingsVaultLabel
+        // The section header was merged into "Security & encrypted vault"; the always-visible
+        // vault location row is now the anchor for the deferred on-disk vault check.
+        val anchor = binding.settingsVaultLocationHolder
         val scroll = binding.settingsNestedScrollview
-        if (!label.isShown) {
+        if (!anchor.isShown) {
             isVaultSectionNearViewport = false
             return@OnScrollChangedListener
         }
 
-        val labelLoc = IntArray(2)
+        val anchorLoc = IntArray(2)
         val scrollLoc = IntArray(2)
-        label.getLocationOnScreen(labelLoc)
+        anchor.getLocationOnScreen(anchorLoc)
         scroll.getLocationOnScreen(scrollLoc)
 
         val lookAhead = scroll.height / 2
-        val labelTop = labelLoc[1]
-        val labelBottom = labelLoc[1] + label.height
+        val labelTop = anchorLoc[1]
+        val labelBottom = anchorLoc[1] + anchor.height
         val near = labelTop < scrollLoc[1] + scroll.height + lookAhead && labelBottom > scrollLoc[1] - lookAhead
 
         if (near && !isVaultSectionNearViewport) {
             // The "Encrypted vault" section is about to appear: check the disk before it is drawn.
-            scroll.post { setupVaultSettings() }
+            scroll.post {
+                setupVaultSettings()
+                refreshRowDecorations()
+            }
         }
         isVaultSectionNearViewport = near
     }
@@ -504,8 +751,6 @@ class SettingsActivity : SimpleActivity() {
         val vaultExists = doesVaultExist()
         val hasStoragePermission = !(isRPlus() && !isExternalStorageManager())
 
-        binding.settingsVaultLabel.beGoneIf(!hasStoragePermission)
-        binding.settingsVaultDivider.beGoneIf(!hasStoragePermission)
 
         // 0) Kasa konumu (depolama izni varsa her zaman gösterilir)
         binding.settingsVaultLocationHolder.beVisibleIf(hasStoragePermission)
@@ -525,13 +770,6 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 4b) Kasa guncelleme uyarisini her zaman goster (sadece guncel olmayan v3 kasalarda;
-        //     v4 kasalarda guncelleme uyarisina gerek yok). doesVaultExist() yukarida
-        //     cachedVaultRoot'u secili kasaya ayarladigi icin getVaultFormat() o kasayi okur.
-        binding.settingsVaultUpgradeWarningHolder.beVisibleIf(
-            hasStoragePermission && vaultExists && CryptoManager.getVaultFormat() == 3
-        )
-
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -546,7 +784,6 @@ class SettingsActivity : SimpleActivity() {
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupBlockVaultScreenshots()
-        setupVaultUpgradeWarning()
         setupEmptyVault()
     }
 
@@ -570,16 +807,6 @@ class SettingsActivity : SimpleActivity() {
             requireVaultPassword {
                 binding.settingsBlockVaultScreenshots.toggle()
                 config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
-            }
-        }
-    }
-
-    private fun setupVaultUpgradeWarning() {
-        binding.settingsVaultUpgradeWarning.isChecked = config.vaultUpgradeWarningAlwaysShow
-        binding.settingsVaultUpgradeWarningHolder.setOnClickListener {
-            requireVaultPassword {
-                binding.settingsVaultUpgradeWarning.toggle()
-                config.vaultUpgradeWarningAlwaysShow = binding.settingsVaultUpgradeWarning.isChecked
             }
         }
     }
@@ -1276,38 +1503,6 @@ class SettingsActivity : SimpleActivity() {
         }
     )
 
-    private fun setupShowVirtualAlbumIcon() {
-        binding.settingsShowVirtualAlbumIcon.isChecked = config.showVirtualAlbumIcon
-        binding.settingsShowVirtualAlbumIconHolder.setOnClickListener {
-            binding.settingsShowVirtualAlbumIcon.toggle()
-            config.showVirtualAlbumIcon = binding.settingsShowVirtualAlbumIcon.isChecked
-        }
-    }
-
-    private fun setupShowFavoritesAlbumIcon() {
-        binding.settingsShowFavoritesAlbumIcon.isChecked = config.showFavoritesAlbumIcon
-        binding.settingsShowFavoritesAlbumIconHolder.setOnClickListener {
-            binding.settingsShowFavoritesAlbumIcon.toggle()
-            config.showFavoritesAlbumIcon = binding.settingsShowFavoritesAlbumIcon.isChecked
-        }
-    }
-
-    private fun setupShowExcludedAlbumIcon() {
-        binding.settingsShowExcludedAlbumIcon.isChecked = config.showExcludedAlbumIcon
-        binding.settingsShowExcludedAlbumIconHolder.setOnClickListener {
-            binding.settingsShowExcludedAlbumIcon.toggle()
-            config.showExcludedAlbumIcon = binding.settingsShowExcludedAlbumIcon.isChecked
-        }
-    }
-
-    private fun setupShowHiddenAlbumIcon() {
-        binding.settingsShowHiddenAlbumIcon.isChecked = config.showHiddenAlbumIcon
-        binding.settingsShowHiddenAlbumIconHolder.setOnClickListener {
-            binding.settingsShowHiddenAlbumIcon.toggle()
-            config.showHiddenAlbumIcon = binding.settingsShowHiddenAlbumIcon.isChecked
-        }
-    }
-
     private fun setupKeepLastModified() {
         binding.settingsKeepLastModified.isChecked = config.keepLastModified
         binding.settingsKeepLastModifiedHolder.setOnClickListener {
@@ -1722,7 +1917,6 @@ class SettingsActivity : SimpleActivity() {
                 put(EXCLUDED_FOLDERS, TextUtils.join(",", config.excludedFolders))
                 put(SHOW_HIDDEN_MEDIA, config.showHiddenMedia)
                 put(BLOCK_VAULT_SCREENSHOTS, config.blockVaultScreenshots)
-                put(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, config.vaultUpgradeWarningAlwaysShow)
                 put(ARGON2_PROFILE, config.argon2Profile)
                 put(BRUTE_FORCE_MODE, config.bruteForceMode)
                 put(UNLOCK_TARGET_MS, config.unlockTargetMs)
@@ -1890,7 +2084,6 @@ class SettingsActivity : SimpleActivity() {
                 EXCLUDED_FOLDERS -> config.addExcludedFolders(value.toStringSet())
                 SHOW_HIDDEN_MEDIA -> config.showHiddenMedia = value.toBoolean()
                 BLOCK_VAULT_SCREENSHOTS -> config.blockVaultScreenshots = value.toBoolean()
-                VAULT_UPGRADE_WARNING_ALWAYS_SHOW -> config.vaultUpgradeWarningAlwaysShow = value.toBoolean()
                 ARGON2_PROFILE -> config.argon2Profile = value.toInt()
                 BRUTE_FORCE_MODE -> config.bruteForceMode = value.toInt()
                 UNLOCK_TARGET_MS -> config.unlockTargetMs = value.toInt()
