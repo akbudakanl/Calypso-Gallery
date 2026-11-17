@@ -198,12 +198,11 @@ def format_fastlane(release: Release, repository: str = DEFAULT_REPOSITORY) -> s
 
     for limit in (120, 80, 40, 20):
         selected = [(title, truncate_summary(summary, limit)) for title, summary in selected]
+        while len(selected) > 1 and len(render(selected)) > MAX_FASTLANE_NOTE_LENGTH:
+            selected.pop()
         notes = render(selected)
         if len(notes) <= MAX_FASTLANE_NOTE_LENGTH:
             return notes
-
-    while len(selected) > 1 and len(render(selected)) > MAX_FASTLANE_NOTE_LENGTH:
-        selected.pop()
 
     if not selected:
         return f"Release details are published with the complete notes and corresponding source.{footer}"
