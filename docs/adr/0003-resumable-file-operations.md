@@ -1,8 +1,12 @@
 # ADR 0003 — Resumable file operations
 
-- **Status:** Proposed (awaiting approval)
+- **Status:** Accepted — implementation in progress (see §11 for exact per-item status)
 - **Date:** 2026-11-17
-- **Relates to:** ADR 0002 §7, DOCS.md §2.4/§2.5, `docs/transfer-data-integrity.md` §6
+- **Relates to:** ADR 0002 §7, DOCS.md §2.4/§2.5, `docs/transfer-data-integrity.md` §6,
+  `docs/pending-foreground-registry-registration.md`
+- **Reading guide:** this ADR records the *decisions and rationale*. The current runtime state,
+  phased implementation notes and residual risks are in `docs/transfer-data-integrity.md` §8;
+  §11 below maps the checklist to that state.
 
 ## 1. Context
 
@@ -55,10 +59,12 @@ PENDING → IN_FLIGHT → COPIED_UNVERIFIED → VERIFIED → SOURCE_DELETED
 
 ## 3a. Decision — space budgeting (low-storage operations)
 
-The staging protocol above must not inherit the gaps of the current check. Today `getAvailableStorageB`
-is used only in `CopyMoveHelper.prepareAndRunCopyMove` and only when `useStreamCopy == true`; it
-compares `Σ source.size` with `>= availableSpace`, and skips the check entirely when the API returns
-`-1`. **Encrypt, decrypt, album operations and plain → vault copies have no space check at all.**
+The staging protocol must not inherit the gaps of the *original* check. Before this ADR was
+implemented, `getAvailableStorageB` was used only in `CopyMoveHelper.prepareAndRunCopyMove` and only
+when `useStreamCopy == true`; it compared `Σ source.size` with `>= availableSpace` and skipped the
+check entirely when the API returned `-1`. Encrypt, decrypt, album operations and plain → vault
+copies had no space check at all. This is now implemented via `SpaceEstimator`, per-item re-checks
+and an explicit confirmation dialog for the `-1` case (see §11 and the results document §8.3.3).
 
 - **Single estimator.** One `OperationSpaceEstimate` / `SpaceEstimator` component is used by every
   path: plain copy/move, plain ↔ encrypted, encrypted `.bin` move/copy, file and album
@@ -126,30 +132,70 @@ Two concurrent file operations are serialized through the registry so wipe/key d
 1. No authentication tag is ever recomputed over unverifiable bytes.
 2. No source is deleted unless its destination is `VERIFIED`.
 3. No dedup/skip decision is made from unverified bytes.
-4. Interrupted temp files are cleaned at startup only when no operation is running. Note: the current
-   code only *creates* `.tmp_*.bin` (`renameEncryptedFile`) and has no startup cleanup, so this must be
-   implemented rather than assumed. Plaintext-bearing staging files require secure wipe, not `delete()`.
+4. Interrupted temp files are cleaned at startup only when no operation is running. Implemented by
+   `OperationRecovery.cleanupOrphanStaging`, which deletes `.stage_*` orphans and securely wipes any
+   staging file that does not carry the vault magic (i.e. may hold plaintext), including `content://`
+   SAF staging documents. It is skipped while an operation is registered with the foreground registry.
 5. The resume prompt is one-time and carries no "always ask" preference for ordinary operations.
 6. No batch starts when `peakBytes` exceeds available space plus the margin (§3a), unless the user
    explicitly acknowledges that free space could not be verified.
 
-## 9. Implementation checklist (staged, not yet started)
+## 9. Implementation checklist
 
-1. Room table `pending_operations` + schema registration (including `stagingPath` and batch estimates).
-2. `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)`; wire it into every operation
-   entry point (§3a) and extend the state machine with `WAITING_FOR_SPACE` / `SPACE_CHECK_FAILED`.
-3. Journal hooks in `CopyMoveHelper` (copy/move, plain and encrypted, cross-album).
-4. Journal hooks in encrypt/decrypt paths (file and album), including album conflict resolution.
-5. Staging + same-directory atomic commit (`ATOMIC_MOVE`, no non-atomic fallback) in all four write paths.
-6. Transient-wait loop + notification/progress state (including "waiting for free space" and `-1` handling).
-7. Process-death resume dialog + Secure Erase list prompt.
-8. Startup reconciliation (orphan staging cleanup **before** the space check; verify journalled `VERIFIED` items against disk; discard stale `IN_FLIGHT`; reconcile MediaStore/Room/virtual-album manifests).
-9. Tests: kill mid-copy, kill mid-encrypt, external volume removed and remounted, conflict dialog pending at kill, skipped-file erase eligibility, exact storage boundary, album peak space with N files, max-size thumbnail header, SAF `-1` path, orphan accumulation, ENOSPC mid-write.
+Status markers: **[DONE]** implemented, **[PARTIAL]** partly implemented, **[PENDING]** not implemented.
+Details and code pointers are in §11 and in `docs/transfer-data-integrity.md` §8.
+
+1. **[DONE]** Room table `pending_operations` + schema registration (including `stagingPath` and batch estimates).
+2. **[PARTIAL]** `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)` wired into operation
+   entry points; state machine includes `WAITING_FOR_SPACE` / `SPACE_CHECK_FAILED`, but the runtime
+   polling loop that waits for a removed volume to return is still missing.
+3. **[DONE]** Journal hooks in `CopyMoveHelper` (copy/move, plain and encrypted, cross-album).
+4. **[DONE]** Journal hooks in encrypt/decrypt paths (file and album), including recording album conflict
+   resolution. Re-applying the recorded decisions on resume is tracked separately in §11.
+5. **[DONE]** Staging + same-directory atomic commit (`ATOMIC_MOVE`, SAF `DocumentFile.renameTo`, no
+   cross-store copy+delete fallback) in all write paths, including external-vault sync.
+6. **[PARTIAL]** Notification/progress state and explicit `-1` confirmation are implemented; the
+   transient-wait polling loop and its "waiting for free space" notification state are not.
+7. **[PARTIAL]** Process-death resume dialog implemented; the Secure Erase list prompt for eligible
+   skipped files when the user declines resume is not.
+8. **[DONE]** Startup reconciliation: orphan staging cleanup before the space check, stale `IN_FLIGHT`
+   reset, per-item idempotent reconciliation of MediaStore/Room/virtual-album manifests.
+9. **[PARTIAL]** JVM unit tests cover estimator, margin and staging names; the kill/remount/ENOSPC
+   scenarios are documented as optional on-device tests (results document §8.4), not automated.
 
 ## 10. Open questions
 
 - Should the resume prompt appear on **any** app start, or only on vault unlock? (Proposed: only on vault unlock for encrypted operations; on app start for plain-only operations.)
 - Should a journalled operation expire after N days, or persist until explicitly resolved?
 - Should the CLI share this journal format for external-storage transfers? (Currently out of scope.)
-- What exact safety margin should §3a use (`max(64 MiB, 1%)` proposed), and should the SAF `-1` case
-  require explicit user confirmation or only a non-blocking warning?
+- What exact safety margin should §3a use? (`max(64 MiB, 1%)` is implemented; the SAF `-1` case was
+  **resolved** in favour of explicit user confirmation — see results document §8.3.3.)
+
+## 11. Implementation status
+
+This ADR is the **decision record**; the results document
+[`docs/transfer-data-integrity.md`](../transfer-data-integrity.md) §8 is the **current runtime
+report**. Read both when resuming work. Statuses below are intentionally explicit so that no
+separate conversation is needed to reconstruct what has been built.
+
+| Area (ADR section) | Status | Evidence / notes |
+|---|---|---|
+| Separate `pending_operations` Room DB (§3) | **DONE** | `PendingOperationsDatabase`, `PendingOperation`, `PendingOperationsDao`, `OperationJournal` |
+| `stagingPath`, batch flags and per-item state machine (§3) | **DONE** | `operationId:itemIndex` keys; `isMove`, `wipeSource`, `deleteSource`; `WAITING_FOR_SPACE` states defined |
+| Space estimator and container-size formula (§3a) | **DONE** | `SpaceEstimator`, `VaultContainerWriter.estimateEncryptedSize`, wired into copy/move and album operations |
+| Explicit confirmation for unverifiable free space (§3a, §10) | **DONE** | `SpaceConfirmation` (async + blocking variants), 9 locales translated |
+| Staging + atomic commit in all write paths (§3a, §5) | **DONE** | `AtomicStaging` (File + SAF), `CryptoManagerFileCrypto`, `CryptoManagerConflict`, `CopyMoveHelper`, `CryptoManagerExportSync` (`ATOMIC_MOVE`) |
+| Journal hooks in copy/move and album/Activity batches (§9/3-4) | **DONE** | `CopyMoveHelper`, `CryptoManagerFolderCrypto`, `tryCopyMoveFilesTo` |
+| Read-back verification before source deletion (§3, §8) | **DONE** | Full `verifyFileIntegrity` after encrypt and `.bin` copy; output-length check after decrypt; fingerprint check after plain copy |
+| Process-death resume dialog (§2, §9/7) | **DONE** | `OperationRecovery.maybePromptResume`, triggered from `MainActivity.onResume`, deferred until vault unlock for encrypted items |
+| Startup reconciliation and orphan cleanup (§8, §9/8) | **DONE** | `OperationRecovery.reconcile`, `MetadataReconciler` (per-item, survives a second process death) |
+| Foreground service and single owner token (§7) | **PARTIAL** | `FileOperationService` + `ForegroundOperationRegistry` wired into copy/move and resume only. Album/Activity batches still unregistered — tracked in [`docs/pending-foreground-registry-registration.md`](../pending-foreground-registry-registration.md) |
+| Transient-wait loop for a removed external volume (§2, §9/6) | **PENDING** | States exist in the journal; no runtime polling that waits for the volume and continues automatically |
+| Secure Erase prompt when resume is declined (§6, §9/7) | **PENDING** | Not implemented |
+| Re-applying recorded conflict decisions / `resolvedDestName` on resume (§4) | **PENDING** | Payload is recorded but `resume()` currently uses `skipDuplicateCheck = true`; `(1)/(2)` names and album merge targets may drift |
+| Automated fault-injection / device tests (§9/9) | **PARTIAL** | JVM tests exist; kill/remount/ENOSPC scenarios are documented as manual device tests (results document §8.4) |
+
+**Remaining code work:** the foreground-registry registration, transient-wait loop, Secure Erase
+prompt, resume fidelity for conflict decisions, and additional automated tests. See §9 markers and
+the results document §8 for the full breakdown. The data-loss invariant (§8/2) is preserved by all
+implemented paths.
