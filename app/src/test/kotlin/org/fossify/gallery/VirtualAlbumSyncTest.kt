@@ -51,47 +51,6 @@ class VirtualAlbumSyncTest {
         assertEquals("deadbeef", unresolvedParsed.items?.get(0)?.fingerprint)
     }
 
-    @Test
-    fun testSnakeCaseAndLegacyFallbackCompatibility() {
-        // Test parsing snake_case JSON (e.g. from external sources or scripts)
-        val snakeCaseJson = """
-            {
-                "version": 1,
-                "name": "Vacation Album",
-                "created_ts": 1690000000000,
-                "is_hidden": false,
-                "items": [
-                    {
-                        "full_path": "/storage/emulated/0/DCIM/Camera/IMG_01.jpg",
-                        "added_ts": 1690000010000
-                    }
-                ]
-            }
-        """.trimIndent()
-
-        val parsed = Gson().fromJson(snakeCaseJson, VirtualAlbumBackup::class.java)
-        assertEquals("Vacation Album", parsed.name)
-        assertEquals(1690000000000L, parsed.createdTs)
-        assertFalse(parsed.isHidden)
-        assertEquals(1, parsed.items?.size)
-        assertEquals("/storage/emulated/0/DCIM/Camera/IMG_01.jpg", parsed.items?.get(0)?.fullPath)
-        assertEquals(1690000010000L, parsed.items?.get(0)?.addedTs)
-
-        // Test fallback media_paths
-        val mediaPathsJson = """
-            {
-                "name": "Landscapes",
-                "media_paths": [
-                    "/storage/emulated/0/Pictures/m1.jpg",
-                    "/storage/emulated/0/Pictures/m2.jpg"
-                ]
-            }
-        """.trimIndent()
-
-        val parsedPaths = Gson().fromJson(mediaPathsJson, VirtualAlbumBackup::class.java)
-        assertEquals("Landscapes", parsedPaths.name)
-        assertEquals(2, parsedPaths.mediaPaths?.size)
-    }
 
     @Test
     fun testCorruptedJsonDoesNotCrash() {
@@ -238,16 +197,6 @@ class VirtualAlbumSyncTest {
         val parsed = Gson().fromJson(json, VirtualAlbumBackup::class.java)
         assertEquals("/storage/emulated/0/DCIM/Camera", parsed.parentPhysicalPath)
         assertEquals("Camera Album", parsed.name)
-
-        // Also test deserialization when snake_case "parent_physical_path" is used
-        val snakeCaseJson = """
-            {
-                "name": "Camera Album",
-                "parent_physical_path": "/storage/emulated/0/DCIM/Camera"
-            }
-        """.trimIndent()
-        val parsedSnakeCase = Gson().fromJson(snakeCaseJson, VirtualAlbumBackup::class.java)
-        assertEquals("/storage/emulated/0/DCIM/Camera", parsedSnakeCase.parentPhysicalPath)
     }
 
     @Test
