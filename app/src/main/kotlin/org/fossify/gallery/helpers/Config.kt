@@ -536,31 +536,15 @@ class Config(context: Context) : BaseConfig(context) {
         set(mode) = prefs.edit().putInt(DATE_TIE_BREAK_MODE, mode).apply()
 
     var albumCryptoConflictMode: Int
-        get() = when (val raw = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)) {
-            LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL -> ALBUM_CRYPTO_CONFLICT_MERGE
-            else -> raw
-        }
-        set(mode) {
-            val normalized = if (mode == LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL) {
-                ALBUM_CRYPTO_CONFLICT_MERGE
-            } else {
-                mode
-            }
-            prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, normalized).apply()
-        }
+        get() = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)
+        set(mode) = prefs.edit().putInt(ALBUM_CRYPTO_CONFLICT_MODE, mode).apply()
 
     var skippedEncryptFilesMode: Int
-        get() = prefs.getInt(
-            SKIPPED_ENCRYPT_FILES_MODE,
-            prefs.getInt(SKIPPED_CRYPTO_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
-        )
+        get() = prefs.getInt(SKIPPED_ENCRYPT_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
         set(mode) = prefs.edit().putInt(SKIPPED_ENCRYPT_FILES_MODE, mode).apply()
 
     var skippedDecryptFilesMode: Int
-        get() = prefs.getInt(
-            SKIPPED_DECRYPT_FILES_MODE,
-            prefs.getInt(SKIPPED_CRYPTO_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
-        )
+        get() = prefs.getInt(SKIPPED_DECRYPT_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
         set(mode) = prefs.edit().putInt(SKIPPED_DECRYPT_FILES_MODE, mode).apply()
 
     var keepScreenOn: Boolean
@@ -829,10 +813,6 @@ class Config(context: Context) : BaseConfig(context) {
     var editorBrushSize: Float
         get() = prefs.getFloat(EDITOR_BRUSH_SIZE, 0.05f)
         set(editorBrushSize) = prefs.edit().putFloat(EDITOR_BRUSH_SIZE, editorBrushSize).apply()
-
-    var wereFavoritesMigrated: Boolean
-        get() = prefs.getBoolean(WERE_FAVORITES_MIGRATED, false)
-        set(wereFavoritesMigrated) = prefs.edit().putBoolean(WERE_FAVORITES_MIGRATED, wereFavoritesMigrated).apply()
 
     var showFolderMediaCount: Int
         get() = prefs.getInt(FOLDER_MEDIA_COUNT, FOLDER_MEDIA_CNT_LINE)

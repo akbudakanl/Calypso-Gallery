@@ -2129,11 +2129,6 @@ class SettingsActivity : SimpleActivity() {
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
                 SKIPPED_ENCRYPT_FILES_MODE -> config.skippedEncryptFilesMode = value.toInt()
                 SKIPPED_DECRYPT_FILES_MODE -> config.skippedDecryptFilesMode = value.toInt()
-                SKIPPED_CRYPTO_FILES_MODE -> {
-                    val mode = value.toInt()
-                    config.skippedEncryptFilesMode = mode
-                    config.skippedDecryptFilesMode = mode
-                }
                 KEEP_LAST_MODIFIED -> config.keepLastModified = value.toBoolean()
                 SKIP_DELETE_CONFIRMATION -> config.skipDeleteConfirmation = value.toBoolean()
                 DELETE_ORIGINAL_FROM_FAVORITES_AND_VIRTUAL_ALBUMS -> config.deleteOriginalFromFavoritesAndVirtualAlbums = value.toBoolean()

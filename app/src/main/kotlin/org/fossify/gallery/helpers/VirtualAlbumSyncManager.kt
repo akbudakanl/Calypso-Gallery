@@ -23,31 +23,30 @@ import java.security.MessageDigest
 data class VirtualAlbumBackup(
     @SerializedName("version") val version: Int = 1,
     @SerializedName("name") val name: String? = null,
-    @SerializedName(value = "createdTs", alternate = ["created_ts"]) val createdTs: Long? = null,
-    @SerializedName(value = "isHidden", alternate = ["is_hidden"]) val isHidden: Boolean = false,
+    @SerializedName("createdTs") val createdTs: Long? = null,
+    @SerializedName("isHidden") val isHidden: Boolean = false,
     @SerializedName("items") val items: List<VirtualAlbumItemBackup>? = null,
-    @SerializedName(value = "parentPhysicalPath", alternate = ["parent_physical_path", "sourcePath", "source_path"]) val parentPhysicalPath: String? = null,
-    @SerializedName(value = "mediaPaths", alternate = ["media_paths", "paths", "media", "files"]) val mediaPaths: List<String>? = null,
-    @SerializedName(value = "encryptedPayload", alternate = ["encrypted_payload", "encrypted_data"]) val encryptedPayload: String? = null,
-    @SerializedName(value = "relativeParentVaultPath", alternate = ["relative_parent_vault_path"]) val relativeParentVaultPath: String? = null
+    @SerializedName("parentPhysicalPath") val parentPhysicalPath: String? = null,
+    @SerializedName("mediaPaths") val mediaPaths: List<String>? = null,
+    @SerializedName("encryptedPayload") val encryptedPayload: String? = null,
+    @SerializedName("relativeParentVaultPath") val relativeParentVaultPath: String? = null
 )
 
 data class VirtualAlbumItemBackup(
-    @SerializedName(value = "fullPath", alternate = ["full_path", "path"]) val fullPath: String? = null,
-    @SerializedName(value = "addedTs", alternate = ["added_ts", "addedTS"]) val addedTs: Long? = null,
-    @SerializedName(value = "mediaStoreId", alternate = ["media_store_id"]) val mediaStoreId: Long? = null,
-    @SerializedName(value = "fileSize", alternate = ["file_size"]) val fileSize: Long? = null,
-    @SerializedName(value = "lastModified", alternate = ["last_modified"]) val lastModified: Long? = null,
-    @SerializedName(value = "fingerprint") val fingerprint: String? = null,
-    @SerializedName(value = "state") val state: String? = null,
-    @SerializedName(value = "folderInode", alternate = ["folder_inode"]) val folderInode: Long? = null,
-    @SerializedName(value = "folderSignature", alternate = ["folder_signature"]) val folderSignature: String? = null,
-    @SerializedName(value = "capturedAtSec", alternate = ["captured_at_sec"]) val capturedAtSec: Long? = null,
-    @SerializedName(value = "relativeVaultPath", alternate = ["relative_vault_path"]) val relativeVaultPath: String? = null
+    @SerializedName("fullPath") val fullPath: String? = null,
+    @SerializedName("addedTs") val addedTs: Long? = null,
+    @SerializedName("mediaStoreId") val mediaStoreId: Long? = null,
+    @SerializedName("fileSize") val fileSize: Long? = null,
+    @SerializedName("lastModified") val lastModified: Long? = null,
+    @SerializedName("fingerprint") val fingerprint: String? = null,
+    @SerializedName("state") val state: String? = null,
+    @SerializedName("folderInode") val folderInode: Long? = null,
+    @SerializedName("folderSignature") val folderSignature: String? = null,
+    @SerializedName("capturedAtSec") val capturedAtSec: Long? = null,
+    @SerializedName("relativeVaultPath") val relativeVaultPath: String? = null
 )
 
 object VirtualAlbumSyncManager {
-    private const val ALBUMS_DIR_NAME = "Fossify Virtual Albums"
     private const val VAULT_JSON_SUBFOLDER = "JSON"
 
     @VisibleForTesting

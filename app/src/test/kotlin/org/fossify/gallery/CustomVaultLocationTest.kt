@@ -21,8 +21,6 @@ import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DEFAULT_SECRET_ALBUM_NAME
 import org.fossify.gallery.helpers.ENCRYPTED_BIN_EXT
-import org.fossify.gallery.helpers.LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL
-import org.fossify.gallery.helpers.SKIPPED_CRYPTO_FILES_MODE
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_ASK
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_DELETE
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_KEEP
@@ -1500,24 +1498,16 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun config_conflictAndSkippedModes_haveExpectedDefaultsAndLegacyMigrations() {
+    fun config_conflictAndSkippedModes_haveExpectedDefaultsAndIndependentSettings() {
         assertEquals(CONFLICT_HANDLING_STANDARD_DIALOG, testContext.config.conflictHandlingMode)
         assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedEncryptFilesMode)
         assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedDecryptFilesMode)
 
-        // Legacy combined key falls back for both encrypt and decrypt until overridden independently
-        testContext.getSharedPreferences("Prefs", Context.MODE_PRIVATE).edit()
-            .putInt(SKIPPED_CRYPTO_FILES_MODE, CRYPTO_SKIPPED_FILES_DELETE)
-            .apply()
-        assertEquals(CRYPTO_SKIPPED_FILES_DELETE, testContext.config.skippedEncryptFilesMode)
-        assertEquals(CRYPTO_SKIPPED_FILES_DELETE, testContext.config.skippedDecryptFilesMode)
-
         testContext.config.skippedEncryptFilesMode = CRYPTO_SKIPPED_FILES_KEEP
         assertEquals(CRYPTO_SKIPPED_FILES_KEEP, testContext.config.skippedEncryptFilesMode)
-        assertEquals(CRYPTO_SKIPPED_FILES_DELETE, testContext.config.skippedDecryptFilesMode)
+        assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedDecryptFilesMode)
 
-        // Legacy ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL (3) normalizes to ALBUM_CRYPTO_CONFLICT_MERGE
-        testContext.config.albumCryptoConflictMode = LEGACY_ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL
+        testContext.config.albumCryptoConflictMode = ALBUM_CRYPTO_CONFLICT_MERGE
         assertEquals(ALBUM_CRYPTO_CONFLICT_MERGE, testContext.config.albumCryptoConflictMode)
     }
 
