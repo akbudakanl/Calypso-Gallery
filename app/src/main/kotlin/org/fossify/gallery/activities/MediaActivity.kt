@@ -1672,7 +1672,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         val isVaultFolder = (mPath.isNotEmpty() && !mPath.isVirtualAlbumPath() && CryptoManager.isEncryptedFolderPath(this, mPath)) ||
             CryptoManager.isVaultRecycleBinPath(this, mPath)
 
-        if (mShowAll && !mIsVaultFilesView && !mIsVaultOpening && !isVaultFolder && !config.scrollHorizontally) {
+        // The gesture must also run with horizontal scrolling enabled; it provides
+        // pull-to-refresh in the all-files view and pull-to-open-vault here.
+        if (mShowAll && !mIsVaultFilesView && !mIsVaultOpening && !isVaultFolder) {
             if (vaultPullGesture.handleTouchEvent(ev)) {
                 return true
             }

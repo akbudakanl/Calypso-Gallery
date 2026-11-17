@@ -441,11 +441,6 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsScrollHorizontallyHolder.setOnClickListener {
             binding.settingsScrollHorizontally.toggle()
             config.scrollHorizontally = binding.settingsScrollHorizontally.isChecked
-
-            if (config.scrollHorizontally) {
-                config.enablePullToRefresh = false
-                binding.settingsEnablePullToRefresh.isChecked = false
-            }
         }
     }
 

@@ -1178,7 +1178,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (!mIsVaultDialogShowing && !mIsSecretVaultView && !config.scrollHorizontally) {
+        // Keep the pull gesture active even with horizontal scrolling: it drives both
+        // pull-to-refresh and pull-to-open-vault in the folders view.
+        if (!mIsVaultDialogShowing && !mIsSecretVaultView) {
             if (vaultPullGesture.handleTouchEvent(ev)) {
                 return true
             }
