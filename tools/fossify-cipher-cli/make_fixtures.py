@@ -113,7 +113,8 @@ def main() -> int:
         source = TMP_DIR / source_name
         source.write_bytes(payload)
 
-        produced = cv.encrypt_file(source, TMP_DIR, KEK)
+        # Kanonik fixture'lar tek anahtarli (keyId=1) keyring ile uretilir.
+        produced = cv.encrypt_file(source, TMP_DIR, KEK, key_id=cv.ACTIVE_KEY_ID)
         if produced is None:
             print(f"[ERROR] {name}: encrypt_file basarisiz")
             return 1

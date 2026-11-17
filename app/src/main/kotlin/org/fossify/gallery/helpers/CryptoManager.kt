@@ -136,15 +136,22 @@ object CryptoManager {
     @Volatile
     internal var unlockedMasterKey: ByteArray? = null
 
-    /**
-     * kanonik kasada keyring'den çözülen KEK.
-     * [activeKek] eski MEK'i (unlockedMasterKey) kullanir.
-     */
+    /** Aktif KEK (yeni dosya başlıkları bu anahtarla yazılır). */
     @Volatile
     internal var unlockedKek: ByteArray? = null
 
-    /** Dosya basliklarini sifrelemek icin aktif KEK. */
+    /** Kasadaki tüm KEK'ler, keyId → anahtar. Rotasyon sırasında birden fazla olabilir. */
+    internal val unlockedKeyring = LinkedHashMap<Short, ByteArray>()
+
+    /** Aktif anahtar kimliği (her yeni dosya bu keyId ile yazılır). */
+    @Volatile
+    internal var activeKeyId: Short = 1
+
+    /** Dosya başlıklarını şifrelemek için aktif KEK. */
     internal fun activeKek(): ByteArray? = unlockedKek ?: unlockedMasterKey
+
+    /** Belirli bir keyId ile yazılmış dosya başlığını açacak KEK. */
+    internal fun kekFor(keyId: Short): ByteArray? = unlockedKeyring[keyId] ?: activeKek()
 
     internal val metadataCache = ConcurrentHashMap<String, EncryptedFileMetadata>()
 
@@ -206,6 +213,9 @@ object CryptoManager {
         unlockedMasterKey = null
         unlockedKek?.fill(0)
         unlockedKek = null
+        unlockedKeyring.values.forEach { it.fill(0) }
+        unlockedKeyring.clear()
+        activeKeyId = 1
         metadataCache.values.forEach { it.fileKey.fill(0) }
         metadataCache.clear()
         folderNameCache.clear()
@@ -540,7 +550,6 @@ object CryptoManager {
         cacheResult: Boolean = true
     ): EncryptedFileMetadata? {
         metadataCache[file.absolutePath]?.let { return it }
-        val kek = activeKek() ?: return null
         if (!file.exists() || !file.isFile) return null
 
         return try {
@@ -553,7 +562,7 @@ object CryptoManager {
                     val version = dis.readByte()
                     if (version != VaultContainer.VAULT_FORMAT_VERSION) return null
 
-                    val meta = readContainerMetadata(dis, kek, version, includeThumbnail) ?: return null
+                    val meta = readContainerMetadata(dis, { id -> kekFor(id) }, version, includeThumbnail) ?: return null
                     if (cacheResult && includeThumbnail) {
                         metadataCache[file.absolutePath] = meta
                     }
