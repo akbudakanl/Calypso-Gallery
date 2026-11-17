@@ -176,7 +176,7 @@ fun CryptoManager.getStorageRootDirectory(): File {
 
 
 /**
- * The container of this app: `<internal storage>/Fossify Gallery Cipher`. It holds the vault,
+ * The container of this app: `<internal storage>/Calypso Gallery`. It holds the vault,
  * the saved virtual albums and the backups of the favorites. It is a standalone top level
  * folder, it is not nested in the Documents folder.
  */
@@ -191,6 +191,17 @@ fun CryptoManager.getCipherRootDirectory(): File {
  */
 fun CryptoManager.ensureCipherRootDirectory(): File {
     val dir = getCipherRootDirectory()
+    if (!dir.exists()) {
+        // Upgrade: keep existing vaults, virtual albums and favorites backups from the
+        // previous "Calypso Gallery" container instead of creating an empty one.
+        val legacyDir = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
+        if (legacyDir.exists() && legacyDir.isDirectory) {
+            try {
+                legacyDir.renameTo(dir)
+            } catch (_: Exception) {
+            }
+        }
+    }
     if (!dir.exists()) {
         dir.mkdirs()
     }

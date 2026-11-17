@@ -400,7 +400,7 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
 
 /**
  * Checks whether [dir] directly contains a vault or hosts a Cipher_Secrets folder
- * (either directly inside [dir], inside `<dir>/Fossify Gallery Cipher`, or `<dir>/Cipher`).
+ * (either directly inside [dir], inside `<dir>/Calypso Gallery`, or `<dir>/Cipher`).
  */
 fun CryptoManager.resolveExistingVaultInDirectory(dir: File): File? {
     val candidates = listOf(
@@ -415,9 +415,13 @@ fun CryptoManager.resolveExistingVaultInDirectory(dir: File): File? {
 
 internal fun CryptoManager.internalVaultCandidates(): List<File> {
     val documentsDir = getDocumentsDirectory()
+    val legacyRoot = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
     return listOf(
         getDefaultVaultRoot(),
         File(getCipherRootDirectory(), CIPHER_ROOT_DIR_NAME),
+        // Previous app container name, so upgrades find and migrate existing vaults.
+        File(legacyRoot, CIPHER_SECRETS_DIR_NAME),
+        File(legacyRoot, CIPHER_ROOT_DIR_NAME),
         File(documentsDir, "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"),
         File(documentsDir, CIPHER_SECRETS_DIR_NAME),
         File(documentsDir, CIPHER_ROOT_DIR_NAME)
@@ -751,9 +755,12 @@ fun CryptoManager.findVaultRoot(context: Context): File? {
     // Migrate the vaults of the older versions into the standalone Cipher folder:
     // Documents/Cipher_Secrets and Documents/Cipher/Cipher_Secrets -> <internal storage>/Cipher/Cipher_Secrets
     val standardDir = getDefaultVaultRoot()
+    val legacyRoot = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
     val legacyDirs = listOf(
         File(getDocumentsDirectory(), CIPHER_SECRETS_DIR_NAME),
-        File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME")
+        File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"),
+        File(legacyRoot, CIPHER_SECRETS_DIR_NAME),
+        File(legacyRoot, CIPHER_ROOT_DIR_NAME)
     )
     val legacyDir = legacyDirs.firstOrNull { it.absolutePath == root.absolutePath }
     if (legacyDir != null && !standardDir.exists()) {

@@ -43,6 +43,9 @@ object VaultContainer {
     /** v3: AES-256-CTR payload + Poly1305-AES MAC. Uretilen guncel format. */
     const val VERSION_SYMMETRIC_AUTH: Byte = 3
 
+    /** v4: Tink AES256_GCM_HKDF streaming AEAD payload + per-file DEK. */
+    const val VERSION_TINK_STREAM: Byte = 4
+
     /**
      * v5: legacy. MAC, payload'in yaninda header'i da kapsar.
      * Bu surum **yalnizca okunur** - guncel kod v5 uretmez.
@@ -55,6 +58,12 @@ object VaultContainer {
     const val GCM_TAG_BITS = 128
     const val CTR_IV_LENGTH = 16
     const val MAC_TAG_LENGTH = 16
+
+    /** v4: cleartext keyId (u16) uzunlugu. */
+    const val KEY_ID_LENGTH = 2
+
+    /** v4: immutable random fileId uzunlugu. */
+    const val FILE_ID_LENGTH = 16
 
     // ---------------- Yardimci imzalar ----------------
 
@@ -81,17 +90,31 @@ object VaultContainer {
     fun payloadOffset(encryptedHeaderLength: Int): Long =
         (FIXED_PREFIX_LENGTH + GCM_IV_LENGTH + encryptedHeaderLength + CTR_IV_LENGTH).toLong()
 
+    /**
+     * v4 duzeninde sabit olan onek boyutu:
+     * magic(8) + version(1) + keyId(2) + fileId(16) + headerIv(12) + headerLen(4) = 43.
+     */
+    const val FIXED_PREFIX_LENGTH_V4 = 8 + 1 + KEY_ID_LENGTH + FILE_ID_LENGTH + GCM_IV_LENGTH + 4
+
+    /** v4 konteynerinde Tink sifreli akisinin baslangic ofseti. */
+    fun payloadOffsetV4(encryptedHeaderLength: Int): Long =
+        (FIXED_PREFIX_LENGTH_V4 + encryptedHeaderLength).toLong()
+
     /** Bir surumun desteklenip desteklenmedigini dondurur. */
     fun isKnownVersion(version: Byte): Boolean = when (version) {
-        VERSION_SYMMETRIC, VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH -> true
+        VERSION_SYMMETRIC, VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH, VERSION_TINK_STREAM -> true
         else -> false
     }
 
-    /** Bir surumun MAC algoritmasini dondurur. */
+    /** Bir surumun butunluk algoritmasini dondurur. */
     fun macAlgorithmFor(version: Byte): MacAlgorithm = when (version) {
         VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH -> MacAlgorithm.POLY1305_AES
+        VERSION_TINK_STREAM -> MacAlgorithm.AEAD_GCM_STREAM
         else -> MacAlgorithm.NONE
     }
+
+    /** v4 basliginda depolanan algorithmParamsId degeri. */
+    const val ALGORITHM_PARAMS_V4: Short = 0x0001
 
     /**
      * Content IV sifir mi diye kontrol eder.
@@ -110,5 +133,8 @@ enum class MacAlgorithm {
     NONE,
 
     /** Poly1305-AES128 - BouncyCastle `Poly1305(AESEngine)` ile birebir uyumlu. */
-    POLY1305_AES
+    POLY1305_AES,
+
+    /** v4: Tink AES-GCM-HKDF streaming AEAD (segment basina GCM tag). */
+    AEAD_GCM_STREAM
 }

@@ -50,6 +50,7 @@ import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
+import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_TINK_STREAM
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
@@ -149,7 +150,14 @@ data class EncryptedFileMetadata(
     val fileKey: ByteArray,
     val version: Byte = 1,
     val isMacAuthenticated: Boolean = false,
-    val thumbnailBytes: ByteArray? = null
+    val thumbnailBytes: ByteArray? = null,
+    // ---- v4 (Tink streaming AEAD) alanlari ----
+    val fileId: ByteArray? = null,
+    val keyId: Short = -1,
+    val ciphertextLength: Long = 0L,
+    val isV4: Boolean = false,
+    /** v4: Tink segment boyutu (header'dan okunur; sabit degil). */
+    val segmentSize: Int = 0
 )
 
 data class VaultPhysicalAlbum(
@@ -609,6 +617,15 @@ object CryptoManager {
                     if (magicStr != MAGIC_V2 && magicStr != MAGIC_V1) return null
 
                     val version = dis.readByte()
+                    if (version == VERSION_TINK_STREAM) {
+                        // Stage 0: KEK = VMK (legacy MEK) until the v4 keyring is wired in Stage 1.
+                        val v4Meta = readV4Metadata(dis, masterKey, version, includeThumbnail)
+                            ?: return null
+                        if (cacheResult && includeThumbnail) {
+                            metadataCache[file.absolutePath] = v4Meta
+                        }
+                        return v4Meta
+                    }
                     val fileKey: ByteArray = when (version) {
                         VERSION_SYMMETRIC, VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH -> masterKey.copyOf()
                         else -> return null
