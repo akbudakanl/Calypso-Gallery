@@ -433,7 +433,7 @@
     <string name="fast_large_duplicate_check_label">大容量ファイルの高速重複チェック (&gt;8 MB)</string>
     <string name="fast_large_duplicate_check_hint">大容量ファイルを含む転送に重要: ファイル全体を読み取る代わりに1ファイルあたり5ブロック（合計1.25 MB）を確認し、重複チェックを数十倍高速化します。</string>
     <string name="fast_large_duplicate_check_info_title">高速重複チェック (&gt;8 MB)</string>
-    <string name="fast_large_duplicate_check_info_message" formatted="false">大容量のコピー/移動転送で重要な理由:\n\n数ギガバイトの動画などの大容量ファイルをコピーまたは移動する際、ファイル名とサイズが一致するたびに、厳密なビット単位チェックでは送信元と送信先の両方のファイルを先頭から末尾まで読み取る必要があり、高速ストレージでも数分、SD カードではさらに長くかかります。\n\n高速チェックの仕組み:\n• 8 MB 未満のファイルは常にビット単位で100%チェックされます。\n• 8 MB を超えるファイルでは、ファイルサイズに加えて先頭、25%、50%、75%、末尾に分散した5つの 256 KB ブロック（片側合計 1.25 MB）を比較します。\n• 50 MB〜1 GB の動画を含む 50 GB のアーカイブでは、ディスク読み取りが約 40×〜800× 削減されます。\n\n有効・無効の目安:\n• オン推奨: ギャラリーの大部分が大容量ファイル (&gt;8 MB) の場合、破損していない異なる2つのファイルが同じ名前、正確なバイトサイズ、および5つのサンプリング領域すべてで一致することは実質的に不可能です。\n• オフ推奨（高速化なし）: ギャラリーの大部分が写真または 8 MB 未満のファイルの場合、8 MB 未満のファイルは常にビット単位で100%チェックされるため、この設定による顕著な速度向上はありません。\n• 外部 USB 保管庫の同期は常に完全な Poly1305-AES 認証を維持します。</string>
+    <string name="fast_large_duplicate_check_info_message" formatted="false">大容量のコピー/移動転送で重要な理由:\n\n数ギガバイトの動画などの大容量ファイルをコピーまたは移動する際、ファイル名とサイズが一致するたびに、厳密なビット単位チェックでは送信元と送信先の両方のファイルを先頭から末尾まで読み取る必要があり、高速ストレージでも数分、SD カードではさらに長くかかります。\n\n高速チェックの仕組み:\n• 8 MB 未満のファイルは常にビット単位で100%チェックされます。\n• 8 MB を超えるファイルでは、ファイルサイズに加えて先頭、25%、50%、75%、末尾に分散した5つの 256 KB ブロック（片側合計 1.25 MB）を比較します。\n• 50 MB〜1 GB の動画を含む 50 GB のアーカイブでは、ディスク読み取りが約 40×〜800× 削減されます。\n\n有効・無効の目安:\n• オン推奨: ギャラリーの大部分が大容量ファイル (&gt;8 MB) の場合、破損していない異なる2つのファイルが同じ名前、正確なバイトサイズ、および5つのサンプリング領域すべてで一致することは実質的に不可能です。\n• オフ推奨（高速化なし）: ギャラリーの大部分が写真または 8 MB 未満のファイルの場合、8 MB 未満のファイルは常にビット単位で100%チェックされるため、この設定による顕著な速度向上はありません。\n• 外部 USB 保管庫の同期は常に完全な Tink AEAD 認証を維持します。</string>
     <string name="conflict_handling_explanation_title">ファイルの競合と重複の解決</string>
     <string name="conflict_handling_explanation_message" formatted="false">ファイルやアルバムのコピー、移動、暗号化、または復号時に、同じ名前のファイルが保存先に既に存在する場合:\n\n1. ビット単位の重複チェック (RAM):\nアプリは最初にファイルサイズを確認し、一致する場合は RAM 上でファイル内容をビット単位で比較します（暗号化ファイルはディスクに平文を書き込まずメモリ内で確認されます）。コピー/移動時は同一ファイルがスキップされ、元ファイルは元のフォルダーにそのまま残ります。暗号化/復号時にアルバムを統合する場合は、ビット単位で100%同一の元ファイルを削除するか残すかを選択できます。\n\n2. 同名で異なる内容（例: 2つの異なる download.jpg ファイル）:\n• 完全自動（既定）: 新しいファイルを download(1).jpg、download(2).jpg のように名前変更して、操作を中断せず両方のファイルを保持します。\n• スマートダイアログ: ビット単位で同一のファイルは引き続き静かにスキップし、名前が同じで内容が異なる場合のみ確認します（スキップ / 上書き / 両方保持）。</string>
     <string name="syncing_vault_progress">外部ドライブから保管庫を同期中…</string>
@@ -520,22 +520,6 @@
     <string name="fork_disclaimer_title">フォークに関する通知</string>
     <string name="fork_disclaimer_message">このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。</string>
     <string name="fork_disclaimer_acknowledge">理解しました</string>
-    <string name="vault_upgrade_entry_title">暗号化された保管庫の更新が利用可能です</string>
-    <string name="vault_upgrade_entry_message">暗号化された保管庫は古いバージョンのアプリで作成されており、旧暗号化アルゴリズムを使用しています。希望する場合は、現在のバージョンの暗号化アルゴリズムに従って暗号化された保管庫を再作成できます。</string>
-    <string name="vault_upgrade_always_show">常に表示</string>
-    <string name="vault_upgrade_settings_title">保管庫の更新警告を常に表示</string>
-    <string name="vault_upgrade_details_title">更新前</string>
-    <string name="vault_upgrade_details_message">現在の暗号化アルゴリズムを使用する目的で暗号化された保管庫を更新する前に、バックアップを作成することをお勧めします。これにより、更新が中断されたことによるデータ消失のリスクを排除でき、希望する場合は古いバージョンのアプリで未更新の暗号化された保管庫を引き続き使用できます。</string>
-    <string name="vault_upgrade_low_battery">バッテリー残量が少なくなっています。端末を少なくとも 20% まで充電してください。</string>
-    <string name="vault_upgrade_low_space">暗号化された保管庫を更新するための空き容量が不足しています。</string>
-    <string name="vault_upgrade_continue">続行</string>
-    <string name="vault_upgrade_progress">%2$d 個中 %1$d 個を変換しました</string>
-    <string name="vault_upgrade_finished">更新が完了しました。新しいキーリングを有効にするには、暗号化された保管庫を再度開いてください。</string>
-    <string name="vault_upgrade_failed_count">更新を停止しました: %1$d 個のファイルを検証できませんでした。</string>
-    <string name="vault_upgrade_resume_title">保管庫の更新が中断されました</string>
-    <string name="vault_upgrade_resume_message">暗号化された保管庫の更新が中断されました。暗号化された保管庫内の一部のファイルが新しい暗号化アルゴリズムに更新されています。データの消失はありません。残りのファイルの更新を続行しますか？</string>
-    <string name="vault_upgrade_progress_warning">更新中はアプリを終了したり画面をオフにしたりしないでください。</string>
-    <string name="vault_upgrade_waiting">暗号化された保管庫が切断されています。再接続を待っています...</string>
     <string name="argon2_profile_title">総当たり攻撃への耐性</string>
     <string name="brute_force_mode_title">調整モード</string>
     <string name="brute_force_mode_time">保管庫のロック解除時間を使用</string>
