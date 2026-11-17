@@ -2,6 +2,8 @@
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
     <string name="space_unverified_warning">Der freie Speicherplatz konnte nicht überprüft werden (%2$s). Es werden etwa %1$s benötigt; der Vorgang wird versucht und kann bei Speichermangel abgebrochen werden.</string>
+    <string name="space_unverified_title">Freier Speicherplatz nicht überprüft</string>
+    <string name="space_continue_anyway">Trotzdem fortfahren</string>
     <string name="resume_operations_title">Unterbrochene Vorgänge</string>
     <string name="resume_operations_message">%1$d Vorgang/Vorgänge wurden unterbrochen. Keine Daten verloren – dort fortfahren, wo sie standen?</string>
     <string name="resume_continue">Fortfahren</string>

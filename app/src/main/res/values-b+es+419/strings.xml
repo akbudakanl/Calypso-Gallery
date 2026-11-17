@@ -2,6 +2,8 @@
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
     <string name="space_unverified_warning">No se pudo verificar el espacio libre (%2$s). Se requieren aproximadamente %1$s; se intentará la operación y podría detenerse si se agota el espacio.</string>
+    <string name="space_unverified_title">Espacio libre sin verificar</string>
+    <string name="space_continue_anyway">Continuar de todos modos</string>
     <string name="resume_operations_title">Operaciones interrumpidas</string>
     <string name="resume_operations_message">Se interrumpieron %1$d operación(es). No se perdió ningún dato; ¿desea continuar donde se detuvieron?</string>
     <string name="resume_continue">Continuar</string>

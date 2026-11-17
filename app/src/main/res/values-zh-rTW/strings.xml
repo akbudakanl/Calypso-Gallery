@@ -2,6 +2,8 @@
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
     <string name="space_unverified_warning">無法確認可用空間（%2$s）。約需要 %1$s；仍會嘗試執行此操作，但若空間不足可能會中斷。</string>
+    <string name="space_unverified_title">無法確認可用空間</string>
+    <string name="space_continue_anyway">仍要繼續</string>
     <string name="resume_operations_title">中斷的操作</string>
     <string name="resume_operations_message">有 %1$d 項操作已中斷。資料未遺失，要從中斷處繼續嗎？</string>
     <string name="resume_continue">繼續</string>
