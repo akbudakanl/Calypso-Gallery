@@ -28,6 +28,15 @@ class ForkChangelogTests(unittest.TestCase):
                 self.assertIn(f"releases/tag/{release.version}", notes)
                 self.assertIn(f"archive/refs/tags/{release.version}.tar.gz", notes)
 
+    def test_fastlane_notes_keep_a_readable_summary(self):
+        content = (REPOSITORY_ROOT / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
+        releases = fork_changelog.parse_releases(content)
+        release = next(item for item in releases if item.version == "1.19.0-cipher")
+
+        notes = fork_changelog.format_fastlane(release)
+
+        self.assertIn("Zero-Pollution Folder Identity", notes)
+
     def test_github_notes_include_version_source_and_gplv3(self):
         content = (REPOSITORY_ROOT / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
         releases = fork_changelog.parse_releases(content)
