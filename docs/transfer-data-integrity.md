@@ -152,7 +152,7 @@ Bu hedef şu varsayımlara dayanır:
 | 1 | **Atomik rename garantisi yok (kısmen giderildi)** | Copy/move ve SAF yolları artık staging + atomik commit kullanıyor: doğrudan `File` hedeflerde `Files.move(ATOMIC_MOVE)`, SAF hedeflerde kardeş `DocumentFile` oluşturup `DocumentFile.renameTo()` ile commit (`AtomicStaging.commitSaf`); başarısızlık `FAILED`, kopyala-sil fallback yok. **Kalan:** `CryptoManagerExportSync.kt:322-331` hâlâ `ATOMIC_MOVE` denemeden `REPLACE_EXISTING` + `renameTo` fallback kullanıyor; FAT/exFAT'ta `DocumentFile.renameTo()` tüm sağlayıcılarda garanti değil. |
 | 2 | **Doğrulama kapsamı/maliyeti** | Şifreli kopyada hızlı örnekleme kullanılıyor (`Activity.kt:2417`); sync yolu tam `verifyFileIntegrity` yapıyor (`:279`). Sadece boyut+fingerprint "VERIFIED" dersen bozuk `.bin` doğrulanmış sayılabilir. Tam doğrulama büyük videolarda 2x okuma maliyeti getirir; bu maliyet kabul edilmelidir. |
 | 3 | **Journal kaybı / reddi** | Journal app-private; app verisi silinirse veya expire olursa (ADR §10 açık soru) ya da kullanıcı resume'u reddederse: commit edilmiş ama kaynağı silinmemiş öğeler **duplicate** kalır; `resolvedDestName` gider → `(1)/(2)` kayar; albüm batch kaydı gider → yeni rastgele alt klasör (`CryptoManagerFolderCrypto.kt:79-84`). |
-| 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar; her işlem app-private SharedPreferences ile bir kez işaretlenir. **Kalan:** klasör config ve thumbnail cache tutarlılığı, resume sırasında ikinci bir ölümde yeniden reconcile tetiklenmesi. |
+| 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
 | 5 | **Foreground service sınırları** | Force-stop `onDestroy` çağırmadan öldürür (journal `IN_FLIGHT` kalır — resume halleder). OEM battery optimizer / Doze servisi duraklatabilir, wake lock kaybolabilir, harici birim geri gelmeyebilir → işlem "waiting" takılabilir. Timeout/cancel politikası gerekir. |
 | 6 | **Plaintext staging izi** | Decrypt ve düz kopya staging dosyaları düz metin tutar; `delete()` ile silinirse flash'te iz kalır. Secure wipe şart (ADR 0002 §7). Ciphertext staging için normal `delete()` yeterli. |
 | 7 | **Tek seferlik alan kontrolü** | Alan kontrolü batch başında yapılır; uzun süren işlemde başka uygulamalar alan tüketebilir veya harici birim çıkarılabilir. Öğe başına yeniden kontrol gerekir. |
@@ -231,7 +231,7 @@ Alan kontrolü, ADR 0003'ün bir parçası olarak **"Decision — space budgetin
 3. **Zamanlama:** batch başında + her öğenin `IN_FLIGHT` geçişinden önce yeniden kontrol;
    startup orphan temizliği kontrolden **önce** çalışır.
 4. **`-1` politikası:** sessiz atlama yok; `File` yolu için `StatFs` fallback, SAF/OTG için açık
-   "alan doğrulanamadı" uyarısı ve iptal seçeneği.
+   onay diyaloğu ("devam et / iptal") — bkz. §8.3.3.
 5. **Eşik:** `required + max(64 MiB, %1) > available` ise engelle veya `WAITING_FOR_SPACE` durumuna
    geç (ADR §2 transient-wait katmanı, bildirim ve iptal akışıyla).
 6. **Staging:** nihai dizinde → rename ücretsiz, 2x kopya yok; `ATOMIC_MOVE` desteklenmezse
@@ -322,13 +322,40 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
   `COPY` için kaynak korunduğundan yalnızca yeni hedefin kimliği kaydedilir.
 - Sanal albümün kendi `parentPhysicalPath` değeri eski klasöre işaret ediyorsa düzeltilip manifest
   yeniden yazılır; düz dosyalar için MediaStore rescan yapılır.
-- **Idempotency:** işlenen operationId'ler app-private SharedPreferences'da tutulur; UPDATE-by-old-path
-  semantics'i sayesinde ikinci çağrı satır çoğaltmaz. Reconcile yalnızca commit edilmiş öğeleri kapsar;
-  yarım kalan öğeler resume sırasında kendi yazma yollarında güncellenir.
-- **Kalan:** klasör config / thumbnail cache tutarlılığı ve resume sırasında ikinci bir ölüm.
+- **Idempotency:** işlenen **öğeler** (`operationId:itemIndex`) app-private SharedPreferences'da
+  tutulur; UPDATE-by-old-path semantics'i sayesinde ikinci çağrı satır çoğaltmaz. Bu sayede resume
+  sırasında ikinci bir süreç ölümü olursa, ilk turda `PENDING` olan ve sonradan tamamlanan öğeler
+  bir sonraki startup'ta yeniden reconcile edilir. `reconciled_items_v2` anahtarı, eski
+  operasyon-bazlı işaretleyiciden gelen kayıtları geçersiz kılar.
+- Reconcile yalnızca commit edilmiş öğeleri kapsar; yarım kalan öğeler resume sırasında kendi yazma
+  yollarında güncellenir.
 
-**Kalan (Faz 3):** albüm/Activity batch işlemlerinin registry'ye kaydı, `-1` alan durumunda kullanıcı
-onayı (şu an açıklayıcı uyarı + devam), `CryptoManagerExportSync`'te `ATOMIC_MOVE` kullanımı.
+### 8.3.2 Kasıtlı kapsam dışı: klasör config ve thumbnail cache
+
+`included/excluded/encrypted` klasör listeleri (`config`) ve thumbnail önbelleği, dosya işlemlerinin
+yanında güncellenen ikincil store'lardır. Bir süreç ölümü bu listeleri geçici olarak eski yolda
+bırakabilir; ancak **bu belge kapsamında bunlar için kod değişikliği planlanmamıştır.** Gerekçe:
+
+- klasör listeleri mevcut işlem sonu hook'larıyla (`config.addEncryptedFolder` /
+  `removeEncryptedFolder` / `replaceExactExcludedFolder`) zaten güncellenir ve bir sonraki tam
+  işlemde kendini düzeltebilir;
+- thumbnail cache'i zaten yeniden üretilebilir bir türev veridir, kalıcı doğruluk kaynağı değildir;
+- bunları journal'a dahil etmek, ADR 0003'ün "source paths remain intact" güvenlik modeline ek bir
+  bağımlılık ekler ve faydası veri bütünlüğü açısından marjinaldir.
+
+Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okunması gerekir.
+
+### 8.3.3 Açık alan onayı (Faz 3/3)
+
+- `SpaceConfirmation.askAsync`: düz kopya/taşıma akışında, `-1` (SAF/OTG) durumunda "boş alan
+  doğrulanamadı" başlıklı diyalog gösterir; gereken boyut ve neden açıklayıcı mesajda yer alır.
+  Onaylanırsa işlem başlar, reddedilirse ilerleme diyaloğu kapanır.
+- `SpaceConfirmation.confirmBlocking`: albüm encrypt/decrypt gibi senkron arka plan işlemlerinde
+  aynı onayı alır; ana thread'de asla bloklamaz (orada `false` döner).
+- Yeni metinler (başlık + "Yine de devam et") tüm 9 locale'e ve blind-test md'lerine eklendi.
+
+**Kalan (Faz 3):** albüm/Activity batch işlemlerinin registry'ye kaydı ve
+`CryptoManagerExportSync`'te `ATOMIC_MOVE` kullanımı.
 
 ### 8.4 Opsiyonel gerçek cihaz testleri (otomasyon yok)
 
