@@ -15,6 +15,9 @@ import org.fossify.gallery.helpers.CryptoManager.TransferConflictStatus
 import org.fossify.gallery.helpers.CryptoManager.TransferConflictCheck
 import org.fossify.gallery.helpers.CryptoManager.SmartConflictDifference
 import org.fossify.gallery.helpers.CryptoManager.SmartConflictComparison
+import org.fossify.gallery.helpers.operations.AtomicStaging
+import org.fossify.gallery.helpers.operations.OperationContext
+import org.fossify.gallery.helpers.operations.OperationJournal
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerConflict.
@@ -437,7 +440,8 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     skipDuplicateCheck: Boolean = false,
     deleteSourceOnIdentical: Boolean = true,
     matchCollisionVariants: Boolean = true,
-    fastSampling: Boolean = false
+    fastSampling: Boolean = false,
+    operation: OperationContext = OperationContext.NONE
 ): File? {
     if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
     val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false) ?: return null
@@ -500,32 +504,45 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     }
 
     val needsRename = desiredName != sourceMeta.originalName
+    val staging = AtomicStaging.fileFor(destBin, operation)
+    OperationJournal.markInFlight(operation, staging.absolutePath)
     val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
+        // Same-filesystem rename is already atomic — no staging involved.
+        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin))
         true
     } else {
         try {
             FileInputStream(sourceBin).use { fis ->
                 BufferedInputStream(fis, 256 * 1024).use { bis ->
-                    FileOutputStream(destBin).use { fos ->
+                    FileOutputStream(staging).use { fos ->
                         BufferedOutputStream(fos, 256 * 1024).use { bos ->
                             bis.copyTo(bos, 256 * 1024)
                             bos.flush()
-                            fos.fd.sync()
                         }
+                        fos.fd.sync()
                     }
                 }
             }
+            AtomicStaging.commit(staging, destBin)
+            if (!verifyFileIntegrity(destBin)) {
+                throw IOException("Copied container failed read-back verification")
+            }
+            OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin))
             destBin.setLastModified(sourceBin.lastModified())
             if (needsRename && !renameEncryptedFile(destBin, desiredName, skipIntegrityCheck = true, syncParentDir = false)) {
                 destBin.delete()
+                OperationJournal.markFailed(operation, "encrypted rename failed")
                 return null
             }
             if (isMove) {
                 sourceBin.delete()
+                OperationJournal.markSourceDeleted(operation)
             }
             true
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            AtomicStaging.discard(staging, containsPlaintext = false, context = context)
             destBin.delete()
+            OperationJournal.markFailed(operation, e.message ?: "encrypted transfer failed")
             false
         }
     }
