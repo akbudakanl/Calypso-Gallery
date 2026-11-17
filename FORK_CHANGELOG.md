@@ -15,7 +15,7 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 - Şifreli kasa: Tink AES256_GCM_HKDF akış şifrelemesi, Argon2id anahtar türetme, rastgele DEK'li konteynerler, KEK anahtar halkası ve `CalypsoGallery` alan ayırımı ile kanonik konteyner biçimi.
 - Kasa güvenliği: biyometrik kilit (donanım tabanlı anahtarlar), kaba kuvvete karşı ayarlanabilir Argon2 hedef süresi, kasa geri dönüşüm kutusu, sıfırlama hareketiyle kilit, RAM temizliği, ekran görüntüsü ve ekran yakalama engelleme, uygulama geri yüklendiğinde yeniden kimlik doğrulama.
 - Çevrimdışı çalışma: ağ izni kaldırıldı, tüm ağ özellikleri devre dışı; gizli içerik için ekran koruyucu ve pano görüntü kopyalama engelleme.
-- Masaüstü şifreleme aracı: çevrimdışı/Tails uyumlu CLI, harici kasa konumu, yerel telefona aktarım, `.pending_sync` artımlı senkronizasyon ve uygulamayla birebir uyumlu kanonik konteyner üretimi.
+- Masaüstü şifreleme aracı: çevrimdışı/Tails uyumlu CLI, harici kasa konumu, yerel telefona aktarım, `.pending_sync` artımlı senkronizasyon ve uygulamayla birebir uyumlu kanonik konteyner üretimi (payload'da gerçek Tink Python kütüphanesi kullanılır).
 - Dosya işlemleri: bit düzeyinde yineleme ayıklama, akıllı/standart çakışma pencereleri, önizleme ve bayt/tarih karşılaştırması, boş albüm temizliği, büyük dosyalar için hızlı kontrol, eşleşen içerik için tarih eşitlik ayarı.
 - Favori ve sanal albüm yedekleme: otomatik yedekler, ZIP dışa/içe aktarma, çakışma birleştirme ve kasa geri dönüşüm kutusu istisnaları.
 - Arayüz: uygulama içi dil seçici, albüm türü simgeleri, gizle/şifrele ve hariç tut akışlarının ayrılması, bağımsız görünüm modları, parmak kaydırmalı kasa açma, arama ve görünüm tercihleri.

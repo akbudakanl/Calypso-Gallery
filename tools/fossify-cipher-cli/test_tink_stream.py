@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
 Tests for the canonical Tink AES256_GCM_HKDF stream and FGVLTENC v1 container
-format implemented manually with `cryptography`.
-
-These tests verify:
-  - the exact expected-ciphertext-size formula,
-  - stream header layout and per-segment AES-256-GCM authentication,
-  - tamper detection,
-  - the full container header (AAD binding, KEK-derived header key, metadata).
+format. The tool uses the REAL Tink Python library (keyset built from the raw
+DEK with RAW output prefix); these tests verify byte layout, the exact
+expected-ciphertext-size formula, tamper detection and the container header.
 
 The decryption helpers below are test-only and intentionally kept out of
 cipher_vault.py (which is encrypt-only).
 """
 
+import io
 import os
 import struct
+import tempfile
 import unittest
+from pathlib import Path
 
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.exceptions import InvalidTag
+
+import tink
 
 import cipher_vault as cv
 
@@ -34,32 +34,26 @@ def reference_expected_ciphertext_size(plaintext_size: int) -> int:
 
 
 def decrypt_tink_stream(stream: bytes, dek: bytes, file_id: bytes) -> bytes:
-    """Test-only decryptor for the AES256_GCM_HKDF stream produced by encrypt_file."""
-    if len(stream) < 40 + 16:
-        raise ValueError("stream too short")
-    if stream[0] != 40:
-        raise ValueError("bad stream header length byte")
-    salt = stream[1:33]
-    nonce_prefix = stream[33:40]
-    stream_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=file_id).derive(dek)
+    """Decrypt a canonical Tink stream with the real Tink library."""
+    primitive = cv._tink_stream_primitive(dek)
+    source = io.BytesIO(stream)
+    out = io.BytesIO()
+    with primitive.new_decrypting_stream(source, file_id) as dec:
+        while True:
+            chunk = dec.read(64 * 1024)
+            if not chunk:
+                break
+            out.write(chunk)
+    return out.getvalue()
 
-    pos = 40
-    segment = 0
-    plaintext = bytearray()
-    first_max = cv.SEGMENT_SIZE - cv.STREAM_HEADER_LENGTH - cv.GCM_TAG_SIZE
-    later_max = cv.SEGMENT_SIZE - cv.GCM_TAG_SIZE
-    while pos < len(stream):
-        max_plain = first_max if segment == 0 else later_max
-        seg_len = min(len(stream) - pos, max_plain + cv.GCM_TAG_SIZE)
-        if seg_len < cv.GCM_TAG_SIZE:
-            raise ValueError("invalid segment length")
-        enc = stream[pos:pos + seg_len]
-        pos += seg_len
-        is_last = pos == len(stream)
-        iv = nonce_prefix + segment.to_bytes(4, "big") + (b"\x01" if is_last else b"\x00")
-        plaintext += AESGCM(stream_key).decrypt(iv, enc, b"")
-        segment += 1
-    return bytes(plaintext)
+
+def encrypt_tink_stream(plain: bytes, dek: bytes, file_id: bytes) -> bytes:
+    """Encrypt with the real Tink library (frozen canonical parameters)."""
+    primitive = cv._tink_stream_primitive(dek)
+    out = cv._KeepOpenBytesIO()
+    with primitive.new_encrypting_stream(out, file_id) as enc:
+        enc.write(plain)
+    return out.getvalue()
 
 
 def parse_container(data: bytes, kek: bytes) -> dict:
@@ -140,17 +134,15 @@ def parse_container(data: bytes, kek: bytes) -> dict:
 
 
 class TinkStreamFormatTest(unittest.TestCase):
+    def test_real_tink_is_used(self):
+        self.assertTrue(cv.HAS_TINK, "the real Tink Python library must be available")
+
     def test_expected_ciphertext_size_values(self):
         cases = [
-            (0, 56),                 # empty: 40B header + 16B tag
-            (1, 57),
-            (15, 71),
-            (65535, 40 + 65535 + 16),
-            (262087, 40 + 262087 + 16),
-            (262088, 262144),        # first segment exactly full
-            (262089, 262144 + 1 + 16),
-            (262128, 262144 + 40 + 16),
-            (524216, 2 * 262144),    # two full segments
+            (0, 56), (1, 57), (15, 71), (65535, 40 + 65535 + 16),
+            (262087, 40 + 262087 + 16), (262088, 262144),
+            (262089, 262144 + 1 + 16), (262128, 262144 + 40 + 16),
+            (524216, 2 * 262144),
             (1_100_000, reference_expected_ciphertext_size(1_100_000)),
         ]
         for size, expected in cases:
@@ -161,68 +153,30 @@ class TinkStreamFormatTest(unittest.TestCase):
     def test_stream_roundtrip_and_layout(self):
         for size in (0, 1, 16, 65535, 262088, 262089, 524216):
             with self.subTest(size=size):
-                plaintext = bytes((i * 31 + 7) & 0xFF for i in range(size))
+                plain = bytes((i * 31 + 7) & 0xFF for i in range(size))
                 dek = os.urandom(32)
                 file_id = os.urandom(16)
-                salt = os.urandom(32)
-                nonce_prefix = os.urandom(7)
-                stream_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=file_id).derive(dek)
-
-                from io import BytesIO
-                out = BytesIO()
-                out.write(bytes([40]) + salt + nonce_prefix)
-                pos = 0
-                segment = 0
-                while True:
-                    max_chunk = cv.FIRST_CHUNK_PLAINTEXT_MAX if segment == 0 else cv.SEGMENT_PLAINTEXT_MAX
-                    chunk = plaintext[pos:pos + max_chunk]
-                    pos += len(chunk)
-                    last = pos >= size
-                    iv = nonce_prefix + segment.to_bytes(4, "big") + (b"\x01" if last else b"\x00")
-                    out.write(AESGCM(stream_key).encrypt(iv, chunk, b""))
-                    segment += 1
-                    if last:
-                        break
-                stream = out.getvalue()
-
+                stream = encrypt_tink_stream(plain, dek, file_id)
                 self.assertEqual(len(stream), cv.expected_ciphertext_size(size))
                 self.assertEqual(stream[0], 40)
-                self.assertEqual(stream[1:33], salt)
-                self.assertEqual(stream[33:40], nonce_prefix)
-                self.assertEqual(decrypt_tink_stream(stream, dek, file_id), plaintext)
+                self.assertEqual(decrypt_tink_stream(stream, dek, file_id), plain)
 
     def test_tampered_stream_is_rejected(self):
-        plaintext = b"authenticated payload"
         dek = os.urandom(32)
         file_id = os.urandom(16)
-        salt = os.urandom(32)
-        nonce_prefix = os.urandom(7)
-        stream_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=file_id).derive(dek)
-        iv = nonce_prefix + (0).to_bytes(4, "big") + b"\x01"
-        enc = AESGCM(stream_key).encrypt(iv, plaintext, b"")
-        stream = bytes([40]) + salt + nonce_prefix + enc
-
-        tampered = bytearray(stream)
-        tampered[45] ^= 0x01
-        from cryptography.exceptions import InvalidTag
-        with self.assertRaises(InvalidTag):
-            decrypt_tink_stream(bytes(tampered), dek, file_id)
+        stream = bytearray(encrypt_tink_stream(b"authenticated payload", dek, file_id))
+        stream[45] ^= 0x01
+        with self.assertRaises(tink.TinkError):
+            decrypt_tink_stream(bytes(stream), dek, file_id)
 
     def test_header_aad_binds_cleartext_prefix(self):
-        """Changing any cleartext prefix byte must break header decryption."""
-        import tempfile
-        from pathlib import Path
-
         kek = os.urandom(32)
         with tempfile.TemporaryDirectory() as td:
             source = Path(td) / "photo.jpg"
             source.write_bytes(b"jpeg-bytes")
             out = cv.encrypt_file(source, Path(td), kek)
             data = bytearray(out.read_bytes())
-
-            # Flip the keyId, which is part of the header AAD.
             data[9] ^= 0x01
-            from cryptography.exceptions import InvalidTag
             with self.assertRaises(InvalidTag):
                 parse_container(bytes(data), kek)
 

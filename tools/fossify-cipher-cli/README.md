@@ -129,7 +129,7 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
      ```bat
      run.bat
      ```
-     *(Auto-detects Python 3.9+, sets up `.venv` if dependencies are missing, scans mounted USB drive letters `D:\`–`Z:\`, and runs with UTF-8 + ANSI color support.)*
+     *(Auto-detects Python 3.10-3.13, sets up `.venv` if dependencies are missing, scans mounted USB drive letters `D:\`–`Z:\`, and runs with UTF-8 + ANSI color support.)*
 
 ```bash
 # Interactive mode (prompts for Language, .vault secret with retry, and optional wipe; no OS or output prompt)

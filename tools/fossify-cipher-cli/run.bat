@@ -14,14 +14,14 @@ set "PYTHON_CMD="
 set "VENV_PY=%SCRIPT_DIR%\.venv\Scripts\python.exe"
 
 if exist "%VENV_PY%" (
-    "%VENV_PY%" -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+    "%VENV_PY%" -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) and sys.version_info < (3, 14) else 1)" >nul 2>&1
     if !errorlevel! equ 0 set PYTHON_CMD="%VENV_PY%"
 )
 
 if not defined PYTHON_CMD (
     where py >nul 2>&1
     if !errorlevel! equ 0 (
-        py -3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+        py -3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) and sys.version_info < (3, 14) else 1)" >nul 2>&1
         if !errorlevel! equ 0 set "PYTHON_CMD=py -3"
     )
 )
@@ -29,7 +29,7 @@ if not defined PYTHON_CMD (
 if not defined PYTHON_CMD (
     where python >nul 2>&1
     if !errorlevel! equ 0 (
-        python -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+        python -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) and sys.version_info < (3, 14) else 1)" >nul 2>&1
         if !errorlevel! equ 0 set "PYTHON_CMD=python"
     )
 )
@@ -37,14 +37,14 @@ if not defined PYTHON_CMD (
 if not defined PYTHON_CMD (
     where python3 >nul 2>&1
     if !errorlevel! equ 0 (
-        python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+        python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) and sys.version_info < (3, 14) else 1)" >nul 2>&1
         if !errorlevel! equ 0 set "PYTHON_CMD=python3"
     )
 )
 
 if not defined PYTHON_CMD (
     echo ==========================================================
-    echo   [ERROR] Python 3.9+ was not found.
+    echo   [ERROR] Python 3.10-3.13 was not found.
     echo ==========================================================
     echo Install Python 3 from https://www.python.org/downloads/
     echo ^(check "Add Python to PATH" during installation^)
