@@ -16,7 +16,7 @@ Every encrypted media file (`.bin`) is a self-contained `FGVLTENC` version 1 con
 - **Authenticated, seekable media:** Tink `AES256_GCM_HKDF` authenticates data in segments while preserving random access for the video player.
 - **Cheap key rotation:** a per-file random DEK and a rotatable KEK make key changes a header-only operation; media bytes are never re-encrypted.
 - **Context-bound metadata:** small encrypted strings use per-record keys and purpose-binding associated data, so records cannot be swapped between categories.
-- **Byte-identical Android ↔ CLI interoperability:** both implementations follow one frozen spec, pinned to the same Tink wire format.
+- **Byte-identical Android ↔ CLI interoperability:** both use the real Tink `AES256_GCM_HKDF` primitive over one frozen parameter set; the Python CLI builds an equivalent RAW-prefix keyset from the raw DEK.
 
 Non-goals: changing Argon2id parameters (see ADR 0002 and the calibration methodology), changing the Keystore/StrongBox mechanism, UI, gestures, recycle-bin semantics, or `JSON/` virtual-album storage.
 
@@ -203,8 +203,8 @@ Per file the CLI generates random `fileId(16)` and `dek(32)`, derives `headerKey
 
 Actions:
 
-- Pin Tink in `gradle/libs.versions.toml` (`tink-android`); the desktop CLI implements the same frozen stream format with `cryptography`. No Conscrypt.
-- Keep `pycryptodome` + `bouncycastle` for Argon2id in the CLI.
+- Pin Tink in both `gradle/libs.versions.toml` (`tink-android`) and the CLI's `requirements.txt` (`tink>=1.16.1,<2`, Python 3.10-3.13). The Python CLI builds a RAW-prefix keyset from the raw DEK, so both sides use the real Tink primitive. No Conscrypt.
+- The CLI uses `cryptography` for the AES-256-GCM header and `argon2-cffi` for Argon2id.
 - `make_fixtures.py` produces canonical fixtures (edge sizes and a real image) under `app/src/test/resources/fixtures/cli/`; `CliFixtureCompatibilityTest` asserts the app can read, authenticate and decrypt every one, and that tampered payloads/segments/headers are rejected.
 - A test-only independent Python decrypt helper validates Android-produced containers in CI despite the encrypt-only production CLI.
 

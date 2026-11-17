@@ -35,6 +35,17 @@ if [ -z "$PYTHON_BIN" ]; then
     exit 1
 fi
 
+# Tink supports Python 3.10-3.13. Reject 3.14+ early with a clear message.
+"$PYTHON_BIN" -c "import sys; sys.exit(0 if (3, 10) <= sys.version_info[:2] <= (3, 13) else 1)" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "=========================================================="
+    echo "  [ERROR] Unsupported Python version: $("$PYTHON_BIN" --version 2>&1)"
+    echo "  Tink requires Python 3.10-3.13. Install a supported"
+    echo "  interpreter (e.g. python3.12) and re-run this launcher."
+    echo "=========================================================="
+    exit 1
+fi
+
 # 1. Detect Desktop directory
 if [ "$OS_NAME" = "Darwin" ]; then
     DESKTOP_DIR="$HOME/Desktop"
@@ -48,8 +59,8 @@ else
     DESKTOP_DIR="$HOME/Desktop"
 fi
 
-# 2. Check Python dependencies (cryptography, argon2, pillow)
-"$PYTHON_BIN" -c "import cryptography, argon2, PIL" 2>/dev/null
+# 2. Check Python dependencies (cryptography, argon2, pillow, tink)
+"$PYTHON_BIN" -c "import cryptography, argon2, PIL, tink" 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "=========================================================="
     echo "  [WARNING] Required Python libraries are missing!"

@@ -113,7 +113,7 @@ Monolithic container formats (such as Veracrypt volumes or ZIP archives) risk to
 
 ### 2.1 Desktop CLI encryption pipeline
 
-`tools/fossify-cipher-cli/cipher_vault.py` is strictly encrypt-only: it unwraps `.vault` with Argon2id + `AES-256-GCM`, derives `CalypsoGallery:` HKDF subkeys from the KEK, encrypts each per-file header with `AES-256-GCM`, and streams the payload through Tink `AES256_GCM_HKDF` into canonical `FGVLTENC` version 1 containers. It never decrypts media and never touches the `JSON/` virtual albums.
+`tools/fossify-cipher-cli/cipher_vault.py` is strictly encrypt-only: it unwraps `.vault` with Argon2id + `AES-256-GCM`, derives `CalypsoGallery:` HKDF subkeys from the KEK, encrypts each per-file header with `AES-256-GCM`, and streams the payload through the real Tink Python library's `AES256_GCM_HKDF` primitive into canonical `FGVLTENC` version 1 containers. The Python CLI builds a RAW-prefix Tink keyset from the raw per-file DEK, so its output is byte-identical to the Android writer. Tink requires Python 3.10-3.13. The CLI never decrypts media and never touches the `JSON/` virtual albums.
 
 ### 2.2 Container Format Contract (`helpers/vault/`)
 

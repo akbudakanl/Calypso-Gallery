@@ -53,13 +53,20 @@ VAULT_DIR_NAME = "Secrets"
 VAULT_DIR_NAMES = (VAULT_DIR_NAME,)
 
 HAS_CRYPTO = True
+HAS_TINK = True
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from cryptography.hazmat.primitives.kdf.hkdf import HKDF
     from cryptography.hazmat.primitives import hashes
     from argon2.low_level import hash_secret_raw, Type
+    import tink
+    from tink import streaming_aead
+    from tink.proto import aes_gcm_hkdf_streaming_pb2 as _hkdf_pb
+    from tink.proto import tink_pb2 as _tink_pb
+    from tink._secret_key_access import SecretKeyAccess
 except ImportError:
     HAS_CRYPTO = False
+    HAS_TINK = False
 
 try:
     from PIL import Image
@@ -109,15 +116,15 @@ def configure_console():
         pass
 
 def check_dependencies():
-    if not HAS_CRYPTO:
-        print("[ERROR] Required Python packages are missing!", file=sys.stderr)
+    if not HAS_CRYPTO or not HAS_TINK:
+        print("[ERROR] Required Python packages are missing or incompatible!", file=sys.stderr)
+        print("Tink requires Python 3.10-3.13 (not 3.14+). Use a matching interpreter.", file=sys.stderr)
         kind = get_platform_kind()
         if kind == "linux":
-            print("To install on Debian-based Linux (e.g., Debian, Ubuntu, Tails), run in terminal:", file=sys.stderr)
-            print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil", file=sys.stderr)
-        print("Or install via pip (recommended inside a venv on macOS/Windows):", file=sys.stderr)
+            print("On Debian-based Linux (e.g., Debian, Ubuntu, Tails), run in terminal:", file=sys.stderr)
+            print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil python3-tink", file=sys.stderr)
+        print("Or install via pip (recommended inside a venv):", file=sys.stderr)
         print("  pip install -r requirements.txt", file=sys.stderr)
-        print("  pip install cryptography argon2-cffi pillow", file=sys.stderr)
         sys.exit(1)
 
 def install_network_audit_hook(allow_adb: bool):
@@ -678,6 +685,50 @@ def expected_ciphertext_size(plaintext_size: int) -> int:
     return size
 
 
+def _tink_stream_primitive(dek: bytes):
+    """Build the real Tink AES256_GCM_HKDF primitive with the frozen canonical parameters.
+
+    The Android app constructs this primitive directly from a raw DEK. Tink Python's
+    public API is keyset-based, so the equivalent RAW-prefix keyset is assembled from
+    the same parameters (key_value=DEK, 256 KiB segments, SHA-256 HKDF, derived 32 B).
+    The resulting bytes are byte-identical to the Kotlin writer's output.
+    """
+    streaming_aead.register()
+    hash_number = (
+        _hkdf_pb.AesGcmHkdfStreamingParams.DESCRIPTOR
+        .fields_by_name["hkdf_hash_type"].enum_type.values_by_name["SHA256"].number
+    )
+    key = _hkdf_pb.AesGcmHkdfStreamingKey(
+        version=0,
+        key_value=dek,
+        params=_hkdf_pb.AesGcmHkdfStreamingParams(
+            ciphertext_segment_size=SEGMENT_SIZE,
+            derived_key_size=32,
+            hkdf_hash_type=hash_number,
+        ),
+    )
+    kd = _tink_pb.KeyData(
+        type_url="type.googleapis.com/google.crypto.tink.AesGcmHkdfStreamingKey",
+        value=key.SerializeToString(),
+        key_material_type=_tink_pb.KeyData.SYMMETRIC,
+    )
+    ks = _tink_pb.Keyset()
+    entry = ks.key.add()
+    entry.key_data.CopyFrom(kd)
+    entry.status = _tink_pb.ENABLED
+    entry.key_id = 1
+    entry.output_prefix_type = _tink_pb.RAW
+    ks.primary_key_id = 1
+    handle = tink.proto_keyset_format.parse(ks.SerializeToString(), SecretKeyAccess())
+    return handle.primitive(streaming_aead.StreamingAead)
+
+
+class _KeepOpenBytesIO(BytesIO):
+    """Tink closes the stream's destination on exit; keep the buffer readable."""
+    def close(self):
+        self.flush()
+
+
 def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     """
     Unwraps a canonical v1 .vault header.
@@ -1227,51 +1278,37 @@ def encrypt_file(
         if not output_file.exists():
             break
 
-    # 4. Tink AES256_GCM_HKDF stream parameters: u8(40) | salt(32) | noncePrefix(7).
-    salt = secrets.token_bytes(32)
-    nonce_prefix = secrets.token_bytes(7)
-    stream_header = bytes([STREAM_HEADER_LENGTH]) + salt + nonce_prefix
-    stream_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=file_id).derive(dek)
+    # 4. Real Tink AES256_GCM_HKDF streaming-AEAD payload (AAD = fileId).
+    stream_primitive = _tink_stream_primitive(dek)
+    stream_buffer = _KeepOpenBytesIO()
+    with stream_primitive.new_encrypting_stream(stream_buffer, file_id) as encrypting:
+        with open(source_path, "rb") as fin:
+            while True:
+                chunk = fin.read(64 * 1024)
+                if not chunk:
+                    break
+                encrypting.write(chunk)
+                if on_chunk_processed:
+                    on_chunk_processed(len(chunk))
+    tink_stream = stream_buffer.getvalue()
 
-    payload_written = 0
-    segment = 0
     with open(output_file, "wb") as fout:
         fout.write(CONTAINER_MAGIC)                    # 8B "FGVLTENC"
         fout.write(bytes([CONTAINER_VERSION]))         # 1B (0x01)
         fout.write(struct.pack(">H", ACTIVE_KEY_ID))   # 2B
         fout.write(file_id)                            # 16B
         fout.write(header_iv)                          # 12B
-        fout.write(struct.pack(">I", len(enc_header))) # 4B N (ciphertext header length)
-        fout.write(enc_header)                         # N bytes (ciphertext + 16B GCM tag)
-        fout.write(stream_header)                      # 40B Tink stream header
+        fout.write(struct.pack(">I", len(enc_header))) # 4B N
+        fout.write(enc_header)                         # ciphertext header + tag
+        fout.write(tink_stream)                        # Tink stream header + ciphertext
 
-        with open(source_path, "rb") as fin:
-            while True:
-                max_chunk = FIRST_CHUNK_PLAINTEXT_MAX if segment == 0 else SEGMENT_PLAINTEXT_MAX
-                chunk = fin.read(max_chunk)
-                payload_written += len(chunk)
-                is_last = payload_written >= orig_size
-                iv = (
-                    nonce_prefix
-                    + segment.to_bytes(4, "big")
-                    + (b"\x01" if is_last else b"\x00")
-                )
-                fout.write(AESGCM(stream_key).encrypt(iv, chunk, b""))
-                segment += 1
-                if on_chunk_processed:
-                    on_chunk_processed(len(chunk))
-                if is_last:
-                    break
-
-    # Guard against any divergence from Tink's exact stream size formula.
-    written_stream = output_file.stat().st_size - FIXED_PREFIX_LENGTH - len(enc_header)
+    written_stream = len(tink_stream)
     if written_stream != ciphertext_length:
         raise ValueError(
             f"Tink stream size mismatch: wrote {written_stream}, expected {ciphertext_length}"
         )
 
     header_key = bytearray(len(header_key))
-    stream_key = bytearray(len(stream_key))
     dek = bytearray(len(dek))
 
     try:
