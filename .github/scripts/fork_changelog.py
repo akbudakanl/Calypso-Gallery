@@ -26,7 +26,7 @@ FASTLANE_SUMMARY_LENGTH = 160
 RELEASE_HEADING_RE = re.compile(r"^## \[([^\]]+)\](?:\s+-\s+.*)?\s*$")
 SECTION_HEADING_RE = re.compile(r"^###\s+(.+?)\s*$")
 TOP_LEVEL_BULLET_RE = re.compile(r"^-\s+(.*)$")
-FORK_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)-cipher$")
+FORK_VERSION_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 
 @dataclass
@@ -159,7 +159,7 @@ def next_fork_version(current_version: str, bump: str) -> str:
     else:
         raise ValueError(f"Unsupported version bump: {bump}")
 
-    return f"{major}.{minor}.{patch}-cipher"
+    return f"{major}.{minor}.{patch}"
 
 
 def format_fastlane(release: Release, repository: str = DEFAULT_REPOSITORY) -> str:
@@ -306,8 +306,8 @@ def command_ensure_translations(args: argparse.Namespace) -> int:
 
 
 def command_prepare(args: argparse.Namespace) -> int:
-    if not args.version.endswith("-cipher"):
-        print("Fork release versions must end with '-cipher'.", file=sys.stderr)
+    if FORK_VERSION_RE.fullmatch(args.version) is None:
+        print("Release versions must be numeric X.Y.Z.", file=sys.stderr)
         return 1
 
     content = read_text(CHANGELOG_PATH)
@@ -395,7 +395,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     next_version = subparsers.add_parser(
-        "next-version", help="Calculate the next X.Y.Z-cipher version for a release bump."
+        "next-version", help="Calculate the next X.Y.Z version for a release bump."
     )
     next_version.add_argument("--current", required=True)
     next_version.add_argument("--bump", required=True, choices=("major", "minor", "patch"))

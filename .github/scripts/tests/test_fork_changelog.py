@@ -20,7 +20,7 @@ class ForkChangelogTests(unittest.TestCase):
         content = (REPOSITORY_ROOT / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
         releases = fork_changelog.parse_releases(content)
 
-        self.assertGreater(len(releases), 1)
+        self.assertGreater(len(releases), 0)
         for release in releases:
             with self.subTest(version=release.version):
                 notes = fork_changelog.format_fastlane(release)
@@ -31,59 +31,58 @@ class ForkChangelogTests(unittest.TestCase):
     def test_fastlane_notes_keep_a_readable_summary(self):
         content = (REPOSITORY_ROOT / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
         releases = fork_changelog.parse_releases(content)
-        release = next(item for item in releases if item.version == "1.19.0-cipher")
+        release = next(item for item in releases if item.version != "Unreleased")
 
         notes = fork_changelog.format_fastlane(release)
 
-        self.assertIn("Zero-Pollution Folder Identity", notes)
+        self.assertIn(f"releases/tag/{release.version}", notes)
 
     def test_github_notes_include_version_source_and_gplv3(self):
         content = (REPOSITORY_ROOT / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
         releases = fork_changelog.parse_releases(content)
-        release = next(item for item in releases if item.version == "1.19.0-cipher")
+        release = next(item for item in releases if item.version != "Unreleased")
 
         notes = fork_changelog.format_github(release, "akbudakanl/Gallery-Cipher", releases)
 
         self.assertIn(
-            "https://github.com/akbudakanl/Gallery-Cipher/archive/refs/tags/1.19.0-cipher.tar.gz",
+            f"https://github.com/akbudakanl/Gallery-Cipher/archive/refs/tags/{release.version}.tar.gz",
             notes,
         )
         self.assertIn("GNU General Public License version 3", notes)
-        self.assertIn("compare/1.18.3-cipher...1.19.0-cipher", notes)
 
     def test_next_fork_version_bumps_the_numeric_base(self):
         self.assertEqual(
-            fork_changelog.next_fork_version("1.19.0-cipher", "patch"),
-            "1.19.1-cipher",
+            fork_changelog.next_fork_version("1.0.0", "patch"),
+            "1.0.1",
         )
         self.assertEqual(
-            fork_changelog.next_fork_version("1.19.0-cipher", "minor"),
-            "1.20.0-cipher",
+            fork_changelog.next_fork_version("1.0.0", "minor"),
+            "1.1.0",
         )
         self.assertEqual(
-            fork_changelog.next_fork_version("1.19.0-cipher", "major"),
-            "2.0.0-cipher",
+            fork_changelog.next_fork_version("1.0.0", "major"),
+            "2.0.0",
         )
 
     def test_prepare_moves_unreleased_entries_and_updates_files(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            changelog_fixture = """# Fork changelog
+            changelog_fixture = """# Changelog
 
 ## [Unreleased]
 ### Changed
-- Zero-Pollution fixture change
+- Fixture change
 
-## [1.19.0-cipher] - 2026-11-14
+## [1.0.0] - 2026-11-17
 ### Added
-- Previous fork release
+- Previous release
 
-[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.19.0-cipher...HEAD
-[1.19.0-cipher]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.18.3-cipher...1.19.0-cipher
+[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/akbudakanl/Gallery-Cipher/releases/tag/1.0.0
 """
             (root / "FORK_CHANGELOG.md").write_text(changelog_fixture, encoding="utf-8")
             (root / "gradle.properties").write_text(
-                "VERSION_NAME=1.19.0-cipher\nVERSION_CODE=39\n"
+                "VERSION_NAME=1.0.0\nVERSION_CODE=1\n"
                 "APP_ID=org.fossify.gallery\nAPPLICATION_ID=com.calypso.gallery\n",
                 encoding="utf-8",
             )
@@ -95,8 +94,8 @@ class ForkChangelogTests(unittest.TestCase):
             try:
                 os.chdir(root)
                 arguments = argparse.Namespace(
-                    version="1.20.0-cipher",
-                    code=40,
+                    version="1.1.0",
+                    code=2,
                     repository="akbudakanl/Gallery-Cipher",
                 )
                 with contextlib.redirect_stdout(io.StringIO()):
@@ -108,23 +107,22 @@ class ForkChangelogTests(unittest.TestCase):
             changelog = (root / "FORK_CHANGELOG.md").read_text(encoding="utf-8")
             marker = (root / ".fossify/release-marker.txt").read_text(encoding="utf-8")
 
-            self.assertIn("VERSION_NAME=1.20.0-cipher", properties)
-            self.assertIn("VERSION_CODE=40", properties)
-            self.assertIn("## [1.20.0-cipher] - ", changelog)
+            self.assertIn("VERSION_NAME=1.1.0", properties)
+            self.assertIn("VERSION_CODE=2", properties)
+            self.assertIn("## [1.1.0] - ", changelog)
             self.assertIn(
-                "[1.20.0-cipher]: https://github.com/akbudakanl/Gallery-Cipher/compare/"
-                "1.19.0-cipher...1.20.0-cipher",
+                "[1.1.0]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...1.1.0",
                 changelog,
             )
-            self.assertIn("1.20.0-cipher (40)", marker)
+            self.assertIn("1.1.0 (2)", marker)
             self.assertEqual(upstream_changelog.read_text(encoding="utf-8"), "upstream-only\n")
 
             releases = fork_changelog.parse_releases(changelog)
             unreleased = next(item for item in releases if item.version == "Unreleased")
-            prepared = next(item for item in releases if item.version == "1.20.0-cipher")
+            prepared = next(item for item in releases if item.version == "1.1.0")
             self.assertFalse(any(section.changes for section in unreleased.sections))
             self.assertTrue(any(section.changes for section in prepared.sections))
-            self.assertIn("Zero-Pollution fixture change", original)
+            self.assertIn("Fixture change", original)
 
     def test_release_workflow_uses_release_application_id(self):
         workflow = (REPOSITORY_ROOT / ".github" / "workflows" / "release.yml").read_text(
@@ -137,7 +135,7 @@ class ForkChangelogTests(unittest.TestCase):
         self.assertIn("Create version-specific source tag", workflow)
         self.assertIn("needs: [prepare, release_foss]", workflow)
 
-    def test_prepare_rejects_non_fork_version(self):
+    def test_prepare_rejects_suffixed_version(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
             shutil.copy2(REPOSITORY_ROOT / "FORK_CHANGELOG.md", root / "FORK_CHANGELOG.md")
@@ -147,7 +145,7 @@ class ForkChangelogTests(unittest.TestCase):
             try:
                 os.chdir(root)
                 arguments = argparse.Namespace(
-                    version="1.20.0",
+                    version="1.20.0-cipher",
                     code=40,
                     repository="akbudakanl/Gallery-Cipher",
                 )

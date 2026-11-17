@@ -1,0 +1,7 @@
+Initial public release of Calypso Gallery 1.0.0.
+
+- Encrypted vaults using Tink streaming AEAD
+- Virtual albums, favorites and zero-pollution file identity
+- Offline-only operation with no network permission
+- Encrypted vault export/import and desktop CLI tooling
+- Independent, GPLv3-licensed fork of Fossify Gallery
