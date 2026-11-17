@@ -124,8 +124,7 @@ internal fun readContainerMetadata(
 
 
 fun CryptoManager.readEmbeddedThumbnailBytes(file: File): ByteArray? {
-    // Tek (kanonik) format: thumbnail kanonik header'in icinde gelir;
-    // eski v1/v3/v5 header fallback'leri kaldirildi.
+    // Thumbnail kanonik header'in icinde gelir.
     val meta = readMetadata(file) ?: return null
     return meta.thumbnailBytes?.takeIf { it.isNotEmpty() }
 }
