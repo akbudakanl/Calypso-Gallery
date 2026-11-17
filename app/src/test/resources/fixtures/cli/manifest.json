@@ -1,0 +1,105 @@
+{
+  "algorithm": "AES-256-GCM header + Tink AES256_GCM_HKDF stream (cryptography)",
+  "files": {
+    "block_exact.bin": {
+      "bin_len": 230,
+      "bin_sha256": "d95bc188bfce928de663e7b3a6988d533ae74108620ef94970b9d0ae3c165f22",
+      "expected_stream_len": 72,
+      "plaintext_len": 16,
+      "plaintext_sha256": "be45cb2605bf36bebde684841a28f0fd43c69850a3dce5fedba69928ee3a8991",
+      "source_name": "block_exact.jpg"
+    },
+    "block_minus1.bin": {
+      "bin_len": 230,
+      "bin_sha256": "5cf726081a6151eb7b6cdae72632184b9f306e8d56c13a84e82786b264d4acae",
+      "expected_stream_len": 71,
+      "plaintext_len": 15,
+      "plaintext_sha256": "7071fc3188fde7e7e500d4768f1784bede1a22e991648dcab9dc3219acff1d4c",
+      "source_name": "block_minus1.jpg"
+    },
+    "block_plus1.bin": {
+      "bin_len": 231,
+      "bin_sha256": "40bb1b23df6bd64595efcb17c7156ea9b0b4e3be948950b09db0baa023b28ec6",
+      "expected_stream_len": 73,
+      "plaintext_len": 17,
+      "plaintext_sha256": "3e5718fea51a8f3f5baca61c77afab473c1810f8b9db330273b4011ce92c787e",
+      "source_name": "block_plus1.jpg"
+    },
+    "empty.bin": {
+      "bin_len": 208,
+      "bin_sha256": "7ecc46d9b0b71cc56e2577c7c691c013617d9637b7b40cee7fe1054989bf6b32",
+      "expected_stream_len": 56,
+      "plaintext_len": 0,
+      "plaintext_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_name": "empty.jpg"
+    },
+    "first_segment_exact.bin": {
+      "bin_len": 262310,
+      "bin_sha256": "ddff22a89707bb660b0719517b1d821510d12b04c2807325d7b2527dfefdfc67",
+      "expected_stream_len": 262144,
+      "plaintext_len": 262088,
+      "plaintext_sha256": "b7ed7dbea6645bb292e76f9e119ee710b8e73aa50ca3c492c45f7e2c45314b92",
+      "source_name": "first_segment_exact.jpg"
+    },
+    "first_segment_minus1.bin": {
+      "bin_len": 262310,
+      "bin_sha256": "3e12c1a1167824dd1864afffa7af1129ac458198a6b286dc8e88f63896cdbe92",
+      "expected_stream_len": 262143,
+      "plaintext_len": 262087,
+      "plaintext_sha256": "092c407ecf23e972bdf94792dac1652a369f8c77c8963863b8f659cef1acff7d",
+      "source_name": "first_segment_minus1.jpg"
+    },
+    "first_segment_plus1.bin": {
+      "bin_len": 262327,
+      "bin_sha256": "476445c49be52867e716248f60a674ce598c581044f6d2d77bae9427cd8011d3",
+      "expected_stream_len": 262161,
+      "plaintext_len": 262089,
+      "plaintext_sha256": "1d28b0a7276ca62a85c3f0dd805012b577121486040868870129d0bce7a49c2f",
+      "source_name": "first_segment_plus1.jpg"
+    },
+    "multi_mb.bin": {
+      "bin_len": 1100275,
+      "bin_sha256": "8e6fcd1e95f1b1db94718c1a4b63f9729505548059d3aeaf08a1938c07e92bea",
+      "expected_stream_len": 1100120,
+      "plaintext_len": 1100000,
+      "plaintext_sha256": "0307dfdaf3ba23ec188749214591c8904b45783806fa1b84f3a8694922562ddb",
+      "source_name": "multi_mb.jpg"
+    },
+    "one_byte.bin": {
+      "bin_len": 212,
+      "bin_sha256": "bb86335e58eab260e6eeca6a6d2a554a018468b552bd7eb679f01f29f6c43995",
+      "expected_stream_len": 57,
+      "plaintext_len": 1,
+      "plaintext_sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "source_name": "one_byte.jpg"
+    },
+    "real_image_with_thumbnail.bin": {
+      "bin_len": 1064,
+      "bin_sha256": "fd75d17773863cc2678a04ff9f842a6e1c5bc98f7885dc395bf2cb109d347764",
+      "expected_stream_len": 216,
+      "plaintext_len": 160,
+      "plaintext_sha256": "4dbb800cec670a752b44fcfa034423662df78a10b6fc55edbb5b43224a2ad0c2",
+      "source_name": "real_image_with_thumbnail.jpg"
+    },
+    "second_segment_exact.bin": {
+      "bin_len": 262367,
+      "bin_sha256": "ff3d5cf4d25bce30a3938ba9836a70e5da9f13a057c95e087dfb2ad67175c4ab",
+      "expected_stream_len": 262200,
+      "plaintext_len": 262128,
+      "plaintext_sha256": "1933495a0615c04517a0262b5224733a455013b4fa77ed684dc46a4ad4ecb122",
+      "source_name": "second_segment_exact.jpg"
+    },
+    "two_full_segments.bin": {
+      "bin_len": 524452,
+      "bin_sha256": "c9d196df77e0e4ea6b77ed710d4233a43b5a58318ef8b691713a2627adb953bf",
+      "expected_stream_len": 524288,
+      "plaintext_len": 524216,
+      "plaintext_sha256": "9ba4d75cc983daf6977843d7da8ded242ad4d56456b8333380d608554e0ef864",
+      "source_name": "two_full_segments.jpg"
+    }
+  },
+  "format": "FGVLTENC",
+  "kek_hex": "00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f",
+  "segment_size": 262144,
+  "version": 1
+}

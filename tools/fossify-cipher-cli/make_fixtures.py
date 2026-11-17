@@ -3,11 +3,9 @@
 CLI ile uretilen .bin dosyalarini Android tarafi icin test fixture'i olarak uretir.
 
 Amac: "CLI'da sifrele -> telefonda ac" akisini regresyon testiyle sabitlemek.
-Android tarafi (CliFixtureCompatibilityTest.kt) bu dosyalari okuyup:
-  - header' cozebiliyor,
-  - Poly1305-AES MAC'i dogruluyor,
-  - duz metni birebir elde ediyor
-olmalidir.
+Uretilen konteynerler kanonik FGVLTENC v1 formatindadir:
+  - KEK'ten turetilen anahtarla AES-256-GCM sifreli header (AAD = cleartext prefix),
+  - Tink AES256_GCM_HKDF uyumlu akis (AAD = fileId, 256 KiB segment).
 
 Kullanim:
     cd tools/fossify-cipher-cli
@@ -17,14 +15,16 @@ Cikti:
     app/src/test/resources/fixtures/cli/*.bin
     app/src/test/resources/fixtures/cli/manifest.json
 
-NOT: Uretilen dosyalar deterministik DEGILDIR (IV ve dosya adi rastgeledir).
-Bu yuzden bir kez uretilip repoya commit edilir; testler bu sabit
-fixture'lari kullanir.
+NOT: Uretilen dosyalar deterministik DEGILDIR (IV, fileId, salt, noncePrefix ve dosya adi
+rastgeledir). Bu yuzden bir kez uretilip repoya commit edilir; testler bu sabit
+fixture'lari kullanir. manifest.json icindeki kek_hex, konteyner header'larini cozmek
+icin kullanilan anahtari kaydeder.
 """
 
 import hashlib
 import json
 import shutil
+import struct
 import sys
 from pathlib import Path
 
@@ -33,30 +33,31 @@ REPO_ROOT = SCRIPT_DIR.parents[1]
 OUT_DIR = REPO_ROOT / "app" / "src" / "test" / "resources" / "fixtures" / "cli"
 TMP_DIR = SCRIPT_DIR / "_fixture_tmp"
 
-# Test icin sabit master key. Android testi bu degeri manifest.json'dan okur.
-MASTER_KEY_HEX = (
+# Test icin sabit KEK. Android testi bu degeri manifest.json'dan okur.
+KEK_HEX = (
     "00112233445566778899aabbccddeeff"
     "102132435465768798a9bacbdcedfe0f"
 )
-MASTER_KEY = bytes.fromhex(MASTER_KEY_HEX)
+KEK = bytes.fromhex(KEK_HEX)
 
 
 def _payloads():
-    """Kenar durumu payload'lari. Boyutlar Poly1305/streaming blok sinirlarina gore secilmistir."""
+    """Kenar durumu payload'lari: Tink akis segment sinirlarini kapsar."""
     return {
-        # Poly1305 "hic blok yok" yolu (tag = s). En sik hata yeri.
+        # Tink bos duz metin yolu: 40B stream header + 16B tag = 56 bayt.
         "empty": (b"", 0),
-        # Kismi son blok
         "one_byte": (b"\x00", 1),
-        # Tam blok siniri (16 bayt)
         "block_minus1": (bytes(range(15)), 15),
         "block_exact": (bytes(range(16)), 16),
         "block_plus1": (bytes(range(17)), 17),
-        # Python chunk boyutu 64 KiB, Android tamponu 256 KiB
-        "chunk_minus1": (bytes(i & 0xFF for i in range(65535)), 65535),
-        "chunk_exact": (bytes(i & 0xFF for i in range(65536)), 65536),
-        "chunk_plus1": (bytes(i & 0xFF for i in range(65537)), 65537),
-        # Coklu chunk / streaming
+        # Ilk segment kapasitesi: 262144 - 40 - 16 = 262088 bayt.
+        "first_segment_minus1": (bytes(i & 0xFF for i in range(262087)), 262087),
+        "first_segment_exact": (bytes(i & 0xFF for i in range(262088)), 262088),
+        "first_segment_plus1": (bytes(i & 0xFF for i in range(262089)), 262089),
+        # Ikinci ve sonraki segment kapasitesi: 262144 - 16 = 262128 bayt.
+        "second_segment_exact": (bytes((i * 7) & 0xFF for i in range(262128)), 262128),
+        "two_full_segments": (bytes((i * 3 + 1) & 0xFF for i in range(524216)), 524216),
+        # Coklu segment / streaming
         "multi_mb": (bytes((i * 31 + 7) & 0xFF for i in range(1_100_000)), 1_100_000),
     }
 
@@ -85,8 +86,8 @@ def main() -> int:
         print("Bu scripti tools/fossify-cipher-cli icinden calistirin.")
         return 1
 
-    if len(MASTER_KEY) != 32:
-        print("[ERROR] MASTER_KEY 32 bayt olmali")
+    if len(KEK) != 32:
+        print("[ERROR] KEK 32 bayt olmali")
         return 1
 
     shutil.rmtree(TMP_DIR, ignore_errors=True)
@@ -100,9 +101,10 @@ def main() -> int:
 
     manifest = {
         "format": "FGVLTENC",
-        "version": 3,
-        "mac": "Poly1305-AES128 (restic / BouncyCastle Poly1305(AESEngine) uyumlu)",
-        "master_key_hex": MASTER_KEY_HEX,
+        "version": 1,
+        "algorithm": "AES-256-GCM header + Tink AES256_GCM_HKDF stream (cryptography)",
+        "segment_size": 262144,
+        "kek_hex": KEK_HEX,
         "files": {},
     }
 
@@ -111,12 +113,18 @@ def main() -> int:
         source = TMP_DIR / source_name
         source.write_bytes(payload)
 
-        produced = cv.encrypt_file(source, TMP_DIR, MASTER_KEY)
+        produced = cv.encrypt_file(source, TMP_DIR, KEK)
         if produced is None:
             print(f"[ERROR] {name}: encrypt_file basarisiz")
             return 1
 
         data = produced.read_bytes()
+        expected_stream = cv.expected_ciphertext_size(len(payload))
+        actual_stream = len(data) - cv.FIXED_PREFIX_LENGTH - struct.unpack(">I", data[39:43])[0]
+        if actual_stream != expected_stream:
+            print(f"[ERROR] {name}: stream boyutu {actual_stream}, beklenen {expected_stream}")
+            return 1
+
         target = OUT_DIR / f"{name}.bin"
         target.write_bytes(data)
 
@@ -124,6 +132,7 @@ def main() -> int:
             "source_name": source_name,
             "plaintext_sha256": hashlib.sha256(payload).hexdigest(),
             "plaintext_len": len(payload),
+            "expected_stream_len": expected_stream,
             "bin_sha256": hashlib.sha256(data).hexdigest(),
             "bin_len": len(data),
         }

@@ -1,8 +1,8 @@
 # Calypso Gallery - Cross-Platform Offline Vault Encryptor CLI
 
-This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, and Windows** with automatic OS detection) encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Calypso Gallery** application (`AES-256-CTR` + `Poly1305-AES` authenticated streaming encryption, plus `FGMETA2` AES-GCM encrypted album `.meta` folders).
+This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, and Windows** with automatic OS detection) encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Calypso Gallery** application. It writes the canonical `FGVLTENC` v1 container: an AES-256-GCM encrypted metadata header (key = HKDF-SHA256 of the vault KEK bound to the file ID) followed by a Tink-compatible `AES256_GCM_HKDF` streaming-AEAD payload (256 KiB segments, file ID as associated data). Album `.meta` files use the canonical `FGMETA` format.
 
-> **Backward compatibility:** the vault folder is now named `Secrets/`. Existing `Cipher_Secrets/` containers (and drives using the former `Fossify Gallery Cipher` app folder) are still auto-detected and written to in place — no renaming or copying is required. The rename is path-only; the container format is unchanged.
+> **Format:** this tool writes only the current canonical container format. The vault folder is `Secrets/` inside the app container `Calypso Gallery/` (the `Encrypted_Output` / `Sifreli_Cikti` desktop output folders are still supported as standalone sync sources by the app).
 
 > 🇹🇷 **Türkçe kılavuz** için sayfanın altındaki [Türkçe Kullanım Kılavuzu](#-türkçe-kullanım-kılavuzu) bölümüne geçebilirsiniz.
 
@@ -54,7 +54,7 @@ Use your external USB/SD drive as the vault itself from Android without copying 
 
 1. **Stage plaintext media in RAM:** Download or place your plaintext photos/videos into `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`), which lives purely in volatile RAM (`tmpfs`) on Tails / `toram` Live OS.
 2. **Plug in your external USB/SD drive:** Mount the drive containing `Secrets/.vault` (e.g., `/media/amnesia/USB/Secrets/.vault` or `/mnt/.../Secrets/.vault`).
-3. **Run `./run.sh`:** The CLI auto-detects `.vault`, prompts for your vault password/PIN/pattern, and **automatically writes** newly encrypted `.meta` (`FGMETA2`) album folders and `.bin` payloads directly into `<USB>/Secrets/` (with zero output prompt — or pass `-o` / `--output` to override).
+3. **Run `./run.sh`:** The CLI auto-detects `.vault`, prompts for your vault password/PIN/pattern, and **automatically writes** newly encrypted `.meta` (`FGMETA`) album folders and canonical `.bin` payloads directly into `<USB>/Secrets/` (with zero output prompt — or pass `-o` / `--output` to override).
 4. **Done:** Optionally zero-wipe the RAM input files (`--delete-source` or interactive prompt), then connect the USB/SD drive directly to your phone.
 
 ### Workflow 2: Phone Vault + Unified `Secrets` External Sync
@@ -75,9 +75,9 @@ Keep your primary `Secrets` vault on your phone while encrypting new media insid
      * When you run **Sync vault from external drive** on Android, the app **only** processes entries listed in `.pending_sync`—it does not scan older archive files (avoiding wasted I/O and false `Failed` warnings from bit-rot in unrelated archive files), removes successfully synced entries, and deletes `.pending_sync` once empty. Without `.pending_sync`, sync is rejected so the same batch is not re-synced twice.
      * **Note for Future Desktop Clients:** Any separate desktop application/client must maintain its **own** independent pending-sync queue (e.g., `.pending_sync_desktop`) rather than consuming or deleting `.pending_sync`, so files already synced to the phone remain pending for the desktop client (and vice versa).
    * **4-Stage Single-Pass Sync Optimization & Duplicate Checking:**
-     * Unchanged mirrored `.bin` files already in the destination album skip in `O(1)` time (checking size + header version + trailing 16-byte `Poly1305-AES` tag) without decrypting headers or hashing gigabytes of video.
-     * Incoming `.bin` files with distinct filenames stream-copy and verify `Poly1305-AES` MAC in a **single pass** (`copyBinAndVerifyIntegritySinglePass`), lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`.
-     * Same-name / same-size filename collisions verify incoming `Poly1305-AES` MAC and compare decrypted content in RAM in a **single pass** (`compareEncryptedStreamAndVerifySourceMac`, or 5 distributed `256 KB` checkpoints for `>8 MB` files when **Fast duplicate check** is enabled in Android Settings): identical bits (even across different random IVs) skip cleanly, while differing bits preserve as `<name>(1)`, `<name>(2)`, etc.
+     * Unchanged mirrored `.bin` files already in the destination album skip in `O(1)` time (checking size + canonical header version) without decrypting headers or hashing gigabytes of video.
+     * Incoming `.bin` files with distinct filenames stream-copy and verify the Tink AES-GCM-HKDF stream authentication in a **single pass**, lazily matching or creating `.meta` albums and routing root files to `Default Secret Album`.
+     * Same-name / same-size filename collisions verify the authenticated stream and compare decrypted content in a **single pass** (or 5 distributed `256 KB` checkpoints for `>8 MB` files when **Fast duplicate check** is enabled in Android Settings): identical plaintext (even across different random file IDs, DEKs and nonces) skips cleanly, while differing content is preserved as `<name>(1)`, `<name>(2)`, etc.
 
 ---
 
@@ -93,10 +93,10 @@ Before encrypting, `cipher_vault.py` checks every file against the exact gallery
 Unsupported files (such as `.txt`, `.pdf`, `.md`, `.zip`) as well as `.bin` files and hidden files starting with `.` are skipped before encryption, logged with a warning, and counted in the summary.
 
 ### Automatic Album Routing & `.meta` Matching
-* **Root Files → `Default Secret Album`:** Files placed directly in the input folder root (no subfolder) are routed automatically into **`Default Secret Album`** (`__VAULT_DEFAULT_ALBUM__`). If your vault already has a Default Secret Album folder, it is reused; otherwise, a new randomized 6-character hex subfolder with `.meta` (`FGMETA2`) is created.
+* **Root Files → `Default Secret Album`:** Files placed directly in the input folder root (no subfolder) are routed automatically into **`Default Secret Album`** (`__VAULT_DEFAULT_ALBUM__`). If your vault already has a Default Secret Album folder, it is reused; otherwise, a new randomized 6-character hex subfolder with `.meta` (`FGMETA`) is created.
 * **Subfolders → `.meta`-Aware Album Matching:** For files inside subfolders (e.g., `To_Encrypt/Vacation/img.jpg`), the CLI decrypts existing `.meta` files in the target vault:
   * If an encrypted album with that name already exists (exact or case-insensitive trimmed match), new `.bin` files are placed directly into that existing hex folder.
-  * If no matching album exists yet, a new randomized 6-character hex folder with encrypted `.meta` (`FGMETA2`) is created.
+  * If no matching album exists yet, a new randomized 6-character hex folder with encrypted `.meta` (`FGMETA`) is created.
   * `.nomedia` is placed at the vault root (`Secrets/.nomedia`), **not** inside normal album subfolders, matching Android's `ExcludedMenuPolicy` so your albums appear normally in the unlocked vault. (Only explicitly dot-prefixed hidden albums like `.Private` receive an inner `.nomedia`.)
   * Nested subfolders (e.g., `To_Encrypt/Vacation/Day1/img.jpg`) flatten cleanly into their top-level album name (`Vacation`) so all vault folders stay 1 level deep inside `Secrets/`.
 * **Mixed Inputs:** Having some files in the input root and others in subfolders works seamlessly in a single pass.
@@ -158,9 +158,9 @@ run.bat  --lang en -i C:\LocalMedia\To_Encrypt -v E:\Secrets\.vault
 
 ## 🇹🇷 Türkçe Kullanım Kılavuzu
 
-Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı CLI aracı (**Linux / Tails OS, macOS ve Windows** üzerinde işletim sistemini otomatik algılar), medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Calypso Gallery** uygulamasıyla **%100 uyumlu** şekilde `.bin` formatında (`AES-256-CTR` + `Poly1305-AES`) ve `FGMETA2` şifreli `.meta` albümleriyle şifreler.
+Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı CLI aracı (**Linux / Tails OS, macOS ve Windows** üzerinde işletim sistemini otomatik algılar), medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Calypso Gallery** uygulamasıyla **%100 uyumlu** şekilde kanonik `.bin` formatında şifreler: kasa KEK'inden türetilen anahtarla AES-256-GCM şifreli üstbilgi ve Tink uyumlu `AES256_GCM_HKDF` akış şifrelemesi (256 KiB segment, AAD = dosya kimliği). Albüm `.meta` dosyaları kanonik `FGMETA` formatındadır.
 
-> **Geriye dönük uyumluluk:** kasa klasörünün adı artık `Secrets/`. Mevcut `Cipher_Secrets/` kasaları (ve eski `Fossify Gallery Cipher` uygulama klasörünü kullanan sürücüler) otomatik algılanır ve yerinde yazılmaya devam edilir; yeniden adlandırma veya kopyalama gerekmez. Değişiklik yalnızca yoldur, kasa formatı aynıdır.
+> **Format:** bu araç yalnızca güncel kanonik konteyner formatını yazar. Kasa klasörü uygulama klasörü `Calypso Gallery/` içindeki `Secrets/` dizinidir (Masaüstündeki `Encrypted_Output` / `Sifreli_Cikti` klasörleri uygulama tarafından bağımsız eşitleme kaynağı olarak desteklenmeye devam eder).
 
 ### 🛡️ Önerilen İşletim Sistemleri (1. Seviye RAM vs. 2. Seviye Standart Mod)
 CLI çalıştığında işletim sisteminizi **ek bir soru sormadan** otomatik algılar:
@@ -190,24 +190,24 @@ Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şi
 
 1. **Harici USB/SD diskinizde `Secrets/` hazırlayın (iki yöntemden birini seçin):**
    * **Senaryo 1 — USB'de tam `Secrets` kopyası varsa:** Telefonunuzdaki `Secrets` klasörünü (`.vault` + mevcut şifreli `<hex>/.meta` albüm klasörleri) USB diske kopyalayın.
-   * **Senaryo 2 — USB'de eski kasa medyaları YOKSA (Yalnızca `.vault`):** USB diskte `Secrets/` klasörü açıp içine **yalnızca** telefonunuzdaki küçük `.vault` başlık dosyasını (`Dahili Depolama > Calypso Gallery > Secrets > .vault`) koyun; hiçbir medya kopyalanmaz. *(Not: `.vault` dosyasını doğrudan `<USB>/.vault` köküne koysanız bile CLI çıktıyı otomatik olarak `<USB>/Secrets/` içine yazar; yalnızca `~/Desktop/.vault` veya Ev dizinindeki tekil `.vault` dosyalarında Masaüstü `Sifreli_Cikti` / `Encrypted_Output` klasörüne düşer.)*
+   * **Senaryo 2 — USB'de kasa medyası YOKSA (Yalnızca `.vault`):** USB diskte `Secrets/` klasörü açıp içine **yalnızca** telefonunuzdaki küçük `.vault` başlık dosyasını (`Dahili Depolama > Calypso Gallery > Secrets > .vault`) koyun; hiçbir medya kopyalanmaz. *(Not: `.vault` dosyasını doğrudan `<USB>/.vault` köküne koysanız bile CLI çıktıyı otomatik olarak `<USB>/Secrets/` içine yazar; yalnızca `~/Desktop/.vault` veya Ev dizinindeki tekil `.vault` dosyalarında Masaüstü `Sifreli_Cikti` / `Encrypted_Output` klasörüne düşer.)*
 2. **Tails OS'te şifreleyin (`./run.sh`):**
    * Yeni medyaları `~/Desktop/Sifrelenecek` (veya `To_Encrypt`) içine koyun (doğrudan köke konanlar `Default Secret Album`'e gider; `Sifrelenecek/Tatil/foto.jpg` gibi alt klasörler mevcut `.meta` albümle eşleşir veya yeni albüm oluşturur).
-   * `./run.sh` ile kasa şifrenizi/PIN'inizi girin. **Çıktı hedefi sorulmaz** — araç kilidi açar açmaz doğrudan `<USB>/Secrets/` içine şifreli `.meta` (`FGMETA2`) klasörlerini ve `.bin` dosyalarını yazar. İsterseniz RAM'deki kaynak dosyaları sildirin (`--delete-source` veya etkileşimli onay).
+   * `./run.sh` ile kasa şifrenizi/PIN'inizi girin. **Çıktı hedefi sorulmaz** — araç kilidi açar açmaz doğrudan `<USB>/Secrets/` içine şifreli `.meta` (`FGMETA`) klasörlerini ve `.bin` dosyalarını yazar. İsterseniz RAM'deki kaynak dosyaları sildirin (`--delete-source` veya etkileşimli onay).
 3. **Telefonda uygulama içinden eşitleyin:**
    * USB/SD diski telefonunuza bağlayın, **Calypso Gallery** uygulamasını açın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** (*"Settings > Encrypted vault > Sync vault from external drive"*) seçeneğine dokunun, istenirse kasanın kilidini açın ve `<USB>/Secrets` (veya USB kökünü) seçin.
    * **Her iki senaryo tek yapıda aynı şekilde çalışır:** USB'de tam kopya (Senaryo 1) veya yalnızca `.vault` + yeni eklenenler (Senaryo 2) olması fark etmez. Senaryo 2'de eşitleme bittikten sonra isterseniz `<USB>/Secrets/` içindeki aktarılmış `.bin`/alt klasörleri silip yalnızca `.vault` dosyasını bir sonraki aktarım için bırakabilirsiniz.
    * **Tek Geçişli 4 Aşamalı Optimizasyon ve Kopya Kontrolü:**
-     * Telefonda zaten bulunan değişmemiş birebir `.bin` dosyaları başlık çözme veya gigabaytlarca video hash'leme yapmadan `O(1)` sürede (boyut + başlık sürümü + sondaki 16 baytlık `Poly1305-AES` etiketi kontrolüyle) atlanır.
-     * Farklı addaki yeni `.bin` dosyaları **tek okuma geçişinde** `Poly1305-AES` MAC doğrulaması ve kopyalamayı birlikte yaparak (`copyBinAndVerifyIntegritySinglePass`) eşleşen veya yeni oluşturulan albümlere (kökteki dosyalar `Default Secret Album`'e) aktarılır.
-     * Aynı ad / aynı boyuttaki çakışmalar **tek okuma geçişinde** kaynak `Poly1305-AES` doğrulamasıyla birlikte RAM'de decrypted akışı karşılaştırır (Android Ayarlarda **Büyük dosyalarda hızlı kopya kontrolü (>8 MB)** açıldığında 5 dağılmış `256 KB` nokta kontrolü, kapalıyken tam bit-bit karşılaştırma): farklı IV ile şifrelenmiş olsalar bile aynı bitler atlanır; farklı içeriğe sahip dosyalar üzerine yazılmadan `<ad>(1)`, `<ad>(2)` olarak güvenle adlandırılır.
+     * Telefonda zaten bulunan değişmemiş birebir `.bin` dosyaları başlık çözme veya gigabaytlarca video hash'leme yapmadan `O(1)` sürede (boyut + kanonik başlık sürümü kontrolüyle) atlanır.
+     * Farklı addaki yeni `.bin` dosyaları **tek okuma geçişinde** Tink AES-GCM-HKDF akışının doğrulanması ve kopyalamayı tek geçişte yaparak eşleşen veya yeni oluşturulan albümlere (kökteki dosyalar `Default Secret Album`'e) aktarılır.
+     * Aynı ad / aynı boyuttaki çakışmalar **tek okuma geçişinde** kaynak akışın kimlik doğrulamasıyla birlikte decrypted akışı karşılaştırır (Android Ayarlarda **Büyük dosyalarda hızlı kopya kontrolü (>8 MB)** açıldığında 5 dağılmış `256 KB` nokta kontrolü, kapalıyken tam bit-bit karşılaştırma): farklı dosya kimliği, DEK ve nonce ile şifrelenmiş olsalar bile aynı düz metin atlanır; farklı içeriğe sahip dosyalar üzerine yazılmadan `<ad>(1)`, `<ad>(2)` olarak güvenle adlandırılır.
 
 ### 📁 Desteklenen Medya Kontrolü ve Otomatik Albüm Yönlendirmesi
 * **Şifreleme Öncesi Format Doğrulaması:** Yalnızca Android uygulamasının desteklediği fotoğraf, GIF, SVG, RAW ve video uzantıları şifrelenir. `.txt`, `.pdf`, `.md`, `.zip` gibi desteklenmeyen dosyalar ile `.bin` ve `.` ile başlayan gizli dosyalar uyarı verilerek atlanır ve özet raporda belirtilir.
-* **Kök Klasör Dosyaları → `Default Secret Album`:** Girdi klasörünün doğrudan köküne bırakılan dosyalar (alt klasörsüz) otomatik olarak **`Default Secret Album`** (`__VAULT_DEFAULT_ALBUM__`) albümüne şifrelenir. Kasada zaten varsa mevcut klasör yeniden kullanılır, yoksa `.meta` (`FGMETA2`) içeren yeni rastgele 6 haneli hex klasörü oluşturulur.
+* **Kök Klasör Dosyaları → `Default Secret Album`:** Girdi klasörünün doğrudan köküne bırakılan dosyalar (alt klasörsüz) otomatik olarak **`Default Secret Album`** (`__VAULT_DEFAULT_ALBUM__`) albümüne şifrelenir. Kasada zaten varsa mevcut klasör yeniden kullanılır, yoksa `.meta` (`FGMETA`) içeren yeni rastgele 6 haneli hex klasörü oluşturulur.
 * **Alt Klasörler → `.meta` İle Akıllı Eşleştirme:** Alt klasörlerdeki dosyalar (örn. `Sifrelenecek/Tatil/foto.jpg`) için hedefteki kasanın mevcut `.meta` dosyaları çözülür:
   * Aynı isimde (birebir veya büyük/küçük harf duyarsız) albüm zaten varsa dosyalar mevcut şifreli klasöre eklenir.
-  * Yoksa rastgele 6 haneli yeni hex klasörü ve şifreli `.meta` (`FGMETA2`) oluşturulur.
+  * Yoksa rastgele 6 haneli yeni hex klasörü ve şifreli `.meta` (`FGMETA`) oluşturulur.
   * `.nomedia` yalnızca kasa kökünde (`Secrets/.nomedia`) bulunur; normal albüm klasörlerinin içine yazılmaz (böylece Android uygulaması albümleri gizlenmiş/hariç tutulmuş saymaz). Yalnızca `.` ile başlayan gizli alt klasörler için iç `.nomedia` oluşturulur.
   * İç içe alt klasörler (örn. `Tatil/1_Gun/foto.jpg`) Android'in tek seviyeli kasa yapısına uygun olarak en üst albüm adına (`Tatil`) yönlendirilir.
 * **Karma Girdi:** Aynı çalıştırmada hem kökte hem alt klasörlerde dosya bulunması sorunsuz desteklenir.

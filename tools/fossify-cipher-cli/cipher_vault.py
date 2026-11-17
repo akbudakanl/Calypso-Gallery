@@ -3,8 +3,12 @@
 Calypso Gallery - Cross-Platform Offline Vault Encryptor CLI Tool
 -----------------------------------------------------------------
 Encrypts plaintext media files (photos, videos) into .bin format,
-100% compatible with the Encrypted Vault of Calypso Gallery
-(AES-256-CTR + Poly1305-AES authenticated streaming encryption).
+100% compatible with the Encrypted Vault of Calypso Gallery.
+
+Containers use the canonical FGVLTENC v1 layout: an AES-256-GCM encrypted
+metadata header (key derived from the vault KEK via HKDF-SHA256) followed by a
+Tink-compatible AES256_GCM_HKDF streaming-AEAD payload. Album `.meta` folders
+use the canonical FGMETA layout. No other container format is written.
 
 This is an unofficial companion tool for the independently maintained Calypso Gallery fork;
 it is not affiliated with, endorsed by, or supported by Fossify.
@@ -23,7 +27,6 @@ Features:
 - Automatic OS detection (Linux/Tails, macOS, Windows) with zero extra prompts.
 - Encrypt-Only workflow targeting either an external Secrets vault
   directly or an output/delta folder (Encrypted_Output / Sifreli_Cikti).
-  Legacy "Cipher_Secrets" containers and the former app container name are still detected.
 - Automatic .vault discovery across Desktop, persistent storage, and mounted USB drives.
 - Pre-encryption supported media format validation matching the Android app.
 - Automatic Default Secret Album routing for root files & .meta-aware subfolder matching.
@@ -33,8 +36,6 @@ Features:
 import os
 import sys
 import time
-import hmac
-import hashlib
 import secrets
 import struct
 import getpass
@@ -46,31 +47,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from io import BytesIO
 
-# On-disk names used by the Android app. The legacy values are still recognised so existing
-# vaults and external containers keep working after the rename; they are not brand names.
+# On-disk names used by the Android app (Kotlin Constants.kt).
 APP_DIR_NAME = "Calypso Gallery"
-LEGACY_APP_DIR_NAME = "Fossify Gallery Cipher"
 VAULT_DIR_NAME = "Secrets"
-LEGACY_VAULT_DIR_NAME = "Cipher_Secrets"
-VAULT_DIR_NAMES = (VAULT_DIR_NAME, LEGACY_VAULT_DIR_NAME)
+VAULT_DIR_NAMES = (VAULT_DIR_NAME,)
 
 HAS_CRYPTO = True
 try:
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+    from cryptography.hazmat.primitives import hashes
     from argon2.low_level import hash_secret_raw, Type
 except ImportError:
     HAS_CRYPTO = False
-
-# Poly1305-AES (Bernstein 2005) cekirdegi icin pycryptodome.
-# Elle yazilmis bir MAC implementasyonu kullanmamak icin zorunludur:
-# bu paket Poly1305'i C seviyesinde, denetlenmis bir kutuphanede sunar.
-HAS_POLY1305 = True
-try:
-    from Crypto.Hash import Poly1305
-    from Crypto.Cipher import AES as PolyAes
-except ImportError:
-    HAS_POLY1305 = False
 
 try:
     from PIL import Image
@@ -128,14 +117,7 @@ def check_dependencies():
             print("  sudo apt update && sudo apt install -y python3-cryptography python3-argon2 python3-pil", file=sys.stderr)
         print("Or install via pip (recommended inside a venv on macOS/Windows):", file=sys.stderr)
         print("  pip install -r requirements.txt", file=sys.stderr)
-        print("  pip install cryptography argon2-cffi pillow pycryptodome", file=sys.stderr)
-        sys.exit(1)
-
-    if not HAS_POLY1305:
-        print("[ERROR] Required Python packages are missing!", file=sys.stderr)
-        print("The Poly1305-AES MAC is provided by 'pycryptodome'.", file=sys.stderr)
-        print("Install it with:", file=sys.stderr)
-        print("  pip install pycryptodome", file=sys.stderr)
+        print("  pip install cryptography argon2-cffi pillow", file=sys.stderr)
         sys.exit(1)
 
 def install_network_audit_hook(allow_adb: bool):
@@ -153,11 +135,28 @@ def install_network_audit_hook(allow_adb: bool):
     sys.addaudithook(_audit_hook)
 
 # ==================== PROTOCOL CONSTANTS ====================
-MAGIC_V2 = b"FGVLTENC"
-VERSION_SYMMETRIC_AUTH = 3
-VAULT_HEADER_MAGIC = b"FGVLT2"
-META_MAGIC_V2 = b"FGMETA2"
-META_MAGIC_SYM = b"FVLTMETA"
+# Canonical FGVLTENC v1 container (Kotlin: VaultContainer / VaultContainerWriter).
+CONTAINER_MAGIC = b"FGVLTENC"
+CONTAINER_VERSION = 1
+ACTIVE_KEY_ID = 1
+VAULT_HEADER_MAGIC = b"FGVLT"          # 5 ASCII bytes (Kotlin VaultContainer.VAULT_HEADER_MAGIC)
+FOLDER_META_MAGIC = b"FGMETA"          # 6 ASCII bytes (Kotlin VaultContainer.FOLDER_META_MAGIC)
+VAULT_STR_PREFIX = b"FVSTR:"           # Kotlin VaultContainer.VAULT_STR_PREFIX
+
+# HKDF-SHA256 domain separation (RFC 5869 / Tink Hkdf.computeHkdf). DO NOT CHANGE.
+DOMAIN_HEADER_KEY = "CalypsoGallery:Header:AES256GCM"
+DOMAIN_METADATA_KEY = "CalypsoGallery:Metadata:AESGCM"
+
+# Tink AES256_GCM_HKDF streaming parameters (frozen for Android interop).
+SEGMENT_SIZE = 262_144                              # Kotlin TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
+GCM_TAG_SIZE = 16
+STREAM_HEADER_LENGTH = 40                           # u8(40) | salt(32) | noncePrefix(7)
+FIRST_CHUNK_PLAINTEXT_MAX = SEGMENT_SIZE - STREAM_HEADER_LENGTH - GCM_TAG_SIZE  # 262088
+SEGMENT_PLAINTEXT_MAX = SEGMENT_SIZE - GCM_TAG_SIZE                             # 262128
+FIXED_PREFIX_LENGTH = 8 + 1 + 2 + 16 + 12 + 4        # 43
+# Tink treats an empty HKDF salt as HashLen (32) zero bytes; pass this explicitly so
+# every cryptography version derives the same header/metadata keys as the Android app.
+HKDF_EMPTY_SALT = b"\x00" * 32
 
 VAULT_DEFAULT_ALBUM_NAME = "__VAULT_DEFAULT_ALBUM__"
 DEFAULT_SECRET_ALBUM_NAME = "Default Secret Album"
@@ -168,10 +167,6 @@ DEFAULT_ALBUM_RAW_NAMES = {
     "Varsayılan Gizli Albüm",
     "Default Hidden Album",
 }
-
-DOMAIN_HEADER_KEY = b"FossifyGallery:Header:AES256GCM"
-DOMAIN_CONTENT_ENC_KEY = b"FossifyGallery:Payload:AES256CTR"
-DOMAIN_CONTENT_MAC_KEY = b"FossifyGallery:Payload:Poly1305"
 
 TYPE_IMAGES = 1
 TYPE_VIDEOS = 2
@@ -213,9 +208,8 @@ FOLDER_NAMES = {
 MESSAGES = {
     "en": {
         "op_cancelled": "\nOperation cancelled.",
-        "vault_format_mismatch": "\033[1;31m[-] Encrypted Vault format mismatch: the selected vault uses the v4 encryption algorithm, but this CLI version can only write v3 containers. No files were transferred and the pending-sync file was left untouched.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault file was not found automatically.\033[0m",
-        "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Secrets > .vault; legacy Cipher_Secrets is also detected)",
+        "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Secrets > .vault)",
         "vault_path_hint": "    onto your Desktop or enter its path below.",
         "vault_enter_path": "\n\033[1;36m-> Enter path to .vault file (or drag & drop here): \033[0m",
         "vault_copy_prompt": "\033[1;32m[i] Copy .vault to Desktop for automatic detection next time? [Y/n]: \033[0m",
@@ -262,9 +256,8 @@ MESSAGES = {
     },
     "tr": {
         "op_cancelled": "\nİşlem iptal edildi.",
-        "vault_format_mismatch": "\033[1;31m[-] Şifreli Kasa formatı uyumsuz: seçili kasa v4 şifreleme algoritmasını kullanıyor, ancak bu CLI sürümü yalnızca v3 konteyner yazabiliyor. Hiçbir dosya aktarılmadı ve bekleyen eşitleme dosyasına dokunulmadı.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault dosyası otomatik olarak bulunamadı.\033[0m",
-        "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Secrets > .vault; eski Cipher_Secrets de algılanır)",
+        "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Secrets > .vault)",
         "vault_path_hint": "    Masaüstüne bırakabilir veya dosya yolunu aşağıya girebilirsiniz.",
         "vault_enter_path": "\n\033[1;36m-> .vault dosya yolunu girin (veya sürükleyip bırakın): \033[0m",
         "vault_copy_prompt": "\033[1;32m[i] Bir sonraki sefer otomatik algılama için .vault Masaüstüne kopyalansın mı? [E/h]: \033[0m",
@@ -447,7 +440,7 @@ def get_localized_desktop_dir(desktop: Path, lang: str, folder_key: str) -> Path
     return target
 
 def is_valid_vault_file(path: Path) -> bool:
-    """Returns True if path exists, is >= 32 bytes, and begins with FGVLT2 header magic."""
+    """Returns True if path exists, is >= 32 bytes, and begins with canonical FGVLT header magic."""
     try:
         if not path.is_file() or path.stat().st_size < 32:
             return False
@@ -455,18 +448,6 @@ def is_valid_vault_file(path: Path) -> bool:
             return f.read(len(VAULT_HEADER_MAGIC)) == VAULT_HEADER_MAGIC
     except Exception:
         return False
-
-def read_vault_format(path: Path) -> int:
-    """Reads the container format version from a .vault header (3 or 4; 3 if unreadable)."""
-    try:
-        with open(path, "rb") as f:
-            header = f.read(len(VAULT_HEADER_MAGIC) + 2)
-        if header[:len(VAULT_HEADER_MAGIC)] != VAULT_HEADER_MAGIC:
-            return 3
-        version = header[len(VAULT_HEADER_MAGIC)]
-        return version if version in (3, 4) else 3
-    except Exception:
-        return 3
 
 def _windows_external_drive_roots() -> list[Path]:
     """Enumerates mounted non-system drive roots on Windows, prioritizing removable USB/SD drives."""
@@ -545,13 +526,10 @@ def find_vault_file() -> Path | None:
     standalone_candidates: list[Path] = []
 
     def add_vault_dir_locations(base: Path):
-        for secrets_name in VAULT_DIR_NAMES:
-            vault_dir_candidates.extend([
-                base / secrets_name / ".vault",
-                base / APP_DIR_NAME / secrets_name / ".vault",
-                base / LEGACY_APP_DIR_NAME / secrets_name / ".vault",
-                base / "Documents" / "Cipher" / secrets_name / ".vault",
-            ])
+        vault_dir_candidates.extend([
+            base / VAULT_DIR_NAME / ".vault",
+            base / APP_DIR_NAME / VAULT_DIR_NAME / ".vault",
+        ])
 
     # 1. Tails / Live-Boot Persistent & external USB drives (vault containers first)
     if kind == "linux":
@@ -663,132 +641,135 @@ def prompt_for_vault_file(lang: str) -> Path:
 
 # ==================== CRYPTOGRAPHIC UTILITIES ====================
 
-def derive_subkey(key: bytes, domain: bytes) -> bytes:
-    """HKDF-style domain separation via HMAC-SHA256."""
-    return hmac.new(key, domain, hashlib.sha256).digest()
+@dataclass
+class VaultKeys:
+    """The two keys held by a canonical .vault keyring."""
+    vmk: bytes  # Vault Master Key - protects folder .meta files
+    kek: bytes  # Key Encryption Key - protects file container headers
 
-def poly1305_aes_mac(mac_key: bytes, nonce: bytes, data: bytes) -> bytes:
+
+def _hkdf_sha256(ikm: bytes, salt: bytes, info: bytes) -> bytes:
+    """RFC 5869 HKDF-SHA256, matching Tink Hkdf.computeHkdf('HmacSha256', ...)."""
+    return HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=info).derive(ikm)
+
+
+def derive_header_key(kek: bytes, file_id: bytes) -> bytes:
+    """Per-file AES-256-GCM header key: HKDF(KEK, empty salt, domain|fileId.hex())."""
+    return _hkdf_sha256(
+        kek,
+        HKDF_EMPTY_SALT,
+        (DOMAIN_HEADER_KEY + "|" + file_id.hex()).encode("utf-8"),
+    )
+
+
+def derive_metadata_key(kek: bytes, context: str) -> bytes:
+    """Per-record key for FVSTR: vault strings (domain|purpose, purpose is also the AAD)."""
+    return _hkdf_sha256(kek, HKDF_EMPTY_SALT, (DOMAIN_METADATA_KEY + "|" + context).encode("utf-8"))
+
+
+def expected_ciphertext_size(plaintext_size: int) -> int:
+    """Tink AesGcmHkdfStreaming.expectedCiphertextSize for the canonical segment size."""
+    plaintext_segment_size = SEGMENT_SIZE - GCM_TAG_SIZE
+    full_segments = (plaintext_size + STREAM_HEADER_LENGTH) // plaintext_segment_size
+    last_segment = (plaintext_size + STREAM_HEADER_LENGTH) % plaintext_segment_size
+    size = full_segments * SEGMENT_SIZE
+    if last_segment > 0:
+        size += last_segment + GCM_TAG_SIZE
+    return size
+
+
+def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     """
-    Poly1305-AES (Bernstein 2005) MAC - BouncyCastle `Poly1305(AESEngine)` ile birebir uyumlu.
+    Unwraps a canonical v1 .vault header.
 
-    Anahtar duzeni (Android/BC ve restic ile ayni):
-        mac_key[0:16]  -> r  (Poly1305 polinom katsayisi; kutup icinde clamp edilir)
-        mac_key[16:32] -> K  (AES-128 anahtari; s = AES-128_K(nonce))
+    Layout: magic(5) | version(1) | kdf(1) | iterations(4) | memoryKb(4) |
+    parallelism(4) | protectionType(1) | saltLen(4) | salt | ivPdk(12) |
+    wrappedVmKLen(4) | wrappedVMK | ivVmk(12) | keyringLen(4) | wrappedKeyring.
 
-    pycryptodome'un duzeni farklidir: `Poly1305.new(key=..., cipher=AES)` icinde
-    key[:16] AES anahtari (K), key[16:32] ise r olarak kullanilir.
-    Bu yuzden iki yarim yer degistirilerek verilir.
-
-    Not: Elle yazilmis bir MAC implementasyonu kullanmamak icin pycryptodome
-    tercih edilir; boylece cekirdek C seviyesinde ve denetlenmis bir kutuphanede kalir.
-    """
-    if len(mac_key) != 32:
-        raise ValueError("Poly1305-AES requires a 32-byte MAC key.")
-    if len(nonce) != 16:
-        raise ValueError("Poly1305-AES requires a 16-byte nonce.")
-
-    r_part = mac_key[:16]
-    k_part = mac_key[16:32]
-    mac = Poly1305.new(key=k_part + r_part, cipher=PolyAes, nonce=nonce)
-    mac.update(data)
-    return mac.digest()
-
-
-def poly1305_aes_mac_stream(mac_key: bytes, nonce: bytes):
-    """
-    Akis (streaming) Poly1305-AES MAC hesaplayici.
-
-    Kullanim:
-        mac = poly1305_aes_mac_stream(mac_key, nonce)
-        mac.update(chunk)
-        tag = mac.digest()
-
-    Tek gecisli yazma akisini korumak icin kullanilir; poly1305_aes_mac() ile
-    ayni sonucu uretir.
-    """
-    if len(mac_key) != 32:
-        raise ValueError("Poly1305-AES requires a 32-byte MAC key.")
-    if len(nonce) != 16:
-        raise ValueError("Poly1305-AES requires a 16-byte nonce.")
-
-    r_part = mac_key[:16]
-    k_part = mac_key[16:32]
-    return Poly1305.new(key=k_part + r_part, cipher=PolyAes, nonce=nonce)
-
-def unlock_vault_header(vault_path: Path, secret: str) -> bytes:
-    """
-    Unwraps the .vault header file from Android and extracts the 256-bit Master Key.
-    """
-    return unlock_vault_header_bytes(vault_path.read_bytes(), secret)
-
-def unlock_vault_header_bytes(data: bytes, secret: str) -> bytes:
-    """
-    Unwraps raw .vault header bytes and extracts the 256-bit Master Key.
+    PDK = Argon2id(secret, salt, ...) unwraps the VMK; the VMK unwraps the keyring,
+    which is packKeyringV4 = u16 keyId | 32-byte KEK.
     """
     if len(data) < 32:
         raise ValueError(".vault file is too small or invalid.")
 
     offset = 0
-    magic = data[offset:offset + 6]
-    offset += 6
+
+    def take(count: int) -> bytes:
+        nonlocal offset
+        if count < 0 or offset + count > len(data):
+            raise ValueError("Corrupted .vault header: truncated field.")
+        chunk = data[offset:offset + count]
+        offset += count
+        return chunk
+
+    magic = take(len(VAULT_HEADER_MAGIC))
     if magic != VAULT_HEADER_MAGIC:
-        raise ValueError(f"Invalid vault header! Expected: {VAULT_HEADER_MAGIC.decode()}, found: {magic}")
+        raise ValueError(f"Invalid vault header! Expected: {VAULT_HEADER_MAGIC.decode()}, found: {magic!r}")
 
-    version = data[offset]
-    offset += 1
-    kdf_type = data[offset]
-    offset += 1
-    if kdf_type != 1:
-        raise ValueError("Unsupported KDF algorithm (Only Argon2id is supported).")
+    take(1)  # version byte - canonical v1 keyring layout
+    if take(1)[0] != 1:
+        raise ValueError("Unsupported KDF algorithm (only Argon2id is supported).")
 
-    iterations, memory_kb, parallelism = struct.unpack(">3i", data[offset:offset + 12])
-    offset += 12
+    iterations, memory_kb, parallelism = struct.unpack(">3i", take(12))
+    if not (1 <= iterations <= 100 and 1024 <= memory_kb <= 1_048_576 and 1 <= parallelism <= 32):
+        raise ValueError("Invalid Argon2id parameters in .vault header.")
 
-    if version >= 3:
-        _prot_type = data[offset]
-        offset += 1
+    take(1)  # protection type (password / PIN / pattern)
 
-    salt_len = struct.unpack(">i", data[offset:offset + 4])[0]
-    offset += 4
+    salt_len = struct.unpack(">i", take(4))[0]
     if salt_len <= 0 or salt_len > 256:
         raise ValueError("Invalid salt length.")
+    salt = take(salt_len)
 
-    salt = data[offset:offset + salt_len]
-    offset += salt_len
+    iv_pdk = take(12)
+    wrapped_vmk_len = struct.unpack(">i", take(4))[0]
+    if wrapped_vmk_len < GCM_TAG_SIZE + 32 or wrapped_vmk_len > 65536:
+        raise ValueError("Corrupted wrapped VMK data.")
+    wrapped_vmk = take(wrapped_vmk_len)
 
-    iv = data[offset:offset + 12]
-    offset += 12
+    iv_vmk = take(12)
+    keyring_len = struct.unpack(">i", take(4))[0]
+    if keyring_len <= 0 or keyring_len > 4096:
+        raise ValueError("Corrupted wrapped keyring data.")
+    wrapped_keyring = take(keyring_len)
 
-    wrapped_len = struct.unpack(">i", data[offset:offset + 4])[0]
-    offset += 4
-    if wrapped_len <= 0 or offset + wrapped_len > len(data):
-        raise ValueError("Corrupted wrapped bundle data.")
-
-    wrapped = data[offset:offset + wrapped_len]
-
-    # Argon2id key derivation
-    wrapping_key = hash_secret_raw(
+    pdk = hash_secret_raw(
         secret=secret.encode("utf-8"),
         salt=salt,
         time_cost=iterations,
         memory_cost=memory_kb,
         parallelism=parallelism,
         hash_len=32,
-        type=Type.ID
+        type=Type.ID,
     )
-
-    # AES-256-GCM authenticated unwrap
-    tag = wrapped[-16:]
-    ciphertext = wrapped[:-16]
-    cipher = Cipher(algorithms.AES(wrapping_key), modes.GCM(iv, tag), backend=default_backend()).decryptor()
     try:
-        bundle = cipher.update(ciphertext) + cipher.finalize()
+        vmk = AESGCM(pdk).decrypt(iv_pdk, wrapped_vmk, b"")[:32]
     except Exception:
         raise ValueError("Incorrect password/PIN or corrupted file!")
+    finally:
+        pdk = bytearray(len(pdk))
 
-    # Master Key is the first 32 bytes of the bundle
-    master_key = bundle[:32]
-    return master_key
+    if len(vmk) < 32:
+        raise ValueError("Wrapped VMK is too short.")
+
+    try:
+        keyring = AESGCM(vmk).decrypt(iv_vmk, wrapped_keyring, b"")
+    except Exception:
+        raise ValueError("Incorrect password/PIN or corrupted keyring!")
+    if len(keyring) < 2 + 32:
+        raise ValueError("Corrupted keyring: expected keyId + 32-byte KEK.")
+
+    return VaultKeys(vmk=vmk[:32], kek=keyring[2:34])
+
+
+def unlock_vault_header(vault_path: Path, secret: str) -> bytes:
+    """Unwraps a .vault header and returns the KEK (the file-header key)."""
+    return unlock_vault_header_bytes(vault_path.read_bytes(), secret)
+
+
+def unlock_vault_header_bytes(data: bytes, secret: str) -> bytes:
+    """Unwraps raw .vault header bytes and returns the KEK used for file headers."""
+    return unwrap_vault_keys(data, secret).kek
 
 def is_default_album_raw_name(raw_name: str | None) -> bool:
     """Returns True if raw_name identifies the built-in Default Secret Album."""
@@ -801,9 +782,10 @@ def write_encrypted_folder_meta(
     vault_dir: Path | None = None,
 ):
     """
-    Writes .meta (FGMETA2) compatible with the Calypso Gallery Encrypted Vault.
-    Creates .nomedia at vault_dir root, and inside folder ONLY when original_name
-    is an explicitly hidden dot-folder (never for normal albums, default album, or recycle bin).
+    Writes a canonical .meta (FGMETA) album file compatible with the Calypso Gallery
+    Encrypted Vault. Creates .nomedia at vault_dir root, and inside folder ONLY when
+    original_name is an explicitly hidden dot-folder (never for normal albums,
+    default album, or recycle bin).
     """
     vault_root = vault_dir if vault_dir is not None else folder.parent
     if vault_root.is_dir():
@@ -816,11 +798,10 @@ def write_encrypted_folder_meta(
 
     meta_file = folder / ".meta"
     iv = secrets.token_bytes(12)
-    cipher = Cipher(algorithms.AES(master_key), modes.GCM(iv), backend=default_backend()).encryptor()
-    enc_name = cipher.update(original_name.encode("utf-8")) + cipher.finalize() + cipher.tag
+    enc_name = AESGCM(master_key).encrypt(iv, original_name.encode("utf-8"), b"")
 
     with open(meta_file, "wb") as f:
-        f.write(META_MAGIC_V2)                    # 7B ("FGMETA2")
+        f.write(FOLDER_META_MAGIC)                # 6B ("FGMETA")
         f.write(iv)                               # 12B IV
         f.write(struct.pack(">i", len(enc_name))) # 4B Big-Endian int
         f.write(enc_name)                         # AES-256-GCM ciphertext + 16B tag
@@ -846,14 +827,11 @@ def sanitize_name(name: str, fallback: str = "unnamed") -> str:
 
 def read_raw_folder_meta_bytes(data: bytes, master_key: bytes) -> str | None:
     """
-    Decrypts raw .meta bytes (FGMETA2 or legacy FVLTMETA) and returns the raw
-    decrypted UTF-8 folder name without display mapping, or None if invalid.
+    Decrypts canonical raw .meta bytes (FGMETA) and returns the raw decrypted
+    UTF-8 folder name without display mapping, or None if invalid.
     """
-    if len(data) >= 8 + 12 + 4 + 16 and data[:8] == META_MAGIC_SYM:
-        magic_len = 8
-    elif len(data) >= 7 + 12 + 4 + 16 and data[:7] == META_MAGIC_V2:
-        magic_len = 7
-    else:
+    magic_len = len(FOLDER_META_MAGIC)
+    if len(data) < magic_len + 12 + 4 + 16 or data[:magic_len] != FOLDER_META_MAGIC:
         return None
 
     iv = data[magic_len:magic_len + 12]
@@ -863,11 +841,8 @@ def read_raw_folder_meta_bytes(data: bytes, master_key: bytes) -> str | None:
         return None
 
     enc_name = data[payload_start:payload_start + enc_len]
-    tag = enc_name[-16:]
-    ciphertext = enc_name[:-16]
     try:
-        cipher = Cipher(algorithms.AES(master_key), modes.GCM(iv, tag), backend=default_backend()).decryptor()
-        plain = cipher.update(ciphertext) + cipher.finalize()
+        plain = AESGCM(master_key).decrypt(iv, enc_name, b"")
         raw_name = plain.decode("utf-8")
         return raw_name if raw_name else None
     except Exception:
@@ -885,7 +860,7 @@ def read_raw_folder_meta(meta_file: Path, master_key: bytes) -> str | None:
 
 def read_encrypted_folder_meta_bytes(data: bytes, fallback_name: str, master_key: bytes) -> str | None:
     """
-    Decrypts raw .meta bytes (FGMETA2) and returns the display album folder name,
+    Decrypts raw .meta bytes (FGMETA) and returns the display album folder name,
     or None if the data is invalid.
     """
     raw = read_raw_folder_meta_bytes(data, master_key)
@@ -899,7 +874,7 @@ def read_encrypted_folder_meta_bytes(data: bytes, fallback_name: str, master_key
 
 def read_encrypted_folder_meta(meta_file: Path, master_key: bytes) -> str | None:
     """
-    Decrypts a .meta file (FGMETA2) and returns the display album folder name,
+    Decrypts a .meta file (FGMETA) and returns the display album folder name,
     or None if the file is missing/invalid.
     """
     try:
@@ -937,11 +912,7 @@ def scan_existing_vault_albums(vault_dir: Path, master_key: bytes) -> VaultAlbum
 
         meta_file = sub / ".meta"
         if not meta_file.is_file():
-            legacy_meta = sub / ".fmeta"
-            if legacy_meta.is_file():
-                meta_file = legacy_meta
-            else:
-                continue
+            continue
 
         raw_name = read_raw_folder_meta(meta_file, master_key)
         if raw_name is None or raw_name == VAULT_RECYCLE_BIN_NAME:
@@ -977,7 +948,7 @@ def get_or_create_vault_album(
     Returns an existing or newly created 6-hex encrypted album directory inside vault_dir.
     Root files (album_name is None) or default album variants route to Default Secret Album
     (__VAULT_DEFAULT_ALBUM__). Named albums match existing .meta entries (exact then
-    stripped/case-insensitive) or create a new randomized 6-hex folder with FGMETA2 .meta.
+    stripped/case-insensitive) or create a new randomized 6-hex folder with FGMETA .meta.
     """
     vault_dir.mkdir(parents=True, exist_ok=True)
     root_nomedia = vault_dir / ".nomedia"
@@ -1187,12 +1158,17 @@ def extract_date_taken_ms(source_path: Path, fallback_ms: int) -> int:
 def encrypt_file(
     source_path: Path,
     target_dir: Path,
-    master_key: bytes,
+    kek: bytes,
     on_chunk_processed=None
 ) -> Path:
     """
-    Encrypts a media file into a .bin file 100% compatible with the Calypso Gallery Encrypted Vault.
-    Uses chunked streaming for high-efficiency on large files.
+    Encrypts a media file into a canonical FGVLTENC v1 .bin container compatible
+    with the Calypso Gallery Encrypted Vault.
+
+    Layout: magic(8) | version(1) | keyId(2) | fileId(16) | headerIv(12) |
+    N(4) | encHeader(N) | Tink AES256_GCM_HKDF stream. The header is encrypted
+    with a key derived from the KEK and bound to the cleartext prefix as AAD;
+    the payload uses a fresh per-file DEK and fileId as the stream AAD.
     """
     stat = source_path.stat()
     orig_name = source_path.name
@@ -1204,9 +1180,22 @@ def encrypt_file(
 
     thumb_bytes = generate_thumbnail_bytes(source_path) if media_type == TYPE_IMAGES else b""
 
-    # 1. Plaintext Header Packet (Java DataOutputStream Big-Endian format)
+    # Fresh per-file key material and the exact stream size Tink would emit.
+    file_id = secrets.token_bytes(16)
+    dek = secrets.token_bytes(32)
+    ciphertext_length = expected_ciphertext_size(orig_size)
+
+    # 1. Plaintext header (Java DataOutputStream order, all big-endian).
     hdr_buf = BytesIO()
+    hdr_buf.write(struct.pack(">H", 1))                  # algorithmParams = 1
+    hdr_buf.write(struct.pack(">I", SEGMENT_SIZE))       # segmentSize = 262144
+    hdr_buf.write(struct.pack(">Q", ciphertext_length))  # ciphertextLength
+    hdr_buf.write(dek)                                   # 32-byte per-file DEK
+    # DataOutputStream.writeUTF = u16 byte length + Java modified UTF-8. For ASCII
+    # and BMP names this is identical to standard UTF-8 (NUL/supplementary chars differ).
     name_bytes = orig_name.encode("utf-8")
+    if len(name_bytes) > 0xFFFF:
+        raise ValueError("Original filename is too long for the container header.")
     hdr_buf.write(struct.pack(">H", len(name_bytes)))
     hdr_buf.write(name_bytes)
     hdr_buf.write(struct.pack(">q", last_mod))
@@ -1215,60 +1204,75 @@ def encrypt_file(
     hdr_buf.write(struct.pack(">i", media_type))
     hdr_buf.write(struct.pack(">i", video_duration))
     hdr_buf.write(struct.pack(">i", len(thumb_bytes)))
-    if thumb_bytes:
-        hdr_buf.write(thumb_bytes)
+    hdr_buf.write(thumb_bytes)
     header_plain = hdr_buf.getvalue()
 
-    # 2. Key Derivation (Domain separation via HMAC-SHA256)
-    header_key = derive_subkey(master_key, DOMAIN_HEADER_KEY)
-    content_enc_key = derive_subkey(master_key, DOMAIN_CONTENT_ENC_KEY)
-    content_mac_key = derive_subkey(master_key, DOMAIN_CONTENT_MAC_KEY)
-
-    # 3. Header Encryption (AES-256-GCM)
+    # 2. Header key: HKDF-SHA256(KEK, empty salt, "domain|fileId.hex()").
+    header_key = derive_header_key(kek, file_id)
     header_iv = secrets.token_bytes(12)
-    h_cipher = Cipher(algorithms.AES(header_key), modes.GCM(header_iv), backend=default_backend()).encryptor()
-    enc_header_data = h_cipher.update(header_plain) + h_cipher.finalize() + h_cipher.tag
+    encrypted_header_length = len(header_plain) + GCM_TAG_SIZE
+    header_aad = (
+        CONTAINER_MAGIC
+        + bytes([CONTAINER_VERSION])
+        + struct.pack(">H", ACTIVE_KEY_ID)
+        + file_id
+        + struct.pack(">I", encrypted_header_length)
+    )
+    enc_header = AESGCM(header_key).encrypt(header_iv, header_plain, header_aad)
 
-    # 4. Randomized .bin Output Filename
+    # 3. Randomized .bin output filename (unchanged UX).
     while True:
         bin_name = f"{secrets.token_hex(8)}.bin"
         output_file = target_dir / bin_name
         if not output_file.exists():
             break
 
-    # 5. Payload Encryption (AES-256-CTR + Poly1305-AES Streaming)
-    content_iv = secrets.token_bytes(16)
-    c_cipher = Cipher(algorithms.AES(content_enc_key), modes.CTR(content_iv), backend=default_backend()).encryptor()
-    poly_mac = poly1305_aes_mac_stream(content_mac_key, content_iv)
+    # 4. Tink AES256_GCM_HKDF stream parameters: u8(40) | salt(32) | noncePrefix(7).
+    salt = secrets.token_bytes(32)
+    nonce_prefix = secrets.token_bytes(7)
+    stream_header = bytes([STREAM_HEADER_LENGTH]) + salt + nonce_prefix
+    stream_key = HKDF(algorithm=hashes.SHA256(), length=32, salt=salt, info=file_id).derive(dek)
 
+    payload_written = 0
+    segment = 0
     with open(output_file, "wb") as fout:
-        fout.write(MAGIC_V2)                                     # 8B ("FGVLTENC")
-        fout.write(bytes([VERSION_SYMMETRIC_AUTH]))              # 1B (0x03)
-        fout.write(header_iv)                                    # 12B
-        fout.write(struct.pack(">i", len(enc_header_data)))       # 4B Big-Endian int
-        fout.write(enc_header_data)                              # Encrypted Header + 16B GCM Tag
-        fout.write(content_iv)                                   # 16B Content IV
+        fout.write(CONTAINER_MAGIC)                    # 8B "FGVLTENC"
+        fout.write(bytes([CONTAINER_VERSION]))         # 1B (0x01)
+        fout.write(struct.pack(">H", ACTIVE_KEY_ID))   # 2B
+        fout.write(file_id)                            # 16B
+        fout.write(header_iv)                          # 12B
+        fout.write(struct.pack(">I", len(enc_header))) # 4B N (ciphertext header length)
+        fout.write(enc_header)                         # N bytes (ciphertext + 16B GCM tag)
+        fout.write(stream_header)                      # 40B Tink stream header
 
-        chunk_size = 64 * 1024
         with open(source_path, "rb") as fin:
             while True:
-                chunk = fin.read(chunk_size)
-                if not chunk:
-                    break
-                enc_chunk = c_cipher.update(chunk)
-                if enc_chunk:
-                    fout.write(enc_chunk)
-                    poly_mac.update(enc_chunk)
+                max_chunk = FIRST_CHUNK_PLAINTEXT_MAX if segment == 0 else SEGMENT_PLAINTEXT_MAX
+                chunk = fin.read(max_chunk)
+                payload_written += len(chunk)
+                is_last = payload_written >= orig_size
+                iv = (
+                    nonce_prefix
+                    + segment.to_bytes(4, "big")
+                    + (b"\x01" if is_last else b"\x00")
+                )
+                fout.write(AESGCM(stream_key).encrypt(iv, chunk, b""))
+                segment += 1
                 if on_chunk_processed:
                     on_chunk_processed(len(chunk))
+                if is_last:
+                    break
 
-            final_enc = c_cipher.finalize()
-            if final_enc:
-                fout.write(final_enc)
-                poly_mac.update(final_enc)
+    # Guard against any divergence from Tink's exact stream size formula.
+    written_stream = output_file.stat().st_size - FIXED_PREFIX_LENGTH - len(enc_header)
+    if written_stream != ciphertext_length:
+        raise ValueError(
+            f"Tink stream size mismatch: wrote {written_stream}, expected {ciphertext_length}"
+        )
 
-        mac_tag = poly_mac.digest()
-        fout.write(mac_tag)
+    header_key = bytearray(len(header_key))
+    stream_key = bytearray(len(stream_key))
+    dek = bytearray(len(dek))
 
     try:
         os.utime(output_file, (stat.st_atime, stat.st_mtime))
@@ -1283,10 +1287,10 @@ def unlock_master_key_with_path(
     args,
     lang: str,
     extra_vault_paths: list[Path] | None = None,
-) -> tuple[bytes, Path | None]:
+) -> tuple[VaultKeys, Path | None]:
     """
     Locates .vault on disk, prompts for password/PIN (with retry on interactive input),
-    and unwraps the Master Key. Returns (master_key, vault_path_or_none).
+    and unwraps both keys in the keyring. Returns (VaultKeys, vault_path_or_none).
     """
     vault_data: bytes | None = None
     vault_path: Path | None = None
@@ -1323,9 +1327,9 @@ def unlock_master_key_with_path(
     if cli_secret:
         print(t(lang, "unwrapping_vault"))
         try:
-            master_key = unlock_vault_header_bytes(vault_data, cli_secret)
+            vault_keys = unwrap_vault_keys(vault_data, cli_secret)
             print(t(lang, "vault_unlocked"))
-            return master_key, vault_path
+            return vault_keys, vault_path
         except Exception as e:
             print(t(lang, "vault_unlock_err", err=e), file=sys.stderr)
             sys.exit(1)
@@ -1349,9 +1353,9 @@ def unlock_master_key_with_path(
 
         print(t(lang, "unwrapping_vault"))
         try:
-            master_key = unlock_vault_header_bytes(vault_data, secret)
+            vault_keys = unwrap_vault_keys(vault_data, secret)
             print(t(lang, "vault_unlocked"))
-            return master_key, vault_path
+            return vault_keys, vault_path
         except Exception as e:
             print(t(lang, "vault_unlock_err", err=e), file=sys.stderr)
             if max_attempts is not None and attempt >= max_attempts:
@@ -1362,14 +1366,14 @@ def unlock_master_key(
     args,
     lang: str,
     extra_vault_paths: list[Path] | None = None,
-) -> bytes:
-    """Locates .vault on disk, prompts for password/PIN, and unwraps the Master Key."""
-    master_key, _ = unlock_master_key_with_path(
+) -> VaultKeys:
+    """Locates .vault on disk, prompts for password/PIN, and unwraps both vault keys."""
+    vault_keys, _ = unlock_master_key_with_path(
         args,
         lang,
         extra_vault_paths=extra_vault_paths,
     )
-    return master_key
+    return vault_keys
 
 def is_targetable_vault_dir(
     vault_file: Path | None,
@@ -1378,10 +1382,10 @@ def is_targetable_vault_dir(
     desktop_out_dir: Path,
 ) -> bool:
     """
-    Returns True when vault_file.parent is a real vault directory (e.g. Secrets, or the
-    legacy Cipher_Secrets folder, on an external USB/SD drive or a directory containing
-    .nomedia / .meta albums / .bin files)
-    rather than a standalone .vault copied onto Desktop, Home, input_path, or Persistent root.
+    Returns True when vault_file.parent is a real vault directory (i.e. Secrets on an
+    external USB/SD drive, or a directory containing .nomedia / .meta albums / .bin
+    files) rather than a standalone .vault copied onto Desktop, Home, input_path, or
+    Persistent root.
     """
     if vault_file is None:
         return False
@@ -1412,7 +1416,7 @@ def is_targetable_vault_dir(
             if child.is_file() and child.suffix.lower() == ".bin":
                 return True
             if child.is_dir() and not child.name.startswith(".") and child.name.lower() != "json":
-                if (child / ".meta").is_file() or (child / ".fmeta").is_file():
+                if (child / ".meta").is_file():
                     return True
     except Exception:
         return False
@@ -1429,8 +1433,7 @@ def choose_encrypt_output_dir(
     Determines the unified encryption destination directory with no interactive prompt:
     1. Explicit -o / --output path.
     2. Targetable vault directory (e.g. .../Secrets/.vault -> .../Secrets).
-    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Secrets,
-       reusing an existing legacy Cipher_Secrets folder when present).
+    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Secrets).
     4. Fallback to localized Desktop output folder (Encrypted_Output / Sifreli_Cikti).
     """
     if args.output:
@@ -1523,10 +1526,9 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         print("=" * 65 + "\n")
         sys.exit(0)
 
-    master_key, vault_path = unlock_master_key_with_path(args, lang)
-    if vault_path is not None and read_vault_format(vault_path) == 4:
-        print(t(lang, "vault_format_mismatch"))
-        sys.exit(0)
+    vault_keys, vault_path = unlock_master_key_with_path(args, lang)
+    vmk = vault_keys.vmk   # protects folder .meta files
+    kek = vault_keys.kek   # protects file container headers
     if vault_path is not None and is_cloud_synced_path(vault_path):
         print(t(lang, "cloud_sync_warning", path=vault_path))
 
@@ -1548,7 +1550,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
     total_bytes = sum(f.stat().st_size for f, _ in items_to_encrypt)
     print(t(lang, "enc_queued", count=len(items_to_encrypt), mb=total_bytes / (1024 * 1024)))
 
-    album_cache = scan_existing_vault_albums(output_dir, master_key)
+    album_cache = scan_existing_vault_albums(output_dir, vmk)
     progress = HorizontalProgressBar(len(items_to_encrypt), total_bytes, lang=lang)
     created_bins: list[Path] = []
 
@@ -1557,14 +1559,14 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             dest_dir = get_or_create_vault_album(
                 output_dir,
                 album_name,
-                master_key,
+                vmk,
                 album_cache=album_cache,
             )
 
             out_bin = encrypt_file(
                 src_file,
                 dest_dir,
-                master_key,
+                kek,
                 on_chunk_processed=lambda chunk_len, fn=src_file.name: progress.update(chunk_len, fn)
             )
             created_bins.append(out_bin)
@@ -1632,17 +1634,6 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         if args.adb:
             phone_container = f"/storage/emulated/0/{APP_DIR_NAME}"
             phone_dest = f"{phone_container}/{VAULT_DIR_NAME}/"
-            # An upgraded phone may still use the pre-rename folder. Push there when its .vault
-            # header exists, otherwise files would land in a sibling folder outside the active vault.
-            try:
-                probe = subprocess.run(
-                    ["adb", "shell", f"[ -f '{phone_container}/{LEGACY_VAULT_DIR_NAME}/.vault' ] && echo legacy"],
-                    capture_output=True, text=True, timeout=10,
-                )
-                if "legacy" in probe.stdout:
-                    phone_dest = f"{phone_container}/{LEGACY_VAULT_DIR_NAME}/"
-            except Exception:
-                pass
             print(t(lang, "adb_pushing", dest=phone_dest))
             res = subprocess.run(["adb", "devices"], capture_output=True, text=True)
             has_adb_device = any(
@@ -1665,8 +1656,8 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                         subprocess.run(["adb", "push", str(b), phone_dest], check=True)
                 print(t(lang, "adb_done"))
     finally:
-        if master_key:
-            master_key = bytearray(len(master_key))
+        vmk = bytearray(len(vmk))
+        kek = bytearray(len(kek))
 
 def main():
     configure_console()
@@ -1687,8 +1678,6 @@ Desktop Usage:
   Direct external vault example (Linux / macOS / Windows):
      python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/.vault
 
-Legacy Cipher_Secrets containers (and the former "Fossify Gallery Cipher" app folder)
-are still auto-detected and written to in place.
         """
     )
     parser.add_argument("-e", "--encrypt", action="store_true", help="Encrypt plaintext media into .bin format (default)")

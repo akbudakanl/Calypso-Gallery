@@ -15,101 +15,35 @@ from pathlib import Path
 from unittest import mock
 
 import cipher_vault as cv
-from test_poly1305_aes import poly1305_aes_tag
+from test_tink_stream import parse_container, reference_expected_ciphertext_size
 
 
-def decrypt_bin_for_test(bin_path: Path, master_key: bytes) -> dict:
-    """
-    Test-only helper to decrypt and authenticate an FGVLTENC v3 .bin file
-    so unit tests can verify ciphertext integrity, header metadata, thumbnails,
-    and plaintext payload without keeping decryption logic in cipher_vault.py.
-    """
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-
-    data = bin_path.read_bytes()
-    min_size = 8 + 1 + 12 + 4 + 16 + 16 + 16
-    if len(data) < min_size:
-        raise ValueError(f"File too small: {bin_path}")
-
-    pos = 0
-    if data[pos:pos + 8] != cv.MAGIC_V2:
-        raise ValueError("Invalid magic")
-    pos += 8
-    if data[pos] != cv.VERSION_SYMMETRIC_AUTH:
-        raise ValueError(f"Unexpected version: {data[pos]}")
-    pos += 1
-
-    header_iv = data[pos:pos + 12]
-    pos += 12
-    enc_header_len = struct.unpack(">i", data[pos:pos + 4])[0]
-    pos += 4
-    enc_header_data = data[pos:pos + enc_header_len]
-    pos += enc_header_len
-
-    header_key = cv.derive_subkey(master_key, cv.DOMAIN_HEADER_KEY)
-    h_dec = Cipher(
-        algorithms.AES(header_key),
-        modes.GCM(header_iv, enc_header_data[-16:]),
-        backend=default_backend(),
-    ).decryptor()
-    header_plain = h_dec.update(enc_header_data[:-16]) + h_dec.finalize()
-
-    name_len = struct.unpack(">H", header_plain[:2])[0]
-    orig_name = header_plain[2:2 + name_len].decode("utf-8")
-    last_mod, date_taken, orig_size, media_type, video_duration, thumb_len = struct.unpack(
-        ">qqqiii",
-        header_plain[2 + name_len:2 + name_len + 36],
-    )
-    thumb_bytes = header_plain[2 + name_len + 36:2 + name_len + 36 + thumb_len]
-
-    content_iv = data[pos:pos + 16]
-    pos += 16
-    enc_payload = data[pos:-16]
-    expected_mac = data[-16:]
-
-    content_mac_key = cv.derive_subkey(master_key, cv.DOMAIN_CONTENT_MAC_KEY)
-    # MAC dogrulamasi BAGIMSIZ bir uygulamadan yapilir (pycryptodome).
-    # Aksi halde test, ayni hatali MAC kodunu iki kez kullanir ve hata gorunmez.
-    if poly1305_aes_tag(content_mac_key, content_iv, enc_payload) != expected_mac:
-        raise ValueError("Poly1305 MAC mismatch")
-
-    content_enc_key = cv.derive_subkey(master_key, cv.DOMAIN_CONTENT_ENC_KEY)
-    c_dec = Cipher(
-        algorithms.AES(content_enc_key),
-        modes.CTR(content_iv),
-        backend=default_backend(),
-    ).decryptor()
-    payload = c_dec.update(enc_payload) + c_dec.finalize()
-
-    return {
-        "orig_name": orig_name,
-        "last_mod": last_mod,
-        "date_taken": date_taken,
-        "orig_size": orig_size,
-        "media_type": media_type,
-        "video_duration": video_duration,
-        "thumb_bytes": thumb_bytes,
-        "payload": payload,
-    }
+def decrypt_bin_for_test(bin_path: Path, kek: bytes) -> dict:
+    """Test-only helper: parse and decrypt a canonical FGVLTENC v1 .bin container."""
+    return parse_container(bin_path.read_bytes(), kek)
 
 
-def create_test_vault_file(vault_path: Path, secret: str, master_key: bytes | None = None) -> bytes:
-    """Builds a valid FGVLT2 v3 .vault file matching Android CryptoManager.writeVaultHeader."""
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.backends import default_backend
+def create_test_vault_file(
+    vault_path: Path,
+    secret: str,
+    vmk: bytes | None = None,
+    kek: bytes | None = None,
+) -> tuple[bytes, bytes]:
+    """Builds a canonical v1 .vault header (PDK -> VMK -> keyring -> KEK)."""
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from argon2.low_level import hash_secret_raw, Type
 
-    if master_key is None:
-        master_key = secrets.token_bytes(32)
+    if vmk is None:
+        vmk = secrets.token_bytes(32)
+    if kek is None:
+        kek = secrets.token_bytes(32)
 
     iterations = 1
     memory_kb = 8192
     parallelism = 1
     salt = secrets.token_bytes(16)
-    iv = secrets.token_bytes(12)
-
-    wrapping_key = hash_secret_raw(
+    iv_pdk = secrets.token_bytes(12)
+    pdk = hash_secret_raw(
         secret=secret.encode("utf-8"),
         salt=salt,
         time_cost=iterations,
@@ -118,23 +52,27 @@ def create_test_vault_file(vault_path: Path, secret: str, master_key: bytes | No
         hash_len=32,
         type=Type.ID,
     )
+    wrapped_vmk = AESGCM(pdk).encrypt(iv_pdk, vmk, b"")
 
-    bundle = master_key + struct.pack(">i", 0)
-    enc = Cipher(algorithms.AES(wrapping_key), modes.GCM(iv), backend=default_backend()).encryptor()
-    wrapped = enc.update(bundle) + enc.finalize() + enc.tag
+    iv_vmk = secrets.token_bytes(12)
+    keyring = struct.pack(">H", 1) + kek
+    wrapped_keyring = AESGCM(vmk).encrypt(iv_vmk, keyring, b"")
 
     with open(vault_path, "wb") as f:
-        f.write(cv.VAULT_HEADER_MAGIC)
-        f.write(bytes([3, 1]))
+        f.write(cv.VAULT_HEADER_MAGIC)               # 5B "FGVLT"
+        f.write(bytes([1, 1]))                       # version 1, Argon2id
         f.write(struct.pack(">3i", iterations, memory_kb, parallelism))
-        f.write(bytes([3]))
+        f.write(bytes([1]))                          # protection type
         f.write(struct.pack(">i", len(salt)))
         f.write(salt)
-        f.write(iv)
-        f.write(struct.pack(">i", len(wrapped)))
-        f.write(wrapped)
+        f.write(iv_pdk)
+        f.write(struct.pack(">i", len(wrapped_vmk)))
+        f.write(wrapped_vmk)
+        f.write(iv_vmk)
+        f.write(struct.pack(">i", len(wrapped_keyring)))
+        f.write(wrapped_keyring)
 
-    return master_key
+    return vmk, kek
 
 
 class TestCipherVaultCLI(unittest.TestCase):
@@ -147,7 +85,8 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.vault_dir = self.root / "ExternalUSB" / "Secrets"
         self.vault_dir.mkdir(parents=True, exist_ok=True)
         self.vault_file = self.vault_dir / ".vault"
-        self.master_key = create_test_vault_file(self.vault_file, self.secret)
+        self.vmk, self.kek = create_test_vault_file(self.vault_file, self.secret)
+        self.master_key = self.vmk   # VMK protects folder .meta files
 
     def tearDown(self):
         self.tmpdir.cleanup()
@@ -210,6 +149,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         cv.write_encrypted_folder_meta(normal_dir, "Vacation", self.master_key, vault_dir=self.vault_dir)
         self.assertTrue((self.vault_dir / ".nomedia").is_file())
         self.assertFalse((normal_dir / ".nomedia").exists())
+        self.assertEqual((normal_dir / ".meta").read_bytes()[:6], cv.FOLDER_META_MAGIC)
         self.assertEqual(cv.read_raw_folder_meta(normal_dir / ".meta", self.master_key), "Vacation")
         self.assertEqual(cv.read_encrypted_folder_meta(normal_dir / ".meta", self.master_key), "Vacation")
 
@@ -242,7 +182,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.assertIsNone(cv.read_encrypted_folder_meta(normal_dir / ".meta", wrong_key))
 
     def test_scan_existing_vault_albums_ignores_system_dirs(self):
-        # Create valid default album (legacy Turkish variant), valid named album, recycle bin, JSON, .hidden, and bad .meta
+        # Create a Turkish-named default album, a named album, recycle bin, JSON, .hidden, and bad .meta
         def_dir = self.vault_dir / "aa1122"
         def_dir.mkdir()
         cv.write_encrypted_folder_meta(def_dir, "Varsayılan Gizli Albüm", self.master_key)
@@ -380,8 +320,8 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.assertEqual(len(root_bins), 1)
         self.assertEqual(len(trip_bins), 1)
 
-        root_dec = decrypt_bin_for_test(root_bins[0], self.master_key)
-        trip_dec = decrypt_bin_for_test(trip_bins[0], self.master_key)
+        root_dec = decrypt_bin_for_test(root_bins[0], self.kek)
+        trip_dec = decrypt_bin_for_test(trip_bins[0], self.kek)
         self.assertEqual(root_dec["orig_name"], "root_photo.jpg")
         self.assertEqual(root_dec["orig_size"], len(root_payload))
         self.assertEqual(root_dec["payload"], root_payload)
@@ -468,17 +408,6 @@ class TestCipherVaultCLI(unittest.TestCase):
                 )
             self.assertEqual(chosen_usb_root, (usb_root_dir / "Secrets").resolve())
 
-            # 3b. Existing legacy Cipher_Secrets folder on the drive is reused, not duplicated
-            (usb_root_dir / "Secrets").rmdir()  # remove the folder created by case 3
-            legacy_on_usb = usb_root_dir / "Cipher_Secrets"
-            legacy_on_usb.mkdir()
-            with redirect_stdout(io.StringIO()):
-                chosen_legacy = cv.choose_encrypt_output_dir(
-                    args_no_out, self.desktop, "en", input_dir, usb_root_vault
-                )
-            self.assertEqual(chosen_legacy, legacy_on_usb.resolve())
-            self.assertFalse((usb_root_dir / "Secrets").exists())
-
             # 4. Standalone ~/Desktop/.vault -> ~/Desktop/Encrypted_Output
             with redirect_stdout(io.StringIO()):
                 chosen_desktop = cv.choose_encrypt_output_dir(
@@ -546,8 +475,8 @@ class TestCipherVaultCLI(unittest.TestCase):
         cache = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
         self.assertIsNotNone(cache.default_album_dir)
         self.assertIn("AlbumOne", cache.exact_albums)
-        root_dec = decrypt_bin_for_test(next(cache.default_album_dir.glob("*.bin")), self.master_key)
-        sub_dec = decrypt_bin_for_test(next(cache.exact_albums["AlbumOne"].glob("*.bin")), self.master_key)
+        root_dec = decrypt_bin_for_test(next(cache.default_album_dir.glob("*.bin")), self.kek)
+        sub_dec = decrypt_bin_for_test(next(cache.exact_albums["AlbumOne"].glob("*.bin")), self.kek)
         self.assertEqual(root_dec["orig_name"], "root.jpg")
         self.assertEqual(root_dec["payload"], root_data)
         self.assertEqual(sub_dec["orig_name"], "clip.mp4")
@@ -641,7 +570,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         cam_bins = list(cache.exact_albums["Camera"].glob("*.bin"))
         self.assertEqual(len(cam_bins), 1)
 
-        dec = decrypt_bin_for_test(cam_bins[0], self.master_key)
+        dec = decrypt_bin_for_test(cam_bins[0], self.kek)
         self.assertEqual(dec["orig_name"], "real_photo.jpg")
         self.assertEqual(dec["media_type"], cv.TYPE_IMAGES)
         self.assertGreater(len(dec["thumb_bytes"]), 0)
@@ -656,8 +585,10 @@ class TestCipherVaultCLI(unittest.TestCase):
         with mock.patch("getpass.getpass", side_effect=["", "wrong-secret", self.secret]), \
              redirect_stdout(io.StringIO()), \
              mock.patch("sys.stderr", new_callable=io.StringIO):
-            unlocked_key, unlocked_path = cv.unlock_master_key_with_path(args, "en")
-        self.assertEqual(unlocked_key, self.master_key)
+            unlocked_keys, unlocked_path = cv.unlock_master_key_with_path(args, "en")
+        self.assertEqual(unlocked_keys.vmk, self.vmk)
+        self.assertEqual(unlocked_keys.kek, self.kek)
+        self.assertEqual(cv.unlock_vault_header_bytes(self.vault_file.read_bytes(), self.secret), self.kek)
         self.assertEqual(unlocked_path, self.vault_file.resolve())
 
     def test_cloud_sync_path_detection_and_skips_desktop_vault_copy(self):
@@ -709,18 +640,6 @@ class TestCipherVaultCLI(unittest.TestCase):
             detected_cs = cv.find_vault_file()
         self.assertEqual(detected_cs, cs_vault)
 
-        # A legacy Cipher_Secrets/.vault on an existing drive is still discovered
-        cs_vault.unlink()
-        cs_vault.parent.rmdir()
-        legacy_vault = fake_usb_drive / "Cipher_Secrets" / ".vault"
-        legacy_vault.parent.mkdir(parents=True)
-        create_test_vault_file(legacy_vault, self.secret, self.master_key)
-        with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
-             mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
-             mock.patch.object(cv, "_external_mount_roots", return_value=[fake_usb_drive]):
-            detected_legacy = cv.find_vault_file()
-        self.assertEqual(detected_legacy, legacy_vault)
-
     def test_windows_and_macos_notices_and_readonly_wipe_without_extra_prompts(self):
         in_dir = self.root / "OneDrive" / "To_Encrypt"
         in_dir.mkdir(parents=True)
@@ -751,6 +670,61 @@ class TestCipherVaultCLI(unittest.TestCase):
         source_text = Path(cv.__file__).read_text(encoding="utf-8")
         for forbidden in ("decrypt_file", "decrypt_stream", "run_decrypt_mode", "import zipfile"):
             self.assertNotIn(forbidden, source_text)
+
+    def test_no_legacy_or_superseded_format_symbols(self):
+        for removed in ("derive_subkey", "poly1305_aes_mac", "poly1305_aes_mac_stream", "read_vault_format"):
+            self.assertFalse(hasattr(cv, removed), f"cipher_vault must not expose {removed}")
+        source_text = Path(cv.__file__).read_text(encoding="utf-8")
+        for forbidden in (
+            "Poly1305", "poly1305", "pycryptodome", "FossifyGallery",
+            "Cipher_Secrets", "Fossify Gallery Cipher", "FGMETA2", "FVLTMETA",
+            ".fmeta", "vault_format_mismatch",
+        ):
+            self.assertNotIn(forbidden, source_text)
+
+    def test_encrypt_file_writes_canonical_container(self):
+        source = self.root / "CanonicalPhoto.jpg"
+        payload = bytes((i * 17 + 3) & 0xFF for i in range(262089))  # crosses a segment boundary
+        source.write_bytes(payload)
+
+        out = cv.encrypt_file(source, self.vault_dir, self.kek)
+        data = out.read_bytes()
+
+        self.assertEqual(data[:8], cv.CONTAINER_MAGIC)
+        self.assertEqual(data[8], 1)                                   # version
+        self.assertEqual(struct.unpack(">H", data[9:11])[0], 1)         # keyId
+        self.assertEqual(len(data[11:27]), 16)                          # fileId
+
+        parsed = parse_container(data, self.kek)
+        self.assertEqual(parsed["orig_name"], "CanonicalPhoto.jpg")
+        self.assertEqual(parsed["orig_size"], len(payload))
+        self.assertEqual(parsed["payload"], payload)
+        n = struct.unpack(">I", data[39:43])[0]
+        self.assertEqual(parsed["ciphertext_length"], len(data) - cv.FIXED_PREFIX_LENGTH - n)
+        self.assertEqual(parsed["ciphertext_length"], reference_expected_ciphertext_size(len(payload)))
+        self.assertEqual(len(data), cv.FIXED_PREFIX_LENGTH + n + parsed["ciphertext_length"])
+
+    def test_canonical_vault_header_version_and_keyring(self):
+        raw = self.vault_file.read_bytes()
+        self.assertEqual(raw[:5], cv.VAULT_HEADER_MAGIC)
+        self.assertEqual(raw[5], 1)   # canonical version 1
+        self.assertEqual(raw[6], 1)   # Argon2id
+
+        keys = cv.unwrap_vault_keys(raw, self.secret)
+        self.assertEqual(keys.vmk, self.vmk)
+        self.assertEqual(keys.kek, self.kek)
+        self.assertEqual(cv.unlock_vault_header_bytes(raw, self.secret), self.kek)
+        with self.assertRaises(ValueError):
+            cv.unwrap_vault_keys(raw, "wrong-secret")
+
+    def test_encrypt_file_uses_kek_not_vmk(self):
+        """A container encrypted with the KEK must not open with the VMK."""
+        source = self.root / "KeySeparation.jpg"
+        source.write_bytes(b"key-separation-payload")
+        out = cv.encrypt_file(source, self.vault_dir, self.kek)
+        from cryptography.exceptions import InvalidTag
+        with self.assertRaises(InvalidTag):
+            parse_container(out.read_bytes(), self.vmk)
 
     def test_pending_sync_appends_across_sessions_without_overwriting(self):
         batch1 = self.root / "Batch1"
