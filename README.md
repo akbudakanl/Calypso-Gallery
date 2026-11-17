@@ -70,3 +70,9 @@ Use the Material Design interface with dynamic color and theme support.
 - [FORK_CHANGELOG.md](FORK_CHANGELOG.md) — fork-only change and modification record
 - [CHANGELOG.md](CHANGELOG.md) — upstream-only Fossify Gallery release history
 - [tools/fossify-cipher-cli/README.md](tools/fossify-cipher-cli/README.md) — command-line vault tooling
+
+### Fork release process
+
+The fork release workflow reads, updates, and publishes release notes exclusively from `FORK_CHANGELOG.md`; it never consumes or rewrites the upstream-only `CHANGELOG.md`. Fork release tags use the independent `X.Y.Z-cipher` version form.
+
+Each release creates a version-specific source tag and GitHub release with the complete fork release section and a corresponding source archive. Setting `RELEASE_TARGET=gplay` additionally deploys to Google Play after the GitHub source release succeeds; otherwise the release is published to GitHub only. Fastlane changelog entries are deterministic summaries capped at Play Console's 500-character limit and link to both the complete release notes and the version-specific source archive.

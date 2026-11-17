@@ -1,4 +1,4 @@
-name: Prepare Release PR
+name: Prepare Calypso Release PR
 
 on:
   repository_dispatch:
@@ -7,11 +7,186 @@ on:
   push:
     branches: [main]
     paths:
-      - "CHANGELOG.md"
+      - "FORK_CHANGELOG.md"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: calypso-release-pr-${{ github.repository }}
+  cancel-in-progress: true
 
 jobs:
-  call-release-pr:
-    uses: FossifyOrg/.github/.github/workflows/prepare-release-pr.yml@main
-    with:
-      abi_apks: true
-    secrets: inherit
+  release-pr:
+    if: ${{ github.event_name != 'push' || !contains(github.event.head_commit.message, 'chore(release)') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (audit outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Test fork release tooling
+        run: python -m unittest discover -s .github/scripts/tests -v
+
+      - name: Get next version code
+        id: version-code
+        run: |
+          current_version_code=$(grep '^VERSION_CODE=' gradle.properties | cut -d= -f2)
+          next_version_code=$(( (current_version_code / 10 + 1) * 10 ))
+          echo "nextVersionCode=$next_version_code" >> "$GITHUB_OUTPUT"
+
+      - name: Check release history
+        id: release-history
+        run: |
+          current_version=$(grep '^VERSION_NAME=' gradle.properties | cut -d= -f2)
+          echo "currentVersion=$current_version" >> "$GITHUB_OUTPUT"
+          if git rev-parse --verify --quiet "refs/tags/$current_version" >/dev/null; then
+            echo "hasCurrentTag=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hasCurrentTag=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add translation note when metadata changed
+        if: steps.release-history.outputs.hasCurrentTag == 'true'
+        run: |
+          python .github/scripts/fork_changelog.py ensure-translations \
+            --tag "${{ steps.release-history.outputs.currentVersion }}"
+
+      - name: Check Unreleased changes
+        id: changelog
+        run: |
+          has_changes=$(python .github/scripts/fork_changelog.py has-unreleased)
+          echo "has_changes=$has_changes" >> "$GITHUB_OUTPUT"
+
+      - name: Calculate next fork version name
+        if: steps.release-history.outputs.hasCurrentTag == 'true' && steps.changelog.outputs.has_changes == 'true'
+        id: semantic-version
+        uses: ietf-tools/semver-action@c90370b2958652d71c06a3484129a4d423a6d8a8
+        with:
+          token: ${{ github.token }}
+          branch: ${{ github.event.repository.default_branch }}
+          fromTag: ${{ steps.release-history.outputs.currentVersion }}
+          noNewCommitBehavior: "warn"
+          noVersionBumpBehavior: "patch"
+          patchList: fix, bugfix, perf, refactor, test, tests, chore
+
+      - name: Select next fork version name
+        if: steps.changelog.outputs.has_changes == 'true'
+        id: version-name
+        env:
+          CURRENT_VERSION: ${{ steps.release-history.outputs.currentVersion }}
+          HAS_CURRENT_TAG: ${{ steps.release-history.outputs.hasCurrentTag }}
+          VERSION_BUMP: ${{ steps.semantic-version.outputs.bump }}
+        run: |
+          set -euo pipefail
+          if [[ "$HAS_CURRENT_TAG" == "true" ]]; then
+            if [[ -z "$VERSION_BUMP" ]]; then
+              echo "::error::Unable to determine the next semantic version bump"
+              exit 1
+            fi
+            next_version=$(python .github/scripts/fork_changelog.py next-version \
+              --current "$CURRENT_VERSION" --bump "$VERSION_BUMP")
+          else
+            next_version="$CURRENT_VERSION"
+          fi
+
+          if [[ ! "$next_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+-cipher$ ]]; then
+            echo "::error::Invalid fork release version: $next_version"
+            exit 1
+          fi
+
+          echo "nextStrict=$next_version" >> "$GITHUB_OUTPUT"
+
+      - name: Check if release branch needs update
+        if: steps.version-name.outputs.nextStrict
+        id: skip-update
+        run: |
+          set -euo pipefail
+          main_branch="${{ github.event.repository.default_branch }}"
+          release_branch="calypso-release"
+
+          if git rev-parse --verify -q "origin/$release_branch"; then
+            if git merge-base --is-ancestor "origin/$main_branch" "origin/$release_branch"; then
+              echo "needs_update=false" >> "$GITHUB_OUTPUT"
+              echo "Release branch is up-to-date."
+            else
+              echo "needs_update=true" >> "$GITHUB_OUTPUT"
+              echo "Release branch is behind the main branch."
+            fi
+          else
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
+            echo "Release branch doesn't exist yet."
+          fi
+
+      - name: Update fork release version files
+        if: steps.skip-update.outputs.needs_update == 'true' && steps.version-name.outputs.nextStrict
+        id: update-version
+        run: |
+          python .github/scripts/fork_changelog.py prepare \
+            --version "${{ steps.version-name.outputs.nextStrict }}" \
+            --code "${{ steps.version-code.outputs.nextVersionCode }}" \
+            --repository "${{ github.repository }}"
+
+      - name: Extract fork release notes
+        if: steps.update-version.outcome == 'success'
+        id: extract-changelog
+        env:
+          VERSION_NAME: ${{ steps.version-name.outputs.nextStrict }}
+          VERSION_CODE: ${{ steps.version-code.outputs.nextVersionCode }}
+        run: |
+          set -euo pipefail
+          github_notes=$(mktemp)
+          fastlane_notes=$(mktemp)
+          python .github/scripts/fork_changelog.py format \
+            --version "$VERSION_NAME" --format github \
+            --repository "${{ github.repository }}" --output "$github_notes"
+          python .github/scripts/fork_changelog.py format \
+            --version "$VERSION_NAME" --format fastlane \
+            --repository "${{ github.repository }}" --output "$fastlane_notes"
+
+          metadata_path="fastlane/metadata/android/en-US/changelogs"
+          mkdir -p "$metadata_path"
+          for offset in 0 1 2 3 4; do
+            cp "$fastlane_notes" "$metadata_path/$((VERSION_CODE + offset)).txt"
+          done
+
+          {
+            echo "changelog<<CALYPSO_RELEASE_NOTES"
+            cat "$github_notes"
+            echo "CALYPSO_RELEASE_NOTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create release app token
+        if: steps.update-version.outcome == 'success'
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Create or update release PR
+        if: steps.version-name.outputs.nextStrict && steps.extract-changelog.outcome == 'success'
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          sign-commits: true
+          branch: calypso-release
+          commit-message: "chore(release): v${{ steps.version-name.outputs.nextStrict }} (${{ steps.version-code.outputs.nextVersionCode }})"
+          title: "chore(release): v${{ steps.version-name.outputs.nextStrict }} (${{ steps.version-code.outputs.nextVersionCode }})"
+          body: |
+            ## Calypso Gallery release notes
+
+            ${{ steps.extract-changelog.outputs.changelog }}
+          add-paths: |
+            FORK_CHANGELOG.md
+            gradle.properties
+            .fossify/release-marker.txt
+            fastlane/metadata/android/en-US/changelogs/*.txt
