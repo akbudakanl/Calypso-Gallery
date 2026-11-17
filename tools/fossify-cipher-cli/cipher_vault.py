@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor CLI Tool
--------------------------------------------------------------------------
+Calypso Gallery - Cross-Platform Offline Vault Encryptor CLI Tool
+-----------------------------------------------------------------
 Encrypts plaintext media files (photos, videos) into .bin format,
-100% compatible with Android Fossify Gallery Cipher
+100% compatible with the Encrypted Vault of Calypso Gallery
 (AES-256-CTR + Poly1305-AES authenticated streaming encryption).
+
+This is an unofficial companion tool for the independently maintained Calypso Gallery fork;
+it is not affiliated with, endorsed by, or supported by Fossify.
 
 IMPORTANT SECURITY NOTICE (TIER 1 LIVE BOOT vs. TIER 2 STANDARD OS):
   - Tier 1 (Recommended for maximum privacy): Run inside a RAM-only Live Boot OS
@@ -18,8 +21,9 @@ IMPORTANT SECURITY NOTICE (TIER 1 LIVE BOOT vs. TIER 2 STANDARD OS):
 
 Features:
 - Automatic OS detection (Linux/Tails, macOS, Windows) with zero extra prompts.
-- Encrypt-Only workflow targeting either an external Cipher_Secrets vault
+- Encrypt-Only workflow targeting either an external Secrets vault
   directly or an output/delta folder (Encrypted_Output / Sifreli_Cikti).
+  Legacy "Cipher_Secrets" containers and the former app container name are still detected.
 - Automatic .vault discovery across Desktop, persistent storage, and mounted USB drives.
 - Pre-encryption supported media format validation matching the Android app.
 - Automatic Default Secret Album routing for root files & .meta-aware subfolder matching.
@@ -42,8 +46,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from io import BytesIO
 
-# The standalone container of the Android app in the internal storage.
-APP_DIR_NAME = "Fossify Gallery Cipher"
+# On-disk names used by the Android app. The legacy values are still recognised so existing
+# vaults and external containers keep working after the rename; they are not brand names.
+APP_DIR_NAME = "Calypso Gallery"
+LEGACY_APP_DIR_NAME = "Fossify Gallery Cipher"
+VAULT_DIR_NAME = "Secrets"
+LEGACY_VAULT_DIR_NAME = "Cipher_Secrets"
+VAULT_DIR_NAMES = (VAULT_DIR_NAME, LEGACY_VAULT_DIR_NAME)
 
 HAS_CRYPTO = True
 try:
@@ -206,7 +215,7 @@ MESSAGES = {
         "op_cancelled": "\nOperation cancelled.",
         "vault_format_mismatch": "\033[1;31m[-] Encrypted Vault format mismatch: the selected vault uses the v4 encryption algorithm, but this CLI version can only write v3 containers. No files were transferred and the pending-sync file was left untouched.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault file was not found automatically.\033[0m",
-        "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Cipher_Secrets > .vault)",
+        "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Secrets > .vault; legacy Cipher_Secrets is also detected)",
         "vault_path_hint": "    onto your Desktop or enter its path below.",
         "vault_enter_path": "\n\033[1;36m-> Enter path to .vault file (or drag & drop here): \033[0m",
         "vault_copy_prompt": "\033[1;32m[i] Copy .vault to Desktop for automatic detection next time? [Y/n]: \033[0m",
@@ -220,7 +229,7 @@ MESSAGES = {
         "vault_unlocked": "\033[1;32m[✓] Vault unlocked successfully! Master Key loaded into memory.\033[0m\n",
         "vault_unlock_err": "\033[1;31m[ERROR]\033[0m Could not unlock vault: {err}",
         "vault_retry": "\033[1;33m[i] Please try again (Ctrl+C to cancel).\033[0m\n",
-        "enc_title": "\033[1;36m      Fossify Gallery Cipher - Offline Vault Encryptor\033[0m",
+        "enc_title": "\033[1;36m      Calypso Gallery - Offline Vault Encryptor\033[0m",
         "non_ram_os_notice": "\033[1;33m[i] Standard OS Mode ({os_name}):\033[0m Running on a disk-backed OS (not RAM-only Tails/Live Boot). Swap, thumbnails, and filesystem logs are not cleared; best suited for encrypting media already on this PC.",
         "cloud_sync_warning": "\033[1;31m[WARNING]\033[0m Cloud-synced folder detected ({path})! Plaintext media or .vault here may upload to OneDrive/iCloud/Dropbox. Prefer a non-synced local folder or USB drive (-i / -o).",
         "wipe_non_ram_disclaimer": "\033[1;33m[i] Note:\033[0m On {os_name} SSDs, overwriting removes the file entry but cannot erase SSD wear-leveling blocks, NTFS/APFS journals, shadow copies/snapshots, or OS thumbnail/search caches.",
@@ -234,7 +243,7 @@ MESSAGES = {
         "enc_success": "\n\033[1;32m[✓] Success! {count} file(s) encrypted and saved:\033[0m",
         "out_dir_line": "    -> Output Directory: \033[1;36m{path}\033[0m",
         "enc_tip1": "\033[1;37m[i] Tip: Transfer the contents of the output folder into your phone's\033[0m",
-        "enc_tip2": "\033[1;37m    '{app_dir}/Cipher_Secrets/' directory.\033[0m",
+        "enc_tip2": "\033[1;37m    '{app_dir}/Secrets/' directory.\033[0m",
         "wipe_prompt": "\n\033[1;33m[?] Securely wipe and delete plaintext files from input folder? [y/N]: \033[0m",
         "wiping_start": "\n\033[1;33m[*] Securely overwriting with zeros and deleting source files...\033[0m",
         "wipe_err": "    [-] Could not delete: {name} ({err})",
@@ -255,7 +264,7 @@ MESSAGES = {
         "op_cancelled": "\nİşlem iptal edildi.",
         "vault_format_mismatch": "\033[1;31m[-] Şifreli Kasa formatı uyumsuz: seçili kasa v4 şifreleme algoritmasını kullanıyor, ancak bu CLI sürümü yalnızca v3 konteyner yazabiliyor. Hiçbir dosya aktarılmadı ve bekleyen eşitleme dosyasına dokunulmadı.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault dosyası otomatik olarak bulunamadı.\033[0m",
-        "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Cipher_Secrets > .vault)",
+        "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Secrets > .vault; eski Cipher_Secrets de algılanır)",
         "vault_path_hint": "    Masaüstüne bırakabilir veya dosya yolunu aşağıya girebilirsiniz.",
         "vault_enter_path": "\n\033[1;36m-> .vault dosya yolunu girin (veya sürükleyip bırakın): \033[0m",
         "vault_copy_prompt": "\033[1;32m[i] Bir sonraki sefer otomatik algılama için .vault Masaüstüne kopyalansın mı? [E/h]: \033[0m",
@@ -269,7 +278,7 @@ MESSAGES = {
         "vault_unlocked": "\033[1;32m[✓] Kasa başarıyla açıldı! Ana Anahtar (Master Key) belleğe alındı.\033[0m\n",
         "vault_unlock_err": "\033[1;31m[HATA]\033[0m Kasa açılamadı: {err}",
         "vault_retry": "\033[1;33m[i] Lütfen tekrar deneyin (İptal için Ctrl+C).\033[0m\n",
-        "enc_title": "\033[1;36m      Fossify Gallery Cipher - Çevrimdışı Şifreleme Aracı\033[0m",
+        "enc_title": "\033[1;36m      Calypso Gallery - Çevrimdışı Şifreleme Aracı\033[0m",
         "non_ram_os_notice": "\033[1;33m[i] Standart İşletim Sistemi Modu ({os_name}):\033[0m RAM tabanlı Tails/Live Boot yerine disk tabanlı sistemde çalışıyor. Takas alanı, küçük resim önbelleği ve dosya sistemi izleri silinmez; bilgisayarda zaten bulunan medyaları şifrelemek için uygundur.",
         "cloud_sync_warning": "\033[1;31m[UYARI]\033[0m Bulutla eşitlenen klasör algılandı ({path})! Buradaki şifresiz medyalar veya .vault dosyası OneDrive/iCloud/Dropbox'a yüklenebilir. Bulut dışı yerel bir klasör veya USB (-i / -o) kullanmanız önerilir.",
         "wipe_non_ram_disclaimer": "\033[1;33m[i] Not:\033[0m {os_name} SSD disklerde üzerine sıfır yazmak dosyayı siler; ancak SSD aşınma dengeleme bloklarını, NTFS/APFS günlüklerini, gölge kopyaları/anlık görüntüleri veya sistem önbelleklerini temizlemez.",
@@ -283,7 +292,7 @@ MESSAGES = {
         "enc_success": "\n\033[1;32m[✓] Başarılı! {count} dosya şifrelendi ve kaydedildi:\033[0m",
         "out_dir_line": "    -> Çıktı Klasörü: \033[1;36m{path}\033[0m",
         "enc_tip1": "\033[1;37m[i] İpucu: Çıktı klasörünün içeriğini telefonunuzdaki\033[0m",
-        "enc_tip2": "\033[1;37m    '{app_dir}/Cipher_Secrets/' dizinine aktarabilirsiniz.\033[0m",
+        "enc_tip2": "\033[1;37m    '{app_dir}/Secrets/' dizinine aktarabilirsiniz.\033[0m",
         "wipe_prompt": "\n\033[1;33m[?] Girdi klasöründeki şifresiz kaynak dosyalar sıfırlanıp silinsin mi? [e/H]: \033[0m",
         "wiping_start": "\n\033[1;33m[*] Kaynak dosyalar üzerine sıfır yazılarak güvenli şekilde siliniyor...\033[0m",
         "wipe_err": "    [-] Silinemedi: {name} ({err})",
@@ -536,13 +545,15 @@ def find_vault_file() -> Path | None:
     standalone_candidates: list[Path] = []
 
     def add_vault_dir_locations(base: Path):
-        vault_dir_candidates.extend([
-            base / "Cipher_Secrets" / ".vault",
-            base / APP_DIR_NAME / "Cipher_Secrets" / ".vault",
-            base / "Documents" / "Cipher" / "Cipher_Secrets" / ".vault",
-        ])
+        for secrets_name in VAULT_DIR_NAMES:
+            vault_dir_candidates.extend([
+                base / secrets_name / ".vault",
+                base / APP_DIR_NAME / secrets_name / ".vault",
+                base / LEGACY_APP_DIR_NAME / secrets_name / ".vault",
+                base / "Documents" / "Cipher" / secrets_name / ".vault",
+            ])
 
-    # 1. Tails / Live-Boot Persistent & external USB drives (Cipher_Secrets vaults first)
+    # 1. Tails / Live-Boot Persistent & external USB drives (vault containers first)
     if kind == "linux":
         persistent_roots = [Path("/home/amnesia/Persistent"), Path.home() / "Persistent"]
         for p_root in persistent_roots:
@@ -632,7 +643,7 @@ def prompt_for_vault_file(lang: str) -> Path:
         if is_valid_vault_file(p):
             desktop = get_desktop_dir()
             desktop_vault = desktop / ".vault"
-            in_vault_dir = p.parent.name == "Cipher_Secrets" or (p.parent / ".nomedia").is_file()
+            in_vault_dir = p.parent.name in VAULT_DIR_NAMES or (p.parent / ".nomedia").is_file()
             if (
                 not in_vault_dir
                 and not desktop_vault.exists()
@@ -790,7 +801,7 @@ def write_encrypted_folder_meta(
     vault_dir: Path | None = None,
 ):
     """
-    Writes .meta (FGMETA2) compatible with Android Fossify Gallery Cipher.
+    Writes .meta (FGMETA2) compatible with the Calypso Gallery Encrypted Vault.
     Creates .nomedia at vault_dir root, and inside folder ONLY when original_name
     is an explicitly hidden dot-folder (never for normal albums, default album, or recycle bin).
     """
@@ -1180,7 +1191,7 @@ def encrypt_file(
     on_chunk_processed=None
 ) -> Path:
     """
-    Encrypts a media file into a .bin file 100% compatible with Android Fossify Gallery Cipher.
+    Encrypts a media file into a .bin file 100% compatible with the Calypso Gallery Encrypted Vault.
     Uses chunked streaming for high-efficiency on large files.
     """
     stat = source_path.stat()
@@ -1367,8 +1378,9 @@ def is_targetable_vault_dir(
     desktop_out_dir: Path,
 ) -> bool:
     """
-    Returns True when vault_file.parent is a real vault directory (e.g. Cipher_Secrets
-    on an external USB/SD drive or a directory containing .nomedia / .meta albums / .bin files)
+    Returns True when vault_file.parent is a real vault directory (e.g. Secrets, or the
+    legacy Cipher_Secrets folder, on an external USB/SD drive or a directory containing
+    .nomedia / .meta albums / .bin files)
     rather than a standalone .vault copied onto Desktop, Home, input_path, or Persistent root.
     """
     if vault_file is None:
@@ -1390,7 +1402,7 @@ def is_targetable_vault_dir(
         if vdir in excluded:
             return False
 
-        if vdir.name == "Cipher_Secrets":
+        if vdir.name in VAULT_DIR_NAMES:
             return True
 
         if (vdir / ".nomedia").is_file():
@@ -1416,8 +1428,9 @@ def choose_encrypt_output_dir(
     """
     Determines the unified encryption destination directory with no interactive prompt:
     1. Explicit -o / --output path.
-    2. Targetable vault directory (e.g. .../Cipher_Secrets/.vault -> .../Cipher_Secrets).
-    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Cipher_Secrets).
+    2. Targetable vault directory (e.g. .../Secrets/.vault -> .../Secrets).
+    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Secrets,
+       reusing an existing legacy Cipher_Secrets folder when present).
     4. Fallback to localized Desktop output folder (Encrypted_Output / Sifreli_Cikti).
     """
     if args.output:
@@ -1438,7 +1451,8 @@ def choose_encrypt_output_dir(
             Path(__file__).resolve().parent.resolve(),
         }
         if vdir not in standalone_excluded:
-            target_dir = (vdir / "Cipher_Secrets").resolve()
+            existing_vault_dir = next((vdir / name for name in VAULT_DIR_NAMES if (vdir / name).is_dir()), None)
+            target_dir = (existing_vault_dir or (vdir / VAULT_DIR_NAME)).resolve()
         else:
             target_dir = desktop_out_dir
     else:
@@ -1562,7 +1576,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         if skipped_unsupported > 0:
             print(t(lang, "enc_skipped_summary", count=skipped_unsupported))
         print(t(lang, "out_dir_line", path=output_dir))
-        if (output_dir / ".vault").is_file() or output_dir.name == "Cipher_Secrets":
+        if (output_dir / ".vault").is_file() or output_dir.name in VAULT_DIR_NAMES:
             print(t(lang, "enc_tip_direct"))
         else:
             print(t(lang, "enc_tip1"))
@@ -1616,7 +1630,19 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             print(t(lang, "wiping_done"))
 
         if args.adb:
-            phone_dest = f"/storage/emulated/0/{APP_DIR_NAME}/Cipher_Secrets/"
+            phone_container = f"/storage/emulated/0/{APP_DIR_NAME}"
+            phone_dest = f"{phone_container}/{VAULT_DIR_NAME}/"
+            # An upgraded phone may still use the pre-rename folder. Push there when its .vault
+            # header exists, otherwise files would land in a sibling folder outside the active vault.
+            try:
+                probe = subprocess.run(
+                    ["adb", "shell", f"[ -f '{phone_container}/{LEGACY_VAULT_DIR_NAME}/.vault' ] && echo legacy"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                if "legacy" in probe.stdout:
+                    phone_dest = f"{phone_container}/{LEGACY_VAULT_DIR_NAME}/"
+            except Exception:
+                pass
             print(t(lang, "adb_pushing", dest=phone_dest))
             res = subprocess.run(["adb", "devices"], capture_output=True, text=True)
             has_adb_device = any(
@@ -1647,7 +1673,7 @@ def main():
     desktop = get_desktop_dir()
 
     parser = argparse.ArgumentParser(
-        description="Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor",
+        description="Calypso Gallery - Cross-Platform Offline Vault Encryptor",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 SECURITY NOTICE (Tier 1 Live Boot vs. Tier 2 Standard OS):
@@ -1659,7 +1685,10 @@ Desktop Usage:
   Encrypt (English: To_Encrypt -> Vault or Encrypted_Output | Türkçe: Sifrelenecek -> Kasa veya Sifreli_Cikti):
      python3 cipher_vault.py --lang en
   Direct external vault example (Linux / macOS / Windows):
-     python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Cipher_Secrets/.vault
+     python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/.vault
+
+Legacy Cipher_Secrets containers (and the former "Fossify Gallery Cipher" app folder)
+are still auto-detected and written to in place.
         """
     )
     parser.add_argument("-e", "--encrypt", action="store_true", help="Encrypt plaintext media into .bin format (default)")
@@ -1667,7 +1696,7 @@ Desktop Usage:
     parser.add_argument("--lang", choices=["en", "tr"], help="CLI language and Desktop folder language (en or tr)")
     parser.add_argument("-v", "-k", "--vault", help="Path to .vault file (Searched automatically across mounted vaults/USB/desktop if omitted)")
     parser.add_argument("-i", "--input", help="Input folder/file")
-    parser.add_argument("-o", "--output", help="Output folder (or target Cipher_Secrets vault directory)")
+    parser.add_argument("-o", "--output", help="Output folder (or target Secrets vault directory)")
     parser.add_argument("-s", "--secret", help="Vault password or PIN (Prompted securely if omitted)")
     parser.add_argument("--pattern", help="Grid pattern indices if 3x3 pattern is used (e.g. '0,1,2,5')")
     parser.add_argument("--delete-source", action="store_true", help="Securely wipe and delete original files after encryption")

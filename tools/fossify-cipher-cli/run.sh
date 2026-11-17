@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Fossify Gallery Cipher - Linux & macOS Quick Launcher
+# Calypso Gallery - Linux & macOS Quick Launcher
 # ==============================================================================
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -114,14 +114,16 @@ if [ "$OS_NAME" = "Darwin" ]; then
 fi
 
 # 4. Create double-clickable Desktop shortcut icon (Linux)
-DESKTOP_FILE="$DESKTOP_DIR/Fossify-Cipher.desktop"
+DESKTOP_FILE="$DESKTOP_DIR/Calypso-Gallery-Vault.desktop"
+# Remove the shortcut created by older builds so the rebranded launcher replaces it.
+rm -f "$DESKTOP_DIR/Fossify-Cipher.desktop" 2>/dev/null || true
 if [ ! -f "$DESKTOP_FILE" ] && [ -d "$DESKTOP_DIR" ]; then
     cat <<EOF > "$DESKTOP_FILE"
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Fossify Cipher Vault
-Comment=Offline Vault Encryptor for Android Fossify Gallery Cipher
+Name=Calypso Gallery Vault
+Comment=Offline Encrypted Vault Encryptor for Android Calypso Gallery
 Exec=sh -c 'cd "$DIR" && ./run.sh; echo; read -p "Press Enter to exit..."'
 Icon=system-lock-screen
 Terminal=true
