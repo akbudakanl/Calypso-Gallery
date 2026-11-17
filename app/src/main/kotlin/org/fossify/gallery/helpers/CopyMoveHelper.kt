@@ -47,6 +47,7 @@ import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.OperationFaults
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.SpaceEstimator
+import org.fossify.gallery.helpers.operations.SpaceConfirmation
 import java.io.IOException
 import org.fossify.gallery.extensions.StandardConflictItem
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
@@ -406,17 +407,14 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                     toast(text, Toast.LENGTH_LONG)
                 }
                 !probe.verifiable -> {
-                    // ADR 0003 §3a: SAF/OTG cannot report free space reliably. Explain why and
-                    // continue with per-item error handling instead of silently skipping the check.
-                    toast(
-                        getString(
-                            org.fossify.gallery.R.string.space_unverified_warning,
-                            estimate.peakBytes.formatSize(),
-                            probe.reason
-                        ),
-                        Toast.LENGTH_LONG
+                    // ADR 0003 §3a: SAF/OTG cannot report free space — require explicit consent.
+                    SpaceConfirmation.askAsync(
+                        context = this,
+                        probe = probe,
+                        estimate = estimate,
+                        onApproved = { startAfterSpaceCheck() },
+                        onRejected = { initialProgressDialog.dismiss() }
                     )
-                    startAfterSpaceCheck()
                 }
                 else -> startAfterSpaceCheck()
             }

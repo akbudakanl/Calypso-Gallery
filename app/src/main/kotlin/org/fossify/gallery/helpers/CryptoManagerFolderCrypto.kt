@@ -24,6 +24,7 @@ import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationFaults
 import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.SpaceEstimator
+import org.fossify.gallery.helpers.operations.SpaceConfirmation
 import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictResolution
@@ -95,6 +96,7 @@ fun CryptoManager.encryptFolder(
     // ADR 0003 §3a: album writes ALL outputs before wiping ANY source, so peak is the sum.
     val estimate = SpaceEstimator.forEncrypted(filesToEncrypt.map { EncryptedSizeInput(it.length(), it.name) })
     val probe = SpaceEstimator.probe(subfolder.absolutePath)
+    if (!probe.verifiable && !SpaceConfirmation.confirmBlocking(context, probe, estimate)) return null
     if (probe.verifiable && !SpaceEstimator.hasEnough(probe.availableBytes, estimate.peakBytes)) {
         context.toast(
             String.format(
@@ -468,6 +470,7 @@ fun CryptoManager.decryptFolder(
     // outputs before deleting any .bin, so peak is the sum (ADR 0003 §3a).
     val estimate = SpaceEstimator.forPlain(filesToDecrypt.map { it.length() })
     val probe = SpaceEstimator.probe(targetFolder.absolutePath)
+    if (!probe.verifiable && !SpaceConfirmation.confirmBlocking(context, probe, estimate)) return null
     if (probe.verifiable && !SpaceEstimator.hasEnough(probe.availableBytes, estimate.peakBytes)) {
         context.toast(
             String.format(
