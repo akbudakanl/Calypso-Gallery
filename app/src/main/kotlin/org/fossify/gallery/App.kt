@@ -17,8 +17,8 @@ import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.SplashActivity
 import org.fossify.gallery.activities.VaultLockActivity
-import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.RandomOrderManager
+import org.fossify.gallery.helpers.SideloadCheck
 import org.fossify.gallery.helpers.VaultSessionManager
 import java.io.IOException
 import java.net.Proxy
@@ -45,11 +45,8 @@ class App : FossifyApp() {
 
     override fun onCreate() {
         super.onCreate()
-        // Fossify commons treats any build with a non-official applicationId or signing key as
-        // "sideloaded" and shows a misleading "your app version is corrupt" dialog. This is a
-        // legitimate independent fork, so mark that check as finished with a negative result.
-        // 2 = not sideloaded, 1 = sideloaded (see commons BaseConfig.appSideloadingStatus).
-        config.appSideloadingStatus = 2
+        // Independent fork: disable Commons' sideloaded / fake-app warning at every entry point.
+        SideloadCheck.disable(this)
         VaultMigration.cleanupStaleTempFiles(this)
         installCodeLevelNetworkBlocker()
         Reprint.initialize(this)

@@ -14,7 +14,6 @@ import org.fossify.commons.dialogs.PropertiesDialog
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.checkAppSideloading
 import org.fossify.commons.extensions.getColoredDrawableWithColor
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFilenameFromPath
@@ -105,10 +104,6 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
         setupEdgeToEdge(
             padBottomSystem = listOf(binding.bottomActions.bottomActionsWrapper),
         )
-        if (checkAppSideloading()) {
-            return
-        }
-
         setupOptionsMenu()
         refreshMenuItems()
         requestMediaPermissions {
