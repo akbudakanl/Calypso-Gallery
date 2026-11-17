@@ -762,7 +762,7 @@ def _parse_keyring(keyring: bytes) -> tuple[int, dict[int, bytes]]:
     if len(remainder) < 2:
         raise ValueError("Corrupted keyring: missing key count.")
     count = struct.unpack(">H", remainder[:2])[0]
-    if count <= 0 or count > 16:
+    if count <= 0 or count > 256:
         raise ValueError("Corrupted keyring: invalid key count.")
 
     keys: dict[int, bytes] = {}

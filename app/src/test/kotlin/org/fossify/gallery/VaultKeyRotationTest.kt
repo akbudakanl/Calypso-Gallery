@@ -120,7 +120,7 @@ class VaultKeyRotationTest {
     }
 
     @Test
-    fun rotationIsIdempotent() {
+    fun repeatedRotationKeepsPayloadIdentical() {
         val file = File(root, "photo.bin")
         writeContainer(file, keyId = 1, kek = kek1)
 
