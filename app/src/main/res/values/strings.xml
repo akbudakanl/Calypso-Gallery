@@ -380,8 +380,8 @@
     <string name="encrypt_decrypt_notifications">Encrypt / Decrypt</string>
     <string name="place_finger_prompt">Please place your finger on the fingerprint sensor</string>
     <string name="connect_at_least_4_dots_prompt">Connect at least 4 dots</string>
-    <string name="access_existing_cipher_secrets_prompt">Do you want to access your existing Secrets folder?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Existing Secrets folder will be deleted and a new one will be created. Are you sure?</string>
+    <string name="access_existing_secrets_prompt">Do you want to access your existing Secrets folder?</string>
+    <string name="delete_and_recreate_secrets_prompt">Existing Secrets folder will be deleted and a new one will be created. Are you sure?</string>
     <string name="confirm_checkbox_label">I confirm</string>
     <string name="secret_vault">Encrypted Vault</string>
     <string name="secret_vault_empty">Encrypted Vault is empty</string>
@@ -572,7 +572,6 @@
     <string name="fork_disclaimer_message">This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">I understand</string>
 
-    <!-- Encrypted Vault format upgrade (v3 -> v4) -->
     <string name="argon2_profile_title">Brute-Force resistance</string>
     <string name="brute_force_mode_title">Calibration mode</string>
     <string name="brute_force_mode_time">Via vault unlock time</string>

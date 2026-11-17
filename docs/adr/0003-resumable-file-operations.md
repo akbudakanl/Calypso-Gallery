@@ -1,13 +1,13 @@
-# ADR 0003 — Resumable file operations beyond vault migration
+# ADR 0003 — Resumable file operations
 
 - **Status:** Proposed (awaiting approval)
 - **Date:** 2026-11-17
-- **Relates to:** ADR 0001 §7, ADR 0002 §7, DOCS.md §2.4/§2.5
+- **Relates to:** ADR 0002 §7, DOCS.md §2.4/§2.5
 
 ## 1. Context
 
-ADR 0001/0002 deliver a resumable **vault migration** with two interruption layers:
-a foreground service that waits out transient failures (external disk removed, write error) and resumes from an on-vault manifest, plus a single "interrupted, continue?" dialog when the process actually died.
+ADR 0002 establishes a registered-foreground-operation model with two interruption layers:
+a foreground service that waits out transient failures (external disk removed, write error) and resumes from a durable journal, plus a single "interrupted, continue?" dialog when the process actually died.
 
 The same class of failure affects ordinary file operations: copy/move (plain ↔ plain, plain ↔ encrypted, encrypted ↔ encrypted), and encrypt/decrypt of files and albums. The upstream code already protects against **data loss** (a move deletes the source only after the destination is verified — `CopyMoveHelper.copyFile`, `transferSuccess`), but it leaves a partially written destination behind and offers no resume: the user must clean up and restart manually.
 
@@ -18,14 +18,13 @@ This ADR specifies a unified resume framework for those operations. It is **desi
 | Layer | Trigger | Behaviour | User prompt |
 |---|---|---|---|
 | **Transient wait** | Process alive; external volume unmounted, write error, temporary I/O failure | Service stays alive, keys stay in RAM, notification/progress shows "waiting", polls until the resource returns, then continues from the journal | None |
-| **Process death** | App killed, reboot, user force-closed, service cancelled | Journal persists; on next app start + vault unlock, one combined dialog explains the partial operation and asks whether to continue | **One-time** "previous operation interrupted, no data lost, continue?" — **no "always show" setting** (unlike vault migration) |
+| **Process death** | App killed, reboot, user force-closed, service cancelled | Journal persists; on next app start + vault unlock, one combined dialog explains the partial operation and asks whether to continue | **One-time** "previous operation interrupted, no data lost, continue?" — **no "always show" setting** |
 
-Vault migration keeps its own stricter rule (§7 of ADR 0001): its "always show" setting is forced back ON after every interruption. Ordinary file operations deliberately do **not** inherit that rule — the resume dialog is shown once per interrupted operation, with no persistent preference, because there is no "you might not notice your vault is half-upgraded" risk.
+The resume dialog is deliberately shown once per interrupted operation, with no persistent preference: a partially copied or encrypted file does not change the vault format, so there is no risk the user might miss a state change.
 
 ## 3. Decision — journal location and schema
 
 - **Ordinary operations:** app-private Room table `pending_operations` (JSON payload). Rationale: device-local, survives app restart, does not pollute the vault, is not visible to the CLI, and is wiped with app data (acceptable — source files remain intact).
-- **Vault migration:** keeps its on-vault `.vault_migration` manifest (already implemented). Rationale: it must follow the vault across devices and survive an app-data wipe; it is authenticated with VMK.
 
 Per-item journal record:
 
@@ -84,7 +83,7 @@ Two concurrent file operations are serialized through the registry so wipe/key d
 
 ## 9. Implementation checklist (staged, not yet started)
 
-1. Room table `pending_operations` + migration.
+1. Room table `pending_operations` + schema registration.
 2. Journal hooks in `CopyMoveHelper` (copy/move, plain and encrypted, cross-album).
 3. Journal hooks in encrypt/decrypt paths (file and album), including album conflict resolution.
 4. Transient-wait loop + notification/progress state.

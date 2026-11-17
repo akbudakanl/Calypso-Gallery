@@ -298,8 +298,8 @@
     <string name="decrypting_files">ファイルを復号しています…</string>
     <string name="place_finger_prompt">指紋センサーに指を置いてください</string>
     <string name="connect_at_least_4_dots_prompt">4つ以上の点をつなげてください</string>
-    <string name="access_existing_cipher_secrets_prompt">既存の Secrets フォルダーにアクセスしますか？</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">既存の Secrets フォルダーは削除され、新しく作成されます。よろしいですか？</string>
+    <string name="access_existing_secrets_prompt">既存の Secrets フォルダーにアクセスしますか？</string>
+    <string name="delete_and_recreate_secrets_prompt">既存の Secrets フォルダーは削除され、新しく作成されます。よろしいですか？</string>
     <string name="confirm_checkbox_label">確認しました</string>
     <string name="secret_vault">暗号化された保管庫</string>
     <string name="secret_vault_empty">暗号化された保管庫は空です</string>

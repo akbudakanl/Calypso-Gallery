@@ -302,8 +302,8 @@
     <string name="decrypting_files">Descifrando archivos…</string>
     <string name="place_finger_prompt">Por favor, apoya tu dedo sobre el sensor de huellas</string>
     <string name="connect_at_least_4_dots_prompt">Conecta al menos 4 puntos</string>
-    <string name="access_existing_cipher_secrets_prompt">¿Deseas acceder a tu carpeta Secrets existente?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Se eliminará la carpeta Secrets existente y se creará una nueva. ¿Estás seguro?</string>
+    <string name="access_existing_secrets_prompt">¿Deseas acceder a tu carpeta Secrets existente?</string>
+    <string name="delete_and_recreate_secrets_prompt">Se eliminará la carpeta Secrets existente y se creará una nueva. ¿Estás seguro?</string>
     <string name="confirm_checkbox_label">Confirmo</string>
     <string name="secret_vault">Bóveda cifrada</string>
     <string name="secret_vault_empty">La bóveda cifrada está vacía</string>

@@ -334,8 +334,8 @@
     <string name="decrypting_files">Faylların şifrəsi açılır…</string>
     <string name="place_finger_prompt">Zəhmət olmasa, barmağınızı barmaq izi sensoruna qoyun</string>
     <string name="connect_at_least_4_dots_prompt">Ən azı 4 nöqtəni birləşdirin</string>
-    <string name="access_existing_cipher_secrets_prompt">Mövcud Secrets qovluğunuza daxil olmaq istəyirsiniz?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Mövcud Secrets qovluğu silinəcək və yenisi yaradılacaq. Əminsiniz?</string>
+    <string name="access_existing_secrets_prompt">Mövcud Secrets qovluğunuza daxil olmaq istəyirsiniz?</string>
+    <string name="delete_and_recreate_secrets_prompt">Mövcud Secrets qovluğu silinəcək və yenisi yaradılacaq. Əminsiniz?</string>
     <string name="confirm_checkbox_label">Təsdiqləyirəm</string>
     <string name="secret_vault">Şifrəli Seyf</string>
     <string name="secret_vault_empty">Şifrəli Seyf boşdur</string>

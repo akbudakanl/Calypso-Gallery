@@ -2,8 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-11-16
-- **Target release:** 1.20 (alongside [ADR 0001](0001-tink-streaming-aead-migration.md))
-- **Relates to:** DOCS.md §2, §2.4, §5; ADR 0001 §7 (foreground-service exception)
+- **Relates to:** DOCS.md §2, §2.4, §5; [ADR 0001](0001-tink-streaming-aead-migration.md) (canonical vault container format); ADR 0003 (resumable file operations)
 
 > **Terminology.** User-facing text uses **"Encrypted Vault" / "Şifreli Kasa"**, as decided in ADR 0001.
 
@@ -11,7 +10,7 @@
 
 ## 1. Context
 
-ADR 0001 defines the new cryptographic format. This ADR covers the *operational* guarantees around it: where randomness comes from, how KDF cost is exposed, what traces the app leaves, how long keys live in RAM, and what happens when a destructive or long-running operation is interrupted. These are independent of the container version and apply to v3 and v4 vaults alike.
+ADR 0001 defines the canonical cryptographic format. This ADR covers the *operational* guarantees around it: where randomness comes from, how KDF cost is exposed, what traces the app leaves, how long keys live in RAM, and what happens when a destructive or long-running operation is interrupted. These guarantees are independent of the container format and apply to every vault.
 
 ---
 
@@ -30,7 +29,7 @@ ADR 0001 defines the new cryptographic format. This ADR covers the *operational*
 
 **Rules:** never call `SecureRandom.setSeed()` with predictable or attacker-influenced data; never use `Math.random()` for any security value; each file's `fileId`, DEK, header IV and Tink salt/nonce-prefix come from `SecureRandom` only. The device-bound Keystore key remains an additional derivation ingredient through the existing VMK wrapping, not through custom entropy mixing.
 
-**No homegrown cryptography.** Every cipher, MAC, KDF and random source comes from Tink, JCE or BouncyCastle: AES-GCM / AES-CTR / HMAC / PBKDF2 / SHA-256 via JCE, Argon2id / Poly1305-AES (legacy reads only) via BouncyCastle, streaming AEAD and RFC 5869 HKDF via Tink. The only hand-written pieces are **format plumbing** — byte layouts, domain-label strings, the v3 CTR counter increment for random access, and header-AAD concatenation — none of which is a cryptographic primitive. The legacy bare-HMAC subkey derivation exists solely for v3 read compatibility; all v4 derivation uses standard HKDF (ADR 0001 §3.2).
+**No homegrown cryptography.** Every cipher, MAC, KDF and random source comes from Tink, JCE or BouncyCastle: AES-GCM / HMAC / PBKDF2 / SHA-256 via JCE, Argon2id via BouncyCastle, streaming AEAD and RFC 5869 HKDF via Tink. The only hand-written pieces are **format plumbing** — byte layouts, domain-label strings and header-AAD concatenation — none of which is a cryptographic primitive. All key separation uses standard HKDF-SHA256 with `CalypsoGallery:` domain labels (ADR 0001).
 
 ---
 
@@ -144,8 +143,7 @@ The background-lock rule ("on background / screen off → lock vault and wipe ke
 - decrypt / export,
 - copy or move **between encrypted albums**,
 - **delete — both normal delete and secure wipe** (§6),
-- external-vault sync,
-- the v3 → v4 rebuild (ADR 0001 §7).
+- external-vault sync.
 
 Behaviour:
 
@@ -154,9 +152,9 @@ Behaviour:
 - On completion (or cancellation), the operation is unregistered, `CryptoManager.clearKeys()` runs, and the user must enter the password again to use the vault.
 - `FLAG_KEEP_SCREEN_ON` may be set during the operation (hint, not guarantee).
 - Two concurrent foreground operations are serialized through a single owner token to avoid two independent wipe/clear decisions racing.
-- If the process is killed, the durable manifests/journals from ADR 0001 §7.3 and §6 allow resumption after re-authentication.
+- If the process is killed, the durable operation journals (ADR 0003) and the secure-wipe journal (§6) allow resumption after re-authentication.
 
-This generalizes ADR 0001 §7.3; where the two texts differ on this point, this ADR wins.
+This is the single foreground-operation registry shared with the resumable-operation framework in ADR 0003.
 
 ---
 

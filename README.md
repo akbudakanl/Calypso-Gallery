@@ -4,7 +4,7 @@ Calypso Gallery is a security-hardened, independently maintained personal fork o
 
 Unleash memories, not personal data. Calypso Gallery is a powerful and private photo and video app with no ads, no Internet permission, and no unnecessary permissions.
 
-> **Versioning and upstream policy:** This fork uses an independent Semantic Versioning scheme (`X.Y.Z-cipher`) and was originally forked from upstream Fossify Gallery `1.14.2`. Fork versions do not map one-to-one to upstream releases. Relevant upstream fixes and improvements are selectively backported and recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
+> **Versioning and upstream policy:** Calypso Gallery `1.0.0` is the first release. It was originally forked from upstream Fossify Gallery `1.14.2`; this release does not map one-to-one to any upstream version. Relevant upstream fixes and improvements are selectively backported and recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
 
 ## Project status and attribution
 
@@ -32,11 +32,9 @@ The inherited upstream source remains available from [FossifyOrg/Gallery](https:
 
 The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0, and the companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) package (`tink>=1.16.1,<2`). Both implementations are licensed under the Apache License, Version 2.0. The bundled Android attribution and complete Apache 2.0 license text are available in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt) and in the app under **About → Read the Tink Apache 2.0 license and attribution**. Gson attribution is also included under **About → Third-party licenses**.
 
-## Android package identity and upgrades
+## Android package identity
 
-The release application ID is `com.calypso.gallery`; the Kotlin namespace remains `org.fossify.gallery` to retain compatibility with the inherited Fossify code and resources. This differs from the earlier `org.fossify.gallery` application ID, so Android installs Calypso Gallery as a separate application and does not offer an in-place upgrade from that package. Restoring the old ID alone would not guarantee an in-place update: Android also requires signing-key continuity with the installed build.
-
-Existing user-created media and vault containers in ordinary shared storage remain accessible subject to Android permissions, but package-scoped locations such as `Android/data/org.fossify.gallery` remain owned by the old package. Android also does not transfer app-private data between package identities. Preferences, the Room database, saved app state, vault credentials, and Android Keystore-bound keys are package-scoped and are not migrated automatically. Users moving from `org.fossify.gallery` must recreate or separately migrate those items. Debug builds use `com.calypso.gallery.debug`.
+The release application ID is `com.calypso.gallery`; the Kotlin namespace remains `org.fossify.gallery` to retain compatibility with the inherited Fossify code and resources. Debug builds use `com.calypso.gallery.debug`.
 
 ## Features
 
@@ -44,10 +42,10 @@ Existing user-created media and vault containers in ordinary shared storage rema
 Enhance your photos with the built-in editor. Crop, resize, rotate, flip, draw, and apply filters without compromising your privacy.
 
 **🌐 PRIVACY FIRST, ALWAYS:**  
-The app does not request Internet access. Strip EXIF metadata such as GPS coordinates and camera details to keep your memories yours.
+The app is offline-only and does not request Internet access. Strip EXIF metadata such as GPS coordinates and camera details to keep your memories yours.
 
-**🔐 HARDWARE-HARDENED CRYPTOGRAPHIC VAULT:**  
-Go beyond simple folder hiding with an isolated, zero-network cryptographic vault (`Secrets`). Media files are individually encrypted on disk using `AES-256-CTR` with `Poly1305-AES` integrity tags, metadata is protected by `AES-256-GCM`, and the master encryption key is derived using `Argon2id` and wrapped by Android Keystore (`StrongBox` / `TEE`). Pre-wipe SHA-256 verification, CSPRNG overwriting, `FLAG_SECURE` screen protection, and automatic RAM zeroization reduce the risk of exposing decrypted keys and frames.
+**🔐 TINK-BASED ENCRYPTED VAULT:**  
+Go beyond simple folder hiding with an isolated, offline-only cryptographic vault stored in the `Secrets` folder. The canonical vault container format uses Tink `AES256_GCM_HKDF` stream encryption, `Argon2id` key derivation, randomly generated DEKs, a KEK key ring, and `CalypsoGallery` domain separation. Full bit-by-bit verification, `FLAG_SECURE` screen protection, and automatic RAM zeroization reduce the risk of exposing decrypted keys and frames.
 
 **🔗 ZERO-FOOTPRINT VIRTUAL ALBUMS:**  
 Organize media into Virtual Albums without duplicating files or consuming extra storage space. Albums created from encrypted vault items become **Stealth Virtual Albums**, with HMAC-obfuscated filenames and `AES-256-GCM` encrypted titles and paths.
@@ -73,6 +71,6 @@ Use the Material Design interface with dynamic color and theme support.
 
 ### Fork release process
 
-The fork release workflow reads, updates, and publishes release notes exclusively from `FORK_CHANGELOG.md`; it never consumes or rewrites the upstream-only `CHANGELOG.md`. Fork release tags use the independent `X.Y.Z-cipher` version form.
+The release workflow reads, updates, and publishes release notes exclusively from `FORK_CHANGELOG.md`; it never consumes or rewrites the upstream-only `CHANGELOG.md`. This release is tagged `1.0.0`.
 
 Each release creates a version-specific source tag and GitHub release with the complete fork release section and a corresponding source archive. Setting `RELEASE_TARGET=gplay` additionally deploys to Google Play after the GitHub source release succeeds; otherwise the release is published to GitHub only. Fastlane changelog entries are deterministic summaries capped at Play Console's 500-character limit and link to both the complete release notes and the version-specific source archive.

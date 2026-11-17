@@ -97,7 +97,7 @@ if (!ok) { enc.delete(); return null }   // do not touch the original
 
 **3.3 Credential Entropy and .vault Exposure**
 
-Issues: Using a PIN (min 4 digits, ~13 bits entropy) or pattern (4–9 dots, ~18 bits entropy) renders Argon2id ineffective against offline brute force. The `.vault` file is stored under public Documents/Cipher; the wrapped bundle is duplicated in SharedPreferences and (since `allowBackup="true"`) in cloud backups. An attacker has everything needed for an offline dictionary attack.
+Issues: Using a PIN (min 4 digits, ~13 bits entropy) or pattern (4–9 dots, ~18 bits entropy) renders Argon2id ineffective against offline brute force. The `.vault` file is stored under `Calypso Gallery/Secrets` on shared storage; the wrapped bundle is duplicated in SharedPreferences and (since `allowBackup="true"`) in cloud backups. An attacker has everything needed for an offline dictionary attack.
 
 Remediation:
 
@@ -205,13 +205,11 @@ Audit preference keys containing paths: pinned, included, and excluded folders; 
 
 `encryptedFile.setLastModified(lastModified)` propagated original photo timestamps directly to ciphertext files. Replace with a fixed (e.g. midnight UTC) or randomized timestamp; the original timestamp is already preserved inside the encrypted header. Optionally, pad small files into discrete size buckets.
 
-**3.14 Encryption Container Format (v5)**
+**3.14 Encryption Container Format (canonical FGVLTENC v1)**
 
-In earlier formats, the per-file key was the MEK directly; Poly1305 MAC was only verified on full export/decryption rather than during streaming playback; headers and payloads were not cryptographically bound.
+Media is stored in per-file `FGVLTENC` version 1 containers: an AES-256-GCM encrypted header (key derived per file from the KEK with HKDF-SHA256; AAD binds magic, version, `keyId`, `fileId` and the header length) wraps a random per-file DEK, followed by a Tink `AES256_GCM_HKDF` streaming-AEAD payload (256 KiB segments, RAW prefix, AAD = the immutable `fileId`). Every segment is authenticated during both playback and export; random access uses `StreamingAead.newSeekableDecryptingChannel`, preserving ExoPlayer seeking. Vault-level strings (`FVSTR:`) use per-purpose HKDF-SHA256 metadata keys with the purpose as GCM AAD.
 
-Recommendation: Transition to Google Tink StreamingAead (AES-GCM-HKDF with 1 MiB segments; random access via `SeekableByteChannel` preserving ExoPlayer seeking) with random per-file keys (wrapped with MEK, AAD = file UUID). Every segment is authenticated during both playback and export. Retain read support for v1–v4 while migrating in the background.
-
-If retaining custom CTR + Poly1305: Authenticate the MAC on initial stream opening, incorporate header digest into the MAC input, and derive unique per-file keys.
+Verification: before a plaintext source is deleted, decrypt the written container and verify the SHA-256 digest and the Tink stream integrity (strict, through the final segment). If any check fails, abort and preserve the original.
 
 **3.15 Key and Memory Hygiene**
 
@@ -244,7 +242,7 @@ Order of operations is critical:
 
 1. Pre-flight checks: verify storage is internal (warn on SD/USB), check FBE status (`DevicePolicyManager.getStorageEncryptionStatus()` == `ENCRYPTION_STATUS_ACTIVE_PER_USER`), confirm sufficient free space, and check battery level. Start foreground service.
 2. Encrypt: write to temporary filename (`.tmp`), call `force()`, rename to target; compute SHA-256 digest of plaintext stream.
-3. Verify: decrypt the encrypted file stream, verify Poly1305 MAC and SHA-256 digest match. If any check fails, abort and preserve originals.
+3. Verify: decrypt the encrypted file stream, verify the Tink streaming-AEAD tags and SHA-256 digest match. If any check fails, abort and preserve originals.
 4. Pending-wipe journal: record verified plaintext paths to a journal file in internal app-private storage (not Room; unencrypted is fine as data was already verified). On crash or process death, the wipe resumes on next launch.
 5. Shred: execute the secure wipe function from section 3.1 for each file; remove successful entries from journal, report failures to the user.
 6. Application traces: delete DB records + run checkpoint/VACUUM, purge favorites, virtual album JSON, SharedPreferences entries, Glide and external caches (shred then clear), temporary folder, MediaStore rows, and Recycle Bin items.
@@ -289,9 +287,9 @@ Recommended terminology:
 
 - Week 1 (P0): 3.1, 3.2, 3.4, 3.6, 3.7, and documentation corrections.
 - Week 2 (P0/P1): 3.3 (Keystore-bound wrapping and passphrase option), 3.5, 3.8–3.12, 3.16.
-- Week 3+ (P1/P2): 3.14 (v5 format and migration), 3.15, 3.13, and testing testbed.
+- Week 3+ (P1/P2): 3.14, 3.15, 3.13, and testing testbed.
 
-Timelines are approximate estimates. Format migration carries the highest risk and requires a backward compatibility plan (supporting v1–v4 reading).
+Timelines are approximate estimates.
 
 ## 10. Residual Risks
 

@@ -327,8 +327,8 @@
     <string name="encrypt_decrypt_notifications">Şifreleme / Şifre Çözme</string>
     <string name="place_finger_prompt">Lütfen parmağınızı parmak izi sensörüne yerleştirin</string>
     <string name="connect_at_least_4_dots_prompt">En az 4 noktayı birleştirin</string>
-    <string name="access_existing_cipher_secrets_prompt">Mevcut Secrets klasörünüze erişmek istiyor musunuz?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Mevcut Secrets klasörü silinecek ve yenisi oluşturulacak, emin misiniz?</string>
+    <string name="access_existing_secrets_prompt">Mevcut Secrets klasörünüze erişmek istiyor musunuz?</string>
+    <string name="delete_and_recreate_secrets_prompt">Mevcut Secrets klasörü silinecek ve yenisi oluşturulacak, emin misiniz?</string>
     <string name="confirm_checkbox_label">Onaylıyorum</string>
     <string name="secret_vault">Şifreli Kasa</string>
     <string name="secret_vault_empty">Şifreli Kasa boş</string>
@@ -519,7 +519,6 @@
     <string name="fork_disclaimer_message">Bu uygulama, Fossify ekibi tarafından geliştirilmemiştir. Calypso Gallery, Fossify Gallery uygulamasının bağımsız olarak sürdürülen resmi olmayan bir forkudur; orijinal geliştiriciye yalnızca kaynak göstermek amacıyla referans verilmektedir. Fossify ile herhangi bir bağlantısı, onayı veya desteği yoktur.\n\nDevam ederek bu uyarıyı onaylamış olursunuz. Fork ile ilgili değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
     <string name="fork_disclaimer_acknowledge">Anladım</string>
 
-    <!-- Şifreli Kasa format güncellemesi (v3 -> v4) -->
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_mode_title">Kalibrasyon modu</string>
     <string name="brute_force_mode_time">Kasa açılış süresi üzerinden</string>
