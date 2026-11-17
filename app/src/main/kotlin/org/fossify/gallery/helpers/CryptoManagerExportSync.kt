@@ -323,11 +323,21 @@ fun CryptoManager.syncVaultFromExternalDirectory(
                 java.nio.file.Files.move(
                     tempFile.toPath(),
                     destBin.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
                     java.nio.file.StandardCopyOption.REPLACE_EXISTING
                 )
                 true
+            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+                // A rename inside the same file store is atomic even when the provider cannot
+                // advertise ATOMIC_MOVE. Never degrade to a cross-store copy+delete: that would
+                // reintroduce a partially written destination (ADR 0003 §3a).
+                val sameStore = runCatching {
+                    java.nio.file.Files.getFileStore(tempFile.toPath().parent) ==
+                        java.nio.file.Files.getFileStore(destBin.toPath().parent)
+                }.getOrDefault(false)
+                sameStore && tempFile.renameTo(destBin)
             } catch (_: Exception) {
-                tempFile.renameTo(destBin)
+                false
             }
 
             if (!movedToDest || !destBin.exists()) {
