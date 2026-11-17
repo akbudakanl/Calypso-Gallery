@@ -72,6 +72,15 @@ class VaultSecurityDialog(
         binding.vaultPatternHolder.beGone()
 
         if (isSetupMode) {
+            binding.vaultBruteForceHolder.apply {
+                beVisible()
+                text = activity.getString(R.string.argon2_profile_title) + "\n" + BruteForceDialog.summary(activity)
+                setOnClickListener {
+                    BruteForceDialog.show(activity) {
+                        text = activity.getString(R.string.argon2_profile_title) + "\n" + BruteForceDialog.summary(activity)
+                    }
+                }
+            }
             binding.vaultTabs.apply {
                 beVisible()
                 setBackgroundColor(backgroundColor)

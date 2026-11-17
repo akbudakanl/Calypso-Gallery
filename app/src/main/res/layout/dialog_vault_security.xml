@@ -23,6 +23,19 @@
         android:gravity="center"
         android:textSize="@dimen/bigger_text_size" />
 
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/vault_brute_force_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/normal_margin"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:padding="@dimen/smaller_margin"
+        android:text="@string/argon2_profile_title"
+        android:visibility="gone" />
+
     <!-- Pattern View (PROTECTION_PATTERN = 0) -->
     <FrameLayout
         android:id="@+id/vault_pattern_holder"
