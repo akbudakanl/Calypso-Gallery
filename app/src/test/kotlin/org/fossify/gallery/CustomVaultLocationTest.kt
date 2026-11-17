@@ -105,7 +105,7 @@ class CustomVaultLocationTest {
 
     @Test
     fun resolveExistingVaultInDirectory_checksDirectAndNestedLayouts() {
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
         val directDir = File(tempRoot, "direct").apply { mkdirs() }
         File(directDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
@@ -136,7 +136,7 @@ class CustomVaultLocationTest {
 
     @Test
     fun resolveExistingVaultInDirectory_recognizesLegacySecretsFolderName() {
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
         val legacyDrive = File(tempRoot, "legacy_usb_drive").apply { mkdirs() }
         val legacyDir = File(legacyDrive, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
@@ -196,7 +196,7 @@ class CustomVaultLocationTest {
         val externalVolume = File(tempRoot, "ExternalUSB")
         val externalSecrets = File(externalVolume, SECRETS_DIR_NAME).apply { mkdirs() }
         val headerFile = File(externalSecrets, VAULT_HEADER_FILE)
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
         headerFile.writeBytes(validHeaderBytes)
 
         CryptoManager.setVaultRootLocation(testContext, externalSecrets)
@@ -241,7 +241,7 @@ class CustomVaultLocationTest {
     fun locateVaultRootOnDisk_doesNotAutoDetectExternalVault_whenVaultRootPathEmpty() {
         val usbRoot = File(tempRoot, "MountedUsbRoot")
         val usbSecrets = File(usbRoot, SECRETS_DIR_NAME).apply { mkdirs() }
-        File(usbSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(usbSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
 
         val contextWithExternalDir = FakeVaultContext(tempRoot, externalFilesDirs = arrayOf(
             File(usbRoot, "Android/data/org.fossify.gallery.debug/files").apply { mkdirs() }
@@ -294,7 +294,7 @@ class CustomVaultLocationTest {
 
     @Test
     fun configuredCustomVault_takesPrecedenceOverOtherVaultsWhenResolving() {
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
         val firstVault = File(tempRoot, "FirstVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(firstVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         val secondVault = File(tempRoot, "SecondCustomUsb/$SECRETS_DIR_NAME").apply { mkdirs() }
@@ -343,7 +343,7 @@ class CustomVaultLocationTest {
     fun syncVaultFromExternalDirectory_importsFullAndDeltaAlbumsAndMapsNames() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
         val phoneVault = File(tempRoot, "PhoneVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
@@ -456,7 +456,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val phoneVault = File(tempRoot, "PhoneDedup/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 
@@ -549,7 +549,7 @@ class CustomVaultLocationTest {
     fun syncVaultFromExternalDirectory_stage0FastSkipMirroredBinAndRejectTamperedPayloadOrMac() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
         val phoneVault = File(tempRoot, "PhoneStage0/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         setMasterKey(masterKey)
@@ -612,7 +612,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val phoneVault = File(tempRoot, "PhoneCollision/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 
@@ -700,7 +700,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "EncDedupVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
 
@@ -788,7 +788,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "EncMoveVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
 
@@ -866,7 +866,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "DecVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
 
@@ -934,7 +934,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "MergeVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
         testContext.config.internalStoragePath = tempRoot.absolutePath
@@ -997,7 +997,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "CleanupVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
 
@@ -1121,7 +1121,7 @@ class CustomVaultLocationTest {
     fun syncVaultFromExternalDirectory_doesNotPolluteMetadataCacheAndRejectsCorruptMac() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
         val vaultDir = File(tempRoot, "vault_sync_perf/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
@@ -1168,11 +1168,11 @@ class CustomVaultLocationTest {
         setMasterKey(masterKey)
 
         val phoneVault = File(tempRoot, "phone_pending/Calypso Gallery/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 
         val extSecrets = File(tempRoot, "ext_pending/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(extSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(extSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         val extAlbum = File(extSecrets, "PendingAlbum").apply { mkdirs() }
 
         // Unlisted corrupt .bin in archive (bit-rot) must be ignored when .pending_sync is used
@@ -1432,7 +1432,7 @@ class CustomVaultLocationTest {
         setMasterKey(masterKey)
 
         val vaultRoot = CryptoManager.createVaultRoot(testContext, File(tempRoot, "vault_host").apply { mkdirs() })!!
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
         val vaultAlbum = File(vaultRoot, "ab12cd").apply { mkdirs() }
         writeMetaV2(vaultAlbum, masterKey, "Trips")
@@ -1488,7 +1488,7 @@ class CustomVaultLocationTest {
 
         val vaultHost = File(tempRoot, "vault_siblings").apply { mkdirs() }
         val siblingVaultRoot = CryptoManager.createVaultRoot(testContext, vaultHost)!!
-        File(siblingVaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(siblingVaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, siblingVaultRoot)
         testContext.config.internalStoragePath = tempRoot.absolutePath
 
@@ -1589,7 +1589,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "MergeEncVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
         testContext.config.internalStoragePath = tempRoot.absolutePath
@@ -1677,7 +1677,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val vaultRoot = File(tempRoot, "MergeDecVault/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
 
@@ -1934,7 +1934,7 @@ class CustomVaultLocationTest {
 
         FileOutputStream(File(folder, VAULT_SUBFOLDER_META_FILE)).use { fos ->
             DataOutputStream(fos).use { dos ->
-                dos.write("FGMETA2".toByteArray(Charsets.US_ASCII))
+                dos.write(org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC.toByteArray(Charsets.US_ASCII))
                 dos.write(iv)
                 dos.writeInt(encryptedName.size)
                 dos.write(encryptedName)

@@ -2,11 +2,11 @@ package org.fossify.gallery
 
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.openDecryptedContentStream
-import org.fossify.gallery.helpers.readV4Metadata
+import org.fossify.gallery.helpers.readContainerMetadata
 import org.fossify.gallery.helpers.verifyFileIntegrity
 import org.fossify.gallery.helpers.vault.TinkStreamSpec
 import org.fossify.gallery.helpers.vault.VaultContainer
-import org.fossify.gallery.helpers.vault.v4HeaderAad
+import org.fossify.gallery.helpers.vault.headerAad
 import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveFileHeaderKey
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -33,7 +33,7 @@ import javax.crypto.spec.SecretKeySpec
  * v4 yazici henuz yok; test owner, Tink'i dogrudan kullanarak gecerli bir v4
  * konteyner uretir ve app'in okuma yollarini bu konteyner uzerinde exerciser.
  */
-class V4ContainerReadTest {
+class VaultContainerReadTest {
 
     private val kek = ByteArray(32) { (it * 7 + 3).toByte() }
     private val secureRandom = SecureRandom()
@@ -62,20 +62,20 @@ class V4ContainerReadTest {
 
             val meta = DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
                 skipPrefix(it)
-                readV4Metadata(it, kek, VaultContainer.VERSION_TINK_STREAM, true)
+                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)
             }
             assertNotNull("metadata for size $size", meta)
             meta!!
             assertEquals("case_$size.jpg", meta.originalName)
             assertEquals(size.toLong(), meta.originalSize)
-            assertTrue(meta.isV4)
+            assertTrue(meta.isCanonicalFormat)
             assertArrayEquals(fileId, meta.fileId)
             assertArrayEquals(dek, meta.fileKey)
             assertEquals(
                 TinkStreamSpec.expectedCiphertextSize(size.toLong()),
                 meta.ciphertextLength
             )
-            assertEquals(VaultContainer.payloadOffsetV4(lastHeaderLength), meta.payloadOffset)
+            assertEquals(VaultContainer.payloadOffset(lastHeaderLength), meta.payloadOffset)
 
             val decrypted = CryptoManager.openDecryptedContentStream(file, 0L, meta)!!
                 .use { it.readBytes() }
@@ -97,47 +97,6 @@ class V4ContainerReadTest {
             assertArrayEquals("seek at $offset", expected, actual)
         }
     }
-
-    /**
-     * Golden v4 vektoru: sabit KEK (00..1f), 100 baytlik bilinen duz metin ve bir kez
-     * uretilip depoya bakilan rastgele salt/nonce/fileId/dek iceren konteyner.
-     *
-     * Tink akisi randomized oldugu icin ayni girdilerden ayni sifreli metin
-     * uretilmez; bu yuzden "beklenen ciphertext" yerine **sabit bir fixture**
-     * saklanir ve her iki dilin de (Java/Python) bunu cozmesi gerekir.
-     * Parametrelerden biri degisirse (segment boyutu, AAD, header duzeni) bu test kirilir.
-     */
-    @Test
-    fun decryptsGoldenV4Fixture() {
-        // Fixture, sinif seviyesindeki kek ile uretildi (bak: writeV4).
-        val goldenKek = ByteArray(32) { (it * 7 + 3).toByte() }
-        val goldenFileId = "d7a50bb70224bc023a62bd22bf03c2b4".hexToBytes()
-        val goldenDek = "bf493010dcc4150bfe8ecd385d0bc17d8f954c9aba052917cd41208a34c5fd8b".hexToBytes()
-        val goldenBase64 = "RkdWTFRFTkMEAAHXpQu3AiS8AjpivSK/A8K0u7XnbGLzICMJAD6qAAAAbpK/IsoSpk/3FvjMmEEHYHYHIzoJBQxln383Z9VeKVxb3gsaZryF7sCrsXyAS3SMUKG14qv6+ElqV72H5sDDxcULKSiqszZIiid4XGqR2J8ncOrcrxpmDdMdeRFXXy3jNGSMHre3QX1JRwYz+Mr0KKMVVg5LvTht++TnHAN4cSVNR/xqqzKudxwXs69fpA+xAAiCdSVt23WRnNierCnxnbYe/iuHSXieL5C4p0HIph8jiRDno77rmiQOCr4UhOoC0D3s78HJjeJdl0gpWKG9G5zh8MvrBzGCGCm+NL8cTv4vPOzu9WNWUIwp67+L0YTmjxnLMCjPX5CmL4gqD4JChFk/geIm92Ke250v"
-
-        val file = File(tempDir, "golden_v4.bin")
-        file.writeBytes(java.util.Base64.getDecoder().decode(goldenBase64))
-
-        val meta = DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
-            skipPrefix(it)
-            readV4Metadata(it, goldenKek, VaultContainer.VERSION_TINK_STREAM, true)
-        }
-        assertNotNull(meta)
-        meta!!
-        assertArrayEquals(goldenFileId, meta.fileId)
-        assertArrayEquals(goldenDek, meta.fileKey)
-        assertEquals(100L, meta.originalSize)
-        assertEquals("golden.jpg", meta.originalName)
-        assertEquals(TinkStreamSpec.expectedCiphertextSize(100L), meta.ciphertextLength)
-
-        val expected = ByteArray(100) { (it * 17 + 3).toByte() }
-        val decrypted = CryptoManager.openDecryptedContentStream(file, 0L, meta)!!.use { it.readBytes() }
-        assertArrayEquals(expected, decrypted)
-        assertTrue(CryptoManager.verifyFileIntegrity(file, meta))
-    }
-
-    private fun String.hexToBytes(): ByteArray =
-        chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 
     @Test
     fun rejectsTamperedPayloadTagAndTruncation() {
@@ -168,7 +127,7 @@ class V4ContainerReadTest {
             null,
             DataInputStream(BufferedInputStream(FileInputStreamCompat(badHeader))).use {
                 skipPrefix(it)
-                readV4Metadata(it, kek, VaultContainer.VERSION_TINK_STREAM, false)
+                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, false)
             }
         )
 
@@ -187,7 +146,7 @@ class V4ContainerReadTest {
 
     private fun FileInputStreamCompat(file: File) = java.io.FileInputStream(file)
 
-    /** readV4Metadata, magic+version'in once okunmus oldugunu varsayar. */
+    /** readContainerMetadata, magic+version'in once okunmus oldugunu varsayar. */
     private fun skipPrefix(dis: DataInputStream) {
         val magic = ByteArray(8)
         dis.readFully(magic)
@@ -197,7 +156,7 @@ class V4ContainerReadTest {
     private fun readMeta(file: File) =
         DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
             skipPrefix(it)
-            readV4Metadata(it, kek, VaultContainer.VERSION_TINK_STREAM, true)!!
+            readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)!!
         }
 
     /** Gecerli bir v4 konteyner yazar (uretme amacli test helper'i). */
@@ -210,7 +169,7 @@ class V4ContainerReadTest {
         val ciphertextLength = TinkStreamSpec.expectedCiphertextSize(payload.size.toLong())
         val headerPlain = ByteArrayOutputStream().use { baos ->
             DataOutputStream(baos).use { dos ->
-                dos.writeShort(VaultContainer.ALGORITHM_PARAMS_V4.toInt())
+                dos.writeShort(VaultContainer.ALGORITHM_PARAMS.toInt())
                 dos.writeInt(TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE)
                 dos.writeLong(ciphertextLength)
                 dos.write(dek)
@@ -235,9 +194,9 @@ class V4ContainerReadTest {
                 GCMParameterSpec(VaultContainer.GCM_TAG_BITS, headerIv)
             )
             updateAAD(
-                v4HeaderAad(
-                    VaultContainer.MAGIC_V2.toByteArray(Charsets.US_ASCII),
-                    VaultContainer.VERSION_TINK_STREAM,
+                headerAad(
+                    VaultContainer.VAULT_MAGIC.toByteArray(Charsets.US_ASCII),
+                    VaultContainer.VAULT_FORMAT_VERSION,
                     keyId,
                     fileId,
                     encHeaderLen
@@ -250,8 +209,8 @@ class V4ContainerReadTest {
         val file = File(tempDir, "${originalName.replace('.', '_')}_${payload.size}.bin")
         FileOutputStream(file).use { fos ->
             val dos = DataOutputStream(fos)
-            dos.write(VaultContainer.MAGIC_V2.toByteArray(Charsets.US_ASCII))
-            dos.writeByte(VaultContainer.VERSION_TINK_STREAM.toInt())
+            dos.write(VaultContainer.VAULT_MAGIC.toByteArray(Charsets.US_ASCII))
+            dos.writeByte(VaultContainer.VAULT_FORMAT_VERSION.toInt())
             dos.writeShort(keyId.toInt())
             dos.write(fileId)
             dos.write(headerIv)

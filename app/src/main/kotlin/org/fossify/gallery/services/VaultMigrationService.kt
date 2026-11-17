@@ -23,7 +23,7 @@ import java.util.Base64
 /**
  * v3 -> v4 kasa donusumunu arka planda, anahtar RAM'de kalarak calistirir.
  * Tamamlaninca KEK'i pending-finalize olarak saklar; sonraki unlock sirasinda
- * .vault v4 basligi yazilir (sifre servise tasinmaz).
+ * .vault kanonik başlık yazilir (sifre servise tasinmaz).
  */
 class VaultMigrationService : Service() {
 

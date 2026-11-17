@@ -16,7 +16,6 @@ import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.macs.Poly1305
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -37,26 +36,14 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
-import org.fossify.gallery.helpers.vault.VaultContainerWriterV4
 import org.fossify.gallery.helpers.vault.TinkStreamSpec
-import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_TINK_STREAM
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_FORMAT_VERSION
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -217,11 +204,8 @@ fun CryptoManager.encryptFileToDirectory(
     if (!sourceFile.exists() || !sourceFile.isFile) return null
     if (isEncryptedFile(sourceFile.name)) return sourceFile
 
-    val masterKey = unlockedMasterKey ?: return null
-    val useV4 = getVaultFormat() == 4
-    val kek = if (useV4) activeKek() ?: return null else null
-    val fileKey: ByteArray = kek ?: masterKey
-    val versionByte: Byte = if (useV4) VERSION_TINK_STREAM else VERSION_SYMMETRIC_AUTH
+    val kek = activeKek() ?: return null
+    val versionByte = VaultContainer.VAULT_FORMAT_VERSION
 
     if (!targetDir.exists()) {
         targetDir.mkdirs()
@@ -315,27 +299,10 @@ fun CryptoManager.encryptFileToDirectory(
         0
     }
     val thumbBytes = runCatching { generateEmbeddedThumbnail(sourceFile, mediaType) }.getOrDefault(ByteArray(0))
-    val thumbnailForV4 = if (thumbBytes.isNotEmpty()) thumbBytes else null
+    val thumbnailForContainer = if (thumbBytes.isNotEmpty()) thumbBytes else null
 
-    val headerPlainBytes = ByteArrayOutputStream().use { baos ->
-        DataOutputStream(baos).use { dos ->
-            dos.writeUTF(originalName)
-            dos.writeLong(lastModified)
-            dos.writeLong(dateTaken)
-            dos.writeLong(originalSize)
-            dos.writeInt(mediaType)
-            dos.writeInt(videoDuration)
-            dos.writeInt(thumbBytes.size)
-            if (thumbBytes.isNotEmpty()) {
-                dos.write(thumbBytes)
-            }
-        }
-        baos.toByteArray()
-    }
-
-    val preparedV3 = if (!useV4) VaultContainerWriter.prepare(headerPlainBytes, fileKey, versionByte) else null
-    val preparedV4 = if (useV4) VaultContainerWriterV4.prepare(
-        kek = kek!!,
+    val prepared = VaultContainerWriter.prepare(
+        kek = kek,
         keyId = 1,
         originalName = originalName,
         lastModified = lastModified,
@@ -343,9 +310,9 @@ fun CryptoManager.encryptFileToDirectory(
         originalSize = originalSize,
         mediaType = mediaType,
         videoDuration = videoDuration,
-        thumbnail = thumbnailForV4,
+        thumbnail = thumbnailForContainer,
         version = versionByte
-    ) else null
+    )
 
     var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
     while (encryptedFile.exists()) {
@@ -354,31 +321,16 @@ fun CryptoManager.encryptFileToDirectory(
 
     return try {
         val sourcePath = sourceFile.absolutePath
-        val v4 = preparedV4
-        val v3 = preparedV3
-        if (v4 != null) {
-            FileInputStream(sourceFile).use { fis ->
-                VaultContainerWriterV4.writeContainer(
-                    target = encryptedFile,
-                    prepared = v4,
-                    payloadProvider = { fis }
-                )
-            }
-        } else {
-            FileInputStream(sourceFile).use { fis ->
-                VaultContainerWriter.writeContainer(
-                    target = encryptedFile,
-                    prepared = v3!!,
-                    fileKey = fileKey,
-                    payloadProvider = { fis },
-                    bufferSize = 256 * 1024
-                )
-            }
+        FileInputStream(sourceFile).use { fis ->
+            VaultContainerWriter.writeContainer(
+                target = encryptedFile,
+                prepared = prepared,
+                payloadProvider = { fis }
+            )
         }
 
         encryptedFile.setLastModified(lastModified)
 
-        val payloadOffset = v4?.payloadOffset ?: VaultContainer.payloadOffset(v3!!.encryptedHeader.size)
         val newMeta = EncryptedFileMetadata(
             originalName = originalName,
             lastModified = lastModified,
@@ -386,17 +338,17 @@ fun CryptoManager.encryptFileToDirectory(
             originalSize = originalSize,
             mediaType = mediaType,
             videoDuration = videoDuration,
-            payloadOffset = payloadOffset,
-            contentIv = v4?.let { ByteArray(0) } ?: v3!!.contentIv,
-            fileKey = (v4?.dek ?: fileKey).copyOf(),
+            payloadOffset = prepared.payloadOffset,
+            contentIv = ByteArray(0),
+            fileKey = prepared.dek.copyOf(),
             version = versionByte,
             isMacAuthenticated = true,
-            thumbnailBytes = thumbnailForV4,
-            fileId = v4?.fileId?.copyOf(),
-            keyId = if (v4 != null) 1 else -1,
-            ciphertextLength = v4?.ciphertextLength ?: 0L,
-            isV4 = v4 != null,
-            segmentSize = if (v4 != null) TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE else 0
+            thumbnailBytes = thumbnailForContainer,
+            fileId = prepared.fileId.copyOf(),
+            keyId = 1,
+            ciphertextLength = prepared.ciphertextLength,
+            isCanonicalFormat = true,
+            segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
         )
         metadataCache[encryptedFile.absolutePath] = newMeta
         activeIndex?.addEntry(encryptedFile, newMeta)
@@ -443,11 +395,8 @@ fun CryptoManager.encryptStreamToDirectory(
     lastModifiedOverride: Long? = null,
     dateTakenOverride: Long? = null
 ): File? {
-    val masterKey = unlockedMasterKey ?: return null
-    val useV4 = getVaultFormat() == 4
-    val kek = if (useV4) activeKek() ?: return null else null
-    val fileKey: ByteArray = kek ?: masterKey
-    val versionByte: Byte = if (useV4) VERSION_TINK_STREAM else VERSION_SYMMETRIC_AUTH
+    val kek = activeKek() ?: return null
+    val versionByte = VaultContainer.VAULT_FORMAT_VERSION
 
     if (!targetDir.exists()) {
         targetDir.mkdirs()
@@ -459,30 +408,8 @@ fun CryptoManager.encryptStreamToDirectory(
     val initialSize = if (contentLength > 0L) contentLength else 0L
     val mediaType = getMediaTypeForName(originalName)
     val videoDuration = 0
-    val thumbBytes = ByteArray(0)
-
-    fun buildHeaderBytes(size: Long): ByteArray {
-        return ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.writeUTF(originalName)
-                dos.writeLong(lastModified)
-                dos.writeLong(dateTaken)
-                dos.writeLong(size)
-                dos.writeInt(mediaType)
-                dos.writeInt(videoDuration)
-                dos.writeInt(thumbBytes.size)
-                if (thumbBytes.isNotEmpty()) {
-                    dos.write(thumbBytes)
-                }
-            }
-            baos.toByteArray()
-        }
-    }
-
-    val headerPlainBytes = buildHeaderBytes(initialSize)
-    val preparedV3 = if (!useV4) VaultContainerWriter.prepare(headerPlainBytes, fileKey, versionByte) else null
-    val preparedV4 = if (useV4) VaultContainerWriterV4.prepare(
-        kek = kek!!,
+    val prepared = VaultContainerWriter.prepare(
+        kek = kek,
         keyId = 1,
         originalName = originalName,
         lastModified = lastModified,
@@ -492,7 +419,7 @@ fun CryptoManager.encryptStreamToDirectory(
         videoDuration = videoDuration,
         thumbnail = null,
         version = versionByte
-    ) else null
+    )
 
     var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
     while (encryptedFile.exists()) {
@@ -500,50 +427,29 @@ fun CryptoManager.encryptStreamToDirectory(
     }
 
     return try {
-        val v4s = preparedV4
-        val v3s = preparedV3
-        val totalBytesRead = if (v4s != null) {
-            VaultContainerWriterV4.writeContainer(
-                target = encryptedFile,
-                prepared = v4s,
-                payloadProvider = { inputStream },
-                onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
-            )
-        } else {
-            VaultContainerWriter.writeContainer(
-                target = encryptedFile,
-                prepared = v3s!!,
-                fileKey = fileKey,
-                payloadProvider = { inputStream },
-                bufferSize = 64 * 1024,
-                onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
-            )
-        }
+        val totalBytesRead = VaultContainerWriter.writeContainer(
+            target = encryptedFile,
+            prepared = prepared,
+            payloadProvider = { inputStream },
+            onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
+        )
 
         if (contentLength <= 0L || contentLength != totalBytesRead) {
-            // Gercek boyut bastan bilinmiyordu: header icindeki sabit uzunluklu
-            // alanlari duzelt. fileId/dek korundugu icin Tink akisi gecerli kalir.
-            if (v4s != null) {
-                VaultContainerWriterV4.rewriteHeaderInPlace(
-                    file = encryptedFile,
-                    kek = kek!!,
-                    keyId = 1,
-                    prepared = v4s,
-                    originalName = originalName,
-                    lastModified = lastModified,
-                    dateTaken = dateTaken,
-                    originalSize = totalBytesRead,
-                    mediaType = mediaType,
-                    videoDuration = videoDuration,
-                    thumbnail = null
-                )
-            } else {
-                VaultContainerWriter.rewriteHeaderInPlace(
-                    encryptedFile,
-                    buildHeaderBytes(totalBytesRead),
-                    fileKey
-                )
-            }
+            // Gerçek boyut baştan bilinmiyordu: header'daki sabit uzunluklu alanları düzelt.
+            // fileId/dek korunduğu için Tink akışı geçerli kalır.
+            VaultContainerWriter.rewriteHeaderInPlace(
+                file = encryptedFile,
+                kek = kek,
+                keyId = 1,
+                prepared = prepared,
+                originalName = originalName,
+                lastModified = lastModified,
+                dateTaken = dateTaken,
+                originalSize = totalBytesRead,
+                mediaType = mediaType,
+                videoDuration = videoDuration,
+                thumbnail = null
+            )
         }
 
         encryptedFile.setLastModified(lastModified)
@@ -552,9 +458,6 @@ fun CryptoManager.encryptStreamToDirectory(
             generateEmbeddedThumbnailFromEncryptedFile(encryptedFile)
         } else null
 
-        val v4f = preparedV4
-        val v3f = preparedV3
-        val payloadOffset = v4f?.payloadOffset ?: VaultContainer.payloadOffset(v3f!!.encryptedHeader.size)
         metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
             originalName = originalName,
             lastModified = lastModified,
@@ -562,17 +465,17 @@ fun CryptoManager.encryptStreamToDirectory(
             originalSize = totalBytesRead,
             mediaType = mediaType,
             videoDuration = videoDuration,
-            payloadOffset = payloadOffset,
-            contentIv = v4f?.let { ByteArray(0) } ?: v3f!!.contentIv,
-            fileKey = (v4f?.dek ?: fileKey).copyOf(),
+            payloadOffset = prepared.payloadOffset,
+            contentIv = ByteArray(0),
+            fileKey = prepared.dek.copyOf(),
             version = versionByte,
             isMacAuthenticated = true,
             thumbnailBytes = finalThumbBytes,
-            fileId = v4f?.fileId?.copyOf(),
-            keyId = if (v4f != null) 1 else -1,
-            ciphertextLength = v4f?.let { TinkStreamSpec.expectedCiphertextSize(totalBytesRead) } ?: 0L,
-            isV4 = v4f != null,
-            segmentSize = if (v4f != null) TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE else 0
+            fileId = prepared.fileId.copyOf(),
+            keyId = 1,
+            ciphertextLength = TinkStreamSpec.expectedCiphertextSize(totalBytesRead),
+            isCanonicalFormat = true,
+            segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
         )
 
         encryptedFile
@@ -808,14 +711,6 @@ fun CryptoManager.renameEncryptedFile(
     val tempFile = File(parentDir, ".tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
 
     return try {
-        val magicBytes = ByteArray(8)
-        val version: Byte
-
-        RandomAccessFile(encryptedFile, "r").use { raf ->
-            raf.readFully(magicBytes)
-            version = raf.readByte()
-        }
-
         val newExt = trimmedName.substringAfterLast('.', "")
         val updatedMediaType = if (newExt.isNotEmpty() && (
                 trimmedName.isImageFast() || trimmedName.isVideoFast() ||
@@ -828,34 +723,27 @@ fun CryptoManager.renameEncryptedFile(
         }
 
         val thumbBytes = readEmbeddedThumbnailBytes(encryptedFile) ?: meta.thumbnailBytes ?: ByteArray(0)
-        val headerPlainBytes = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.writeUTF(trimmedName)
-                dos.writeLong(meta.lastModified)
-                dos.writeLong(meta.dateTaken)
-                dos.writeLong(meta.originalSize)
-                dos.writeInt(updatedMediaType)
-                dos.writeInt(meta.videoDuration)
-                dos.writeInt(thumbBytes.size)
-                if (thumbBytes.isNotEmpty()) {
-                    dos.write(thumbBytes)
-                }
-            }
-            baos.toByteArray()
-        }
 
+        val kek = activeKek() ?: return false
+        val fileId = meta.fileId ?: return false
         val newPayloadOffset = VaultContainerWriter.rewriteContainer(
             source = encryptedFile,
             target = tempFile,
+            kek = kek,
+            keyId = meta.keyId,
+            fileId = fileId,
+            dek = meta.fileKey,
+            version = meta.version,
             sourcePayloadOffset = meta.payloadOffset,
-            sourcePayloadLength = meta.originalSize,
-            sourceContentIv = meta.contentIv,
-            newHeaderPlainBytes = headerPlainBytes,
-            fileKey = meta.fileKey,
-            version = version,
-            macCoversHeader = version == VERSION_V5_AUTH,
-            magic = magicBytes,
-            useDerivedHeaderKey = meta.isMacAuthenticated,
+            ciphertextLength = meta.ciphertextLength,
+            segmentSize = meta.segmentSize,
+            originalName = trimmedName,
+            lastModified = meta.lastModified,
+            dateTaken = meta.dateTaken,
+            originalSize = meta.originalSize,
+            mediaType = updatedMediaType,
+            videoDuration = meta.videoDuration,
+            thumbnail = if (thumbBytes.isNotEmpty()) thumbBytes else null,
             syncFile = syncParentDir
         )
 
@@ -935,4 +823,3 @@ fun CryptoManager.resolveSyncSourceRoot(selectedDir: File): File {
 
     return selectedDir
 }
-

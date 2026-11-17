@@ -21,7 +21,7 @@ import javax.crypto.spec.SecretKeySpec
  *  - dosya basina atomik degistirme (.tmp -> fsync -> dogrula -> rename)
  *  - dogrulamadan eski dosya asla silinmez
  *  - resumable manifest (KEK + tamamlanan yollar), her dosyadan sonra kaydedilir
- *  - idempotent: v4 dosyalari tekrar islenmez
+ *  - idempotent: dosyalar tekrar islenmez
  */
 object VaultMigration {
 
@@ -93,7 +93,7 @@ object VaultMigration {
     }
 
     /**
-     * Tek bir v3 dosyasini v4'e donusturur. Dogrulama basarisizsa kaynak dosyaya
+     * Tek bir v3 dosyasini kanonik formata donusturur. Dogrulama basarisizsa kaynak dosyaya
      * dokunmaz ve false dondurur (§7.5).
      */
     internal fun convertFile(
@@ -103,11 +103,11 @@ object VaultMigration {
         keyId: Short = 1
     ): Boolean {
         val meta = CryptoManager.readMetadata(file, includeThumbnail = true, cacheResult = false) ?: return false
-        if (meta.isV4) return true
+        if (meta.isCanonicalFormat) return true
         if (meta.isMacAuthenticated && !CryptoManager.verifyFileIntegrity(file, meta)) return false
 
         val thumb = meta.thumbnailBytes
-        val prepared = VaultContainerWriterV4.prepare(
+        val prepared = VaultContainerWriter.prepare(
             kek = kek,
             keyId = keyId,
             originalName = meta.originalName,
@@ -120,15 +120,15 @@ object VaultMigration {
         )
         val tmp = File(file.parentFile, ".tmp_${java.util.UUID.randomUUID()}.bin")
         return try {
-            // v3 payload'u once coz, ardindan duz metni v4 akisina ver.
+            // v3 payload'u once coz, ardindan duz metni kanonik akışa ver.
             // (Ciphertext'i oldugu gibi yazmak cift sifreleme olurdu.)
             val plain = CryptoManager.openDecryptedContentStream(file, 0L, meta) ?: return false
             plain.use { input ->
-                VaultContainerWriterV4.writeContainer(target = tmp, prepared = prepared, payloadProvider = { input })
+                VaultContainerWriter.writeContainer(target = tmp, prepared = prepared, payloadProvider = { input })
             }
             // Yeni dosyayi tam decrypt ile dogrula (Tink EOF'ta son tag'i dogrular).
             val newMeta = meta.copy(
-                version = VaultContainer.VERSION_TINK_STREAM,
+                version = VaultContainer.VAULT_FORMAT_VERSION,
                 payloadOffset = prepared.payloadOffset,
                 contentIv = ByteArray(0),
                 fileKey = prepared.dek.copyOf(),
@@ -136,7 +136,7 @@ object VaultMigration {
                 fileId = prepared.fileId.copyOf(),
                 keyId = keyId,
                 ciphertextLength = prepared.ciphertextLength,
-                isV4 = true,
+                isCanonicalFormat = true,
                 segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
             )
             if (!CryptoManager.verifyFileIntegrity(tmp, newMeta)) return false
@@ -195,7 +195,7 @@ object VaultMigration {
         return loadManifest(root, vmk)?.first
     }
 
-    /** Tum kasayi v4'e donusturur; kesinti sonrasi manifest'ten devam eder. */
+    /** Tum kasayi kanonik formata donusturur; kesinti sonrasi manifest'ten devam eder. */
     fun migrate(context: Context, onProgress: (Progress) -> Unit = {}): Progress {
         cancelRequested = false
         val root = CryptoManager.getVaultRoot(context) ?: return Progress(0, 0, 0, true)
@@ -246,7 +246,7 @@ object VaultMigration {
 
         // .vault basligi bu motor tarafindan degistirilmez: sifre gerektirir.
         // Service, tum dosyalar donusunce unlockedKek'i ayarlayip
-        // setupOrUpdateCredentials() ile v4 basligini yazar, ardindan manifest'i siler.
+        // setupOrUpdateCredentials() ile kanonik başlıkni yazar, ardindan manifest'i siler.
         return Progress(converted, files.size, failed, failed == 0 && done.size >= files.size)
     }
 }

@@ -16,12 +16,12 @@ import kotlin.math.roundToInt
  * ADR §11.1 - segment boyutu olcumu (JVM).
  *
  * Normal test kosumunda KAPALIDIR; calistirmak icin:
- *   CIPHER_BENCHMARK=1 ./gradlew :app:testFossDebugUnitTest --tests "*V4SegmentBenchmark"
+ *   CIPHER_BENCHMARK=1 ./gradlew :app:testFossDebugUnitTest --tests "*VaultSegmentBenchmark"
  *
  * Bu olcum goreli karsilastirma saglar (ayni makinede tum secenekler). Gercek cihaz
  * sayilari icin EncryptedMediaDataSource uzerindeki opt-in probe kullanilmalidir.
  */
-class V4SegmentBenchmark {
+class VaultSegmentBenchmark {
 
     private val key = ByteArray(32) { (it * 7 + 3).toByte() }
     private val fileId = ByteArray(16) { (it * 11 + 1).toByte() }
@@ -32,7 +32,7 @@ class V4SegmentBenchmark {
     @Test
     fun measureSegmentSizes() {
         if (System.getenv("CIPHER_BENCHMARK") != "1") {
-            println("V4SegmentBenchmark: skipped (set CIPHER_BENCHMARK=1 to run)")
+            println("VaultSegmentBenchmark: skipped (set CIPHER_BENCHMARK=1 to run)")
             return
         }
 

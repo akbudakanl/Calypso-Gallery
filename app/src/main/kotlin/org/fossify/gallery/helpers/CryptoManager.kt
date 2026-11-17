@@ -16,7 +16,6 @@ import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.macs.Poly1305
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -37,24 +36,13 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
-import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_TINK_STREAM
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_FORMAT_VERSION
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -151,12 +139,12 @@ data class EncryptedFileMetadata(
     val version: Byte = 1,
     val isMacAuthenticated: Boolean = false,
     val thumbnailBytes: ByteArray? = null,
-    // ---- v4 (Tink streaming AEAD) alanlari ----
+    // ---- kanonik (Tink streaming AEAD) alanlari ----
     val fileId: ByteArray? = null,
     val keyId: Short = -1,
     val ciphertextLength: Long = 0L,
-    val isV4: Boolean = false,
-    /** v4: Tink segment boyutu (header'dan okunur; sabit degil). */
+    val isCanonicalFormat: Boolean = false,
+    /** Tink segment boyutu (header'dan okunur; sabit değil). */
     val segmentSize: Int = 0
 )
 
@@ -196,9 +184,6 @@ object CryptoManager {
 
     internal const val ARGON2_SALT_LENGTH = 16
 
-
-    internal const val PBKDF2_ITERATIONS = 100_000
-
     internal const val KEY_LENGTH_BITS = 256
 
     internal const val THUMB_MAX_DIMENSION = 320
@@ -213,7 +198,7 @@ object CryptoManager {
     internal var unlockedMasterKey: ByteArray? = null
 
     /**
-     * v4 kasada keyring'den cozulen KEK. v3 kasada null - o durumda
+     * kanonik kasada keyring'den çözülen KEK.
      * [activeKek] eski MEK'i (unlockedMasterKey) kullanir.
      */
     @Volatile
@@ -622,117 +607,29 @@ object CryptoManager {
         cacheResult: Boolean = true
     ): EncryptedFileMetadata? {
         metadataCache[file.absolutePath]?.let { return it }
-        val masterKey = unlockedMasterKey ?: return null
+        val kek = activeKek() ?: return null
         if (!file.exists() || !file.isFile) return null
 
         return try {
             FileInputStream(file).use { fis ->
                 DataInputStream(BufferedInputStream(fis, 8192)).use { dis ->
-                    val magicBytes = ByteArray(8)
+                    val magicBytes = ByteArray(VaultContainer.VAULT_MAGIC.length)
                     dis.readFully(magicBytes)
-                    val magicStr = String(magicBytes, Charsets.US_ASCII)
-                    if (magicStr != MAGIC_V2 && magicStr != MAGIC_V1) return null
+                    if (String(magicBytes, Charsets.US_ASCII) != VaultContainer.VAULT_MAGIC) return null
 
                     val version = dis.readByte()
-                    if (version == VERSION_TINK_STREAM) {
-                        // v4: baslik KEK ile sifrelenir; v3 kasa icin activeKek() eski MEK'i dondurur.
-                        val v4Meta = readV4Metadata(dis, activeKek() ?: return null, version, includeThumbnail)
-                            ?: return null
-                        if (cacheResult && includeThumbnail) {
-                            metadataCache[file.absolutePath] = v4Meta
-                        }
-                        return v4Meta
+                    if (version != VaultContainer.VAULT_FORMAT_VERSION) return null
+
+                    val meta = readContainerMetadata(dis, kek, version, includeThumbnail) ?: return null
+                    if (cacheResult && includeThumbnail) {
+                        metadataCache[file.absolutePath] = meta
                     }
-                    val fileKey: ByteArray = when (version) {
-                        VERSION_SYMMETRIC, VERSION_SYMMETRIC_AUTH, VERSION_V5_AUTH -> masterKey.copyOf()
-                        else -> return null
-                    }
-
-                    val headerIv = ByteArray(GCM_IV_LENGTH)
-                    dis.readFully(headerIv)
-
-                    val encHeaderLen = dis.readInt()
-                    if (encHeaderLen <= 0 || encHeaderLen > 5 * 1024 * 1024) {
-                        fileKey.fill(0)
-                        return null
-                    }
-
-                    val encHeader = ByteArray(encHeaderLen)
-                    dis.readFully(encHeader)
-
-                    val contentIv = ByteArray(CTR_IV_LENGTH)
-                    dis.readFully(contentIv)
-
-                    // Content IV dosyanin icinde acik tutulur. Tamamen sifir bir IV,
-                    // Poly1305-AES icin tekrar eden one-time key demektir; reddet.
-                    if (!VaultContainer.isValidContentIv(contentIv)) {
-                        return null
-                    }
-
-                    val isMacAuth = (version == VERSION_SYMMETRIC_AUTH || version == VERSION_V5_AUTH)
-                    val headerKey = if (isMacAuth) {
-                        deriveSubkey(fileKey, DOMAIN_HEADER_KEY)
-                    } else {
-                        fileKey
-                    }
-
-                    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                    cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(headerKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, headerIv))
-                    val plainHeader = cipher.doFinal(encHeader)
-                    if (isMacAuth) {
-                        headerKey.fill(0)
-                    }
-
-                    DataInputStream(ByteArrayInputStream(plainHeader)).use { hdis ->
-                        val originalName = hdis.readUTF()
-                        val lastModified = hdis.readLong()
-                        val dateTaken = hdis.readLong()
-                        val originalSize = hdis.readLong()
-                        val mediaType = hdis.readInt()
-                        val videoDuration = hdis.readInt()
-                        val thumbBytes = if (includeThumbnail) {
-                            try {
-                                if (hdis.available() >= 4) {
-                                    val thumbLen = hdis.readInt()
-                                    if (thumbLen in 1..(5 * 1024 * 1024) && hdis.available() >= thumbLen) {
-                                        val tb = ByteArray(thumbLen)
-                                        hdis.readFully(tb)
-                                        tb
-                                    } else null
-                                } else null
-                            } catch (_: Exception) {
-                                null
-                            }
-                        } else {
-                            null
-                        }
-                        val payloadOffset = VaultContainer.payloadOffset(encHeaderLen)
-
-                        val meta = EncryptedFileMetadata(
-                            originalName = originalName,
-                            lastModified = lastModified,
-                            dateTaken = dateTaken,
-                            originalSize = originalSize,
-                            mediaType = mediaType,
-                            videoDuration = videoDuration,
-                            payloadOffset = payloadOffset,
-                            contentIv = contentIv,
-                            fileKey = fileKey,
-                            version = version,
-                            isMacAuthenticated = isMacAuth,
-                            thumbnailBytes = thumbBytes
-                        )
-                        if (cacheResult && includeThumbnail) {
-                            metadataCache[file.absolutePath] = meta
-                        }
-                        meta
-                    }
+                    meta
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
 
 }
-

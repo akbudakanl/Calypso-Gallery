@@ -762,7 +762,7 @@ object VirtualAlbumSyncManager {
             // A hidden virtual album whose stored name is a vault string that cannot be decrypted
             // with the current vault key belongs to a different vault (e.g. left over after a new
             // vault was created with a fresh VMK/KEK). Do not resurrect it in this vault's JSON/
-            // folder as an empty album whose name shows up as a random "FVSTR1:…" string. Remove
+            // folder as an empty album whose name shows up as a random "FVSTR:…" string. Remove
             // the stale row (and its on-disk manifest) instead. Only do this while the vault is
             // unlocked, otherwise every hidden name would look undecryptable.
             if (album.isHidden && CryptoManager.isVaultUnlocked &&

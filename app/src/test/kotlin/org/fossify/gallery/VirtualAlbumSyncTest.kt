@@ -149,7 +149,7 @@ class VirtualAlbumSyncTest {
         val vaultRoot = CryptoManager.getDefaultVaultRoot()
         val virtualAlbumsDir = VirtualAlbumSyncManager.getVirtualAlbumsStorageDir()
 
-        assertEquals(CIPHER_SECRETS_DIR_NAME, vaultRoot.name)
+        assertEquals(SECRETS_DIR_NAME, vaultRoot.name)
         assertEquals(CIPHER_VIRTUAL_ALBUMS_DIR_NAME, virtualAlbumsDir.name)
 
         // Both folders must be siblings inside the "Calypso Gallery" container, which is a

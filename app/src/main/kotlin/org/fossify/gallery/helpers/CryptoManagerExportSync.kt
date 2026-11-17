@@ -16,7 +16,6 @@ import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.macs.Poly1305
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -37,23 +36,12 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
-import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -331,27 +319,7 @@ fun CryptoManager.syncVaultFromExternalDirectory(
                 }
             }
 
-            // Stage 0: O(1) exact-mirror .bin fast skip before reading headers or building metadata index
-            if (existingTarget != null) {
-                val binNameMap = albumBinNameIndex.getOrPut(existingTarget) {
-                    val map = HashMap<String, File>()
-                    existingTarget.listFiles()
-                        ?.filter { isEncryptedBinFile(it) }
-                        ?.forEach { existingBin ->
-                            map[existingBin.name.lowercase(Locale.ROOT)] = existingBin
-                        }
-                    map
-                }
-                val matchingMirrorBin = binNameMap[sourceBin.name.lowercase(Locale.ROOT)]
-                if (matchingMirrorBin != null && hasMatchingMacTrailer(sourceBin, matchingMirrorBin)) {
-                    skippedDuplicateCount++
-                    processed++
-                    onProgress?.invoke(processed, total)
-                    continue
-                }
-            }
-
-            // Stage 1: Small GCM-authenticated header read only (no thumbnail allocation, no cache pollution)
+            // Kanonik format: başlık okuma + Tink akış karşılaştırması ile yinelenenleri atla.
             val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false)
             if (sourceMeta == null) {
                 metadataCache.remove(sourceBin.absolutePath)
@@ -361,68 +329,36 @@ fun CryptoManager.syncVaultFromExternalDirectory(
                 continue
             }
 
-            var integrityVerified = !sourceMeta.isMacAuthenticated
+            var integrityVerified = false
 
             if (existingTarget != null) {
                 val index = albumIndexMap.getOrPut(existingTarget) {
                     TargetEncryptedIndex(existingTarget)
                 }
                 val collisionCandidates = index.findCandidates(sourceMeta.originalName, includeCollisionVariants = true)
-
-                // Stage 2: O(1) length + contentIv + Poly1305 trailer + timestamp match before full integrity scan
-                if (collisionCandidates.any { (existingFile, existingMeta) ->
+                val matchingCandidate = collisionCandidates.firstOrNull { (existingFile, existingMeta) ->
+                    existingMeta.originalSize == sourceMeta.originalSize &&
+                        existingMeta.mediaType == sourceMeta.mediaType &&
                         areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
-                            isFastMacMatchDuplicate(sourceBin, sourceMeta, existingFile, existingMeta)
-                    }
-                ) {
+                        areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
+                }
+                if (matchingCandidate != null) {
                     skippedDuplicateCount++
                     processed++
                     onProgress?.invoke(processed, total)
                     continue
                 }
-
-                // Stage 3/4: Filter to exact size + mediaType + timestamp matches and compare + verify MAC in 1 pass
-                val sizeMatchingCandidates = collisionCandidates.filter { (_, existingMeta) ->
-                    existingMeta.originalSize == sourceMeta.originalSize &&
-                        existingMeta.mediaType == sourceMeta.mediaType &&
-                        areEncryptedTimestampsEquivalent(sourceMeta, existingMeta)
-                }
-                if (sizeMatchingCandidates.isNotEmpty()) {
-                    var matchOutcome = StreamCompareMacResult.MISMATCH
-                    for ((existingFile, existingMeta) in sizeMatchingCandidates) {
-                        matchOutcome = compareEncryptedStreamAndVerifySourceMac(
-                            sourceBin = sourceBin,
-                            sourceMeta = sourceMeta,
-                            existingFile = existingFile,
-                            existingMeta = existingMeta
-                        )
-                        if (matchOutcome != StreamCompareMacResult.MISMATCH) {
-                            break
-                        }
-                    }
-                    when (matchOutcome) {
-                        StreamCompareMacResult.MATCH_VALID -> {
-                            skippedDuplicateCount++
-                            processed++
-                            onProgress?.invoke(processed, total)
-                            continue
-                        }
-                        StreamCompareMacResult.SOURCE_MAC_INVALID -> {
-                            metadataCache.remove(sourceBin.absolutePath)
-                            recordFailure(sourceBin)
-                            processed++
-                            onProgress?.invoke(processed, total)
-                            continue
-                        }
-                        StreamCompareMacResult.MISMATCH -> Unit
-                    }
-                }
             }
 
-            // Single-pass copy + inline MAC verification before creating a new destination album
+            // Hedefe kopyala ve Tink AEAD ile bütünlüğü doğrula.
             val stagingDir = existingTarget ?: vaultRoot
             val tempFile = File(stagingDir, ".sync_tmp_${randomHex(8)}$ENCRYPTED_BIN_EXT")
-            val copyVerified = copyBinAndVerifyIntegritySinglePass(sourceBin, sourceMeta, tempFile)
+            val copyVerified = try {
+                sourceBin.copyTo(tempFile, overwrite = true)
+                verifyFileIntegrity(tempFile)
+            } catch (_: Exception) {
+                false
+            }
             if (!copyVerified || !tempFile.exists()) {
                 tempFile.delete()
                 metadataCache.remove(sourceBin.absolutePath)
@@ -675,4 +611,3 @@ fun CryptoManager.previewDecryptAlbumConflict(
     val renamed = resolveUniquePlainFolder(parent, targetFolder.name)
     return AlbumConflictPreview(existingName = targetFolder.name, renamedPreview = renamed.name)
 }
-

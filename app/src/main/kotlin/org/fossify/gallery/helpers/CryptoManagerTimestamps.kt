@@ -16,7 +16,6 @@ import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.macs.Poly1305
 import org.bouncycastle.crypto.params.Argon2Parameters
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -37,23 +36,12 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import org.fossify.gallery.extensions.virtualAlbumsDB
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
-import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_MAGIC
+import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -301,4 +289,3 @@ internal fun CryptoManager.persistDecryptedDateTaken(
     }
     updateMediaStoreTimestamps(context, fullPath, dateTaken, lastModified)
 }
-
