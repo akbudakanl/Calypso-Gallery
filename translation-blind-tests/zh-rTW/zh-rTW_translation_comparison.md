@@ -600,11 +600,11 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 403 | `create_new_vault_option` | Create new vault | 建立新保險箱 |
 | 404 | `use_existing_vault_option` | Use existing vault | 使用現有保險箱 |
 | 405 | `where_to_create_vault_title` | Where should the vault be created? | 要在哪裡建立保險箱？ |
-| 406 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | 預設位置（內部 > Fossify Gallery Cipher > Cipher_Secrets） |
+| 406 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | 預設位置（內部 > Calypso Gallery > Cipher_Secrets） |
 | 407 | `vault_location_custom_short` | Custom Location | 自訂位置 |
 | 408 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 在所選資料夾中找不到現有的加密保險箱 (.vault)。 |
 | 409 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | 在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。 |
-| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | 標準位置（內部儲存空間 > Fossify Gallery Cipher > Cipher_Secrets） |
+| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | 標準位置（內部儲存空間 > Calypso Gallery > Cipher_Secrets） |
 | 411 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | 自訂 / 外部位置（USB 磁碟機、SD 卡或自訂資料夾） |
 | 412 | `external_vault_unavailable_title` | External vault unavailable | 無法存取外部保險箱 |
 | 413 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 您設定的保險箱位置 (%s) 目前已中斷連線或無法使用。請接上磁碟機並輕觸「重試」，或選擇其他保險箱位置。 |

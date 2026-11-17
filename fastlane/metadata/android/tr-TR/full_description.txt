@@ -21,11 +21,7 @@ JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, WEBP , GIF, videolar ve daha fazlası - 
 ✨ DİNAMİK TEMALARLA MATERYAL TASARIM:
 Dinamik temalarla sezgisel materyal tasarımın güzelliğini deneyimleyin. Daha fazlasını mı istiyorsunuz? Özel temalara dalın ve galerinizi gerçekten benzersiz hale getirin.
 
-Fossify tarafından sunulan diğer uygulamaları keşfedin:
-https://www.fossify.org
-Açık Kaynak Kod:
-https://www.github.com/FossifyOrg
-Reddit'te topluluğa katılın:
-https://www.reddit.com/r/Fossify
-Telegram üzerinden bağlanın:
-https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

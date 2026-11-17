@@ -551,11 +551,11 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 390 | `create_new_vault_option` | Create new vault | Neuen Tresor erstellen |
 | 391 | `use_existing_vault_option` | Use existing vault | Vorhandenen Tresor verwenden |
 | 392 | `where_to_create_vault_title` | Where should the vault be created? | Wo soll der Tresor erstellt werden? |
-| 393 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | Standard-Speicherort (Intern > Fossify Gallery Cipher > Cipher_Secrets) |
+| 393 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | Standard-Speicherort (Intern > Calypso Gallery > Cipher_Secrets) |
 | 394 | `vault_location_custom_short` | Custom Location | Benutzerdefinierter Speicherort |
 | 395 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Im ausgewählten Ordner wurde kein vorhandener verschlüsselter Tresor (.vault) gefunden. |
 | 396 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Unter %s wurde ein vorhandener verschlüsselter Tresor gefunden. Möchtest du ihn entsperren und verwenden? Tippe auf Nein, um einen anderen Ordner zu wählen. |
-| 397 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | Standard-Speicherort (Interner Speicher > Fossify Gallery Cipher > Cipher_Secrets) |
+| 397 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | Standard-Speicherort (Interner Speicher > Calypso Gallery > Cipher_Secrets) |
 | 398 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Benutzerdefinierter / Externer Speicherort (USB-Laufwerk, SD-Karte oder eigener Ordner) |
 | 399 | `external_vault_unavailable_title` | External vault unavailable | Externer Tresor nicht verfügbar |
 | 400 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Dein konfigurierter Tresor-Speicherort (%s) ist derzeit getrennt oder nicht verfügbar. Schließe das Laufwerk an und tippe auf Erneut versuchen, oder wähle einen anderen Tresor-Speicherort. |

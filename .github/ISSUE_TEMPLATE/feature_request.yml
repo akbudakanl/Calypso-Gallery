@@ -1,12 +1,12 @@
 name: Feature request
-description: Suggest an idea for this project
+description: Suggest an idea for Calypso Gallery
 labels: [ "feature request", "needs triage" ]
 body:
   - type: markdown
     attributes:
       value: |
         ## Hi there 👋
-        Thanks for helping us improve Fossify Gallery by suggesting a feature!
+        Thanks for helping us improve Calypso Gallery by suggesting a feature!
         Please fill in as much information as possible about your feature request to avoid unnecessary and time-consuming back-and-forth communication.
 
   - type: checkboxes
@@ -14,9 +14,7 @@ body:
     attributes:
       label: "Checklist"
       options:
-        - label: "I made sure that there are **no existing issues** - [open](https://github.com/FossifyOrg/Gallery/issues) or [closed](https://github.com/FossifyOrg/Gallery/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
-          required: true
-        - label: "I made sure that there are **no existing discussions** - [open](https://github.com/orgs/FossifyOrg/discussions?discussions_q=is:open+label:gallery) or [closed](https://github.com/orgs/FossifyOrg/discussions?discussions_q=is:closed+label:gallery) - to which I could contribute my information."
+        - label: "I made sure that there are **no existing issues** - [open](https://github.com/akbudakanl/Gallery-Cipher/issues) or [closed](https://github.com/akbudakanl/Gallery-Cipher/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
           required: true
         - label: "I have read the FAQs inside the app (Menu -> About -> FAQs) and my problem isn't listed."
           required: true
@@ -24,7 +22,7 @@ body:
           required: true
         - label: "This issue contains only one feature request."
           required: true
-        - label: "I have read and understood the [contribution guidelines](https://github.com/FossifyOrg/Gallery/blob/master/CONTRIBUTING.md)."
+        - label: "I have read and understood the [contribution guidelines](https://github.com/akbudakanl/Gallery-Cipher/blob/main/CONTRIBUTING.md)."
           required: true
 
   - type: textarea

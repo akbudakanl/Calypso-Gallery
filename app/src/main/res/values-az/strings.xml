@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Qalereya</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Redaktə</string>
     <string name="open_camera">Kameranı aç</string>
     <string name="hidden">(gizli)</string>
@@ -458,11 +458,11 @@
     <string name="create_new_vault_option">Yeni seyf yarat</string>
     <string name="use_existing_vault_option">Mövcud seyfdən istifadə et</string>
     <string name="where_to_create_vault_title">Seyf harada yaradılsın?</string>
-    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">Fərdi yer</string>
     <string name="no_existing_vault_at_location">Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı.</string>
     <string name="unlock_existing_vault_at_location_prompt">%s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun.</string>
-    <string name="vault_location_standard_option">Standart yer (Daxili yaddaş &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standart yer (Daxili yaddaş &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">Fərdi / Xarici yer (USB sürücü, SD kart və ya fərdi qovluq)</string>
     <string name="external_vault_unavailable_title">Xarici seyf əlçatan deyil</string>
     <string name="external_vault_unavailable_prompt">Tənzimlənmiş seyf yeriniz (%s) hazırda ayrılıb və ya əlçatan deyil. Sürücünü qoşub Yenidən cəhd et üzərinə toxunun və ya başqa seyf yeri seçin.</string>

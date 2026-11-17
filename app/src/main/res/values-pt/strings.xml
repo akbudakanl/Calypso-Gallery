@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galeria</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Editar</string>
     <string name="open_camera">Abrir cÃ¢mara</string>
     <string name="hidden">(oculta)</string>
@@ -250,7 +250,7 @@
     <string name="wallpaper">Papel de Parede</string>
     <string name="failed_to_load_media">Erro ao carregar os dados.</string>
     <string name="playback_speed">Velocidade de reproduÃ§Ã£o</string>
-    <string name="full_storage_permission_required">Fossify Gallery precisa de acesso total para mostrar as fotos e os vÃ­deos. Aceda a DefiniÃ§Ãµes &gt; PermissÃµes &gt; Fotos e vÃ­deos &gt; Permitir.</string>
+    <string name="full_storage_permission_required">Calypso Gallery precisa de acesso total para mostrar as fotos e os vÃ­deos. Aceda a DefiniÃ§Ãµes &gt; PermissÃµes &gt; Fotos e vÃ­deos &gt; Permitir.</string>
     <string name="file_is_malformed_or_corrupted">Ficheiro invÃ¡lido ou danificado.</string>
     <string name="media_exceeds_device_capabilities">O ficheiro excede as capacidades do dispositivo.</string>
     <string name="unsupported_format">Formato nÃ£o suportado.</string>

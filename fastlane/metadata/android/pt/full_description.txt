@@ -21,7 +21,7 @@ JPEG, PNG, MP4, MKV, RAW, SVG, GIF, vídeos, e muito mais – as tuas memória e
 ✨ MATERIAL DESIGN COM TEMAS DINÂMICOS:
 Desfruta da beleza do intuitivo material design com temas dinâmicos. Queres mais? Mergulha nos temas personalizáveis e torna a tua galeria verdadeiramente única.
 
-Explora mais aplicações da Fossify: https://www.fossify.org
-Código aberto: https://www.github.com/FossifyOrg
-Junta-te à comunidade no Reddit: https://www.reddit.com/r/Fossify
-Liga-te a nós no Telegram: https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

@@ -612,11 +612,11 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 396 | `create_new_vault_option` | Create new vault | Opprett nytt hvelv |
 | 397 | `use_existing_vault_option` | Use existing vault | Bruk eksisterende hvelv |
 | 398 | `where_to_create_vault_title` | Where should the vault be created? | Hvor skal hvelvet opprettes? |
-| 399 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | Standardplassering (Intern > Fossify Gallery Cipher > Cipher_Secrets) |
+| 399 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | Standardplassering (Intern > Calypso Gallery > Cipher_Secrets) |
 | 400 | `vault_location_custom_short` | Custom Location | Egendefinert plassering |
 | 401 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Ingen eksisterende kryptert hvelv (.vault) ble funnet i den valgte mappen. |
 | 402 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Et eksisterende kryptert hvelv ble funnet på %s. Vil du låse det opp og bruke det? Trykk på Nei for å velge en annen mappe. |
-| 403 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | Standardplassering (Intern lagring > Fossify Gallery Cipher > Cipher_Secrets) |
+| 403 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | Standardplassering (Intern lagring > Calypso Gallery > Cipher_Secrets) |
 | 404 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Egendefinert / Ekstern plassering (USB-stasjon, SD-kort eller egendefinert mappe) |
 | 405 | `external_vault_unavailable_title` | External vault unavailable | Eksternt hvelv utilgjengelig |
 | 406 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Den konfigurerte hvelvplasseringen din (%s) er for øyeblikket frakoblet eller utilgjengelig. Koble til stasjonen og trykk på Prøv på nytt, eller velg en annen hvelvplassering. |

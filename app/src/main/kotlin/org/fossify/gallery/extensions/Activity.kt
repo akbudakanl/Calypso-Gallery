@@ -36,11 +36,11 @@ import org.fossify.commons.extensions.*
 import org.fossify.commons.extensions.getCurrentFormattedDateTime
 import org.fossify.commons.extensions.internalStoragePath
 import org.fossify.commons.helpers.*
-import org.fossify.commons.models.FAQItem
 import org.fossify.commons.models.FileDirItem
 import org.fossify.commons.models.RadioItem
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
+import org.fossify.gallery.activities.AboutActivity
 import org.fossify.gallery.activities.MediaActivity
 import org.fossify.gallery.activities.SettingsActivity
 import org.fossify.gallery.activities.SimpleActivity
@@ -176,45 +176,8 @@ fun SimpleActivity.launchSettings() {
 }
 
 fun SimpleActivity.launchAbout() {
-    val licenses = LICENSE_GLIDE or LICENSE_CROPPER or LICENSE_RTL or LICENSE_SUBSAMPLING or LICENSE_PATTERN or LICENSE_REPRINT or LICENSE_GIF_DRAWABLE or
-        LICENSE_PICASSO or LICENSE_EXOPLAYER or LICENSE_SANSELAN or LICENSE_FILTERS or LICENSE_GESTURE_VIEWS or LICENSE_APNG
-
-    val faqItems = arrayListOf(
-        FAQItem(R.string.faq_3_title, R.string.faq_3_text),
-        FAQItem(R.string.faq_12_title, R.string.faq_12_text),
-        FAQItem(R.string.faq_7_title, R.string.faq_7_text),
-        FAQItem(R.string.faq_14_title, R.string.faq_14_text),
-        FAQItem(R.string.faq_1_title, R.string.faq_1_text),
-        FAQItem(org.fossify.commons.R.string.faq_5_title_commons, org.fossify.commons.R.string.faq_5_text_commons),
-        FAQItem(R.string.faq_5_title, R.string.faq_5_text),
-        FAQItem(R.string.faq_4_title, R.string.faq_4_text),
-        FAQItem(R.string.faq_6_title, R.string.faq_6_text),
-        FAQItem(R.string.faq_8_title, R.string.faq_8_text),
-        FAQItem(R.string.faq_10_title, R.string.faq_10_text),
-        FAQItem(R.string.faq_11_title, R.string.faq_11_text),
-        FAQItem(R.string.faq_13_title, R.string.faq_13_text),
-        FAQItem(R.string.faq_15_title, R.string.faq_15_text),
-        FAQItem(R.string.faq_2_title, R.string.faq_2_text),
-        FAQItem(R.string.faq_18_title, R.string.faq_18_text),
-        FAQItem(org.fossify.commons.R.string.faq_9_title_commons, org.fossify.commons.R.string.faq_9_text_commons),
-    )
-
-    if (resources.getBoolean(org.fossify.commons.R.bool.is_google_play_build)) {
-        faqItems.add(FAQItem(org.fossify.commons.R.string.faq_2_title_commons, org.fossify.commons.R.string.faq_2_text_commons))
-        faqItems.add(FAQItem(org.fossify.commons.R.string.faq_6_title_commons, org.fossify.commons.R.string.faq_6_text_commons))
-        faqItems.add(FAQItem(org.fossify.commons.R.string.faq_7_title_commons, org.fossify.commons.R.string.faq_7_text_commons))
-        faqItems.add(FAQItem(org.fossify.commons.R.string.faq_10_title_commons, org.fossify.commons.R.string.faq_10_text_commons))
-    }
-
-    if (isRPlus() && !isExternalStorageManager()) {
-        faqItems.add(0, FAQItem(R.string.faq_16_title, "${getString(R.string.faq_16_text)} ${getString(R.string.faq_16_text_extra)}"))
-        faqItems.add(1, FAQItem(R.string.faq_17_title, R.string.faq_17_text))
-        faqItems.removeIf { it.text == R.string.faq_7_text }
-        faqItems.removeIf { it.text == R.string.faq_14_text }
-        faqItems.removeIf { it.text == R.string.faq_8_text }
-    }
-
-    startAboutActivity(R.string.app_name, licenses, BuildConfig.VERSION_NAME, faqItems, true)
+    hideKeyboard()
+    startActivity(Intent(applicationContext, AboutActivity::class.java))
 }
 
 fun BaseSimpleActivity.handleMediaManagementPrompt(callback: () -> Unit) {

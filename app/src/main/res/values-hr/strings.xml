@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galerija</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Uredi</string>
     <string name="open_camera">Otvori kameru</string>
     <string name="hidden">(skrivene)</string>
@@ -241,7 +241,7 @@
     <string name="faq_17_text">To je prestalo raditi zbog promjena sustava koje su uvedene s Androidom 11. Aplikacija viÅ¡e ne moÅ¾e pregledavati stvarne mape, oslanja se na takozvani MediaStore za dohvaÄ‡anje podataka.</string>
     <string name="faq_18_title">ZaÅ¡to vidim oglase tijekom reprodukcije videa\?</string>
     <string name="faq_18_text">NaÅ¡e aplikacije ne sadrÅ¾e oglase. Ako ih vidiÅ¡ tijekom reprodukcije videa, vjerojatno koristiÅ¡ neki drugi video player. PokuÅ¡aj pronaÄ‡i standardni video player u postavkama ureÄ‘aja, a zatim na njemu izvrÅ¡i â€OÄisti standardne postavkeâ€œ. SljedeÄ‡i put kada pozoveÅ¡ neku namjeru gledanja videa, vidjet Ä‡eÅ¡ upit za biranje aplikacija u kojem moÅ¾eÅ¡ odabrati aplikaciju koju Å¾eliÅ¡ koristiti.</string>
-    <string name="faq_1_title">Kako mogu odrediti Fossify Gallery kao standardnu galeriju ureÄ‘aja?</string>
+    <string name="faq_1_title">Kako mogu odrediti Calypso Gallery kao standardnu galeriju ureÄ‘aja?</string>
     <string name="wallpaper">Slika pozadine</string>
     <string name="exclude_folder_description">Ovo Ä‡e iskljuÄiti odabir zajedno s njegovim podmapama samo iz Fossify galerije. IskljuÄenim mapama moÅ¾eÅ¡ upravljati u postavkama.</string>
     <string name="excluded_activity_placeholder">IskljuÄivanje mapa Ä‡e ih sakriti zajedno s njihovim podmapama samo u Fossify galeriji, i dalje Ä‡e biti vidljive u drugim aplikacijama.

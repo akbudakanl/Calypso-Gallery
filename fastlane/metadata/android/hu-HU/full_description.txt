@@ -13,7 +13,7 @@ Zárja le emlékeit PIN-kóddal, mintával vagy ujjlenyomattal. Biztosítsa egye
 Habár történnek balesetek, megkönnyebbülhet. A Fossify Galéria beépített lomtárjából másodperceken belül visszaállíthatja a kitörölt képeket vagy videókat. Nincs többé elveszett kincs, csak megkönnyebbülés.
 
 🎨 SAJÁT GALÉRIA, SAJÁT STÍLUS:
-Szabja személyre a kinézetet és funkcionalitást kedve szerint. A felhasználói felület témáitól a funkciógombokig a Fossify Gallery megadja Önnek a kreatív szabadságot, amire vágyott.
+Szabja személyre a kinézetet és funkcionalitást kedve szerint. A felhasználói felület témáitól a funkciógombokig a Calypso Gallery megadja Önnek a kreatív szabadságot, amire vágyott.
 
 📷 AZ UNIVERZÁLIS FORMÁTUM SZABADSÁGA:
 JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, videók és még sok más – minden emlékét újra megtekintheti, bármilyen formátumot is választ. Lehetőségei útjába immáron nem áll semmilyen akadály.
@@ -21,7 +21,7 @@ JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, videók és még sok más – minde
 ✨ MATERIAL DIZÁJN, DINAMIKUS TÉMÁKKAL:
 Keltse életre a material dizájn ösztönös szépségét dinamikus témákkal. Ennél is többet akar? Ássa bele magát az egyedi témákba, és varázsolja még egyedibbé galériáját.
 
-Fedezze fel a többi Fossify appot: https://www.fossify.org
-Nyílt Forráskód: https://www.github.com/FossifyOrg
-Csatlakozzon a Reddit-közösséghez: https://www.reddit.com/r/Fossify
-Csatlakozzon Telegram-csoportunkhoz: https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

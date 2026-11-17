@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galerie</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">EditaÅ£i</string>
     <string name="open_camera">Deschide camera</string>
     <string name="hidden">(ascuns)</string>
@@ -235,8 +235,8 @@
     <string name="crop">Decupare</string>
     <string name="slide">Glisare</string>
     <string name="hidden_all_files">Trebuie sÄƒ acorzi aplicaÈ›iei acces la Toate fiÈ™ierele pentru a vedea fiÈ™ierele ascunse, altfel nu poate funcÈ›iona.</string>
-    <string name="excluded_activity_placeholder">Excluderea dosarelor se va face Ã®mpreunÄƒ cu sub-dosarele lor ascunse doar Ã®n Fossify Gallery, ele vor fi Ã®n continuare vizibile Ã®n alte aplicaÈ›ii.\n\nDacÄƒ doreÈ™ti sÄƒ le ascunzi È™i de alte aplicaÈ›ii, utilizeazÄƒ funcÈ›ia Ascundere.</string>
+    <string name="excluded_activity_placeholder">Excluderea dosarelor se va face Ã®mpreunÄƒ cu sub-dosarele lor ascunse doar Ã®n Calypso Gallery, ele vor fi Ã®n continuare vizibile Ã®n alte aplicaÈ›ii.\n\nDacÄƒ doreÈ™ti sÄƒ le ascunzi È™i de alte aplicaÈ›ii, utilizeazÄƒ funcÈ›ia Ascundere.</string>
     <string name="cant_unhide_folder">DacÄƒ un dosar sau unul dintre dosarele pÄƒrinte are un punct Ã®naintea numelui sÄƒu, acesta este ascuns È™i nu poate fi dezvÄƒluit astfel. Trebuie sÄƒ elimini punctul redenumindu-l.</string>
-    <string name="full_storage_permission_required">Fossify Gallery are nevoie de acces complet pentru a fiÈ™a toate fotografiile È™i videoclipurile. AcceseazÄƒ SetÄƒri &gt; Permisiuni &gt; Fotografii È™i videoclipuri &gt; Permite toate.</string>
+    <string name="full_storage_permission_required">Calypso Gallery are nevoie de acces complet pentru a fiÈ™a toate fotografiile È™i videoclipurile. AcceseazÄƒ SetÄƒri &gt; Permisiuni &gt; Fotografii È™i videoclipuri &gt; Permite toate.</string>
     <string name="force_landscape_reverse">ForÈ›eazÄƒ modul peisaj (invers)</string>
 </resources>

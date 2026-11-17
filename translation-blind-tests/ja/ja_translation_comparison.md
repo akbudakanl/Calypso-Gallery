@@ -592,11 +592,11 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 403 | `create_new_vault_option` | Create new vault | 新しい保管庫を作成 |
 | 404 | `use_existing_vault_option` | Use existing vault | 既存の保管庫を使用 |
 | 405 | `where_to_create_vault_title` | Where should the vault be created? | 保管庫をどこに作成しますか？ |
-| 406 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | 既定の場所 (内部 > Fossify Gallery Cipher > Cipher_Secrets) |
+| 406 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | 既定の場所 (内部 > Calypso Gallery > Cipher_Secrets) |
 | 407 | `vault_location_custom_short` | Custom Location | カスタムの場所 |
 | 408 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。 |
 | 409 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。 |
-| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | 標準の場所 (内部ストレージ > Fossify Gallery Cipher > Cipher_Secrets) |
+| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | 標準の場所 (内部ストレージ > Calypso Gallery > Cipher_Secrets) |
 | 411 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | カスタム / 外部の場所（USB ドライブ、SD カード、またはカスタムフォルダー） |
 | 412 | `external_vault_unavailable_title` | External vault unavailable | 外部保管庫を利用できません |
 | 413 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 設定された保管庫の場所 (%s) は現在切断されているか利用できません。ドライブを接続して「再試行」をタップするか、別の保管庫の場所を選択してください。 |

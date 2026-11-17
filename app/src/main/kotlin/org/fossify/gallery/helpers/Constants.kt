@@ -140,6 +140,7 @@ const val CRYPTO_SKIPPED_FILES_KEEP = 1
 const val CRYPTO_SKIPPED_FILES_DELETE = 2
 const val WAS_NOTIFICATION_PERMISSION_ASKED = "was_notification_permission_asked"
 const val WAS_AUTO_BACKUP_PROMPT_SHOWN = "was_auto_backup_prompt_shown"
+const val WAS_FORK_DISCLAIMER_SHOWN = "was_fork_disclaimer_shown"
 const val AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS = "auto_backup_favorites_and_virtual_albums"
 const val SHOW_VIRTUAL_ALBUM_ICON = "show_virtual_album_icon"
 const val SHOW_FAVORITES_ALBUM_ICON = "show_favorites_album_icon"
@@ -169,7 +170,9 @@ const val CIPHER_ROOT_DIR_NAME = "Cipher"
  * The standalone container of this app in the internal storage. It is not nested in the Documents
  * folder, it sits directly in the internal storage as its own top level folder.
  */
-const val CIPHER_APP_DIR_NAME = "Fossify Gallery Cipher"
+const val CIPHER_APP_DIR_NAME = "Calypso Gallery"
+/** Previous container name, kept only so existing vaults/backups can be migrated. */
+const val LEGACY_CIPHER_APP_DIR_NAME = "Fossify Gallery Cipher"
 const val CIPHER_VIRTUAL_ALBUMS_DIR_NAME = "Virtual Album Saves"
 const val CIPHER_SECRETS_DIR_NAME = "Cipher_Secrets"
 

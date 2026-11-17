@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">圖庫</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">編輯</string>
     <string name="open_camera">開啟相機</string>
     <string name="hidden">（已隱藏）</string>
@@ -244,9 +244,9 @@
     <string name="wallpaper">桌布</string>
     <string name="excluded_activity_placeholder">排除資料夾功能僅會在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾，在其他應用程式中仍會正常顯示。\n\n如要同時在其他應用程式中隱藏，請使用「隱藏」功能。</string>
     <string name="exclude_folder_description">僅在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾。稍後可在設定中管理已排除的資料夾。</string>
-    <string name="faq_1_title">怎樣將 Fossify Gallery 設為本裝置的預設相簿？</string>
-    <string name="faq_1_text">首先，您需要在裝置設定的應用程式部分找到目前預設的相簿，尋找一個寫著「預設開啟」之類的按鈕，點擊它，然後選擇「清除預設」。下次嘗試開啟圖片或影片時，您應該會看到一個應用程式選擇器，您可以在其中選擇 Fossify Gallery 並將其設為預設應用程式。</string>
-    <string name="faq_5_text">排除是指僅在 Fossify Gallery 中不顯示該資料夾，而隱藏則是系統層級的操作，它也會將資料夾隱藏於其他相簿。這是透過在指定資料夾建立一個名為「.nomedia」的空檔案來實現的，您也可以使用任何檔案管理員刪除它。請注意，有些裝置不允許隱藏像是相機、螢幕截圖和下載等資料夾。</string>
+    <string name="faq_1_title">怎樣將 Calypso Gallery 設為本裝置的預設相簿？</string>
+    <string name="faq_1_text">首先，您需要在裝置設定的應用程式部分找到目前預設的相簿，尋找一個寫著「預設開啟」之類的按鈕，點擊它，然後選擇「清除預設」。下次嘗試開啟圖片或影片時，您應該會看到一個應用程式選擇器，您可以在其中選擇 Calypso Gallery 並將其設為預設應用程式。</string>
+    <string name="faq_5_text">排除是指僅在 Calypso Gallery 中不顯示該資料夾，而隱藏則是系統層級的操作，它也會將資料夾隱藏於其他相簿。這是透過在指定資料夾建立一個名為「.nomedia」的空檔案來實現的，您也可以使用任何檔案管理員刪除它。請注意，有些裝置不允許隱藏像是相機、螢幕截圖和下載等資料夾。</string>
     <string name="full_storage_permission_required">Fossify 圖庫需要完整存取權限才能顯示您所有的照片與影片。請到「設定」→「隱私權」→「應用程式權限」→「相片和影片」→「一律全部允許」。</string>
     <string name="playback_speed">播放速度</string>
     <string name="failed_to_load_media">載入媒體失敗。</string>
@@ -388,11 +388,11 @@
     <string name="create_new_vault_option">建立新保險箱</string>
     <string name="use_existing_vault_option">使用現有保險箱</string>
     <string name="where_to_create_vault_title">要在哪裡建立保險箱？</string>
-    <string name="vault_location_default_short">預設位置（內部 &gt; Fossify Gallery Cipher &gt; Cipher_Secrets）</string>
+    <string name="vault_location_default_short">預設位置（內部 &gt; Calypso Gallery &gt; Cipher_Secrets）</string>
     <string name="vault_location_custom_short">自訂位置</string>
     <string name="no_existing_vault_at_location">在所選資料夾中找不到現有的加密保險箱 (.vault)。</string>
     <string name="unlock_existing_vault_at_location_prompt">在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。</string>
-    <string name="vault_location_standard_option">標準位置（內部儲存空間 &gt; Fossify Gallery Cipher &gt; Cipher_Secrets）</string>
+    <string name="vault_location_standard_option">標準位置（內部儲存空間 &gt; Calypso Gallery &gt; Cipher_Secrets）</string>
     <string name="vault_location_custom_option">自訂 / 外部位置（USB 磁碟機、SD 卡或自訂資料夾）</string>
     <string name="external_vault_unavailable_title">無法存取外部保險箱</string>
     <string name="external_vault_unavailable_prompt">您設定的保險箱位置 (%s) 目前已中斷連線或無法使用。請接上磁碟機並輕觸「重試」，或選擇其他保險箱位置。</string>

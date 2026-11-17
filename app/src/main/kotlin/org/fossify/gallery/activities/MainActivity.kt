@@ -87,6 +87,7 @@ import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
+import org.fossify.gallery.dialogs.ForkDisclaimerDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyVaultScreenProtection
@@ -220,6 +221,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mShouldStopFetching = false
     private var mWasDefaultFolderChecked = false
     private var mWasMediaManagementPromptShown = false
+    private var mIsForkDisclaimerDialogShowing = false
     private var mLatestMediaId = 0L
     private var mLatestMediaDateId = 0L
 
@@ -381,6 +383,21 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun handleMediaPermissions(callback: (() -> Unit)? = null) {
+        // The fork notice must be acknowledged before any permission is requested.
+        // onCreate and onResume both reach this method, so avoid showing it twice.
+        if (!config.wasForkDisclaimerShown) {
+            if (mIsForkDisclaimerDialogShowing) {
+                return
+            }
+            mIsForkDisclaimerDialogShowing = true
+            ForkDisclaimerDialog(this) {
+                config.wasForkDisclaimerShown = true
+                mIsForkDisclaimerDialogShowing = false
+                tryLoadGallery()
+            }
+            return
+        }
+
         requestMediaPermissions(enableRationale = true) {
             callback?.invoke()
             if (isRPlus() && !mWasMediaManagementPromptShown) {

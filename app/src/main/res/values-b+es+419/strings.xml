@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galería</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Editar</string>
     <string name="open_camera">Abrir cámara</string>
     <string name="hidden">(oculto)</string>
@@ -396,11 +396,11 @@
     <string name="create_new_vault_option">Crear bóveda nueva</string>
     <string name="use_existing_vault_option">Usar bóveda existente</string>
     <string name="where_to_create_vault_title">¿Dónde debería crearse la bóveda?</string>
-    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">Ubicación personalizada</string>
     <string name="no_existing_vault_at_location">No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada.</string>
     <string name="unlock_existing_vault_at_location_prompt">Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta.</string>
-    <string name="vault_location_standard_option">Ubicación estándar (Almacenamiento interno &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Ubicación estándar (Almacenamiento interno &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada)</string>
     <string name="external_vault_unavailable_title">Bóveda externa no disponible</string>
     <string name="external_vault_unavailable_prompt">Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda.</string>

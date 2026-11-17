@@ -155,11 +155,28 @@
         </activity>
 
         <activity
-            android:name="org.fossify.commons.activities.AboutActivity"
+            android:name=".activities.AboutActivity"
             android:configChanges="orientation"
             android:exported="false"
-            android:label="@string/about"
+            android:label="@string/about_title"
             android:parentActivityName=".activities.MainActivity" />
+
+        <activity
+            android:name=".activities.GplLicenseActivity"
+            android:configChanges="orientation"
+            android:exported="false"
+            android:label="@string/gpl_license_title"
+            android:parentActivityName=".activities.AboutActivity" />
+
+        <activity
+            android:name="org.fossify.commons.activities.FAQActivity"
+            android:parentActivityName=".activities.AboutActivity"
+            tools:replace="android:parentActivityName" />
+
+        <activity
+            android:name="org.fossify.commons.activities.LicenseActivity"
+            android:parentActivityName=".activities.AboutActivity"
+            tools:replace="android:parentActivityName" />
 
         <activity
             android:name="org.fossify.commons.activities.CustomizationActivity"

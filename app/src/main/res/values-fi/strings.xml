@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galleria</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Muokkaa</string>
     <string name="open_camera">Avaa kamera</string>
     <string name="hidden">(piilotettu)</string>
@@ -247,12 +247,12 @@
     <string name="file_is_malformed_or_corrupted">Tiedosto on epÃ¤kelpo tai korruptoitunut.</string>
     <string name="media_exceeds_device_capabilities">Media ylittÃ¤Ã¤ laitteen suorituskyvyn.</string>
     <string name="unsupported_format">Tiedostomuoto ei tuettu.</string>
-    <string name="exclude_folder_description">TÃ¤mÃ¤ toiminto poissulkee kansion ja sen alikansiot vain Fossify Gallery:sta. Voit hallita poissuljettuja kansioita asetuksista.</string>
-    <string name="faq_1_title">Kuinka voin asettaa Fossify Gallery:n laitteen oletusgalleriaksi?</string>
-    <string name="faq_1_text">EnsimmÃ¤isenÃ¤ etsi laitteen asetuksista sovellukset-osio. Etsi painiketta, jossa on maininta, ettÃ¤ \"Avaa oletuksena\". Valitse tÃ¤mÃ¤n jÃ¤lkeen \"Palauta oletukset\". Seuraavan kerran, kun yritÃ¤t avata kuvaa tai videota, valitsee sovellusvalitsimesta Fossify Gallery ja tee siitÃ¤ oletussovellus.</string>
-    <string name="full_storage_permission_required">Fossify Gallery tarvitsee tÃ¤yden pÃ¤Ã¤syn kuviin ja videoihin, jotta niitÃ¤ voidaan nÃ¤yttÃ¤Ã¤. Mene kohtaan Asetukset &gt; Luvat &gt; Kuvat ja videot &gt; Salli kaikki.</string>
-    <string name="excluded_activity_placeholder">Kansioiden ja niiden alikansioiden poissulkeminen piilottaa kansiot vain Fossify Gallery:sta. Ne ovat edelleen saatavilla muissa sovelluksissa.\n\nJos haluat piilottaa ne myÃ¶s muista sovelluksista, kÃ¤ytÃ¤ Piilota toimintoa.</string>
-    <string name="faq_5_text">Kansion poissulku toimii vain Fossify Gallery:ssÃ¤. Piilota toiminto piiloittaa kansiot myÃ¶s muista galleria-sovelluksista. Piilota-toiminto kÃ¤yttÃ¤Ã¤ hyvÃ¤kseen tyhjÃ¤Ã¤ \".nomedia\" tiedostoa valitussa kansiossa. TÃ¤mÃ¤n tiedoston voi poistaa tiedostonhallintasovelluksella. Huomio, ettÃ¤ jotkin laitteet eivÃ¤t salli kameran ja jÃ¤rjestelmÃ¤n oletuskansioiden, kuten Kamera, Kuvakaappaukset ja Lataukset, piilotusta.</string>
+    <string name="exclude_folder_description">TÃ¤mÃ¤ toiminto poissulkee kansion ja sen alikansiot vain Calypso Gallery:sta. Voit hallita poissuljettuja kansioita asetuksista.</string>
+    <string name="faq_1_title">Kuinka voin asettaa Calypso Gallery:n laitteen oletusgalleriaksi?</string>
+    <string name="faq_1_text">EnsimmÃ¤isenÃ¤ etsi laitteen asetuksista sovellukset-osio. Etsi painiketta, jossa on maininta, ettÃ¤ \"Avaa oletuksena\". Valitse tÃ¤mÃ¤n jÃ¤lkeen \"Palauta oletukset\". Seuraavan kerran, kun yritÃ¤t avata kuvaa tai videota, valitsee sovellusvalitsimesta Calypso Gallery ja tee siitÃ¤ oletussovellus.</string>
+    <string name="full_storage_permission_required">Calypso Gallery tarvitsee tÃ¤yden pÃ¤Ã¤syn kuviin ja videoihin, jotta niitÃ¤ voidaan nÃ¤yttÃ¤Ã¤. Mene kohtaan Asetukset &gt; Luvat &gt; Kuvat ja videot &gt; Salli kaikki.</string>
+    <string name="excluded_activity_placeholder">Kansioiden ja niiden alikansioiden poissulkeminen piilottaa kansiot vain Calypso Gallery:sta. Ne ovat edelleen saatavilla muissa sovelluksissa.\n\nJos haluat piilottaa ne myÃ¶s muista sovelluksista, kÃ¤ytÃ¤ Piilota toimintoa.</string>
+    <string name="faq_5_text">Kansion poissulku toimii vain Calypso Gallery:ssÃ¤. Piilota toiminto piiloittaa kansiot myÃ¶s muista galleria-sovelluksista. Piilota-toiminto kÃ¤yttÃ¤Ã¤ hyvÃ¤kseen tyhjÃ¤Ã¤ \".nomedia\" tiedostoa valitussa kansiossa. TÃ¤mÃ¤n tiedoston voi poistaa tiedostonhallintasovelluksella. Huomio, ettÃ¤ jotkin laitteet eivÃ¤t salli kameran ja jÃ¤rjestelmÃ¤n oletuskansioiden, kuten Kamera, Kuvakaappaukset ja Lataukset, piilotusta.</string>
     <plurals name="restore_confirmation">
         <item quantity="one">Haluatko varmasti palauttaa %d tiedoston?</item>
         <item quantity="other">Haluatko varmasti palauttaa %d tiedostoa?</item>

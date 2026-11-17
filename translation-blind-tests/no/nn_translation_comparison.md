@@ -601,11 +601,11 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 406 | `create_new_vault_option` | Create new vault | Opprett nytt kvelv |
 | 407 | `use_existing_vault_option` | Use existing vault | Bruk eksisterande kvelv |
 | 408 | `where_to_create_vault_title` | Where should the vault be created? | Kvar skal kvelvet opprettast? |
-| 409 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | Standardplassering (Intern > Fossify Gallery Cipher > Cipher_Secrets) |
+| 409 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | Standardplassering (Intern > Calypso Gallery > Cipher_Secrets) |
 | 410 | `vault_location_custom_short` | Custom Location | Eigendefinert plassering |
 | 411 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa. |
 | 412 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe. |
-| 413 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | Standardplassering (Intern lagring > Fossify Gallery Cipher > Cipher_Secrets) |
+| 413 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | Standardplassering (Intern lagring > Calypso Gallery > Cipher_Secrets) |
 | 414 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Eigendefinert / Ekstern plassering (USB-stasjon, SD-kort eller eigendefinert mappe) |
 | 415 | `external_vault_unavailable_title` | External vault unavailable | Eksternt kvelv utilgjengeleg |
 | 416 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Den konfigurerte kvelvplasseringa di (%s) er for tida fråkopla eller utilgjengeleg. Kopla til stasjonen og trykk på Prøv på nytt, eller vel ei anna kvelvplassering. |

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galerie</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Modifier</string>
     <string name="open_camera">Ouvrir l\'appareil photo</string>
     <string name="hidden">(cachÃ©)</string>
@@ -39,9 +39,9 @@
     <string name="svgs">SVG</string>
     <string name="no_media_with_filters">Aucun fichier mÃ©dia trouvÃ© avec les filtres sÃ©lectionnÃ©s.</string>
     <string name="change_filters_underlined"><u>Modifier les filtres</u></string>
-    <string name="exclude_folder_description">Ceci exclura la sÃ©lection et ses sous-dossiers de Fossify Gallery uniquement. Vous pouvez gÃ©rer les dossiers exclus dans ParamÃ¨tres.</string>
+    <string name="exclude_folder_description">Ceci exclura la sÃ©lection et ses sous-dossiers de Calypso Gallery uniquement. Vous pouvez gÃ©rer les dossiers exclus dans ParamÃ¨tres.</string>
     <string name="exclude_folder_parent">Exclure un dossier parent \?</string>
-    <string name="excluded_activity_placeholder">Exclure les dossiers va les cacher (ainsi que leur sous-dossiers) uniquement dans Fossify Gallery, ils seront toujours visibles dans les autres applications.\n\nSi vous voulez aussi les cacher des autres applications, utilisez la fonction \"Cacher\".</string>
+    <string name="excluded_activity_placeholder">Exclure les dossiers va les cacher (ainsi que leur sous-dossiers) uniquement dans Calypso Gallery, ils seront toujours visibles dans les autres applications.\n\nSi vous voulez aussi les cacher des autres applications, utilisez la fonction \"Cacher\".</string>
     <string name="hidden_folders">Dossiers cachÃ©s</string>
     <string name="manage_hidden_folders">GÃ©rer les dossiers cachÃ©s</string>
     <string name="hidden_folders_placeholder">Il semblerait que vous n\'ayez pas de dossier cachÃ© par un fichier .nomedia.</string>
@@ -208,8 +208,8 @@
     <string name="manage_bottom_actions">GÃ©rer la barre d\'actions</string>
     <string name="toggle_favorite">Ajouter/retirer des favoris</string>
     <string name="toggle_file_visibility">VisibilitÃ© du fichier</string>
-    <string name="faq_1_title">Comment puis-je faire de Fossify Gallery la galerie par dÃ©fautâ€¯?</string>
-    <string name="faq_1_text">D\'abord, vous devez trouver la galerie qui est actuellement dÃ©finie par dÃ©faut dans la section \"Applications\" des paramÃ¨tres de votre appareil. Cherchez un bouton qui dit quelque chose comme \"Ouvrir par dÃ©faut\", cliquez dessus, puis sÃ©lectionnez \"Effacer les valeurs par dÃ©faut\". La prochaine fois que vous tenterez d\'ouvrir une image ou une vidÃ©o, vous devriez voir apparaÃ®tre un sÃ©lecteur d\'application, oÃ¹ vous pourrez sÃ©lectionner Fossify Gallery et en faire l\'application par dÃ©faut.</string>
+    <string name="faq_1_title">Comment puis-je faire de Calypso Gallery la galerie par dÃ©fautâ€¯?</string>
+    <string name="faq_1_text">D\'abord, vous devez trouver la galerie qui est actuellement dÃ©finie par dÃ©faut dans la section \"Applications\" des paramÃ¨tres de votre appareil. Cherchez un bouton qui dit quelque chose comme \"Ouvrir par dÃ©faut\", cliquez dessus, puis sÃ©lectionnez \"Effacer les valeurs par dÃ©faut\". La prochaine fois que vous tenterez d\'ouvrir une image ou une vidÃ©o, vous devriez voir apparaÃ®tre un sÃ©lecteur d\'application, oÃ¹ vous pourrez sÃ©lectionner Calypso Gallery et en faire l\'application par dÃ©faut.</string>
     <string name="faq_2_title">J\'ai verrouillÃ© l\'application avec un mot de passe et je l\'ai oubliÃ©. Que faireâ€¯?</string>
     <string name="faq_2_text">Il y a deux faÃ§ons de procÃ©der. Soit vous rÃ©installez l\'application, soit vous recherchez l\'application dans les paramÃ¨tres de l\'appareil et appuyez sur \"Supprimer les donnÃ©es\". Ceci rÃ©initialisera seulement les paramÃ¨tres de l\'application et ne supprimera pas vos fichiers.</string>
     <string name="faq_3_title">Comment faire pour qu\'un dossier soit toujours affichÃ© tout en haut \?</string>
@@ -217,7 +217,7 @@
     <string name="faq_4_title">Comment avancer rapidement dans les vidÃ©os \?</string>
     <string name="faq_4_text">Appuyez deux fois sur le cÃ´tÃ© de l\'Ã©cran, ou appuyez sur la valeur de durÃ©e actuelle ou maximale prÃ¨s de la barre de recherche. Si vous activez l\'ouverture des vidÃ©os sur un Ã©cran sÃ©parÃ© dans les paramÃ¨tres de l\'application, vous pouvez Ã©galement utiliser des gestes horizontaux.</string>
     <string name="faq_5_title">Quelle est la diffÃ©rence entre cacher et exclure un dossierâ€¯?</string>
-    <string name="faq_5_text">\"Exclure\" empÃªche l\'affichage du dossier seulement dans Fossify Gallery, tandis que \"Masquer\" fonctionne au niveau du systÃ¨me et cache Ã©galement le dossier des autres galeries. Cela fonctionne en crÃ©ant un fichier vide \".nomedia\" dans le dossier donnÃ©, que vous pouvez ensuite supprimer avec n\'importe quel gestionnaire de fichier. Notez que certains appareils ne permettent pas de cacher des dossiers comme Appareil photo, Captures d\'Ã©cran et TÃ©lÃ©chargements.</string>
+    <string name="faq_5_text">\"Exclure\" empÃªche l\'affichage du dossier seulement dans Calypso Gallery, tandis que \"Masquer\" fonctionne au niveau du systÃ¨me et cache Ã©galement le dossier des autres galeries. Cela fonctionne en crÃ©ant un fichier vide \".nomedia\" dans le dossier donnÃ©, que vous pouvez ensuite supprimer avec n\'importe quel gestionnaire de fichier. Notez que certains appareils ne permettent pas de cacher des dossiers comme Appareil photo, Captures d\'Ã©cran et TÃ©lÃ©chargements.</string>
     <string name="faq_6_title">Pourquoi des dossiers avec des pochettes d\'albums musicaux ou des miniatures d\'images sont affichÃ©sâ€¯?</string>
     <string name="faq_6_text">Il est possible que des dossiers qui ne devraient pas Ãªtre affichÃ©s le soient. Vous pouvez les exclure facilement en les sÃ©lectionnant par un appui prolongÃ©, puis en choisissant l\'option \"Exclure\", aprÃ¨s quoi vous pouvez aussi sÃ©lectionner le dossier parent, ce qui devrait Ã©viter l\'apparition de dossiers similaires.</string>
     <string name="faq_7_title">Un dossier avec des images n\'apparaÃ®t pas. Que faire \?</string>
@@ -248,7 +248,7 @@
     <string name="portraits">Portraits</string>
     <string name="by_extension">Extension</string>
     <string name="animation">Animation</string>
-    <string name="full_storage_permission_required">Fossify Gallery a besoin d\'un accÃ¨s complet pour afficher toutes vos photos et vidÃ©os. Allez dans ParamÃ¨tres &gt; Autorisations &gt; Photos et vidÃ©os &gt; Autoriser tout.</string>
+    <string name="full_storage_permission_required">Calypso Gallery a besoin d\'un accÃ¨s complet pour afficher toutes vos photos et vidÃ©os. Allez dans ParamÃ¨tres &gt; Autorisations &gt; Photos et vidÃ©os &gt; Autoriser tout.</string>
     <string name="file_is_malformed_or_corrupted">Le fichier est altÃ©rÃ© ou corrompu.</string>
     <string name="media_exceeds_device_capabilities">Le support dÃ©passe les capacitÃ©s de l\'appareil.</string>
     <string name="unsupported_format">Format non pris en charge.</string>

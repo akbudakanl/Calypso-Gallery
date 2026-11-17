@@ -585,11 +585,11 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 405 | `create_new_vault_option` | Create new vault | Yeni seyf yarat |
 | 406 | `use_existing_vault_option` | Use existing vault | Mövcud seyfdən istifadə et |
 | 407 | `where_to_create_vault_title` | Where should the vault be created? | Seyf harada yaradılsın? |
-| 408 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | Susmaya görə yer (Daxili > Fossify Gallery Cipher > Cipher_Secrets) |
+| 408 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | Susmaya görə yer (Daxili > Calypso Gallery > Cipher_Secrets) |
 | 409 | `vault_location_custom_short` | Custom Location | Fərdi yer |
 | 410 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı. |
 | 411 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun. |
-| 412 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | Standart yer (Daxili yaddaş > Fossify Gallery Cipher > Cipher_Secrets) |
+| 412 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | Standart yer (Daxili yaddaş > Calypso Gallery > Cipher_Secrets) |
 | 413 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Fərdi / Xarici yer (USB sürücü, SD kart və ya fərdi qovluq) |
 | 414 | `external_vault_unavailable_title` | External vault unavailable | Xarici seyf əlçatan deyil |
 | 415 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Tənzimlənmiş seyf yeriniz (%s) hazırda ayrılıb və ya əlçatan deyil. Sürücünü qoşub Yenidən cəhd et üzərinə toxunun və ya başqa seyf yeri seçin. |

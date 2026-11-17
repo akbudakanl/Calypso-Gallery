@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galleri</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Redigera</string>
     <string name="open_camera">Ã–ppna kameran</string>
     <string name="hidden">(dold)</string>
@@ -209,7 +209,7 @@
     <string name="manage_bottom_actions">Hantera synliga Ã¥tgÃ¤rder lÃ¤ngst ned pÃ¥ skÃ¤rmen</string>
     <string name="toggle_favorite">VÃ¤xla favorit</string>
     <string name="toggle_file_visibility">Visa/dÃ¶lj fil</string>
-    <string name="faq_1_title">Hur kan jag gÃ¶ra Fossify Gallery till enhetens standardgalleri?</string>
+    <string name="faq_1_title">Hur kan jag gÃ¶ra Calypso Gallery till enhetens standardgalleri?</string>
     <string name="faq_2_title">Jag lÃ¥ste appen med ett lÃ¶senord, men jag glÃ¶mde det. Vad kan jag gÃ¶ra\?</string>
     <string name="faq_2_text">Du kan lÃ¶sa det pÃ¥ 2 sÃ¤tt. Du kan antingen installera om appen eller hitta appen i dina enhetsinstÃ¤llningar och vÃ¤lja \"Rensa data\". Det kommer att Ã¥terstÃ¤lla alla dina instÃ¤llningar, det tar inte bort nÃ¥gra mediefiler.</string>
     <string name="faq_3_title">Hur kan jag fÃ¥ ett album att alltid visas hÃ¶gst upp\?</string>
@@ -243,16 +243,16 @@
     <string name="faq_18_title">VarfÃ¶r ser jag annonser under videouppspelning\?</string>
     <string name="faq_18_text">VÃ¥ra appar har inga som helst annonser. Om du ser dem under videouppspelning anvÃ¤nder du nÃ¥gon annan videospelare. FÃ¶rsÃ¶k att hitta din standardvideospelare i enhetsinstÃ¤llningarna och gÃ¶r sedan en \"Rensa standardinstÃ¤llningar\" pÃ¥ den. NÃ¤sta gÃ¥ng du vill Ã¶ppna en video kommer du att se ett appvÃ¤ljarfÃ¶nster, dÃ¤r du kan vÃ¤lja vilken app du vill anvÃ¤nda.</string>
     <string name="wallpaper">Bakgrund</string>
-    <string name="excluded_activity_placeholder">Att utesluta mappar dÃ¶ljer bara dem och deras undermappar i Fossify Gallery, de kommer fortfarande vara synliga i andra appar.\n\nOm du vill dÃ¶lja dem frÃ¥n andra appar ocksÃ¥ anvÃ¤nder du funktionen DÃ¶lj.</string>
-    <string name="exclude_folder_description">Detta utesluter bara de valda mapparna och deras undermappar frÃ¥n Fossify Gallery. Du kan hantera uteslutna mappar i InstÃ¤llningar.</string>
+    <string name="excluded_activity_placeholder">Att utesluta mappar dÃ¶ljer bara dem och deras undermappar i Calypso Gallery, de kommer fortfarande vara synliga i andra appar.\n\nOm du vill dÃ¶lja dem frÃ¥n andra appar ocksÃ¥ anvÃ¤nder du funktionen DÃ¶lj.</string>
+    <string name="exclude_folder_description">Detta utesluter bara de valda mapparna och deras undermappar frÃ¥n Calypso Gallery. Du kan hantera uteslutna mappar i InstÃ¤llningar.</string>
     <string name="faq_1_text">FÃ¶rst mÃ¥ste du hitta din enhets standardgalleri app i appsektionen i enhetsinstÃ¤llningarna. Leta efter en knapp som sÃ¤ger \"Systemstandard\", tryck pÃ¥ den och vÃ¤lj sedan rensa instÃ¤llningar. NÃ¤sta gÃ¥ng du Ã¶ppnar en bild eller videofil bÃ¶r du se en appvÃ¤ljare dÃ¤r du kan vÃ¤ljs Fossify Galleri som gÃ¶ra den till systemstandard.</string>
-    <string name="faq_5_text">Uteslut fÃ¶rhindrar att mappen endast visas i Fossify Gallery, medan DÃ¶lj fungerar pÃ¥ systemnivÃ¥ och den dÃ¶ljer Ã¤ven mappen fÃ¶r andra gallerier. Det fungerar genom att skapa en tom \".nomedia\"-fil i den givna mappen, som du sedan kan ta bort med vilken filhanterare som helst. Observera att vissa enheter inte tillÃ¥ter att dÃ¶lja mappar som Kamera, SkÃ¤rmdumpar och Nedladdningar.</string>
+    <string name="faq_5_text">Uteslut fÃ¶rhindrar att mappen endast visas i Calypso Gallery, medan DÃ¶lj fungerar pÃ¥ systemnivÃ¥ och den dÃ¶ljer Ã¤ven mappen fÃ¶r andra gallerier. Det fungerar genom att skapa en tom \".nomedia\"-fil i den givna mappen, som du sedan kan ta bort med vilken filhanterare som helst. Observera att vissa enheter inte tillÃ¥ter att dÃ¶lja mappar som Kamera, SkÃ¤rmdumpar och Nedladdningar.</string>
     <string name="playback_speed">Uppspelningshastighet</string>
     <string name="failed_to_load_media">Det gick inte att lÃ¤sa in media.</string>
     <string name="file_is_malformed_or_corrupted">Filen Ã¤r felformaterad eller skadad.</string>
     <string name="media_exceeds_device_capabilities">Media Ã¶verskrider enhetens funktioner.</string>
     <string name="unsupported_format">Formatet stÃ¶ds inte.</string>
-    <string name="full_storage_permission_required">Fossify Gallery behÃ¶ver fullstÃ¤ndig Ã¥tkomst fÃ¶r att visa alla dina foton och videor. GÃ¥ till InstÃ¤llningar &gt; BehÃ¶righeter &gt; Foton och videor &gt; TillÃ¥t alla.</string>
+    <string name="full_storage_permission_required">Calypso Gallery behÃ¶ver fullstÃ¤ndig Ã¥tkomst fÃ¶r att visa alla dina foton och videor. GÃ¥ till InstÃ¤llningar &gt; BehÃ¶righeter &gt; Foton och videor &gt; TillÃ¥t alla.</string>
     <string name="keep_screen_on_fullscreen_photos">LÃ¥t skÃ¤rmen vara pÃ¥ nÃ¤r foton visas i helskÃ¤rm</string>
     <plurals name="restore_confirmation">
         <item quantity="one">Ã„r du sÃ¤ker pÃ¥ att du vill Ã¥terstÃ¤lla %d fil?</item>

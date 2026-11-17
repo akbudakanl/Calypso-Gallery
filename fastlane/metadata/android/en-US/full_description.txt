@@ -1,27 +1,32 @@
-Unleash memories, not personal data. Fossify Gallery is the ultimate photo and video app that's as powerful as it is private. No ads, no unnecessary permissions – just a seamless experience tailored for you.
+Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Unleash memories, not personal data. Calypso Gallery is a private photo and video app with a built-in editor, no ads, no Internet permission, and no unnecessary permissions.
 
 🖼️ PHOTO EDITING AT YOUR FINGERTIPS:
-Enhance your photos with our basic yet powerful photo editor. Crop, resize, rotate, flip, draw, and apply stunning filters, all without compromising your privacy. Take control of your memories like never before.
+Enhance your photos with the built-in editor. Crop, resize, rotate, flip, draw, and apply filters without compromising your privacy.
 
 🌐 PRIVACY FIRST, ALWAYS:
-Your privacy matters. Ditch the data-hungry giants. Fossify Gallery puts you in control. Strip away EXIF metadata like GPS coordinates and camera details, keeping your memories yours, and yours alone.
+The app does not request Internet access. Strip EXIF metadata such as GPS coordinates and camera details to keep your memories yours.
 
-🔒 SUPERIOR SECURITY:
-Lock down your memories with pin, pattern, or fingerprint protection. Secure specific photos, videos, or the entire app – you decide who gets access. Peace of mind, guaranteed.
+🔐 CRYPTOGRAPHIC SECRET VAULT:
+Protect selected media with a zero-network cryptographic vault. Files are encrypted on disk, metadata is protected, keys are derived with modern key-derivation functions and wrapped by Android Keystore, and the vault supports additional screen and memory protections.
+
+🔗 ZERO-FOOTPRINT VIRTUAL ALBUMS:
+Organize media into Virtual Albums without duplicating files. Albums created from encrypted vault items remain hidden outside the unlocked vault.
 
 🔄 RECOVER WITH EASE:
-Breathe easy, accidents happen! Fossify Gallery's built-in recycle bin lets you recover deleted photos and videos in seconds. No more lost treasures, just pure relief.
+Recover deleted photos and videos with the built-in recycle bin.
 
 🎨 YOUR GALLERY, YOUR STYLE:
-Customize the look, feel, and functionality to match your style. From UI themes to function buttons, Fossify Gallery gives you the creative freedom you crave.
+Customize themes, colors, and behavior to match your preferences.
 
 📷 UNIVERSAL FORMAT FREEDOM:
-JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, videos, and more – we've got your memories covered, in any format you choose. No restrictions, just limitless possibilities.
+JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, AVIF, videos, and more.
 
 ✨ MATERIAL DESIGN WITH DYNAMIC THEMES:
-Experience the beauty of intuitive material design with dynamic themes. Want more? Dive into custom themes and make your gallery truly unique.
+Use the Material Design interface with dynamic color and theme support.
 
-Explore more apps by Fossify: https://www.fossify.org
-Open-Source Code: https://www.github.com/FossifyOrg
-Join the community on Reddit: https://www.reddit.com/r/Fossify
-Connect on Telegram: https://t.me/Fossify
+Calypso Gallery is free software licensed under the GNU General Public License version 3.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galleri</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Rediger</string>
     <string name="open_camera">Åpne kamera</string>
     <string name="hidden">(skjult)</string>
@@ -205,8 +205,8 @@
     <string name="toggle_favorite">Slå av/på favoritt</string>
     <string name="toggle_file_visibility">Filsynlighet av/på</string>
     <string name="faq_16_text">Fra og med Android 11 kan du ikke lenger skjule/vise filer eller mapper, du kan heller ikke se de skjulte i galleriapper pga. systemrestriksjoner. Du må bruke en filbehandlingsapp for det.</string>
-    <string name="excluded_activity_placeholder">Ekskludering av mapper vil gjøre dem sammen med deres undermapper, skjulte bare i Fossify Gallery. De vil fortsatt være synlige i andre apper.\n\nHvis du vil skjule dem fra andre apper også, bruk Skjul-funksjonen.</string>
-    <string name="exclude_folder_description">Dette vil ekskludere valgte sammen med undermapper, bare fra Fossify Gallery. Ekskluderte mapper kan håndteres i Innstillinger.</string>
+    <string name="excluded_activity_placeholder">Ekskludering av mapper vil gjøre dem sammen med deres undermapper, skjulte bare i Calypso Gallery. De vil fortsatt være synlige i andre apper.\n\nHvis du vil skjule dem fra andre apper også, bruk Skjul-funksjonen.</string>
+    <string name="exclude_folder_description">Dette vil ekskludere valgte sammen med undermapper, bare fra Calypso Gallery. Ekskluderte mapper kan håndteres i Innstillinger.</string>
     <plurals name="restore_confirmation">
         <item quantity="one">Er du sikker på du vil gjenopprette %d fil?</item>
         <item quantity="other">Er du sikker på du vil gjenopprette %d filer?</item>
@@ -214,7 +214,7 @@
     <string name="playback_speed">Avspillingshastighet</string>
     <string name="unsupported_format">Ikke-støttet format.</string>
     <string name="keep_screen_on_fullscreen_photos">Hold skjermen på ved visning av bilder i fullskjermmodus</string>
-    <string name="full_storage_permission_required">Fossify Gallery trenger full tilgang for å vise alle dine bilder og videoer. Gå til Innstillinger &gt; Tillatelser &gt; Bilder og videoer &gt; Tillat alle.</string>
+    <string name="full_storage_permission_required">Calypso Gallery trenger full tilgang for å vise alle dine bilder og videoer. Gå til Innstillinger &gt; Tillatelser &gt; Bilder og videoer &gt; Tillat alle.</string>
     <string name="wallpaper">Bakgrunnsbilde</string>
     <string name="force_landscape_reverse">Framtving landskap (omvendt)</string>
     <string name="overwrite_original">Overskriv original</string>
@@ -238,8 +238,8 @@
     <string name="failed_to_load_media">Kunne ikke laste inn media.</string>
     <string name="file_is_malformed_or_corrupted">Filen er ugyldig eller ødelagt.</string>
     <string name="media_exceeds_device_capabilities">Mediet overstiger enhetens kapasitet.</string>
-    <string name="faq_1_title">Hvordan kan jeg gjøre Fossify Gallery til enhetens standardgalleri?</string>
-    <string name="faq_1_text">Først må du finne det nåværende standardgalleriet i Apper-delen av enhetsinnstillingene, se etter en knapp som heter noe slikt som \"Åpne som standard\", trykke på den og deretter velge \"Fjern standardvalg\".\nNeste gang du prøver å åpne et bilde eller en video, skal du se en appvelger der du kan velge Fossify Gallery og gjøre den til standardapp.</string>
+    <string name="faq_1_title">Hvordan kan jeg gjøre Calypso Gallery til enhetens standardgalleri?</string>
+    <string name="faq_1_text">Først må du finne det nåværende standardgalleriet i Apper-delen av enhetsinnstillingene, se etter en knapp som heter noe slikt som \"Åpne som standard\", trykke på den og deretter velge \"Fjern standardvalg\".\nNeste gang du prøver å åpne et bilde eller en video, skal du se en appvelger der du kan velge Calypso Gallery og gjøre den til standardapp.</string>
     <string name="faq_2_title">Jeg låste appen med et passord, men jeg har glemt det. Hva kan jeg gjøre?</string>
     <string name="faq_2_text">Du kan løse det på to måter. Du kan enten installere appen på nytt, eller finne appen i enhetsinnstillingene og velge \"Slett data\". Det vil tilbakestille alle innstillingene dine, men det vil ikke fjerne noen mediafiler.</string>
     <string name="faq_3_title">Hvordan kan jeg få et album til å alltid vises øverst?</string>
@@ -247,7 +247,7 @@
     <string name="faq_4_title">Hvordan kan jeg spole fremover i videoer?</string>
     <string name="faq_4_text">Du kan gjøre det ved å dobbelttrykke på siden av skjermen, eller trykke på teksten for nåværende eller maksimal varighet nær søkelinjen. Hvis du aktiverer avspilling av videoer på en separat skjerm i appinnstillingene, kan du også bruke horisontale bevegelser.</string>
     <string name="faq_5_title">Hva er forskjellen mellom å skjule og å ekskludere en mappe?</string>
-    <string name="faq_5_text">Ekskluder hindrer at mappen vises kun i Fossify Gallery, mens Skjul fungerer på systemnivå og skjuler mappen også for andre gallerier. Det fungerer ved å opprette en tom \".nomedia\"-fil i den aktuelle mappen, som du også kan fjerne med en hvilken som helst filbehandler. Merk at enkelte enheter ikke tillater å skjule mapper som Camera, Screenshots og Downloads.</string>
+    <string name="faq_5_text">Ekskluder hindrer at mappen vises kun i Calypso Gallery, mens Skjul fungerer på systemnivå og skjuler mappen også for andre gallerier. Det fungerer ved å opprette en tom \".nomedia\"-fil i den aktuelle mappen, som du også kan fjerne med en hvilken som helst filbehandler. Merk at enkelte enheter ikke tillater å skjule mapper som Camera, Screenshots og Downloads.</string>
     <string name="faq_6_title">Hvorfor vises mapper med plateomslag eller klistremerker?</string>
     <string name="faq_6_text">Det kan skje at uvanlige album dukker opp. Du kan enkelt ekskludere dem ved å trykke og holde på dem og velge Ekskluder. I den neste dialogen kan du så velge den overordnede mappen, noe som sannsynligvis også vil hindre at andre relaterte album vises.</string>
     <string name="faq_7_title">En mappe med bilder vises ikke, eller den viser ikke alle elementer. Hva kan jeg gjøre?</string>
@@ -405,11 +405,11 @@
     <string name="create_new_vault_option">Opprett nytt hvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterende hvelv</string>
     <string name="where_to_create_vault_title">Hvor skal hvelvet opprettes?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">Egendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterende kryptert hvelv (.vault) ble funnet i den valgte mappen.</string>
     <string name="unlock_existing_vault_at_location_prompt">Et eksisterende kryptert hvelv ble funnet på %s. Vil du låse det opp og bruke det? Trykk på Nei for å velge en annen mappe.</string>
-    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">Egendefinert / Ekstern plassering (USB-stasjon, SD-kort eller egendefinert mappe)</string>
     <string name="external_vault_unavailable_title">Eksternt hvelv utilgjengelig</string>
     <string name="external_vault_unavailable_prompt">Den konfigurerte hvelvplasseringen din (%s) er for øyeblikket frakoblet eller utilgjengelig. Koble til stasjonen og trykk på Prøv på nytt, eller velg en annen hvelvplassering.</string>
