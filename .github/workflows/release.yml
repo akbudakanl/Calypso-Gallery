@@ -43,8 +43,8 @@ jobs:
             exit 1
           fi
 
-          if [[ ! "$version_name" =~ ^[0-9]+\.[0-9]+\.[0-9]+-cipher$ ]]; then
-            echo "::error::Invalid fork release version: $version_name"
+          if [[ ! "$version_name" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release version: $version_name"
             exit 1
           fi
 

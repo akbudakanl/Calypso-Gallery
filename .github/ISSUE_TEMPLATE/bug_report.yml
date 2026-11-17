@@ -32,7 +32,7 @@ body:
     attributes:
       label: Affected app version
       description: "Which app version were you using when you found the bug?"
-      placeholder: "x.x.x-cipher - Go to App Main Menu > About > Version."
+      placeholder: "x.y.z - Go to App Main Menu > About > Version."
     validations:
       required: true
 

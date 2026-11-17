@@ -5,17 +5,16 @@ import org.fossify.commons.helpers.SIDELOADING_FALSE
 import org.fossify.gallery.extensions.config
 
 /**
- * Central place for neutralizing Fossify Commons' "sideloaded / fake app" detection.
+ * Neutralizes Fossify Commons' "sideloaded / fake app" detection.
  *
- * Commons considers a build sideloaded when it is not signed with the official Fossify
- * signing key, which is always the case for this independently maintained fork with its
- * own applicationId. It then shows an "App Corrupt" dialog linking to the Play Store
- * listing built from R.string.package_name.
+ * Commons decides this by probing for a marker drawable (R.drawable.ic_camera_vector) that
+ * is stripped from our independent build. It then shows an "App Corrupt" dialog linking to
+ * the Play Store listing built from R.string.package_name. The check does not inspect the
+ * signing key, installer, namespace or applicationId.
  *
  * The verdict is cached in the shared "Prefs" preferences as appSideloadingStatus and is
- * read by BaseSplashActivity as well as by every checkAppSideloading() call. Marking it as
- * SIDELOADING_FALSE once in Application.onCreate() disables the check at all entry points,
- * including the splash screen and the editor/viewer/wallpaper activities.
+ * read by BaseSplashActivity. Marking it SIDELOADING_FALSE in Application.onCreate() keeps
+ * every entry point from running the probe.
  */
 object SideloadCheck {
     fun disable(context: Context) {
