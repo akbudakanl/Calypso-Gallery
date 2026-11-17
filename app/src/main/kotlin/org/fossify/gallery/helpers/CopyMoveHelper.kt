@@ -12,7 +12,6 @@ import org.fossify.commons.extensions.deleteFileBg
 import org.fossify.commons.extensions.deleteFromMediaStore
 import org.fossify.commons.extensions.formatSize
 import org.fossify.commons.extensions.getAndroidSAFFileItems
-import org.fossify.commons.extensions.getAvailableStorageB
 import org.fossify.commons.extensions.getDocumentFile
 import org.fossify.commons.extensions.getDocumentSdk30
 import org.fossify.commons.extensions.getDoesFilePathExist
@@ -40,6 +39,15 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.FileDirItem
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
+import org.fossify.gallery.helpers.operations.AtomicStaging
+import org.fossify.gallery.helpers.operations.BatchOperationInfo
+import org.fossify.gallery.helpers.operations.JournalItem
+import org.fossify.gallery.helpers.operations.OperationContext
+import org.fossify.gallery.helpers.operations.OperationJournal
+import org.fossify.gallery.helpers.operations.OperationFaults
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.operations.SpaceEstimator
+import java.io.IOException
 import org.fossify.gallery.extensions.StandardConflictItem
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
@@ -48,6 +56,7 @@ import org.fossify.gallery.extensions.resolveStandardFilenameConflicts
 import org.fossify.gallery.extensions.updateDBMediaPath
 import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -374,28 +383,42 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
     }
 
     ensureBackgroundThread {
-        val availableSpace = destination.getAvailableStorageB()
-        val sumToCopy = fileDirItems.sumOf { item ->
+        fileDirItems.forEach { item ->
             if (item.size == 0L) {
                 item.size = item.getProperSize(applicationContext, copyHidden)
             }
-            item.size
         }
+        val probe = SpaceEstimator.probe(destination)
+        val estimate = SpaceEstimator.forPlain(fileDirItems.map { it.size })
         runOnUiThread {
             if (isFinishing || isDestroyed) {
                 initialProgressDialog.dismiss()
                 return@runOnUiThread
             }
-            if (availableSpace != -1L && sumToCopy >= availableSpace) {
-                initialProgressDialog.dismiss()
-                val text = String.format(
-                    getString(org.fossify.commons.R.string.no_space),
-                    sumToCopy.formatSize(),
-                    availableSpace.formatSize()
-                )
-                toast(text, Toast.LENGTH_LONG)
-            } else {
-                startAfterSpaceCheck()
+            when {
+                probe.verifiable && !SpaceEstimator.hasEnough(probe.availableBytes, estimate.peakBytes) -> {
+                    initialProgressDialog.dismiss()
+                    val text = String.format(
+                        getString(org.fossify.commons.R.string.no_space),
+                        estimate.peakBytes.formatSize(),
+                        probe.availableBytes.formatSize()
+                    )
+                    toast(text, Toast.LENGTH_LONG)
+                }
+                !probe.verifiable -> {
+                    // ADR 0003 §3a: SAF/OTG cannot report free space reliably. Explain why and
+                    // continue with per-item error handling instead of silently skipping the check.
+                    toast(
+                        getString(
+                            org.fossify.gallery.R.string.space_unverified_warning,
+                            estimate.peakBytes.formatSize(),
+                            probe.reason
+                        ),
+                        Toast.LENGTH_LONG
+                    )
+                    startAfterSpaceCheck()
+                }
+                else -> startAfterSpaceCheck()
             }
         }
     }
@@ -426,12 +449,21 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
     )
 
     ensureBackgroundThread {
-        val runner = CopyMoveRunner(
-            activity = this,
-            config = config,
-            progressDialog = progressDialog
-        )
-        val result = runner.execute(fileDirItems)
+        val result = ForegroundOperationRegistry.withOperation(this, "copy-move") {
+            val runner = CopyMoveRunner(
+                activity = this,
+                config = config,
+                progressDialog = progressDialog
+            )
+            runner.execute(fileDirItems)
+        }
+        if (result == null) {
+            runOnUiThread {
+                progressDialog.dismiss()
+                toast(org.fossify.commons.R.string.copy_move_failed)
+            }
+            return@ensureBackgroundThread
+        }
 
         runOnUiThread {
             progressDialog.dismiss()
@@ -544,6 +576,10 @@ private class CopyMoveRunner(
     private var transferredBytes = 0L
     private var lastUiUpdateMs = 0L
 
+    /** ADR 0003: one journal context per batch, one item index per physical write. */
+    private var operation: OperationContext = OperationContext.NONE
+    private var nextItemIndex = 0
+
     private fun getDestIndex(dir: File): CryptoManager.TargetPlainIndex {
         return destIndexMap.getOrPut(dir.absolutePath) {
             val preExistingPaths = dir.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
@@ -617,6 +653,31 @@ private class CopyMoveRunner(
         var skippedConflictCount = 0
         totalBytes = computeTotalBytes(items)
 
+        operation = OperationContext(
+            operationId = OperationJournal.newOperationId(),
+            kind = if (config.isCopyOperation) OperationJournal.KIND_COPY else OperationJournal.KIND_MOVE,
+            batch = BatchOperationInfo(
+                destRoot = config.destination,
+                peakBytes = totalBytes,
+                isMove = !config.isCopyOperation,
+                wipeSource = false,
+                deleteSource = !config.isCopyOperation
+            )
+        )
+        nextItemIndex = 0
+        OperationJournal.beginBatch(
+            operation,
+            items.map {
+                JournalItem(
+                    sourcePath = it.path,
+                    destPath = File(config.destination, it.name).absolutePath,
+                    sourceSize = it.size,
+                    resolvedDestName = it.name,
+                    kind = operation.kind
+                )
+            }
+        )
+
         val succeeded = try {
             for (item in items) {
                 when (val outcome = resolveTopLevelDestination(item)) {
@@ -631,6 +692,9 @@ private class CopyMoveRunner(
                         transferTopLevelItem(item, outcome.destItem)
                         processedItems++
                         publishProgress(forceUi = true, filename = item.name)
+                        if (OperationFaults.abortAfterItem(operation, processedItems - 1)) {
+                            throw IOException("Fault injection: simulated process death after item ${processedItems - 1}")
+                        }
                     }
                 }
             }
@@ -649,6 +713,7 @@ private class CopyMoveRunner(
                     }
                 }
             }
+            operation.operationId?.let { OperationJournal.clear(it) }
             true
         } catch (e: Exception) {
             activity.showErrorToast(e)
@@ -902,47 +967,120 @@ private class CopyMoveRunner(
             0L
         }
 
+        if (!documents.containsKey(destParent) && activity.needsStupidWritePermissions(dest.path)) {
+            documents[destParent] = activity.getDocumentFile(destParent)
+        }
+
+        val itemContext = OperationContext(
+            operationId = operation.operationId,
+            itemIndex = nextItemIndex++,
+            kind = operation.kind,
+            batch = operation.batch
+        )
+        // Direct File targets use a File sibling; SAF targets use a sibling DocumentFile.
+        val destDocument = documents[destParent]
+        val fileStaging = if (destDocument == null) {
+            AtomicStaging.fileFor(File(dest.path), itemContext)
+        } else {
+            null
+        }
+        val safStaging = if (destDocument != null) {
+            runCatching {
+                destDocument.createFile(source.path.getMimeType(), AtomicStaging.safStageName(itemContext))
+            }.getOrNull()
+        } else {
+            null
+        }
+        if (destDocument != null && safStaging == null) {
+            OperationJournal.markFailed(itemContext, "could not create SAF staging document")
+            return
+        }
+        OperationJournal.markInFlight(
+            itemContext,
+            fileStaging?.absolutePath ?: safStaging?.uri?.toString().orEmpty()
+        )
+        val sourceFingerprint = if (safStaging != null) {
+            runCatching {
+                activity.getFileInputStreamSync(source.path)?.use { AtomicStaging.streamFingerprint(it) } ?: ""
+            }.getOrDefault("")
+        } else {
+            MediaIdentity.computeFingerprint(sourceFile)
+        }
+
         var inputStream: InputStream? = null
         var outputStream: OutputStream? = null
         var transferSuccess = false
+        var committed = false
         try {
-            if (!documents.containsKey(destParent) && activity.needsStupidWritePermissions(dest.path)) {
-                documents[destParent] = activity.getDocumentFile(destParent)
+            outputStream = when {
+                fileStaging != null -> FileOutputStream(fileStaging)
+                safStaging != null -> activity.contentResolver.openOutputStream(safStaging.uri)
+                else -> activity.getFileOutputStreamSync(dest.path, source.path.getMimeType(), destDocument)
             }
-            outputStream = activity.getFileOutputStreamSync(
-                dest.path,
-                source.path.getMimeType(),
-                documents[destParent]
-            )
             inputStream = activity.getFileInputStreamSync(source.path)
             val bytesCopied = streamCopy(inputStream, outputStream, source.name)
 
-            if (source.size == bytesCopied && activity.getDoesFilePathExist(dest.path)) {
-                transferSuccess = true
+            val landed = when {
+                fileStaging != null -> fileStaging.exists() && fileStaging.length() == source.size
+                safStaging != null -> safStaging.length() == source.size
+                else -> activity.getDoesFilePathExist(dest.path)
+            }
+            if (source.size == bytesCopied && landed) {
+                if (fileStaging != null) {
+                    AtomicStaging.commit(fileStaging, File(dest.path))
+                    committed = true
+                } else if (safStaging != null) {
+                    // DocumentFile.renameTo is a directory-entry operation. No copy+delete fallback:
+                    // on failure the item is FAILED and the source stays intact (ADR 0003 §3a).
+                    if (!AtomicStaging.commitSaf(safStaging, File(dest.path).name)) {
+                        throw IOException("SAF atomic rename failed")
+                    }
+                    committed = true
+                }
+                val destFingerprint = if (safStaging != null) {
+                    AtomicStaging.safFingerprint(activity, safStaging.uri)
+                } else {
+                    MediaIdentity.computeFingerprint(File(dest.path))
+                }
+                if (sourceFingerprint.isEmpty() || destFingerprint == sourceFingerprint) {
+                    OperationJournal.markVerified(itemContext, destFingerprint)
+                    transferSuccess = true
+                } else {
+                    OperationJournal.markFailed(itemContext, "copied fingerprint mismatch")
+                }
             }
         } catch (e: Exception) {
             activity.showErrorToast(e)
+            OperationJournal.markFailed(itemContext, e.message ?: "copy failed")
         } finally {
             closeQuietly(inputStream)
             closeQuietly(outputStream)
         }
 
-        if (transferSuccess) {
-            transferredFiles.add(source)
-            finalizeCopiedFile(dest, capturedLastModified, capturedDateTaken)
-            if (!config.isCopyOperation) {
-                runCatching { activity.updateDBMediaPath(source.path, dest.path) }
-                if (activity.baseConfig.keepLastModified && capturedDateTaken > 0L) {
-                    CryptoManager.persistDecryptedDateTaken(
-                        context = activity.applicationContext,
-                        outFile = File(dest.path),
-                        dateTaken = capturedDateTaken,
-                        lastModified = capturedLastModified
-                    )
-                }
-                deleteSourceFile(source)
-                sourceFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
+        if (!transferSuccess) {
+            if (fileStaging != null) {
+                AtomicStaging.discard(fileStaging, containsPlaintext = true, context = activity.applicationContext)
             }
+            if (safStaging != null) AtomicStaging.discardSaf(safStaging)
+            if (committed && destDocument == null) runCatching { File(dest.path).delete() }
+            return
+        }
+
+        transferredFiles.add(source)
+        finalizeCopiedFile(dest, capturedLastModified, capturedDateTaken)
+        if (!config.isCopyOperation) {
+            runCatching { activity.updateDBMediaPath(source.path, dest.path) }
+            if (activity.baseConfig.keepLastModified && capturedDateTaken > 0L) {
+                CryptoManager.persistDecryptedDateTaken(
+                    context = activity.applicationContext,
+                    outFile = File(dest.path),
+                    dateTaken = capturedDateTaken,
+                    lastModified = capturedLastModified
+                )
+            }
+            deleteSourceFile(source)
+            OperationJournal.markSourceDeleted(itemContext)
+            sourceFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
         }
     }
 
