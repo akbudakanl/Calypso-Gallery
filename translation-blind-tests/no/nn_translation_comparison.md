@@ -666,3 +666,106 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 471 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Secrets som inneheld .vault-fila. |
 | 472 | `exporting_vault_progress` | Exporting encrypted vault… | Eksporterer kryptert kvelv… |
 | 473 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | Eksportmålet kan ikkje vera den aktive kvelvmappa eller liggja inne i ho. |
+| 474 | `conflict_handling_standard_dialog_summary` | Standard dialog | Standard dialog |
+| 475 | `conflict_handling_smart_dialog_summary` | Smart dialog | Smart dialog |
+| 476 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automatisk (eksperimentelt) |
+| 477 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Standard dialog (Standard — Sjekkar berre filnamnet, som den opphavlege Fossify Gallery) |
+| 478 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Handsama filer som vart hoppa over under kryptering |
+| 479 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | Handsama filer som vart hoppa over under dekryptering |
+| 480 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Vel om filer som vart hoppa over i kjeldemappa under kryptering skal behaldast eller slettast av tryggleiksomsyn. Dette valet gjeld òg for albumkonfliktar under albumkryptering (sjå innstillinga under) når kjeldealbumet vert slått saman med eit eksisterande album på målet. |
+| 481 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | Vel om filer som vart hoppa over i kjeldemappa under dekryptering skal behaldast eller slettast. Dette valet gjeld òg for albumkonfliktar under albumdekryptering (sjå innstillinga under) når kjeldealbumet vert slått saman med eit eksisterande album på målet. |
+| 482 | `skipped_crypto_files_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 483 | `skipped_crypto_files_keep` | Keep | Behald |
+| 484 | `skipped_crypto_files_delete` | Delete | Slett |
+| 485 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Filene du hoppa over vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 486 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Filene du hoppa over vart ikkje overførte. Du kan sletta desse filene. |
+| 487 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 488 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
+| 489 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 490 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
+| 491 | `skipped_crypto_files_always_ask` | Always ask | Spør alltid |
+| 492 | `delete_skipped_files_confirm_title` | Are you sure? | Er du sikker? |
+| 493 | `delete_skipped_files_confirm_message` | Your files will be deleted! | Filene dine vert sletta! |
+| 494 | `date_tie_break_label` | When content is identical but dates differ | Når innhaldet er identisk, men datoen er ulik |
+| 495 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Behald datoen til den eksisterande fila (standard) |
+| 496 | `date_tie_break_use_source` | Use the source file\'s date | Bruk datoen til kjeldefila |
+| 497 | `date_tie_break_ask` | Always ask | Spør alltid |
+| 498 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Gjeld berre for Smart dialog og automatisk modus. Standard dialog vert ikkje påverka. |
+| 499 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Kvifor \"Spør alltid\" slår av Smart dialog og automatisk modus |
+| 500 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | Smart dialog og automatisk modus finst av éin grunn: å hoppa over filer som alt er til stades, slik at du berre ser filene som verkeleg treng merksemda di — same namn, ulikt innhald. Det er nettopp i dette tilfellet at samanlikning av minibilete kan avdekkja bit-rot.\n\nViss du vel \"Spør alltid\" her, kjem kvar identisk fil med ein annan dato tilbake til deg som ein konflikt. I Smart dialog ser du to minibilete av det same biletet, utan noko å stadfesta. I automatisk modus vert den identiske fila skriven på nytt som namn(1), og fyller mappene dine med meiningslause kopiar.\n\nBruk dette valet berre viss du med vilje vil gå gjennom kvar einaste datoskilnad, til dømes for å retta ein feil dato for hand.\n\nMerk: når innhaldet er bit-identisk, er EXIF-opptaksdatoen òg identisk. Ein datoskilnad tyder at den eine sida mista EXIF-dataa sine og fall tilbake til endringsdatoen til fila (kopieringsdatoen). |
+| 501 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 502 | `smart_conflict_incoming_label` | Incoming (New) | Innkommande (ny) |
+| 503 | `smart_conflict_existing_label` | Existing (Target) | Eksisterande (mål) |
+| 504 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Øydelagd eller uleseleg |
+| 505 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Integritetssjekk feila (bit-rot / øydelagd) |
+| 506 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Trykk på eit av minibileta for å sjå førehandsvisinga i full storleik |
+| 507 | `smart_conflict_comparing` | Comparing file contents and dates… | Samanliknar filinnhald og datoar… |
+| 508 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | Filinnhaldet er ulikt.\nViss desse to filene skulle vore like, kan det ha oppstått dataskade. Det tilrår å behalda begge og granska dei. |
+| 509 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | Filinnhaldet er identisk, men tidsstempla for oppretting (dato teken) er ulike. |
+| 510 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | Filinnhaldet er identisk, men endringsdatoane er ulike. |
+| 511 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | Filinnhaldet er identisk, men opprettings- og endringsdatoane er ulike. |
+| 512 | `smart_conflict_meta_date_taken` | Taken: %s | Teke: %s |
+| 513 | `smart_conflict_meta_date_modified` | Modified: %s | Endra: %s |
+| 514 | `album_type_icons` | Album type icons | Ikon for albumtype |
+| 515 | `virtual_folders` | Virtual folders | Virtuelle mapper |
+| 516 | `favorites_album` | Favorites | Favorittar |
+| 517 | `excluded_folders_album` | Excluded folders | Ekskluderte mapper |
+| 518 | `hidden_folders_album` | Hidden folders | Skjulte mapper |
+| 519 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Syn skjulte mapper mellombels |
+| 520 | `stop_showing_hidden_folders` | Stop showing hidden folders | Slutt å syna skjulte mapper |
+| 521 | `unexclude` | Stop excluding | Slutt å ekskludera |
+| 522 | `hide_folder` | Hide | Skjul |
+| 523 | `unhide_folder` | Unhide | Syn att |
+| 524 | `about_title` | About Calypso Gallery | Om Calypso Gallery |
+| 525 | `about_version` | Version %1$s (%2$s) | Versjon %1$s (%2$s) |
+| 526 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell personleg fork av Fossify Gallery. Han er ikkje tilknytt eller støtta av Fossify. |
+| 527 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Denne distribusjonen er ein endra versjon av Fossify Gallery. Forken vart laga frå oppstraums-commiten 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), og alle forksspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
+| 528 | `about_license_heading` | License | Lisens |
+| 529 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Dette programmet er fri programvare: du kan distribuera det og/eller endra det i samsvar med vilkåra i GNU General Public License som publisert av Free Software Foundation, versjon 3 av lisensen.\n\nDette programmet vert distribuert i håp om at det skal vera nyttig, men UTAN NOKON GARANTI; utan ein gitt garanti for SALJGBARHEIT eller EIGNA FOR EIT FØREMÅL. Sjå GNU General Public License for fleire detaljar.\n\nDu skulle ha motteke ein kopi av GNU General Public License saman med dette programmet. Viss ikkje, bruk lisenshandlinga under eller besøk https://www.gnu.org/licenses/. |
+| 530 | `about_read_gpl_license` | Read the GNU GPL v3 license | Les GNU GPL v3-lisensen |
+| 531 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Les Tink Apache 2.0-lisensen og tilskrivinga |
+| 532 | `about_source_heading` | Source code | Kjeldekode |
+| 533 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | Den fullstendige tilhøyrande kjeldekoden for denne forken finst i fork-repositoriet. Merkelagde utgåver har òg eit tilhøyrande kjeldearkiv. Repositoriet inneheld byggjeskripta, avhengighetserklæringane og den fullstendige fork-historikken som trengst for å granska og byggja prosjektet på nytt. |
+| 534 | `about_fork_source` | Fork source code and corresponding source | Kjeldekode for forken og tilhøyrande kjelde |
+| 535 | `about_release_sources` | Release source archives | Kjeldearkiv for utgåver |
+| 536 | `about_fork_issues` | Fork issue tracker | Feilsporar for forken |
+| 537 | `about_upstream_source` | Upstream Fossify Gallery source code | Kjeldekode for oppstraums Fossify Gallery |
+| 538 | `about_upstream_project` | Upstream Fossify project | Oppstraums Fossify-prosjektet |
+| 539 | `about_help_heading` | Help and legal information | Hjelp og juridisk informasjon |
+| 540 | `about_faq` | Frequently asked questions | Ofte stilte spørsmål |
+| 541 | `about_third_party_licenses` | Third-party licenses | Lisensar frå tredjepart |
+| 542 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 543 | `tink_license_title` | Tink license and attribution | Tink-lisens og tilskriving |
+| 544 | `fork_disclaimer_title` | Fork notice | Fork-merknad |
+| 545 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Dette programmet er ikkje utvikla av Fossify-teamet. Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell fork av Fossify Gallery; den opphavlege utviklaren er berre nemnd for tilskriving. Det er ikkje tilknytt, støtta eller vedlikehalde av Fossify.\n\nVed å halda fram stadfestar du denne merknaden. Forkspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
+| 546 | `fork_disclaimer_acknowledge` | I understand | Eg forstår |
+| 547 | `vault_upgrade_entry_title` | Encrypted Vault update available | Oppdatering av kryptert kvelv tilgjengeleg |
+| 548 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | Det krypterte kvelvet ditt vart oppretta med ein utdatert versjon av appen og brukar den gamle krypteringsalgoritmen. Viss du vil, kan du oppretta det krypterte kvelvet ditt på nytt etter krypteringsalgoritmen til den gjeldande versjonen. |
+| 549 | `vault_upgrade_always_show` | Always show | Syn alltid |
+| 550 | `vault_upgrade_settings_title` | Always show vault update warning | Syn alltid åtvaring om kvelvoppdatering |
+| 551 | `vault_upgrade_details_title` | Before updating | Før oppdatering |
+| 552 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | Det tilrår å laga ei tryggingskopi før du oppdaterer det krypterte kvelvet til å bruka den gjeldande krypteringsalgoritmen. Slik vert risikoen for datatap på grunn av ei avbrote oppdatering eliminert, og viss du vil, kan du halda fram med å bruka det ikkje-oppdaterte krypterte kvelvet i eldre versjonar av appen. |
+| 553 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | Batteriet ditt er lågt. Lad eininga di til minst 20 %. |
+| 554 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | Ikkje nok ledig plass til å oppdatera det krypterte kvelvet. |
+| 555 | `vault_upgrade_continue` | Continue | Hald fram |
+| 556 | `vault_upgrade_progress` | Converted %1$d of %2$d files | Konvertert %1$d av %2$d filer |
+| 557 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | Oppdateringa er fullført. Opne det krypterte kvelvet på nytt for å aktivere den nye nøkkelringen. |
+| 558 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | Oppdateringa stoppa: %1$d fil(er) kunne ikkje stadfestast. |
+| 559 | `vault_upgrade_resume_title` | Vault update was interrupted | Kvelvoppdateringa vart avbroten |
+| 560 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | Oppdateringa av det krypterte kvelvet vart avbroten. Nokre filer i det krypterte kvelvet ditt vart oppdaterte til den nye krypteringsalgoritmen. Ingen data gjekk tapt. Vil du halda fram med å oppdatera dei resterande filene? |
+| 561 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | Ikkje avslutt appen eller slå av skjermen under oppdateringa. |
+| 562 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | Det krypterte kvelvet er fråkopla. Ventar på at det skal kopla til att... |
+| 563 | `argon2_profile_title` | Brute-Force resistance | Motstand mot brute-force |
+| 564 | `brute_force_mode_title` | Calibration mode | Kalibreringsmodus |
+| 565 | `brute_force_mode_time` | Via vault unlock time | Via opplåsingstid for kvelvet |
+| 566 | `brute_force_mode_presets` | Via ready-made modes | Via ferdige modusar |
+| 567 | `brute_force_time_title` | Target vault unlock time | Ønskt opplåsingstid for kvelvet |
+| 568 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | Sekund (2.0–7.0). Appen måler denne eininga éin gong og lagrar dei resulterande KDF-parametrane i kvelvet; faktisk opplåsingstid varierer på andre einingar. |
+| 569 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
+| 570 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Lagra: %1$d MiB / %2$d rundar |
+| 571 | `brute_force_clamped` |  (clamped) |  (avgrensa) |
+| 572 | `argon2_profile_low` | Low-end device (not recommended) | Eining med låg yting (ikkje tilrådd) |
+| 573 | `argon2_profile_default` | Default | Standard |
+| 574 | `argon2_profile_high` | High security | Høg tryggleik |
+| 575 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Viss du ikkje veit kva du gjer, tilrår vi å behalda standardinnstillinga. Dette påverkar berre nye kvelv og passordendringar. |
+| 576 | `argon2_profile_current` | Current: %s | Gjeldande: %s |

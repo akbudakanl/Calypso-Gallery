@@ -657,3 +657,106 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 468 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Secrets という名前のフォルダーを使用するだけで十分です。 |
 | 469 | `exporting_vault_progress` | Exporting encrypted vault… | 暗号化された保管庫をエクスポート中… |
 | 470 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | エクスポート先に現在使用中の保管庫フォルダーまたはそのサブフォルダーを指定することはできません。 |
+| 471 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準ダイアログ |
+| 472 | `conflict_handling_smart_dialog_summary` | Smart dialog | スマートダイアログ |
+| 473 | `conflict_handling_auto_summary` | Automatic (Experimental) | 自動（実験的） |
+| 474 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準ダイアログ（既定 — 元の Fossify Gallery と同様、ファイル名のみを確認） |
+| 475 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 暗号化時にスキップされたファイルを管理 |
+| 476 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | 復号時にスキップされたファイルを管理 |
+| 477 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 暗号化時に送信元フォルダーでスキップされたファイルを保持するか、セキュリティのため削除するかを選択します。この選択は、アルバムの暗号化時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。 |
+| 478 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | 復号時に送信元フォルダーでスキップされたファイルを保持するか削除するかを選択します。この選択は、アルバムの復号時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。 |
+| 479 | `skipped_crypto_files_ask` | Always ask (Default) | 毎回確認（既定） |
+| 480 | `skipped_crypto_files_keep` | Keep | 保持 |
+| 481 | `skipped_crypto_files_delete` | Delete | 削除 |
+| 482 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | スキップしたファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 483 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | スキップしたファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 484 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 485 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 486 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 487 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 488 | `skipped_crypto_files_always_ask` | Always ask | 毎回確認 |
+| 489 | `delete_skipped_files_confirm_title` | Are you sure? | よろしいですか？ |
+| 490 | `delete_skipped_files_confirm_message` | Your files will be deleted! | ファイルが削除されます！ |
+| 491 | `date_tie_break_label` | When content is identical but dates differ | 内容は同一だが日付が異なる場合 |
+| 492 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 既存ファイルの日付を保持（既定） |
+| 493 | `date_tie_break_use_source` | Use the source file\'s date | 送信元ファイルの日付を使用 |
+| 494 | `date_tie_break_ask` | Always ask | 毎回確認 |
+| 495 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | スマートダイアログと自動モードのみに適用されます。標準ダイアログは影響を受けません。 |
+| 496 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | \"毎回確認\"がスマートダイアログと自動モードを無効にする理由 |
+| 497 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありません。自動モードでは同一ファイルが name(1) として再度書き込まれ、フォルダーが無意味なコピーで埋まります。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 |
+| 498 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 499 | `smart_conflict_incoming_label` | Incoming (New) | 受信（新規） |
+| 500 | `smart_conflict_existing_label` | Existing (Target) | 既存（宛先） |
+| 501 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 破損または読み取り不能 |
+| 502 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 整合性チェックに失敗（ビットロット / 破損） |
+| 503 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | いずれかのサムネイルをタップして全サイズのプレビューを確認 |
+| 504 | `smart_conflict_comparing` | Comparing file contents and dates… | ファイルの内容と日付を比較しています… |
+| 505 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | ファイルの内容が異なります。\nこの2つのファイルが同じであるはずだった場合、データの破損が発生している可能性があります。両方を保持して確認することをお勧めします。 |
+| 506 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | ファイルの内容は同一ですが、作成日時（撮影日時）が異なります。 |
+| 507 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | ファイルの内容は同一ですが、更新日時が異なります。 |
+| 508 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | ファイルの内容は同一ですが、作成日時と更新日時が異なります。 |
+| 509 | `smart_conflict_meta_date_taken` | Taken: %s | 撮影日時: %s |
+| 510 | `smart_conflict_meta_date_modified` | Modified: %s | 更新日時: %s |
+| 511 | `album_type_icons` | Album type icons | アルバムの種類のアイコン |
+| 512 | `virtual_folders` | Virtual folders | 仮想フォルダー |
+| 513 | `favorites_album` | Favorites | お気に入り |
+| 514 | `excluded_folders_album` | Excluded folders | 除外されたフォルダー |
+| 515 | `hidden_folders_album` | Hidden folders | 非表示フォルダー |
+| 516 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 非表示フォルダーを一時的に表示 |
+| 517 | `stop_showing_hidden_folders` | Stop showing hidden folders | 非表示フォルダーの表示を停止 |
+| 518 | `unexclude` | Stop excluding | 除外を解除 |
+| 519 | `hide_folder` | Hide | 非表示にする |
+| 520 | `unhide_folder` | Unhide | 再表示 |
+| 521 | `about_title` | About Calypso Gallery | Calypso Gallery について |
+| 522 | `about_version` | Version %1$s (%2$s) | バージョン %1$s (%2$s) |
+| 523 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery は、Fossify Gallery の独立して保守された非公式の個人フォークです。Fossify とは提携しておらず、Fossify によって推奨もされていません。 |
+| 524 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | この配布物は Fossify Gallery の改造版です。このフォークはアップストリームのコミット 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) から作成されており、フォーク固有のすべての変更は FORK_CHANGELOG.md に記載されています。 |
+| 525 | `about_license_heading` | License | ライセンス |
+| 526 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本プログラムはフリーソフトウェアです。フリーソフトウェア財団が公開する GNU General Public License（バージョン3）の条件に基づき、再配布および／または改変することができます。\n\n本プログラムは有用であることを願って配布されますが、無保証です。商品性および特定目的への適合性の黙示的保証を含む、いかなる保証もありません。詳細は GNU General Public License をご覧ください。\n\n本プログラムとともに GNU General Public License の写しを受け取っているはずです。受け取っていない場合は、下のライセンスの操作を実行するか、https://www.gnu.org/licenses/ にアクセスしてください。 |
+| 527 | `about_read_gpl_license` | Read the GNU GPL v3 license | GNU GPL v3 ライセンスを読む |
+| 528 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Tink の Apache 2.0 ライセンスと帰属表示を読む |
+| 529 | `about_source_heading` | Source code | ソースコード |
+| 530 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | このフォークの完全な対応ソースはフォークのリポジトリに保管されています。タグ付けされたリリースには、対応するソースアーカイブもあります。リポジトリには、プロジェクトの調査と再ビルドに必要なビルドスクリプト、依存関係の宣言、および完全なフォーク履歴が含まれています。 |
+| 531 | `about_fork_source` | Fork source code and corresponding source | フォークのソースコードと対応ソース |
+| 532 | `about_release_sources` | Release source archives | リリースのソースアーカイブ |
+| 533 | `about_fork_issues` | Fork issue tracker | フォークのイシュートラッカー |
+| 534 | `about_upstream_source` | Upstream Fossify Gallery source code | アップストリームの Fossify Gallery ソースコード |
+| 535 | `about_upstream_project` | Upstream Fossify project | アップストリームの Fossify プロジェクト |
+| 536 | `about_help_heading` | Help and legal information | ヘルプと法的情報 |
+| 537 | `about_faq` | Frequently asked questions | よくある質問 |
+| 538 | `about_third_party_licenses` | Third-party licenses | サードパーティのライセンス |
+| 539 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 540 | `tink_license_title` | Tink license and attribution | Tink のライセンスと帰属表示 |
+| 541 | `fork_disclaimer_title` | Fork notice | フォークに関する通知 |
+| 542 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。 |
+| 543 | `fork_disclaimer_acknowledge` | I understand | 理解しました |
+| 544 | `vault_upgrade_entry_title` | Encrypted Vault update available | 暗号化された保管庫の更新が利用可能です |
+| 545 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | 暗号化された保管庫は古いバージョンのアプリで作成されており、旧暗号化アルゴリズムを使用しています。希望する場合は、現在のバージョンの暗号化アルゴリズムに従って暗号化された保管庫を再作成できます。 |
+| 546 | `vault_upgrade_always_show` | Always show | 常に表示 |
+| 547 | `vault_upgrade_settings_title` | Always show vault update warning | 保管庫の更新警告を常に表示 |
+| 548 | `vault_upgrade_details_title` | Before updating | 更新前 |
+| 549 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | 現在の暗号化アルゴリズムを使用する目的で暗号化された保管庫を更新する前に、バックアップを作成することをお勧めします。これにより、更新が中断されたことによるデータ消失のリスクを排除でき、希望する場合は古いバージョンのアプリで未更新の暗号化された保管庫を引き続き使用できます。 |
+| 550 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | バッテリー残量が少なくなっています。端末を少なくとも 20% まで充電してください。 |
+| 551 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | 暗号化された保管庫を更新するための空き容量が不足しています。 |
+| 552 | `vault_upgrade_continue` | Continue | 続行 |
+| 553 | `vault_upgrade_progress` | Converted %1$d of %2$d files | %2$d 個中 %1$d 個を変換しました |
+| 554 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | 更新が完了しました。新しいキーリングを有効にするには、暗号化された保管庫を再度開いてください。 |
+| 555 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | 更新を停止しました: %1$d 個のファイルを検証できませんでした。 |
+| 556 | `vault_upgrade_resume_title` | Vault update was interrupted | 保管庫の更新が中断されました |
+| 557 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | 暗号化された保管庫の更新が中断されました。暗号化された保管庫内の一部のファイルが新しい暗号化アルゴリズムに更新されています。データの消失はありません。残りのファイルの更新を続行しますか？ |
+| 558 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | 更新中はアプリを終了したり画面をオフにしたりしないでください。 |
+| 559 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | 暗号化された保管庫が切断されています。再接続を待っています... |
+| 560 | `argon2_profile_title` | Brute-Force resistance | 総当たり攻撃への耐性 |
+| 561 | `brute_force_mode_title` | Calibration mode | 調整モード |
+| 562 | `brute_force_mode_time` | Via vault unlock time | 保管庫のロック解除時間を使用 |
+| 563 | `brute_force_mode_presets` | Via ready-made modes | 用意されたモードを使用 |
+| 564 | `brute_force_time_title` | Target vault unlock time | 目標とする保管庫のロック解除時間 |
+| 565 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | 秒数（2.0–7.0）。アプリはこの端末を一度測定し、結果の KDF パラメーターを保管庫に保存します。実際のロック解除時間は他の端末では異なります。 |
+| 566 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
+| 567 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 保存済み: %1$d MiB / %2$d ラウンド |
+| 568 | `brute_force_clamped` |  (clamped) |  (範囲内に制限されました) |
+| 569 | `argon2_profile_low` | Low-end device (not recommended) | ローエンド端末（非推奨） |
+| 570 | `argon2_profile_default` | Default | 既定 |
+| 571 | `argon2_profile_high` | High security | 高いセキュリティ |
+| 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。 |
+| 573 | `argon2_profile_current` | Current: %s | 現在: %s |

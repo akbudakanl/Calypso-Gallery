@@ -616,3 +616,106 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 455 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | Um Mediendateien, die auf anderen Geräten mit dem unterstützten CLI-Tool verschlüsselt wurden, zum verschlüsselten Tresor auf deinem Smartphone hinzuzufügen, genügt ein Ordner namens Secrets, der die .vault-Datei enthält. |
 | 456 | `exporting_vault_progress` | Exporting encrypted vault… | Verschlüsselter Tresor wird exportiert… |
 | 457 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | Das Exportziel darf nicht der aktive Tresorordner oder ein Unterordner davon sein. |
+| 458 | `conflict_handling_standard_dialog_summary` | Standard dialog | Standarddialog |
+| 459 | `conflict_handling_smart_dialog_summary` | Smart dialog | Intelligenter Dialog |
+| 460 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automatisch (Experimentell) |
+| 461 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Standarddialog (Standard — prüft nur den Dateinamen, wie die ursprüngliche Fossify Gallery) |
+| 462 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Übersprungene Dateien bei der Verschlüsselung verwalten |
+| 463 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | Übersprungene Dateien bei der Entschlüsselung verwalten |
+| 464 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Lege fest, ob Dateien, die bei der Verschlüsselung im Quellordner übersprungen wurden, aus Sicherheitsgründen behalten oder gelöscht werden sollen. Diese Auswahl gilt auch für Albumkonflikte bei der Verschlüsselung eines Albums (siehe Einstellung unten), wenn das Quellalbum am Ziel in ein vorhandenes Album zusammengeführt wird. |
+| 465 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | Lege fest, ob Dateien, die bei der Entschlüsselung im Quellordner übersprungen wurden, behalten oder gelöscht werden sollen. Diese Auswahl gilt auch für Albumkonflikte bei der Entschlüsselung eines Albums (siehe Einstellung unten), wenn das Quellalbum am Ziel in ein vorhandenes Album zusammengeführt wird. |
+| 466 | `skipped_crypto_files_ask` | Always ask (Default) | Immer fragen (Standard) |
+| 467 | `skipped_crypto_files_keep` | Keep | Behalten |
+| 468 | `skipped_crypto_files_delete` | Delete | Löschen |
+| 469 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Die übersprungenen Dateien wurden nicht übertragen. Aus Datenschutzgründen kannst du diese Dateien löschen. |
+| 470 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Die übersprungenen Dateien wurden nicht übertragen. Du kannst diese Dateien löschen. |
+| 471 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Dateien, die bereits im Zielordner vorhanden sind, wurden nicht übertragen. Aus Datenschutzgründen kannst du diese Dateien löschen. |
+| 472 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Dateien, die bereits im Zielordner vorhanden sind, wurden nicht übertragen. Du kannst diese Dateien löschen. |
+| 473 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Die übersprungenen Dateien und die Dateien, die bereits im Zielordner vorhanden sind, wurden nicht übertragen. Aus Datenschutzgründen kannst du diese Dateien löschen. |
+| 474 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Die übersprungenen Dateien und die Dateien, die bereits im Zielordner vorhanden sind, wurden nicht übertragen. Du kannst diese Dateien löschen. |
+| 475 | `skipped_crypto_files_always_ask` | Always ask | Immer fragen |
+| 476 | `delete_skipped_files_confirm_title` | Are you sure? | Bist du sicher? |
+| 477 | `delete_skipped_files_confirm_message` | Your files will be deleted! | Deine Dateien werden gelöscht! |
+| 478 | `date_tie_break_label` | When content is identical but dates differ | Wenn der Inhalt identisch ist, die Datumsangaben aber abweichen |
+| 479 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Datum der vorhandenen Datei beibehalten (Standard) |
+| 480 | `date_tie_break_use_source` | Use the source file\'s date | Datum der Quelldatei verwenden |
+| 481 | `date_tie_break_ask` | Always ask | Immer fragen |
+| 482 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Gilt nur für den intelligenten Dialog und den automatischen Modus. Der Standarddialog ist nicht betroffen. |
+| 483 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Warum "Immer fragen" den intelligenten Dialog und den automatischen Modus deaktiviert |
+| 484 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | Intelligenter Dialog und automatischer Modus existieren aus einem Grund: Dateien zu überspringen, deren Inhalt bereits vorhanden ist, damit du nur die Dateien siehst, die wirklich deine Aufmerksamkeit brauchen — gleicher Name, unterschiedlicher Inhalt. Genau in diesem Fall kann der Vergleich von Vorschaubildern Bit-Rot (Datenverfall) aufdecken.\n\nWenn du hier "Immer fragen" wählst, wird jede identische Datei mit einem anderen Datum erneut als Konflikt gemeldet. Im intelligenten Dialog siehst du zwei Vorschaubilder desselben Bildes, bei denen es nichts zu überprüfen gibt. Im automatischen Modus wird die identische Datei erneut als name(1) geschrieben und deine Ordner mit sinnlosen Kopien gefüllt.\n\nVerwende diese Option nur, wenn du bewusst jede Datumsabweichung prüfen möchtest, zum Beispiel um ein falsches Datum manuell zu korrigieren.\n\nHinweis: Sind die Inhalte bitgleich, ist auch das EXIF-Aufnahmedatum identisch. Eine Datumsabweichung bedeutet, dass auf einer Seite die EXIF-Daten verloren gegangen sind und stattdessen das Datei-Änderungsdatum (das Kopierdatum) verwendet wird. |
+| 485 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 486 | `smart_conflict_incoming_label` | Incoming (New) | Eingehend (Neu) |
+| 487 | `smart_conflict_existing_label` | Existing (Target) | Vorhanden (Ziel) |
+| 488 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Beschädigt oder nicht lesbar |
+| 489 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Integritätsprüfung fehlgeschlagen (Bit-Rot / beschädigt) |
+| 490 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Tippe auf eines der Vorschaubilder, um die Vorschau in voller Größe zu prüfen |
+| 491 | `smart_conflict_comparing` | Comparing file contents and dates… | Dateiinhalte und Datumsangaben werden verglichen… |
+| 492 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | Die Dateiinhalte unterscheiden sich.\nWenn diese beiden Dateien eigentlich identisch sein sollten, könnte eine Datenbeschädigung aufgetreten sein. Es wird empfohlen, beide zu behalten und zu prüfen. |
+| 493 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | Die Dateiinhalte sind identisch, die Erstellungszeitpunkte (Aufnahmedatum) weichen ab. |
+| 494 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | Die Dateiinhalte sind identisch, die Änderungsdaten weichen ab. |
+| 495 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | Die Dateiinhalte sind identisch, Erstellungs- und Änderungsdaten weichen ab. |
+| 496 | `smart_conflict_meta_date_taken` | Taken: %s | Aufnahmedatum: %s |
+| 497 | `smart_conflict_meta_date_modified` | Modified: %s | Änderungsdatum: %s |
+| 498 | `album_type_icons` | Album type icons | Symbole für Albumtypen |
+| 499 | `virtual_folders` | Virtual folders | Virtuelle Ordner |
+| 500 | `favorites_album` | Favorites | Favoriten |
+| 501 | `excluded_folders_album` | Excluded folders | Ausgeschlossene Ordner |
+| 502 | `hidden_folders_album` | Hidden folders | Versteckte Ordner |
+| 503 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Versteckte Ordner temporär anzeigen |
+| 504 | `stop_showing_hidden_folders` | Stop showing hidden folders | Versteckte Ordner nicht mehr anzeigen |
+| 505 | `unexclude` | Stop excluding | Nicht mehr ausschließen |
+| 506 | `hide_folder` | Hide | Verstecken |
+| 507 | `unhide_folder` | Unhide | Nicht mehr verstecken |
+| 508 | `about_title` | About Calypso Gallery | Über Calypso Gallery |
+| 509 | `about_version` | Version %1$s (%2$s) | Version %1$s (%2$s) |
+| 510 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery ist ein unabhängig gepflegter, inoffizieller persönlicher Fork von Fossify Gallery. Er steht in keiner Verbindung zu Fossify und wird nicht von Fossify unterstützt. |
+| 511 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Diese Distribution ist eine modifizierte Version von Fossify Gallery. Der Fork wurde aus dem Upstream-Commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) erstellt; alle forkspezifischen Änderungen sind in FORK_CHANGELOG.md dokumentiert. |
+| 512 | `about_license_heading` | License | Lizenz |
+| 513 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Dieses Programm ist freie Software: Sie können es unter den Bedingungen der GNU General Public License, wie von der Free Software Foundation veröffentlicht, in Version 3 der Lizenz weitergeben und/oder ändern.\n\nDieses Programm wird in der Hoffnung verbreitet, dass es nützlich sein wird, aber OHNE JEDE GEWÄHRLEISTUNG; sogar ohne die implizite Gewährleistung der MARKTGÄNGIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK. Weitere Einzelheiten finden Sie in der GNU General Public License.\n\nSie sollten eine Kopie der GNU General Public License zusammen mit diesem Programm erhalten haben. Falls nicht, nutzen Sie die Lizenzfunktion unten oder besuchen Sie https://www.gnu.org/licenses/. |
+| 514 | `about_read_gpl_license` | Read the GNU GPL v3 license | GNU-GPL-v3-Lizenz lesen |
+| 515 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Tink-Apache-2.0-Lizenz und Urheberrechtshinweise lesen |
+| 516 | `about_source_heading` | Source code | Quellcode |
+| 517 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | Der vollständige entsprechende Quellcode für diesen Fork befindet sich im Fork-Repository. Versionierte Veröffentlichungen haben zudem ein passendes Quellcode-Archiv. Das Repository enthält die Build-Skripte, die Abhängigkeitsdeklarationen und die vollständige Fork-Historie, die zum Prüfen und Nachbauen des Projekts erforderlich sind. |
+| 518 | `about_fork_source` | Fork source code and corresponding source | Fork-Quellcode und entsprechender Quellcode |
+| 519 | `about_release_sources` | Release source archives | Quellcode-Archive der Veröffentlichungen |
+| 520 | `about_fork_issues` | Fork issue tracker | Fork-Issue-Tracker |
+| 521 | `about_upstream_source` | Upstream Fossify Gallery source code | Upstream-Quellcode von Fossify Gallery |
+| 522 | `about_upstream_project` | Upstream Fossify project | Upstream-Fossify-Projekt |
+| 523 | `about_help_heading` | Help and legal information | Hilfe und rechtliche Informationen |
+| 524 | `about_faq` | Frequently asked questions | Häufig gestellte Fragen |
+| 525 | `about_third_party_licenses` | Third-party licenses | Lizenzen von Drittanbietern |
+| 526 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 527 | `tink_license_title` | Tink license and attribution | Tink-Lizenz und Urheberrechtshinweise |
+| 528 | `fork_disclaimer_title` | Fork notice | Fork-Hinweis |
+| 529 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Diese Anwendung wird nicht vom Fossify-Team entwickelt. Calypso Gallery ist ein unabhängig gepflegter, inoffizieller Fork von Fossify Gallery; der ursprüngliche Entwickler wird ausschließlich zur Urheberzuordnung genannt. Er steht in keiner Verbindung zu Fossify, wird nicht von Fossify unterstützt und erhält auch keinen Support von Fossify.\n\nMit dem Fortfahren bestätigst du diesen Hinweis. Forkspezifische Änderungen sind in FORK_CHANGELOG.md dokumentiert. |
+| 530 | `fork_disclaimer_acknowledge` | I understand | Ich verstehe |
+| 531 | `vault_upgrade_entry_title` | Encrypted Vault update available | Update für den Verschlüsselten Tresor verfügbar |
+| 532 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | Dein Verschlüsselter Tresor wurde mit einer veralteten Version der App erstellt und verwendet den alten Verschlüsselungsalgorithmus. Wenn du möchtest, kannst du deinen Verschlüsselten Tresor anhand des Verschlüsselungsalgorithmus der aktuellen Version neu erstellen. |
+| 533 | `vault_upgrade_always_show` | Always show | Immer anzeigen |
+| 534 | `vault_upgrade_settings_title` | Always show vault update warning | Warnung vor Tresor-Update immer anzeigen |
+| 535 | `vault_upgrade_details_title` | Before updating | Vor dem Update |
+| 536 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | Es wird empfohlen, vor dem Update des Verschlüsselten Tresors auf den aktuellen Verschlüsselungsalgorithmus eine Sicherung zu erstellen. So wird das Risiko eines Datenverlusts durch ein unterbrochenes Update ausgeschlossen und du kannst bei Bedarf den nicht aktualisierten Verschlüsselten Tresor in älteren Versionen der App weiterverwenden. |
+| 537 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | Dein Akku ist fast leer. Bitte lade dein Gerät auf mindestens 20% auf. |
+| 538 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | Nicht genügend freier Speicherplatz, um den Verschlüsselten Tresor zu aktualisieren. |
+| 539 | `vault_upgrade_continue` | Continue | Fortfahren |
+| 540 | `vault_upgrade_progress` | Converted %1$d of %2$d files | %1$d von %2$d Dateien konvertiert |
+| 541 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | Update abgeschlossen. Öffne den Verschlüsselten Tresor erneut, um den neuen Schlüsselbund zu aktivieren. |
+| 542 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | Update angehalten: %1$d Datei(en) konnten nicht verifiziert werden. |
+| 543 | `vault_upgrade_resume_title` | Vault update was interrupted | Tresor-Update wurde unterbrochen |
+| 544 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | Das Update des Verschlüsselten Tresors wurde unterbrochen. Einige Dateien in deinem Verschlüsselten Tresor wurden auf den neuen Verschlüsselungsalgorithmus aktualisiert. Es sind keine Daten verloren gegangen. Möchtest du die Aktualisierung der verbleibenden Dateien fortsetzen? |
+| 545 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | Bitte beende die App nicht und schalte den Bildschirm während des Updates nicht aus. |
+| 546 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | Der Verschlüsselte Tresor ist getrennt. Warte auf die Wiederverbindung... |
+| 547 | `argon2_profile_title` | Brute-Force resistance | Brute-Force-Widerstand |
+| 548 | `brute_force_mode_title` | Calibration mode | Kalibrierungsmodus |
+| 549 | `brute_force_mode_time` | Via vault unlock time | Über die Entsperrzeit des Tresors |
+| 550 | `brute_force_mode_presets` | Via ready-made modes | Über vorgefertigte Modi |
+| 551 | `brute_force_time_title` | Target vault unlock time | Zielwert für die Entsperrzeit des Tresors |
+| 552 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | Sekunden (2,0–7,0). Die App misst dieses Gerät einmal und speichert die daraus resultierenden KDF-Parameter im Tresor; die tatsächliche Entsperrzeit kann auf anderen Geräten abweichen. |
+| 553 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
+| 554 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Gespeichert: %1$d MiB / %2$d Runden |
+| 555 | `brute_force_clamped` |  (clamped) |  (begrenzt) |
+| 556 | `argon2_profile_low` | Low-end device (not recommended) | Low-End-Gerät (nicht empfohlen) |
+| 557 | `argon2_profile_default` | Default | Standard |
+| 558 | `argon2_profile_high` | High security | Hohe Sicherheit |
+| 559 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Wenn du nicht weißt, was du tust, wird empfohlen, die Standardeinstellung beizubehalten. Dies wirkt sich nur auf neu erstellte Tresore und Passwortänderungen aus. |
+| 560 | `argon2_profile_current` | Current: %s | Aktuell: %s |
