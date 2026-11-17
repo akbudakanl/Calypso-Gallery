@@ -22,7 +22,9 @@ import java.io.File
 object MetadataReconciler {
 
     private const val PREFS_NAME = "cipher_metadata_reconciliation"
-    private const val KEY_DONE = "completed_operations"
+    // v2 tracks individual items: a second process death during resume must be able to reconcile
+    // items that completed after the first pass (the v1 operation-level marker could not).
+    private const val KEY_DONE = "reconciled_items_v2"
 
     data class Result(val operations: Int, val items: Int)
 
@@ -37,43 +39,41 @@ object MetadataReconciler {
 
         var operations = 0
         var items = 0
-        OperationJournal.allItems().groupBy { it.operationId }.forEach { (operationId, operationItems) ->
-            if (operationId.isBlank() || operationId in done) return@forEach
+        val touchedOperations = HashSet<String>()
 
-            var touched = false
-            operationItems
-                .filter { it.state in completedStates && it.sourcePath != it.destPath }
-                .forEach { item ->
-                    val dest = File(item.destPath)
-                    if (!dest.exists()) return@forEach
+        OperationJournal.allItems()
+            .filter { it.state in completedStates && it.sourcePath != it.destPath }
+            .forEach { item ->
+                if (item.operationId.isBlank()) return@forEach
+                val itemKey = "${item.operationId}:${item.itemIndex}"
+                if (itemKey in done) return@forEach
 
-                    if (item.kind == OperationJournal.KIND_COPY) {
-                        // A copy leaves the source intact: only the new destination needs an identity.
-                        runCatching { context.updateReferenceIdentitiesForPath(item.destPath) }
-                    } else {
-                        // Move/encrypt/decrypt migrated the path: update media, dates, favorites,
-                        // virtual albums and save the affected manifests in one existing helper.
-                        runCatching { context.updateDBMediaPath(item.sourcePath, item.destPath) }
-                    }
-                    fixAlbumParents(context, item.sourcePath, item.destPath)
+                val dest = File(item.destPath)
+                if (!dest.exists()) return@forEach
 
-                    if (!dest.name.endsWith(".bin")) {
-                        runCatching { context.rescanPaths(arrayListOf(item.destPath)) {} }
-                    }
-                    touched = true
-                    items++
+                if (item.kind == OperationJournal.KIND_COPY) {
+                    // A copy leaves the source intact: only the new destination needs an identity.
+                    runCatching { context.updateReferenceIdentitiesForPath(item.destPath) }
+                } else {
+                    // Move/encrypt/decrypt migrated the path: update media, dates, favorites,
+                    // virtual albums and save the affected manifests in one existing helper.
+                    runCatching { context.updateDBMediaPath(item.sourcePath, item.destPath) }
                 }
+                fixAlbumParents(context, item.sourcePath, item.destPath)
 
-            if (touched) {
-                done.add(operationId)
-                operations++
-                // Favorites JSON may have been rewritten by updateDBMediaPath.
-                runCatching { ReferenceBackupManager.saveFavorites(context) }
+                if (!dest.name.endsWith(".bin")) {
+                    runCatching { context.rescanPaths(arrayListOf(item.destPath)) {} }
+                }
+                done.add(itemKey)
+                items++
+                touchedOperations.add(item.operationId)
             }
-        }
 
-        if (operations > 0) {
+        operations = touchedOperations.size
+        if (items > 0) {
             prefs.edit().putStringSet(KEY_DONE, done).apply()
+            // Favorites JSON may have been rewritten by updateDBMediaPath.
+            runCatching { ReferenceBackupManager.saveFavorites(context) }
         }
         return Result(operations, items)
     }
