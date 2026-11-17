@@ -2,17 +2,17 @@
 
 ## 1. Purpose
 
-Fossify Gallery Cipher derives the Encrypted Vault master key with **Argon2id**. The cost parameters (memory, iterations, parallelism) are stored in the `.vault` header, so they travel with the vault to other devices — exactly like KeePass stores KDF rounds inside a `.kdbx` file. This document records how the cost profiles were measured on a real Android device and how the "vault unlock time" setting is derived from those measurements.
+Calypso Gallery derives the Encrypted Vault master key with **Argon2id**. The cost parameters (memory, iterations, parallelism) are stored in the `.vault` header, so they travel with the vault to other devices — exactly like KeePass stores KDF rounds inside a `.kdbx` file. This document records how the cost profiles were measured on a real Android device and how the "vault unlock time" setting is derived from those measurements.
 
 ## 2. Test device
 
-| Property | Value |
-| :--- | :--- |
-| Model | Xiaomi Redmi Note 10s |
-| RAM | 8 GB |
-| Android | (as reported by device; MIUI) |
-| App build | `gallery-39-foss-debug.apk` built from this working tree |
-| Provider | BouncyCastle `Argon2BytesGenerator` via `CryptoManager.deriveKeyArgon2id` |
+| Property  | Value                                                                     |
+| :-------- | :------------------------------------------------------------------------ |
+| Model     | Xiaomi Redmi Note 10s                                                     |
+| RAM       | 8 GB                                                                      |
+| Android   | (as reported by device; MIUI)                                             |
+| App build | `gallery-39-foss-debug.apk` built from this working tree                  |
+| Provider  | BouncyCastle `Argon2BytesGenerator` via `CryptoManager.deriveKeyArgon2id` |
 
 The device contains only test data. No album, virtual-album, file or vault content was inspected during measurement — only CPU timing values were read from `logcat`.
 

@@ -47,7 +47,7 @@ Enhance your photos with the built-in editor. Crop, resize, rotate, flip, draw, 
 The app does not request Internet access. Strip EXIF metadata such as GPS coordinates and camera details to keep your memories yours.
 
 **🔐 HARDWARE-HARDENED CRYPTOGRAPHIC VAULT:**  
-Go beyond simple folder hiding with an isolated, zero-network cryptographic vault (`Cipher_Secrets`). Media files are individually encrypted on disk using `AES-256-CTR` with `Poly1305-AES` integrity tags, metadata is protected by `AES-256-GCM`, and the master encryption key is derived using `Argon2id` and wrapped by Android Keystore (`StrongBox` / `TEE`). Pre-wipe SHA-256 verification, CSPRNG overwriting, `FLAG_SECURE` screen protection, and automatic RAM zeroization reduce the risk of exposing decrypted keys and frames.
+Go beyond simple folder hiding with an isolated, zero-network cryptographic vault (`Secrets`). Media files are individually encrypted on disk using `AES-256-CTR` with `Poly1305-AES` integrity tags, metadata is protected by `AES-256-GCM`, and the master encryption key is derived using `Argon2id` and wrapped by Android Keystore (`StrongBox` / `TEE`). Pre-wipe SHA-256 verification, CSPRNG overwriting, `FLAG_SECURE` screen protection, and automatic RAM zeroization reduce the risk of exposing decrypted keys and frames.
 
 **🔗 ZERO-FOOTPRINT VIRTUAL ALBUMS:**  
 Organize media into Virtual Albums without duplicating files or consuming extra storage space. Albums created from encrypted vault items become **Stealth Virtual Albums**, with HMAC-obfuscated filenames and `AES-256-GCM` encrypted titles and paths.
