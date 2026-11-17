@@ -236,11 +236,11 @@ Encrypted payloads use Tink `AES256_GCM_HKDF`, which authenticates data in **seg
 
 #### Measurement 1 — JVM relative benchmark
 
-`app/src/test/kotlin/.../V4SegmentBenchmark.kt`, opt-in so it never slows normal test runs:
+`app/src/test/kotlin/.../VaultSegmentBenchmark.kt`, opt-in so it never slows normal test runs:
 
 ```powershell
 $env:CIPHER_BENCHMARK = "1"
-.\gradlew.bat :app:testFossDebugUnitTest --tests "*V4SegmentBenchmark"
+.\gradlew.bat :app:testFossDebugUnitTest --tests "*VaultSegmentBenchmark"
 ```
 
 It encrypts a 128 MiB synthetic file at each candidate size, then measures sequential decrypt (median of 3 runs), and mean/p95 latency of 50 random seeks. Result on the development machine:

@@ -15,10 +15,10 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * v4 (`VAULT_FORMAT_VERSION`) konteynerinin **tek yazma yolu**.
+ * Kanonik konteynerin **tek yazma yolu**.
  *
  * Duzen:
- *   magic(8) | version=4(1) | keyId(2) | fileId(16) | headerIv(12) | N(4) |
+ *   magic(8) | version=1(1) | keyId(2) | fileId(16) | headerIv(12) | N(4) |
  *   encHeader(N) | Tink ciphertext(T)
  *
  * Header, KEK'ten fileId ile turetilen bir anahtarla AES-256-GCM ile sifrelenir;
