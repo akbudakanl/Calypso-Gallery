@@ -91,7 +91,6 @@ import org.fossify.gallery.extensions.removeFavoritePaths
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.extensions.rescanFolderMedia
 import java.io.File
-import org.fossify.commons.extensions.rescanPaths
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
 import org.fossify.gallery.dialogs.promptAutoBackupIfNeeded
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles

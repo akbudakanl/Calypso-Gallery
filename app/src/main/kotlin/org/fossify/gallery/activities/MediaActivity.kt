@@ -1,4 +1,4 @@
-﻿package org.fossify.gallery.activities
+package org.fossify.gallery.activities
 
 import android.app.WallpaperManager
 import android.content.Intent

@@ -87,8 +87,6 @@ import org.fossify.gallery.helpers.CryptoManager.AlbumCryptoOptions
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictPreview
 import org.fossify.gallery.helpers.CryptoManager.StreamCompareMacResult
 import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
-import org.fossify.gallery.helpers.vault.VaultMigration
-import org.fossify.gallery.services.VaultMigrationService
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerCredentials.

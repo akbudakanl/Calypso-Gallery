@@ -13,7 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 
-/** v4 metadata (FVSTR2): kayda ozel HKDF anahtari + purpose AAD. */
+/** Kanonik metadata kaydı: kayda özel HKDF anahtarı + purpose AAD. */
 class VaultMetadataTest {
 
     private val vmk = ByteArray(32) { (it * 3 + 1).toByte() }
@@ -44,8 +44,6 @@ class VaultMetadataTest {
 
     @Test
     fun roundTripAndPurposeBinding() {
-        assertEquals(VaultContainer.VAULT_FORMAT_VERSION.toInt(), CryptoManager.getVaultFormat())
-
         val albumName = CryptoManager.encryptStringForVault(ctx, "Secret Album", "album")
         assertTrue(albumName.startsWith(VaultContainer.VAULT_STR_PREFIX))
         assertEquals("Secret Album", CryptoManager.decryptStringFromVault(albumName))

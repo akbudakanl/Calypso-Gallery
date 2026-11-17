@@ -57,10 +57,6 @@ import org.fossify.gallery.dialogs.ResizeWithPathDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.dialogs.SmartFileConflictDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
-import org.fossify.gallery.dialogs.VaultUpgradeWarningDialog
-import org.fossify.gallery.dialogs.VaultUpgradeResumeDialog
-import org.fossify.gallery.dialogs.VaultMigrationProgressDialog
-import org.fossify.gallery.helpers.vault.VaultMigration
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
@@ -388,18 +384,6 @@ fun BaseSimpleActivity.openSecretVaultPrompt(
             if (success) {
                 onDialogShowingChanged(false)
                 config.hiddenProtectionType = type
-                val interrupted = VaultMigration.incompleteProgress(this@openSecretVaultPrompt)
-                if (interrupted != null) {
-                    VaultUpgradeResumeDialog(this@openSecretVaultPrompt).show(
-                        done = interrupted.first,
-                        total = interrupted.second
-                    ) {
-                        VaultMigrationProgressDialog(this@openSecretVaultPrompt).show()
-                        org.fossify.gallery.services.VaultMigrationService.start(this@openSecretVaultPrompt)
-                    }
-                } else {
-                    VaultUpgradeWarningDialog(this@openSecretVaultPrompt)
-                }
                 onVaultReady(false)
             }
         }

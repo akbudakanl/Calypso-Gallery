@@ -16,4 +16,3 @@ fun getOptionalCrossFadeTransition(duration: Int): DrawableTransitionOptions {
         }
     )
 }
-

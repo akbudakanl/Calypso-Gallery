@@ -207,12 +207,6 @@ object CryptoManager {
     /** Dosya basliklarini sifrelemek icin aktif KEK. */
     internal fun activeKek(): ByteArray? = unlockedKek ?: unlockedMasterKey
 
-    /** Kasa formati: .vault basligindaki surum (3 veya 4). */
-    fun getVaultFormat(): Int {
-        val root = cachedVaultRoot ?: return 3
-        return readVaultHeaderVersion(File(root, VAULT_HEADER_FILE))
-    }
-
     internal val metadataCache = ConcurrentHashMap<String, EncryptedFileMetadata>()
 
     internal val folderNameCache = ConcurrentHashMap<String, String>()
