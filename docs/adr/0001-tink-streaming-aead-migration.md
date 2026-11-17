@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-11-16
 - **Scope:** the canonical vault container format, metadata records, the `.vault` key header, and the desktop CLI. The vault lives in `Calypso Gallery/Secrets` on internal storage or at a user-chosen external location.
-- **Relates to:** DOCS.md §2, §2.2, §2.4; [ADR 0002](0002-operational-security-hardening.md) (operational security, wins on the foreground-operation exception); [ADR 0003](0003-resumable-file-operations.md) (resumable operations)
+- **Relates to:** DOCS.md §2, §2.2, §2.4; [ADR 0002](0002-operational-security-hardening.md) (operational security, wins on the foreground-operation exception); [ADR 0003](0003-resumable-file-operations.md) (resumable operations); [ADR 0005](0005-kek-rotation.md) (KEK rotation — deferred, not implemented)
 
 > **Terminology.** The user-facing term is **"Encrypted Vault" / "Şifreli Kasa"**. The same term is used for internal identifiers (`Secrets`, `VAULT_HEADER_FILE`, `.vault`, `VaultContainer`). The canonical on-disk format is `FGVLTENC` **version 1**.
 
@@ -11,10 +11,10 @@
 
 ## 1. Decision summary
 
-Every encrypted media file (`.bin`) is a self-contained `FGVLTENC` version 1 container. It combines an authenticated per-file header with a Tink streaming-AEAD payload, and derives every subkey from a rotatable vault KEK with domain separation. This gives:
+Every encrypted media file (`.bin`) is a self-contained `FGVLTENC` version 1 container. It combines an authenticated per-file header with a Tink streaming-AEAD payload, and derives every subkey from the vault KEK with domain separation. This gives:
 
 - **Authenticated, seekable media:** Tink `AES256_GCM_HKDF` authenticates data in segments while preserving random access for the video player.
-- **Cheap key rotation:** a per-file random DEK and a rotatable KEK make key changes a header-only operation; media bytes are never re-encrypted.
+- **Per-file isolation:** a random DEK per file means one corrupted or exposed file never affects the others.
 - **Context-bound metadata:** small encrypted strings use per-record keys and purpose-binding associated data, so records cannot be swapped between categories.
 - **Byte-identical Android ↔ CLI interoperability:** both use the real Tink `AES256_GCM_HKDF` primitive over one frozen parameter set; the Python CLI builds an equivalent RAW-prefix keyset from the raw DEK.
 
@@ -31,7 +31,7 @@ password / PIN / pattern + Argon2id(salt, params) ──► PDK   (password-deri
 Android Keystore (StrongBox / TEE) ─────────────────► VMK   (random vault master key)
 
 .vault:  AES-256-GCM(PDK) wraps VMK                     ← changes only on password/PIN change
-         AES-256-GCM(VMK) wraps Keyring { keyId → KEK }  ← changes only on KEK rotation
+         AES-256-GCM(VMK) wraps Keyring { keyId → KEK }  ← keyId is 1
 
 per file: headerKey = HKDF-SHA256(KEK[keyId], "CalypsoGallery:Header:AES256GCM" ‖ fileId)
           AES-256-GCM(headerKey, headerAAD) encrypts Header { dek, fileId, … }
@@ -43,16 +43,9 @@ per record: metadataKey = HKDF-SHA256(KEK[keyId], "CalypsoGallery:Metadata:AESGC
 
 **Naming rule:** `PDK` is always the Argon2id output; `VMK` is always the random vault master key. They are never the same variable.
 
-Rotation types:
+This release has a single key epoch (`keyId = 1`). Changing the password re-wraps only the VMK in `.vault`; the keyring, file headers and the optional biometric bundle are unchanged.
 
-| Rotation | Steps | Re-encrypts media? |
-| :--- | :--- | :--- |
-| **KEK rotation** | Generate KEK#2; re-encrypt every file *header* under the new per-file `headerKey` (derived from KEK#2 + the same `fileId`), leaving `dek` unchanged; add keyring entry; set `activeKeyId=2`; retire the old KEK afterwards | **No** — payload bytes are bit-identical; Tink AAD is the immutable `fileId` |
-| **Password / PIN rotation** | New salt + Argon2id params → new PDK → re-wrap **only the VMK** in `.vault` | No; keyring, headers and biometric blob untouched |
-| **VMK rotation** (rare: suspected VMK compromise) | Renew keyring under new VMK + renew biometric blob (requires biometric prompt) | No |
-| **Per-file DEK rotation** (rare: suspected single-file key compromise) | Re-encrypt that one payload under a new DEK and rewrite its header | Yes, one file only |
-
-**Why a DEK layer is needed:** it makes KEK rotation a header-only operation and allows retiring one file's key independently. It is **not** needed for nonce separation — Tink derives a fresh stream key per file via `HKDF-SHA256(ikm=DEK, salt=random32, info=AAD)`, so nonce-prefix collisions across files are harmless, and `headerKey = HKDF(KEK, domain ‖ fileId)` gives each header its own key.
+**Why a DEK layer is needed:** it isolates files from each other. It is **not** needed for nonce separation — Tink derives a fresh stream key per file via `HKDF-SHA256(ikm=DEK, salt=random32, info=AAD)`, so nonce-prefix collisions across files are harmless, and `headerKey = HKDF(KEK, domain ‖ fileId)` gives each header its own key.
 
 ---
 
@@ -74,7 +67,7 @@ offset   size   content
 
 `payloadOffset() = 43 + N`. There is no separate content-IV field and no trailing whole-payload MAC: Tink carries its own stream header (`u8 len | salt(32) | noncePrefix(7)`) and per-segment tags inside `T`.
 
-**Header GCM associated data** = `magic ‖ version ‖ keyId ‖ fileId ‖ N`, where `N` is the **encrypted** header length. The header IV is implicitly authenticated by GCM as the nonce. This binds the header to its file ID, key epoch and format version: transplanting a header into another file, swapping `keyId`, or changing `version` fails at header decryption.
+**Header GCM associated data** = `magic ‖ version ‖ keyId ‖ fileId ‖ N`, where `N` is the **encrypted** header length. The header IV is implicitly authenticated by GCM as the nonce. This binds the header to its file ID and format version: transplanting a header into another file, swapping `keyId`, or changing `version` fails at header decryption.
 
 **Header plaintext packet** (before GCM encryption, `DataOutputStream` encoding):
 
@@ -119,7 +112,7 @@ No custom KDF: this is RFC 5869 HKDF via Tink's `Hkdf.computeHkdf("HmacSha256", 
 | Output prefix | RAW |
 | **Associated data** | **`fileId` — the 16 raw bytes, not a hash of the header** |
 
-The AAD is bound to an **immutable** value. Binding it to `SHA-256(encryptedHeader)` would make KEK rotation and rename unreadable: re-encrypting the header changes the hash and therefore Tink's HKDF-derived stream key, forcing a full payload re-encryption on every rename. With a random DEK per file, cross-file header insertion already fails Tink validation; binding to `fileId` additionally ties the header to its file across rotation. It does **not** provide rollback to an older header of the same file — that requires an immutable header or trusted monotonic state, neither available in a portable vault file. Accepted, documented limitation.
+The AAD is bound to an **immutable** value. Binding it to `SHA-256(encryptedHeader)` would make rename unreadable: re-encrypting the header changes the hash and therefore Tink's HKDF-derived stream key, forcing a full payload re-encryption on every rename. With a random DEK per file, cross-file header insertion already fails Tink validation; binding to `fileId` additionally ties the header to its file. It does **not** provide rollback to an older header of the same file — that requires an immutable header or trusted monotonic state, neither available in a portable vault file. Accepted, documented limitation.
 
 ### 3.4 Random access
 
@@ -174,11 +167,7 @@ The header keeps the outer `writeVaultHeader` framing (magic `FGVLT`, Argon2id p
 ```
 
 - Password/PIN change re-wraps only `PdkWrappedVmK`; the keyring, headers and biometric blob are untouched.
-- KEK rotation touches only `VmkWrappedKeyring` plus file headers.
-- VMK rotation is a separate, rare operation renewing the keyring and biometric blob.
 - Device-bound Keystore/StrongBox wrapping of the VMK keeps daily use hardware-bound; the calibrated Argon2id parameters travel in `.vault` like KeePass rounds in `.kdbx`.
-
-**Compromise caveat:** key rotation protects only *future* use of a vault. Rotating keys cannot invalidate a copy an attacker already made; remediation requires re-encrypting from plaintext with new keys and destroying old copies.
 
 ---
 
@@ -307,7 +296,7 @@ Decision rule: choose the smallest segment whose sequential throughput is within
 | Segment size invalid for a device | Measured (§8); keep current-segment caching, retune by measurement only |
 | Truncation / trailing-byte acceptance | Read to final segment; strict length assertion from authenticated header |
 | AAD / parameter mismatch Java ↔ Python | Frozen spec, pinned versions, golden fixtures in CI |
-| Header transplant / epoch or version downgrade | Header GCM AAD binds `magic‖version‖keyId‖fileId‖N`; Tink rejects via DEK mismatch |
+| Header transplant / version downgrade | Header GCM AAD binds `magic‖version‖keyId‖fileId‖N`; Tink rejects via DEK mismatch |
 | Same-file header rollback | Accepted limitation of a mutable header in a portable vault |
 | `fileId` collision | 16 random bytes; reject all-zero `fileId` defensively |
 | Metadata context not reconstructible | Cleartext `contextType` + discriminator; shared reconstruction helper |
@@ -319,8 +308,8 @@ Decision rule: choose the smallest segment whose sequential throughput is within
 ## 10. Test plan (exit criteria)
 
 1. **Container:** round-trip all edge sizes; header parse; offset/length arithmetic; seek via Tink channel matches sequential; per-segment tamper, truncation, header transplant, `keyId`/`version` swap, wrong KEK, all-zero `fileId`.
-2. **Rotation & rename (critical):** payload bit-identical and decryptable after KEK rotation and after rename; header AAD rejects swapped fields; per-file `headerKey` selection.
-3. **Metadata:** `FVSTR:` round-trip; cross-context ciphertext rejected; key-ID rotation.
-4. **Keyring:** password change leaves keyring/headers/biometric blob bit-identical; VMK rotation renews keyring + blob.
+2. **Rename (critical):** payload bit-identical and decryptable after rename; header AAD rejects swapped fields; per-file `headerKey` selection.
+3. **Metadata:** `FVSTR:` round-trip; cross-context ciphertext rejected.
+4. **Keyring:** password change leaves keyring/headers/biometric blob bit-identical.
 5. **Cross-implementation:** all canonical fixtures decrypt on Android; Android output validated by the independent Python helper.
 6. **Single-bit corruption:** header flip → metadata unavailable; payload flip → only that segment throws, neighbours still decrypt, full verification rejects; bad segment yields substituted zeros and continued playback, not a crash. Yellow `!` overlay appears in grid and viewer; toast fires exactly once per file and persists across restarts; record cleared on delete/rename/restore. Normal export shows the dialog then returns `null` if cancelled; comparison yields `SOURCE_MAC_INVALID`; pre-wipe leaves the plaintext source untouched. Copy is allowed and carries the badge; Move is hidden entirely for corrupted files; rename is allowed and keeps the badge; deleting the `.bin` is never blocked. Both dialog variants share identical text; the decrypt action writes zeros-substituted output, keeps the `.bin`, and is never reused by strict paths.
