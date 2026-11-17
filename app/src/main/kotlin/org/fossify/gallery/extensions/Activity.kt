@@ -85,7 +85,15 @@ import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.clearBiometricKey
 import org.fossify.gallery.helpers.clearCachedVaultRoot
+import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
+import org.fossify.gallery.helpers.operations.AtomicStaging
+import org.fossify.gallery.helpers.operations.BatchOperationInfo
+import org.fossify.gallery.helpers.operations.JournalItem
+import org.fossify.gallery.helpers.operations.OperationContext
+import org.fossify.gallery.helpers.operations.OperationFaults
+import org.fossify.gallery.helpers.operations.OperationJournal
+import java.io.IOException
 import org.fossify.gallery.helpers.decryptFileToDirectory
 import org.fossify.gallery.helpers.decryptFolder
 import org.fossify.gallery.helpers.encryptFileToDirectory
@@ -2394,6 +2402,38 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                             var anyFavoriteUpdated = false
                             var lastUiProgressMs = 0L
 
+                            // ADR 0003: one batch journal for the whole crypto copy/move.
+                            val batchKind = when {
+                                isDestEncrypted && hasUnencryptedToEncrypt -> OperationJournal.KIND_ENCRYPT
+                                !isDestEncrypted && cryptoItems.any { CryptoManager.isEncryptedFile(it.path) } -> OperationJournal.KIND_DECRYPT
+                                isCopyOperation -> OperationJournal.KIND_COPY
+                                else -> OperationJournal.KIND_MOVE
+                            }
+                            val batchOperation = OperationContext(
+                                operationId = OperationJournal.newOperationId(),
+                                kind = batchKind,
+                                batch = BatchOperationInfo(
+                                    sourceRoot = currentDirectoryPath,
+                                    destRoot = destination,
+                                    isMove = !isCopyOperation,
+                                    wipeSource = isDestEncrypted && !isCopyOperation,
+                                    deleteSource = !isCopyOperation,
+                                    payload = conflictResolutions.entries.joinToString(";") { "${it.key}=${it.value}" }
+                                )
+                            )
+                            OperationJournal.beginBatch(
+                                batchOperation,
+                                cryptoItems.map {
+                                    JournalItem(
+                                        sourcePath = it.path,
+                                        destPath = File(destDir, it.name).absolutePath,
+                                        sourceSize = it.size,
+                                        resolvedDestName = it.name,
+                                        kind = batchKind
+                                    )
+                                }
+                            )
+
                             for ((itemIndex, item) in cryptoItems.withIndex()) {
                                 val srcFile = File(item.path)
                                 val now = System.currentTimeMillis()
@@ -2404,6 +2444,12 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                 if (!srcFile.exists()) continue
                                 srcFile.parentFile?.let { sourceDirs.add(it) }
                                 val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
+                                val itemOperation = OperationContext(
+                                    operationId = batchOperation.operationId,
+                                    itemIndex = itemIndex,
+                                    kind = batchKind,
+                                    batch = batchOperation.batch
+                                )
 
                                 val identicalTarget = findIdenticalTransferTarget(
                                     sourceFile = srcFile,
@@ -2417,6 +2463,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                     allowFastSampling = true
                                 )
                                 if (identicalTarget != null) {
+                                    // Settled duplicate: source stays intact, no I/O was attempted.
+                                    OperationJournal.markSkipped(itemOperation)
                                     if (!isCopyOperation) {
                                         if (isDestEncrypted && !CryptoManager.isEncryptedFile(srcFile.name)) {
                                             skippedEncryptFiles.add(srcFile)
@@ -2444,7 +2492,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                             conflictResolution = resolution,
                                             targetIndex = encIndex,
                                             skipDuplicateCheck = true,
-                                            deleteSourceOnIdentical = false
+                                            deleteSourceOnIdentical = false,
+                                            operation = itemOperation
                                         )
                                         if (!isCopyOperation && encFile != null) {
                                             anyPlaintextWiped = true
@@ -2464,7 +2513,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                             conflictResolution = resolution,
                                             targetIndex = plainIndex,
                                             skipDuplicateCheck = true,
-                                            deleteSourceOnIdentical = false
+                                            deleteSourceOnIdentical = false,
+                                            operation = itemOperation
                                         )
                                         if (!isCopyOperation && decFile != null && decFile.exists()) {
                                             runCatching {
@@ -2486,7 +2536,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                         isMove = !isCopyOperation,
                                         conflictResolution = resolution,
                                         targetIndex = encIndex,
-                                        skipDuplicateCheck = true
+                                        skipDuplicateCheck = true,
+                                        operation = itemOperation
                                     )
                                     if (!isCopyOperation && movedOrCopiedBin != null && movedOrCopiedBin.exists()) {
                                         runCatching {
@@ -2518,19 +2569,36 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                         exactTarget
                                     }
                                     if (targetFile != null && oldSrcPath != targetFile.absolutePath) {
-                                        srcFile.copyTo(targetFile, overwrite = true, bufferSize = 256 * 1024)
-                                        targetFile.setLastModified(srcFile.lastModified())
-                                        activePlainIndex.recordFile(targetFile)
-                                        if (!isCopyOperation) {
-                                            runCatching { updateDBMediaPath(oldSrcPath, targetFile.absolutePath) }
-                                            CryptoManager.secureWipeAndDeleteFile(this, srcFile)
-                                            anyPlaintextWiped = true
+                                        val plainStaging = AtomicStaging.fileFor(targetFile, itemOperation)
+                                        OperationJournal.markInFlight(itemOperation, plainStaging.absolutePath)
+                                        try {
+                                            srcFile.copyTo(plainStaging, overwrite = true, bufferSize = 256 * 1024)
+                                            AtomicStaging.commit(plainStaging, targetFile)
+                                            OperationJournal.markVerified(
+                                                itemOperation,
+                                                MediaIdentity.computeFingerprint(targetFile)
+                                            )
+                                            targetFile.setLastModified(srcFile.lastModified())
+                                            activePlainIndex.recordFile(targetFile)
+                                            if (!isCopyOperation) {
+                                                runCatching { updateDBMediaPath(oldSrcPath, targetFile.absolutePath) }
+                                                CryptoManager.secureWipeAndDeleteFile(this, srcFile)
+                                                OperationJournal.markSourceDeleted(itemOperation)
+                                                anyPlaintextWiped = true
+                                            }
+                                            pathsToRescan.add(targetFile.absolutePath)
+                                        } catch (e: Exception) {
+                                            AtomicStaging.discard(plainStaging, containsPlaintext = true, context = this)
+                                            OperationJournal.markFailed(itemOperation, e.message ?: "plain copy failed")
                                         }
-                                        pathsToRescan.add(targetFile.absolutePath)
                                     }
+                                }
+                                if (OperationFaults.abortAfterItem(batchOperation, itemIndex)) {
+                                    throw IOException("Fault injection: simulated process death after item $itemIndex")
                                 }
                             }
 
+                            batchOperation.operationId?.let { OperationJournal.clear(it) }
                             if (anyFavoriteUpdated) {
                                 runCatching { ReferenceBackupManager.saveFavorites(this) }
                             }
