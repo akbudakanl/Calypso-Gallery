@@ -37,7 +37,6 @@ import org.fossify.gallery.databinding.ActivitySettingsBinding
 import org.fossify.gallery.dialogs.*
 import org.fossify.gallery.extensions.*
 import org.fossify.gallery.helpers.*
-import org.fossify.gallery.helpers.vault.VaultKeyRotator
 import org.fossify.gallery.models.AlbumCover
 import org.fossify.gallery.dialogs.ChangeLanguageDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -62,7 +61,6 @@ class SettingsActivity : SimpleActivity() {
             R.id.settings_create_vault_holder,
             R.id.settings_export_vault_holder,
             R.id.settings_sync_vault_holder,
-            R.id.settings_rotate_vault_key_holder,
             R.id.settings_empty_vault_holder,
             R.id.settings_empty_recycle_bin_holder,
             R.id.settings_clear_cache_holder,
@@ -766,11 +764,6 @@ class SettingsActivity : SimpleActivity() {
         // 2) Şifreli kasa şifresini değiştir
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 2b) KEK rotasyonu (kasa açıkken, tüm dosyalar yeni anahtarla yeniden şifrelenir)
-        binding.settingsRotateVaultKeyHolder.beVisibleIf(
-            hasStoragePermission && vaultExists && CryptoManager.isVaultUnlocked
-        )
-
         // 3) Şifreli kasaya biyometrik ile giriş (sadece bu kaydırılabilir)
         binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -789,7 +782,6 @@ class SettingsActivity : SimpleActivity() {
         setupExportVault()
         setupSyncVault()
         setupChangeVaultPassword()
-        setupRotateVaultKey()
         setupVaultBiometric()
         setupBlockVaultScreenshots()
         setupEmptyVault()
@@ -1045,48 +1037,6 @@ class SettingsActivity : SimpleActivity() {
             if (changeSuccess) {
                 updateVaultBiometricSwitch()
                 toast(R.string.password_changed_successfully)
-            }
-        }
-    }
-
-    /**
-     * Rotates the KEK of an already unlocked vault. Every container header is re-encrypted with
-     * a fresh key while the authenticated payload is copied verbatim, so the operation is safe to
-     * retry. Re-auth is required even when the vault is currently unlocked.
-     */
-    private fun setupRotateVaultKey() {
-        binding.settingsRotateVaultKeyHolder.setOnClickListener {
-            if (!doesVaultExist() || !CryptoManager.isVaultUnlocked) return@setOnClickListener
-
-            requireVaultPassword {
-                val progressDialog = CryptoProgressDialog(
-                    activity = this,
-                    max = 0,
-                    titleId = R.string.rotating_vault_key_progress,
-                    enableNotification = false
-                )
-                ensureBackgroundThread {
-                    val rotated = try {
-                        VaultKeyRotator.rotate(this) { done, total ->
-                            runOnUiThread {
-                                if (!isFinishing && !isDestroyed) {
-                                    progressDialog.updateProgress(done, total)
-                                }
-                            }
-                        }
-                    } catch (_: Exception) {
-                        false
-                    }
-                    runOnUiThread {
-                        progressDialog.dismiss()
-                        if (isFinishing || isDestroyed) return@runOnUiThread
-                        if (rotated) {
-                            toast(R.string.vault_key_rotated_successfully)
-                        } else {
-                            toast(R.string.vault_key_rotation_failed)
-                        }
-                    }
-                }
             }
         }
     }

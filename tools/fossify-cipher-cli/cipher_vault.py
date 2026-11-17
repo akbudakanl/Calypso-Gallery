@@ -650,21 +650,9 @@ def prompt_for_vault_file(lang: str) -> Path:
 
 @dataclass
 class VaultKeys:
-    """The keys held by a canonical .vault keyring (single- or multi-key).
-
-    ``kek`` is the active KEK (resolved from ``active_key_id``) and remains the
-    convenience field used for writing new file headers. ``keyring`` holds every
-    KEK in the vault by keyId so callers can also open files written before a KEK
-    rotation with an older, non-active keyId.
-    """
+    """The two keys held by a canonical .vault keyring."""
     vmk: bytes  # Vault Master Key - protects folder .meta files
-    kek: bytes  # active Key Encryption Key - protects file container headers
-    keyring: dict[int, bytes] = field(default_factory=dict)  # keyId -> KEK (all keys)
-    active_key_id: int = ACTIVE_KEY_ID
-
-    def kek_for(self, key_id: int) -> bytes:
-        """Return the KEK stored for ``key_id``, falling back to the active KEK."""
-        return self.keyring.get(key_id, self.kek)
+    kek: bytes  # Key Encryption Key - protects file container headers
 
 
 def _hkdf_sha256(ikm: bytes, salt: bytes, info: bytes) -> bytes:
@@ -741,42 +729,6 @@ class _KeepOpenBytesIO(BytesIO):
         self.flush()
 
 
-def _parse_keyring(keyring: bytes) -> tuple[int, dict[int, bytes]]:
-    """Parse the decrypted keyring into (activeKeyId, {keyId: KEK}).
-
-    Accepts both canonical layouts:
-      * legacy single-key:  activeKeyId(u16) | KEK(32)                 (34 bytes)
-      * multi-key (rotation): activeKeyId(u16) | keyCount(u16) |
-                              [ keyId(u16) | KEK(32) ] x keyCount
-    """
-    if len(keyring) < 2 + 32:
-        raise ValueError("Corrupted keyring: expected keyId + 32-byte KEK.")
-
-    active_id = struct.unpack(">H", keyring[:2])[0]
-    remainder = keyring[2:]
-
-    if len(remainder) == 32:
-        # Legacy packKeyringV4: no keyCount field, just one KEK for activeKeyId.
-        return active_id, {active_id: remainder}
-
-    if len(remainder) < 2:
-        raise ValueError("Corrupted keyring: missing key count.")
-    count = struct.unpack(">H", remainder[:2])[0]
-    if count <= 0 or count > 16:
-        raise ValueError("Corrupted keyring: invalid key count.")
-
-    keys: dict[int, bytes] = {}
-    offset = 2
-    for _ in range(count):
-        if offset + 2 + 32 > len(remainder):
-            raise ValueError("Corrupted keyring: truncated key entry.")
-        key_id = struct.unpack(">H", remainder[offset:offset + 2])[0]
-        offset += 2
-        keys[key_id] = remainder[offset:offset + 32]
-        offset += 32
-    return active_id, keys
-
-
 def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     """
     Unwraps a canonical v1 .vault header.
@@ -786,9 +738,7 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     wrappedVmKLen(4) | wrappedVMK | ivVmk(12) | keyringLen(4) | wrappedKeyring.
 
     PDK = Argon2id(secret, salt, ...) unwraps the VMK; the VMK unwraps the keyring,
-    which may use either the legacy single-key layout (u16 keyId | 32-byte KEK)
-    or the multi-key rotation layout (u16 activeKeyId | u16 keyCount |
-    [u16 keyId | 32-byte KEK] x keyCount).
+    which is packKeyringV4 = u16 keyId | 32-byte KEK.
     """
     if len(data) < 32:
         raise ValueError(".vault file is too small or invalid.")
@@ -857,19 +807,10 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
         keyring = AESGCM(vmk).decrypt(iv_vmk, wrapped_keyring, b"")
     except Exception:
         raise ValueError("Incorrect password/PIN or corrupted keyring!")
-    active_id, keys = _parse_keyring(keyring)
+    if len(keyring) < 2 + 32:
+        raise ValueError("Corrupted keyring: expected keyId + 32-byte KEK.")
 
-    active_kek = keys.get(active_id)
-    if active_kek is None:
-        # Safe fallback: the active id is absent from the keyring (e.g. a partially
-        # rotated vault). Use the first available KEK and write new files under
-        # that id so the Android reader can resolve it from the same keyring.
-        if not keys:
-            raise ValueError("Corrupted keyring: no KEK entries.")
-        active_id = next(iter(keys))
-        active_kek = keys[active_id]
-
-    return VaultKeys(vmk=vmk[:32], kek=active_kek, keyring=keys, active_key_id=active_id)
+    return VaultKeys(vmk=vmk[:32], kek=keyring[2:34])
 
 
 def unlock_vault_header(vault_path: Path, secret: str) -> bytes:
@@ -1269,8 +1210,7 @@ def encrypt_file(
     source_path: Path,
     target_dir: Path,
     kek: bytes,
-    on_chunk_processed=None,
-    key_id: int | None = None,
+    on_chunk_processed=None
 ) -> Path:
     """
     Encrypts a media file into a canonical FGVLTENC v1 .bin container compatible
@@ -1280,16 +1220,7 @@ def encrypt_file(
     N(4) | encHeader(N) | Tink AES256_GCM_HKDF stream. The header is encrypted
     with a key derived from the KEK and bound to the cleartext prefix as AAD;
     the payload uses a fresh per-file DEK and fileId as the stream AAD.
-
-    ``key_id`` is the active keyId from the vault keyring and is written into the
-    container header so the Android reader picks the matching KEK. It defaults to
-    ``ACTIVE_KEY_ID`` when omitted (legacy callers / synthetic fixture vaults).
     """
-    if key_id is None:
-        key_id = ACTIVE_KEY_ID
-    if not 0 <= key_id <= 0xFFFF:
-        raise ValueError("keyId must fit in an unsigned 16-bit field.")
-
     stat = source_path.stat()
     orig_name = source_path.name
     orig_size = stat.st_size
@@ -1334,7 +1265,7 @@ def encrypt_file(
     header_aad = (
         CONTAINER_MAGIC
         + bytes([CONTAINER_VERSION])
-        + struct.pack(">H", key_id)
+        + struct.pack(">H", ACTIVE_KEY_ID)
         + file_id
         + struct.pack(">I", encrypted_header_length)
     )
@@ -1364,7 +1295,7 @@ def encrypt_file(
     with open(output_file, "wb") as fout:
         fout.write(CONTAINER_MAGIC)                    # 8B "FGVLTENC"
         fout.write(bytes([CONTAINER_VERSION]))         # 1B (0x01)
-        fout.write(struct.pack(">H", key_id))          # 2B active keyId
+        fout.write(struct.pack(">H", ACTIVE_KEY_ID))   # 2B
         fout.write(file_id)                            # 16B
         fout.write(header_iv)                          # 12B
         fout.write(struct.pack(">I", len(enc_header))) # 4B N
@@ -1673,8 +1604,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                 src_file,
                 dest_dir,
                 kek,
-                on_chunk_processed=lambda chunk_len, fn=src_file.name: progress.update(chunk_len, fn),
-                key_id=vault_keys.active_key_id,
+                on_chunk_processed=lambda chunk_len, fn=src_file.name: progress.update(chunk_len, fn)
             )
             created_bins.append(out_bin)
             progress.complete_file()

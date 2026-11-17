@@ -62,7 +62,7 @@ class VaultContainerReadTest {
 
             val meta = DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
                 skipPrefix(it)
-                readContainerMetadata(it, { kek }, VaultContainer.VAULT_FORMAT_VERSION, true)
+                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)
             }
             assertNotNull("metadata for size $size", meta)
             meta!!
@@ -127,7 +127,7 @@ class VaultContainerReadTest {
             null,
             DataInputStream(BufferedInputStream(FileInputStreamCompat(badHeader))).use {
                 skipPrefix(it)
-                readContainerMetadata(it, { kek }, VaultContainer.VAULT_FORMAT_VERSION, false)
+                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, false)
             }
         )
 
@@ -156,7 +156,7 @@ class VaultContainerReadTest {
     private fun readMeta(file: File) =
         DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
             skipPrefix(it)
-            readContainerMetadata(it, { kek }, VaultContainer.VAULT_FORMAT_VERSION, true)!!
+            readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)!!
         }
 
     /** Gecerli bir v4 konteyner yazar (uretme amacli test helper'i). */

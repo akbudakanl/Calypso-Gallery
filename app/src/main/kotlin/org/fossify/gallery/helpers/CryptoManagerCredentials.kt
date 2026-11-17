@@ -119,10 +119,7 @@ internal fun CryptoManager.unlockFromHeaderFile(context: Context, headerFile: Fi
                     return false
                 }
                 unlockedMasterKey = vmk
-                unlockedKeyring.clear()
-                unlockedKeyring.putAll(parsed.second)
-                activeKeyId = parsed.first
-                unlockedKek = parsed.second[parsed.first]
+                unlockedKek = parsed.second
 
                 context.config.hiddenPasswordHash = "argon2id_aes256_gcm"
                 context.config.isHiddenPasswordProtectionOn = true
@@ -197,116 +194,22 @@ internal fun CryptoManager.writeVaultHeader(
     }
 }
 
-/**
- * Keyring formatı: activeKeyId(u16) | keyCount(u16) | [keyId(u16) | KEK(32)] × keyCount.
- * Rotasyon sırasında birden fazla KEK bulunabilir; eski anahtarlar korunur.
- */
-
-/**
- * `.vault` başlığındaki keyring'i atomik olarak günceller (KEK rotasyonunun son adımı).
- * Argon2 parametreleri, salt ve PDK ile sarılmış VMK korunur; yalnızca VMK ile sarılmış
- * keyring yeniden yazılır. Bellekteki aktif anahtar durumu de güncellenir.
- */
-internal fun CryptoManager.updateVaultKeyring(
-    context: Context?,
-    newKeyring: Map<Short, ByteArray>,
-    newActiveId: Short
-) {
-    val root = cachedVaultRoot ?: context?.let { findVaultRoot(it) }
-        ?: throw IOException("Vault root is not available")
-    val headerFile = File(root, VAULT_HEADER_FILE)
-    val vmk = unlockedMasterKey ?: throw IllegalStateException("Vault is locked")
-
-    val salt: ByteArray
-    val ivPdk: ByteArray
-    val wrappedVmK: ByteArray
-    val iterations: Int
-    val memoryKb: Int
-    val parallelism: Int
-    val protectionType: Int
-    DataInputStream(BufferedInputStream(FileInputStream(headerFile))).use { dis ->
-        val magic = ByteArray(VAULT_HEADER_MAGIC.length)
-        dis.readFully(magic)
-        if (String(magic, Charsets.US_ASCII) != VAULT_HEADER_MAGIC) throw IOException("Invalid vault header")
-        dis.readByte() // version
-        dis.readByte() // kdf type
-        iterations = dis.readInt()
-        memoryKb = dis.readInt()
-        parallelism = dis.readInt()
-        protectionType = dis.readByte().toInt()
-        val saltLen = dis.readInt()
-        salt = ByteArray(saltLen).also { dis.readFully(it) }
-        ivPdk = ByteArray(GCM_IV_LENGTH).also { dis.readFully(it) }
-        val wrappedLen = dis.readInt()
-        wrappedVmK = ByteArray(wrappedLen).also { dis.readFully(it) }
-        // ivVmk ve wrappedKeyring okunmaz: yenileri üretiliyor.
-    }
-
-    val ivVmk = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-    val keyringCipher = Cipher.getInstance("AES/GCM/NoPadding")
-    keyringCipher.init(
-        Cipher.ENCRYPT_MODE,
-        SecretKeySpec(vmk, "AES"),
-        GCMParameterSpec(GCM_TAG_BITS, ivVmk)
-    )
-    val wrappedKeyring = keyringCipher.doFinal(packKeyring(newKeyring, newActiveId))
-
-    val tempFile = File(root, ".tmp_${randomHex(8)}$VAULT_HEADER_FILE")
-    try {
-        writeVaultHeader(
-            tempFile, salt, memoryKb, iterations, parallelism,
-            ivPdk, wrappedVmK, ivVmk, wrappedKeyring, protectionType
-        )
-        java.nio.file.Files.move(
-            tempFile.toPath(), headerFile.toPath(),
-            java.nio.file.StandardCopyOption.REPLACE_EXISTING
-        )
-    } finally {
-        tempFile.delete()
-    }
-
-    // Önce bağımsız kopyalar alınır: çağırıcı live keyring'i geçirse bile sıfırlama kayıplara yol açmaz.
-    val snapshot = newKeyring.mapValues { it.value.copyOf() }
-    unlockedKeyring.values.forEach { it.fill(0) }
-    unlockedKeyring.clear()
-    unlockedKeyring.putAll(snapshot)
-    activeKeyId = newActiveId
-    unlockedKek?.fill(0)
-    unlockedKek = snapshot[newActiveId]?.copyOf()
-}
-
-private fun CryptoManager.packKeyring(keyring: Map<Short, ByteArray>, activeId: Short): ByteArray =
+private fun CryptoManager.packKeyring(keyId: Short, kek: ByteArray): ByteArray =
     ByteArrayOutputStream().use { baos ->
         DataOutputStream(baos).use { dos ->
-            dos.writeShort(activeId.toInt())
-            dos.writeShort(keyring.size)
-            keyring.forEach { (id, kek) ->
-                dos.writeShort(id.toInt())
-                dos.write(kek)
-            }
+            dos.writeShort(keyId.toInt())
+            dos.write(kek)
         }
         baos.toByteArray()
     }
 
-private fun CryptoManager.unpackKeyring(bytes: ByteArray): Pair<Short, Map<Short, ByteArray>>? {
-    if (bytes.size < 4) return null
-    return try {
-        DataInputStream(ByteArrayInputStream(bytes)).use { dis ->
-            val activeId = dis.readUnsignedShort().toShort()
-            val count = dis.readUnsignedShort()
-            if (count <= 0 || count > 16) return null
-            val result = LinkedHashMap<Short, ByteArray>()
-            repeat(count) {
-                val id = dis.readUnsignedShort().toShort()
-                val kek = ByteArray(32)
-                dis.readFully(kek)
-                result[id] = kek
-            }
-            if (activeId !in result) return null
-            activeId to result
-        }
-    } catch (_: Exception) {
-        null
+private fun CryptoManager.unpackKeyring(bytes: ByteArray): Pair<Short, ByteArray>? {
+    if (bytes.size < 34) return null
+    DataInputStream(ByteArrayInputStream(bytes)).use { dis ->
+        val keyId = dis.readUnsignedShort().toShort()
+        val kek = ByteArray(32)
+        dis.readFully(kek)
+        return keyId to kek
     }
 }
 
@@ -437,17 +340,11 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     } else if (hasExistingVault(context) && !isVaultUnlocked) {
         throw IllegalStateException("Vault is locked! Cannot update credentials without unlocking first.")
     }
-    // Kanonik kasa: VMK -> keyring -> KEK. Şifre değiştiğinde mevcut VMK/KEK'ler korunur.
+    // Kanonik kasa: VMK -> keyring -> KEK. Sifre degistirildiğinde mevcut VMK/KEK korunur.
     val isNewVault = unlockedMasterKey == null
     val vmk = unlockedMasterKey ?: ByteArray(32).also { secureRandom.nextBytes(it) }
-    val keyring = if (isNewVault || unlockedKeyring.isEmpty()) {
-        val freshKek = ByteArray(32).also { secureRandom.nextBytes(it) }
-        linkedMapOf(1.toShort() to freshKek)
-    } else {
-        LinkedHashMap(unlockedKeyring)
-    }
-    val effectiveActiveId = if (isNewVault) 1.toShort() else activeKeyId
-    val kek = keyring[effectiveActiveId] ?: keyring.values.first()
+    val kek = if (isNewVault) ByteArray(32).also { secureRandom.nextBytes(it) }
+        else (unlockedKek ?: ByteArray(32).also { secureRandom.nextBytes(it) })
 
     val salt = ByteArray(ARGON2_SALT_LENGTH).also { secureRandom.nextBytes(it) }
     // Brute-force direnci: hedef acilis suresi seciliyse cihazda tek bir referans
@@ -463,7 +360,7 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     val ivVmk = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
     val keyringCipher = Cipher.getInstance("AES/GCM/NoPadding")
     keyringCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(vmk, "AES"), GCMParameterSpec(GCM_TAG_BITS, ivVmk))
-    val wrappedKeyring = keyringCipher.doFinal(packKeyring(keyring, effectiveActiveId))
+    val wrappedKeyring = keyringCipher.doFinal(packKeyring(1, kek))
 
     clearBiometricKey(context)
 
@@ -485,10 +382,7 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     encryptedFolderCache.clear()
 
     unlockedMasterKey = vmk.copyOf()
-    unlockedKeyring.clear()
-    unlockedKeyring.putAll(keyring.mapValues { it.value.copyOf() })
-    activeKeyId = effectiveActiveId
-    unlockedKek = kek.copyOf()
+    unlockedKek = kek?.copyOf()
     val marker = "argon2id_aes256_gcm"
     context.config.hiddenPasswordHash = marker
     context.config.hiddenProtectionType = protectionType
