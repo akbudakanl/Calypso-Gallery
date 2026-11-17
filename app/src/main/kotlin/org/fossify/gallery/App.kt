@@ -17,6 +17,9 @@ import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.SplashActivity
 import org.fossify.gallery.activities.VaultLockActivity
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.SideloadCheck
 import org.fossify.gallery.helpers.VaultSessionManager
@@ -31,7 +34,6 @@ import java.net.URLStreamHandler
 import java.util.Collections
 import java.util.WeakHashMap
 import org.fossify.gallery.helpers.processPendingWipeJournal
-import org.fossify.gallery.helpers.vault.VaultMigration
 
 class App : FossifyApp() {
 
@@ -45,9 +47,22 @@ class App : FossifyApp() {
 
     override fun onCreate() {
         super.onCreate()
-        // Independent fork: disable Commons' sideloaded / fake-app warning at every entry point.
+        // Neutralize Commons' fake-app warning before any activity can query the cached verdict.
         SideloadCheck.disable(this)
-        VaultMigration.cleanupStaleTempFiles(this)
+        // Commons' legacy launcher-icon migration in appLaunched() builds alias ComponentNames
+        // by stripping ".debug" from the application id; with our package identity that always
+        // targets a component that does not exist and throws on first launch. The Appearance
+        // screen handles icon switching itself with the real package name, so mark both legacy
+        // paths as already handled before MainActivity runs appLaunched().
+        val appearanceConfig = config
+        if (appearanceConfig.appRunCount == 0) {
+            appearanceConfig.appRunCount = 1
+        }
+        appearanceConfig.wasOrangeIconChecked = true
+        // Apply the fork's appearance palette before any activity reads theme colors.
+        val palette = AppearanceManager.apply(this, appearanceConfig)
+        appearanceConfig.lastIconColor = appearanceConfig.appIconColor
+        AppearanceManager.applyLauncherIcon(this, palette.appIcon)
         installCodeLevelNetworkBlocker()
         Reprint.initialize(this)
         Picasso.setSingletonInstance(Picasso.Builder(this).downloader(object : Downloader {
@@ -68,6 +83,9 @@ class App : FossifyApp() {
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 trackedActivities.add(activity)
+                if (config.appearanceMode == Config.APPEARANCE_SYSTEM) {
+                    AppearanceManager.apply(this@App, config)
+                }
             }
             override fun onActivityStarted(activity: Activity) {
                 trackedActivities.add(activity)
@@ -81,6 +99,9 @@ class App : FossifyApp() {
                 maybeLaunchVaultLockScreen(activity)
             }
             override fun onActivityResumed(activity: Activity) {
+                if (config.appearanceMode == Config.APPEARANCE_SYSTEM) {
+                    AppearanceManager.apply(this@App, config)
+                }
                 syncPrivacyCurtain(activity)
                 maybeLaunchVaultLockScreen(activity)
             }
