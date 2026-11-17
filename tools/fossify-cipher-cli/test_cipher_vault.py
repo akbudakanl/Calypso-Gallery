@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit & end-to-end integration tests for Fossify Gallery Cipher offline CLI (cipher_vault.py).
+Unit & end-to-end integration tests for the Calypso Gallery offline CLI (cipher_vault.py).
 """
 
 import argparse
@@ -144,7 +144,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         self.desktop = self.root / "Desktop"
         self.desktop.mkdir(parents=True, exist_ok=True)
         self.secret = "test-vault-password-123"
-        self.vault_dir = self.root / "ExternalUSB" / "Cipher_Secrets"
+        self.vault_dir = self.root / "ExternalUSB" / "Secrets"
         self.vault_dir.mkdir(parents=True, exist_ok=True)
         self.vault_file = self.vault_dir / ".vault"
         self.master_key = create_test_vault_file(self.vault_file, self.secret)
@@ -423,11 +423,11 @@ class TestCipherVaultCLI(unittest.TestCase):
         create_test_vault_file(standalone_desktop_vault, self.secret, self.master_key)
         self.assertFalse(cv.is_targetable_vault_dir(standalone_desktop_vault, self.desktop, input_dir, desktop_out))
 
-        # External USB Cipher_Secrets/.vault containing ONLY .vault (delta usage inside Cipher_Secrets)
+        # External USB Secrets/.vault containing ONLY .vault (delta usage inside Secrets)
         self.assertTrue(cv.is_targetable_vault_dir(self.vault_file, self.desktop, input_dir, desktop_out))
 
-        # Populated external Cipher_Secrets/.vault (with .nomedia and a .meta album)
-        populated_vault_dir = self.root / "PopulatedUSB" / "Cipher_Secrets"
+        # Populated external Secrets/.vault (with .nomedia and a .meta album)
+        populated_vault_dir = self.root / "PopulatedUSB" / "Secrets"
         populated_vault_dir.mkdir(parents=True)
         populated_vault_file = populated_vault_dir / ".vault"
         create_test_vault_file(populated_vault_file, self.secret, self.master_key)
@@ -436,7 +436,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         album_sub.mkdir()
         cv.write_encrypted_folder_meta(album_sub, "Album", self.master_key, vault_dir=populated_vault_dir)
 
-        # External root .vault (e.g. /media/usb/.vault without Cipher_Secrets parent)
+        # External root .vault (e.g. /media/usb/.vault without Secrets parent)
         usb_root_dir = self.root / "ExternalUSBRoot"
         usb_root_dir.mkdir()
         usb_root_vault = usb_root_dir / ".vault"
@@ -445,7 +445,7 @@ class TestCipherVaultCLI(unittest.TestCase):
 
         with mock.patch("sys.stdin.isatty", return_value=True), \
              mock.patch("builtins.input", side_effect=AssertionError("Should not prompt for destination")):
-            # 1. <USB>/Cipher_Secrets/.vault (only .vault present) -> <USB>/Cipher_Secrets
+            # 1. <USB>/Secrets/.vault (only .vault present) -> <USB>/Secrets
             buf1 = io.StringIO()
             with redirect_stdout(buf1):
                 chosen_only_vault = cv.choose_encrypt_output_dir(
@@ -454,19 +454,30 @@ class TestCipherVaultCLI(unittest.TestCase):
             self.assertEqual(chosen_only_vault, self.vault_dir.resolve())
             self.assertIn(str(self.vault_dir.resolve()), buf1.getvalue())
 
-            # 2. <USB>/Cipher_Secrets/.vault (with existing contents) -> <USB>/Cipher_Secrets
+            # 2. <USB>/Secrets/.vault (with existing contents) -> <USB>/Secrets
             with redirect_stdout(io.StringIO()):
                 chosen_populated = cv.choose_encrypt_output_dir(
                     args_no_out, self.desktop, "en", input_dir, populated_vault_file
                 )
             self.assertEqual(chosen_populated, populated_vault_dir.resolve())
 
-            # 3. <USB>/.vault at external root -> <USB>/Cipher_Secrets
+            # 3. <USB>/.vault at external root -> <USB>/Secrets
             with redirect_stdout(io.StringIO()):
                 chosen_usb_root = cv.choose_encrypt_output_dir(
                     args_no_out, self.desktop, "en", input_dir, usb_root_vault
                 )
-            self.assertEqual(chosen_usb_root, (usb_root_dir / "Cipher_Secrets").resolve())
+            self.assertEqual(chosen_usb_root, (usb_root_dir / "Secrets").resolve())
+
+            # 3b. Existing legacy Cipher_Secrets folder on the drive is reused, not duplicated
+            (usb_root_dir / "Secrets").rmdir()  # remove the folder created by case 3
+            legacy_on_usb = usb_root_dir / "Cipher_Secrets"
+            legacy_on_usb.mkdir()
+            with redirect_stdout(io.StringIO()):
+                chosen_legacy = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, "en", input_dir, usb_root_vault
+                )
+            self.assertEqual(chosen_legacy, legacy_on_usb.resolve())
+            self.assertFalse((usb_root_dir / "Secrets").exists())
 
             # 4. Standalone ~/Desktop/.vault -> ~/Desktop/Encrypted_Output
             with redirect_stdout(io.StringIO()):
@@ -574,9 +585,9 @@ class TestCipherVaultCLI(unittest.TestCase):
             )
             self.assertNotEqual(rej_proc.returncode, 0, msg=f"Expected {bad_flag} to be rejected")
 
-    def test_find_vault_file_prioritizes_external_cipher_secrets_and_prompt_keeps_external_path(self):
+    def test_find_vault_file_prioritizes_external_secrets_and_prompt_keeps_external_path(self):
         fake_media = self.root / "media_amnesia"
-        usb_vault_dir = fake_media / "USBDRIVE" / "Cipher_Secrets"
+        usb_vault_dir = fake_media / "USBDRIVE" / "Secrets"
         usb_vault_dir.mkdir(parents=True)
         usb_vault = usb_vault_dir / ".vault"
         create_test_vault_file(usb_vault, self.secret, self.master_key)
@@ -589,7 +600,7 @@ class TestCipherVaultCLI(unittest.TestCase):
             detected = cv.find_vault_file()
         self.assertEqual(detected, usb_vault)
 
-        # Ensure prompt_for_vault_file returns the external Cipher_Secrets/.vault directly
+        # Ensure prompt_for_vault_file returns the external Secrets/.vault directly
         # without replacing it with Desktop/.vault
         empty_desktop = self.root / "EmptyDesktop"
         empty_desktop.mkdir()
@@ -688,8 +699,8 @@ class TestCipherVaultCLI(unittest.TestCase):
             detected_root = cv.find_vault_file()
         self.assertEqual(detected_root, drive_root_vault)
 
-        # Cipher_Secrets/.vault on Windows-style drive takes priority over root .vault
-        cs_vault = fake_usb_drive / "Cipher_Secrets" / ".vault"
+        # Secrets/.vault on Windows-style drive takes priority over root .vault
+        cs_vault = fake_usb_drive / "Secrets" / ".vault"
         cs_vault.parent.mkdir(parents=True)
         create_test_vault_file(cs_vault, self.secret, self.master_key)
         with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
@@ -697,6 +708,18 @@ class TestCipherVaultCLI(unittest.TestCase):
              mock.patch.object(cv, "_external_mount_roots", return_value=[fake_usb_drive]):
             detected_cs = cv.find_vault_file()
         self.assertEqual(detected_cs, cs_vault)
+
+        # A legacy Cipher_Secrets/.vault on an existing drive is still discovered
+        cs_vault.unlink()
+        cs_vault.parent.rmdir()
+        legacy_vault = fake_usb_drive / "Cipher_Secrets" / ".vault"
+        legacy_vault.parent.mkdir(parents=True)
+        create_test_vault_file(legacy_vault, self.secret, self.master_key)
+        with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
+             mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
+             mock.patch.object(cv, "_external_mount_roots", return_value=[fake_usb_drive]):
+            detected_legacy = cv.find_vault_file()
+        self.assertEqual(detected_legacy, legacy_vault)
 
     def test_windows_and_macos_notices_and_readonly_wipe_without_extra_prompts(self):
         in_dir = self.root / "OneDrive" / "To_Encrypt"

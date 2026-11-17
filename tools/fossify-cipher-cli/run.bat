@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 >nul 2>&1
 
 REM ==============================================================================
-REM Fossify Gallery Cipher - Windows Quick Launcher
+REM Calypso Gallery - Windows Quick Launcher
 REM ==============================================================================
 
 set "SCRIPT_DIR=%~dp0"
