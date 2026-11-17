@@ -134,11 +134,8 @@ fun CryptoManager.getDecryptedRawFolderName(folder: File): String? {
     folderNameCache[folder.absolutePath]?.let { return it }
     val masterKey = unlockedMasterKey ?: return null
 
-    val metaFile = when {
-        File(folder, VAULT_SUBFOLDER_META_FILE).exists() -> File(folder, VAULT_SUBFOLDER_META_FILE)
-        File(folder, ENCRYPTED_FOLDER_META_FILE).exists() -> File(folder, ENCRYPTED_FOLDER_META_FILE)
-        else -> return null
-    }
+    val metaFile = File(folder, VAULT_SUBFOLDER_META_FILE)
+    if (!metaFile.exists()) return null
 
     return try {
         DataInputStream(BufferedInputStream(FileInputStream(metaFile))).use { dis ->

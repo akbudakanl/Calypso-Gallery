@@ -319,12 +319,8 @@ fun CryptoManager.resolvePickedPathToFile(context: Context, pickedPath: String):
 fun CryptoManager.isConfiguredCustomVaultPath(context: Context): Boolean {
     val stored = normalizeVaultPath(context.config.vaultRootPath)
     if (stored.isEmpty()) return false
-    // An existing vault still living in the pre-rename "Cipher_Secrets" folder must keep being
-    // treated as the standard location, otherwise the rename would silently change setup,
-    // unplug and delete UX for every upgraded installation.
-    val standardPaths = listOf(getDefaultVaultRoot(), getLegacyDefaultVaultRoot())
-        .map { normalizeVaultPath(it.absolutePath) }
-    return standardPaths.none { stored.equals(it, ignoreCase = true) }
+    val standardPath = normalizeVaultPath(getDefaultVaultRoot().absolutePath)
+    return !stored.equals(standardPath, ignoreCase = true)
 }
 
 
@@ -391,42 +387,21 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
 
 
 /**
- * Checks whether [dir] directly contains a vault or hosts a Secrets folder (current or legacy
- * `Cipher_Secrets`), either directly inside [dir], inside `<dir>/Calypso Gallery`, `<dir>/Cipher`
- * or the historical app container.
+ * Checks whether [dir] directly contains a vault or hosts a Secrets folder, either directly
+ * inside [dir] or nested inside `<dir>/Calypso Gallery`.
  */
 fun CryptoManager.resolveExistingVaultInDirectory(dir: File): File? {
-    val candidates = mutableListOf(dir)
-    for (secretsName in listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)) {
-        candidates += listOf(
-            File(dir, secretsName),
-            File(File(dir, CIPHER_APP_DIR_NAME), secretsName),
-            File(File(dir, CIPHER_ROOT_DIR_NAME), secretsName),
-            File(File(dir, LEGACY_CIPHER_APP_DIR_NAME), secretsName)
-        )
-    }
+    val candidates = listOf(
+        dir,
+        File(dir, SECRETS_DIR_NAME),
+        File(File(dir, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME)
+    )
     return candidates.firstOrNull { hasValidVaultHeader(it) }
 }
 
 
 internal fun CryptoManager.internalVaultCandidates(): List<File> {
-    val documentsDir = getDocumentsDirectory()
-    val legacyRoot = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
-    val candidates = mutableListOf<File>()
-    for (secretsName in listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)) {
-        candidates += listOf(
-            File(getCipherRootDirectory(), secretsName),
-            File(getCipherRootDirectory(), "$CIPHER_ROOT_DIR_NAME/$secretsName"),
-            // Previous app container name, so upgrades find and migrate existing vaults.
-            File(legacyRoot, secretsName),
-            File(documentsDir, "$CIPHER_ROOT_DIR_NAME/$secretsName"),
-            File(documentsDir, secretsName)
-        )
-    }
-    candidates += File(getCipherRootDirectory(), CIPHER_ROOT_DIR_NAME)
-    candidates += File(legacyRoot, CIPHER_ROOT_DIR_NAME)
-    candidates += File(documentsDir, CIPHER_ROOT_DIR_NAME)
-    return candidates.distinctBy { it.absolutePath }
+    return listOf(File(getCipherRootDirectory(), SECRETS_DIR_NAME))
 }
 
 
@@ -525,8 +500,8 @@ fun CryptoManager.findCandidateExternalVaultRoots(context: Context): List<File> 
 
 /**
  * Looks for the vault root ON DISK.
- * - When [Config.vaultRootPath] is empty, ONLY default and legacy internal vault locations are
- *   checked (external USB/SD drives are NOT auto-adopted without explicit user selection).
+ * - When [Config.vaultRootPath] is empty, ONLY the default internal vault location is checked
+ *   (external USB/SD drives are NOT auto-adopted without explicit user selection).
  * - When [Config.vaultRootPath] is set, that configured location is checked directly.
  */
 fun CryptoManager.locateVaultRootOnDisk(context: Context, allowDeepScan: Boolean = true): File? {
@@ -629,12 +604,6 @@ fun CryptoManager.deleteExistingVault(context: Context) {
         findVaultRoot(context)?.let { targets.add(it) }
     } else {
         targets.add(getDefaultVaultRoot())
-        // Legacy locations of the vault, including the pre-rename folder name.
-        for (secretsName in listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)) {
-            targets.add(File(getCipherRootDirectory(), secretsName))
-            targets.add(File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$secretsName"))
-            targets.add(File(getDocumentsDirectory(), secretsName))
-        }
         val storedPath = context.config.vaultRootPath
         if (storedPath.isNotEmpty()) {
             targets.add(File(storedPath))
@@ -656,12 +625,6 @@ fun CryptoManager.deleteExistingVault(context: Context) {
                 dir.delete()
             } catch (_: Exception) {}
         }
-    }
-
-    // The old Cipher container inside the Documents folder, when it is left empty.
-    val legacyParentCipher = File(getDocumentsDirectory(), CIPHER_ROOT_DIR_NAME)
-    if (legacyParentCipher.exists() && legacyParentCipher.isDirectory && legacyParentCipher.listFiles().isNullOrEmpty()) {
-        try { legacyParentCipher.delete() } catch (_: Exception) {}
     }
 
     lockVault()
@@ -718,12 +681,10 @@ fun CryptoManager.createVaultRoot(context: Context, customTargetDir: File? = nul
 
     val newDir = when {
         customTargetDir.name.equals(SECRETS_DIR_NAME, ignoreCase = true) ||
-            customTargetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true) ||
             isValidVaultHeader(File(customTargetDir, VAULT_HEADER_FILE)) -> customTargetDir
         else -> {
-            // Reuse an existing vault folder on the picked drive instead of creating a second one
-            // with the new name next to a legacy "Cipher_Secrets" container.
-            listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)
+            // Reuse an existing Secrets folder on the picked drive instead of creating a second one.
+            listOf(SECRETS_DIR_NAME)
                 .map { File(customTargetDir, it) }
                 .firstOrNull { it.isDirectory }
                 ?: File(customTargetDir, SECRETS_DIR_NAME)
@@ -759,31 +720,5 @@ fun CryptoManager.findVaultRoot(context: Context): File? {
         if (cached.isDirectory && File(cached, VAULT_HEADER_FILE).isFile) return cached
     }
 
-    val root = locateVaultRootOnDisk(context) ?: return null
-
-    // Migrate vaults from older container locations (Documents/ and the former app container) into
-    // the standalone app container. Keep the original on-disk folder name: this code relocates a
-    // vault, it must never silently rename an existing "Cipher_Secrets" folder to "Secrets".
-    val standardDir = getLegacyDefaultVaultRoot()
-    val legacyRoot = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
-    val legacyDirs = listOf(
-        File(getDocumentsDirectory(), CIPHER_SECRETS_DIR_NAME),
-        File(getDocumentsDirectory(), "$CIPHER_ROOT_DIR_NAME/$CIPHER_SECRETS_DIR_NAME"),
-        File(legacyRoot, CIPHER_SECRETS_DIR_NAME),
-        File(legacyRoot, CIPHER_ROOT_DIR_NAME)
-    )
-    val legacyDir = legacyDirs.firstOrNull { it.absolutePath == root.absolutePath }
-    if (legacyDir != null && !standardDir.exists()) {
-        val moved = try {
-            standardDir.parentFile?.mkdirs()
-            legacyDir.renameTo(standardDir)
-        } catch (_: Exception) {
-            false
-        }
-        if (moved) {
-            rememberVaultRoot(context, standardDir)
-            return standardDir
-        }
-    }
-    return root
+    return locateVaultRootOnDisk(context)
 }

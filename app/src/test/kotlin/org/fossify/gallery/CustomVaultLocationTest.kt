@@ -12,8 +12,6 @@ import org.fossify.gallery.dialogs.resolveSkippedCryptoMessageRes
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
 import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
-import org.fossify.gallery.helpers.CIPHER_ROOT_DIR_NAME
-import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_ASK
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_KEEP_TARGET
@@ -121,32 +119,12 @@ class CustomVaultLocationTest {
         File(appSecretsDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         assertEquals(appSecretsDir, CryptoManager.resolveExistingVaultInDirectory(appContainer))
 
-        val legacyRootContainer = File(tempRoot, "legacy_usb").apply { mkdirs() }
-        val legacySecretsDir = File(File(legacyRootContainer, CIPHER_ROOT_DIR_NAME), SECRETS_DIR_NAME).apply { mkdirs() }
-        File(legacySecretsDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
-        assertEquals(legacySecretsDir, CryptoManager.resolveExistingVaultInDirectory(legacyRootContainer))
-
         val emptyDir = File(tempRoot, "empty").apply { mkdirs() }
         assertNull(CryptoManager.resolveExistingVaultInDirectory(emptyDir))
 
         val badHeaderDir = File(tempRoot, "bad_magic").apply { mkdirs() }
         File(badHeaderDir, VAULT_HEADER_FILE).writeBytes("NOTVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         assertNull(CryptoManager.resolveExistingVaultInDirectory(badHeaderDir))
-    }
-
-    @Test
-    fun resolveExistingVaultInDirectory_recognizesLegacySecretsFolderName() {
-        val validHeaderBytes = "FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32)
-
-        val legacyDrive = File(tempRoot, "legacy_usb_drive").apply { mkdirs() }
-        val legacyDir = File(legacyDrive, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
-        File(legacyDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
-        assertEquals(legacyDir, CryptoManager.resolveExistingVaultInDirectory(legacyDrive))
-
-        val legacyAppContainer = File(tempRoot, "legacy_internal_root").apply { mkdirs() }
-        val legacyAppDir = File(File(legacyAppContainer, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
-        File(legacyAppDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
-        assertEquals(legacyAppDir, CryptoManager.resolveExistingVaultInDirectory(legacyAppContainer))
     }
 
     @Test
@@ -174,15 +152,14 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun createVaultRoot_withExistingLegacySecretsFolder_reusesItInsteadOfCreatingNewOne() {
-        val parentPick = File(tempRoot, "LegacyUsbDrive").apply { mkdirs() }
-        val legacyFolder = File(parentPick, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+    fun createVaultRoot_withExistingSecretsFolder_reusesItInsteadOfCreatingNewOne() {
+        val parentPick = File(tempRoot, "UsbDriveWithSecrets").apply { mkdirs() }
+        val existingFolder = File(parentPick, SECRETS_DIR_NAME).apply { mkdirs() }
         val created = CryptoManager.createVaultRoot(testContext, parentPick)
 
         assertNotNull(created)
-        assertEquals(legacyFolder.absolutePath, created!!.absolutePath)
-        assertFalse(File(parentPick, SECRETS_DIR_NAME).exists())
-        assertTrue(File(legacyFolder, NOMEDIA).isFile)
+        assertEquals(existingFolder.absolutePath, created!!.absolutePath)
+        assertTrue(File(existingFolder, NOMEDIA).isFile)
     }
 
     @Test

@@ -105,7 +105,6 @@ fun CryptoManager.isVaultMediaPath(context: Context, path: String): Boolean {
 fun CryptoManager.isEncryptedFolder(folder: File): Boolean {
     if (!folder.exists() || !folder.isDirectory) return false
     return File(folder, VAULT_SUBFOLDER_META_FILE).exists() ||
-        File(folder, ENCRYPTED_FOLDER_META_FILE).exists() ||
         folder.name.startsWith(ENCRYPTED_FOLDER_PREFIX)
 }
 
@@ -151,7 +150,7 @@ fun CryptoManager.getDocumentsDirectory(): File {
 
 
 /**
- * The root of the shared storage (the internal storage of the device). The Cipher folder is a
+ * The root of the shared storage (the internal storage of the device). The app container is a
  * standalone top level folder in here, it is not nested in Documents.
  */
 fun CryptoManager.getStorageRootDirectory(): File {
@@ -180,17 +179,6 @@ fun CryptoManager.getCipherRootDirectory(): File {
 fun CryptoManager.ensureCipherRootDirectory(): File {
     val dir = getCipherRootDirectory()
     if (!dir.exists()) {
-        // Upgrade: keep existing vaults, virtual albums and favorites backups from the
-        // previous "Calypso Gallery" container instead of creating an empty one.
-        val legacyDir = File(getStorageRootDirectory(), LEGACY_CIPHER_APP_DIR_NAME)
-        if (legacyDir.exists() && legacyDir.isDirectory) {
-            try {
-                legacyDir.renameTo(dir)
-            } catch (_: Exception) {
-            }
-        }
-    }
-    if (!dir.exists()) {
         dir.mkdirs()
     }
     val noMedia = File(dir, NOMEDIA)
@@ -203,9 +191,4 @@ fun CryptoManager.ensureCipherRootDirectory(): File {
 
 fun CryptoManager.getDefaultVaultRoot(): File {
     return File(getCipherRootDirectory(), SECRETS_DIR_NAME)
-}
-
-/** The vault folder name used by older builds, still recognised wherever a vault is detected. */
-fun CryptoManager.getLegacyDefaultVaultRoot(): File {
-    return File(getCipherRootDirectory(), CIPHER_SECRETS_DIR_NAME)
 }

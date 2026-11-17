@@ -98,23 +98,14 @@ object VirtualAlbumSyncManager {
             }
         }
 
-        // Older manifests carry the pre-rename folder name; keep both so vault-relative paths
-        // survive an upgrade with vaults still stored in "Cipher_Secrets".
-        val markers = listOf(
-            "/$SECRETS_DIR_NAME/",
-            "/$CIPHER_SECRETS_DIR_NAME/",
-            "/$CIPHER_ROOT_DIR_NAME/"
-        )
-        val lowerFull = normFull.lowercase()
-        for (marker in markers) {
-            val idx = lowerFull.lastIndexOf(marker.lowercase())
-            if (idx >= 0) {
-                val suffix = normFull.substring(idx + marker.length).trim('/')
-                if (suffix.isNotEmpty() && !isVaultJsonRelativePath(suffix)) {
-                    val segments = suffix.split('/')
-                    if (segments.none { it.isEmpty() || it == "." || it == ".." }) {
-                        return suffix
-                    }
+        val marker = "/$SECRETS_DIR_NAME/"
+        val idx = normFull.lowercase().lastIndexOf(marker.lowercase())
+        if (idx >= 0) {
+            val suffix = normFull.substring(idx + marker.length).trim('/')
+            if (suffix.isNotEmpty() && !isVaultJsonRelativePath(suffix)) {
+                val segments = suffix.split('/')
+                if (segments.none { it.isEmpty() || it == "." || it == ".." }) {
+                    return suffix
                 }
             }
         }
@@ -378,36 +369,13 @@ object VirtualAlbumSyncManager {
             emptyList()
         }
 
-        val documentsDir = CryptoManager.getDocumentsDirectory()
-        val legacyDir = File(documentsDir, "Fossify Virtual Albums")
-        // The saves of the older versions lived in the Cipher folder inside the Documents folder.
-        val legacyCipherDir = File(documentsDir, "$CIPHER_ROOT_DIR_NAME/$CIPHER_VIRTUAL_ALBUMS_DIR_NAME")
         val publicDir = getVirtualAlbumsStorageDir()
-
-        // 0. Automatically migrate legacy saves from Documents/Fossify Virtual Albums
-        //    and from the old Documents/Cipher folder.
-        try {
-            for (source in listOf(legacyDir, legacyCipherDir)) {
-                if (source.exists() && source.isDirectory) {
-                    if (!publicDir.exists()) {
-                        publicDir.mkdirs()
-                    }
-                    source.listFiles { file -> file.isFile && file.extension.equals("json", ignoreCase = true) }?.forEach { f ->
-                        val targetFile = File(publicDir, f.name)
-                        if (!targetFile.exists()) {
-                            f.copyTo(targetFile, overwrite = true)
-                        }
-                        try { f.delete() } catch (_: Exception) {}
-                    }
-                }
-            }
-        } catch (_: Exception) {}
 
         val gson = Gson()
         val processedAlbumNames = HashSet<String>()
 
-        // 1. Restore public non-hidden albums from both new and legacy folders
-        val candidateDirs = listOfNotNull(publicDir, legacyCipherDir, legacyDir).filter { it.exists() && it.isDirectory }
+        // 1. Restore public non-hidden albums from the storage folder
+        val candidateDirs = listOf(publicDir).filter { it.exists() && it.isDirectory }
         for (sourceDir in candidateDirs) {
             val jsonFiles = sourceDir.listFiles { file -> file.isFile && file.extension.equals("json", ignoreCase = true) } ?: emptyArray()
             for (file in jsonFiles) {

@@ -109,7 +109,6 @@ fun CryptoManager.isSupportedMediaName(name: String): Boolean {
 fun CryptoManager.isEncryptableMediaFile(file: File): Boolean {
     return file.isFile &&
         file.name != NOMEDIA &&
-        file.name != ENCRYPTED_FOLDER_META_FILE &&
         file.name != VAULT_SUBFOLDER_META_FILE &&
         file.name != VAULT_HEADER_FILE &&
         !isEncryptedFile(file.name) &&
@@ -775,8 +774,7 @@ fun CryptoManager.renameEncryptedFile(
 // ==================== EXTERNAL VAULT SYNC ====================
 
 internal fun CryptoManager.hasFolderMetaFile(dir: File): Boolean {
-    return File(dir, VAULT_SUBFOLDER_META_FILE).exists() ||
-        File(dir, ENCRYPTED_FOLDER_META_FILE).exists()
+    return File(dir, VAULT_SUBFOLDER_META_FILE).exists()
 }
 
 
@@ -792,15 +790,10 @@ fun CryptoManager.resolveSyncSourceRoot(selectedDir: File): File {
         return selectedDir
     }
 
-    val nestedContainerCandidates = mutableListOf<File>()
-    for (secretsName in listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)) {
-        nestedContainerCandidates += listOf(
-            File(File(selectedDir, CIPHER_APP_DIR_NAME), secretsName),
-            File(File(selectedDir, CIPHER_ROOT_DIR_NAME), secretsName),
-            File(File(selectedDir, LEGACY_CIPHER_APP_DIR_NAME), secretsName),
-            File(selectedDir, secretsName)
-        )
-    }
+    val nestedContainerCandidates = mutableListOf(
+        File(File(selectedDir, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME),
+        File(selectedDir, SECRETS_DIR_NAME)
+    )
     nestedContainerCandidates += listOf(
         File(selectedDir, "Encrypted_Output"),
         File(selectedDir, "Sifreli_Cikti")
