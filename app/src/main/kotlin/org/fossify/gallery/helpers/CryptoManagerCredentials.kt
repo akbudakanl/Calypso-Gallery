@@ -241,7 +241,7 @@ internal fun CryptoManager.writeVaultHeader(
     FileOutputStream(headerFile).use { fos ->
         DataOutputStream(fos).use { dos ->
             dos.write(VAULT_HEADER_MAGIC.toByteArray(Charsets.US_ASCII))
-            dos.writeByte(4)
+            dos.writeByte(VaultContainer.VAULT_FORMAT_VERSION.toInt())
             dos.writeByte(1) // Argon2id
             dos.writeInt(iterations)
             dos.writeInt(memoryKb)
