@@ -17,6 +17,13 @@ import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
 import java.io.*
 import android.media.MediaScannerConnection
 import org.fossify.gallery.databases.GalleryDatabase
+import org.fossify.gallery.helpers.operations.BatchOperationInfo
+import org.fossify.gallery.helpers.operations.EncryptedSizeInput
+import org.fossify.gallery.helpers.operations.JournalItem
+import org.fossify.gallery.helpers.operations.OperationContext
+import org.fossify.gallery.helpers.operations.OperationFaults
+import org.fossify.gallery.helpers.operations.OperationJournal
+import org.fossify.gallery.helpers.operations.SpaceEstimator
 import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictResolution
@@ -30,6 +37,7 @@ fun CryptoManager.encryptFolder(
     context: Context,
     folderPath: String,
     options: AlbumCryptoOptions = AlbumCryptoOptions(),
+    operation: OperationContext = OperationContext.NONE,
     onProgress: ((current: Int, total: Int) -> Unit)? = null
 ): String? {
     val folder = File(folderPath)
@@ -84,6 +92,47 @@ fun CryptoManager.encryptFolder(
     }
     if (!subfolder.exists() && !subfolder.mkdirs()) return null
 
+    // ADR 0003 §3a: album writes ALL outputs before wiping ANY source, so peak is the sum.
+    val estimate = SpaceEstimator.forEncrypted(filesToEncrypt.map { EncryptedSizeInput(it.length(), it.name) })
+    val probe = SpaceEstimator.probe(subfolder.absolutePath)
+    if (probe.verifiable && !SpaceEstimator.hasEnough(probe.availableBytes, estimate.peakBytes)) {
+        context.toast(
+            String.format(
+                context.getString(org.fossify.commons.R.string.no_space),
+                estimate.peakBytes.formatSize(),
+                probe.availableBytes.formatSize()
+            )
+        )
+        return null
+    }
+
+    val batchOperation = if (operation.isJournalled) operation else OperationContext(
+        operationId = OperationJournal.newOperationId(),
+        kind = OperationJournal.KIND_ENCRYPT,
+        batch = BatchOperationInfo(
+            sourceRoot = folderPath,
+            destRoot = subfolder.absolutePath,
+            albumConflictResolution = options.resolution.name,
+            estimatedRequiredBytes = estimate.requiredBytes,
+            peakBytes = estimate.peakBytes,
+            isMove = true,
+            wipeSource = true,
+            deleteSource = true
+        )
+    )
+    OperationJournal.beginBatch(
+        batchOperation,
+        filesToEncrypt.map {
+            JournalItem(
+                sourcePath = it.absolutePath,
+                destPath = File(subfolder, it.name).absolutePath,
+                sourceSize = it.length(),
+                resolvedDestName = it.name,
+                kind = OperationJournal.KIND_ENCRYPT
+            )
+        }
+    )
+
     if (shouldAddNoMedia) {
         val noMedia = File(subfolder, NOMEDIA)
         if (!noMedia.exists()) {
@@ -107,9 +156,16 @@ fun CryptoManager.encryptFolder(
 
     for ((index, file) in filesToEncrypt.withIndex()) {
         val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
+        val itemOperation = OperationContext(
+            operationId = batchOperation.operationId,
+            itemIndex = index,
+            kind = OperationJournal.KIND_ENCRYPT,
+            batch = batchOperation.batch
+        )
         if (fileResolution == CONFLICT_SKIP) {
             skippedConflictFiles.add(file)
             options.deferredSkippedSourceCollector?.add(file)
+            OperationJournal.markSkipped(itemOperation)
             onProgress?.invoke(((index + 1) * 7) / 10, total)
             continue
         }
@@ -121,7 +177,8 @@ fun CryptoManager.encryptFolder(
             clearCachesNow = false,
             conflictResolution = fileResolution,
             targetIndex = subfolderIndex,
-            skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths)
+            skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths),
+            operation = itemOperation
         )
         if (enc != null && enc.exists()) {
             val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
@@ -134,6 +191,9 @@ fun CryptoManager.encryptFolder(
             break
         }
         onProgress?.invoke(((index + 1) * 7) / 10, total)
+        if (OperationFaults.abortAfterItem(batchOperation, index)) {
+            throw java.io.IOException("Fault injection: simulated process death after album item $index")
+        }
     }
 
     // ROLLBACK IF ENCRYPTION FAILED ON ANY FILE
@@ -235,9 +295,22 @@ fun CryptoManager.encryptFolder(
     val existingEncryptedFiles = folder.listFiles()?.filter { file ->
         file.isFile && isEncryptedFile(file.name)
     } ?: emptyList()
-    for (encFile in existingEncryptedFiles) {
+    for ((existingIndex, encFile) in existingEncryptedFiles.withIndex()) {
+        val itemOperation = OperationContext(
+            operationId = batchOperation.operationId,
+            itemIndex = filesToEncrypt.size + existingIndex,
+            kind = OperationJournal.KIND_MOVE,
+            batch = batchOperation.batch
+        )
         if (unlockedMasterKey != null) {
-            copyOrMoveEncryptedFileToDirectory(context, encFile, subfolder, isMove = true, targetIndex = subfolderIndex)
+            copyOrMoveEncryptedFileToDirectory(
+                context = context,
+                sourceBin = encFile,
+                targetDir = subfolder,
+                isMove = true,
+                targetIndex = subfolderIndex,
+                operation = itemOperation
+            )
         } else {
             var dest = File(subfolder, encFile.name)
             while (dest.exists()) {
@@ -352,6 +425,7 @@ fun CryptoManager.encryptFolder(
     encryptedFolderCache[folder.absolutePath] = false
     encryptedFolderCache[subfolder.absolutePath] = true
     runCatching { clearAppImageCaches(context) }
+    batchOperation.operationId?.let { OperationJournal.clear(it) }
 
     return subfolder.absolutePath
 }
@@ -366,6 +440,7 @@ fun CryptoManager.decryptFolder(
     folderPath: String,
     targetFolderOverride: File? = null,
     options: AlbumCryptoOptions = AlbumCryptoOptions(),
+    operation: OperationContext = OperationContext.NONE,
     onProgress: ((current: Int, total: Int) -> Unit)? = null
 ): String? {
     val folder = File(folderPath)
@@ -389,6 +464,48 @@ fun CryptoManager.decryptFolder(
     val total = filesToDecrypt.size
     onProgress?.invoke(0, total)
 
+    // Ciphertext length is an upper bound for the decrypted output; album decrypt writes all
+    // outputs before deleting any .bin, so peak is the sum (ADR 0003 §3a).
+    val estimate = SpaceEstimator.forPlain(filesToDecrypt.map { it.length() })
+    val probe = SpaceEstimator.probe(targetFolder.absolutePath)
+    if (probe.verifiable && !SpaceEstimator.hasEnough(probe.availableBytes, estimate.peakBytes)) {
+        context.toast(
+            String.format(
+                context.getString(org.fossify.commons.R.string.no_space),
+                estimate.peakBytes.formatSize(),
+                probe.availableBytes.formatSize()
+            )
+        )
+        return null
+    }
+
+    val batchOperation = if (operation.isJournalled) operation else OperationContext(
+        operationId = OperationJournal.newOperationId(),
+        kind = OperationJournal.KIND_DECRYPT,
+        batch = BatchOperationInfo(
+            sourceRoot = folderPath,
+            destRoot = targetFolder.absolutePath,
+            albumConflictResolution = options.resolution.name,
+            estimatedRequiredBytes = estimate.requiredBytes,
+            peakBytes = estimate.peakBytes,
+            isMove = true,
+            wipeSource = false,
+            deleteSource = true
+        )
+    )
+    OperationJournal.beginBatch(
+        batchOperation,
+        filesToDecrypt.map {
+            JournalItem(
+                sourcePath = it.absolutePath,
+                destPath = File(targetFolder, it.name).absolutePath,
+                sourceSize = it.length(),
+                resolvedDestName = it.name,
+                kind = OperationJournal.KIND_DECRYPT
+            )
+        }
+    )
+
     val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
     val targetPlainIndex = TargetPlainIndex(targetFolder, preExistingPlainPaths)
     val newlyCreatedPlainFiles = ArrayList<File>()
@@ -398,9 +515,16 @@ fun CryptoManager.decryptFolder(
 
     for ((index, file) in filesToDecrypt.withIndex()) {
         val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
+        val itemOperation = OperationContext(
+            operationId = batchOperation.operationId,
+            itemIndex = index,
+            kind = OperationJournal.KIND_DECRYPT,
+            batch = batchOperation.batch
+        )
         if (fileResolution == CONFLICT_SKIP) {
             skippedConflictFiles.add(file)
             options.deferredSkippedSourceCollector?.add(file)
+            OperationJournal.markSkipped(itemOperation)
             onProgress?.invoke(index + 1, total)
             continue
         }
@@ -411,7 +535,8 @@ fun CryptoManager.decryptFolder(
             deleteEncryptedSource = false,
             conflictResolution = fileResolution,
             targetIndex = targetPlainIndex,
-            skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths)
+            skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths),
+            operation = itemOperation
         )
         if (decrypted != null && decrypted.exists()) {
             val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
@@ -424,6 +549,9 @@ fun CryptoManager.decryptFolder(
             break
         }
         onProgress?.invoke(index + 1, total)
+        if (OperationFaults.abortAfterItem(batchOperation, index)) {
+            throw java.io.IOException("Fault injection: simulated process death after album item $index")
+        }
     }
 
     // ROLLBACK IF DECRYPTION FAILED
@@ -530,5 +658,6 @@ fun CryptoManager.decryptFolder(
             runCatching { context.rescanPaths(arrayListOf(targetNoMedia.absolutePath)) }
         }
     }
+    batchOperation.operationId?.let { OperationJournal.clear(it) }
     return targetFolder.absolutePath
 }
