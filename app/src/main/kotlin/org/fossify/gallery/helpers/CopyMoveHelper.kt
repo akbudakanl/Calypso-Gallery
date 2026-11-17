@@ -29,7 +29,6 @@ import org.fossify.commons.extensions.isRecycleBinPath
 import org.fossify.commons.extensions.isRestrictedSAFOnlyRoot
 import org.fossify.commons.extensions.isRestrictedWithSAFSdk30
 import org.fossify.commons.extensions.needsStupidWritePermissions
-import org.fossify.commons.extensions.rescanPath
 import org.fossify.commons.extensions.rescanPaths
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toFileDirItem
@@ -521,6 +520,9 @@ private sealed class TopLevelResolution {
     data class Proceed(val destItem: FileDirItem) : TopLevelResolution()
 }
 
+/** A copied destination that still needs to be indexed by MediaScanner. */
+private data class PendingRescan(val path: String, val lastModified: Long, val dateTaken: Long)
+
 private class CopyMoveRunner(
     private val activity: BaseSimpleActivity,
     private val config: CopyMoveConfig,
@@ -529,6 +531,10 @@ private class CopyMoveRunner(
     private val transferredFiles = ArrayList<FileDirItem>()
     private val itemsToDeleteSdk30 = ArrayList<FileDirItem>()
     private val movedPathsToRescan = ArrayList<String>()
+    // Stream-copied files are collected here and indexed in one bulk pass at the end instead of
+    // firing one MediaScanner request per file. Each request used to change the MediaStore ids and
+    // trigger a full album re-scan via MainActivity.checkLastMediaChanged().
+    private val copiedPathsToRescan = ArrayList<PendingRescan>()
     private val documents = LinkedHashMap<String, DocumentFile?>()
     private val destIndexMap = HashMap<String, CryptoManager.TargetPlainIndex>()
 
@@ -628,8 +634,20 @@ private class CopyMoveRunner(
                     }
                 }
             }
-            if (movedPathsToRescan.isNotEmpty()) {
-                activity.rescanPaths(movedPathsToRescan)
+            // One bulk MediaScanner pass for every transferred file (rename fast paths plus
+            // stream copies) instead of one request per copied file. A single pass changes the
+            // MediaStore ids once, so the album grid is reloaded once instead of N times.
+            val allPathsToRescan = ArrayList<String>(movedPathsToRescan.size + copiedPathsToRescan.size)
+            allPathsToRescan.addAll(movedPathsToRescan)
+            allPathsToRescan.addAll(copiedPathsToRescan.map { it.path })
+            if (allPathsToRescan.isNotEmpty()) {
+                activity.rescanPaths(allPathsToRescan) {
+                    if (activity.baseConfig.keepLastModified) {
+                        copiedPathsToRescan.forEach {
+                            updateLastModifiedValues(it.path, it.lastModified, it.dateTaken)
+                        }
+                    }
+                }
             }
             true
         } catch (e: Exception) {
@@ -951,15 +969,12 @@ private class CopyMoveRunner(
     }
 
     private fun finalizeCopiedFile(dest: FileDirItem, lastModified: Long, dateTaken: Long) {
-        val keepLastModified = activity.baseConfig.keepLastModified
-        if (keepLastModified) {
+        if (activity.baseConfig.keepLastModified) {
             updateLastModifiedValues(dest.path, lastModified, dateTaken)
         }
-        activity.rescanPath(dest.path) {
-            if (keepLastModified) {
-                updateLastModifiedValues(dest.path, lastModified, dateTaken)
-            }
-        }
+        // Defer indexing to the single bulk rescan in execute(). The metadata is re-applied
+        // once that scan completes, since MediaScanner may overwrite file timestamps.
+        copiedPathsToRescan.add(PendingRescan(dest.path, lastModified, dateTaken))
     }
 
     private fun closeQuietly(stream: java.io.Closeable?) {

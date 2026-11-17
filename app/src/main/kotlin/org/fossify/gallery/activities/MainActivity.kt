@@ -206,6 +206,55 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         private const val IS_SECRET_VAULT_VIEW = "is_secret_vault_view"
         private const val HIDDEN_DISPLAY_MODE = "hidden_display_mode"
+
+        /**
+         * Cheap MediaStore fingerprint of a folder, derived from the file paths and their
+         * DATE_MODIFIED values. Used to avoid re-scanning folders whose content did not change.
+         */
+        private data class FolderMediaSignature(
+            val mediaCount: Int,
+            val minModified: Long,
+            val maxModified: Long
+        )
+
+        // Kept at process level so it also survives an activity recreation (e.g. switching
+        // between the album grid and the "all media" file view).
+        @Volatile
+        private var cachedFolderSignatures: Map<String, FolderMediaSignature> = emptyMap()
+
+        // Stamp of the settings that affect folder content. A mismatch invalidates the cache.
+        @Volatile
+        private var cachedFolderSignaturesStamp: Int = 0
+    }
+
+    /**
+     * Computes one MediaStore fingerprint per folder in a single pass over the already-queried
+     * [lastModifieds] map. No extra filesystem or database I/O.
+     */
+    private fun computeFolderMediaSignatures(lastModifieds: Map<String, Long>): Map<String, FolderMediaSignature> {
+        // folder -> (count, min modified, max modified)
+        val accumulators = HashMap<String, LongArray>()
+        for ((path, modified) in lastModifieds) {
+            val separator = path.lastIndexOf('/')
+            if (separator <= 0) continue
+            val folder = path.substring(0, separator)
+            val acc = accumulators.getOrPut(folder) { longArrayOf(0L, Long.MAX_VALUE, 0L) }
+            acc[0]++
+            if (modified < acc[1]) acc[1] = modified
+            if (modified > acc[2]) acc[2] = modified
+        }
+        return accumulators.mapValues { (_, acc) ->
+            FolderMediaSignature(acc[0].toInt(), acc[1], acc[2])
+        }
+    }
+
+    /** Settings that change which media belong to a folder or how its aggregate is computed. */
+    private fun currentFolderSignatureStamp(): Int {
+        var stamp = config.filterMedia
+        stamp = 31 * stamp + config.directorySorting
+        stamp = 31 * stamp + config.tempFolderPath.hashCode()
+        stamp = 31 * stamp + if (mIsSecretVaultView) 1 else 0
+        return stamp
     }
 
     private var mIsPickImageIntent = false
@@ -1795,6 +1844,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val getProperFileSize = true
         val dirPathsToRemove = ArrayList<String>()
         val lastModifieds = fetcher.getLastModifieds()
+        // Derive folder fingerprints from the MediaStore data we already queried above. They let
+        // Phase 2 skip the expensive per-folder re-scan when a folder's media set is unchanged.
+        val folderSignatures = computeFolderMediaSignatures(lastModifieds)
+        val signatureStamp = currentFolderSignatureStamp()
+        val signaturesUsable = signatureStamp == cachedFolderSignaturesStamp
         val dateTakens = fetcher.getDateTakens()
 
         // fetch files from MediaStore only, unless the app has the MANAGE_EXTERNAL_STORAGE permission on Android 11+
@@ -1928,6 +1982,22 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             for (directory in existingDirsOrdered) {
                 if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
                     return
+                }
+
+                // Skip the expensive MediaStore/filesystem re-scan for folders whose fingerprint
+                // has not changed since the last completed scan. Special folders and virtual /
+                // encrypted albums are always re-scanned because they are maintained outside MediaStore.
+                val signature = folderSignatures[directory.path]
+                val canSkipRescan = signaturesUsable &&
+                    signature != null &&
+                    signature == cachedFolderSignatures[directory.path] &&
+                    directory.path != FAVORITES &&
+                    directory.path != RECYCLE_BIN &&
+                    directory.path != tempFolderPath &&
+                    !directory.isVirtualAlbum() &&
+                    !CryptoManager.isEncryptedFolderPath(this, directory.path)
+                if (canSkipRescan) {
+                    continue
                 }
 
                 val curMedia = fetcher.getFilesFrom(
@@ -2086,6 +2156,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
             return
         }
+
+        // Commit the fingerprints only after a complete, non-cancelled scan.
+        cachedFolderSignatures = folderSignatures
+        cachedFolderSignaturesStamp = signatureStamp
 
         mLoadedInitialPhotos = true
         if (hasAllPermissions(getPermissionsToRequest())) {

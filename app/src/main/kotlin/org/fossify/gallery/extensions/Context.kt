@@ -130,6 +130,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import java.util.IdentityHashMap
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
@@ -201,6 +202,8 @@ fun Context.movePinnedDirectoriesToFront(dirs: ArrayList<Directory>): ArrayList<
     return dirs
 }
 
+private data class SortKeys(val value: String, val path: String)
+
 @Suppress("UNCHECKED_CAST")
 fun Context.getSortedDirectories(source: ArrayList<Directory>): ArrayList<Directory> {
     val sorting = config.directorySorting
@@ -223,48 +226,37 @@ fun Context.getSortedDirectories(source: ArrayList<Directory>): ArrayList<Direct
         return newDirsOrdered
     }
 
+    // Precompute the normalized comparison keys once per directory instead of doing
+    // lowercase()/normalizeString() on every single comparator invocation (O(n log n) allocations).
+    // IdentityHashMap is used because Directory is mutable and must not be used as a hash key.
+    val usesTextSort = sorting and SORT_BY_NAME != 0 || sorting and SORT_BY_PATH != 0
+    val sortKeys = if (usesTextSort) IdentityHashMap<Directory, SortKeys>() else null
+    if (sortKeys != null) {
+        val byName = sorting and SORT_BY_NAME != 0
+        dirs.forEach { dir ->
+            if (dir.sortValue.isEmpty()) {
+                dir.sortValue = if (byName) dir.name else dir.path
+                dir.sortValue = dir.sortValue.lowercase(Locale.getDefault())
+            }
+            // NAME sorting normalizes the key, PATH sorting keeps it as plain lowercase.
+            val value = if (byName) dir.sortValue.normalizeString().lowercase(Locale.getDefault()) else dir.sortValue
+            sortKeys[dir] = SortKeys(value = value, path = dir.path.lowercase(Locale.getDefault()))
+        }
+    }
+
+    val alphanumericComparator = if (usesTextSort && sorting and SORT_USE_NUMERIC_VALUE != 0) AlphanumericComparator() else null
     dirs.sortWith { o1, o2 ->
         o1 as Directory
         o2 as Directory
 
+        val k1 = sortKeys?.get(o1)
+        val k2 = sortKeys?.get(o2)
         var result = when {
-            sorting and SORT_BY_NAME != 0 -> {
-                if (o1.sortValue.isEmpty()) {
-                    o1.sortValue = o1.name.lowercase(Locale.getDefault())
-                }
-
-                if (o2.sortValue.isEmpty()) {
-                    o2.sortValue = o2.name.lowercase(Locale.getDefault())
-                }
-
-                if (sorting and SORT_USE_NUMERIC_VALUE != 0) {
-                    AlphanumericComparator().compare(
-                        string1 = o1.sortValue.normalizeString().lowercase(Locale.getDefault()),
-                        string2 = o2.sortValue.normalizeString().lowercase(Locale.getDefault())
-                    )
+            sorting and SORT_BY_NAME != 0 || sorting and SORT_BY_PATH != 0 -> {
+                if (alphanumericComparator != null) {
+                    alphanumericComparator.compare(string1 = k1!!.value, string2 = k2!!.value)
                 } else {
-                    o1.sortValue.normalizeString().lowercase(Locale.getDefault())
-                        .compareTo(o2.sortValue.normalizeString().lowercase(Locale.getDefault()))
-                }
-            }
-
-            sorting and SORT_BY_PATH != 0 -> {
-                if (o1.sortValue.isEmpty()) {
-                    o1.sortValue = o1.path.lowercase(Locale.getDefault())
-                }
-
-                if (o2.sortValue.isEmpty()) {
-                    o2.sortValue = o2.path.lowercase(Locale.getDefault())
-                }
-
-                if (sorting and SORT_USE_NUMERIC_VALUE != 0) {
-                    AlphanumericComparator().compare(
-                        string1 = o1.sortValue.lowercase(Locale.getDefault()),
-                        string2 = o2.sortValue.lowercase(Locale.getDefault())
-                    )
-                } else {
-                    o1.sortValue.lowercase(Locale.getDefault())
-                        .compareTo(o2.sortValue.lowercase(Locale.getDefault()))
+                    k1!!.value.compareTo(k2!!.value)
                 }
             }
 
@@ -279,7 +271,8 @@ fun Context.getSortedDirectories(source: ArrayList<Directory>): ArrayList<Direct
             result *= -1
         }
         if (result == 0) {
-            result = o1.path.lowercase(Locale.getDefault()).compareTo(o2.path.lowercase(Locale.getDefault()))
+            result = (k1?.path ?: o1.path.lowercase(Locale.getDefault()))
+                .compareTo(k2?.path ?: o2.path.lowercase(Locale.getDefault()))
         }
         result
     }
