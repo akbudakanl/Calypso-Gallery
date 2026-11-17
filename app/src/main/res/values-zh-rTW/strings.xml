@@ -298,8 +298,8 @@
     <string name="decrypting_files">正在解密檔案…</string>
     <string name="place_finger_prompt">請將手指放在指紋感應器上</string>
     <string name="connect_at_least_4_dots_prompt">請至少連接 4 個點</string>
-    <string name="access_existing_cipher_secrets_prompt">您要存取現有的 Secrets 資料夾嗎？</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？</string>
+    <string name="access_existing_secrets_prompt">您要存取現有的 Secrets 資料夾嗎？</string>
+    <string name="delete_and_recreate_secrets_prompt">現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？</string>
     <string name="confirm_checkbox_label">我確認</string>
     <string name="secret_vault">加密保險箱</string>
     <string name="secret_vault_empty">加密保險箱為空</string>

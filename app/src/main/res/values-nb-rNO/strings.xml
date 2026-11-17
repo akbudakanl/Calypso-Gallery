@@ -304,8 +304,8 @@
     <string name="decrypting_files">Dekrypterer filer…</string>
     <string name="place_finger_prompt">Plasser fingeren på fingeravtrykkssensoren</string>
     <string name="connect_at_least_4_dots_prompt">Koble sammen minst 4 punkter</string>
-    <string name="access_existing_cipher_secrets_prompt">Vil du få tilgang til din eksisterende Secrets-mappe?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Eksisterende Secrets-mappe vil bli slettet og en ny vil bli opprettet. Er du sikker?</string>
+    <string name="access_existing_secrets_prompt">Vil du få tilgang til din eksisterende Secrets-mappe?</string>
+    <string name="delete_and_recreate_secrets_prompt">Eksisterende Secrets-mappe vil bli slettet og en ny vil bli opprettet. Er du sikker?</string>
     <string name="confirm_checkbox_label">Jeg bekrefter</string>
     <string name="secret_vault">Kryptert hvelv</string>
     <string name="secret_vault_empty">Det krypterte hvelvet er tomt</string>

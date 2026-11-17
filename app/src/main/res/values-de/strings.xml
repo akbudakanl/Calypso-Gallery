@@ -300,8 +300,8 @@
     <string name="decrypting_files">Dateien werden entschlüsselt…</string>
     <string name="place_finger_prompt">Bitte den Finger auf den Fingerabdrucksensor legen</string>
     <string name="connect_at_least_4_dots_prompt">Mindestens 4 Punkte verbinden</string>
-    <string name="access_existing_cipher_secrets_prompt">Möchtest du auf deinen vorhandenen Secrets-Ordner zugreifen?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Der vorhandene Secrets-Ordner wird gelöscht und ein neuer erstellt. Bist du sicher?</string>
+    <string name="access_existing_secrets_prompt">Möchtest du auf deinen vorhandenen Secrets-Ordner zugreifen?</string>
+    <string name="delete_and_recreate_secrets_prompt">Der vorhandene Secrets-Ordner wird gelöscht und ein neuer erstellt. Bist du sicher?</string>
     <string name="confirm_checkbox_label">Ich bestätige</string>
     <string name="secret_vault">Verschlüsselter Tresor</string>
     <string name="secret_vault_empty">Verschlüsselter Tresor ist leer</string>

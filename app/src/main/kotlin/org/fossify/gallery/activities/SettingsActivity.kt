@@ -1139,7 +1139,7 @@ class SettingsActivity : SimpleActivity() {
             if (!doesVaultExist()) return@setOnClickListener
 
             requireVaultPassword {
-                DeleteCipherSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
+                DeleteSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
                     ensureBackgroundThread {
                         CryptoManager.deleteExistingVault(this)
                         runOnUiThread {

@@ -6,9 +6,9 @@ import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
-import org.fossify.gallery.databinding.DialogDeleteCipherSecretsBinding
+import org.fossify.gallery.databinding.DialogDeleteSecretsBinding
 
-class DeleteCipherSecretsDialog(
+class DeleteSecretsDialog(
     private val activity: BaseSimpleActivity,
     private val messageText: String? = null,
     private val onConfirmed: () -> Unit
@@ -17,45 +17,45 @@ class DeleteCipherSecretsDialog(
     private var countDownTimer: CountDownTimer? = null
 
     init {
-        val binding = DialogDeleteCipherSecretsBinding.inflate(activity.layoutInflater)
+        val binding = DialogDeleteSecretsBinding.inflate(activity.layoutInflater)
         if (messageText != null) {
-            binding.cipherSecretsWarningMessage.text = messageText
+            binding.secretsWarningMessage.text = messageText
         }
-        binding.cipherSecretsConfirmCheckbox.isEnabled = false
-        binding.cipherSecretsConfirmCheckbox.isChecked = false
-        binding.cipherSecretsBtnYes.isEnabled = false
+        binding.secretsConfirmCheckbox.isEnabled = false
+        binding.secretsConfirmCheckbox.isChecked = false
+        binding.secretsBtnYes.isEnabled = false
 
-        binding.cipherSecretsBtnYes.text = activity.getString(org.fossify.commons.R.string.yes)
-        binding.cipherSecretsBtnNo.text = activity.getString(org.fossify.commons.R.string.no)
+        binding.secretsBtnYes.text = activity.getString(org.fossify.commons.R.string.yes)
+        binding.secretsBtnNo.text = activity.getString(org.fossify.commons.R.string.no)
 
         val baseConfirmText = activity.getString(R.string.confirm_checkbox_label)
-        binding.cipherSecretsConfirmCheckbox.text = "$baseConfirmText (10)"
+        binding.secretsConfirmCheckbox.text = "$baseConfirmText (10)"
 
         countDownTimer = object : CountDownTimer(10000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = ((millisUntilFinished + 999) / 1000).toInt()
-                binding.cipherSecretsConfirmCheckbox.text = "$baseConfirmText ($seconds)"
+                binding.secretsConfirmCheckbox.text = "$baseConfirmText ($seconds)"
             }
 
             override fun onFinish() {
-                binding.cipherSecretsConfirmCheckbox.text = baseConfirmText
-                binding.cipherSecretsConfirmCheckbox.isEnabled = true
+                binding.secretsConfirmCheckbox.text = baseConfirmText
+                binding.secretsConfirmCheckbox.isEnabled = true
             }
         }.start()
 
-        binding.cipherSecretsConfirmCheckbox.setOnCheckedChangeListener { _, isChecked ->
-            binding.cipherSecretsBtnYes.isEnabled = isChecked
+        binding.secretsConfirmCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            binding.secretsBtnYes.isEnabled = isChecked
         }
 
-        binding.cipherSecretsBtnYes.setOnClickListener {
-            if (binding.cipherSecretsConfirmCheckbox.isChecked) {
+        binding.secretsBtnYes.setOnClickListener {
+            if (binding.secretsConfirmCheckbox.isChecked) {
                 countDownTimer?.cancel()
                 dialog?.dismiss()
                 onConfirmed()
             }
         }
 
-        binding.cipherSecretsBtnNo.setOnClickListener {
+        binding.secretsBtnNo.setOnClickListener {
             countDownTimer?.cancel()
             dialog?.dismiss()
         }

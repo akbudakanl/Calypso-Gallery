@@ -30,7 +30,7 @@
 
 ### 1.2 Newly Added Fork-Only Strings (66 Keys)
 
-These 66 strings were introduced by this fork (Gallery-Cipher) and do not exist in the original Fossify Gallery:
+These 66 strings were introduced by this fork (Calypso Gallery) and do not exist in the original Fossify Gallery:
 
 | # | Key (`name`) | English (`values/strings.xml`) | Taiwanese (`values-zh-rTW/strings.xml`) | Notes |
 |---:|---|---|---|---|
@@ -62,8 +62,8 @@ These 66 strings were introduced by this fork (Gallery-Cipher) and do not exist 
 | 26 | `decrypting_files` | Decrypting files… | 正在解密檔案… | Progress message using `正在…` style |
 | 27 | `place_finger_prompt` | Please place your finger on the fingerprint sensor | 請將手指放在指紋感應器上 | Matches `fossify-commons` `place_finger` terminology (`指紋感應器`) |
 | 28 | `connect_at_least_4_dots_prompt` | Connect at least 4 dots | 請至少連接 4 個點 | Pattern lock validation prompt |
-| 29 | `access_existing_cipher_secrets_prompt` | Do you want to access your existing Secrets folder? | 您要存取現有的 Secrets 資料夾嗎？ | Keeps literal folder name `Secrets` |
-| 30 | `delete_and_recreate_cipher_secrets_prompt` | Existing Secrets folder will be deleted and a new one will be created. Are you sure? | 現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？ | Keeps literal folder name `Secrets` |
+| 29 | `access_existing_secrets_prompt` | Do you want to access your existing Secrets folder? | 您要存取現有的 Secrets 資料夾嗎？ | Keeps literal folder name `Secrets` |
+| 30 | `delete_and_recreate_secrets_prompt` | Existing Secrets folder will be deleted and a new one will be created. Are you sure? | 現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？ | Keeps literal folder name `Secrets` |
 | 31 | `confirm_checkbox_label` | I confirm | 我確認 | Checkbox label, suffixed with countdown `(10)` in dialog |
 | 32 | `secret_vault` | Encrypted Vault | 加密保險箱 | Vault feature title |
 | 33 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 | Empty state placeholder for Encrypted Vault |
@@ -492,8 +492,8 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 289 | `decrypting_files` | Decrypting files… | 正在解密檔案… |
 | 290 | `place_finger_prompt` | Please place your finger on the fingerprint sensor | 請將手指放在指紋感應器上 |
 | 291 | `connect_at_least_4_dots_prompt` | Connect at least 4 dots | 請至少連接 4 個點 |
-| 292 | `access_existing_cipher_secrets_prompt` | Do you want to access your existing Secrets folder? | 您要存取現有的 Secrets 資料夾嗎？ |
-| 293 | `delete_and_recreate_cipher_secrets_prompt` | Existing Secrets folder will be deleted and a new one will be created. Are you sure? | 現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？ |
+| 292 | `access_existing_secrets_prompt` | Do you want to access your existing Secrets folder? | 您要存取現有的 Secrets 資料夾嗎？ |
+| 293 | `delete_and_recreate_secrets_prompt` | Existing Secrets folder will be deleted and a new one will be created. Are you sure? | 現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？ |
 | 294 | `confirm_checkbox_label` | I confirm | 我確認 |
 | 295 | `secret_vault` | Encrypted Vault | 加密保險箱 |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 |
@@ -642,7 +642,6 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 445 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | 大型檔案快速重複檢查 (>8 MB) |
 | 446 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 對包含大型檔案的傳輸至關重要：每個檔案僅檢查 5 個區塊（共 1.25 MB）而不必讀取整個檔案，可將重複檢查加速數十倍。 |
 | 447 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 快速重複檢查 (>8 MB) |
-| 448 | `fast_large_duplicate_check_info_message` | Why this matters for large copy/move transfers:\n\nWhen copying or moving large files, such as gigabytes of videos, exact bit-by-bit checking must read both the source and destination files from start to finish whenever filenames and sizes match—taking minutes on fast storage or much longer on SD cards.\n\nHow Fast Check works:\n• Files under 8 MB are ALWAYS checked 100% bit-by-bit.\n• For files over 8 MB, the app compares file size plus five 256 KB blocks distributed across the start, 25%, 50%, 75%, and end of the file (1.25 MB total per side).\n• For a 50 GB archive of 50 MB–1 GB videos, this cuts disk reads by ~40× to ~800×.\n\nWhen to enable or disable:\n• Recommended ON: If most of your gallery consists of large files (>8 MB), two intact, distinct files sharing the same name, exact byte size, and all 5 sampled regions is virtually impossible in practice.\n• Recommended OFF (no speedup): If your gallery consists mostly of photos or files under 8 MB, this setting provides no significant speed gain since files under 8 MB are always checked 100% bit-by-bit.\n• External USB vault sync always stays full Poly1305-AES authenticated. | 為何這對大型複製/移動傳輸很重要：\n\n複製或移動大型檔案（例如數 GB 的影片）時，只要檔名與大小相符，精確逐位元檢查就必須從頭到尾讀取來源與目的地檔案——在高速儲存裝置上需數分鐘，在 SD 卡上則需更久。\n\n快速檢查的運作方式：\n• 小於 8 MB 的檔案一律進行 100% 逐位元檢查。\n• 對於超過 8 MB 的檔案，應用程式會比對檔案大小以及分佈於檔案開頭、25%、50%、75% 與結尾的五個 256 KB 區塊（單側共 1.25 MB）。\n• 對於包含 50 MB–1 GB 影片的 50 GB 封存檔，這可將磁碟讀取減少約 ~40× 至 ~800×。\n\n何時啟用或停用：\n• 建議開啟：若您的圖庫大多為大型檔案 (>8 MB)，兩個未損壞且不同的檔案在實務上幾乎不可能同時擁有相同檔名、精確位元組大小與全部 5 個取樣區段。\n• 建議關閉（無加速效果）：若您的圖庫主要是相片或小於 8 MB 的檔案，由於小於 8 MB 的檔案一律進行 100% 逐位元檢查，此設定不會帶來明顯的速度提升。\n• 外部 USB 保險箱同步一律維持完整的 Poly1305-AES 驗證。 |
 | 449 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | 檔案衝突與重複解決 |
 | 450 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | 複製、移動、加密或解密檔案與相簿時，若目的地已存在同名檔案：\n\n1. 逐位元重複檢查 (RAM)：\n應用程式會先檢查檔案大小，若大小相符，則在 RAM 中逐位元比對檔案內容（加密檔案會在記憶體中檢查，不會將明文寫入磁碟）。複製/移動期間，相同檔案會被略過，原始檔案在來源資料夾中保持不變。在加密/解密期間合併相簿時，您可選擇要刪除或保留 100% 位元完全相同的來源檔案。\n\n2. 同名但內容不同（例如兩個不同的 download.jpg 檔案）：\n• 全自動（預設）：將新檔案命名為 download(1).jpg、download(2).jpg，不中斷您的操作並保留兩個檔案。\n• 智慧對話方塊：仍會靜默略過位元完全相同的檔案，僅在兩個檔案同名但內容不同時詢問（略過 / 覆寫 / 兩者皆保留）。 |
 | 451 | `syncing_vault_progress` | Syncing vault from external drive… | 正在從外接磁碟機同步保險箱… |
@@ -738,22 +737,6 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 541 | `fork_disclaimer_title` | Fork notice | 分支聲明 |
 | 542 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | 本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。 |
 | 543 | `fork_disclaimer_acknowledge` | I understand | 我瞭解 |
-| 544 | `vault_upgrade_entry_title` | Encrypted Vault update available | 加密保險箱更新可用 |
-| 545 | `vault_upgrade_entry_message` | Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm. | 您的加密保險箱是以舊版應用程式建立，並使用舊的加密演算法。若您願意，可以依目前版本的加密演算法重新建立加密保險箱。 |
-| 546 | `vault_upgrade_always_show` | Always show | 一律顯示 |
-| 547 | `vault_upgrade_settings_title` | Always show vault update warning | 一律顯示保險箱更新警告 |
-| 548 | `vault_upgrade_details_title` | Before updating | 更新前 |
-| 549 | `vault_upgrade_details_message` | It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app. | 建議先備份，再更新加密保險箱以使用目前的加密演算法。如此一來，即可消除因更新中斷而導致資料遺失的風險；若您願意，也可以在舊版應用程式中繼續使用未更新的加密保險箱。 |
-| 550 | `vault_upgrade_low_battery` | Your battery is low, please charge your device to at least 20%. | 您的電量偏低，請將裝置充電至至少 20%。 |
-| 551 | `vault_upgrade_low_space` | Not enough free space to update the Encrypted Vault. | 可用空間不足，無法更新加密保險箱。 |
-| 552 | `vault_upgrade_continue` | Continue | 繼續 |
-| 553 | `vault_upgrade_progress` | Converted %1$d of %2$d files | 已轉換 %1$d / %2$d 個檔案 |
-| 554 | `vault_upgrade_finished` | Update complete. Reopen the Encrypted Vault to activate the new keyring. | 更新完成。請重新開啟加密保險箱以啟用新的金鑰環。 |
-| 555 | `vault_upgrade_failed_count` | Update stopped: %1$d file(s) could not be verified. | 更新已停止：有 %1$d 個檔案無法驗證。 |
-| 556 | `vault_upgrade_resume_title` | Vault update was interrupted | 保險箱更新已中斷 |
-| 557 | `vault_upgrade_resume_message` | The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files? | 加密保險箱更新已中斷。加密保險箱中的部分檔案已更新為新的加密演算法。沒有任何資料遺失。您要繼續更新其餘的檔案嗎？ |
-| 558 | `vault_upgrade_progress_warning` | Please do not exit the app or turn off the screen during the update. | 更新期間請勿離開應用程式或關閉螢幕。 |
-| 559 | `vault_upgrade_waiting` | Encrypted Vault is disconnected. Waiting for it to reconnect... | 加密保險箱已中斷連線。正在等待重新連線... |
 | 560 | `argon2_profile_title` | Brute-Force resistance | 暴力破解防護 |
 | 561 | `brute_force_mode_title` | Calibration mode | 校正模式 |
 | 562 | `brute_force_mode_time` | Via vault unlock time | 透過保險箱解鎖時間 |

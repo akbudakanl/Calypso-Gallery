@@ -25,7 +25,7 @@ This ADR records the analysis, the rejected options, the remaining theoretical g
 ## 2. What we use today
 
 - **Variant: Argon2id, version 1.3.** `deriveKeyArgon2id` uses `Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)` with `ARGON2_VERSION_13` (BouncyCastle). The header stores `KDF: 1 = Argon2id` and the marker is `argon2id_aes256_gcm_v2`.
-- **Rationale for Argon2id:** Argon2d is stronger against GPU/ASIC but side-channel sensitive; Argon2i is the opposite; Argon2id is the hybrid and the RFC 9106 / OWASP recommended default. Keeping it also preserves compatibility with every existing vault.
+- **Rationale for Argon2id:** Argon2d is stronger against GPU/ASIC but side-channel sensitive; Argon2i is the opposite; Argon2id is the hybrid and the RFC 9106 / OWASP recommended default.
 - **Implementation constraint:** BouncyCastle's `Argon2BytesGenerator` allocates the whole working memory as a **single Java `int[]`** — inside the **Java heap**.
 
 Current safety bounds (already implemented, and to be kept for now):
@@ -133,16 +133,16 @@ A `calloc` failure is reported by the reference Argon2 library as `ARGON2_MEMORY
 
 Native Argon2 with the **same algorithm, version 1.3 and the same `(m, t, p)`** produces the **same 32-byte key**. Therefore:
 
-- existing v3/v4 vaults remain readable,
-- `.vault` format is unchanged, no migration,
+- the derived key is byte-identical to the current implementation,
+- the `.vault` format is unchanged,
 - this is an **allocation-location swap, not a crypto change**,
-- **Argon2id is preserved** — no switch to Argon2d (which would break every existing vault and forgo the mobile side-channel advantage).
+- **Argon2id is preserved** — no switch to Argon2d, which would forgo the mobile side-channel advantage and change the derived key.
 
 ### 9.3 API choice — critical
 
 Use the reference Argon2 C library's `argon2id_hash_raw(t_cost, m_cost, parallelism, ...)` via JNI.
 
-**Do not use libsodium's `crypto_pwhash_argon2id`**: it fixes the pass count at 3 and maps `opslimit` as a multiplier, so it cannot reproduce our exact `(m, t, p)`. The derived key would differ and existing vaults would not open.
+**Do not use libsodium's `crypto_pwhash_argon2id`**: it fixes the pass count at 3 and maps `opslimit` as a multiplier, so it cannot reproduce our exact `(m, t, p)`. The derived key would differ from the canonical one.
 
 ### 9.4 What remains theoretical after JNI
 
@@ -179,7 +179,7 @@ This breaks the §6 deadlock **without weakening password security**: an attacke
 
 **No decision has been taken.** The current dynamic scheme stays. Outstanding choices:
 
-1. Implement the JNI prototype + an **equivalence test** proving BC and native Argon2 produce the identical 32-byte key for the same `(password, salt, m, t, p, version)` — the proof that format compatibility holds.
+1. Implement the JNI prototype + an **equivalence test** proving BC and native Argon2 produce the identical 32-byte key for the same `(password, salt, m, t, p, version)` — the proof that both implementations derive the same key.
 2. Add the recovery-key mechanism as a separate ADR / feature, for the formal cross-device case.
 3. Add cheap hardening regardless of 1 and 2: `android:largeHeap="true"`, capability probing by **actual allocation attempt** instead of the `maxMemory()/2` estimate, OOM handling on the vault-creation and unlock paths, and an explanatory dialog instead of a crash when stored parameters exceed device capacity.
 4. Keep the "(clamped)" UI marker and real-parameter display in all cases.
@@ -190,7 +190,7 @@ The project currently has **no** `android:largeHeap`, **no** NDK/CMake setup and
 
 ## 12. Consequences if JNI is adopted
 
-- No `.vault` format change, no vault migration, no CLI change.
+- No `.vault` format change, no CLI change.
 - Build pipeline gains native compilation and ABI-specific artifacts; reproducibility and library provenance must be documented.
 - The existing Argon2 calibration, clamping and UI marker remain valid; only the allocator changes.
 - The recovery-key design remains a separate, optional layer for the residual transfer case.
