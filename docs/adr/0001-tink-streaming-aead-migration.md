@@ -442,6 +442,7 @@ Preconditions (checked at this point, then skipped on later attempts once acknow
 |---|---|
 | **Segment size unvalidated** | **Measurement gate before Stage 2:** sequential throughput, seek latency, player read pattern. 64 KiB remains a reasonable *seek granularity* default; choose by measurement, not "bit-rot isolation" (the reader throws on a corrupt segment rather than skipping it). |
 | Tink seekable channel re-decrypts a segment per small read | Verify current-segment caching in Stage 0; add a thin segment cache or retune segment size |
+| **Reported playback stutter (observed by tester on a debug build)** | Not yet attributable: v4 writers are not enabled, so a v3 (CTR) video does not use the Tink path at all. Likely debug-build overhead, but take seriously: collect the device read-pattern probe on a v4 file, compare debug vs release, and only then decide between keeping 256 KiB, adding a segment cache (§3.4), or reconsidering the size. Never dismiss as "just perception" before measuring. |
 | Truncation / trailing-byte acceptance | Read to `lastFlag`; strict `file.length() == payloadOffset + ciphertextLength` |
 | AAD / param mismatch Java ↔ Python | Frozen spec, pinned versions, golden fixtures in CI |
 | Header transplant / epoch downgrade | Header GCM AAD binds `magic‖version‖keyId‖fileId‖N`; Tink rejects via DEK mismatch |
@@ -543,7 +544,9 @@ Decision rule: choose the **smallest** segment whose sequential throughput is wi
 
 Decision rule applied: best sequential = 610.5 MiB/s; 90 % = 549.5. 16 KiB and 64 KiB fall below it; **256 KiB (564.2) is the smallest segment within 10 %**, and its seek p95 (0.5 ms) is far below the 16 ms frame budget. **Writer default set to 256 KiB.** Readers are not locked to it: `segmentSize` is carried in `EncryptedFileMetadata` from the header and all four values are accepted, so files written with a different segment size remain readable.
 
-**Gate status:** provisional — the device read-pattern probe must still be run on a mid-range device (internal storage and USB) before Stage 2. If Media3's real reads are consistently ≥256 KiB and aligned, 1 MiB may be reconsidered; if they are small and randomly distributed, keep 256 KiB.
+**Device probe result (collected by tester on 2026-11-17, v3 video):** `opens=7..10`, `seeks=6..9`, `reads=45k..61k`, `bytes=17.9..24.2 MB` → **~400 bytes per read on average**, ~98 % of reads below 64 KiB, only one seek per open plus a few scrubs. Media3 therefore performs small but **mostly contiguous** reads. This means segment size governs the latency spike at segment boundaries rather than average throughput: a 1 MiB segment would produce a single ~1 MB decrypt spike per boundary, while 256 KiB produces smaller, more frequent spikes. With smoothness already reported as a concern, **256 KiB is confirmed and 1 MiB is explicitly rejected**. The user chose to skip the debug-vs-release smoothness comparison; the stutter report remains recorded in §8 as an unattributed risk (the tested video was v3/CTR, so the Tink read path was not involved).
+
+**Gate status:** closed at 256 KiB. Revisit only if a v4 file shows a reproducible smoothness regression that is demonstrably segment-boundary related.
 
 ### 11.2 Pin the exact Tink version (resolved in Stage 0)
 

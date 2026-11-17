@@ -100,7 +100,7 @@ Calypso Gallery employs a defense-in-depth cryptographic pipeline designed to pr
 
 > **Release 1.20 (accepted ADR [`docs/adr/0001-tink-streaming-aead-migration.md`](docs/adr/0001-tink-streaming-aead-migration.md)) changes the payload scheme to Tink `AES256_GCM_HKDF` streaming AEAD (container version 4) and adds per-file DEKs + rotatable KEKs. Metadata moves to per-record AES-GCM with context-binding AAD. Both v3 and v4 containers remain readable and writable. The complete corruption / bit-rot behaviour — which differs between v3 and v4 — is specified in [§2.4](#24-corruption--bit-rot-behaviour-v3-today-v4-in-120); this section's CTR error-isolation description applies to v3.**
 
-> **Operational security (accepted [ADR 0002](docs/adr/0002-operational-security-hardening.md)):** OS CSPRNG only (no user-movement entropy); Argon2id named profiles with enforced minimums and an unlock-delay option; trace-hygiene audit (thumbnail cache, recents snapshot, MediaStore, temp files, backups, clipboard, keyboard); immediate key zeroization except while a registered foreground file operation is active; durable/resumable secure wipe. These apply to both v3 and v4 vaults.**
+> **Operational security (accepted [ADR 0002](docs/adr/0002-operational-security-hardening.md)):** OS CSPRNG only (no user-movement entropy); **"Brute-Force direnci"** setting (default: target vault unlock time 2.0–7.0 s with decimal input; alternative: ready-made Argon2id modes) whose calibrated KDF parameters are stored in `.vault`, like KeePass stores rounds in `.kdbx` — see [the calibration methodology](docs/argon2-calibration-methodology.md); trace-hygiene audit (thumbnail cache, recents snapshot, MediaStore, temp files, backups, clipboard, keyboard); immediate key zeroization except while a registered foreground file operation is active; durable/resumable secure wipe. These apply to both v3 and v4 vaults.**
 
 ### Bit-Rot Resilience (Zero Error Propagation)
 Monolithic container formats (such as Veracrypt volumes or ZIP archives) risk total catastrophic loss if a single sector corrupts. Calypso Gallery avoids this through granular file isolation:
@@ -236,9 +236,101 @@ If full verification fails while the user rebuilds an older Encrypted Vault (§5
 
 #### 2.4.8 Why this is engineered this way
 
-Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external encrypted-area use case. The design assumes corruption is *exceptional*: it detects it loudly, keeps the user's media playable, and never silently propagates or "launters" damaged bytes.
+Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external Encrypted Vault use case. The design assumes corruption is *exceptional*: it detects it loudly, keeps the user's media playable, and never silently propagates or "launters" damaged bytes.
 
-A plain **move** is already trace-free when source and target share a filesystem — `rename(2)` changes only the directory entry, and the app uses this for atomic temp-file replacement. Encryption/decryption are *transformations*, not moves: two different byte sequences must coexist until the new one is verified, which is what preserves the only good copy if the process is interrupted. In-place CTR overwrite is technically possible but non-atomic (a crash leaves half-plaintext/half-ciphertext with no original), and external vaults are usually on a different filesystem where `rename` degrades to copy+delete anyway. "Forensic trace-free deletion" is not achievable at app level on flash (FTL wear-leveling, journal metadata); CSPRNG overwrite + `fsync` remains best-effort as stated in §2.
+A plain **move** is already trace-free when source and target share a filesystem — `rename(2)` changes only the directory entry, and the app uses this for atomic temp-file replacement. Encryption/decryption are *transformations*, not moves: two different byte sequences must coexist until the new one is verified, which is what preserves the only good copy if the process is interrupted. In-place CTR overwrite is technically possible but non-atomic (a crash leaves half-plaintext/half-ciphertext with no original), and external vaults are usually on a different filesystem where `rename` degrades to copy+delete anyway. "Forensic trace-free deletion" is not achievable at app level on flash (FTL wear-leveling, journal metadata); CSPRNG overwrite + `fsync` remains best effort as stated in §2.
+
+### 2.5 Tink segment size — measurement and rationale (ADR 0001 §11.1)
+
+v4 payloads are encrypted with Tink `AES256_GCM_HKDF`, which authenticates data in **segments**. The segment size is a write-time parameter; it is stored inside each encrypted header, and readers use the stored value. Four values are accepted: **16 / 64 / 256 KiB and 1 MiB** (Tink's default). The writer default is currently **256 KiB**.
+
+#### Why the size matters
+
+- **Sequential throughput:** every segment has its own GCM tag and IV setup, so more segments mean more per-segment work. Smaller segments are slower.
+- **Seek latency:** to read byte X the reader must decrypt the whole segment containing X. Smaller segments mean less work per seek.
+- **Tag overhead:** 16 bytes per segment. 256 KiB costs 0.006 %; 1 MiB costs 0.0015 % — negligible either way.
+- **Corruption blast radius:** a single flipped bit invalidates that segment's tag. With the tolerant-display policy (§2.4.3), a smaller segment produces a smaller visible glitch. This is a side benefit, **not** the deciding factor.
+
+#### Measurement 1 — JVM relative benchmark
+
+`app/src/test/kotlin/.../V4SegmentBenchmark.kt`, opt-in so it never slows normal test runs:
+
+```powershell
+$env:CIPHER_BENCHMARK = "1"
+.\gradlew.bat :app:testFossDebugUnitTest --tests "*V4SegmentBenchmark"
+```
+
+It encrypts a 128 MiB synthetic file at each candidate size, then measures sequential decrypt (median of 3 runs), and mean/p95 latency of 50 random seeks. Result on the development machine:
+
+| Segment | Tag overhead | Sequential MiB/s | Seek mean ms | Seek p95 ms |
+| :--- | :--- | :--- | :--- | :--- |
+| 16 KiB | 0.098 % | 343.2 | 0.093 | 0.131 |
+| 64 KiB | 0.024 % | 507.0 | 0.121 | 0.213 |
+| **256 KiB** | 0.006 % | **564.2** | **0.388** | **0.500** |
+| 1 MiB | 0.0015 % | 610.5 | 1.502 | 1.954 |
+
+**Decision rule:** choose the *smallest* segment whose sequential throughput is within ~10 % of the best measured value, provided seek p95 stays below one frame budget (~16 ms). Best = 610.5 MiB/s; 90 % = 549.5. 16 and 64 KiB fall below; **256 KiB (564.2) is the smallest that qualifies**, with seek p95 0.5 ms. Hence 256 KiB — not Tink's 1 MiB default.
+
+This is a **relative**, same-machine measurement, not a phone result.
+
+#### Measurement 2 — real read pattern on a device (still required)
+
+`MediaReadPatternProbe` (§2.4) records Media3's actual `read()` sizes, open/seek counts and bytes transferred. It is **always enabled in debug builds** — no `adb shell setprop` is needed (custom `cipher.*` properties are rejected by SELinux on many devices with "see dmesg for error reason"). Release builds require `cipher.measure_reads=1`.
+
+Procedure:
+
+1. Build a debug APK from the current source:
+   ```powershell
+   .\gradlew.bat :app:assembleFossDebug
+   ```
+2. Install it (uninstall the previous APK first if signatures differ — vault files on shared storage survive, but app-private settings do not):
+   ```powershell
+   adb install -r app\build\outputs\apk\foss\debug\gallery-39-foss-debug.apk
+   ```
+3. Clear the log, then in the app unlock the Encrypted Vault, open a **v4 encrypted video** and scrub forward/backward several times. **Exit the player** — the probe logs on `DataSource.close()`.
+   ```powershell
+   adb logcat -c
+   adb logcat -s CipherReadProbe
+   ```
+   Example line: `CipherReadProbe: opens=2 seeks=7 reads=1432 bytes=31876608 128B..256B=4% ... >=64K=62%`
+
+Interpretation: if reads are consistently ≥256 KiB and well aligned, 1 MiB may be reconsidered for slightly better sequential throughput; if they are small and randomly distributed, keep 256 KiB. Any playback smoothness issue is investigated with this data before changing the constant — see §11.1 of ADR 0001.
+
+#### Measurement 2 result — device probe (2026-11-17)
+
+Collected from a debug build on a real device with a v3 encrypted video:
+
+```
+opens=7..10  seeks=6..9  reads=45,444..61,306  bytes=17.9..24.2 MB
+1B..128B=11%  129B..256B=4%  257B..512B=15%  513B..1024B=7%
+1025B..2048B=13%  2049B..4096B=15%  4097B..8192B=15%
+8193B..16384B=13%  16385B..32768B=1%  >=64K=2%
+```
+
+**Interpretation:** ~400 bytes per read on average, ~98 % of reads below 64 KiB, and only one seek per open plus a few scrubs. Media3 issues small but mostly **contiguous** reads, so the segment size determines the latency spike when a boundary is crossed, not the average throughput. A 1 MiB segment would cause a single ~1 MB decrypt spike per boundary; 256 KiB causes smaller, more frequent spikes. Given a reported smoothness concern, **1 MiB is explicitly rejected and 256 KiB is confirmed** as the writer default.
+
+> **Status:** **256 KiB is final.** Revisit only if a v4 file shows a reproducible regression that is demonstrably segment-boundary related. The probe data came from a v3 video, so it does not by itself explain any v4 playback behaviour.
+
+#### v4 probe vs v3 probe (2026-11-17)
+
+After switching to a newly created v4 vault, the same probe was run again:
+
+| | v3 | v4 |
+| :--- | :--- | :--- |
+| reads (cumulative) | 45,444–61,306 | 14,445–21,418 |
+| bytes (cumulative) | 17.9–24.2 MB | 25.2–36.8 MB |
+| bytes per read | ~394 B | ~1.7 KB |
+| reads ≥64 KiB | ~2 % | 0 % |
+
+Tink's buffering coalesces Media3's many tiny reads into **fewer, larger** reads — roughly a 4× reduction in read calls. The tester reported that the earlier perceived stutter was gone (possibly partly perceptual). This supports keeping 256 KiB.
+
+#### v4 writer status
+
+Newly created Encrypted Vaults now write **version 4** containers (`.vault` v4 keyring + Tink streaming payload), including the stream-encryption path `encryptStreamToDirectory`. Existing v3 vaults are untouched and keep writing v3.
+
+Vault-level metadata in v4 uses `FVSTR2:` records: a per-purpose `HKDF(KEK, purpose)` key and AES-256-GCM with `purpose` as AAD. Album names, stealth-album JSON, restore manifests and resume blobs use distinct purposes, preventing record swapping between categories. v3 vaults keep their `FVSTR1:` records.
+
+**Interrupted update behaviour:** an interrupted rebuild is never silently resumed. On the next vault unlock a single dialog states that the update was interrupted, that some files were converted, that **no data was lost**, and asks whether to continue. The "always ask" setting is forced back to ON after every interruption so the user cannot miss it. The in-app progress screen is modal, keeps the screen on, and shows the persistent "do not exit / do not turn off the screen" warning.
 
 ---
 
