@@ -46,7 +46,7 @@ Keep the current default **64 MiB / t=3 / p=2**. Expose **named profiles**, not 
 | High security | 128 MiB | 4 | 2 | "High security" |
 
 - Absolute minimums enforced in code: `memoryKb >= 19 * 1024`, `iterations >= 2`, `parallelism >= 1` (OWASP baseline). Values below this are rejected.
-- The profile selector shows a fixed note: **"If you don't know what you're doing, it is recommended to keep the default setting."** / TR: "Ne yaptığınızı bilmiyorsanız varsayılan ayarda kalmanız önerilir."
+- The profile selector shows a fixed note: **"If you don't know what you're doing, it is recommended to keep the default setting."** 
 - Show the estimated unlock time for the chosen profile on the device where possible.
 - Parameters are stored in `.vault` (already the case). Changing a profile re-wraps the VMK under a newly derived PDK; it does not touch the keyring, headers or biometric blob.
 
