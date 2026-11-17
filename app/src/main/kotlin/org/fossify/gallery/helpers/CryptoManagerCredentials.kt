@@ -569,6 +569,17 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     context.config.hiddenProtectionType = protectionType
     context.config.isHiddenPasswordProtectionOn = true
 
+    if (isNewVault) {
+        // A genuinely new vault gets a fresh VMK/KEK. Hidden virtual albums left over in Room DB
+        // from a previous vault store their names encrypted with the OLD key and point into the old
+        // vault, so they are unusable here and can no longer be decrypted (their names would show
+        // as random "FVSTR1:…" strings). Drop them up front so the next syncVirtualAlbums() cannot
+        // re-export them into this vault's JSON/ folder as empty, unreadable albums. Switching to a
+        // different vault already does this via prepareVaultLocationSwitch; creating a brand-new
+        // one (especially at the default location) previously did not.
+        runCatching { VirtualAlbumSyncManager.evictHiddenVirtualAlbumsFromDbCache(context) }
+    }
+
     try {
         getOrCreateDefaultHiddenAlbum(context)
     } catch (_: Exception) {
