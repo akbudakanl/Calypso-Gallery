@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Bá»™ sÆ°u táº­p</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Chá»‰nh sá»­a</string>
     <string name="open_camera">Má»Ÿ Camera</string>
     <string name="hidden">(áº©n)</string>
@@ -200,7 +200,7 @@
     <string name="manage_bottom_actions">Quáº£n lÃ½ nhá»¯ng hÃ nh Ä‘á»™ng dÆ°á»›i cÃ¹ng</string>
     <string name="toggle_favorite">ThÃ­ch/Bá» thÃ­ch</string>
     <string name="toggle_file_visibility">áº¨n/Bá» áº©n</string>
-    <string name="faq_1_text">TrÆ°á»›c tiÃªn, báº¡n pháº£i tÃ¬m thÆ° viá»‡n máº·c Ä‘á»‹nh hiá»‡n táº¡i trong pháº§n á»¨ng dá»¥ng trong cÃ i Ä‘áº·t thiáº¿t bá»‹ cá»§a mÃ¬nh, tÃ¬m nÃºt cÃ³ ná»™i dung nhÆ° \"Má»Ÿ theo máº·c Ä‘á»‹nh\", nháº¥p vÃ o nÃºt Ä‘Ã³, sau Ä‘Ã³ chá»n \"XÃ³a máº·c Ä‘á»‹nh\". Láº§n tá»›i khi má»Ÿ hÃ¬nh áº£nh hoáº·c video, báº¡n sáº½ tháº¥y bá»™ chá»n á»©ng dá»¥ng, nÆ¡i báº¡n cÃ³ thá»ƒ chá»n Fossify Gallery vÃ  Ä‘áº·t nÃ³ lÃ m á»©ng dá»¥ng máº·c Ä‘á»‹nh.</string>
+    <string name="faq_1_text">TrÆ°á»›c tiÃªn, báº¡n pháº£i tÃ¬m thÆ° viá»‡n máº·c Ä‘á»‹nh hiá»‡n táº¡i trong pháº§n á»¨ng dá»¥ng trong cÃ i Ä‘áº·t thiáº¿t bá»‹ cá»§a mÃ¬nh, tÃ¬m nÃºt cÃ³ ná»™i dung nhÆ° \"Má»Ÿ theo máº·c Ä‘á»‹nh\", nháº¥p vÃ o nÃºt Ä‘Ã³, sau Ä‘Ã³ chá»n \"XÃ³a máº·c Ä‘á»‹nh\". Láº§n tá»›i khi má»Ÿ hÃ¬nh áº£nh hoáº·c video, báº¡n sáº½ tháº¥y bá»™ chá»n á»©ng dá»¥ng, nÆ¡i báº¡n cÃ³ thá»ƒ chá»n Calypso Gallery vÃ  Ä‘áº·t nÃ³ lÃ m á»©ng dá»¥ng máº·c Ä‘á»‹nh.</string>
     <string name="faq_2_title">LÃ m sao khi khÃ³a á»©ng dá»¥ng nhÆ°ng quÃªn máº­t kháº©u?</string>
     <string name="faq_2_text">Báº¡n cÃ³ thá»ƒ giáº£i quyáº¿t theo 2 cÃ¡ch. CÃ i Ä‘áº·t láº¡i á»©ng dá»¥ng hoáº·c tÃ¬m á»©ng dá»¥ng trong cÃ i Ä‘áº·t thiáº¿t bá»‹ cá»§a báº¡n vÃ  chá»n \"XÃ³a dá»¯ liá»‡u\". Äiá»u nÃ y sáº½ thiáº¿t láº­p láº¡i táº¥t cáº£ cÃ¡c cÃ i Ä‘áº·t cá»§a báº¡n nhÆ°ng khÃ´ng xÃ³a báº¥t ká»³ tá»‡p phÆ°Æ¡ng tiá»‡n nÃ o.</string>
     <string name="faq_3_title">LÃ m sao Ä‘á»ƒ má»™t album luÃ´n xuáº¥t hiá»‡n á»Ÿ Ä‘áº§u?</string>
@@ -227,13 +227,13 @@
     <string name="faq_15_text">Bá»™ nhá»› cache á»©ng dá»¥ng cÃ³ thá»ƒ cáº§n 250MB nháº±m Ä‘áº£m báº£o táº£i hÃ¬nh áº£nh nhanh hÆ¡n. Náº¿u app chiáº¿m nhiá»u dung lÆ°á»£ng hÆ¡n, ráº¥t cÃ³ thá»ƒ lÃ  do báº¡n cÃ³ nhiá»u má»¥c trong ThÃ¹ng rÃ¡c. Nhá»¯ng tá»‡p Ä‘Ã³ Ä‘Æ°á»£c tÃ­nh vÃ o dung lÆ°á»£ng á»©ng dá»¥ng. Báº¡n cÃ³ thá»ƒ xÃ³a táº¥t cáº£ tá»‡p trong ThÃ¹ng rÃ¡c. Má»i tá»‡p trong ThÃ¹ng rÃ¡c sáº½ tá»± Ä‘á»™ng bá»‹ xÃ³a sau 30 ngÃ y.</string>
     <string name="faq_16_text">Ká»ƒ tá»« Android 11, báº¡n khÃ´ng thá»ƒ áº©n hoáº·c hiá»‡n cÃ¡c tá»‡p hoáº·c thÆ° má»¥c ná»¯a, báº¡n cÅ©ng khÃ´ng thá»ƒ nhÃ¬n tháº¥y nhá»¯ng tá»‡p hoáº·c thÆ° má»¥c bá»‹ áº©n trong á»©ng dá»¥ng thÆ° viá»‡n. Báº¡n sáº½ pháº£i sá»­ dá»¥ng má»™t sá»‘ trÃ¬nh quáº£n lÃ½ tá»‡p cho Ä‘iá»u Ä‘Ã³.</string>
     <string name="force_landscape_reverse">Chiá»u ngang (Ä‘áº£o ngÆ°á»£c)</string>
-    <string name="full_storage_permission_required">Fossify Gallery cáº§n toÃ n quyá»n truy cáº­p Ä‘á»ƒ hiá»ƒn thá»‹ táº¥t cáº£ áº£nh vÃ  video cá»§a báº¡n. VÃ o CÃ i Ä‘áº·t â†’ Quyá»n â†’ áº¢nh vÃ  video â†’ Cho phÃ©p táº¥t cáº£.</string>
-    <string name="excluded_activity_placeholder">Viá»‡c bá» qua cÃ¡c thÆ° má»¥c sáº½ khiáº¿n chÃºng cÃ¹ng vá»›i cÃ¡c thÆ° má»¥c con bá»‹ áº©n trong Fossify Gallery, nhÆ°ng váº«n sáº½ hiá»ƒn thá»‹ trong cÃ¡c á»©ng dá»¥ng khÃ¡c.\n\nNáº¿u báº¡n muá»‘n áº©n chÃºng khá»i cÃ¡c á»©ng dá»¥ng khÃ¡c ná»¯a, hÃ£y sá»­ dá»¥ng chá»©c nÄƒng áº¨n (Hide).</string>
+    <string name="full_storage_permission_required">Calypso Gallery cáº§n toÃ n quyá»n truy cáº­p Ä‘á»ƒ hiá»ƒn thá»‹ táº¥t cáº£ áº£nh vÃ  video cá»§a báº¡n. VÃ o CÃ i Ä‘áº·t â†’ Quyá»n â†’ áº¢nh vÃ  video â†’ Cho phÃ©p táº¥t cáº£.</string>
+    <string name="excluded_activity_placeholder">Viá»‡c bá» qua cÃ¡c thÆ° má»¥c sáº½ khiáº¿n chÃºng cÃ¹ng vá»›i cÃ¡c thÆ° má»¥c con bá»‹ áº©n trong Calypso Gallery, nhÆ°ng váº«n sáº½ hiá»ƒn thá»‹ trong cÃ¡c á»©ng dá»¥ng khÃ¡c.\n\nNáº¿u báº¡n muá»‘n áº©n chÃºng khá»i cÃ¡c á»©ng dá»¥ng khÃ¡c ná»¯a, hÃ£y sá»­ dá»¥ng chá»©c nÄƒng áº¨n (Hide).</string>
     <plurals name="restore_confirmation">
         <item quantity="other">Báº¡n cÃ³ cháº¯c muá»‘n khÃ´i phá»¥c %d tá»‡p?</item>
     </plurals>
     <string name="svgs">áº¢nh SVG</string>
-    <string name="exclude_folder_description">Bá» qua nhá»¯ng thÆ° má»¥c Ä‘Ã£ chá»n cÃ¹ng vá»›i cÃ¡c thÆ° má»¥c con cá»§a chÃºng trong Fossify Gallery. Báº¡n cÃ³ thá»ƒ quáº£n lÃ½ thÆ° má»¥c Ä‘Ã£ bá» qua trong pháº§n CÃ i Ä‘áº·t.</string>
+    <string name="exclude_folder_description">Bá» qua nhá»¯ng thÆ° má»¥c Ä‘Ã£ chá»n cÃ¹ng vá»›i cÃ¡c thÆ° má»¥c con cá»§a chÃºng trong Calypso Gallery. Báº¡n cÃ³ thá»ƒ quáº£n lÃ½ thÆ° má»¥c Ä‘Ã£ bá» qua trong pháº§n CÃ i Ä‘áº·t.</string>
     <string name="cant_unhide_folder">Náº¿u má»™t thÆ° má»¥c hoáº·c má»™t trong cÃ¡c thÆ° má»¥c máº¹ cá»§a nÃ³ cÃ³ dáº¥u cháº¥m á»Ÿ Ä‘áº§u tÃªn, thÃ¬ nÃ³ sáº½ bá»‹ áº©n vÃ  khÃ´ng thá»ƒ hiá»‡n láº¡i báº±ng cÃ¡ch nÃ y. Báº¡n cáº§n Ä‘á»•i tÃªn Ä‘á»ƒ xÃ³a dáº¥u cháº¥m Ä‘i.</string>
     <string name="overwrite_original">Ghi Ä‘Ã¨ tá»‡p gá»‘c</string>
     <string name="keep_screen_on_fullscreen_photos">Giá»¯ mÃ n hÃ¬nh luÃ´n sÃ¡ng</string>
@@ -247,9 +247,9 @@
     <string name="file_is_malformed_or_corrupted">Tá»‡p khÃ´ng há»£p lá»‡ hoáº·c Ä‘Ã£ bá»‹ há»ng.</string>
     <string name="media_exceeds_device_capabilities">Thiáº¿t bá»‹ khÃ´ng há»— trá»£ tá»‡p phÆ°Æ¡ng tiá»‡n nÃ y.</string>
     <string name="unsupported_format">Äá»‹nh dáº¡ng khÃ´ng Ä‘Æ°á»£c há»— trá»£.</string>
-    <string name="faq_1_title">LÃ m sao Ä‘á»ƒ Ä‘áº·t Fossify Gallery lÃ m á»©ng dá»¥ng xem áº£nh máº·c Ä‘á»‹nh?</string>
+    <string name="faq_1_title">LÃ m sao Ä‘á»ƒ Ä‘áº·t Calypso Gallery lÃ m á»©ng dá»¥ng xem áº£nh máº·c Ä‘á»‹nh?</string>
     <string name="faq_4_text">Báº¡n cÃ³ thá»ƒ nháº¥n Ä‘Ãºp vÃ o cáº¡nh mÃ n hÃ¬nh hoáº·c nháº¥n vÃ o thá»i lÆ°á»£ng hiá»‡n táº¡i hoáº·c tá»‘i Ä‘a gáº§n thanh tua. Náº¿u báº¡n báº­t tÃ¹y chá»n má»Ÿ video trÃªn mÃ n hÃ¬nh riÃªng trong pháº§n cÃ i Ä‘áº·t á»©ng dá»¥ng, báº¡n cÅ©ng cÃ³ thá»ƒ sá»­ dá»¥ng thao tÃ¡c vuá»‘t ngang.</string>
-    <string name="faq_5_text">Bá» qua chá»‰ ngÄƒn thÆ° má»¥c hiá»ƒn thá»‹ trong Fossify Gallery, trong khi áº¨n hoáº¡t Ä‘á»™ng trÃªn toÃ n há»‡ thá»‘ng vÃ  áº©n thÆ° má»¥c khá»i cÃ¡c app thÆ° viá»‡n khÃ¡c. Chá»©c nÄƒng nÃ y hoáº¡t Ä‘á»™ng báº±ng cÃ¡ch táº¡o má»™t tá»‡p \".nomedia\" trá»‘ng trong thÆ° má»¥c Ä‘Æ°á»£c chá»n, mÃ  báº¡n cÃ³ thá»ƒ xÃ³a báº±ng báº¥t ká»³ trÃ¬nh quáº£n lÃ½ tá»‡p nÃ o. LÆ°u Ã½ ráº±ng má»™t sá»‘ thiáº¿t bá»‹ khÃ´ng cho phÃ©p áº©n cÃ¡c thÆ° má»¥c nhÆ° Camera, áº¢nh chá»¥p mÃ n hÃ¬nh vÃ  Táº£i xuá»‘ng.</string>
+    <string name="faq_5_text">Bá» qua chá»‰ ngÄƒn thÆ° má»¥c hiá»ƒn thá»‹ trong Calypso Gallery, trong khi áº¨n hoáº¡t Ä‘á»™ng trÃªn toÃ n há»‡ thá»‘ng vÃ  áº©n thÆ° má»¥c khá»i cÃ¡c app thÆ° viá»‡n khÃ¡c. Chá»©c nÄƒng nÃ y hoáº¡t Ä‘á»™ng báº±ng cÃ¡ch táº¡o má»™t tá»‡p \".nomedia\" trá»‘ng trong thÆ° má»¥c Ä‘Æ°á»£c chá»n, mÃ  báº¡n cÃ³ thá»ƒ xÃ³a báº±ng báº¥t ká»³ trÃ¬nh quáº£n lÃ½ tá»‡p nÃ o. LÆ°u Ã½ ráº±ng má»™t sá»‘ thiáº¿t bá»‹ khÃ´ng cho phÃ©p áº©n cÃ¡c thÆ° má»¥c nhÆ° Camera, áº¢nh chá»¥p mÃ n hÃ¬nh vÃ  Táº£i xuá»‘ng.</string>
     <string name="faq_16_title">Äiá»u gÃ¬ sáº½ xáº£y ra vá»›i tá»‡p vÃ  thÆ° má»¥c bá»‹ áº©n? Táº¡i sao tÃ´i khÃ´ng thá»ƒ tháº¥y cÃ¡c má»¥c Ä‘Ã£ áº©n ná»¯a?</string>
     <string name="faq_16_text_extra">Hoáº·c báº¡n cÅ©ng cÃ³ thá»ƒ cáº¥p quyá»n â€œTruy cáº­p táº¥t cáº£ tá»‡pâ€ cho á»©ng dá»¥ng thÆ° viá»‡n nÃ y trong pháº§n CÃ i Ä‘áº·t thiáº¿t bá»‹. Viá»‡c nÃ y sáº½ cho phÃ©p hiá»ƒn thá»‹ cÃ¡c má»¥c áº©n vÃ  giÃºp thao tÃ¡c vá»›i tá»‡p á»•n Ä‘á»‹nh hÆ¡n.</string>
     <string name="faq_17_title">Táº¡i sao tÃ´i khÃ´ng thá»ƒ thÃªm cÃ¡c thÆ° má»¥c bá»‹ thiáº¿u ná»¯a?</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">GalerÃ­a</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Editar</string>
     <string name="open_camera">Abrir cÃ¡mara</string>
     <string name="hidden">(oculto)</string>
@@ -39,9 +39,9 @@
     <string name="portraits">Retratos</string>
     <string name="no_media_with_filters">Non se atopou multimedia do tipo indicado polo filtro.</string>
     <string name="change_filters_underlined"><u>Cambiar filtro</u></string>
-    <string name="exclude_folder_description">Isto sÃ³ excluirÃ¡ de Fossify Gallery a selecciÃ³n e os seus subcartafoles. Podes xestionar os cartafoles excluÃ­dos nos Axustes.</string>
+    <string name="exclude_folder_description">Isto sÃ³ excluirÃ¡ de Calypso Gallery a selecciÃ³n e os seus subcartafoles. Podes xestionar os cartafoles excluÃ­dos nos Axustes.</string>
     <string name="exclude_folder_parent">ExcluÃ­r o cartafol pai no seu lugar\?</string>
-    <string name="excluded_activity_placeholder">Ao excluÃ­r un cartafol xunto cos seus cartafoles farÃ¡s que non sexan visibles sÃ³ en Fossify Gallery, serÃ¡n aÃ­nda visibles noutras aplicaciÃ³ns.\n\nSe queres ocultalos tamÃ©n doutras apps, usa a funciÃ³n Ocultar.</string>
+    <string name="excluded_activity_placeholder">Ao excluÃ­r un cartafol xunto cos seus cartafoles farÃ¡s que non sexan visibles sÃ³ en Calypso Gallery, serÃ¡n aÃ­nda visibles noutras aplicaciÃ³ns.\n\nSe queres ocultalos tamÃ©n doutras apps, usa a funciÃ³n Ocultar.</string>
     <string name="hidden_folders">Cartafoles ocultos</string>
     <string name="manage_hidden_folders">Xestionar cartafoles ocultos</string>
     <string name="hidden_folders_placeholder">Semella que non tes ningÃºn cartafol oculto cun ficheiro \".nomedia\".</string>
@@ -208,8 +208,8 @@
     <string name="manage_bottom_actions">Xestionar acciÃ³ns visibles do fondo</string>
     <string name="toggle_favorite">Engadir como favorito</string>
     <string name="toggle_file_visibility">Alternar visibilidade do ficheiro</string>
-    <string name="faq_1_title">Como facer que Fossify Gallery sexa a galerÃ­a predeterminada no mÃ³bil?</string>
-    <string name="faq_1_text">Primeiro tes que atopar a galerÃ­a predeterminada actual na secciÃ³n AplicaciÃ³ns nos axustes do teu dispositivo, busca un botÃ³n que poÃ±a algo como \"Abrir por defecto\", preme nel, marca \"Restablecer predeterminada\". A prÃ³xima vez que intentes abrir unha imaxe ou vÃ­deo deberÃ¡s escoller a aplicaciÃ³n para abrila, e aÃ­ podes elixir Fossify Gallery e poÃ±ela como app predeterminada.</string>
+    <string name="faq_1_title">Como facer que Calypso Gallery sexa a galerÃ­a predeterminada no mÃ³bil?</string>
+    <string name="faq_1_text">Primeiro tes que atopar a galerÃ­a predeterminada actual na secciÃ³n AplicaciÃ³ns nos axustes do teu dispositivo, busca un botÃ³n que poÃ±a algo como \"Abrir por defecto\", preme nel, marca \"Restablecer predeterminada\". A prÃ³xima vez que intentes abrir unha imaxe ou vÃ­deo deberÃ¡s escoller a aplicaciÃ³n para abrila, e aÃ­ podes elixir Calypso Gallery e poÃ±ela como app predeterminada.</string>
     <string name="faq_2_title">ProtexÃ­n a aplicaciÃ³n cun contrasinal, pero esquecino. Que podo facer?</string>
     <string name="faq_2_text">Podes solucionalo de dous xeitos. Ou ben reinstalar a aplicaciÃ³n ou buscar a aplicaciÃ³n nos axustes do dispositivo e escoller \"Limpar datos\". RestablecerÃ¡ todos os seus axustes, mais non eliminarÃ¡ ficheiros de medios.</string>
     <string name="faq_3_title">Como podo facer que un Ã¡lbum apareza sempre arriba de todo\?</string>
@@ -217,7 +217,7 @@
     <string name="faq_4_title">Como podo aumentala velocidade da reproduciÃ³n do vÃ­deo\?</string>
     <string name="faq_4_text">Pode facelo tocando dÃºas veces o lateral da pantalla, ou tocando os textos de duraciÃ³n mÃ¡xima ou actual preto da barra de avance. Se activa abrir os vÃ­deos nunha pantalla separada, tamÃ©n pode usar xestos horizontais.</string>
     <string name="faq_5_title">Cal Ã© a diferenza entre ocultar e excluÃ­r un cartafol?</string>
-    <string name="faq_5_text">A exclusiÃ³n sÃ³ evita que se mostre o cartafol en Fossify Gallery, mentras Ocultar funciona para todo o sistema e agocha o cartafol para outras galerÃ­as tamÃ©n. Funciona creando un ficheiro baleiro \".nomedia\" no cartafol dado, que podes eliminar posteriormente desde calquera xestor de ficheiros. Ten en conta que algÃºns dispositivos non permiten ocultar cartafoles, como a CÃ¡mara, Captura de Pantall ou Descargas.</string>
+    <string name="faq_5_text">A exclusiÃ³n sÃ³ evita que se mostre o cartafol en Calypso Gallery, mentras Ocultar funciona para todo o sistema e agocha o cartafol para outras galerÃ­as tamÃ©n. Funciona creando un ficheiro baleiro \".nomedia\" no cartafol dado, que podes eliminar posteriormente desde calquera xestor de ficheiros. Ten en conta que algÃºns dispositivos non permiten ocultar cartafoles, como a CÃ¡mara, Captura de Pantall ou Descargas.</string>
     <string name="faq_6_title">Por que aparecen cartafoles de mÃºsica con portadas ou pegatinas\?</string>
     <string name="faq_6_text">Pode acontecer que vexa que aparecen Ã¡lbumes raros. Pode excluÃ­los con facilidade mantendo premidos e escollendo ExcluÃ­r. No seguinte diÃ¡logo pode escoller o cartafol pai, esto probablemente agoche outros Ã¡lbumes relacionados.</string>
     <string name="faq_7_title">Un cartafol con imaxes non aparece, que podo facer\?</string>
@@ -248,7 +248,7 @@
     <string name="editor">Editor</string>
     <string name="gifs">GIFs</string>
     <string name="playback_speed">Velocidade de reproduciÃ³n</string>
-    <string name="full_storage_permission_required">Fossify Gallery precisa acceso completo para poder mostrar todas as fotos e vÃ­deos. Vai a Axustes &gt; Permisos &gt; Fotos e VÃ­deos &gt; Permitir todo.</string>
+    <string name="full_storage_permission_required">Calypso Gallery precisa acceso completo para poder mostrar todas as fotos e vÃ­deos. Vai a Axustes &gt; Permisos &gt; Fotos e VÃ­deos &gt; Permitir todo.</string>
     <string name="file_is_malformed_or_corrupted">O ficheiro estÃ¡ corrupto ou mal formado.</string>
     <string name="media_exceeds_device_capabilities">O multimedia supera as capacidades do dispositivo.</string>
     <string name="unsupported_format">Formato non compatible.</string>

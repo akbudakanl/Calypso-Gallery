@@ -21,7 +21,7 @@ JPEG, PNG, MP4, MKV, RAW, SVG, GIF, video, dan lainnya — kami dapat menangani 
 ✨ DESAIN MATERIAL DENGAN TEMA DINAMIS:
 Rasakan keindahan desain material yang intuitif dengan tema dinamis. Ingin lebih? Jelajahi tema kustom dan buat galeri Anda benar-benar unik.
 
-Jelajahi lebih banyak aplikasi oleh Fossify: https://www.fossify.org
-Kode Bersumber Terbuka: https://www.github.com/FossifyOrg
-Bergabunglah dalam komunitas di Reddit: https://www.reddit.com/r/Fossify
-Bergabung di Telegram: https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Questions
-    url: https://github.com/orgs/FossifyOrg/discussions
-    about: Please ask and answer questions here.
+  - name: Fork questions and issue tracker
+    url: https://github.com/akbudakanl/Gallery-Cipher/issues
+    about: Ask a fork-specific question, report a bug, or propose a feature.

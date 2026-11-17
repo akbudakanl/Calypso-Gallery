@@ -287,7 +287,7 @@ class CustomVaultLocationTest {
         File(usbSecrets, "abcd1234.bin").writeBytes(byteArrayOf(1, 2, 3))
         assertEquals(usbSecrets.absolutePath, CryptoManager.resolveSyncSourceRoot(usbRoot).absolutePath)
 
-        // 2. Drive root containing Fossify Gallery Cipher/Cipher_Secrets
+        // 2. Drive root containing Calypso Gallery/Cipher_Secrets
         val appContainerRoot = File(tempRoot, "AppContainerRoot").apply { mkdirs() }
         val appSecrets = File(File(appContainerRoot, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
         assertEquals(appSecrets.absolutePath, CryptoManager.resolveSyncSourceRoot(appContainerRoot).absolutePath)
@@ -1137,7 +1137,7 @@ class CustomVaultLocationTest {
         val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
         setMasterKey(masterKey)
 
-        val phoneVault = File(tempRoot, "phone_pending/Fossify Gallery Cipher/Cipher_Secrets").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "phone_pending/Calypso Gallery/Cipher_Secrets").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 

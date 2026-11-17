@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galeria</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Edytuj</string>
     <string name="open_camera">OtwÃ³rz aparat</string>
     <string name="hidden">(ukryte)</string>
@@ -42,9 +42,9 @@
     <string name="portraits">Portrety</string>
     <string name="no_media_with_filters">Nie znaleziono plikÃ³w multimedialnych z wybranymi filtrami.</string>
     <string name="change_filters_underlined"><u>ZmieÅ„ filtry</u></string>
-    <string name="exclude_folder_description">Spowoduje to wykluczenie wybranego folderu i jego podfolderÃ³w z Fossify Gallery. MoÅ¼esz zarzÄ…dzaÄ‡ wykluczonymi folderami w Ustawieniach.</string>
+    <string name="exclude_folder_description">Spowoduje to wykluczenie wybranego folderu i jego podfolderÃ³w z Calypso Gallery. MoÅ¼esz zarzÄ…dzaÄ‡ wykluczonymi folderami w Ustawieniach.</string>
     <string name="exclude_folder_parent">Czy zamiast tego wykluczyÄ‡ folder nadrzÄ™dny\?</string>
-    <string name="excluded_activity_placeholder">Wykluczenie folderÃ³w spowoduje ukrycie ich wraz z podfolderami tylko w Fossify Gallery, w innych aplikacjach bÄ™dÄ… nadal widoczne.
+    <string name="excluded_activity_placeholder">Wykluczenie folderÃ³w spowoduje ukrycie ich wraz z podfolderami tylko w Calypso Gallery, w innych aplikacjach bÄ™dÄ… nadal widoczne.
 \n
 \nJeÅ›li chcesz je ukryÄ‡ takÅ¼e w innych aplikacjach, uÅ¼yj funkcji â€Ukryj folderâ€.</string>
     <string name="hidden_folders">Ukryte foldery</string>
@@ -216,8 +216,8 @@
     <string name="manage_bottom_actions">ZarzÄ…dzaj widocznoÅ›ciÄ… dolnych przyciskÃ³w akcji</string>
     <string name="toggle_favorite">Ulubione</string>
     <string name="toggle_file_visibility">ZmieÅ„ widocznoÅ›Ä‡ pliku</string>
-    <string name="faq_1_title">Jak mogÄ™ ustawiÄ‡ Fossify Gallery jako domyÅ›lnÄ… galeriÄ™ urzÄ…dzenia?</string>
-    <string name="faq_1_text">Najpierw znajdÅº aktualnie domyÅ›lnÄ… galeriÄ™ urzÄ…dzenia w ustawieniach urzÄ…dzenia (sekcja â€Aplikacjeâ€). Na ekranie z informacjami o niej wybierz â€OtwÃ³rz domyÅ›lnieâ€, a nastÄ™pnie â€WyczyÅ›Ä‡ domyÅ›lneâ€. Gdy podczas nastÄ™pnej prÃ³by otwarcia obrazu czy wideo system zapyta CiÄ™, ktÃ³rÄ… aplikacjÄ… to zrobiÄ‡, wybierz Fossify Gallery i opcjÄ™ zapamiÄ™tania tego wyboru.</string>
+    <string name="faq_1_title">Jak mogÄ™ ustawiÄ‡ Calypso Gallery jako domyÅ›lnÄ… galeriÄ™ urzÄ…dzenia?</string>
+    <string name="faq_1_text">Najpierw znajdÅº aktualnie domyÅ›lnÄ… galeriÄ™ urzÄ…dzenia w ustawieniach urzÄ…dzenia (sekcja â€Aplikacjeâ€). Na ekranie z informacjami o niej wybierz â€OtwÃ³rz domyÅ›lnieâ€, a nastÄ™pnie â€WyczyÅ›Ä‡ domyÅ›lneâ€. Gdy podczas nastÄ™pnej prÃ³by otwarcia obrazu czy wideo system zapyta CiÄ™, ktÃ³rÄ… aplikacjÄ… to zrobiÄ‡, wybierz Calypso Gallery i opcjÄ™ zapamiÄ™tania tego wyboru.</string>
     <string name="faq_2_title">ZablokowaÅ‚em aplikacjÄ™ hasÅ‚em i je zapomniaÅ‚em. Co mogÄ™ zrobiÄ‡\?</string>
     <string name="faq_2_text">MoÅ¼esz rozwiÄ…zaÄ‡ to na 2 sposoby. MoÅ¼esz zarÃ³wno przeinstalowaÄ‡ aplikacjÄ™, jak i znaleÅºÄ‡ jÄ… w ustawieniach swojego urzÄ…dzenia i wybraÄ‡ â€WyczyÅ›Ä‡ daneâ€. PrzywrÃ³ci to oryginalne ustawienia aplikacji, nie usuwajÄ…c Å¼adnych plikÃ³w multimedialnych.</string>
     <string name="faq_3_title">Jak sprawiÄ‡, aby album zawsze pojawiaÅ‚ siÄ™ na gÃ³rze\?</string>
@@ -225,7 +225,7 @@
     <string name="faq_4_title">Jak mogÄ™ przewijaÄ‡ wideo do przodu\?</string>
     <string name="faq_4_text">MoÅ¼esz to zrobiÄ‡, naciskajÄ…c dwukrotnie bok ekranu albo tekst aktualnego lub caÅ‚kowitego czasu trwania w pobliÅ¼u paska przewijania. JeÅ›li wÅ‚Ä…czysz â€Zawsze otwieraj wideo na osobnym ekranieâ€¦â€ w ustawieniach aplikacji, moÅ¼esz teÅ¼ uÅ¼ywaÄ‡ poziomych gestÃ³w.</string>
     <string name="faq_5_title">Jaka jest rÃ³Å¼nica miÄ™dzy ukryciem a wykluczeniem folderu\?</string>
-    <string name="faq_5_text">Wykluczanie dziaÅ‚a tylko w obrÄ™bie Fossify Gallery, podczas gdy ukrywanie ma wpÅ‚yw takÅ¼e na inne galerie. DziaÅ‚a to przez dodanie do folderu pustego pliku â€.nomediaâ€, ktÃ³ry moÅ¼esz potem usunÄ…Ä‡ w dowolnym menedÅ¼erze plikÃ³w. Uwaga: NiektÃ³re urzÄ…dzenia nie pozwalajÄ… na ukrywanie folderÃ³w takich, jak Aparat, Zrzuty ekranu i Pobrane.</string>
+    <string name="faq_5_text">Wykluczanie dziaÅ‚a tylko w obrÄ™bie Calypso Gallery, podczas gdy ukrywanie ma wpÅ‚yw takÅ¼e na inne galerie. DziaÅ‚a to przez dodanie do folderu pustego pliku â€.nomediaâ€, ktÃ³ry moÅ¼esz potem usunÄ…Ä‡ w dowolnym menedÅ¼erze plikÃ³w. Uwaga: NiektÃ³re urzÄ…dzenia nie pozwalajÄ… na ukrywanie folderÃ³w takich, jak Aparat, Zrzuty ekranu i Pobrane.</string>
     <string name="faq_6_title">Dlaczego pojawiajÄ… siÄ™ foldery z okÅ‚adkÄ… albumu muzycznego lub naklejkami\?</string>
     <string name="faq_6_text">MoÅ¼e siÄ™ zdarzyÄ‡, Å¼e zobaczysz w aplikacji jakieÅ› nietypowe albumy. MoÅ¼esz je Å‚atwo wykluczyÄ‡, naciskajÄ…c je dÅ‚ugo i wybierajÄ…c Wyklucz. W nastÄ™pnym oknie moÅ¼esz wybraÄ‡ folder nadrzÄ™dny, co prawdopodobnie zapobiegnie rÃ³wnieÅ¼ wyÅ›wietlaniu siÄ™ innych powiÄ…zanych albumÃ³w.</string>
     <string name="faq_7_title">Folder z obrazami nie wyÅ›wietla siÄ™ lub nie pokazuje wszystkich elementÃ³w. Co mogÄ™ zrobiÄ‡\?</string>
@@ -252,7 +252,7 @@
     <string name="faq_18_title">Dlaczego widzÄ™ reklamy podczas odtwarzania wideo\?</string>
     <string name="faq_18_text">Nasze aplikacje nie majÄ… Å¼adnych reklam. JeÅ›li widzisz je podczas odtwarzania wideo, musisz uÅ¼ywaÄ‡ odtwarzacza wideo innej aplikacji. SprÃ³buj znaleÅºÄ‡ domyÅ›lny odtwarzacz wideo w ustawieniach urzÄ…dzenia, a nastÄ™pnie wykonaj na nim â€WyczyÅ›Ä‡ domyÅ›lneâ€. NastÄ™pnym razem, gdy sprÃ³bujesz odtworzyÄ‡ wideo, zobaczysz ekran wyboru aplikacji, gdzie moÅ¼esz wybraÄ‡, ktÃ³rÄ… chcesz uÅ¼yÄ‡.</string>
     <string name="by_folder">Folder</string>
-    <string name="full_storage_permission_required">Fossify Gallery potrzebuje peÅ‚nego dostÄ™pu, aby wyÅ›wietlaÄ‡ wszystkie Twoje zdjÄ™cia i wideo. PrzejdÅº do UstawieÅ„ &gt; Uprawnienia &gt; ZdjÄ™cia i filmy &gt; Zezwalaj.</string>
+    <string name="full_storage_permission_required">Calypso Gallery potrzebuje peÅ‚nego dostÄ™pu, aby wyÅ›wietlaÄ‡ wszystkie Twoje zdjÄ™cia i wideo. PrzejdÅº do UstawieÅ„ &gt; Uprawnienia &gt; ZdjÄ™cia i filmy &gt; Zezwalaj.</string>
     <string name="playback_speed">PrÄ™dkoÅ›Ä‡ odtwarzania</string>
     <string name="failed_to_load_media">Nie udaÅ‚o siÄ™ zaÅ‚adowaÄ‡ multimediÃ³w.</string>
     <string name="media_exceeds_device_capabilities">Plik przekracza moÅ¼liwoÅ›ci urzÄ…dzenia.</string>

@@ -50,7 +50,7 @@ class SvgModule : AppGlideModule() {
         ): ModelLoader.LoadData<InputStream> {
             return ModelLoader.LoadData(model, object : DataFetcher<InputStream> {
                 override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
-                    callback.onLoadFailed(SecurityException("Network access is permanently disabled in Fossify Gallery Cipher"))
+                    callback.onLoadFailed(SecurityException("Network access is permanently disabled in Calypso Gallery"))
                 }
 
                 override fun cleanup() {}

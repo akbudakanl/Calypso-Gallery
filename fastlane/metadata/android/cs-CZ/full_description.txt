@@ -21,7 +21,7 @@ JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, videa a další - máme pro vás vz
 ✨ MATERIAL DESIGN S DYNAMICKÝMI BARVAMI:
 Zažijte krásu Material Designu s dynamickými motivy. Chcete víc? Ponořte se do vlastních motivů a vytvořte si skutečně jedinečnou galerii.
 
-Prozkoumejte další aplikace od Fossify: https://www.fossify.org
-Otevřený zdrojový kód: https://www.github.com/FossifyOrg
-Připojte se ke komunitě na Redditu: https://www.reddit.com/r/Fossify
-Připojte se na Telegram: https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

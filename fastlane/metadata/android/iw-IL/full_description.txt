@@ -21,7 +21,8 @@ JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, סרטונים ועוד – כיס�
 ✨ עיצוב חומרי עם נושאים דינמיים:<br>
 חוו את היופי של עיצוב חומרי אינטואיטיבי עם נושאים דינמיים. רוצים עוד? צללו לנושאים מותאמים אישית והפכו את הגלריה שלכם לייחודית באמת.
 <br><br>
-חקרו עוד אפליקציות של Fossify: https://www.fossify.org<br>
-קוד פתוח: https://www.github.com/FossifyOrg<br>
-הצטרפו לקהילה ב-Reddit: https://www.reddit.com/r/Fossify<br>
-התחברו בטלגרם: https://t.me/Fossify
+
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

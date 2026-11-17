@@ -1,6 +1,6 @@
-# Fossify Gallery Cipher - Cross-Platform Offline Vault Encryptor CLI
+# Calypso Gallery - Cross-Platform Offline Vault Encryptor CLI
 
-This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, and Windows** with automatic OS detection) encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Fossify Gallery Cipher** application (`AES-256-CTR` + `Poly1305-AES` authenticated streaming encryption, plus `FGMETA2` AES-GCM encrypted album `.meta` folders).
+This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, and Windows** with automatic OS detection) encrypts plaintext media files (photos, GIFs, SVGs, RAWs, videos) into `.bin` format **100% compatible with the Android Calypso Gallery** application (`AES-256-CTR` + `Poly1305-AES` authenticated streaming encryption, plus `FGMETA2` AES-GCM encrypted album `.meta` folders).
 
 > 🇹🇷 **Türkçe kılavuz** için sayfanın altındaki [Türkçe Kullanım Kılavuzu](#-türkçe-kullanım-kılavuzu) bölümüne geçebilirsiniz.
 
@@ -66,7 +66,7 @@ Keep your primary `Cipher_Secrets` vault on your phone while encrypting new medi
    * Place new plaintext files in `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`): files directly in the root route to **`Default Secret Album`**, while named subfolders (e.g., `To_Encrypt/Vacation/photo.jpg`) match existing `.meta` albums or create new encrypted ones.
    * Run `./run.sh` and enter your vault password/PIN/pattern. **No output destination prompt is shown** — `cipher_vault.py` unlocks `.vault` and automatically encrypts into `<USB>/Cipher_Secrets/`. Optionally zero-wipe the RAM source files (`--delete-source` or interactive prompt).
 3. **Sync into your phone inside the Android app:**
-   * Connect the USB/SD drive to your phone, open **Fossify Gallery Cipher**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
+   * Connect the USB/SD drive to your phone, open **Calypso Gallery**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Cipher_Secrets` (or the USB root).
    * **Identical handling for both scenarios:** Whether your USB's `Cipher_Secrets/` holds a full vault mirror (Scenario 1) or only `.vault` plus newly encrypted additions (Scenario 2), Android sync processes it identically. In Scenario 2, once syncing completes, you can delete the synced `.bin` files and album subfolders from `<USB>/Cipher_Secrets/` while keeping only `.vault` for next time.
    * **Incremental `.pending_sync` Manifest (Zero Archive Re-Scan):**
      * After encrypting new media, `cipher_vault.py` **appends** the newly created `.bin` relative paths to `<output_dir>/.pending_sync` (preserving any earlier unsynced CLI batches).
@@ -115,7 +115,7 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
 
 ## 🚀 Quick Start & CLI Examples
 
-1. **Mount USB `Cipher_Secrets/` (Full Vault or Header-Only `.vault`):** Plug in your external USB/SD drive containing `Cipher_Secrets/.vault` (either a full vault copy or just `.vault`), or copy `.vault` to `~/Desktop/.vault` from your phone (`Internal Storage > Fossify Gallery Cipher > Cipher_Secrets > .vault`).
+1. **Mount USB `Cipher_Secrets/` (Full Vault or Header-Only `.vault`):** Plug in your external USB/SD drive containing `Cipher_Secrets/.vault` (either a full vault copy or just `.vault`), or copy `.vault` to `~/Desktop/.vault` from your phone (`Internal Storage > Calypso Gallery > Cipher_Secrets > .vault`).
 2. **Run Launcher (auto-detects your OS with no extra prompts):**
    * **Linux / Tails / macOS:**
      ```bash
@@ -156,7 +156,7 @@ run.bat  --lang en -i C:\LocalMedia\To_Encrypt -v E:\Cipher_Secrets\.vault
 
 ## 🇹🇷 Türkçe Kullanım Kılavuzu
 
-Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı CLI aracı (**Linux / Tails OS, macOS ve Windows** üzerinde işletim sistemini otomatik algılar), medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Fossify Gallery Cipher** uygulamasıyla **%100 uyumlu** şekilde `.bin` formatında (`AES-256-CTR` + `Poly1305-AES`) ve `FGMETA2` şifreli `.meta` albümleriyle şifreler.
+Bu **yalnızca şifreleme yapan (Encrypt-Only)** çevrimdışı CLI aracı (**Linux / Tails OS, macOS ve Windows** üzerinde işletim sistemini otomatik algılar), medya dosyalarınızı (fotoğraf, GIF, SVG, RAW, video) Android **Calypso Gallery** uygulamasıyla **%100 uyumlu** şekilde `.bin` formatında (`AES-256-CTR` + `Poly1305-AES`) ve `FGMETA2` şifreli `.meta` albümleriyle şifreler.
 
 ### 🛡️ Önerilen İşletim Sistemleri (1. Seviye RAM vs. 2. Seviye Standart Mod)
 CLI çalıştığında işletim sisteminizi **ek bir soru sormadan** otomatik algılar:
@@ -186,12 +186,12 @@ Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şi
 
 1. **Harici USB/SD diskinizde `Cipher_Secrets/` hazırlayın (iki yöntemden birini seçin):**
    * **Senaryo 1 — USB'de tam `Cipher_Secrets` kopyası varsa:** Telefonunuzdaki `Cipher_Secrets` klasörünü (`.vault` + mevcut şifreli `<hex>/.meta` albüm klasörleri) USB diske kopyalayın.
-   * **Senaryo 2 — USB'de eski kasa medyaları YOKSA (Yalnızca `.vault`):** USB diskte `Cipher_Secrets/` klasörü açıp içine **yalnızca** telefonunuzdaki küçük `.vault` başlık dosyasını (`Dahili Depolama > Fossify Gallery Cipher > Cipher_Secrets > .vault`) koyun; hiçbir medya kopyalanmaz. *(Not: `.vault` dosyasını doğrudan `<USB>/.vault` köküne koysanız bile CLI çıktıyı otomatik olarak `<USB>/Cipher_Secrets/` içine yazar; yalnızca `~/Desktop/.vault` veya Ev dizinindeki tekil `.vault` dosyalarında Masaüstü `Sifreli_Cikti` / `Encrypted_Output` klasörüne düşer.)*
+   * **Senaryo 2 — USB'de eski kasa medyaları YOKSA (Yalnızca `.vault`):** USB diskte `Cipher_Secrets/` klasörü açıp içine **yalnızca** telefonunuzdaki küçük `.vault` başlık dosyasını (`Dahili Depolama > Calypso Gallery > Cipher_Secrets > .vault`) koyun; hiçbir medya kopyalanmaz. *(Not: `.vault` dosyasını doğrudan `<USB>/.vault` köküne koysanız bile CLI çıktıyı otomatik olarak `<USB>/Cipher_Secrets/` içine yazar; yalnızca `~/Desktop/.vault` veya Ev dizinindeki tekil `.vault` dosyalarında Masaüstü `Sifreli_Cikti` / `Encrypted_Output` klasörüne düşer.)*
 2. **Tails OS'te şifreleyin (`./run.sh`):**
    * Yeni medyaları `~/Desktop/Sifrelenecek` (veya `To_Encrypt`) içine koyun (doğrudan köke konanlar `Default Secret Album`'e gider; `Sifrelenecek/Tatil/foto.jpg` gibi alt klasörler mevcut `.meta` albümle eşleşir veya yeni albüm oluşturur).
    * `./run.sh` ile kasa şifrenizi/PIN'inizi girin. **Çıktı hedefi sorulmaz** — araç kilidi açar açmaz doğrudan `<USB>/Cipher_Secrets/` içine şifreli `.meta` (`FGMETA2`) klasörlerini ve `.bin` dosyalarını yazar. İsterseniz RAM'deki kaynak dosyaları sildirin (`--delete-source` veya etkileşimli onay).
 3. **Telefonda uygulama içinden eşitleyin:**
-   * USB/SD diski telefonunuza bağlayın, **Fossify Gallery Cipher** uygulamasını açın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** (*"Settings > Encrypted vault > Sync vault from external drive"*) seçeneğine dokunun, istenirse kasanın kilidini açın ve `<USB>/Cipher_Secrets` (veya USB kökünü) seçin.
+   * USB/SD diski telefonunuza bağlayın, **Calypso Gallery** uygulamasını açın, **Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle** (*"Settings > Encrypted vault > Sync vault from external drive"*) seçeneğine dokunun, istenirse kasanın kilidini açın ve `<USB>/Cipher_Secrets` (veya USB kökünü) seçin.
    * **Her iki senaryo tek yapıda aynı şekilde çalışır:** USB'de tam kopya (Senaryo 1) veya yalnızca `.vault` + yeni eklenenler (Senaryo 2) olması fark etmez. Senaryo 2'de eşitleme bittikten sonra isterseniz `<USB>/Cipher_Secrets/` içindeki aktarılmış `.bin`/alt klasörleri silip yalnızca `.vault` dosyasını bir sonraki aktarım için bırakabilirsiniz.
    * **Tek Geçişli 4 Aşamalı Optimizasyon ve Kopya Kontrolü:**
      * Telefonda zaten bulunan değişmemiş birebir `.bin` dosyaları başlık çözme veya gigabaytlarca video hash'leme yapmadan `O(1)` sürede (boyut + başlık sürümü + sondaki 16 baytlık `Poly1305-AES` etiketi kontrolüyle) atlanır.

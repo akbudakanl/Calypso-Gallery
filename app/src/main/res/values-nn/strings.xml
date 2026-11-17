@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galleri</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Rediger</string>
     <string name="open_camera">Opna kameraet</string>
     <string name="hidden">(skjult)</string>
@@ -38,7 +38,7 @@
         <item quantity="one">Er du sikker på at du vil gjenoppretta %d fil?</item>
         <item quantity="other">Er du sikker på at du vil gjenoppretta %d filer?</item>
     </plurals>
-    <string name="full_storage_permission_required">Fossify Gallery treng full tilgang for å syna alle bileta og videoane dine. Gå til Innstillingar &gt; Løyve &gt; Bilete og videoar &gt; Tillat alle.</string>
+    <string name="full_storage_permission_required">Calypso Gallery treng full tilgang for å syna alle bileta og videoane dine. Gå til Innstillingar &gt; Løyve &gt; Bilete og videoar &gt; Tillat alle.</string>
 
     <!-- Filter -->
     <string name="filter_media">Filtrer media</string>
@@ -52,9 +52,9 @@
     <string name="change_filters_underlined"><u>Endra filtre</u></string>
 
     <!-- Hide / Exclude -->
-    <string name="exclude_folder_description">Dette vil ekskludera utvalet saman med undermapper berre frå Fossify Gallery. Du kan handsama ekskluderte mapper i Innstillingar.</string>
+    <string name="exclude_folder_description">Dette vil ekskludera utvalet saman med undermapper berre frå Calypso Gallery. Du kan handsama ekskluderte mapper i Innstillingar.</string>
     <string name="exclude_folder_parent">Ekskludera ei overordna mappe i staden?</string>
-    <string name="excluded_activity_placeholder">Ekskludering av mapper gjer dei og undermappene deira skjulte berre i Fossify Gallery; dei vil framleis vera synlege i andre appar.\n\nViss du vil skjula dei frå andre appar òg, bruk Skjul-funksjonen.</string>
+    <string name="excluded_activity_placeholder">Ekskludering av mapper gjer dei og undermappene deira skjulte berre i Calypso Gallery; dei vil framleis vera synlege i andre appar.\n\nViss du vil skjula dei frå andre appar òg, bruk Skjul-funksjonen.</string>
     <string name="hidden_folders">Skjulte mapper</string>
     <string name="manage_hidden_folders">Handsama skjulte mapper</string>
     <string name="hidden_folders_placeholder">Det ser ikkje ut til at du har nokon mapper skjulte med ei \".nomedia\"-fil.</string>
@@ -265,8 +265,8 @@
     <string name="video_no_sound">Denne videoen har ingen ljod</string>
 
     <!-- FAQ -->
-    <string name="faq_1_title">Korleis kan eg gjera Fossify Gallery til standardgalleriet på eininga?</string>
-    <string name="faq_1_text">Fyrst må du finna det gjeldande standardgalleriet i Appar-delen av einingsinnstillingane, sjå etter ein knapp som heiter noko slikt som \"Opna som standard\", trykkja på han og deretter velja \"Fjern standardval\".\nNeste gong du prøver å opna eit bilete eller ein video, skal du sjå ein appveljar der du kan velja Fossify Gallery og gjera han til standardapp.</string>
+    <string name="faq_1_title">Korleis kan eg gjera Calypso Gallery til standardgalleriet på eininga?</string>
+    <string name="faq_1_text">Fyrst må du finna det gjeldande standardgalleriet i Appar-delen av einingsinnstillingane, sjå etter ein knapp som heiter noko slikt som \"Opna som standard\", trykkja på han og deretter velja \"Fjern standardval\".\nNeste gong du prøver å opna eit bilete eller ein video, skal du sjå ein appveljar der du kan velja Calypso Gallery og gjera han til standardapp.</string>
     <string name="faq_2_title">Eg låste appen med eit passord, men eg har gløymt det. Kva kan eg gjera?</string>
     <string name="faq_2_text">Du kan løysa det på to måtar. Du kan anten installera appen på nytt, eller finna appen i einingsinnstillingane og velja \"Fjern data\". Det vil nullstilla alle innstillingane dine, men fjernar ingen mediafiler.</string>
     <string name="faq_3_title">Korleis kan eg få eit album til alltid å synast øvst?</string>
@@ -274,7 +274,7 @@
     <string name="faq_4_title">Korleis kan eg spola framover i videoar?</string>
     <string name="faq_4_text">Du kan gjera det ved å dobbelttrykkja på sida av skjermen, eller trykkja på teksten for gjeldande eller maksimal lengd nær søkelinja. Viss du slår på avspeling av videoar på ein eigen skjerm i appinnstillingane, kan du bruka vassrette rørsler òg.</string>
     <string name="faq_5_title">Kva er skilnaden mellom å skjula og å ekskludera ei mappe?</string>
-    <string name="faq_5_text">Ekskluder hindrar at mappa vert synt berre i Fossify Gallery, medan Skjul verkar på systemnivå og skjuler mappa frå andre galleri òg. Det verkar ved å laga ei tom \".nomedia\"-fil i den gjeldande mappa, som du òg kan fjerna med ein kva som helst filhandsamar. Merk at somme einingar ikkje tillèt å skjula mapper som Camera, Screenshots og Downloads.</string>
+    <string name="faq_5_text">Ekskluder hindrar at mappa vert synt berre i Calypso Gallery, medan Skjul verkar på systemnivå og skjuler mappa frå andre galleri òg. Det verkar ved å laga ei tom \".nomedia\"-fil i den gjeldande mappa, som du òg kan fjerna med ein kva som helst filhandsamar. Merk at somme einingar ikkje tillèt å skjula mapper som Camera, Screenshots og Downloads.</string>
     <string name="faq_6_title">Kvifor dukkar det opp mapper med plateomslag eller klistremerke?</string>
     <string name="faq_6_text">Det kan henda at uvanlege album dukkar opp. Du kan enkelt ekskludera dei ved å trykkja og halda på dei og velja Ekskluder. I den neste dialogen kan du velja den overordna mappa, noko som truleg hindrar at andre relaterte album vert synte òg.</string>
     <string name="faq_7_title">Ei mappe med bilete vert ikkje synt, eller ho syner ikkje alle elementa. Kva kan eg gjera?</string>
@@ -459,11 +459,11 @@
     <string name="create_new_vault_option">Opprett nytt kvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterande kvelv</string>
     <string name="where_to_create_vault_title">Kvar skal kvelvet opprettast?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">Eigendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa.</string>
     <string name="unlock_existing_vault_at_location_prompt">Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe.</string>
-    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standardplassering (Intern lagring &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">Eigendefinert / Ekstern plassering (USB-stasjon, SD-kort eller eigendefinert mappe)</string>
     <string name="external_vault_unavailable_title">Eksternt kvelv utilgjengeleg</string>
     <string name="external_vault_unavailable_prompt">Den konfigurerte kvelvplasseringa di (%s) er for tida fråkopla eller utilgjengeleg. Kopla til stasjonen og trykk på Prøv på nytt, eller vel ei anna kvelvplassering.</string>

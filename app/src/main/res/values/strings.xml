@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Gallery</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Edit</string>
     <string name="open_camera">Open camera</string>
     <string name="hidden">(hidden)</string>
@@ -38,7 +38,7 @@
         <item quantity="one">Are you sure you want to restore %d file?</item>
         <item quantity="other">Are you sure you want to restore %d files?</item>
     </plurals>
-    <string name="full_storage_permission_required">Fossify Gallery needs full access to display all your photos and videos. Go to Settings > Permissions > Photos and videos > Allow all.</string>
+    <string name="full_storage_permission_required">Calypso Gallery needs full access to display all your photos and videos. Go to Settings > Permissions > Photos and videos > Allow all.</string>
 
     <!-- Filter -->
     <string name="filter_media">Filter media</string>
@@ -52,9 +52,9 @@
     <string name="change_filters_underlined"><u>Change filters</u></string>
 
     <!-- Hide / Exclude -->
-    <string name="exclude_folder_description">This will exclude the selection together with its subfolders from Fossify Gallery only. You can manage excluded folders in Settings.</string>
+    <string name="exclude_folder_description">This will exclude the selection together with its subfolders from Calypso Gallery only. You can manage excluded folders in Settings.</string>
     <string name="exclude_folder_parent">Exclude a parent instead?</string>
-    <string name="excluded_activity_placeholder">Excluding folders will make them together with their subfolders hidden just in Fossify Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Encrypt function.</string>
+    <string name="excluded_activity_placeholder">Excluding folders will make them together with their subfolders hidden just in Calypso Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Encrypt function.</string>
     <string name="hidden_folders">Hidden folders</string>
     <string name="manage_hidden_folders">Manage hidden folders</string>
     <string name="hidden_folders_placeholder">Seems like you don\'t have any folders hidden with a \".nomedia\" file or dot prefix.</string>
@@ -271,9 +271,9 @@
     <string name="video_no_sound">This video has no audio</string>
 
     <!-- FAQ -->
-    <string name="faq_1_title">How can I make Fossify Gallery the default device gallery?</string>
+    <string name="faq_1_title">How can I make Calypso Gallery the default device gallery?</string>
     <string name="faq_1_text">First you have to find the currently default gallery in the Apps section of your device settings, look for a button that says something like \"Open by default\", click on it, then select \"Clear defaults\".
-        The next time you will try opening an image or video you should see an app picker, where you can select Fossify Gallery and make it the default app.</string>
+        The next time you will try opening an image or video you should see an app picker, where you can select Calypso Gallery and make it the default app.</string>
     <string name="faq_2_title">I locked the app with a password, but I forgot it. What can I do?</string>
     <string name="faq_2_text">You can solve it in 2 ways. You can either reinstall the app, or find the app in your device settings and select \"Clear data\". It will reset all your settings, it will not remove any media files.</string>
     <string name="faq_3_title">How can I make an album always appear at the top?</string>
@@ -281,7 +281,7 @@
     <string name="faq_4_title">How can I fast forward videos?</string>
     <string name="faq_4_text">You can do it by double tapping the side of the screen, or tapping the current or max duration texts near the seekbar. If you enable opening videos on a separate screen in the app settings, you can use horizontal gestures too.</string>
     <string name="faq_5_title">What is the difference between hiding and excluding a folder?</string>
-    <string name="faq_5_text">Exclude prevents displaying the folder only in Fossify Gallery, while Hide works system-wise and it hides the folder from other galleries too. It works by creating an empty \".nomedia\" file in the given folder, which you can then remove with any file manager too. Note that some devices do not allow hiding folders like Camera, Screenshots and Downloads.</string>
+    <string name="faq_5_text">Exclude prevents displaying the folder only in Calypso Gallery, while Hide works system-wise and it hides the folder from other galleries too. It works by creating an empty \".nomedia\" file in the given folder, which you can then remove with any file manager too. Note that some devices do not allow hiding folders like Camera, Screenshots and Downloads.</string>
     <string name="faq_6_title">Why do folders with music cover art or stickers show up?</string>
     <string name="faq_6_text">It can happen that you will see some unusual albums show up. You can easily exclude them by long pressing them and selecting Exclude. In the next dialog you can then select the parent folder, chances are it will prevent the other related albums showing up too.</string>
     <string name="faq_7_title">A folder with images isn\'t showing up, or it doesn\'t show all items.  What can I do?</string>
@@ -399,11 +399,11 @@
     <string name="create_new_vault_option">Create new vault</string>
     <string name="use_existing_vault_option">Use existing vault</string>
     <string name="where_to_create_vault_title">Where should the vault be created?</string>
-    <string name="vault_location_default_short">Default Location (Internal &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Default Location (Internal &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">Custom Location</string>
     <string name="no_existing_vault_at_location">No existing encrypted vault (.vault) was found in the selected folder.</string>
     <string name="unlock_existing_vault_at_location_prompt">An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder.</string>
-    <string name="vault_location_standard_option">Standard location (Internal Storage &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standard location (Internal Storage &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">Custom / External location (USB drive, SD card, or custom folder)</string>
     <string name="external_vault_unavailable_title">External vault unavailable</string>
     <string name="external_vault_unavailable_prompt">Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location.</string>
@@ -516,4 +516,29 @@
     <string name="unexclude">Stop excluding</string>
     <string name="hide_folder">Hide</string>
     <string name="unhide_folder">Unhide</string>
+
+    <!-- Fork about and GPL information -->
+    <string name="about_title">About Calypso Gallery</string>
+    <string name="about_version">Version %1$s (%2$s)</string>
+    <string name="about_fork_description">Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify.</string>
+    <string name="about_modification_notice">This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md.</string>
+    <string name="about_license_heading">License</string>
+    <string name="about_gpl_notice" formatted="false">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/.</string>
+    <string name="about_read_gpl_license">Read the GNU GPL v3 license</string>
+    <string name="about_source_heading">Source code</string>
+    <string name="about_corresponding_source_notice">The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project.</string>
+    <string name="about_fork_source">Fork source code and corresponding source</string>
+    <string name="about_release_sources">Release source archives</string>
+    <string name="about_fork_issues">Fork issue tracker</string>
+    <string name="about_upstream_source">Upstream Fossify Gallery source code</string>
+    <string name="about_upstream_project">Upstream Fossify project</string>
+    <string name="about_help_heading">Help and legal information</string>
+    <string name="about_faq">Frequently asked questions</string>
+    <string name="about_third_party_licenses">Third-party licenses</string>
+    <string name="gpl_license_title">GNU General Public License v3</string>
+
+    <!-- Fork disclaimer, shown once before any runtime permission is requested -->
+    <string name="fork_disclaimer_title">Fork notice</string>
+    <string name="fork_disclaimer_message">This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md.</string>
+    <string name="fork_disclaimer_acknowledge">I understand</string>
 </resources>

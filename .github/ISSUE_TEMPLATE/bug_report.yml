@@ -1,12 +1,12 @@
 name: Bug report
-description: Create a bug report to help us improve
+description: Create a bug report to help us improve Calypso Gallery
 labels: [ "bug", "needs triage" ]
 body:
   - type: markdown
     attributes:
       value: |
         ## Hi there 👋
-        Thanks for helping us improve Fossify Gallery by reporting a bug!
+        Thanks for helping us improve Calypso Gallery by reporting a bug!
         Please fill in as much information as possible about your bug to avoid unnecessary and time-consuming back-and-forth communication.
 
   - type: checkboxes
@@ -14,11 +14,9 @@ body:
     attributes:
       label: "Checklist"
       options:
-        - label: "I can reproduce the bug with the latest version given [here](https://github.com/FossifyOrg/Gallery/releases/latest)."
+        - label: "I can reproduce the bug with the latest version given [here](https://github.com/akbudakanl/Gallery-Cipher/releases/latest)."
           required: true
-        - label: "I made sure that there are **no existing issues** - [open](https://github.com/FossifyOrg/Gallery/issues) or [closed](https://github.com/FossifyOrg/Gallery/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
-          required: true
-        - label: "I made sure that there are **no existing discussions** - [open](https://github.com/orgs/FossifyOrg/discussions?discussions_q=is:open+label:gallery) or [closed](https://github.com/orgs/FossifyOrg/discussions?discussions_q=is:closed+label:gallery) - to which I could contribute my information."
+        - label: "I made sure that there are **no existing issues** - [open](https://github.com/akbudakanl/Gallery-Cipher/issues) or [closed](https://github.com/akbudakanl/Gallery-Cipher/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
           required: true
         - label: "I have read the FAQs inside the app (Menu -> About -> FAQs) and my problem isn't listed."
           required: true
@@ -26,7 +24,7 @@ body:
           required: true
         - label: "This issue contains only one bug."
           required: true
-        - label: "I have read and understood the [contribution guidelines](https://github.com/FossifyOrg/Gallery/blob/master/CONTRIBUTING.md)."
+        - label: "I have read and understood the [contribution guidelines](https://github.com/akbudakanl/Gallery-Cipher/blob/main/CONTRIBUTING.md)."
           required: true
 
   - type: input
@@ -34,7 +32,7 @@ body:
     attributes:
       label: Affected app version
       description: "Which app version were you using when you found the bug?"
-      placeholder: "x.x.x - Go to App Main Menu > About > Version."
+      placeholder: "x.x.x-cipher - Go to App Main Menu > About > Version."
     validations:
       required: true
 
@@ -43,7 +41,7 @@ body:
     attributes:
       label: Affected Android/Custom ROM version
       description: |
-        What operating system and version were you using when you encounter the bug?
+        What operating system and version were you using when you encountered the bug?
       placeholder: "Example: Android 12 / LineageOS 18.1"
     validations:
       required: true
@@ -109,7 +107,7 @@ body:
       description: |
         A picture or video is worth a thousand words.
 
-        If applicable, drag and drop screenshots or a screen recording to help explain your problem. If your file is too big for Github to accept, try to compress it (ZIP file), or feel free to paste a link to an image/video instead.
+        If applicable, drag and drop screenshots or a screen recording to help explain your problem. If your file is too big for GitHub to accept, try to compress it (ZIP file), or feel free to paste a link to an image/video instead.
 
   - type: textarea
     id: additional-information
@@ -123,4 +121,3 @@ body:
         * you have disabled all animations on your device
         * your rabbit chewed your network cable
         * ...
-

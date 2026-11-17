@@ -1,6 +1,6 @@
 # Translation Blind Tests
 
-This directory stores translation audit and blind-review comparison reports for **Fossify Gallery Cipher**. Each target language has its own dedicated subfolder so that string audits, terminology notes, and 1-to-1 English comparison tables remain cleanly organized and easy to maintain.
+This directory stores translation audit and blind-review comparison reports for **Calypso Gallery**. Each target language has its own dedicated subfolder so that string audits, terminology notes, and 1-to-1 English comparison tables remain cleanly organized and easy to maintain.
 
 > [!NOTE]
 > **Notes — Translation Requests & Feedback:**  

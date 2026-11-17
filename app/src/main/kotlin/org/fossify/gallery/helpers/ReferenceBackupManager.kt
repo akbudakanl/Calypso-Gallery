@@ -18,7 +18,7 @@ import java.io.File
  * Keeps a copy of the favorites and the virtual albums in the Cipher folder on shared storage.
  *
  * The app database lives in the internal storage of the app, so it is gone when the user clears
- * the app data. The backups live next to it in the `Fossify Gallery Cipher` folder, outside of the
+ * the app data. The backups live next to it in the `Calypso Gallery` folder, outside of the
  * app sandbox, and are restored when the app starts without any data.
  *
  * The backup is only written while the app may access the shared storage. Without that permission

@@ -21,7 +21,7 @@ JPEG, JPEG-XL, PNG, MP4, MKV, RAW, SVG, GIF, videod ja palju muud - meil on sinu
 ✨ MATERIAALNE DISAIN DÜNAAMILISTE TEEMADEGA:
 Koge intuitiivse materjalidisaini ilu koos dünaamiliste teemadega. Tahad rohkem? Sukeldu kohandatud teemadesse ja tee oma galerii tõeliselt ainulaadseks.
 
-Tutvu Fossify rakendustega: https://www.fossify.org
-Avatud lähtekood: https://www.github.com/FossifyOrg
-Liitu kogukonnaga Reddit'is: https://www.reddit.com/r/Fossify
-Suhtle Telegram'is: https://t.me/Fossify
+Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery (https://github.com/FossifyOrg/Gallery). It is not affiliated with or endorsed by Fossify.
+
+Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
+Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases

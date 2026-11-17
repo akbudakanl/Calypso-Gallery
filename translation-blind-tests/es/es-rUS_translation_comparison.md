@@ -591,11 +591,11 @@ Following the previous audit, 22 additional keys were localized in `values-es-rU
 | 408 | `create_new_vault_option` | Create new vault | Crear bóveda nueva |
 | 409 | `use_existing_vault_option` | Use existing vault | Usar bóveda existente |
 | 410 | `where_to_create_vault_title` | Where should the vault be created? | ¿Dónde debería crearse la bóveda? |
-| 411 | `vault_location_default_short` | Default Location (Internal > Fossify Gallery Cipher > Cipher_Secrets) | Ubicación predeterminada (Interno > Fossify Gallery Cipher > Cipher_Secrets) |
+| 411 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Cipher_Secrets) | Ubicación predeterminada (Interno > Calypso Gallery > Cipher_Secrets) |
 | 412 | `vault_location_custom_short` | Custom Location | Ubicación personalizada |
 | 413 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada. |
 | 414 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta. |
-| 415 | `vault_location_standard_option` | Standard location (Internal Storage > Fossify Gallery Cipher > Cipher_Secrets) | Ubicación estándar (Almacenamiento interno > Fossify Gallery Cipher > Cipher_Secrets) |
+| 415 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Cipher_Secrets) | Ubicación estándar (Almacenamiento interno > Calypso Gallery > Cipher_Secrets) |
 | 416 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada) |
 | 417 | `external_vault_unavailable_title` | External vault unavailable | Bóveda externa no disponible |
 | 418 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda. |

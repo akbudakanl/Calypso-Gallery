@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">ギャラリー</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">編集</string>
     <string name="open_camera">カメラを開く</string>
     <string name="hidden">(非表示)</string>
@@ -391,11 +391,11 @@
     <string name="create_new_vault_option">新しい保管庫を作成</string>
     <string name="use_existing_vault_option">既存の保管庫を使用</string>
     <string name="where_to_create_vault_title">保管庫をどこに作成しますか？</string>
-    <string name="vault_location_default_short">既定の場所 (内部 &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">既定の場所 (内部 &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_short">カスタムの場所</string>
     <string name="no_existing_vault_at_location">選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。</string>
     <string name="unlock_existing_vault_at_location_prompt">%s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。</string>
-    <string name="vault_location_standard_option">標準の場所 (内部ストレージ &gt; Fossify Gallery Cipher &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">標準の場所 (内部ストレージ &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
     <string name="vault_location_custom_option">カスタム / 外部の場所（USB ドライブ、SD カード、またはカスタムフォルダー）</string>
     <string name="external_vault_unavailable_title">外部保管庫を利用できません</string>
     <string name="external_vault_unavailable_prompt">設定された保管庫の場所 (%s) は現在切断されているか利用できません。ドライブを接続して「再試行」をタップするか、別の保管庫の場所を選択してください。</string>

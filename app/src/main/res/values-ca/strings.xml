@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_launcher_name">Galeria</string>
+    <string name="app_launcher_name">Calypso Gallery</string>
     <string name="edit">Edita</string>
     <string name="open_camera">Obre la cÃ mera</string>
     <string name="hidden">(ocult)</string>
@@ -240,17 +240,17 @@
     <string name="faq_17_text">AixÃ² ha deixat de funcionar a causa dels canvis del sistema que tambÃ© han vingut amb Android 11, l\'aplicaciÃ³ ja no pot navegar per carpetes reals, es basa en l\'anomenat MediaStore per a obtenir dades.</string>
     <string name="faq_18_title">Per quÃ¨ veig anuncis comercials durant la reproducciÃ³ de vÃ­deo\?</string>
     <string name="faq_18_text">Les nostres aplicacions no tenen cap anunci. Si els veieu durant la reproducciÃ³ de vÃ­deo, estareu utilitzant una altra aplicaciÃ³ de reproducciÃ³ de vÃ­deo. Intenteu trobar el reproductor de vÃ­deo predeterminat a la configuraciÃ³ del dispositiu i, a continuaciÃ³, feu Â«Esborra els valors predeterminatsÂ». La prÃ²xima vegada que invoqueu una acciÃ³ de vÃ­deo, veureu un missatge de selecciÃ³ d\'aplicacions, on podreu seleccionar quina aplicaciÃ³ voleu utilitzar.</string>
-    <string name="faq_1_title">Com puc fer que la Fossify Gallery sigui la galeria predeterminada del dispositiu?</string>
+    <string name="faq_1_title">Com puc fer que la Calypso Gallery sigui la galeria predeterminada del dispositiu?</string>
     <string name="editor">Editor</string>
     <string name="wallpaper">Fons de pantalla</string>
-    <string name="faq_5_text">Exclou impedeix mostrar la carpeta nomÃ©s a Fossify Gallery, mentre que Oculta funciona en l\'Ã mbit del sistema i tambÃ© oculta la carpeta d\'altres galeries. Funciona creant un fitxer Â«.nomediaÂ» buit a la carpeta indicada, que desprÃ©s podreu eliminar amb qualsevol gestor de fitxers. Tingueu en compte que alguns dispositius no permeten amagar carpetes com ara Camera/CÃ mera, Screenshots/Captures de pantalla o Downloads/DescÃ rregues.</string>
-    <string name="exclude_folder_description">AixÃ² exclourÃ  la selecciÃ³ juntament amb les seves subcarpetes nomÃ©s de la Fossify Gallery. Podeu gestionar les carpetes excloses a la configuraciÃ³.</string>
-    <string name="excluded_activity_placeholder">L\'exclusiÃ³ de les carpetes es farÃ  juntament amb les seves subcarpetes amagades nomÃ©s a la Fossify Gallery, perÃ² encara seran visibles en les altres aplicacions.
+    <string name="faq_5_text">Exclou impedeix mostrar la carpeta nomÃ©s a Calypso Gallery, mentre que Oculta funciona en l\'Ã mbit del sistema i tambÃ© oculta la carpeta d\'altres galeries. Funciona creant un fitxer Â«.nomediaÂ» buit a la carpeta indicada, que desprÃ©s podreu eliminar amb qualsevol gestor de fitxers. Tingueu en compte que alguns dispositius no permeten amagar carpetes com ara Camera/CÃ mera, Screenshots/Captures de pantalla o Downloads/DescÃ rregues.</string>
+    <string name="exclude_folder_description">AixÃ² exclourÃ  la selecciÃ³ juntament amb les seves subcarpetes nomÃ©s de la Calypso Gallery. Podeu gestionar les carpetes excloses a la configuraciÃ³.</string>
+    <string name="excluded_activity_placeholder">L\'exclusiÃ³ de les carpetes es farÃ  juntament amb les seves subcarpetes amagades nomÃ©s a la Calypso Gallery, perÃ² encara seran visibles en les altres aplicacions.
 \n
 \nSi tambÃ© voleu amagar-les de les altres apps, utilitzeu la funciÃ³ Amagar.</string>
-    <string name="faq_1_text">Primer heu de trobar la galeria predeterminada a la secciÃ³ d\'Aplicacions de la configuraciÃ³ del dispositiu, busqueu un botÃ³ que digui alguna cosa com Â«Obre per defecteÂ», feu-hi clic i seleccioneu Â«Neteja els valors per defecteÂ». La prÃ²xima vegada que intenteu obrir una imatge o un vÃ­deo veureu un selector d\'aplicacions, on podreu seleccionar Fossify Gallery i convertir-la en l\'aplicaciÃ³ predeterminada.</string>
+    <string name="faq_1_text">Primer heu de trobar la galeria predeterminada a la secciÃ³ d\'Aplicacions de la configuraciÃ³ del dispositiu, busqueu un botÃ³ que digui alguna cosa com Â«Obre per defecteÂ», feu-hi clic i seleccioneu Â«Neteja els valors per defecteÂ». La prÃ²xima vegada que intenteu obrir una imatge o un vÃ­deo veureu un selector d\'aplicacions, on podreu seleccionar Calypso Gallery i convertir-la en l\'aplicaciÃ³ predeterminada.</string>
     <string name="interval">Interval</string>
-    <string name="full_storage_permission_required">La Fossify Gallery necessita accÃ©s complet a totes les vostres fotografies i vÃ­deos. Aneu a ConfiguraciÃ³ &gt; Permisos &gt; Fotos i vÃ­deos &gt; Permet-ho tot.</string>
+    <string name="full_storage_permission_required">La Calypso Gallery necessita accÃ©s complet a totes les vostres fotografies i vÃ­deos. Aneu a ConfiguraciÃ³ &gt; Permisos &gt; Fotos i vÃ­deos &gt; Permet-ho tot.</string>
     <string name="playback_speed">Velocitat de reproducciÃ³</string>
     <string name="failed_to_load_media">Ha fallat en carregar elements multimÃ¨dia.</string>
     <string name="media_exceeds_device_capabilities">Els elements multimÃ¨dia excedeixen les capacitats del dispositiu.</string>

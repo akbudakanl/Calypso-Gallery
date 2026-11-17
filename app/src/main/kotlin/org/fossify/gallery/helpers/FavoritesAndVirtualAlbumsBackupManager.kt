@@ -61,7 +61,7 @@ private const val JSON_EXTENSION = ".json"
  * `Favorites/favorites.json` and `Virtual albums/<album>.json` depending on which data is present.
  *
  * The export output is identical whether or not the user granted all-files access. On import,
- * internal backup files under `Fossify Gallery Cipher` are written only when shared-storage
+ * internal backup files under `Calypso Gallery` are written only when shared-storage
  * access is granted; otherwise imported entries stay within the application's database.
  */
 object FavoritesAndVirtualAlbumsBackupManager {

@@ -180,11 +180,11 @@ class App : FossifyApp() {
                 if (protocol != null && protocol.lowercase() in blockedSchemes) {
                     object : URLStreamHandler() {
                         override fun openConnection(u: URL?): URLConnection {
-                            throw SecurityException("Network access is permanently disabled in Fossify Gallery Cipher")
+                            throw SecurityException("Network access is permanently disabled in Calypso Gallery")
                         }
 
                         override fun openConnection(u: URL?, p: Proxy?): URLConnection {
-                            throw SecurityException("Network access is permanently disabled in Fossify Gallery Cipher")
+                            throw SecurityException("Network access is permanently disabled in Calypso Gallery")
                         }
                     }
                 } else {
@@ -198,7 +198,7 @@ class App : FossifyApp() {
                 override fun select(uri: URI?): MutableList<Proxy> {
                     val scheme = uri?.scheme?.lowercase()
                     if (scheme in blockedSchemes || scheme == "socket") {
-                        throw SecurityException("Network access is permanently disabled in Fossify Gallery Cipher")
+                        throw SecurityException("Network access is permanently disabled in Calypso Gallery")
                     }
                     return mutableListOf(Proxy.NO_PROXY)
                 }
