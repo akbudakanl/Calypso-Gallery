@@ -11,7 +11,7 @@ import org.junit.Test
 
 class CopyMovePolicyTest {
     private val realAlbum = "/storage/emulated/0/DCIM/Camera"
-    private val encryptedRealAlbum = "/storage/emulated/0/Calypso Gallery/Cipher_Secrets/a1b2c3"
+    private val encryptedRealAlbum = "/storage/emulated/0/Calypso Gallery/Secrets/a1b2c3"
     private val virtualAlbum = "virtual_album_7"
 
     @Test

@@ -116,7 +116,7 @@ class ExcludedMenuPolicyTest {
 
     @Test
     fun isEncryptedAlbumExcludedIdentifiesExcludedAndSystemAlbumsCorrectly() {
-        val vaultRoot = "/storage/emulated/0/Calypso Gallery/Cipher_Secrets"
+        val vaultRoot = "/storage/emulated/0/Calypso Gallery/Secrets"
         val normalAlbum = "$vaultRoot/.fvault_1111"
         val noMediaAlbum = "$vaultRoot/.fvault_2222"
         val dotDecryptedAlbum = "$vaultRoot/.fvault_3333"

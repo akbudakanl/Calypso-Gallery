@@ -106,7 +106,7 @@ class ReferenceLifecycleTest {
         assertNull(plainResolution)
 
         // Vault-hint search IS allowed to search inside .vault roots
-        val vaultHintFile = File(storageRoot, "HiddenStorage/Cipher_Secrets/Vacation/abcd1234.bin")
+        val vaultHintFile = File(storageRoot, "HiddenStorage/Secrets/Vacation/abcd1234.bin")
         val vaultResolution = MediaIdentityResolver.resolveInFilesystem(
             identity = identity,
             hintPaths = listOf(vaultHintFile.absolutePath),
