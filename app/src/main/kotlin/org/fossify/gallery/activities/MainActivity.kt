@@ -138,6 +138,7 @@ import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.operations.OperationRecovery
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.GET_ANY_INTENT
 import org.fossify.gallery.helpers.GET_IMAGE_INTENT
@@ -583,6 +584,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 promptToResumeVault()
             }
         }
+
+        // ADR 0003: one-time resume prompt after process death. Encrypted operations are only
+        // offered once the vault is unlocked; plain ones are offered on app start.
+        OperationRecovery.maybePromptResume(this)
     }
 
     /** Asks for the vault password again and puts the person back into the vault where they left off. */
