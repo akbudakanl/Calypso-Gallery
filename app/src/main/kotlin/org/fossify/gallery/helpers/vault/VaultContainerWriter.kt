@@ -10,6 +10,7 @@ import java.io.RandomAccessFile
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.nio.channels.Channels
+import org.fossify.gallery.helpers.operations.EncryptedSizeInput
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -59,18 +60,7 @@ internal object VaultContainerWriter {
 
         val headerPlain = ByteArrayOutputStream().use { baos ->
             DataOutputStream(baos).use { dos ->
-                dos.writeShort(VaultContainer.ALGORITHM_PARAMS.toInt())
-                dos.writeInt(TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE)
-                dos.writeLong(ciphertextLength)
-                dos.write(dek)
-                dos.writeUTF(originalName)
-                dos.writeLong(lastModified)
-                dos.writeLong(dateTaken)
-                dos.writeLong(originalSize)
-                dos.writeInt(mediaType)
-                dos.writeInt(videoDuration)
-                dos.writeInt(thumbnail?.size ?: 0)
-                if (thumbnail != null) dos.write(thumbnail)
+                writeHeaderPlain(dos, dek, ciphertextLength, originalName, lastModified, dateTaken, originalSize, mediaType, videoDuration, thumbnail)
             }
             baos.toByteArray()
         }
@@ -87,6 +77,61 @@ internal object VaultContainerWriter {
             payloadOffset = VaultContainer.payloadOffset(encHeader.size),
             ciphertextLength = ciphertextLength
         )
+    }
+
+    /** Single source of truth for the header layout, shared by [prepare] and the size estimator. */
+    private fun writeHeaderPlain(
+        dos: DataOutputStream,
+        dek: ByteArray,
+        ciphertextLength: Long,
+        originalName: String,
+        lastModified: Long,
+        dateTaken: Long,
+        originalSize: Long,
+        mediaType: Int,
+        videoDuration: Int,
+        thumbnail: ByteArray?
+    ) {
+        dos.writeShort(VaultContainer.ALGORITHM_PARAMS.toInt())
+        dos.writeInt(TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE)
+        dos.writeLong(ciphertextLength)
+        dos.write(dek)
+        dos.writeUTF(originalName)
+        dos.writeLong(lastModified)
+        dos.writeLong(dateTaken)
+        dos.writeLong(originalSize)
+        dos.writeInt(mediaType)
+        dos.writeInt(videoDuration)
+        dos.writeInt(thumbnail?.size ?: 0)
+        if (thumbnail != null) dos.write(thumbnail)
+    }
+
+    /**
+     * Exact size of the container that [prepare] + [writeContainer] would produce. Used by
+     * `SpaceEstimator` (ADR 0003 §3a) before any byte is written, so low-storage decisions use the
+     * same header layout as the writer.
+     */
+    fun estimateEncryptedSize(input: EncryptedSizeInput): Long {
+        val ciphertextLength = TinkStreamSpec.expectedCiphertextSize(input.originalSize, input.segmentSize)
+        val headerPlainSize = ByteArrayOutputStream().use { baos ->
+            DataOutputStream(baos).use { dos ->
+                writeHeaderPlain(
+                    dos = dos,
+                    dek = ByteArray(TinkStreamSpec.KEY_SIZE_BYTES),
+                    ciphertextLength = ciphertextLength,
+                    originalName = input.originalName,
+                    lastModified = 0L,
+                    dateTaken = 0L,
+                    originalSize = input.originalSize,
+                    mediaType = 0,
+                    videoDuration = 0,
+                    thumbnail = if (input.thumbnailSize > 0) ByteArray(input.thumbnailSize) else null
+                )
+            }
+            baos.size()
+        }
+        val encryptedHeaderSize = headerPlainSize + 16 // GCM tag
+        return VaultContainer.payloadOffset(encryptedHeaderSize) + ciphertextLength
     }
 
     fun writeContainer(
