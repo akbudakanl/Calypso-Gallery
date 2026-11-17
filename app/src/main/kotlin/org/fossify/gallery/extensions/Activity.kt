@@ -58,7 +58,6 @@ import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.dialogs.SmartFileConflictDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
-import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
@@ -903,16 +902,10 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
 
     val targetDisplayDir = if (targetDir == null) {
         CryptoManager.getDefaultVaultRoot()
-    } else if (listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME).any {
-            targetDir.name.equals(it, ignoreCase = true)
-        }
-    ) {
+    } else if (targetDir.name.equals(SECRETS_DIR_NAME, ignoreCase = true)) {
         targetDir
     } else {
-        listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)
-            .map { File(targetDir, it) }
-            .firstOrNull { it.isDirectory }
-            ?: File(targetDir, SECRETS_DIR_NAME)
+        File(targetDir, SECRETS_DIR_NAME)
     }
 
     if (confirmBeforeCreatingNew && switchingFromAnotherVault) {

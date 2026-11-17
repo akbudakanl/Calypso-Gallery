@@ -624,7 +624,7 @@ fun CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(context: Context, albumDir:
     if (isVaultRecycleBin(albumDir) || isDefaultHiddenAlbum(albumDir)) {
         return false
     }
-    val metaNames = setOf(VAULT_SUBFOLDER_META_FILE, ENCRYPTED_FOLDER_META_FILE, NOMEDIA, VAULT_RESTORE_INFO_FILE)
+    val metaNames = setOf(VAULT_SUBFOLDER_META_FILE, NOMEDIA, VAULT_RESTORE_INFO_FILE)
     val remaining = albumDir.listFiles() ?: emptyArray()
     if (remaining.any { it.name !in metaNames }) {
         return false

@@ -174,26 +174,14 @@ const val ENCRYPTED_FOLDERS = "encrypted_folders"
 const val ENCRYPTED_FILE_EXT = ".fenc"
 const val ENCRYPTED_FILE_PREFIX = ".fv_"
 const val ENCRYPTED_FOLDER_PREFIX = ".fvault_"
-const val ENCRYPTED_FOLDER_META_FILE = ".fmeta"
-const val CIPHER_ROOT_DIR_NAME = "Cipher"
 /**
  * The standalone container of this app in the internal storage. It is not nested in the Documents
  * folder, it sits directly in the internal storage as its own top level folder.
  */
 const val CIPHER_APP_DIR_NAME = "Calypso Gallery"
-/**
- * Historical on-disk container name from the fork's early builds. Kept only so existing vaults
- * and backups can be located and migrated; it is not a product/brand name.
- */
-const val LEGACY_CIPHER_APP_DIR_NAME = "Fossify Gallery Cipher"
 const val CIPHER_VIRTUAL_ALBUMS_DIR_NAME = "Virtual Album Saves"
-/** Current on-disk name of the vault container folder inside the app container. */
+/** On-disk name of the vault container folder inside the app container. */
 const val SECRETS_DIR_NAME = "Secrets"
-/**
- * Historical on-disk vault folder name. Still a fully valid vault location: it is recognised for
- * detection, migration and sync so upgrading never strands an existing vault. Not a brand name.
- */
-const val CIPHER_SECRETS_DIR_NAME = "Cipher_Secrets"
 
 // slideshow
 const val SLIDESHOW_INTERVAL = "slideshow_interval"

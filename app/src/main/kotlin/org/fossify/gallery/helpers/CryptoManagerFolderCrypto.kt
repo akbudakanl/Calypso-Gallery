@@ -156,9 +156,7 @@ fun CryptoManager.encryptFolder(
         }
     }
 
-    if (!File(subfolder, VAULT_SUBFOLDER_META_FILE).exists() &&
-        !File(subfolder, ENCRYPTED_FOLDER_META_FILE).exists()
-    ) {
+    if (!File(subfolder, VAULT_SUBFOLDER_META_FILE).exists()) {
         writeEncryptedFolderMeta(context, subfolder, originalFolderName)
     }
 

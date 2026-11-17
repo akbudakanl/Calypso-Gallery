@@ -53,14 +53,14 @@ class VaultRelativeSyncTest {
 
     @Test
     fun extractRelativeVaultPath_and_resolveVaultItemPath_handleMountsAndRejectTraversal() {
-        val oldVaultRoot = File("/mnt/media_rw/USB-1111/Cipher_Secrets")
+        val oldVaultRoot = File("/mnt/media_rw/USB-1111/Secrets")
         val newVaultRoot = File("/storage/USB-2222/CustomVault")
 
         // Relative extraction against explicit vault root
         assertEquals(
             "a1b2c3/4f8a1c9e.bin",
             VirtualAlbumSyncManager.extractRelativeVaultPath(
-                "/mnt/media_rw/USB-1111/Cipher_Secrets/a1b2c3/4f8a1c9e.bin",
+                "/mnt/media_rw/USB-1111/Secrets/a1b2c3/4f8a1c9e.bin",
                 oldVaultRoot
             )
         )
@@ -69,14 +69,14 @@ class VaultRelativeSyncTest {
         assertEquals(
             "a1b2c3/4f8a1c9e.bin",
             VirtualAlbumSyncManager.extractRelativeVaultPath(
-                "E:\\Portable\\Cipher_Secrets\\a1b2c3\\4f8a1c9e.bin",
+                "E:\\Portable\\Secrets\\a1b2c3\\4f8a1c9e.bin",
                 null
             )
         )
         assertEquals(
             "sub/item.bin",
             VirtualAlbumSyncManager.extractRelativeVaultPath(
-                "/storage/legacy/Cipher/sub/item.bin",
+                "/storage/legacy/Secrets/sub/item.bin",
                 null
             )
         )
@@ -95,7 +95,7 @@ class VaultRelativeSyncTest {
             VirtualAlbumSyncManager.resolveVaultItemPath(
                 vaultRoot = newVaultRoot,
                 relativeVaultPath = "a1b2c3/4f8a1c9e.bin",
-                rawFullPath = "/mnt/media_rw/USB-1111/Cipher_Secrets/a1b2c3/4f8a1c9e.bin"
+                rawFullPath = "/mnt/media_rw/USB-1111/Secrets/a1b2c3/4f8a1c9e.bin"
             )
         )
 
@@ -105,7 +105,7 @@ class VaultRelativeSyncTest {
             VirtualAlbumSyncManager.resolveVaultItemPath(
                 vaultRoot = newVaultRoot,
                 relativeVaultPath = null,
-                rawFullPath = "/mnt/media_rw/OtherMount/Cipher_Secrets/a1b2c3/4f8a1c9e.bin"
+                rawFullPath = "/mnt/media_rw/OtherMount/Secrets/a1b2c3/4f8a1c9e.bin"
             )
         )
 
@@ -127,8 +127,7 @@ class VaultRelativeSyncTest {
     }
 
     @Test
-    fun extractRelativeVaultPath_recognizesCurrentAndLegacyVaultFolderMarkers() {
-        // Current "Secrets" container on a different mount
+    fun extractRelativeVaultPath_recognizesVaultFolderMarkerOnAnyMount() {
         assertEquals(
             "a1b2c3/item1.bin",
             VirtualAlbumSyncManager.extractRelativeVaultPath(
@@ -136,12 +135,10 @@ class VaultRelativeSyncTest {
                 null
             )
         )
-
-        // Legacy "Cipher_Secrets" container must keep resolving after the rename
         assertEquals(
             "a1b2c3/item1.bin",
             VirtualAlbumSyncManager.extractRelativeVaultPath(
-                "/mnt/media_rw/USB-4444/Cipher_Secrets/a1b2c3/item1.bin",
+                "/mnt/media_rw/USB-4444/Secrets/a1b2c3/item1.bin",
                 null
             )
         )
@@ -157,24 +154,24 @@ class VaultRelativeSyncTest {
         val expectedPresentPath = presentEncryptedFile.absolutePath
         val expectedMissingPath = File(subAlbumDir, "missing2.bin").absolutePath
 
-        // Write stealth backup JSON originally created when vault was mounted at /mnt/usb1/Cipher_Secrets
+        // Write stealth backup JSON originally created when vault was mounted at /mnt/usb1/Secrets
         val jsonDir = File(usb2Secrets, "JSON").apply { mkdirs() }
         val backup = VirtualAlbumBackup(
             version = 2,
             name = "Secret Trip",
             createdTs = 1700000100L,
             isHidden = true,
-            parentPhysicalPath = "/mnt/usb1/Cipher_Secrets/a1b2c3",
+            parentPhysicalPath = "/mnt/usb1/Secrets/a1b2c3",
             relativeParentVaultPath = "a1b2c3",
             items = listOf(
                 VirtualAlbumItemBackup(
-                    fullPath = "/mnt/usb1/Cipher_Secrets/a1b2c3/item1.bin",
+                    fullPath = "/mnt/usb1/Secrets/a1b2c3/item1.bin",
                     relativeVaultPath = "a1b2c3/item1.bin",
                     addedTs = 1700000200L,
                     fileSize = 4L
                 ),
                 VirtualAlbumItemBackup(
-                    fullPath = "/mnt/usb1/Cipher_Secrets/a1b2c3/missing2.bin",
+                    fullPath = "/mnt/usb1/Secrets/a1b2c3/missing2.bin",
                     relativeVaultPath = "a1b2c3/missing2.bin",
                     addedTs = 1700000300L,
                     fileSize = 9L
@@ -192,7 +189,7 @@ class VaultRelativeSyncTest {
                 name = "Secret Trip",
                 createdTs = 1700000100L,
                 isHidden = true,
-                parentPhysicalPath = "/mnt/usb1/Cipher_Secrets/a1b2c3"
+                parentPhysicalPath = "/mnt/usb1/Secrets/a1b2c3"
             )
         )
         fakeDao.insertItems(
@@ -200,9 +197,9 @@ class VaultRelativeSyncTest {
                 VirtualAlbumItem(
                     id = null,
                     albumId = staleAlbumId,
-                    fullPath = "/mnt/usb1/Cipher_Secrets/a1b2c3/item1.bin",
+                    fullPath = "/mnt/usb1/Secrets/a1b2c3/item1.bin",
                     filename = "item1.bin",
-                    parentPath = "/mnt/usb1/Cipher_Secrets/a1b2c3",
+                    parentPath = "/mnt/usb1/Secrets/a1b2c3",
                     addedTS = 1700000200L,
                     fileSize = 4L,
                     state = ITEM_STATE_UNRESOLVED

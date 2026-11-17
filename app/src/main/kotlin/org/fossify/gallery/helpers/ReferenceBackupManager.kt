@@ -84,43 +84,6 @@ object ReferenceBackupManager {
     }
 
     /**
-     * The backup of the older versions, it lived in the Cipher folder inside the Documents folder.
-     */
-    private fun getLegacyFavoritesBackupFile(): File {
-        return File(
-            CryptoManager.getDocumentsDirectory(),
-            "$CIPHER_ROOT_DIR_NAME/$FAVORITES_DIR_NAME/$FAVORITES_FILE_NAME"
-        )
-    }
-
-    /**
-     * Moves the backup of the older versions into the new folder, so the favorites of the user
-     * survive the update to the standalone container.
-     */
-    private fun migrateLegacyBackup(): File? {
-        val legacyFile = getLegacyFavoritesBackupFile()
-        if (!legacyFile.isFile) {
-            return null
-        }
-
-        return try {
-            CryptoManager.ensureCipherRootDirectory()
-            val target = getFavoritesBackupFile()
-            if (!target.exists()) {
-                val dir = getFavoritesBackupDir()
-                if (!dir.exists() && !dir.mkdirs()) {
-                    return null
-                }
-                legacyFile.copyTo(target, overwrite = true)
-            }
-            legacyFile.delete()
-            target.takeIf { it.isFile }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    /**
      * Writes the current favorites to the backup file. Does nothing when the shared storage cannot
      * be accessed.
      */
@@ -166,7 +129,6 @@ object ReferenceBackupManager {
         }
 
         val file = getFavoritesBackupFile().takeIf { it.isFile }
-            ?: migrateLegacyBackup()
             ?: return 0
 
         return try {
