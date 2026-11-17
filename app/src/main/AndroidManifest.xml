@@ -64,6 +64,11 @@
         tools:replace="android:label,android:allowBackup">
 
         <service
+            android:name="org.fossify.gallery.services.VaultMigrationService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
             android:exported="false">
