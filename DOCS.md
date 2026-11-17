@@ -92,7 +92,8 @@ Calypso Gallery employs a defense-in-depth cryptographic pipeline designed to pr
 | Component                   | Primitive / Algorithm                                           | Purpose                                                                   |
 | :-------------------------- | :-------------------------------------------------------------- | :------------------------------------------------------------------------ |
 | **Key Derivation (KDF)**    | `Argon2id` (64 MB RAM, 3 iterations, 2 threads)                 | Hardware-hardened key derivation resistant to GPU/FPGA/ASIC cracking      |
-| **Hardware Key Protection** | Android Keystore (`AES-256-GCM`, StrongBox / TEE)               | Device-bound cryptographic wrapping layer (`vaultWrappedKeyData`)         |
+| **Vault Credentials**       | Argon2id → `AES-256-GCM`                                         | PDK wraps the VMK; VMK wraps the KEK keyring (`.vault` / `vaultWrappedKeyData`) |
+| **Biometric Unlock**        | Android Keystore (`AES-256-GCM`, StrongBox / TEE, optional)      | Hardware-bound key wraps the VMK; requires user authentication           |
 | **Vault Headers & Strings** | `AES-256-GCM` (`12-byte IV`, `128-bit Tag`)                     | Authenticated encryption for headers, thumbnails, and metadata            |
 | **Payload Streams**         | Tink `AES256_GCM_HKDF` (256 KiB segments, RAW prefix)           | Authenticated, seekable streaming encryption for images and videos        |
 | **Segment Integrity**       | Tink per-segment GCM tags + exact-length assertion              | Cryptographic tamper detection during playback, export, and decryption    |
@@ -105,11 +106,14 @@ Calypso Gallery employs a defense-in-depth cryptographic pipeline designed to pr
 
 > **Operational security (accepted [ADR 0002](docs/adr/0002-operational-security-hardening.md)):** OS CSPRNG only (no user-movement entropy); **"Brute-Force direnci"** setting (target vault unlock time 2.0–7.0 s with decimal input; alternative: ready-made Argon2id modes) whose calibrated KDF parameters are stored in `.vault`, like KeePass stores rounds in `.kdbx` — see [the calibration methodology](docs/argon2-calibration-methodology.md); trace-hygiene audit (thumbnail cache, recents snapshot, MediaStore, temp files, backups, clipboard, keyboard); immediate key zeroization except while a registered foreground file operation is active; durable/resumable secure wipe.
 
+> [!WARNING]
+> **No formal cryptographic audit has been performed on this format.** It uses well-vetted primitives — Tink's streaming AEAD and HKDF, AES-256-GCM, Argon2id — with domain-separated keys and AEAD-bound context, but the container layout, AAD construction and key hierarchy are project-specific and have not been reviewed by an external cryptographer. Do not treat this vault as a substitute for independently audited encryption at rest. Cross-language golden-fixture tests guard against implementation regressions, not against flaws in the design itself.
+
 ### Bit-Rot Resilience (Zero Error Propagation)
 Monolithic container formats (such as Veracrypt volumes or ZIP archives) risk total catastrophic loss if a single sector corrupts. Calypso Gallery avoids this through granular file isolation:
 1. **File-Level Granularity:** Each image and video is stored as an independent encrypted binary file. Corruption in one file has **zero effect** on any other file or the vault at large.
 2. **Segment-Authenticated Streaming:** payloads use Tink `AES256_GCM_HKDF` with a per-file DEK and AAD = `fileId`. A corrupt segment is *detected* by its GCM tag: the reader throws for that segment while other segments still decrypt. The app substitutes placeholder bytes for the bad segment only and keeps playing (§2.4). Bit-rot isolation is therefore **per-segment**, not per-bit; the substitution is explicit application logic and is never written back to disk.
-3. **Hardware-Bound & Redundant Keying:** Vault credentials on disk (`.vault`) are backed by an Android Keystore hardware-bound wrapping layer (`vaultWrappedKeyData`) with StrongBox / TEE enforcement. If the master header file suffers physical sector loss, the application can recover the master key bundle on the authenticated device.
+3. **Optional Hardware Binding:** biometric unlock adds an Android Keystore (StrongBox/TEE) wrapping layer around the VMK on supported devices. The `.vault` header is the only portable copy of the credentials: if it is lost or damaged, the vault cannot be recovered. Keep a backup of the vault directory.
 
 ### 2.1 Desktop CLI encryption pipeline
 
