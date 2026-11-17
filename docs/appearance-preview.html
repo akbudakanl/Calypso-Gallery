@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Calypso Gallery — Appearance önizlemesi</title>
+<style>
+  :root {
+    --bg:#FAFAFA; --surface:#FFFFFF; --primary:#27272A; --secondary:#52525B;
+    --text:#18181B; --border:#E4E4E7; --on-primary:#FFFFFF; --muted:#6B7085;
+  }
+  body[data-theme="dark"] {
+    --bg:#09090B; --surface:#18181B; --primary:#E4E4E7; --secondary:#A1A1AA;
+    --text:#FAFAFA; --border:#27272A; --on-primary:#09090B; --muted:#A0A6C4;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Roboto,"Segoe UI",system-ui,sans-serif; background:#e9ebf3; color:#18181B; padding:28px; }
+  header { max-width:1080px; margin:0 auto 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  h1 { font-size:20px; margin:0; }
+  .switch { display:flex; gap:8px; }
+  .switch button { border:1px solid #c9cee0; background:#fff; padding:8px 14px; border-radius:8px; cursor:pointer; font:inherit; }
+  .switch button.active { background:#27272A; color:#fff; border-color:#27272A; }
+  .grid { max-width:1080px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media (max-width:900px){ .grid{ grid-template-columns:1fr; } }
+  .panel { background:var(--bg); color:var(--text); border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(20,25,60,.18); }
+  .bar { background:var(--primary); color:var(--on-primary); padding:16px 20px; font-weight:600; }
+  .content { padding:8px 0 20px; }
+  .section { color:var(--primary); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:16px 20px 6px; font-weight:700; }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--border); }
+  .row .label { flex:1; font-size:14px; }
+  .radio { width:18px; height:18px; border-radius:50%; border:2px solid var(--primary); display:inline-flex; align-items:center; justify-content:center; }
+  .radio.on::after { content:""; width:9px; height:9px; border-radius:50%; background:var(--primary); }
+  .swatch { width:26px; height:26px; border-radius:6px; border:1px solid var(--border); }
+  .preview { margin:16px 20px; padding:20px; background:var(--surface); border:1px solid var(--border); border-radius:12px; }
+  .preview p { margin:0 0 14px; font-size:16px; font-weight:600; }
+  .sample-btn { display:inline-block; background:var(--primary); color:var(--on-primary); padding:10px 18px; border-radius:8px; font-weight:700; font-size:13px; }
+  .rule { height:1px; background:var(--border); margin-top:18px; }
+  .palette { max-width:1080px; margin:24px auto 0; background:#fff; border-radius:16px; padding:20px; }
+  .palette h2 { font-size:15px; margin:0 0 14px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th,td { text-align:left; padding:7px 8px; border-bottom:1px solid #edf0f8; }
+  th { color:#6B7085; font-weight:600; }
+  .chip { display:inline-block; width:14px; height:14px; border-radius:4px; vertical-align:-2px; margin-right:8px; border:1px solid rgba(0,0,0,.12); }
+  code { background:#f2f4fa; padding:2px 6px; border-radius:4px; font-size:12px; }
+  .note { max-width:1080px; margin:14px auto 0; color:#555b70; font-size:13px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Calypso Gallery — Appearance ekranı önizlemesi</h1>
+  <div class="switch">
+    <button id="lightBtn" class="active" onclick="setTheme('light')">Light</button>
+    <button id="darkBtn" onclick="setTheme('dark')">Dark</button>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="panel" id="panel">
+    <div class="bar">Görünüm</div>
+    <div class="content">
+      <div class="section">App theme</div>
+      <div class="row"><span class="radio on"></span><span class="label">Auto light / dark (System)</span></div>
+      <div class="row"><span class="radio"></span><span class="label">Light</span></div>
+      <div class="row"><span class="radio"></span><span class="label">Dark</span></div>
+      <div class="row"><span class="radio"></span><span class="label">Custom</span></div>
+
+      <div class="section">Custom colors</div>
+      <div class="row"><span class="label">Text color</span><span class="swatch" style="background:var(--text)"></span></div>
+      <div class="row"><span class="label">Background color</span><span class="swatch" style="background:var(--bg)"></span></div>
+      <div class="row"><span class="label">Primary color</span><span class="swatch" style="background:var(--primary)"></span></div>
+      <div class="row"><span class="label">App icon color</span><span class="swatch" style="background:var(--primary)"></span></div>
+
+      <div class="section">Font</div>
+      <div class="row"><span class="label">App font</span><span>System default</span></div>
+
+      <div class="section">Preview</div>
+      <div class="preview">
+        <p>Your memories, your colors</p>
+        <span class="sample-btn">Sample button</span>
+        <div class="rule"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="palette">
+    <h2>Palet ve kontrast (WCAG)</h2>
+    <table>
+      <thead><tr><th>Rol</th><th>Light</th><th>Dark</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p style="font-size:12px;color:#6B7085;margin-top:14px">
+      Text/Background ≥ 16:1 her iki temada. Dark tema Primary açık olduğu için dolgulu düğmelerde koyu
+      <code>onPrimary</code> kullanılır (beyazla 2:1 kalırdı). Border dekoratif ayraçtır; bileşen sınırı
+      istenirse ~3:1'e koyulaştırılmalı.
+    </p>
+  </div>
+</div>
+
+<script>
+const colors = {
+  'Background':['#FAFAFA','#09090B'], 'Surface':['#FFFFFF','#18181B'],
+  'Primary':['#27272A','#E4E4E7'], 'Secondary':['#52525B','#A1A1AA'],
+  'Text':['#18181B','#FAFAFA'], 'Border':['#E4E4E7','#27272A'],
+  'onPrimary':['#FFFFFF','#09090B']
+};
+const rows = document.getElementById('rows');
+for (const [name,[l,d]] of Object.entries(colors)) {
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${name}</td><td><span class="chip" style="background:${l}"></span><code>${l}</code></td><td><span class="chip" style="background:${d}"></span><code>${d}</code></td>`;
+  rows.appendChild(tr);
+}
+function setTheme(t){
+  document.body.dataset.theme=t;
+  document.getElementById('lightBtn').classList.toggle('active',t==='light');
+  document.getElementById('darkBtn').classList.toggle('active',t==='dark');
+}
+</script>
+</body>
+</html>

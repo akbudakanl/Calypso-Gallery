@@ -17,8 +17,54 @@ import java.util.Locale
 
 class Config(context: Context) : BaseConfig(context) {
     companion object {
+        const val APPEARANCE_SYSTEM = 0
+        const val APPEARANCE_LIGHT = 1
+        const val APPEARANCE_DARK = 2
+        const val APPEARANCE_CUSTOM = 3
+
+        private const val APPEARANCE_MODE = "appearance_mode"
+        private const val SAVED_APPEARANCE_THEMES = "saved_appearance_themes"
+
         fun newInstance(context: Context) = Config(context)
     }
+
+    var savedThemesJson: String
+        get() = prefs.getString(SAVED_APPEARANCE_THEMES, "[]") ?: "[]"
+        set(value) = prefs.edit().putString(SAVED_APPEARANCE_THEMES, value).apply()
+
+    /**
+     * Appearance mode for the fork's own Appearance screen. On first run after the upgrade,
+     * the previous Commons theme choice is preserved: system theme stays System, existing
+     * custom colors become Custom, otherwise the closest brand palette is selected.
+     */
+    var appearanceMode: Int
+        get() {
+            if (!prefs.contains(APPEARANCE_MODE)) {
+                val initial = when {
+                    // Fresh install: Commons defaults are not our palette colors, so the old
+                    // fallback would wrongly migrate to Custom with the green Fossify icon.
+                    !prefs.contains(org.fossify.commons.helpers.TEXT_COLOR) -> APPEARANCE_SYSTEM
+                    isSystemThemeEnabled -> APPEARANCE_SYSTEM
+                    customTextColor != 0 || customBackgroundColor != 0 || customPrimaryColor != 0 ||
+                        customAccentColor != 0 || customAppIconColor != 0 -> APPEARANCE_CUSTOM
+                    textColor == AppearancePalette.DARK.text &&
+                        backgroundColor == AppearancePalette.DARK.background -> APPEARANCE_DARK
+                    textColor == AppearancePalette.LIGHT.text &&
+                        backgroundColor == AppearancePalette.LIGHT.background -> APPEARANCE_LIGHT
+                    else -> APPEARANCE_CUSTOM
+                }
+                if (initial == APPEARANCE_CUSTOM) {
+                    customTextColor = textColor
+                    customBackgroundColor = backgroundColor
+                    customPrimaryColor = primaryColor
+                    customAccentColor = accentColor
+                    customAppIconColor = appIconColor
+                }
+                prefs.edit().putInt(APPEARANCE_MODE, initial).apply()
+            }
+            return prefs.getInt(APPEARANCE_MODE, APPEARANCE_SYSTEM)
+        }
+        set(value) = prefs.edit().putInt(APPEARANCE_MODE, value).apply()
 
     var directorySorting: Int
         get(): Int = prefs.getInt(DIRECTORY_SORT_ORDER, SORT_BY_DATE_MODIFIED or SORT_DESCENDING)
@@ -177,16 +223,6 @@ class Config(context: Context) : BaseConfig(context) {
 
     val argon2Parallelism: Int
         get() = if (argon2Profile == 0) 1 else 2
-
-    /** v3 kasa girisinde guncelleme uyarisini her zaman goster (varsayilan acik). */
-    var vaultUpgradeWarningAlwaysShow: Boolean
-        get() = prefs.getBoolean(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, true)
-        set(value) = prefs.edit().putBoolean(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, value).apply()
-
-    /** Oncelik kontrolleri (bos alan, pil) kullanici tarafindan onaylandi mi. */
-    var vaultUpgradePreflightAcknowledged: Boolean
-        get() = prefs.getBoolean(VAULT_UPGRADE_PREFLIGHT_ACKNOWLEDGED, false)
-        set(value) = prefs.edit().putBoolean(VAULT_UPGRADE_PREFLIGHT_ACKNOWLEDGED, value).apply()
 
     var hasShownVaultImportInfo: Boolean
         get() = prefs.getBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, false)

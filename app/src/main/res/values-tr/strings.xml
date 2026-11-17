@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="appearance_title">Görünüm</string>
+    <string name="application_settings">Uygulama</string>
+    <string name="saved_themes">Kayıtlı temalar</string>
+    <string name="save_theme">Temayı kaydet</string>
+    <string name="discard_changes_question">Değişikliklerinizi kaydetmek ister misiniz?</string>
+    <string name="continue_without_saving">Kaydetmeden devam et</string>
+    <string name="theme_saved">Tema kaydedildi</string>
+    <string name="theme_already_saved">Bu tema zaten kayıtlı</string>
+    <string name="custom_theme_name">Özel tema</string>
+    <string name="no_saved_themes">Henüz kayıtlı tema yok</string>
+    <string name="search_settings">Ayarlarda ara</string>
+    <string name="video_playback_settings">Video oynatma</string>
+    <string name="thumbnails_and_scrolling_settings">Küçük resimler ve kaydırma</string>
+    <string name="media_viewer_settings">Medya görüntüleyici</string>
+    <string name="security_and_vault_settings">Güvenlik ve şifreli kasa</string>
+    <string name="custom_colors">Özel renkler</string>
+    <string name="font_system_default">Sistem varsayılanı</string>
+    <string name="appearance_preview">Önizleme</string>
+    <string name="appearance_preview_text">Anıların, senin renklerin</string>
+    <string name="appearance_preview_button">Örnek düğme</string>
+    <string name="appearance_contrast_warning">Düşük kontrast: metin %1$.1f:1, düğme %2$.1f:1. Okunabilirlik için artırın.</string>
     <string name="edit">Düzenle</string>
     <string name="open_camera">Kamerayı aç</string>
     <string name="hidden">(gizli)</string>
@@ -499,22 +520,6 @@
     <string name="fork_disclaimer_acknowledge">Anladım</string>
 
     <!-- Şifreli Kasa format güncellemesi (v3 -> v4) -->
-    <string name="vault_upgrade_entry_title">Şifreli Kasa güncellemesi mevcut</string>
-    <string name="vault_upgrade_entry_message">Şifreli kasanız uygulamanın güncel olmayan bir sürümünde oluşturulmuş ve eski şifreleme algoritmasını kullanıyor. İsterseniz şifreli kasanızı güncel versiyondaki şifreleme algoritmasına göre yeniden oluşturabilirsiniz.</string>
-    <string name="vault_upgrade_always_show">Her zaman göster</string>
-    <string name="vault_upgrade_settings_title">Kasa güncelleme uyarısını her zaman göster</string>
-    <string name="vault_upgrade_details_title">Güncellemeden önce</string>
-    <string name="vault_upgrade_details_message">Şifreli kasayı güncel şifreleme algoritmasını kullanması için güncellemeden önce yedek almanız önerilir. Böylece güncellemenin yarıda kalması sebebiyle veri kaybetme riskiniz ortadan kalkar ve isterseniz güncellenmemiş şifreli kasanı uygulamanın eski sürümlerinde kullanmaya devam edebilirsiniz.</string>
-    <string name="vault_upgrade_low_battery">Şarjınız az, lütfen cihazınızın şarj seviyesini en az %20 doldurun.</string>
-    <string name="vault_upgrade_low_space">Şifreli Kasa\'yı güncellemek için yeterli boş alan yok.</string>
-    <string name="vault_upgrade_continue">Devam et</string>
-    <string name="vault_upgrade_progress">%2$d dosyadan %1$d tanesi güncellendi</string>
-    <string name="vault_upgrade_finished">Güncelleme tamamlandı. Yeni anahtar halkasını etkinleştirmek için Şifreli Kasa\'yı yeniden açın.</string>
-    <string name="vault_upgrade_failed_count">Güncelleme durdu: %1$d dosya doğrulanamadı.</string>
-    <string name="vault_upgrade_resume_title">Kasa güncellemesi yarıda kaldı</string>
-    <string name="vault_upgrade_resume_message">Şifreli Kasa güncellemesi yarıda kaldı. Şifreli kasanızdaki bazı dosyalar yeni şifreleme algoritmasına güncellendi. Veri kaybı yaşanmadı. Kalan dosyaların güncellenmesine devam etmek istiyor musunuz?</string>
-    <string name="vault_upgrade_progress_warning">Lütfen güncelleme sırasında uygulamadan çıkmayın veya ekranı kapatmayın.</string>
-    <string name="vault_upgrade_waiting">Şifreli Kasa bağlı değil. Yeniden bağlanması bekleniyor...</string>
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_mode_title">Kalibrasyon modu</string>
     <string name="brute_force_mode_time">Kasa açılış süresi üzerinden</string>

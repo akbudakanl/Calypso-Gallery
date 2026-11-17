@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/appearance_coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <org.fossify.commons.views.MyAppBarLayout
+        android:id="@+id/appearance_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/appearance_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/color_primary"
+            app:title="@string/appearance_title"
+            app:titleTextAppearance="@style/AppTheme.ActionBar.TitleTextStyle" />
+
+    </org.fossify.commons.views.MyAppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/appearance_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:id="@+id/appearance_holder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <TextView
+                android:id="@+id/appearance_theme_section_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/theme" />
+
+            <RadioGroup
+                android:id="@+id/appearance_theme_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <RadioButton
+                    android:id="@+id/appearance_system"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/auto_light_dark_theme" />
+
+                <RadioButton
+                    android:id="@+id/appearance_light"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/light_theme" />
+
+                <RadioButton
+                    android:id="@+id/appearance_dark"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dark_theme" />
+
+                <RadioButton
+                    android:id="@+id/appearance_custom"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/custom" />
+            </RadioGroup>
+
+            <include
+                android:id="@+id/appearance_divider_colors"
+                layout="@layout/divider" />
+
+            <TextView
+                android:id="@+id/appearance_custom_colors_section_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/custom_colors" />
+
+            <LinearLayout
+                android:id="@+id/appearance_text_color_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/text_color" />
+
+                <View
+                    android:id="@+id/appearance_text_color_swatch"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="16dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/appearance_background_color_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/background_color" />
+
+                <View
+                    android:id="@+id/appearance_background_color_swatch"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="16dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/appearance_primary_color_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/primary_color" />
+
+                <View
+                    android:id="@+id/appearance_primary_color_swatch"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="16dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/appearance_app_icon_color_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/app_icon_color" />
+
+                <View
+                    android:id="@+id/appearance_app_icon_color_swatch"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="16dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/appearance_saved_themes_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/saved_themes" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="›"
+                    android:textSize="20sp" />
+            </LinearLayout>
+
+            <include
+                android:id="@+id/appearance_divider_font"
+                layout="@layout/divider" />
+
+            <TextView
+                android:id="@+id/appearance_font_section_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/font" />
+
+            <LinearLayout
+                android:id="@+id/appearance_font_row"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <org.fossify.commons.views.MyTextView
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/app_font" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/appearance_font_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <include
+                android:id="@+id/appearance_divider_album_icons"
+                layout="@layout/divider" />
+
+            <TextView
+                android:id="@+id/appearance_album_icons_section_label"
+                style="@style/SettingsSectionLabelStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/album_type_icons" />
+
+            <RelativeLayout
+                android:id="@+id/appearance_show_virtual_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/appearance_show_virtual_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/virtual_folders" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/appearance_show_favorites_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/appearance_show_favorites_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/favorites_album" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/appearance_show_excluded_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/appearance_show_excluded_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/excluded_folders_album" />
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/appearance_show_hidden_album_icon_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/appearance_show_hidden_album_icon"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/hidden_folders_album" />
+            </RelativeLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
