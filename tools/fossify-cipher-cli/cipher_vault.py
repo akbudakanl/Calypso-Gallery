@@ -204,6 +204,7 @@ FOLDER_NAMES = {
 MESSAGES = {
     "en": {
         "op_cancelled": "\nOperation cancelled.",
+        "vault_format_mismatch": "\033[1;31m[-] Encrypted Vault format mismatch: the selected vault uses the v4 encryption algorithm, but this CLI version can only write v3 containers. No files were transferred and the pending-sync file was left untouched.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault file was not found automatically.\033[0m",
         "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Cipher_Secrets > .vault)",
         "vault_path_hint": "    onto your Desktop or enter its path below.",
@@ -252,6 +253,7 @@ MESSAGES = {
     },
     "tr": {
         "op_cancelled": "\nİşlem iptal edildi.",
+        "vault_format_mismatch": "\033[1;31m[-] Şifreli Kasa formatı uyumsuz: seçili kasa v4 şifreleme algoritmasını kullanıyor, ancak bu CLI sürümü yalnızca v3 konteyner yazabiliyor. Hiçbir dosya aktarılmadı ve bekleyen eşitleme dosyasına dokunulmadı.\033[0m",
         "vault_not_found": "\033[1;33m[?] .vault dosyası otomatik olarak bulunamadı.\033[0m",
         "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Cipher_Secrets > .vault)",
         "vault_path_hint": "    Masaüstüne bırakabilir veya dosya yolunu aşağıya girebilirsiniz.",
@@ -444,6 +446,18 @@ def is_valid_vault_file(path: Path) -> bool:
             return f.read(len(VAULT_HEADER_MAGIC)) == VAULT_HEADER_MAGIC
     except Exception:
         return False
+
+def read_vault_format(path: Path) -> int:
+    """Reads the container format version from a .vault header (3 or 4; 3 if unreadable)."""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(len(VAULT_HEADER_MAGIC) + 2)
+        if header[:len(VAULT_HEADER_MAGIC)] != VAULT_HEADER_MAGIC:
+            return 3
+        version = header[len(VAULT_HEADER_MAGIC)]
+        return version if version in (3, 4) else 3
+    except Exception:
+        return 3
 
 def _windows_external_drive_roots() -> list[Path]:
     """Enumerates mounted non-system drive roots on Windows, prioritizing removable USB/SD drives."""
@@ -1496,6 +1510,9 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         sys.exit(0)
 
     master_key, vault_path = unlock_master_key_with_path(args, lang)
+    if vault_path is not None and read_vault_format(vault_path) == 4:
+        print(t(lang, "vault_format_mismatch"))
+        sys.exit(0)
     if vault_path is not None and is_cloud_synced_path(vault_path):
         print(t(lang, "cloud_sync_warning", path=vault_path))
 

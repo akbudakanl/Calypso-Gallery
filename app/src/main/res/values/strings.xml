@@ -455,6 +455,13 @@
     <string name="fast_large_duplicate_check_hint">Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times.</string>
     <string name="fast_large_duplicate_check_info_title">Fast Duplicate Check (&gt;8 MB)</string>
     <string name="fast_large_duplicate_check_info_message" formatted="false">Why this matters for large copy/move transfers:\n\nWhen copying or moving large files, such as gigabytes of videos, exact bit-by-bit checking must read both the source and destination files from start to finish whenever filenames and sizes match—taking minutes on fast storage or much longer on SD cards.\n\nHow Fast Check works:\n• Files under 8 MB are ALWAYS checked 100% bit-by-bit.\n• For files over 8 MB, the app compares file size plus five 256 KB blocks distributed across the start, 25%, 50%, 75%, and end of the file (1.25 MB total per side).\n• For a 50 GB archive of 50 MB–1 GB videos, this cuts disk reads by ~40× to ~800×.\n\nWhen to enable or disable:\n• Recommended ON: If most of your gallery consists of large files (&gt;8 MB), two intact, distinct files sharing the same name, exact byte size, and all 5 sampled regions is virtually impossible in practice.\n• Recommended OFF (no speedup): If your gallery consists mostly of photos or files under 8 MB, this setting provides no significant speed gain since files under 8 MB are always checked 100% bit-by-bit.\n• Encrypt, decrypt, and external USB vault sync operations always perform full bit-by-bit verification.</string>
+    <string name="date_tie_break_label">When content is identical but dates differ</string>
+    <string name="date_tie_break_keep_target">Keep the existing file\'s date (default)</string>
+    <string name="date_tie_break_use_source">Use the source file\'s date</string>
+    <string name="date_tie_break_ask">Always ask</string>
+    <string name="date_tie_break_hint">Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected.</string>
+    <string name="date_tie_break_ask_info_title">Why &quot;Always ask&quot; disables Smart dialog and Automatic mode</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose &quot;Always ask&quot; here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date).</string>
     <string name="conflict_handling_explanation_title">File Conflict &amp; Duplicate Resolution</string>
     <string name="conflict_handling_explanation_message" formatted="false">When copying, moving, encrypting, or decrypting files and albums (including album merges), if a file with the same name already exists at the destination:\n\n• Standard dialog (Default): Checks filename only (like the original Fossify Gallery app) without comparing file contents, and asks you to Skip / Overwrite / Keep both.\n• Smart dialog: Checks file sizes and bit-by-bit contents in RAM (encrypted files stay in memory), auto-skips identical duplicates, and asks with side-by-side previews (Skip / Overwrite / Keep both) only when content differs.\n• Automatic (Experimental): Auto-skips identical duplicates and automatically keeps both different files by naming the incoming file download(1).jpg, download(2).jpg.</string>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
@@ -543,11 +550,36 @@
     <string name="fork_disclaimer_title">Fork notice</string>
     <string name="fork_disclaimer_message">This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">I understand</string>
+
+    <!-- Encrypted Vault format upgrade (v3 -> v4) -->
+    <string name="vault_upgrade_entry_title">Encrypted Vault update available</string>
+    <string name="vault_upgrade_entry_message">Your Encrypted Vault was created with an outdated version of the app and uses the old encryption algorithm. If you wish, you can recreate your Encrypted Vault according to the current version\'s encryption algorithm.</string>
+    <string name="vault_upgrade_always_show">Always show</string>
+    <string name="vault_upgrade_settings_title">Always show vault update warning</string>
+    <string name="vault_upgrade_details_title">Before updating</string>
+    <string name="vault_upgrade_details_message">It is recommended to back up before updating the Encrypted Vault to use the current encryption algorithm. This way, the risk of data loss due to an interrupted update is eliminated and, if you wish, you can continue using the un-updated Encrypted Vault in older versions of the app.</string>
+    <string name="vault_upgrade_low_battery">Your battery is low, please charge your device to at least 20%.</string>
+    <string name="vault_upgrade_low_space">Not enough free space to update the Encrypted Vault.</string>
+    <string name="vault_upgrade_continue">Continue</string>
+    <string name="vault_upgrade_progress">Converted %1$d of %2$d files</string>
+    <string name="vault_upgrade_finished">Update complete. Reopen the Encrypted Vault to activate the new keyring.</string>
+    <string name="vault_upgrade_failed_count">Update stopped: %1$d file(s) could not be verified.</string>
+    <string name="vault_upgrade_resume_title">Vault update was interrupted</string>
+    <string name="vault_upgrade_resume_message">The Encrypted Vault update was interrupted. Some files in your Encrypted Vault were updated to the new encryption algorithm. No data was lost. Do you want to continue updating the remaining files?</string>
+    <string name="vault_upgrade_progress_warning">Please do not exit the app or turn off the screen during the update.</string>
+    <string name="vault_upgrade_waiting">Encrypted Vault is disconnected. Waiting for it to reconnect...</string>
+    <string name="argon2_profile_title">Brute-Force direnci</string>
+    <string name="brute_force_mode_title">Calibration mode</string>
+    <string name="brute_force_mode_time">Via vault unlock time</string>
+    <string name="brute_force_mode_presets">Via ready-made modes</string>
+    <string name="brute_force_time_title">Target vault unlock time</string>
+    <string name="brute_force_time_hint">Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices.</string>
+    <string name="brute_force_time_value">%1$.1f s</string>
+    <string name="brute_force_actual_params">Stored: %1$d MiB / %2$d rounds</string>
+    <string name="brute_force_clamped"> (clamped)</string>
+    <string name="argon2_profile_low">Low-end device (not recommended)</string>
+    <string name="argon2_profile_default">Default</string>
+    <string name="argon2_profile_high">High security</string>
+    <string name="argon2_profile_hint">If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes.</string>
+    <string name="argon2_profile_current">Current: %s</string>
 </resources>
-    <string name="date_tie_break_label">When content is identical but dates differ</string>
-    <string name="date_tie_break_keep_target">Keep the existing file\'s date (default)</string>
-    <string name="date_tie_break_use_source">Use the source file\'s date</string>
-    <string name="date_tie_break_ask">Always ask</string>
-    <string name="date_tie_break_hint">Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected.</string>
-    <string name="date_tie_break_ask_info_title">Why &quot;Always ask&quot; disables Smart dialog and Automatic mode</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose &quot;Always ask&quot; here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date).</string>

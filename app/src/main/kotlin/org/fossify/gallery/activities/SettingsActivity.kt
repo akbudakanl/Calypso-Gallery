@@ -530,12 +530,16 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        // 4b) Kasa guncelleme uyarisini her zaman goster
+        binding.settingsVaultUpgradeWarningHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 6) Şifreli kasayı dışa aktar
         binding.settingsExportVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        setupArgon2Profile()
         setupVaultLocation()
         setupCreateVault()
         setupExportVault()
@@ -543,6 +547,7 @@ class SettingsActivity : SimpleActivity() {
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupBlockVaultScreenshots()
+        setupVaultUpgradeWarning()
         setupEmptyVault()
     }
 
@@ -552,6 +557,107 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsBlockVaultScreenshots.toggle()
             config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
         }
+    }
+
+    private fun setupVaultUpgradeWarning() {
+        binding.settingsVaultUpgradeWarning.isChecked = config.vaultUpgradeWarningAlwaysShow
+        binding.settingsVaultUpgradeWarningHolder.setOnClickListener {
+            binding.settingsVaultUpgradeWarning.toggle()
+            config.vaultUpgradeWarningAlwaysShow = binding.settingsVaultUpgradeWarning.isChecked
+        }
+    }
+
+    private fun setupArgon2Profile() {
+        fun refreshSummary() {
+            binding.settingsArgon2ProfileValue.text =
+                org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
+        }
+        refreshSummary()
+
+        binding.settingsArgon2ProfileHolder.setOnClickListener {
+            val modes = arrayOf(
+                getString(R.string.brute_force_mode_time),
+                getString(R.string.brute_force_mode_presets)
+            )
+            getAlertDialogBuilder()
+                .setTitle(R.string.brute_force_mode_title)
+                .setSingleChoiceItems(modes, config.bruteForceMode) { dialog, which ->
+                    dialog.dismiss()
+                    config.bruteForceMode = which
+                    if (which == 0) showUnlockTimeDialog(::refreshSummary) else showPresetDialog(::refreshSummary)
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+    }
+
+    private fun showPresetDialog(refresh: () -> Unit) {
+        val labels = arrayOf(
+            getString(R.string.argon2_profile_low),
+            getString(R.string.argon2_profile_default),
+            getString(R.string.argon2_profile_high)
+        )
+        getAlertDialogBuilder()
+            .setTitle(R.string.argon2_profile_title)
+            .setMessage(R.string.argon2_profile_hint)
+            .setSingleChoiceItems(labels, config.argon2Profile) { dialog, which ->
+                config.argon2Profile = which
+                refresh()
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showUnlockTimeDialog(refresh: () -> Unit) {
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        val view = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(padding, padding / 2, padding, 0)
+        }
+        val valueText = android.widget.TextView(this).apply {
+            text = getString(R.string.brute_force_time_value, config.unlockTargetMs / 1000f)
+            textSize = 18f
+        }
+        val hint = android.widget.TextView(this).apply {
+            text = getString(R.string.brute_force_time_hint)
+        }
+        val seek = android.widget.SeekBar(this).apply {
+            max = 50
+            progress = (config.unlockTargetMs - 2_000) / 100
+        }
+        val input = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(String.format(java.util.Locale.US, "%.1f", config.unlockTargetMs / 1000f))
+        }
+        seek.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: android.widget.SeekBar?, p: Int, fromUser: Boolean) {
+                if (!fromUser) return
+                val sec = 2.0 + p / 10.0
+                valueText.text = getString(R.string.brute_force_time_value, sec.toFloat())
+                input.setText(String.format(java.util.Locale.US, "%.1f", sec))
+            }
+            override fun onStartTrackingTouch(s: android.widget.SeekBar?) {}
+            override fun onStopTrackingTouch(s: android.widget.SeekBar?) {}
+        })
+        view.addView(hint)
+        view.addView(valueText)
+        view.addView(seek)
+        view.addView(input)
+
+        getAlertDialogBuilder()
+            .setTitle(R.string.brute_force_time_title)
+            .setView(view)
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                val parsed = input.text.toString().replace(',', '.').toFloatOrNull() ?: (config.unlockTargetMs / 1000f)
+                val clamped = parsed.coerceIn(2.0f, 7.0f)
+                config.unlockTargetMs = Math.round(clamped * 1000f)
+                refresh()
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun setupVaultLocation() {
@@ -1592,6 +1698,13 @@ class SettingsActivity : SimpleActivity() {
                 put(EXCLUDED_FOLDERS, TextUtils.join(",", config.excludedFolders))
                 put(SHOW_HIDDEN_MEDIA, config.showHiddenMedia)
                 put(BLOCK_VAULT_SCREENSHOTS, config.blockVaultScreenshots)
+                put(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, config.vaultUpgradeWarningAlwaysShow)
+                put(ARGON2_PROFILE, config.argon2Profile)
+                put(BRUTE_FORCE_MODE, config.bruteForceMode)
+                put(UNLOCK_TARGET_MS, config.unlockTargetMs)
+                put(ARGON2_CALIBRATION_CLAMPED, config.argon2CalibrationClamped)
+                put(LAST_CALIBRATED_MEMORY_KB, config.lastCalibratedMemoryKb)
+                put(LAST_CALIBRATED_ITERATIONS, config.lastCalibratedIterations)
                 put(FILE_LOADING_PRIORITY, config.fileLoadingPriority)
                 put(AUTOPLAY_VIDEOS, config.autoplayVideos)
                 put(REMEMBER_LAST_VIDEO_POSITION, config.rememberLastVideoPosition)
@@ -1753,6 +1866,13 @@ class SettingsActivity : SimpleActivity() {
                 EXCLUDED_FOLDERS -> config.addExcludedFolders(value.toStringSet())
                 SHOW_HIDDEN_MEDIA -> config.showHiddenMedia = value.toBoolean()
                 BLOCK_VAULT_SCREENSHOTS -> config.blockVaultScreenshots = value.toBoolean()
+                VAULT_UPGRADE_WARNING_ALWAYS_SHOW -> config.vaultUpgradeWarningAlwaysShow = value.toBoolean()
+                ARGON2_PROFILE -> config.argon2Profile = value.toInt()
+                BRUTE_FORCE_MODE -> config.bruteForceMode = value.toInt()
+                UNLOCK_TARGET_MS -> config.unlockTargetMs = value.toInt()
+                ARGON2_CALIBRATION_CLAMPED -> config.argon2CalibrationClamped = value.toBoolean()
+                LAST_CALIBRATED_MEMORY_KB -> config.lastCalibratedMemoryKb = value.toInt()
+                LAST_CALIBRATED_ITERATIONS -> config.lastCalibratedIterations = value.toInt()
                 FILE_LOADING_PRIORITY -> config.fileLoadingPriority = value.toInt()
                 AUTOPLAY_VIDEOS -> config.autoplayVideos = value.toBoolean()
                 REMEMBER_LAST_VIDEO_POSITION -> config.rememberLastVideoPosition = value.toBoolean()

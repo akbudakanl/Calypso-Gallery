@@ -401,6 +401,13 @@
     <string name="fast_large_duplicate_check_hint">Büyük dosya içeren aktarımlarda kritik hız kazancı: dosyanın tamamını okumak yerine 5 blok (toplam 1.25 MB) kıyaslayarak çakışma kontrolünü onlarca kat hızlandırır.</string>
     <string name="fast_large_duplicate_check_info_title">Büyük Dosyalarda Hızlı Kopya Kontrolü (&gt;8 MB)</string>
     <string name="fast_large_duplicate_check_info_message" formatted="false">Büyük kopyalama/taşıma işlemlerinde neden önemlidir?\n\nGigabaytlarca video gibi büyük dosyaları kopyalarken veya taşırken ad ile boyut eşleştiğinde tam bit-bit kontrolü kaynak ve hedef dosyaların tamamını baştan sona okumak zorundadır; bu da dahili bellekte dakikalara, SD kartta daha da uzun sürelere çıkabilir.\n\nHızlı Kontrol nasıl çalışır?\n• 8 MB altındaki tüm dosyalar HER ZAMAN %100 bit-bit kontrol edilir.\n• 8 MB üzerindeki dosyalarda boyut eşleşmesine ek olarak dosyanın Baş, %25, %50, %75 ve Son konumlarından 256 KB\'lık 5 blok (taraf başına toplam 1.25 MB) kıyaslanır.\n• 50 MB–1 GB videolardan oluşan 50 GB\'lık bir arşivde okunan veriyi ~40 kat ile ~800 kat arasında azaltır.\n\nNe zaman açmalı / kapatmalı?\n• Açmanız önerilir: Galerinizin büyük bölümünü büyük dosyalar (&gt;8 MB) oluşturuyorsa açın; aynı ad, birebir aynı boyut ve bu 5 bölgenin tamamında aynı kalan iki sağlam farklı dosya pratikte imkânsız gibidir.\n• Kapatmanız önerilir: Galerinizin çoğunluğunu 8 MB altındaki fotoğraflar veya içerikler oluşturuyorsa belirgin bir hız artışı sağlamaz, çünkü bu dosyalar zaten her zaman %100 bit-bit kontrol edilir.\n• Şifreleme, şifre çözme ve harici diskten kasa eşitlemesi veri güvenliği gereği her zaman tam bayt/doğrulamalı kontrol ile yapılır.</string>
+    <string name="date_tie_break_label">İçerik aynı, tarih farklıysa</string>
+    <string name="date_tie_break_keep_target">Hedefteki dosyanın tarihi kalsın (varsayılan)</string>
+    <string name="date_tie_break_use_source">Kaynak dosyanın tarihi kullanılsın</string>
+    <string name="date_tie_break_ask">Her zaman sor</string>
+    <string name="date_tie_break_hint">Yalnızca Akıllı diyalog ve Otomatik modda geçerlidir. Standart diyalog etkilenmez.</string>
+    <string name="date_tie_break_ask_info_title">&quot;Her zaman sor&quot; akıllı diyaloğu ve otomatik modu neden işlevsiz kılar?</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Akıllı diyalog ve Otomatik modun tek amacı vardır: içeriği zaten mevcut olan dosyaları atlamak. Böylece yalnızca gerçekten ilgilenmeniz gereken dosyaları görürsünüz — adı aynı, içeriği farklı olanlar. Bit-rot tespiti de tam bu durumda, thumbnail\'leri karşılaştırılarak yapılır.\n\nBurada &quot;Her zaman sor&quot; seçerseniz, içeriği aynı olup yalnızca tarihi farklı olan her dosya tekrar çakışma olarak karşınıza çıkar. Akıllı diyalogda aynı fotoğrafın iki thumbnail\'ini görürsünüz, kontrol edecek bir şey yoktur. Otomatik modda ise aynı dosya name(1) olarak yeniden yazılır ve klasörünüz gereksiz kopyalarla dolar.\n\nBu seçeneği yalnızca her tarih farkını bilerek incelemek istiyorsanız kullanın; örneğin yanlış bir tarihi elle düzeltmek için.\n\nNot: İçerik bit-to-bit aynıysa EXIF çekim tarihi de aynıdır. Tarih farkı, taraflardan birinin EXIF verisini kaybedip dosya değiştirme tarihine (kopyalama tarihi) düştüğünü gösterir.</string>
     <string name="conflict_handling_explanation_title">Dosya Çakışması ve Kopya Kontrolü</string>
     <string name="conflict_handling_explanation_message" formatted="false">Dosya veya albümleri kopyalarken, taşırken, şifrelerken ve şifresini çözerken (albüm birleştirme dahil) hedefte aynı isimde bir dosya bulunduğunda süreç şöyle işler:\n\n• Standart diyalog (Varsayılan): İçerik kontrolü yapmadan yalnızca dosya adına bakar (orijinal Calypso Gallery gibi) ve her çakışmada Atla / Üzerine Yaz / İkisini de Sakla diye sorar.\n• Akıllı diyalog: Boyut ve RAM üzerinden bit-bit içerik kıyaslaması yapar (şifreli dosyalar diske yazılmadan bellekte kontrol edilir); birebir aynı dosyaları otomatik atlar ve yalnızca içerik farklıysa yan yana önizlemeli olarak sorar.\n• Otomatik (Deneysel): Birebir aynı dosyaları otomatik atlar, içeriği farklı aynı isimli dosyaları ise soru sormadan download(1).jpg şeklinde yeniden adlandırarak her ikisini de korur.</string>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
@@ -490,11 +497,36 @@
     <string name="fork_disclaimer_title">Fork uyarısı</string>
     <string name="fork_disclaimer_message">Bu uygulama, Fossify ekibi tarafından geliştirilmemiştir. Calypso Gallery, Fossify Gallery uygulamasının bağımsız olarak sürdürülen resmi olmayan bir forkudur; orijinal geliştiriciye yalnızca kaynak göstermek amacıyla referans verilmektedir. Fossify ile herhangi bir bağlantısı, onayı veya desteği yoktur.\n\nDevam ederek bu uyarıyı onaylamış olursunuz. Fork ile ilgili değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
     <string name="fork_disclaimer_acknowledge">Anladım</string>
+
+    <!-- Şifreli Kasa format güncellemesi (v3 -> v4) -->
+    <string name="vault_upgrade_entry_title">Şifreli Kasa güncellemesi mevcut</string>
+    <string name="vault_upgrade_entry_message">Şifreli kasanız uygulamanın güncel olmayan bir sürümünde oluşturulmuş ve eski şifreleme algoritmasını kullanıyor. İsterseniz şifreli kasanızı güncel versiyondaki şifreleme algoritmasına göre yeniden oluşturabilirsiniz.</string>
+    <string name="vault_upgrade_always_show">Her zaman göster</string>
+    <string name="vault_upgrade_settings_title">Kasa güncelleme uyarısını her zaman göster</string>
+    <string name="vault_upgrade_details_title">Güncellemeden önce</string>
+    <string name="vault_upgrade_details_message">Şifreli kasayı güncel şifreleme algoritmasını kullanması için güncellemeden önce yedek almanız önerilir. Böylece güncellemenin yarıda kalması sebebiyle veri kaybetme riskiniz ortadan kalkar ve isterseniz güncellenmemiş şifreli kasanı uygulamanın eski sürümlerinde kullanmaya devam edebilirsiniz.</string>
+    <string name="vault_upgrade_low_battery">Şarjınız az, lütfen cihazınızın şarj seviyesini en az %20 doldurun.</string>
+    <string name="vault_upgrade_low_space">Şifreli Kasa\'yı güncellemek için yeterli boş alan yok.</string>
+    <string name="vault_upgrade_continue">Devam et</string>
+    <string name="vault_upgrade_progress">%2$d dosyadan %1$d tanesi güncellendi</string>
+    <string name="vault_upgrade_finished">Güncelleme tamamlandı. Yeni anahtar halkasını etkinleştirmek için Şifreli Kasa\'yı yeniden açın.</string>
+    <string name="vault_upgrade_failed_count">Güncelleme durdu: %1$d dosya doğrulanamadı.</string>
+    <string name="vault_upgrade_resume_title">Kasa güncellemesi yarıda kaldı</string>
+    <string name="vault_upgrade_resume_message">Şifreli Kasa güncellemesi yarıda kaldı. Şifreli kasanızdaki bazı dosyalar yeni şifreleme algoritmasına güncellendi. Veri kaybı yaşanmadı. Kalan dosyaların güncellenmesine devam etmek istiyor musunuz?</string>
+    <string name="vault_upgrade_progress_warning">Lütfen güncelleme sırasında uygulamadan çıkmayın veya ekranı kapatmayın.</string>
+    <string name="vault_upgrade_waiting">Şifreli Kasa bağlı değil. Yeniden bağlanması bekleniyor...</string>
+    <string name="argon2_profile_title">Brute-Force direnci</string>
+    <string name="brute_force_mode_title">Kalibrasyon modu</string>
+    <string name="brute_force_mode_time">Kasa açılış süresi üzerinden</string>
+    <string name="brute_force_mode_presets">Hazır modlar üzerinden</string>
+    <string name="brute_force_time_title">Hedef kasa açılış süresi</string>
+    <string name="brute_force_time_hint">Saniye (2.0–7.0). Uygulama bu cihazda bir kez ölçüm yapar ve sonuçlanan KDF parametrelerini kasaya yazar; gerçek açılış süresi diğer cihazlarda değişir.</string>
+    <string name="brute_force_time_value">%1$.1f sn</string>
+    <string name="brute_force_actual_params">Kayıtlı: %1$d MiB / %2$d tur</string>
+    <string name="brute_force_clamped"> (kırpıldı)</string>
+    <string name="argon2_profile_low">Düşük donanımlı cihaz (önerilmez)</string>
+    <string name="argon2_profile_default">Varsayılan</string>
+    <string name="argon2_profile_high">Yüksek güvenlik</string>
+    <string name="argon2_profile_hint">Ne yaptığınızı bilmiyorsanız varsayılan ayarda kalmanız önerilir. Bu ayar yalnızca yeni kasaları ve parola değişikliklerini etkiler.</string>
+    <string name="argon2_profile_current">Mevcut: %s</string>
 </resources>
-    <string name="date_tie_break_label">İçerik aynı, tarih farklıysa</string>
-    <string name="date_tie_break_keep_target">Hedefteki dosyanın tarihi kalsın (varsayılan)</string>
-    <string name="date_tie_break_use_source">Kaynak dosyanın tarihi kullanılsın</string>
-    <string name="date_tie_break_ask">Her zaman sor</string>
-    <string name="date_tie_break_hint">Yalnızca Akıllı diyalog ve Otomatik modda geçerlidir. Standart diyalog etkilenmez.</string>
-    <string name="date_tie_break_ask_info_title">&quot;Her zaman sor&quot; akıllı diyaloğu ve otomatik modu neden işlevsiz kılar?</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Akıllı diyalog ve Otomatik modun tek amacı vardır: içeriği zaten mevcut olan dosyaları atlamak. Böylece yalnızca gerçekten ilgilenmeniz gereken dosyaları görürsünüz — adı aynı, içeriği farklı olanlar. Bit-rot tespiti de tam bu durumda, thumbnail\'leri karşılaştırılarak yapılır.\n\nBurada &quot;Her zaman sor&quot; seçerseniz, içeriği aynı olup yalnızca tarihi farklı olan her dosya tekrar çakışma olarak karşınıza çıkar. Akıllı diyalogda aynı fotoğrafın iki thumbnail\'ini görürsünüz, kontrol edecek bir şey yoktur. Otomatik modda ise aynı dosya name(1) olarak yeniden yazılır ve klasörünüz gereksiz kopyalarla dolar.\n\nBu seçeneği yalnızca her tarih farkını bilerek incelemek istiyorsanız kullanın; örneğin yanlış bir tarihi elle düzeltmek için.\n\nNot: İçerik bit-to-bit aynıysa EXIF çekim tarihi de aynıdır. Tarih farkı, taraflardan birinin EXIF verisini kaybedip dosya değiştirme tarihine (kopyalama tarihi) düştüğünü gösterir.</string>

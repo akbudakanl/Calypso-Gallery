@@ -129,6 +129,65 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(BLOCK_VAULT_SCREENSHOTS, true)
         set(blockVaultScreenshots) = prefs.edit().putBoolean(BLOCK_VAULT_SCREENSHOTS, blockVaultScreenshots).apply()
 
+    /** Brute-force direnci ayari modu: 0 = kasa acilis suresi (varsayilan), 1 = hazir modlar. */
+    var bruteForceMode: Int
+        get() = prefs.getInt(BRUTE_FORCE_MODE, 0).coerceIn(0, 1)
+        set(value) = prefs.edit().putInt(BRUTE_FORCE_MODE, value.coerceIn(0, 1)).apply()
+
+    /** Son kalibrasyonun urettigi gercek parametreler (arayuzde gosterim icin). */
+    var lastCalibratedMemoryKb: Int
+        get() = prefs.getInt(LAST_CALIBRATED_MEMORY_KB, 64 * 1024)
+        set(value) = prefs.edit().putInt(LAST_CALIBRATED_MEMORY_KB, value).apply()
+
+    var lastCalibratedIterations: Int
+        get() = prefs.getInt(LAST_CALIBRATED_ITERATIONS, 3)
+        set(value) = prefs.edit().putInt(LAST_CALIBRATED_ITERATIONS, value).apply()
+
+    /** Son kalibrasyonda hedefe ulasilamayip 2/16 tur sinirlarina kirpildi mi. */
+    var argon2CalibrationClamped: Boolean
+        get() = prefs.getBoolean(ARGON2_CALIBRATION_CLAMPED, false)
+        set(value) = prefs.edit().putBoolean(ARGON2_CALIBRATION_CLAMPED, value).apply()
+
+    /** Hedef kasa acilis suresi, milisaniye (2.1 sn = 2100). */
+    var unlockTargetMs: Int
+        get() = prefs.getInt(UNLOCK_TARGET_MS, 2400).coerceIn(2_000, 7_000)
+        set(value) = prefs.edit().putInt(UNLOCK_TARGET_MS, value.coerceIn(2_000, 7_000)).apply()
+
+    /**
+     * Argon2id profili: 0 = dusuk cihaz (oneri edilmez),
+     * 1 = varsayilan, 2 = yuksek guvenlik. Sadece YENI kasa/sifre degisiminde kullanilir.
+     */
+    var argon2Profile: Int
+        get() = prefs.getInt(ARGON2_PROFILE, 1).coerceIn(0, 2)
+        set(value) = prefs.edit().putInt(ARGON2_PROFILE, value.coerceIn(0, 2)).apply()
+
+    val argon2MemoryKb: Int
+        get() = when (argon2Profile) {
+            0 -> 32 * 1024
+            2 -> 128 * 1024
+            else -> 64 * 1024
+        }
+
+    val argon2Iterations: Int
+        get() = when (argon2Profile) {
+            0 -> 2
+            2 -> 4
+            else -> 3
+        }
+
+    val argon2Parallelism: Int
+        get() = if (argon2Profile == 0) 1 else 2
+
+    /** v3 kasa girisinde guncelleme uyarisini her zaman goster (varsayilan acik). */
+    var vaultUpgradeWarningAlwaysShow: Boolean
+        get() = prefs.getBoolean(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, true)
+        set(value) = prefs.edit().putBoolean(VAULT_UPGRADE_WARNING_ALWAYS_SHOW, value).apply()
+
+    /** Oncelik kontrolleri (bos alan, pil) kullanici tarafindan onaylandi mi. */
+    var vaultUpgradePreflightAcknowledged: Boolean
+        get() = prefs.getBoolean(VAULT_UPGRADE_PREFLIGHT_ACKNOWLEDGED, false)
+        set(value) = prefs.edit().putBoolean(VAULT_UPGRADE_PREFLIGHT_ACKNOWLEDGED, value).apply()
+
     var hasShownVaultImportInfo: Boolean
         get() = prefs.getBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, false)
         set(hasShownVaultImportInfo) = prefs.edit().putBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, hasShownVaultImportInfo).apply()
