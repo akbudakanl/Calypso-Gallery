@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">無法確認可用空間（%2$s）。約需要 %1$s；仍會嘗試執行此操作，但若空間不足可能會中斷。</string>
+    <string name="resume_operations_title">中斷的操作</string>
+    <string name="resume_operations_message">有 %1$d 項操作已中斷。資料未遺失，要從中斷處繼續嗎？</string>
+    <string name="resume_continue">繼續</string>
+    <string name="resume_later">稍後</string>
+    <string name="resume_done">操作已完成。</string>
+    <string name="resume_failed">部分操作無法完成；來源檔案已保留。</string>
     <string name="edit">編輯</string>
     <string name="open_camera">開啟相機</string>
     <string name="hidden">（已隱藏）</string>

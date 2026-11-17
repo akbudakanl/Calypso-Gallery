@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">Kunne ikkje stadfeste ledig lagringsplass (%2$s). Omtrent %1$s trengst; operasjonen blir prøvd, men kan stoppe dersom plassen tek slutt.</string>
+    <string name="resume_operations_title">Avbrotne operasjonar</string>
+    <string name="resume_operations_message">%1$d operasjon(ar) vart avbrotne. Ingen data gjekk tapt – hald fram der dei stoppa?</string>
+    <string name="resume_continue">Hald fram</string>
+    <string name="resume_later">Ikkje no</string>
+    <string name="resume_done">Operasjonane er fullførte.</string>
+    <string name="resume_failed">Nokre operasjonar kunne ikkje fullførast; kjeldefilene vart behaldne.</string>
     <string name="edit">Rediger</string>
     <string name="open_camera">Opna kameraet</string>
     <string name="hidden">(skjult)</string>

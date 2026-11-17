@@ -1,5 +1,19 @@
 # Traditional Chinese (Taiwan, values-zh-rTW) Translation Audit, Revision & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-zh-rTW/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly; Taiwanese Traditional Chinese wording (資料／檔案／繼續).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | 無法確認可用空間（%2$s）。約需要 %1$s；仍會嘗試執行此操作，但若空間不足可能會中斷。 | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | 中斷的操作 | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | 有 %1$d 項操作已中斷。資料未遺失，要從中斷處繼續嗎？ | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | 繼續 | Positive dialog button |
+| 5 | `resume_later` | Not now | 稍後 | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | 操作已完成。 | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | 部分操作無法完成；來源檔案已保留。 | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-zh-rTW/strings.xml` was audited against `app/src/main/res/values/strings.xml` and `fossify-commons` (`values-zh-rTW`). 14 existing entries with mistranslations, Mainland Chinese phrasing, terminology mismatches, or formatting bugs were revised, and all 50 missing strings were translated into Taiwanese Traditional Chinese (`zh-rTW`) and added, bringing `values-zh-rTW` to full parity (347 `<string>` + 2 `<plurals>` = 349 resource entries; 372 total comparison rows including English `one`/`other` plural forms and 29 `fossify-commons` UI keys). Nine keys that were missing from `values-zh-rTW/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-zh-rTW/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-zh-rTW/strings.xml` to 372 `<string>` + 2 `<plurals>` = 374 resource entries and 393 total comparison rows.
 > **Key Terminology:** `Settings` → `設定` · `Default` → `預設` / `系統預設` · `Folder` → `資料夾` · `Album` → `相簿` · `Encrypted Vault` → `加密保險箱` · `Hidden` → `隱藏` · `Excluded` → `已排除` · `Password` → `密碼` · `Encrypt / Decrypt` → `加密 / 解密` · `Copy to` → `複製` (matches `fossify-commons`) · `Clipboard` → `剪貼簿` · `Search` → `搜尋` (inherited from `fossify-commons`)
 

@@ -1,5 +1,19 @@
 # German (values-de) Translation Completion & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-de/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | Der freie Speicherplatz konnte nicht überprüft werden (%2$s). Es werden etwa %1$s benötigt; der Vorgang wird versucht und kann bei Speichermangel abgebrochen werden. | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | Unterbrochene Vorgänge | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | %1$d Vorgang/Vorgänge wurden unterbrochen. Keine Daten verloren – dort fortfahren, wo sie standen? | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | Fortfahren | Positive dialog button |
+| 5 | `resume_later` | Not now | Später | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | Vorgänge abgeschlossen. | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | Einige Vorgänge konnten nicht abgeschlossen werden; die Quelldateien wurden beibehalten. | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-de/strings.xml` was audited against `app/src/main/res/values/strings.xml`. All 50 missing strings were translated into German and added, bringing `values-de` to full parity (347 `<string>` + 2 `<plurals>` = 349 resource entries; 359 total comparison rows including plural forms and 15 `fossify-commons` UI keys). Nine keys that were missing from `values-de/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-de/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-de/strings.xml` to 372 `<string>` + 2 `<plurals>` = 374 resource entries and 380 total comparison rows.
 > **Key Terminology:** `Settings` → `Einstellungen` · `Default` → `Standard` / `Systemvorgabe` · `Folder` → `Ordner` · `Album` → `Album` · `Encrypted Vault` → `Verschlüsselter Tresor` · `Hidden` → `Versteckt` · `Password` → `Passwort` · `Encrypt / Decrypt` → `Verschlüsseln / Entschlüsseln` · `Copy to` → `Kopieren nach` · `Clipboard` → `Zwischenablage`
 

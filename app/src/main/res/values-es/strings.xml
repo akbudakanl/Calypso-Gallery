@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">No se pudo verificar el espacio libre (%2$s). Se requieren aproximadamente %1$s; se intentará la operación y podría detenerse si se agota el espacio.</string>
+    <string name="resume_operations_title">Operaciones interrumpidas</string>
+    <string name="resume_operations_message">Se interrumpieron %1$d operación(es). No se perdió ningún dato; ¿desea continuar donde se detuvieron?</string>
+    <string name="resume_continue">Continuar</string>
+    <string name="resume_later">Ahora no</string>
+    <string name="resume_done">Operaciones completadas.</string>
+    <string name="resume_failed">No se pudieron completar algunas operaciones; los archivos de origen se conservaron.</string>
     <string name="edit">Editar</string>
     <string name="open_camera">Abrir la cámara</string>
     <string name="hidden">(oculto)</string>

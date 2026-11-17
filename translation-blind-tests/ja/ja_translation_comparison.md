@@ -1,5 +1,19 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-ja/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | 空き領域を確認できませんでした（%2$s）。約 %1$s が必要です。操作を試行しますが、領域が不足すると途中で停止する場合があります。 | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | 中断された操作 | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | %1$d 件の操作が中断されました。データの損失はありません。中断した場所から続けますか？ | `%1$d` = interrupted operation count; Japanese uses only `other` plural |
+| 4 | `resume_continue` | Continue | 続ける | Positive dialog button |
+| 5 | `resume_later` | Not now | 後で | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | 操作が完了しました。 | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | 一部の操作を完了できませんでした。元のファイルは保持されています。 | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-ja/strings.xml` was audited against `app/src/main/res/values/strings.xml`. All 65 missing strings were translated into Japanese and added, bringing `values-ja` to full parity (347 `<string>` + 2 `<plurals>` = 349 resource entries; 372 total comparison rows including English `one`/`other` plural forms and 29 `fossify-commons` UI keys). Nine keys that were missing from `values-ja/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-ja/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-ja/strings.xml` to 373 `<string>` + 2 `<plurals>` = 375 resource entries and 393 total comparison rows.
 > **Key Terminology:** `Settings` → `設定` · `Default` → `既定` / `デフォルト` · `Folder` → `フォルダー` · `Album` → `アルバム` · `Encrypted Vault` → `暗号化された保管庫` · `Hidden` → `非表示` · `Excluded` → `除外` · `Password` → `パスワード` · `Encrypt / Decrypt` → `暗号化 / 復号` · `Clipboard` → `クリップボード`
 

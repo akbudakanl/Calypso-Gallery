@@ -1,5 +1,19 @@
 # Spanish (Latin America, values-b+es+419) Translation Completion & English 1-to-1 Comparison
 
+## ADR 0003 — resumable file operations (7 new keys)
+
+Added to `values-b+es+419/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly; uses `archivos` and neutral `usted` register consistent with the es-419 audit.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish Latin America (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `space_unverified_warning` | Free space could not be verified (%2$s). About %1$s is required; the operation will be attempted and may stop if space runs out. | No se pudo verificar el espacio libre (%2$s). Se requieren aproximadamente %1$s; se intentará la operación y podría detenerse si se agota el espacio. | SAF/OTG free-space warning; `%1$s` = required size, `%2$s` = reason |
+| 2 | `resume_operations_title` | Interrupted operations | Operaciones interrumpidas | One-time process-death dialog title |
+| 3 | `resume_operations_message` | %1$d operation(s) were interrupted. No data was lost — continue where they stopped? | Se interrumpieron %1$d operación(es). No se perdió ningún dato; ¿desea continuar donde se detuvieron? | `%1$d` = interrupted operation count |
+| 4 | `resume_continue` | Continue | Continuar | Positive dialog button |
+| 5 | `resume_later` | Not now | Ahora no | Negative dialog button |
+| 6 | `resume_done` | Operations completed. | Operaciones completadas. | Success toast after resume |
+| 7 | `resume_failed` | Some operations could not be completed; source files were preserved. | No se pudieron completar algunas operaciones; los archivos de origen se conservaron. | Failure toast; no data loss |
+
 > **Scope:** `app/src/main/res/values-b+es+419/strings.xml` was updated to full parity using Standard Spanish (`values-es/strings.xml`) as reference and adapting all entries to Latin American Spanish (`es-419`) and `fossify-commons` (`values-b+es+419`). Previously, `values-b+es+419` contained only 21 `<string>` entries (and 0 `<plurals>`). All 21 existing valid regional entries were preserved, and all 286 missing `<string>` entries plus 2 `<plurals>` blocks were added (347 `<string>` + 2 `<plurals>` = 349 resource entries; `search` and 29 shared UI keys from `fossify-commons`; 374 total comparison rows). Nine keys that were missing from `values-b+es+419/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-b+es+419/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-b+es+419/strings.xml` to 374 `<string>` + 2 `<plurals>` = 376 resource entries and 395 total comparison rows.
 > **Key Terminology & Regional Adaptations vs. `values-es`:** `Ajustes` → `Configuración` · `vídeo/vídeos` → `video/videos` · `ficheros` → `archivos` · `añadir` → `agregar` · `Gestionar` → `Administrar` (matches `fossify-commons` `values-b+es+419`) · `Sistema por defecto` → `Predeterminado del sistema` · `Introduzca la contraseña` → `Ingresar contraseña` · `pegatinas` → `stickers` · `pulsado` → `presionado` · `Por favor, pon el dedo…` → `Por favor, apoye su dedo sobre el sensor de huellas`
 

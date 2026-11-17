@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_launcher_name">Calypso Gallery</string>
+    <string name="space_unverified_warning">Boş alan doğrulanamıyor (%2$s). Yaklaşık %1$s gerekli; işlem denenecek ancak alan yetersiz kalırsa yarıda kesilebilir.</string>
+    <string name="resume_operations_title">Yarım kalan işlemler</string>
+    <string name="resume_operations_message">%1$d işlem yarıda kaldı. Veri kaybı yok; kaldığınız yerden devam edilsin mi?</string>
+    <string name="resume_continue">Devam et</string>
+    <string name="resume_later">Şimdi değil</string>
+    <string name="resume_done">İşlemler tamamlandı.</string>
+    <string name="resume_failed">Bazı işlemler tamamlanamadı; kaynak dosyalar korundu.</string>
     <string name="appearance_title">Görünüm</string>
     <string name="application_settings">Uygulama</string>
     <string name="saved_themes">Kayıtlı temalar</string>
