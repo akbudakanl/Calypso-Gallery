@@ -115,8 +115,6 @@ fi
 
 # 4. Create double-clickable Desktop shortcut icon (Linux)
 DESKTOP_FILE="$DESKTOP_DIR/Calypso-Gallery-Vault.desktop"
-# Remove the shortcut created by older builds so the rebranded launcher replaces it.
-rm -f "$DESKTOP_DIR/Fossify-Cipher.desktop" 2>/dev/null || true
 if [ ! -f "$DESKTOP_FILE" ] && [ -d "$DESKTOP_DIR" ]; then
     cat <<EOF > "$DESKTOP_FILE"
 [Desktop Entry]
