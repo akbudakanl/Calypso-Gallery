@@ -399,7 +399,7 @@ fun Context.createVirtualAlbum(name: String, isHidden: Boolean = false, parentPh
     }
 
     val storedName = if (isHidden) {
-        CryptoManager.encryptStringForVault(this, trimmed)
+        CryptoManager.encryptStringForVault(this, trimmed, "album")
     } else {
         trimmed
     }
@@ -434,7 +434,7 @@ fun Context.renameVirtualAlbum(albumId: Long, newName: String): Boolean {
     return try {
         val oldAlbum = virtualAlbumsDB.getAlbumById(albumId) ?: return false
         val storedName = if (oldAlbum.isHidden) {
-            CryptoManager.encryptStringForVault(this, trimmed)
+            CryptoManager.encryptStringForVault(this, trimmed, "album")
         } else {
             trimmed
         }
@@ -512,7 +512,7 @@ fun Context.addMediaToVirtualAlbum(albumId: Long, media: Collection<Medium>, for
             val currentAlbum = virtualAlbumsDB.getAlbumById(albumId)
             if (currentAlbum != null && (!currentAlbum.isHidden || !CryptoManager.isEncryptedVaultString(currentAlbum.name))) {
                 val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name) ?: currentAlbum.name
-                val encName = CryptoManager.encryptStringForVault(this, plainName)
+                val encName = CryptoManager.encryptStringForVault(this, plainName, "album")
                 virtualAlbumsDB.updateAlbumVisibilityAndName(albumId, true, encName)
                 directoryDB.deleteDirPath(getVirtualAlbumPath(albumId))
             }
@@ -589,7 +589,7 @@ fun Context.addFileDirItemsToVirtualAlbum(
             val currentAlbum = virtualAlbumsDB.getAlbumById(albumId)
             if (currentAlbum != null && (!currentAlbum.isHidden || !CryptoManager.isEncryptedVaultString(currentAlbum.name))) {
                 val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name) ?: currentAlbum.name
-                val encName = CryptoManager.encryptStringForVault(this, plainName)
+                val encName = CryptoManager.encryptStringForVault(this, plainName, "album")
                 virtualAlbumsDB.updateAlbumVisibilityAndName(albumId, true, encName)
                 directoryDB.deleteDirPath(getVirtualAlbumPath(albumId))
             }

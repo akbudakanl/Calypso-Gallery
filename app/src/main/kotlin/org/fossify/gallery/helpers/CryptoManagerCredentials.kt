@@ -47,6 +47,8 @@ import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
 import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
+import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX_V2
+import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveMetadataKey
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
 import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
@@ -98,6 +100,8 @@ import org.fossify.gallery.helpers.CryptoManager.AlbumCryptoOptions
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictPreview
 import org.fossify.gallery.helpers.CryptoManager.StreamCompareMacResult
 import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
+import org.fossify.gallery.helpers.vault.VaultMigration
+import org.fossify.gallery.services.VaultMigrationService
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerCredentials.
@@ -204,6 +208,18 @@ internal fun CryptoManager.unlockFromHeaderFile(context: Context, headerFile: Fi
                 val wrapped = ByteArray(wrappedLen)
                 dis.readFully(wrapped)
 
+                // v4, PDK ile sarilmis VMK'nin ardindan VMK ile sarilmis keyring tasir.
+                var ivVmk: ByteArray? = null
+                var wrappedKeyring: ByteArray? = null
+                if (version == 4) {
+                    ivVmk = ByteArray(GCM_IV_LENGTH)
+                    dis.readFully(ivVmk)
+                    val keyringLen = dis.readInt()
+                    if (keyringLen <= 0 || keyringLen > 4096) return false
+                    wrappedKeyring = ByteArray(keyringLen)
+                    dis.readFully(wrappedKeyring)
+                }
+
                 if (kdfType == 1.toByte()) {
                     if (memoryKb !in 8_192..262_144 || iterations !in 1..10 || parallelism !in 1..8) {
                         return false
@@ -223,8 +239,32 @@ internal fun CryptoManager.unlockFromHeaderFile(context: Context, headerFile: Fi
                     bundle.fill(0)
                     return false
                 }
-                unlockedMasterKey = bundle.copyOf(32)
+                val vmk = bundle.copyOf(32)
                 bundle.fill(0)
+
+                if (version == 4) {
+                    val ivKeyring = ivVmk ?: return false
+                    val encKeyring = wrappedKeyring ?: return false
+                    val keyringCipher = Cipher.getInstance("AES/GCM/NoPadding")
+                    keyringCipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(vmk, "AES"), GCMParameterSpec(GCM_TAG_BITS, ivKeyring))
+                    val keyring = try {
+                        keyringCipher.doFinal(encKeyring)
+                    } catch (_: Exception) {
+                        vmk.fill(0)
+                        return false
+                    }
+                    val parsed = unpackKeyringV4(keyring)
+                    keyring.fill(0)
+                    if (parsed == null) {
+                        vmk.fill(0)
+                        return false
+                    }
+                    unlockedMasterKey = vmk
+                    unlockedKek = parsed.second
+                } else {
+                    unlockedMasterKey = vmk
+                    unlockedKek = null
+                }
 
 
 
@@ -238,6 +278,27 @@ internal fun CryptoManager.unlockFromHeaderFile(context: Context, headerFile: Fi
                         setupOrUpdateCredentials(context, secret, context.config.hiddenProtectionType)
                     } catch (_: Exception) {}
                 }
+
+                // Migrasyon tamamlandiysa v4 basligini ilk sonraki unlock'da yazar.
+                // Boylece sifre foreground service'e tasinmaz.
+                val pendingPrefs = context.getSharedPreferences(VaultMigrationService.PREFS, Context.MODE_PRIVATE)
+                val pendingKek = pendingPrefs.getString(VaultMigrationService.PENDING_KEK, null)
+                if (pendingKek != null) {
+                    val bytes = try {
+                        java.util.Base64.getDecoder().decode(pendingKek)
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (bytes != null) {
+                        try {
+                            if (VaultMigration.finalize(context, secret, context.config.hiddenProtectionType, bytes)) {
+                                pendingPrefs.edit().remove(VaultMigrationService.PENDING_KEK).apply()
+                            }
+                        } finally {
+                            bytes.fill(0)
+                        }
+                    }
+                }
                 true
             }
         }
@@ -246,6 +307,84 @@ internal fun CryptoManager.unlockFromHeaderFile(context: Context, headerFile: Fi
     }
 }
 
+
+/** .vault basligindaki format surumunu okur (3 veya 4; okunamazsa 3). */
+internal fun readVaultHeaderVersion(file: File): Int {
+    if (!file.isFile) return 3
+    return try {
+        FileInputStream(file).use { fis ->
+            val magic = ByteArray(VAULT_HEADER_MAGIC.length)
+            if (fis.read(magic) != magic.size) return 3
+            if (String(magic, Charsets.US_ASCII) != VAULT_HEADER_MAGIC) return 3
+            val v = fis.read()
+            if (v == 3 || v == 4) v else 3
+        }
+    } catch (_: Exception) {
+        3
+    }
+}
+
+/**
+ * v4 .vault basligi: PDK -> VMK ve VMK -> keyring olmak uzere iki sarma katmani.
+ * Duzen:
+ *   magic(6) | version(4) | kdf(1) | iter(4) | mem(4) | par(4) | prot(1) |
+ *   saltLen(4) | salt | ivPdk(12) | wrappedVmKLen(4) | wrappedVmK |
+ *   ivVmk(12) | keyringLen(4) | keyring
+ * keyring icerigi: activeKeyId(u16) | KEK(32)
+ */
+internal fun CryptoManager.writeVaultHeaderV4(
+    headerFile: File,
+    salt: ByteArray,
+    memoryKb: Int,
+    iterations: Int,
+    parallelism: Int,
+    ivPdk: ByteArray,
+    wrappedVmK: ByteArray,
+    ivVmk: ByteArray,
+    wrappedKeyring: ByteArray,
+    protectionType: Int = PROTECTION_PATTERN
+) {
+    FileOutputStream(headerFile).use { fos ->
+        DataOutputStream(fos).use { dos ->
+            dos.write(VAULT_HEADER_MAGIC.toByteArray(Charsets.US_ASCII))
+            dos.writeByte(4)
+            dos.writeByte(1) // Argon2id
+            dos.writeInt(iterations)
+            dos.writeInt(memoryKb)
+            dos.writeInt(parallelism)
+            dos.writeByte(protectionType)
+            dos.writeInt(salt.size)
+            dos.write(salt)
+            dos.write(ivPdk)
+            dos.writeInt(wrappedVmK.size)
+            dos.write(wrappedVmK)
+            dos.write(ivVmk)
+            dos.writeInt(wrappedKeyring.size)
+            dos.write(wrappedKeyring)
+            dos.flush()
+            fos.fd.sync()
+        }
+    }
+}
+
+private fun CryptoManager.packKeyringV4(keyId: Short, kek: ByteArray): ByteArray =
+    ByteArrayOutputStream().use { baos ->
+        DataOutputStream(baos).use { dos ->
+            dos.writeShort(keyId.toInt())
+            dos.write(kek)
+        }
+        baos.toByteArray()
+    }
+
+private fun CryptoManager.unpackKeyringV4(bytes: ByteArray): Pair<Short, ByteArray>? {
+    if (bytes.size < 34) return null
+    DataInputStream(ByteArrayInputStream(bytes)).use { dis ->
+        val keyId = dis.readUnsignedShort().toShort()
+        val kek = ByteArray(32)
+        dis.readFully(kek)
+        return keyId to kek
+    }
+}
 
 fun CryptoManager.getVaultProtectionType(context: Context): Int? {
     val vaultRoot = findVaultRoot(context) ?: return null
@@ -309,6 +448,57 @@ fun CryptoManager.setupOrUpdateCredentials(
 }
 
 
+/**
+ * "Kasa acilis suresi" modunda hedef sureye gore Argon2 parametrelerini kalibre eder.
+ * Tek referans olcumu (~1-2 sn) yeterlidir; iterasyon = hedef / iterasyonBasiSure.
+ * Hazir mod modundaysa profilin sabit degerleri dondurulur.
+ * NOT: Agir is oldugu icin arka planda cagrilmalidir.
+ */
+internal fun CryptoManager.resolveArgon2Params(context: Context): Triple<Int, Int, Int> {
+    if (context.config.bruteForceMode == 1) {
+        context.config.argon2CalibrationClamped = false
+        return Triple(
+            context.config.argon2MemoryKb,
+            context.config.argon2Iterations,
+            context.config.argon2Parallelism
+        )
+    }
+
+    val targetMs = context.config.unlockTargetMs
+    val maxHeapKb = (Runtime.getRuntime().maxMemory() / 1024L).coerceAtLeast(1L)
+    // Low-end cihazlarda tek seferlik ayirma heap'in yarisiyla sinirli;
+    // 128 MiB istense bile maxMemory kucukse 64 MiB'ya dusulur.
+    val desiredMemoryKb = if (targetMs > 5_000) 128 * 1024 else 64 * 1024
+    var memoryKb = desiredMemoryKb.coerceAtMost((maxHeapKb / 2).toInt()).coerceAtLeast(64 * 1024)
+    val referenceSalt = ByteArray(16)
+
+    val measuredMs = try {
+        val t0 = System.nanoTime()
+        deriveKeyArgon2id("cipher-calibration", referenceSalt, memoryKb, 2, 2)
+        ((System.nanoTime() - t0) / 1_000_000L).coerceAtLeast(1L)
+    } catch (_: OutOfMemoryError) {
+        // 128 MiB ayirilamadi: 64 MiB'ya dusup tekrar dene; hala olmazsa OWASP asgari.
+        memoryKb = 64 * 1024
+        System.gc()
+        val t0 = System.nanoTime()
+        try {
+            deriveKeyArgon2id("cipher-calibration", referenceSalt, memoryKb, 2, 2)
+            ((System.nanoTime() - t0) / 1_000_000L).coerceAtLeast(1L)
+        } catch (_: OutOfMemoryError) {
+            1L
+        }
+    }
+
+    val perIterationMs = measuredMs / 2.0
+    val rawIterations = targetMs / perIterationMs
+    val iterations = rawIterations.toInt().coerceIn(2, 16)
+    context.config.argon2CalibrationClamped =
+        rawIterations < 2 || rawIterations > 16 || memoryKb < desiredMemoryKb
+    context.config.lastCalibratedMemoryKb = memoryKb
+    context.config.lastCalibratedIterations = iterations
+    return Triple(memoryKb, iterations, 2)
+}
+
 internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     context: Context,
     secret: String,
@@ -323,14 +513,31 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     } else if (hasExistingVault(context) && !isVaultUnlocked) {
         throw IllegalStateException("Vault is locked! Cannot update credentials without unlocking first.")
     }
-    val masterKey = unlockedMasterKey ?: ByteArray(32).also { secureRandom.nextBytes(it) }
+    // Yeni kasa v4 (VMK -> keyring -> KEK); mevcut v3 kasanin sifresi degistiriliyorsa
+    // v3 basligi korunur. Bu sayede eski kasalar bozulmadan acilmayi surdurur.
+    val isNewVault = unlockedMasterKey == null
+    val vmk = unlockedMasterKey ?: ByteArray(32).also { secureRandom.nextBytes(it) }
+    val kek = if (isNewVault) ByteArray(32).also { secureRandom.nextBytes(it) } else unlockedKek
 
     val salt = ByteArray(ARGON2_SALT_LENGTH).also { secureRandom.nextBytes(it) }
-    val wrappingKey = deriveKeyArgon2id(secret, salt, ARGON2_MEMORY_KB, ARGON2_ITERATIONS, ARGON2_PARALLELISM)
-    val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
+    // Brute-force direnci: hedef acilis suresi seciliyse cihazda tek bir referans
+    // olcumu yapip iterasyon sayisini hedefe gore ayarlariz. Sonuc .vault'a yazilir;
+    // baska cihazda ayni parametreler kullanilir, gercek sure degisir (KeePass gibi).
+    val (argon2MemoryKb, argon2Iterations, argon2Parallelism) = resolveArgon2Params(context)
+    val wrappingKey = deriveKeyArgon2id(secret, salt, argon2MemoryKb, argon2Iterations, argon2Parallelism)
+    val ivPdk = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    cipher.init(Cipher.ENCRYPT_MODE, wrappingKey, GCMParameterSpec(GCM_TAG_BITS, iv))
-    val wrapped = cipher.doFinal(masterKey)
+    cipher.init(Cipher.ENCRYPT_MODE, wrappingKey, GCMParameterSpec(GCM_TAG_BITS, ivPdk))
+    val wrappedVmK = cipher.doFinal(vmk)
+
+    var ivVmk: ByteArray? = null
+    var wrappedKeyring: ByteArray? = null
+    if (kek != null) {
+        ivVmk = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
+        val keyringCipher = Cipher.getInstance("AES/GCM/NoPadding")
+        keyringCipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(vmk, "AES"), GCMParameterSpec(GCM_TAG_BITS, ivVmk))
+        wrappedKeyring = keyringCipher.doFinal(packKeyringV4(1, kek))
+    }
 
     clearBiometricKey(context)
 
@@ -338,17 +545,25 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     val vaultRoot = createVaultRoot(context, customTargetDir)
         ?: throw IOException("Failed to create writable vault directory")
     val vaultHeader = File(vaultRoot, VAULT_HEADER_FILE)
-    writeVaultHeader(vaultHeader, salt, ARGON2_MEMORY_KB, ARGON2_ITERATIONS, ARGON2_PARALLELISM, iv, wrapped, protectionType)
+    if (wrappedKeyring != null && ivVmk != null) {
+        writeVaultHeaderV4(
+            vaultHeader, salt, argon2MemoryKb, argon2Iterations, argon2Parallelism,
+            ivPdk, wrappedVmK, ivVmk, wrappedKeyring, protectionType
+        )
+    } else {
+        writeVaultHeader(vaultHeader, salt, argon2MemoryKb, argon2Iterations, argon2Parallelism, ivPdk, wrappedVmK, protectionType)
+    }
 
     val data = Base64.getEncoder().encodeToString(salt) + ":" +
-        Base64.getEncoder().encodeToString(iv) + ":" +
-        Base64.getEncoder().encodeToString(wrapped)
+        Base64.getEncoder().encodeToString(ivPdk) + ":" +
+        Base64.getEncoder().encodeToString(wrappedVmK)
     context.config.vaultWrappedKeyData = data
     context.config.vaultRootPath = vaultRoot.absolutePath
     cachedVaultRoot = vaultRoot
     encryptedFolderCache.clear()
 
-    unlockedMasterKey = masterKey.copyOf()
+    unlockedMasterKey = vmk.copyOf()
+    unlockedKek = kek?.copyOf()
     val marker = "argon2id_aes256_gcm_v2"
     context.config.hiddenPasswordHash = marker
     context.config.hiddenProtectionType = protectionType
@@ -365,7 +580,7 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
             getOrCreateDefaultHiddenAlbum(context)
             context.virtualAlbumsDB.getAllAlbums().filter { it.isHidden && !isEncryptedVaultString(it.name) }.forEach { album ->
                 val albumId = album.id ?: return@forEach
-                val encName = encryptStringForVault(context, album.name)
+                val encName = encryptStringForVault(context, album.name, "album")
                 context.virtualAlbumsDB.updateAlbumVisibilityAndName(albumId, true, encName)
             }
         } catch (_: Exception) {
@@ -377,13 +592,51 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
 
 
 fun CryptoManager.isEncryptedVaultString(text: String): Boolean {
-    return text.startsWith(VAULT_STR_PREFIX)
+    return text.startsWith(VAULT_STR_PREFIX) || text.startsWith(VAULT_STR_PREFIX_V2)
 }
 
 
-fun CryptoManager.encryptStringForVault(context: Context, plainText: String): String {
+/**
+ * v4 kasa: FVSTR2 kaydi. Kayda ozel HKDF anahtari ve AAD icin purpose kullanilir;
+ * purpose acikta saklanir, boylece decrypt tarafi baglami yeniden kurabilir.
+ * v3 kasa: eski FVSTR1 (masterKey ile dogrudan GCM) korunur.
+ */
+fun CryptoManager.encryptStringForVault(
+    context: Context?,
+    plainText: String,
+    purpose: String = "generic"
+): String {
     if (isEncryptedVaultString(plainText)) return plainText
     val masterKey = unlockedMasterKey ?: return plainText
+
+    if (getVaultFormat() == 4) {
+        val kek = activeKek() ?: return plainText
+        val ctx = "FossifyGallery:Metadata:AESGCM:v4|$purpose"
+        val key = deriveMetadataKey(kek, ctx)
+        return try {
+            val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
+                init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+                updateAAD(ctx.toByteArray(Charsets.UTF_8))
+            }
+            val enc = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+            val payload = ByteArrayOutputStream().use { baos ->
+                DataOutputStream(baos).use { dos ->
+                    dos.writeByte(4)
+                    dos.writeShort(1) // keyId
+                    dos.writeUTF(purpose)
+                    dos.write(iv)
+                    dos.writeInt(enc.size)
+                    dos.write(enc)
+                }
+                baos.toByteArray()
+            }
+            VAULT_STR_PREFIX_V2 + Base64.getEncoder().encodeToString(payload)
+        } finally {
+            key.fill(0)
+        }
+    }
+
     val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
     val cipher = Cipher.getInstance("AES/GCM/NoPadding")
     cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
@@ -403,6 +656,39 @@ fun CryptoManager.encryptStringForVault(context: Context, plainText: String): St
 
 fun CryptoManager.decryptStringFromVault(storedText: String): String? {
     if (!isEncryptedVaultString(storedText)) return storedText
+
+    if (storedText.startsWith(VAULT_STR_PREFIX_V2)) {
+        val kek = activeKek() ?: return null
+        return try {
+            val raw = Base64.getMimeDecoder().decode(storedText.removePrefix(VAULT_STR_PREFIX_V2))
+            DataInputStream(ByteArrayInputStream(raw)).use { dis ->
+                val version = dis.readByte()
+                if (version != 4.toByte()) return null
+                dis.readUnsignedShort() // keyId
+                val purpose = dis.readUTF()
+                val iv = ByteArray(GCM_IV_LENGTH)
+                dis.readFully(iv)
+                val len = dis.readInt()
+                if (len <= 0 || len > 8192) return null
+                val enc = ByteArray(len)
+                dis.readFully(enc)
+                val ctx = "FossifyGallery:Metadata:AESGCM:v4|$purpose"
+                val key = deriveMetadataKey(kek, ctx)
+                try {
+                    val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
+                        init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+                        updateAAD(ctx.toByteArray(Charsets.UTF_8))
+                    }
+                    String(cipher.doFinal(enc), Charsets.UTF_8)
+                } finally {
+                    key.fill(0)
+                }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     val masterKey = unlockedMasterKey ?: return null
     val b64 = storedText.removePrefix(VAULT_STR_PREFIX)
     return try {

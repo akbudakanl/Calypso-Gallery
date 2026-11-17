@@ -74,8 +74,11 @@ object VaultContainer {
     /** .vault baslik dosyasi. */
     const val VAULT_HEADER_MAGIC = "FGVLT2"
 
-    /** .vault icinde saklanan anahtar sarmalama kaydi. */
+    /** .vault icinde saklanan anahtar sarmalama kaydi (v3, legacy). */
     const val VAULT_STR_PREFIX = "FVSTR1:"
+
+    /** v4 metadata kaydi: kayda ozel HKDF anahtari + AAD. */
+    const val VAULT_STR_PREFIX_V2 = "FVSTR2:"
 
     // ---------------- Hesaplar ----------------
 

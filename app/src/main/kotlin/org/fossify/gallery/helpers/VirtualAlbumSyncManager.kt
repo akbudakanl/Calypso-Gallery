@@ -262,7 +262,7 @@ object VirtualAlbumSyncManager {
                     relativeParentVaultPath = extractRelativeVaultPath(album.parentPhysicalPath, vaultRoot)
                 )
                 val innerJson = gson.toJson(innerBackup)
-                val encryptedPayload = CryptoManager.encryptStringForVault(context, innerJson)
+                val encryptedPayload = CryptoManager.encryptStringForVault(context, innerJson, "album_json")
 
                 // 3. Write outer wrapper to vaultRoot/JSON/fva_<hash>.json
                 val outerBackup = VirtualAlbumBackup(
