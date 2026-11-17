@@ -300,8 +300,8 @@
     <string name="decrypting_files">Dateien werden entschlüsselt…</string>
     <string name="place_finger_prompt">Bitte den Finger auf den Fingerabdrucksensor legen</string>
     <string name="connect_at_least_4_dots_prompt">Mindestens 4 Punkte verbinden</string>
-    <string name="access_existing_cipher_secrets_prompt">Möchtest du auf deinen vorhandenen Cipher_Secrets-Ordner zugreifen?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Der vorhandene Cipher_Secrets-Ordner wird gelöscht und ein neuer erstellt. Bist du sicher?</string>
+    <string name="access_existing_cipher_secrets_prompt">Möchtest du auf deinen vorhandenen Secrets-Ordner zugreifen?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Der vorhandene Secrets-Ordner wird gelöscht und ein neuer erstellt. Bist du sicher?</string>
     <string name="confirm_checkbox_label">Ich bestätige</string>
     <string name="secret_vault">Verschlüsselter Tresor</string>
     <string name="secret_vault_empty">Verschlüsselter Tresor ist leer</string>
@@ -339,7 +339,7 @@
     <string name="repeat_new_password">Neues Passwort wiederholen</string>
     <string name="password_changed_successfully">Passwort erfolgreich geändert</string>
     <string name="encrypted_vault_emptied">Verschlüsselter Tresor geleert</string>
-    <string name="empty_encrypted_vault_warning">Der verschlüsselte Tresor (Cipher_Secrets) und alle darin enthaltenen Dateien werden dauerhaft gelöscht. Sind Sie sicher?</string>
+    <string name="empty_encrypted_vault_warning">Der verschlüsselte Tresor (Secrets) und alle darin enthaltenen Dateien werden dauerhaft gelöscht. Sind Sie sicher?</string>
     <string name="refresh">Aktualisieren</string>
     <string name="pull_down_to_open_vault">Weiter nach unten ziehen für den Tresor</string>
     <string name="keep_holding_to_open_vault">Zum Öffnen des verschlüsselten Tresors gedrückt halten</string>
@@ -379,7 +379,7 @@
     <string name="unlock_album">Album entsperren</string>
     <string name="auto_backup_prompt_message">Möchtest du, dass deine Favoriten und virtuellen Alben regelmäßig außerhalb des App-Speichers im Systemspeicher gesichert werden? So gehen deine Favoritenliste und virtuellen Alben nicht verloren, wenn du die App deinstallierst. Du kannst jederzeit in den App-Einstellungen manuell eine Sicherung erstellen.</string>
     <string name="encrypt_info_title">So funktioniert die Verschlüsselung</string>
-    <string name="encrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Cipher_Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neues Album wie Album(1) erstellt oder in das vorhandene verschlüsselte Album zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob Quelldateien, die zu 100% bit-identisch mit dem Ziel sind, gelöscht oder im Quellordner behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
+    <string name="encrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neues Album wie Album(1) erstellt oder in das vorhandene verschlüsselte Album zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob Quelldateien, die zu 100% bit-identisch mit dem Ziel sind, gelöscht oder im Quellordner behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
     <string name="decrypt_info_title">So funktioniert die Entschlüsselung</string>
     <string name="decrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein verschlüsseltes Album oder eine verschlüsselte Datei entschlüsselt wird, wird es bzw. sie mit dem ursprünglichen Namen und Format im ausgewählten Zielordner wiederhergestellt und aus dem verschlüsselten Tresor entfernt.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neuer Ordner wie Album(1) erstellt oder in den vorhandenen Zielordner zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob verschlüsselte Kopien, die zu 100% bit-identisch mit dem Ziel sind, aus dem Tresor entfernt oder behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
     <string name="vault_location">Tresor-Speicherort</string>
@@ -390,11 +390,11 @@
     <string name="create_new_vault_option">Neuen Tresor erstellen</string>
     <string name="use_existing_vault_option">Vorhandenen Tresor verwenden</string>
     <string name="where_to_create_vault_title">Wo soll der Tresor erstellt werden?</string>
-    <string name="vault_location_default_short">Standard-Speicherort (Intern &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Standard-Speicherort (Intern &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Benutzerdefinierter Speicherort</string>
     <string name="no_existing_vault_at_location">Im ausgewählten Ordner wurde kein vorhandener verschlüsselter Tresor (.vault) gefunden.</string>
     <string name="unlock_existing_vault_at_location_prompt">Unter %s wurde ein vorhandener verschlüsselter Tresor gefunden. Möchtest du ihn entsperren und verwenden? Tippe auf Nein, um einen anderen Ordner zu wählen.</string>
-    <string name="vault_location_standard_option">Standard-Speicherort (Interner Speicher &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Standard-Speicherort (Interner Speicher &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Benutzerdefinierter / Externer Speicherort (USB-Laufwerk, SD-Karte oder eigener Ordner)</string>
     <string name="external_vault_unavailable_title">Externer Tresor nicht verfügbar</string>
     <string name="external_vault_unavailable_prompt">Dein konfigurierter Tresor-Speicherort (%s) ist derzeit getrennt oder nicht verfügbar. Schließe das Laufwerk an und tippe auf Erneut versuchen, oder wähle einen anderen Tresor-Speicherort.</string>
@@ -406,7 +406,7 @@
     <string name="vault_location_not_writable">Der ausgewählte Ordner existiert nicht oder ist auf diesem Gerät nicht beschreibbar.</string>
     <string name="vault_location_not_readable">Der ausgewählte Ordner existiert nicht oder ist auf diesem Gerät nicht lesbar.</string>
     <string name="sync_vault_from_external">Verschlüsselte Mediendateien in den verschlüsselten Bereich importieren</string>
-    <string name="sync_vault_select_source_prompt">So funktioniert der Import verschlüsselter Medien:\n\n1. Einheitlicher Ordner Cipher_Secrets:\nBewahre einen Ordner namens Cipher_Secrets auf deinem externen Laufwerk (USB / SD) auf. Du kannst dort entweder eine vollständige Sicherungskopie deines Tresors speichern oder nur die .vault-Headerdatei deines Tresors hineinlegen.\n\n2. Neue Medien verschlüsseln (PC / Tails-CLI):\nDas Offline-CLI-Tool speichert neue verschlüsselte Dateien automatisch direkt in Cipher_Secrets. Dateien im Stammverzeichnis landen im Standard-Geheimalbum (Default Secret Album); Dateien in Unterordnern landen in passenden verschlüsselten Alben (oder erstellen neue).\n\n3. Bit-für-Bit-Smart-Sync:\nWähle als Nächstes dein externes Laufwerk oder den Ordner Cipher_Secrets aus. Die App vergleicht das externe Laufwerk im RAM mit dem Tresor auf deinem Smartphone:\n• Nur neue Dateien und Alben werden importiert.\n• Bit-identische Dateien, die bereits im Tresor sind, werden übersprungen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden sicher als download(1).jpg importiert.</string>
+    <string name="sync_vault_select_source_prompt">So funktioniert der Import verschlüsselter Medien:\n\n1. Einheitlicher Ordner Secrets:\nBewahre einen Ordner namens Secrets auf deinem externen Laufwerk (USB / SD) auf. Du kannst dort entweder eine vollständige Sicherungskopie deines Tresors speichern oder nur die .vault-Headerdatei deines Tresors hineinlegen.\n\n2. Neue Medien verschlüsseln (PC / Tails-CLI):\nDas Offline-CLI-Tool speichert neue verschlüsselte Dateien automatisch direkt in Secrets. Dateien im Stammverzeichnis landen im Standard-Geheimalbum (Default Secret Album); Dateien in Unterordnern landen in passenden verschlüsselten Alben (oder erstellen neue).\n\n3. Bit-für-Bit-Smart-Sync:\nWähle als Nächstes dein externes Laufwerk oder den Ordner Secrets aus. Die App vergleicht das externe Laufwerk im RAM mit dem Tresor auf deinem Smartphone:\n• Nur neue Dateien und Alben werden importiert.\n• Bit-identische Dateien, die bereits im Tresor sind, werden übersprungen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden sicher als download(1).jpg importiert.</string>
     <string name="conflict_handling_mode_label">Dateikonflikt- &amp; Duplikatlösung</string>
     <string name="conflict_handling_auto_short">Vollautomatisch (Standard — Identische überspringen, unterschiedliche als (1) umbenennen)</string>
     <string name="conflict_handling_smart_dialog_short">Smarter Dialog (Identische automatisch überspringen, bei unterschiedlichem Inhalt fragen)</string>
@@ -443,7 +443,7 @@
     <string name="export_encrypted_vault">Verschlüsselten Tresor exportieren</string>
     <string name="export_vault_only_header">Ordner nur mit .vault-Datei exportieren</string>
     <string name="export_vault_entire_folder">Gesamten Ordner exportieren</string>
-    <string name="export_vault_only_header_info">Um Mediendateien, die auf anderen Geräten mit dem unterstützten CLI-Tool verschlüsselt wurden, zum verschlüsselten Tresor auf deinem Smartphone hinzuzufügen, genügt ein Ordner namens Cipher_Secrets, der die .vault-Datei enthält.</string>
+    <string name="export_vault_only_header_info">Um Mediendateien, die auf anderen Geräten mit dem unterstützten CLI-Tool verschlüsselt wurden, zum verschlüsselten Tresor auf deinem Smartphone hinzuzufügen, genügt ein Ordner namens Secrets, der die .vault-Datei enthält.</string>
     <string name="exporting_vault_progress">Verschlüsselter Tresor wird exportiert…</string>
     <string name="vault_export_same_folder_error">Das Exportziel darf nicht der aktive Tresorordner oder ein Unterordner davon sein.</string>
 </resources>

@@ -298,8 +298,8 @@
     <string name="decrypting_files">正在解密檔案…</string>
     <string name="place_finger_prompt">請將手指放在指紋感應器上</string>
     <string name="connect_at_least_4_dots_prompt">請至少連接 4 個點</string>
-    <string name="access_existing_cipher_secrets_prompt">您要存取現有的 Cipher_Secrets 資料夾嗎？</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">現有的 Cipher_Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？</string>
+    <string name="access_existing_cipher_secrets_prompt">您要存取現有的 Secrets 資料夾嗎？</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？</string>
     <string name="confirm_checkbox_label">我確認</string>
     <string name="secret_vault">加密保險箱</string>
     <string name="secret_vault_empty">加密保險箱為空</string>
@@ -337,7 +337,7 @@
     <string name="repeat_new_password">再次輸入新密碼</string>
     <string name="password_changed_successfully">密碼變更成功</string>
     <string name="encrypted_vault_emptied">加密保險箱已清空</string>
-    <string name="empty_encrypted_vault_warning">加密保險箱（Cipher_Secrets）及其所有檔案將會被永久刪除。確定要繼續嗎？</string>
+    <string name="empty_encrypted_vault_warning">加密保險箱（Secrets）及其所有檔案將會被永久刪除。確定要繼續嗎？</string>
     <string name="refresh">重新整理</string>
     <string name="pull_down_to_open_vault">繼續向下拉以開啟加密保險箱</string>
     <string name="keep_holding_to_open_vault">按住不放以開啟加密保險箱</string>
@@ -377,7 +377,7 @@
     <string name="unlock_album">解鎖相簿</string>
     <string name="auto_backup_prompt_message">是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。</string>
     <string name="encrypt_info_title">加密運作方式</string>
-    <string name="encrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Cipher_Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
+    <string name="encrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
     <string name="decrypt_info_title">解密運作方式</string>
     <string name="decrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將加密相簿或檔案解密時，會以原始名稱與格式還原至所選的目的地資料夾，並從加密保險箱中移除。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
     <string name="vault_location">保險箱位置</string>
@@ -388,11 +388,11 @@
     <string name="create_new_vault_option">建立新保險箱</string>
     <string name="use_existing_vault_option">使用現有保險箱</string>
     <string name="where_to_create_vault_title">要在哪裡建立保險箱？</string>
-    <string name="vault_location_default_short">預設位置（內部 &gt; Calypso Gallery &gt; Cipher_Secrets）</string>
+    <string name="vault_location_default_short">預設位置（內部 &gt; Calypso Gallery &gt; Secrets）</string>
     <string name="vault_location_custom_short">自訂位置</string>
     <string name="no_existing_vault_at_location">在所選資料夾中找不到現有的加密保險箱 (.vault)。</string>
     <string name="unlock_existing_vault_at_location_prompt">在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。</string>
-    <string name="vault_location_standard_option">標準位置（內部儲存空間 &gt; Calypso Gallery &gt; Cipher_Secrets）</string>
+    <string name="vault_location_standard_option">標準位置（內部儲存空間 &gt; Calypso Gallery &gt; Secrets）</string>
     <string name="vault_location_custom_option">自訂 / 外部位置（USB 磁碟機、SD 卡或自訂資料夾）</string>
     <string name="external_vault_unavailable_title">無法存取外部保險箱</string>
     <string name="external_vault_unavailable_prompt">您設定的保險箱位置 (%s) 目前已中斷連線或無法使用。請接上磁碟機並輕觸「重試」，或選擇其他保險箱位置。</string>
@@ -404,7 +404,7 @@
     <string name="vault_location_not_writable">所選資料夾不存在，或無法在此裝置上寫入。</string>
     <string name="vault_location_not_readable">所選資料夾不存在，或無法在此裝置上讀取。</string>
     <string name="sync_vault_from_external">將加密的媒體檔案匯入至加密區域</string>
-    <string name="sync_vault_select_source_prompt">加密媒體匯入運作方式：\n\n1. 統一的 Cipher_Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Cipher_Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Cipher_Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Cipher_Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。</string>
+    <string name="sync_vault_select_source_prompt">加密媒體匯入運作方式：\n\n1. 統一的 Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。</string>
     <string name="conflict_handling_mode_label">檔案衝突與重複處理方式</string>
     <string name="conflict_handling_auto_short">全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)）</string>
     <string name="conflict_handling_smart_dialog_short">智慧對話方塊（自動略過相同檔案，僅在內容不同時詢問）</string>
@@ -441,7 +441,7 @@
     <string name="export_encrypted_vault">匯出加密保險箱</string>
     <string name="export_vault_only_header">僅匯出包含 .vault 檔案的資料夾</string>
     <string name="export_vault_entire_folder">匯出整個資料夾</string>
-    <string name="export_vault_only_header_info">若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Cipher_Secrets 且包含 .vault 檔案的資料夾即可。</string>
+    <string name="export_vault_only_header_info">若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Secrets 且包含 .vault 檔案的資料夾即可。</string>
     <string name="exporting_vault_progress">正在匯出加密保險箱…</string>
     <string name="vault_export_same_folder_error">匯出目的地不可為使用中的保險箱資料夾或其子資料夾。</string>
 </resources>

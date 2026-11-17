@@ -302,8 +302,8 @@
     <string name="decrypting_files">Descifrando archivos…</string>
     <string name="place_finger_prompt">Por favor, coloca tu dedo sobre el sensor de huellas</string>
     <string name="connect_at_least_4_dots_prompt">Conecta al menos 4 puntos</string>
-    <string name="access_existing_cipher_secrets_prompt">¿Deseas acceder a tu carpeta Cipher_Secrets existente?</string>
-    <string name="delete_and_recreate_cipher_secrets_prompt">Se eliminará la carpeta Cipher_Secrets existente y se creará una nueva. ¿Estás seguro?</string>
+    <string name="access_existing_cipher_secrets_prompt">¿Deseas acceder a tu carpeta Secrets existente?</string>
+    <string name="delete_and_recreate_cipher_secrets_prompt">Se eliminará la carpeta Secrets existente y se creará una nueva. ¿Estás seguro?</string>
     <string name="confirm_checkbox_label">Confirmo</string>
     <string name="secret_vault">Bóveda cifrada</string>
     <string name="secret_vault_empty">La bóveda cifrada está vacía</string>
@@ -375,7 +375,7 @@
     <string name="repeat_new_password">Repita la nueva contraseña</string>
     <string name="password_changed_successfully">Contraseña cambiada con éxito</string>
     <string name="encrypted_vault_emptied">Bóveda cifrada vaciada</string>
-    <string name="empty_encrypted_vault_warning">Se eliminarán de forma permanente la bóveda cifrada (Cipher_Secrets) y todos sus archivos. ¿Está seguro?</string>
+    <string name="empty_encrypted_vault_warning">Se eliminarán de forma permanente la bóveda cifrada (Secrets) y todos sus archivos. ¿Está seguro?</string>
     <string name="refresh">Actualizar</string>
     <string name="pull_down_to_open_vault">Siga deslizando hacia abajo para la bóveda</string>
     <string name="keep_holding_to_open_vault">Siga manteniendo pulsado para abrir la bóveda cifrada</string>
@@ -416,7 +416,7 @@
     <string name="auto_backup_prompt_message">¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto asegurará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento.</string>
     <string name="access_storage_prompt">Por favor, permite que nuestra aplicación acceda a todos tus archivos; de lo contrario, es posible que no funcione bien.</string>
     <string name="encrypt_info_title">Cómo funciona el cifrado</string>
-    <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Cipher_Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se manejan según tu configuración de resolución de conflictos.</string>
+    <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se manejan según tu configuración de resolución de conflictos.</string>
     <string name="decrypt_info_title">Cómo funciona el descifrado</string>
     <string name="decrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se descifra un álbum o archivo cifrado, se restaura con su nombre y formato originales en la carpeta de destino seleccionada y se elimina de la bóveda cifrada.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear una carpeta nueva como Álbum(1) o fusionarla con la carpeta de destino existente (configurable en Configuración).\n• Al fusionar, puedes elegir si las copias cifradas verificadas como 100% idénticas bit a bit al destino se eliminan de la bóveda o se conservan.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se manejan según tu configuración de resolución de conflictos.</string>
     <string name="vault_location">Ubicación de la bóveda</string>
@@ -427,11 +427,11 @@
     <string name="create_new_vault_option">Crear bóveda nueva</string>
     <string name="use_existing_vault_option">Usar bóveda existente</string>
     <string name="where_to_create_vault_title">¿Dónde debería crearse la bóveda?</string>
-    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_short">Ubicación personalizada</string>
     <string name="no_existing_vault_at_location">No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada.</string>
     <string name="unlock_existing_vault_at_location_prompt">Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta.</string>
-    <string name="vault_location_standard_option">Ubicación estándar (Almacenamiento interno &gt; Calypso Gallery &gt; Cipher_Secrets)</string>
+    <string name="vault_location_standard_option">Ubicación estándar (Almacenamiento interno &gt; Calypso Gallery &gt; Secrets)</string>
     <string name="vault_location_custom_option">Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada)</string>
     <string name="external_vault_unavailable_title">Bóveda externa no disponible</string>
     <string name="external_vault_unavailable_prompt">Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda.</string>
@@ -443,7 +443,7 @@
     <string name="vault_location_not_writable">La carpeta seleccionada no existe o no se puede escribir en ella en este dispositivo.</string>
     <string name="vault_location_not_readable">La carpeta seleccionada no existe o no se puede leer en este dispositivo.</string>
     <string name="sync_vault_from_external">Importar archivos multimedia cifrados a la sección cifrada</string>
-    <string name="sync_vault_select_source_prompt">Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Carpeta unificada Cipher_Secrets:\nMantén una carpeta llamada Cipher_Secrets en tu unidad externa (USB / SD). Puedes guardar allí una copia de seguridad completa de tu bóveda o colocar únicamente el archivo de encabezado .vault de tu bóveda.\n\n2. Cifrado de nuevos archivos multimedia (PC / CLI de Tails):\nLa herramienta CLI sin conexión guarda automáticamente los nuevos archivos cifrados directamente en Cipher_Secrets. Los archivos en la raíz van al Álbum secreto predeterminado; los archivos en subcarpetas van a los álbumes cifrados correspondientes (o crean otros nuevos).\n\n3. Sincronización inteligente bit a bit:\nSelecciona a continuación tu unidad externa o carpeta Cipher_Secrets. La aplicación compara la unidad externa con la bóveda de tu teléfono en la memoria RAM:\n• Solo se importan los archivos y álbumes nuevos.\n• Los archivos idénticos bit a bit que ya están en tu bóveda se omiten.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se importan de forma segura como download(1).jpg.</string>
+    <string name="sync_vault_select_source_prompt">Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Carpeta unificada Secrets:\nMantén una carpeta llamada Secrets en tu unidad externa (USB / SD). Puedes guardar allí una copia de seguridad completa de tu bóveda o colocar únicamente el archivo de encabezado .vault de tu bóveda.\n\n2. Cifrado de nuevos archivos multimedia (PC / CLI de Tails):\nLa herramienta CLI sin conexión guarda automáticamente los nuevos archivos cifrados directamente en Secrets. Los archivos en la raíz van al Álbum secreto predeterminado; los archivos en subcarpetas van a los álbumes cifrados correspondientes (o crean otros nuevos).\n\n3. Sincronización inteligente bit a bit:\nSelecciona a continuación tu unidad externa o carpeta Secrets. La aplicación compara la unidad externa con la bóveda de tu teléfono en la memoria RAM:\n• Solo se importan los archivos y álbumes nuevos.\n• Los archivos idénticos bit a bit que ya están en tu bóveda se omiten.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se importan de forma segura como download(1).jpg.</string>
     <string name="conflict_handling_mode_label">Resolución de conflictos y duplicados de archivos</string>
     <string name="conflict_handling_auto_short">Totalmente automático (Predeterminado: omitir idénticos, renombrar distintos como (1))</string>
     <string name="conflict_handling_smart_dialog_short">Diálogo inteligente (Omitir idénticos automáticamente, preguntar si el contenido difiere)</string>
@@ -480,7 +480,7 @@
     <string name="export_encrypted_vault">Exportar bóveda cifrada</string>
     <string name="export_vault_only_header">Exportar carpeta que contiene solo el archivo .vault</string>
     <string name="export_vault_entire_folder">Exportar toda la carpeta</string>
-    <string name="export_vault_only_header_info">Para agregar a la bóveda cifrada de tu teléfono elementos multimedia cifrados en otros dispositivos con la herramienta CLI compatible, solo necesitas usar una carpeta llamada Cipher_Secrets que contenga el archivo .vault.</string>
+    <string name="export_vault_only_header_info">Para agregar a la bóveda cifrada de tu teléfono elementos multimedia cifrados en otros dispositivos con la herramienta CLI compatible, solo necesitas usar una carpeta llamada Secrets que contenga el archivo .vault.</string>
     <string name="exporting_vault_progress">Exportando bóveda cifrada…</string>
     <string name="vault_export_same_folder_error">El destino de exportación no puede ser la carpeta de la bóveda activa ni estar dentro de ella.</string>
 </resources>
