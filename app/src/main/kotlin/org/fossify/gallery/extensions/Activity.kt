@@ -63,6 +63,7 @@ import org.fossify.gallery.dialogs.VaultMigrationProgressDialog
 import org.fossify.gallery.helpers.vault.VaultMigration
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
@@ -918,10 +919,16 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
 
     val targetDisplayDir = if (targetDir == null) {
         CryptoManager.getDefaultVaultRoot()
-    } else if (targetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true)) {
+    } else if (listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME).any {
+            targetDir.name.equals(it, ignoreCase = true)
+        }
+    ) {
         targetDir
     } else {
-        File(targetDir, CIPHER_SECRETS_DIR_NAME)
+        listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)
+            .map { File(targetDir, it) }
+            .firstOrNull { it.isDirectory }
+            ?: File(targetDir, SECRETS_DIR_NAME)
     }
 
     if (confirmBeforeCreatingNew && switchingFromAnotherVault) {

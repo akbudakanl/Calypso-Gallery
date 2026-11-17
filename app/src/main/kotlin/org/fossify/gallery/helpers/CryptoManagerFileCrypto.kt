@@ -904,10 +904,16 @@ fun CryptoManager.resolveSyncSourceRoot(selectedDir: File): File {
         return selectedDir
     }
 
-    val nestedContainerCandidates = listOf(
-        File(File(selectedDir, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME),
-        File(File(selectedDir, CIPHER_ROOT_DIR_NAME), CIPHER_SECRETS_DIR_NAME),
-        File(selectedDir, CIPHER_SECRETS_DIR_NAME),
+    val nestedContainerCandidates = mutableListOf<File>()
+    for (secretsName in listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)) {
+        nestedContainerCandidates += listOf(
+            File(File(selectedDir, CIPHER_APP_DIR_NAME), secretsName),
+            File(File(selectedDir, CIPHER_ROOT_DIR_NAME), secretsName),
+            File(File(selectedDir, LEGACY_CIPHER_APP_DIR_NAME), secretsName),
+            File(selectedDir, secretsName)
+        )
+    }
+    nestedContainerCandidates += listOf(
         File(selectedDir, "Encrypted_Output"),
         File(selectedDir, "Sifreli_Cikti")
     )

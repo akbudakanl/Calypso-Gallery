@@ -106,7 +106,7 @@ import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
 /**
  * Returns true when the media item belongs to the encrypted vault content
  * zone, i.e. it is stored as an encrypted file or it is located inside one
- * of the encrypted (Cipher_Secrets) folders.
+ * of the encrypted vault folders.
  */
 fun CryptoManager.isVaultMediaPath(context: Context, path: String): Boolean {
     if (path.isEmpty()) return false
@@ -214,6 +214,11 @@ fun CryptoManager.ensureCipherRootDirectory(): File {
 
 
 fun CryptoManager.getDefaultVaultRoot(): File {
+    return File(getCipherRootDirectory(), SECRETS_DIR_NAME)
+}
+
+/** The vault folder name used by older builds, still recognised wherever a vault is detected. */
+fun CryptoManager.getLegacyDefaultVaultRoot(): File {
     return File(getCipherRootDirectory(), CIPHER_SECRETS_DIR_NAME)
 }
 

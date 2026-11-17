@@ -5,7 +5,7 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import com.google.gson.Gson
 import org.fossify.gallery.extensions.config
-import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
 import org.fossify.gallery.helpers.VirtualAlbumBackup
@@ -127,8 +127,29 @@ class VaultRelativeSyncTest {
     }
 
     @Test
+    fun extractRelativeVaultPath_recognizesCurrentAndLegacyVaultFolderMarkers() {
+        // Current "Secrets" container on a different mount
+        assertEquals(
+            "a1b2c3/item1.bin",
+            VirtualAlbumSyncManager.extractRelativeVaultPath(
+                "/mnt/media_rw/USB-3333/Secrets/a1b2c3/item1.bin",
+                null
+            )
+        )
+
+        // Legacy "Cipher_Secrets" container must keep resolving after the rename
+        assertEquals(
+            "a1b2c3/item1.bin",
+            VirtualAlbumSyncManager.extractRelativeVaultPath(
+                "/mnt/media_rw/USB-4444/Cipher_Secrets/a1b2c3/item1.bin",
+                null
+            )
+        )
+    }
+
+    @Test
     fun syncVirtualAlbums_remapsStealthVaultItemsAcrossMounts_andRewritesStaleDbPaths() {
-        val usb2Secrets = File(tempRoot, "Usb2/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val usb2Secrets = File(tempRoot, "Usb2/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(usb2Secrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
 
         val subAlbumDir = File(usb2Secrets, "a1b2c3").apply { mkdirs() }
@@ -209,7 +230,7 @@ class VaultRelativeSyncTest {
 
     @Test
     fun evictHiddenVirtualAlbumsFromDbCache_preservesPublicAlbumsAndDiskJson() {
-        val vaultSecrets = File(tempRoot, "VaultA/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultSecrets = File(tempRoot, "VaultA/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         val jsonFile = File(File(vaultSecrets, "JSON").apply { mkdirs() }, "fva_hidden.json").apply {
             writeText("{\"version\":2}")
@@ -225,7 +246,7 @@ class VaultRelativeSyncTest {
         )
 
         fakeContext.config.vaultRootPath = vaultSecrets.absolutePath
-        val newVaultSecrets = File(tempRoot, "VaultB/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val newVaultSecrets = File(tempRoot, "VaultB/$SECRETS_DIR_NAME").apply { mkdirs() }
         CryptoManager.prepareVaultLocationSwitch(fakeContext, newVaultSecrets)
 
         assertNull(fakeDao.getAlbumById(hiddenId))

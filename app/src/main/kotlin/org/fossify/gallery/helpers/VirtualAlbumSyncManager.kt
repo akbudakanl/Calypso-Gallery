@@ -98,7 +98,13 @@ object VirtualAlbumSyncManager {
             }
         }
 
-        val markers = listOf("/$CIPHER_SECRETS_DIR_NAME/", "/$CIPHER_ROOT_DIR_NAME/")
+        // Older manifests carry the pre-rename folder name; keep both so vault-relative paths
+        // survive an upgrade with vaults still stored in "Cipher_Secrets".
+        val markers = listOf(
+            "/$SECRETS_DIR_NAME/",
+            "/$CIPHER_SECRETS_DIR_NAME/",
+            "/$CIPHER_ROOT_DIR_NAME/"
+        )
         val lowerFull = normFull.lowercase()
         for (marker in markers) {
             val idx = lowerFull.lastIndexOf(marker.lowercase())

@@ -104,11 +104,17 @@ import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
  */
 
 fun CryptoManager.resolveExportVaultTargetDir(targetDir: File): File {
-    return if (targetDir.name.equals(CIPHER_SECRETS_DIR_NAME, ignoreCase = true)) {
-        targetDir
-    } else {
-        File(targetDir, CIPHER_SECRETS_DIR_NAME)
+    if (listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME).any {
+            targetDir.name.equals(it, ignoreCase = true)
+        }
+    ) {
+        return targetDir
     }
+    // Reuse an existing legacy container inside the picked folder instead of creating a second one.
+    return listOf(SECRETS_DIR_NAME, CIPHER_SECRETS_DIR_NAME)
+        .map { File(targetDir, it) }
+        .firstOrNull { it.isDirectory }
+        ?: File(targetDir, SECRETS_DIR_NAME)
 }
 
 

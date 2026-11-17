@@ -14,6 +14,7 @@ import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
 import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_ROOT_DIR_NAME
 import org.fossify.gallery.helpers.CIPHER_SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_ASK
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_KEEP_TARGET
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
@@ -111,17 +112,17 @@ class CustomVaultLocationTest {
         assertEquals(directDir, CryptoManager.resolveExistingVaultInDirectory(directDir))
 
         val childSecretsContainer = File(tempRoot, "usb_drive").apply { mkdirs() }
-        val childSecretsDir = File(childSecretsContainer, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val childSecretsDir = File(childSecretsContainer, SECRETS_DIR_NAME).apply { mkdirs() }
         File(childSecretsDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         assertEquals(childSecretsDir, CryptoManager.resolveExistingVaultInDirectory(childSecretsContainer))
 
         val appContainer = File(tempRoot, "internal_root").apply { mkdirs() }
-        val appSecretsDir = File(File(appContainer, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val appSecretsDir = File(File(appContainer, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME).apply { mkdirs() }
         File(appSecretsDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         assertEquals(appSecretsDir, CryptoManager.resolveExistingVaultInDirectory(appContainer))
 
         val legacyRootContainer = File(tempRoot, "legacy_usb").apply { mkdirs() }
-        val legacySecretsDir = File(File(legacyRootContainer, CIPHER_ROOT_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val legacySecretsDir = File(File(legacyRootContainer, CIPHER_ROOT_DIR_NAME), SECRETS_DIR_NAME).apply { mkdirs() }
         File(legacySecretsDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         assertEquals(legacySecretsDir, CryptoManager.resolveExistingVaultInDirectory(legacyRootContainer))
 
@@ -134,12 +135,27 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun createVaultRoot_withCustomTargetDir_createsCipherSecretsAndNoMediaAndPersistsPath() {
+    fun resolveExistingVaultInDirectory_recognizesLegacySecretsFolderName() {
+        val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
+
+        val legacyDrive = File(tempRoot, "legacy_usb_drive").apply { mkdirs() }
+        val legacyDir = File(legacyDrive, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        File(legacyDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
+        assertEquals(legacyDir, CryptoManager.resolveExistingVaultInDirectory(legacyDrive))
+
+        val legacyAppContainer = File(tempRoot, "legacy_internal_root").apply { mkdirs() }
+        val legacyAppDir = File(File(legacyAppContainer, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        File(legacyAppDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
+        assertEquals(legacyAppDir, CryptoManager.resolveExistingVaultInDirectory(legacyAppContainer))
+    }
+
+    @Test
+    fun createVaultRoot_withCustomTargetDir_createsSecretsAndNoMediaAndPersistsPath() {
         val parentPick = File(tempRoot, "UsbDrive").apply { mkdirs() }
         val created = CryptoManager.createVaultRoot(testContext, parentPick)
 
         assertNotNull(created)
-        assertEquals(File(parentPick, CIPHER_SECRETS_DIR_NAME).absolutePath, created!!.absolutePath)
+        assertEquals(File(parentPick, SECRETS_DIR_NAME).absolutePath, created!!.absolutePath)
         assertTrue(created.isDirectory)
         assertTrue(File(created, NOMEDIA).isFile)
         assertEquals(created.absolutePath, testContext.config.vaultRootPath)
@@ -147,14 +163,26 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun createVaultRoot_withCipherSecretsTargetDir_doesNotDoubleNest() {
-        val alreadyNamed = File(tempRoot, "SdCard/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+    fun createVaultRoot_withSecretsTargetDir_doesNotDoubleNest() {
+        val alreadyNamed = File(tempRoot, "SdCard/$SECRETS_DIR_NAME").apply { mkdirs() }
         val created = CryptoManager.createVaultRoot(testContext, alreadyNamed)
 
         assertNotNull(created)
         assertEquals(alreadyNamed.absolutePath, created!!.absolutePath)
         assertTrue(File(alreadyNamed, NOMEDIA).isFile)
-        assertFalse(File(alreadyNamed, CIPHER_SECRETS_DIR_NAME).exists())
+        assertFalse(File(alreadyNamed, SECRETS_DIR_NAME).exists())
+    }
+
+    @Test
+    fun createVaultRoot_withExistingLegacySecretsFolder_reusesItInsteadOfCreatingNewOne() {
+        val parentPick = File(tempRoot, "LegacyUsbDrive").apply { mkdirs() }
+        val legacyFolder = File(parentPick, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val created = CryptoManager.createVaultRoot(testContext, parentPick)
+
+        assertNotNull(created)
+        assertEquals(legacyFolder.absolutePath, created!!.absolutePath)
+        assertFalse(File(parentPick, SECRETS_DIR_NAME).exists())
+        assertTrue(File(legacyFolder, NOMEDIA).isFile)
     }
 
     @Test
@@ -166,7 +194,7 @@ class CustomVaultLocationTest {
     @Test
     fun unavailableExternalVault_preservesConfigAndBiometricState_andRestoresWhenReconnected() {
         val externalVolume = File(tempRoot, "ExternalUSB")
-        val externalSecrets = File(externalVolume, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val externalSecrets = File(externalVolume, SECRETS_DIR_NAME).apply { mkdirs() }
         val headerFile = File(externalSecrets, VAULT_HEADER_FILE)
         val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
         headerFile.writeBytes(validHeaderBytes)
@@ -212,7 +240,7 @@ class CustomVaultLocationTest {
     @Test
     fun locateVaultRootOnDisk_doesNotAutoDetectExternalVault_whenVaultRootPathEmpty() {
         val usbRoot = File(tempRoot, "MountedUsbRoot")
-        val usbSecrets = File(usbRoot, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val usbSecrets = File(usbRoot, SECRETS_DIR_NAME).apply { mkdirs() }
         File(usbSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
 
         val contextWithExternalDir = FakeVaultContext(tempRoot, externalFilesDirs = arrayOf(
@@ -267,9 +295,9 @@ class CustomVaultLocationTest {
     @Test
     fun configuredCustomVault_takesPrecedenceOverOtherVaultsWhenResolving() {
         val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
-        val firstVault = File(tempRoot, "FirstVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val firstVault = File(tempRoot, "FirstVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(firstVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
-        val secondVault = File(tempRoot, "SecondCustomUsb/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val secondVault = File(tempRoot, "SecondCustomUsb/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(secondVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
 
         CryptoManager.setVaultRootLocation(testContext, firstVault)
@@ -283,15 +311,15 @@ class CustomVaultLocationTest {
 
     @Test
     fun resolveSyncSourceRoot_handlesNestedContainersSubfoldersAndAlbumFolders() {
-        // 1. USB drive root containing nested Cipher_Secrets (even with direct .bin files inside Cipher_Secrets)
+        // 1. USB drive root containing nested Secrets (even with direct .bin files inside Secrets)
         val usbRoot = File(tempRoot, "UsbDriveRoot").apply { mkdirs() }
-        val usbSecrets = File(usbRoot, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val usbSecrets = File(usbRoot, SECRETS_DIR_NAME).apply { mkdirs() }
         File(usbSecrets, "abcd1234.bin").writeBytes(byteArrayOf(1, 2, 3))
         assertEquals(usbSecrets.absolutePath, CryptoManager.resolveSyncSourceRoot(usbRoot).absolutePath)
 
-        // 2. Drive root containing Calypso Gallery/Cipher_Secrets
+        // 2. Drive root containing Calypso Gallery/Secrets
         val appContainerRoot = File(tempRoot, "AppContainerRoot").apply { mkdirs() }
-        val appSecrets = File(File(appContainerRoot, CIPHER_APP_DIR_NAME), CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val appSecrets = File(File(appContainerRoot, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME).apply { mkdirs() }
         assertEquals(appSecrets.absolutePath, CryptoManager.resolveSyncSourceRoot(appContainerRoot).absolutePath)
 
         // 3. Drive root containing Encrypted_Output delta folder
@@ -317,7 +345,7 @@ class CustomVaultLocationTest {
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
-        val phoneVault = File(tempRoot, "PhoneVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "PhoneVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
@@ -325,9 +353,9 @@ class CustomVaultLocationTest {
         val phoneDefaultAlbum = CryptoManager.getOrCreateDefaultHiddenAlbum(testContext)!!
         val existingVacation = CryptoManager.createHiddenPhysicalAlbum(testContext, "vacation")!!
 
-        // Build external drive root with nested Cipher_Secrets
+        // Build external drive root with nested Secrets
         val extDriveRoot = File(tempRoot, "ExtUsbRoot").apply { mkdirs() }
-        val extSecrets = File(extDriveRoot, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val extSecrets = File(extDriveRoot, SECRETS_DIR_NAME).apply { mkdirs() }
         File(extSecrets, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
 
         val rootPayload = ByteArray(32 * 1024).also { random.nextBytes(it) }
@@ -335,7 +363,7 @@ class CustomVaultLocationTest {
         val beachPayload = ByteArray(40 * 1024).also { random.nextBytes(it) }
         val mountainPayload = ByteArray(24 * 1024).also { random.nextBytes(it) }
 
-        // Direct .bin in external Cipher_Secrets -> maps to Default Secret Album
+        // Direct .bin in external Secrets -> maps to Default Secret Album
         val extRootBin = encryptBytesForTest(extSecrets, "root_photo.jpg", rootPayload)
         // Explicit __VAULT_DEFAULT_ALBUM__ .meta subfolder -> maps to Default Secret Album
         val extDefaultDir = File(extSecrets, "d00001").apply { mkdirs() }
@@ -427,7 +455,7 @@ class CustomVaultLocationTest {
     fun syncVaultFromExternalDirectory_deduplicatesIdenticalContentAcrossIVsAndLargeFiles() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val phoneVault = File(tempRoot, "PhoneDedup/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "PhoneDedup/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
@@ -522,7 +550,7 @@ class CustomVaultLocationTest {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
-        val phoneVault = File(tempRoot, "PhoneStage0/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "PhoneStage0/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
@@ -532,7 +560,7 @@ class CustomVaultLocationTest {
         val phoneBin = encryptBytesForTest(phoneAlbum, "archive_item.jpg", payload)
 
         // Build exact byte-for-byte mirror on external drive (same .bin name, length, header, and MAC trailer)
-        val extMirrorSecrets = File(tempRoot, "ExtMirror/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val extMirrorSecrets = File(tempRoot, "ExtMirror/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(extMirrorSecrets, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         val extMirrorAlbum = File(extMirrorSecrets, phoneAlbum.name).apply { mkdirs() }
         File(phoneAlbum, VAULT_SUBFOLDER_META_FILE).copyTo(File(extMirrorAlbum, VAULT_SUBFOLDER_META_FILE))
@@ -583,7 +611,7 @@ class CustomVaultLocationTest {
     fun syncVaultFromExternalDirectory_renamesNameCollisionsAndStaysIdempotent() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val phoneVault = File(tempRoot, "PhoneCollision/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "PhoneCollision/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
@@ -671,7 +699,7 @@ class CustomVaultLocationTest {
     fun encryptFileToDirectory_skipsBitIdenticalAndHandlesConflicts() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "EncDedupVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "EncDedupVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -759,7 +787,7 @@ class CustomVaultLocationTest {
     fun copyOrMoveEncryptedFileToDirectory_deduplicatesAndHandlesConflicts() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "EncMoveVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "EncMoveVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -837,7 +865,7 @@ class CustomVaultLocationTest {
     fun decryptFileToDirectory_skipsBitIdenticalAndRenamesWithParentheses() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "DecVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "DecVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -905,7 +933,7 @@ class CustomVaultLocationTest {
     fun encryptFolder_and_decryptFolder_mergeExistingAlbumsAndCleanupSafely() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "MergeVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "MergeVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -968,7 +996,7 @@ class CustomVaultLocationTest {
     fun cleanupEmptyEncryptedAlbumIfNeeded_removesEmptiedAlbumAndPreservesDefault() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "CleanupVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "CleanupVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -1095,13 +1123,13 @@ class CustomVaultLocationTest {
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
         val validHeaderBytes = "FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32)
 
-        val vaultDir = File(tempRoot, "vault_sync_perf/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultDir = File(tempRoot, "vault_sync_perf/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultDir, VAULT_HEADER_FILE).writeBytes(validHeaderBytes)
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultDir)
 
         val extRoot = File(tempRoot, "ext_sync_perf").apply { mkdirs() }
-        val extSecrets = File(extRoot, CIPHER_SECRETS_DIR_NAME).apply { mkdirs() }
+        val extSecrets = File(extRoot, SECRETS_DIR_NAME).apply { mkdirs() }
 
         val albumName = "SyncTestAlbum"
         val destAlbum = File(vaultDir, albumName).apply { mkdirs() }
@@ -1139,11 +1167,11 @@ class CustomVaultLocationTest {
         val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
         setMasterKey(masterKey)
 
-        val phoneVault = File(tempRoot, "phone_pending/Calypso Gallery/Cipher_Secrets").apply { mkdirs() }
+        val phoneVault = File(tempRoot, "phone_pending/Calypso Gallery/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, phoneVault)
 
-        val extSecrets = File(tempRoot, "ext_pending/Cipher_Secrets").apply { mkdirs() }
+        val extSecrets = File(tempRoot, "ext_pending/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(extSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         val extAlbum = File(extSecrets, "PendingAlbum").apply { mkdirs() }
 
@@ -1560,7 +1588,7 @@ class CustomVaultLocationTest {
     fun encryptFolder_mergeWithConflictsAndDeferredCollectors_handlesStandardAndSmartModes() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "MergeEncVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "MergeEncVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
@@ -1648,7 +1676,7 @@ class CustomVaultLocationTest {
     fun decryptFolder_mergeWithOverwriteSkipAndIdentical_behavesSafely() {
         val random = SecureRandom()
         val masterKey = ByteArray(32).also { random.nextBytes(it) }
-        val vaultRoot = File(tempRoot, "MergeDecVault/$CIPHER_SECRETS_DIR_NAME").apply { mkdirs() }
+        val vaultRoot = File(tempRoot, "MergeDecVault/$SECRETS_DIR_NAME").apply { mkdirs() }
         File(vaultRoot, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         setMasterKey(masterKey)
         CryptoManager.setVaultRootLocation(testContext, vaultRoot)
