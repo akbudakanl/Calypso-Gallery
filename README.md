@@ -1,10 +1,10 @@
 # Calypso Gallery
 
-Calypso Gallery is a security-hardened, independently maintained personal fork of [Fossify Gallery](https://github.com/FossifyOrg/Gallery). It is an unofficial project and is not affiliated with, endorsed by, or supported by the Fossify organization.
+Calypso Gallery is a security-hardened, independently maintained personal fork of [Fossify Gallery](https://github.com/FossifyOrg/Gallery). It was forked from upstream commit [`2688360242468f1d591eddf23740c879616bb828`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (v1.14.2) on **07-11-2026**. Thanks to the original authors and contributors of Fossify Gallery. It is an unofficial project and is not affiliated with, endorsed by, or supported by the Fossify organization.
 
 Unleash memories, not personal data. Calypso Gallery is a powerful and private photo and video app with no ads, no Internet permission, and no unnecessary permissions.
 
-> **Versioning and upstream policy:** This fork uses an independent Semantic Versioning scheme (`X.Y.Z-cipher`) and was originally forked from upstream Fossify Gallery `1.14.1`. Fork versions do not map one-to-one to upstream releases. Relevant upstream fixes and improvements are selectively backported and recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
+> **Versioning and upstream policy:** This fork uses an independent Semantic Versioning scheme (`X.Y.Z-cipher`) and was originally forked from upstream Fossify Gallery `1.14.2`. Fork versions do not map one-to-one to upstream releases. Relevant upstream fixes and improvements are selectively backported and recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
 
 ## Project status and attribution
 
@@ -12,7 +12,7 @@ Unleash memories, not personal data. Calypso Gallery is a powerful and private p
 - **Fork releases:** <https://github.com/akbudakanl/Gallery-Cipher/releases>
 - **Fork issue tracker:** <https://github.com/akbudakanl/Gallery-Cipher/issues>
 - **Upstream project:** <https://github.com/FossifyOrg/Gallery>
-- **Exact upstream base commit:** [`054228be2da275396eb03d2b9002807b5055afac`](https://github.com/FossifyOrg/Gallery/commit/054228be2da275396eb03d2b9002807b5055afac) (`1.14.1-5-g054228be2`)
+- **Exact upstream base commit:** [`2688360242468f1d591eddf23740c879616bb828`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (`1.14.2`)
 
 This distribution is a modified version of Fossify Gallery. The upstream project, its original authors, and its copyright holders are retained as the origin of the inherited source code. Fork-specific changes are tracked in [FORK_CHANGELOG.md](FORK_CHANGELOG.md), while [CHANGELOG.md](CHANGELOG.md) is retained as the upstream-only release history.
 
