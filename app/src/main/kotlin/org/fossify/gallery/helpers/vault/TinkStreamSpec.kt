@@ -10,10 +10,10 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.file.StandardOpenOption
 
 /**
- * v4 konteyneri icin Tink AES256_GCM_HKDF akis spec'i.
+ * kanonik konteyner icin Tink AES256_GCM_HKDF akis spec'i.
  *
  * Bu dosya, Android ve masaustu CLI arasinda **donmus (frozen)** olan parametrelerin
- * tek Kotlin tarafidir. Degistirilirse mevcut v4 kasalari okunamaz hale gelir.
+ * tek Kotlin tarafidir. Degistirilirse mevcut kasalar okunamaz hale gelir.
  * Degisiklik yalnizca yeni bir konteyner surumu ile yapilabilir.
  *
  * ```
@@ -137,10 +137,10 @@ internal class VaultPayloadChannel(
 }
 
 /**
- * v4 konteynerinin Tink akisini rastgele erisimle acar.
+ * kanonik konteynernin Tink akisini rastgele erisimle acar.
  * AAD immutable [fileId]'dir; [EncryptedFileMetadata.fileKey] bu dosyanin DEK'idir.
  */
-internal fun openV4PayloadChannel(
+internal fun openPayloadChannel(
     file: java.io.File,
     payloadOffset: Long,
     ciphertextLength: Long,
@@ -159,14 +159,14 @@ internal fun openV4PayloadChannel(
 }
 
 /**
- * v4 header GCM AAD'si: magic | version | keyId | fileId | N.
+ * header GCM AAD'si: magic | version | keyId | fileId | N.
  *
  * CRITICAL: N, **sifreli** header uzunlugudur (duz metin + 16 bayt GCM tag).
  * Yazici, sifrelemeden once N'yi `headerPlain.size + 16` olarak hesaplayip AAD'ye
  * koymali; okuyucu dosyadaki N degerini okur. Ikisi farkli olursa AEADBadTagException
  * alinir (bu hata Stage 0 testinde yakalandi ve duzeltildi).
  */
-internal fun v4HeaderAad(
+internal fun headerAad(
     magic: ByteArray,
     version: Byte,
     keyId: Short,

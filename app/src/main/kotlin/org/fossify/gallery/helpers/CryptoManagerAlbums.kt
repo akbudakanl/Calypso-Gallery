@@ -1,103 +1,16 @@
 package org.fossify.gallery.helpers
 
-import android.content.ContentValues
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
-import android.net.Uri
-import android.os.Environment
-import android.provider.DocumentsContract
-import android.provider.MediaStore
-import android.system.Os
-import java.util.Base64
-import androidx.annotation.VisibleForTesting
-import androidx.exifinterface.media.ExifInterface
-import com.bumptech.glide.Glide
-import org.bouncycastle.crypto.engines.AESEngine
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.macs.Poly1305
-import org.bouncycastle.crypto.params.Argon2Parameters
-import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.crypto.params.ParametersWithIV
-import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
-import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
-import org.fossify.gallery.extensions.dateTakensDB
-import org.fossify.gallery.extensions.deleteDBPaths
-import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
-import org.fossify.gallery.extensions.directoryDB
-import org.fossify.gallery.extensions.isThisOrParentIncluded
-import org.fossify.gallery.extensions.markReferencesOnDecrypt
-import org.fossify.gallery.extensions.markReferencesOnEncrypt
-import org.fossify.gallery.extensions.mediaDB
-import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
-import org.fossify.gallery.extensions.virtualAlbumsDB
-import org.fossify.gallery.helpers.vault.VaultContainer
-import org.fossify.gallery.helpers.vault.VaultContainerWriter
-import org.fossify.gallery.helpers.vault.VaultContainer.CTR_IV_LENGTH
+import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.MAC_TAG_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V1
-import org.fossify.gallery.helpers.vault.VaultContainer.MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_SYM
-import org.fossify.gallery.helpers.vault.VaultContainer.META_MAGIC_V2
-import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_HEADER_MAGIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_STR_PREFIX
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_SYMMETRIC_AUTH
-import org.fossify.gallery.helpers.vault.VaultContainer.VERSION_V5_AUTH
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_ENC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_CONTENT_MAC_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.DOMAIN_HEADER_KEY
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveSubkey
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.io.*
-import java.math.BigInteger
-import java.security.MessageDigest
-import java.security.SecureRandom
-import java.util.Locale
-import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.Cipher
-import javax.crypto.CipherInputStream
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import android.media.MediaScannerConnection
-import android.os.Build
-import androidx.biometric.BiometricManager
-import android.security.keystore.KeyInfo
-import android.security.keystore.KeyPermanentlyInvalidatedException
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
-import org.fossify.gallery.databases.GalleryDatabase
-import org.fossify.gallery.extensions.favoritesDB
-import org.fossify.gallery.fragments.VideoFragment
-import org.fossify.gallery.models.DateTaken
-import java.security.KeyStore
-import java.text.SimpleDateFormat
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
-import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
-import org.fossify.gallery.helpers.CryptoManager.TransferConflictStatus
-import org.fossify.gallery.helpers.CryptoManager.TransferConflictCheck
-import org.fossify.gallery.helpers.CryptoManager.SmartConflictDifference
-import org.fossify.gallery.helpers.CryptoManager.SmartConflictComparison
-import org.fossify.gallery.helpers.CryptoManager.VaultExportResult
-import org.fossify.gallery.helpers.CryptoManager.AlbumConflictResolution
-import org.fossify.gallery.helpers.CryptoManager.AlbumCryptoOptions
-import org.fossify.gallery.helpers.CryptoManager.AlbumConflictPreview
-import org.fossify.gallery.helpers.CryptoManager.StreamCompareMacResult
-import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerAlbums.
@@ -115,7 +28,7 @@ internal fun CryptoManager.writeEncryptedFolderMeta(context: Context, folder: Fi
 
     FileOutputStream(metaFile).use { fos ->
         DataOutputStream(fos).use { dos ->
-            dos.write(META_MAGIC_V2.toByteArray(Charsets.US_ASCII))
+            dos.write(FOLDER_META_MAGIC.toByteArray(Charsets.US_ASCII))
             dos.write(iv)
             dos.writeInt(encryptedName.size)
             dos.write(encryptedName)
@@ -228,37 +141,25 @@ fun CryptoManager.getDecryptedRawFolderName(folder: File): String? {
     }
 
     return try {
-        BufferedInputStream(FileInputStream(metaFile)).use { bis ->
-            bis.mark(16)
-            val headerBytes = ByteArray(8)
-            val bytesRead = bis.read(headerBytes, 0, 8)
-            if (bytesRead < 7) return null
-            val str7 = String(headerBytes, 0, 7, Charsets.US_ASCII)
-            val str8 = if (bytesRead >= 8) String(headerBytes, 0, 8, Charsets.US_ASCII) else ""
+        DataInputStream(BufferedInputStream(FileInputStream(metaFile))).use { dis ->
+            // Kanonik meta biçimi: FOLDER_META_MAGIC (6 bayt) | IV | length | ciphertext.
+            val magicBytes = ByteArray(FOLDER_META_MAGIC.length)
+            dis.readFully(magicBytes)
+            if (String(magicBytes, Charsets.US_ASCII) != FOLDER_META_MAGIC) return null
 
-            bis.reset()
-            val skipLen = when {
-                str8 == META_MAGIC_SYM -> 8
-                str7 == META_MAGIC_V2 -> 7
-                else -> return null
-            }
-            bis.skip(skipLen.toLong())
-
-            DataInputStream(bis).use { dis ->
-                val iv = ByteArray(GCM_IV_LENGTH)
-                dis.readFully(iv)
-                val len = dis.readInt()
-                if (len <= 0 || len > 4096) return null
-                val encryptedName = ByteArray(len)
-                dis.readFully(encryptedName)
-                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-                cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-                val name = String(cipher.doFinal(encryptedName), Charsets.UTF_8)
-                folderNameCache[folder.absolutePath] = name
-                name
-            }
+            val iv = ByteArray(GCM_IV_LENGTH)
+            dis.readFully(iv)
+            val len = dis.readInt()
+            if (len <= 0 || len > 4096) return null
+            val encryptedName = ByteArray(len)
+            dis.readFully(encryptedName)
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
+            val name = String(cipher.doFinal(encryptedName), Charsets.UTF_8)
+            folderNameCache[folder.absolutePath] = name
+            name
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
     }
 }
@@ -389,4 +290,3 @@ fun CryptoManager.getVaultDestinationAlbums(context: Context): List<VaultPhysica
     albums.addAll(otherAlbums)
     return albums
 }
-

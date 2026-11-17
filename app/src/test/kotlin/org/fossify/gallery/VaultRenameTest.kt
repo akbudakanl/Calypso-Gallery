@@ -1,7 +1,9 @@
 package org.fossify.gallery
 
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.vault.VaultContainer
+import org.fossify.gallery.helpers.openDecryptedContentStream
+import org.fossify.gallery.helpers.renameEncryptedFile
+import org.fossify.gallery.helpers.verifyFileIntegrity
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -10,23 +12,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
 import java.io.File
-import org.fossify.gallery.helpers.openDecryptedContentStream
-import org.fossify.gallery.helpers.renameEncryptedFile
-import org.fossify.gallery.helpers.verifyFileIntegrity
 
 /**
- * `CryptoManager.renameEncryptedFile` - sifreli dosyanin gorunen adini degistirme.
+ * `CryptoManager.renameEncryptedFile` — şifreli dosyanın görünen adını değiştirme.
  *
- * Bu yol payload'i yeniden sifrelemez; yalnizca header'i yeniden yazar ve
- * payload'i aynen kopyalar. Dosya adi degistiginde header boyutu degisebilecegi
- * icin payload ofseti kayar - test bu kaymanin saglam oldugunu dogrular.
+ * Bu yol payload'ı yeniden şifrelemez; yalnızca header'ı yeniden yazar ve
+ * Tink ciphertext'ini aynen kopyalar. Dosya adı değiştiğinde header boyutu
+ * değişebileceğinden payload ofseti kayar — test bu kaymanın sağlam olduğunu doğrular.
  */
 class VaultRenameTest {
 
-    private val masterKey = ByteArray(32) { (it * 13 + 2).toByte() }
+    private val kek = ByteArray(32) { (it * 13 + 2).toByte() }
     private lateinit var tempDir: File
 
     @Before
@@ -35,16 +32,17 @@ class VaultRenameTest {
         tempDir.mkdirs()
         tempDir.listFiles()?.forEach { it.delete() }
 
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, masterKey)
+        for (name in listOf("unlockedMasterKey", "unlockedKek")) {
+            val field = CryptoManager::class.java.getDeclaredField(name)
+            field.isAccessible = true
+            field.set(CryptoManager, kek.copyOf())
+        }
     }
 
     @Test
     fun renameKeepsPayloadIntactAndIntegrityValid() {
         val payload = ByteArray(3000) { (it * 7 + 1).toByte() }
         val target = File(tempDir, "original.bin")
-
         writeContainer(target, "first_name.jpg", payload)
 
         val renamed = CryptoManager.renameEncryptedFile(
@@ -53,14 +51,13 @@ class VaultRenameTest {
             skipIntegrityCheck = false,
             syncParentDir = false
         )
-        assertTrue("yeniden adlandirma basarisiz", renamed)
+        assertTrue("yeniden adlandırma başarısız", renamed)
 
         val meta = CryptoManager.readMetadata(target, includeThumbnail = false, cacheResult = false)
-        assertNotNull("header okunamadi", meta)
-        assertEquals("dosya adi guncellenmedi", "second_name_with_a_longer_extension.jpg", meta!!.originalName)
-        assertEquals("boyut degisti", payload.size.toLong(), meta.originalSize)
-
-        assertTrue("MAC dogrulanmadi", CryptoManager.verifyFileIntegrity(target, meta))
+        assertNotNull("header okunamadı", meta)
+        assertEquals("dosya adı güncellenmedi", "second_name_with_a_longer_extension.jpg", meta!!.originalName)
+        assertEquals("boyut değişti", payload.size.toLong(), meta.originalSize)
+        assertTrue("bütünlük doğrulanmadı", CryptoManager.verifyFileIntegrity(target, meta))
 
         val decrypted = CryptoManager.openDecryptedContentStream(target, 0L, meta)!!.use { it.readBytes() }
         assertArrayEquals("payload bozuldu", payload, decrypted)
@@ -78,11 +75,11 @@ class VaultRenameTest {
             skipIntegrityCheck = false,
             syncParentDir = false
         )
-        assertTrue("ayni ad no-op olmali", result)
+        assertTrue("aynı ad no-op olmalı", result)
 
         val meta = CryptoManager.readMetadata(target, includeThumbnail = false, cacheResult = false)
         assertEquals("same_name.jpg", meta!!.originalName)
-        assertTrue("MAC dogrulanmadi", CryptoManager.verifyFileIntegrity(target, meta))
+        assertTrue("bütünlük doğrulanmadı", CryptoManager.verifyFileIntegrity(target, meta))
     }
 
     @Test
@@ -91,7 +88,6 @@ class VaultRenameTest {
         val target = File(tempDir, "tampered.bin")
         writeContainer(target, "tampered.jpg", payload)
 
-        // payload icindeki bir bayti boz
         val bytes = target.readBytes()
         val meta = CryptoManager.readMetadata(target, includeThumbnail = false, cacheResult = false)!!
         val payloadStart = meta.payloadOffset.toInt()
@@ -104,30 +100,24 @@ class VaultRenameTest {
             skipIntegrityCheck = false,
             syncParentDir = false
         )
-        assertTrue("bozuk dosya yeniden adlandirilmamali", !result)
+        assertTrue("bozuk dosya yeniden adlandırılmamalı", !result)
     }
 
-    // ---------------- yardimcilar ----------------
-
     private fun writeContainer(target: File, name: String, payload: ByteArray) {
-        val header = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.writeUTF(name)
-                dos.writeLong(1_700_000_000_000L)
-                dos.writeLong(1_700_000_000_000L)
-                dos.writeLong(payload.size.toLong())
-                dos.writeInt(1)
-                dos.writeInt(0)
-                dos.writeInt(0)
-            }
-            baos.toByteArray()
-        }
-
-        val prepared = VaultContainerWriter.prepare(header, masterKey, VaultContainer.VERSION_SYMMETRIC_AUTH)
+        val prepared = VaultContainerWriter.prepare(
+            kek = kek,
+            keyId = 7,
+            originalName = name,
+            lastModified = 1_700_000_000_000L,
+            dateTaken = 1_699_000_000_000L,
+            originalSize = payload.size.toLong(),
+            mediaType = 1,
+            videoDuration = 0,
+            thumbnail = null
+        )
         VaultContainerWriter.writeContainer(
             target = target,
             prepared = prepared,
-            fileKey = masterKey,
             payloadProvider = { ByteArrayInputStream(payload) }
         )
     }

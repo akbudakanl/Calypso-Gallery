@@ -52,7 +52,7 @@ class EncryptedRenameAndDefaultAlbumTest {
 
         FileOutputStream(File(folder, VAULT_SUBFOLDER_META_FILE)).use { fos ->
             DataOutputStream(fos).use { dos ->
-                dos.write("FGMETA2".toByteArray(Charsets.US_ASCII))
+                dos.write(org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC.toByteArray(Charsets.US_ASCII))
                 dos.write(iv)
                 dos.writeInt(encryptedName.size)
                 dos.write(encryptedName)

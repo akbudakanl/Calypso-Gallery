@@ -150,7 +150,7 @@ class VaultRelativeSyncTest {
     @Test
     fun syncVirtualAlbums_remapsStealthVaultItemsAcrossMounts_andRewritesStaleDbPaths() {
         val usb2Secrets = File(tempRoot, "Usb2/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(usb2Secrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(usb2Secrets, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
 
         val subAlbumDir = File(usb2Secrets, "a1b2c3").apply { mkdirs() }
         val presentEncryptedFile = File(subAlbumDir, "item1.bin").apply { writeBytes(byteArrayOf(1, 2, 3, 4)) }
@@ -231,7 +231,7 @@ class VaultRelativeSyncTest {
     @Test
     fun evictHiddenVirtualAlbumsFromDbCache_preservesPublicAlbumsAndDiskJson() {
         val vaultSecrets = File(tempRoot, "VaultA/$SECRETS_DIR_NAME").apply { mkdirs() }
-        File(vaultSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT2".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        File(vaultSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         val jsonFile = File(File(vaultSecrets, "JSON").apply { mkdirs() }, "fva_hidden.json").apply {
             writeText("{\"version\":2}")
         }
