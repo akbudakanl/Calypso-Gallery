@@ -51,7 +51,7 @@ data class VaultResumeState(
             if (json.toByteArray(Charsets.UTF_8).size > MAX_PLAIN_BYTES) {
                 json = toJson(includeNames = false)
             }
-            val encrypted = CryptoManager.encryptStringForVault(context, json)
+            val encrypted = CryptoManager.encryptStringForVault(context, json, "resume")
             if (CryptoManager.isEncryptedVaultString(encrypted)) encrypted else null
         } catch (_: Exception) {
             null

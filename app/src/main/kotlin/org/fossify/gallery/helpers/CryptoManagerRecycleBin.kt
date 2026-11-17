@@ -220,7 +220,7 @@ fun CryptoManager.saveVaultRecycleBinRestoreMap(context: Context, map: HashMap<S
     }
     try {
         val json = Gson().toJson(map)
-        val encryptedContent = encryptStringForVault(context, json)
+        val encryptedContent = encryptStringForVault(context, json, "restore_info")
         restoreFile.writeText(encryptedContent, Charsets.UTF_8)
     } catch (_: Exception) {}
 }

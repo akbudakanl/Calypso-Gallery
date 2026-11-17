@@ -212,6 +212,21 @@ object CryptoManager {
     @Volatile
     internal var unlockedMasterKey: ByteArray? = null
 
+    /**
+     * v4 kasada keyring'den cozulen KEK. v3 kasada null - o durumda
+     * [activeKek] eski MEK'i (unlockedMasterKey) kullanir.
+     */
+    @Volatile
+    internal var unlockedKek: ByteArray? = null
+
+    /** Dosya basliklarini sifrelemek icin aktif KEK. */
+    internal fun activeKek(): ByteArray? = unlockedKek ?: unlockedMasterKey
+
+    /** Kasa formati: .vault basligindaki surum (3 veya 4). */
+    fun getVaultFormat(): Int {
+        val root = cachedVaultRoot ?: return 3
+        return readVaultHeaderVersion(File(root, VAULT_HEADER_FILE))
+    }
 
     internal val metadataCache = ConcurrentHashMap<String, EncryptedFileMetadata>()
 
@@ -271,6 +286,8 @@ object CryptoManager {
     private fun lockVaultInternal() {
         unlockedMasterKey?.fill(0)
         unlockedMasterKey = null
+        unlockedKek?.fill(0)
+        unlockedKek = null
         metadataCache.values.forEach { it.fileKey.fill(0) }
         metadataCache.clear()
         folderNameCache.clear()
@@ -618,8 +635,8 @@ object CryptoManager {
 
                     val version = dis.readByte()
                     if (version == VERSION_TINK_STREAM) {
-                        // Stage 0: KEK = VMK (legacy MEK) until the v4 keyring is wired in Stage 1.
-                        val v4Meta = readV4Metadata(dis, masterKey, version, includeThumbnail)
+                        // v4: baslik KEK ile sifrelenir; v3 kasa icin activeKek() eski MEK'i dondurur.
+                        val v4Meta = readV4Metadata(dis, activeKek() ?: return null, version, includeThumbnail)
                             ?: return null
                         if (cacheResult && includeThumbnail) {
                             metadataCache[file.absolutePath] = v4Meta
