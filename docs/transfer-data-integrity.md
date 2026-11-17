@@ -149,7 +149,7 @@ Bu hedef şu varsayımlara dayanır:
 
 | # | Risk | Açıklama / önlem |
 |---|---|---|
-| 1 | **Atomik rename garantisi yok (kısmen giderildi)** | Copy/move ve SAF yolları artık staging + atomik commit kullanıyor: doğrudan `File` hedeflerde `Files.move(ATOMIC_MOVE)`, SAF hedeflerde kardeş `DocumentFile` oluşturup `DocumentFile.renameTo()` ile commit (`AtomicStaging.commitSaf`); başarısızlık `FAILED`, kopyala-sil fallback yok. **Kalan:** `CryptoManagerExportSync.kt:322-331` hâlâ `ATOMIC_MOVE` denemeden `REPLACE_EXISTING` + `renameTo` fallback kullanıyor; FAT/exFAT'ta `DocumentFile.renameTo()` tüm sağlayıcılarda garanti değil. |
+| 1 | **Atomik rename garantisi yok (kısmen giderildi)** | Copy/move, SAF ve external sync yolları artık staging + atomik commit kullanıyor: doğrudan `File` hedeflerde `Files.move(ATOMIC_MOVE)`, SAF hedeflerde kardeş `DocumentFile` ile `DocumentFile.renameTo()`, `CryptoManagerExportSync`'te önce `ATOMIC_MOVE`; desteklenmezse yalnızca **aynı file store** üzerinde rename'e izin verilir, aksi halde öğe `FAILED`. Cross-store kopyala-sil fallback yok. **Kalan:** bazı SAF sağlayıcıları rename'i hiç desteklemez; o durumda işlem güvenli biçimde reddedilir. |
 | 2 | **Doğrulama kapsamı/maliyeti** | Şifreli kopyada hızlı örnekleme kullanılıyor (`Activity.kt:2417`); sync yolu tam `verifyFileIntegrity` yapıyor (`:279`). Sadece boyut+fingerprint "VERIFIED" dersen bozuk `.bin` doğrulanmış sayılabilir. Tam doğrulama büyük videolarda 2x okuma maliyeti getirir; bu maliyet kabul edilmelidir. |
 | 3 | **Journal kaybı / reddi** | Journal app-private; app verisi silinirse veya expire olursa (ADR §10 açık soru) ya da kullanıcı resume'u reddederse: commit edilmiş ama kaynağı silinmemiş öğeler **duplicate** kalır; `resolvedDestName` gider → `(1)/(2)` kayar; albüm batch kaydı gider → yeni rastgele alt klasör (`CryptoManagerFolderCrypto.kt:79-84`). |
 | 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
@@ -310,8 +310,10 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
 - Doğrulama: SAF'ta `File` yolu olmadığı için tam akış SHA-256 (`AtomicStaging.streamFingerprint`)
   kullanılır; direct-File yolunda `MediaIdentity` (ilk/son 64 KB) devam eder.
 - `OperationRecovery.cleanupOrphanStaging`: journal'daki `content://` staging URI'larını da siler.
-- Kalan SAF notları: `CryptoManagerExportSync` fallback'i hâlâ eski; bazı SAF sağlayıcıları rename'i
-  desteklemez (o durumda işlem güvenli biçimde `FAILED` olur, yarım dosya oluşmaz).
+- `CryptoManagerExportSync` de artık önce `ATOMIC_MOVE` deniyor; yalnızca aynı file store üzerinde
+  `renameTo` fallback'ine izin veriliyor, farklı store ise öğe `FAILED` (kaynak korunur).
+- Kalan SAF notu: bazı sağlayıcılar rename'i hiç desteklemez; o durumda işlem güvenli biçimde
+  reddedilir, yarım dosya oluşmaz.
 
 ### 8.3.1 Metadata reconciliation (Faz 3/2)
 
@@ -354,8 +356,10 @@ Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okun
   aynı onayı alır; ana thread'de asla bloklamaz (orada `false` döner).
 - Yeni metinler (başlık + "Yine de devam et") tüm 9 locale'e ve blind-test md'lerine eklendi.
 
-**Kalan (Faz 3):** albüm/Activity batch işlemlerinin registry'ye kaydı ve
-`CryptoManagerExportSync`'te `ATOMIC_MOVE` kullanımı.
+**Kalan (Faz 3):** yalnızca albüm/Activity batch işlemlerinin foreground registry'ye kaydı.
+Bu eksikliğin kapsamı, etkisi ve yapılacaklar listesi
+[pending-foreground-registry-registration.md](pending-foreground-registry-registration.md)
+dosyasında ayrıca takip ediliyor.
 
 ### 8.4 Opsiyonel gerçek cihaz testleri (otomasyon yok)
 
