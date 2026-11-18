@@ -2,7 +2,6 @@ package org.fossify.gallery.activities
 
 import android.content.Intent
 import android.os.Bundle
-import org.fossify.commons.activities.FAQActivity
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.isExternalStorageManager
@@ -101,10 +100,8 @@ class AboutActivity : SimpleActivity() {
     }
 
     private fun launchFaqActivity() {
-        startActivity(Intent(this, FAQActivity::class.java).apply {
-            putExtra("app_icon_ids", getAppIconIDs())
-            putExtra("app_launcher_name", getAppLauncherName())
-            putExtra("app_faq", getFaqItems())
+        startActivity(Intent(this, FaqActivity::class.java).apply {
+            putExtra(FaqActivity.EXTRA_APP_FAQ, getFaqItems())
         })
     }
 

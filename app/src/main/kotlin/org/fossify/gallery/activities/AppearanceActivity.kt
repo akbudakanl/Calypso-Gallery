@@ -178,6 +178,12 @@ class AppearanceActivity : SimpleActivity() {
         }
 
         updateTextColors(binding.appearanceHolder)
+        listOf(
+            binding.appearanceThemeSectionLabel,
+            binding.appearanceCustomColorsSectionLabel,
+            binding.appearanceFontSectionLabel,
+            binding.appearanceAlbumIconsSectionLabel,
+        ).forEach { it.setTextColor(palette.primary) }
         isRefreshing = false
     }
 
