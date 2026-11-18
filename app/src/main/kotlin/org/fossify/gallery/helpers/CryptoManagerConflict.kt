@@ -18,6 +18,7 @@ import org.fossify.gallery.helpers.CryptoManager.SmartConflictComparison
 import org.fossify.gallery.helpers.operations.AtomicStaging
 import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationJournal
+import org.fossify.gallery.helpers.operations.TransientOperationWaiter
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerConflict.
@@ -443,14 +444,30 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     fastSampling: Boolean = false,
     operation: OperationContext = OperationContext.NONE
 ): File? {
-    if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) return null
-    val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false) ?: return null
-    if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin, sourceMeta)) return null
-    if (!targetDir.exists() && !targetDir.mkdirs()) return null
+    if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) {
+        OperationJournal.markFailed(operation, "encrypted source missing")
+        return null
+    }
+    val sourceMeta = readMetadata(sourceBin, includeThumbnail = false, cacheResult = false)
+    if (sourceMeta == null) {
+        OperationJournal.markFailed(operation, "could not read encrypted header")
+        return null
+    }
+    if (sourceMeta.isMacAuthenticated && !verifyFileIntegrity(sourceBin, sourceMeta)) {
+        OperationJournal.markFailed(operation, "encrypted source integrity check failed")
+        return null
+    }
+    if (!targetDir.exists() && !targetDir.mkdirs()) {
+        OperationJournal.markFailed(operation, "could not create target folder")
+        return null
+    }
 
     val srcParentCanon = runCatching { sourceBin.parentFile?.canonicalPath }.getOrNull()
     val targetCanon = runCatching { targetDir.canonicalPath }.getOrNull()
-    if (srcParentCanon != null && srcParentCanon == targetCanon) return sourceBin
+    if (srcParentCanon != null && srcParentCanon == targetCanon) {
+        OperationJournal.markSkipped(operation)
+        return sourceBin
+    }
 
     val index = targetIndex ?: TargetEncryptedIndex(targetDir)
 
@@ -468,11 +485,18 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                 )
             ) {
                 applyDuplicateDateToEncryptedFile(context, existingBin, sourceMeta.lastModified)
+                val dupFingerprint = MediaIdentity.computeFingerprint(existingBin)
                 if (isMove && deleteSourceOnIdentical) {
                     runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
                     runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
                     metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
                     sourceBin.delete()
+                    OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
+                    OperationJournal.markSourceDeleted(operation)
+                } else if (!isMove && deleteSourceOnIdentical) {
+                    OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
+                } else {
+                    OperationJournal.markSkipped(operation)
                 }
                 return if (!deleteSourceOnIdentical) null else existingBin
             }
@@ -483,7 +507,10 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     val exactMatches = index.findExactEntries(desiredName)
     if (exactMatches.isNotEmpty()) {
         when (conflictResolution) {
-            CONFLICT_SKIP -> return null
+            CONFLICT_SKIP -> {
+                OperationJournal.markSkipped(operation)
+                return null
+            }
             CONFLICT_OVERWRITE -> {
                 val removed = index.removeExactEntries(desiredName)
                 removed.forEach { existingBin ->
@@ -504,11 +531,18 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     }
 
     val needsRename = desiredName != sourceMeta.originalName
+    if (!isMove || needsRename) {
+        if (!TransientOperationWaiter.awaitDestinationReady(context, operation, targetDir, sourceBin.length())) {
+            OperationJournal.markFailed(operation, "destination unavailable or insufficient space")
+            return null
+        }
+    }
     val staging = AtomicStaging.fileFor(destBin, operation)
     OperationJournal.markInFlight(operation, staging.absolutePath)
     val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
         // Same-filesystem rename is already atomic — no staging involved.
-        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin))
+        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin), destBin.absolutePath)
+        OperationJournal.markSourceDeleted(operation)
         true
     } else {
         try {
@@ -518,22 +552,22 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                         BufferedOutputStream(fos, 256 * 1024).use { bos ->
                             bis.copyTo(bos, 256 * 1024)
                             bos.flush()
+                            fos.fd.sync()
                         }
-                        fos.fd.sync()
                     }
                 }
             }
-            AtomicStaging.commit(staging, destBin)
-            if (!verifyFileIntegrity(destBin)) {
+            AtomicStaging.commit(staging, destBin, alreadyFileSynced = true)
+            if (!verifyFileIntegrity(destBin, sourceMeta)) {
                 throw IOException("Copied container failed read-back verification")
             }
-            OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin))
-            destBin.setLastModified(sourceBin.lastModified())
             if (needsRename && !renameEncryptedFile(destBin, desiredName, skipIntegrityCheck = true, syncParentDir = false)) {
                 destBin.delete()
                 OperationJournal.markFailed(operation, "encrypted rename failed")
                 return null
             }
+            OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin), destBin.absolutePath)
+            destBin.setLastModified(sourceBin.lastModified())
             if (isMove) {
                 sourceBin.delete()
                 OperationJournal.markSourceDeleted(operation)

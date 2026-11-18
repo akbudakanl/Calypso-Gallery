@@ -47,5 +47,6 @@ data class JournalItem(
     val sourceSize: Long = 0L,
     val sourceFingerprint: String = "",
     val resolvedDestName: String = "",
-    val kind: String = ""
+    val kind: String = "",
+    val conflictResolution: String = ""
 )

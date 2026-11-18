@@ -19,6 +19,9 @@ interface PendingOperationsDao {
     @Query("SELECT * FROM pending_operations WHERE operation_id = :operationId ORDER BY item_index ASC")
     fun forOperation(operationId: String): List<PendingOperation>
 
+    @Query("SELECT * FROM pending_operations WHERE operation_id = :operationId AND item_index = :itemIndex LIMIT 1")
+    fun findItem(operationId: String, itemIndex: Int): PendingOperation?
+
     @Query("SELECT DISTINCT operation_id FROM pending_operations ORDER BY created_at ASC")
     fun operationIds(): List<String>
 
@@ -30,6 +33,9 @@ interface PendingOperationsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun upsert(item: PendingOperation)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsertAll(items: List<PendingOperation>)
 
     @Query(
         """UPDATE pending_operations

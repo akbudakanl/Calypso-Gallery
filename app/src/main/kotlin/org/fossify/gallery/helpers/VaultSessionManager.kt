@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 /**
  * Decides WHEN the unlocked vault (master key, decrypted metadata, image caches) is wiped from RAM.
@@ -94,7 +95,7 @@ object VaultSessionManager {
     /** Called when the first activity of the app becomes visible. */
     fun onAppForegrounded(context: Context) {
         handler.removeCallbacksAndMessages(null)
-        if (isInBackground && isExpired()) {
+        if (isInBackground && isExpired() && !ForegroundOperationRegistry.isActive) {
             lockNow(context)
         }
         isInBackground = false
@@ -153,6 +154,16 @@ object VaultSessionManager {
 
     /** Wipes the keys and the decrypted caches from RAM right now. */
     fun lockNow(context: Context) {
+        if (ForegroundOperationRegistry.isActive) {
+            // ADR 0002 §7 & ADR 0003 §2: keep vault keys in RAM while a registered foreground
+            // file operation is running; reschedule the background timeout check.
+            val timeout = timeoutMs()
+            if (timeout > 0) {
+                val appContext = context.applicationContext
+                handler.postDelayed({ lockNow(appContext) }, timeout)
+            }
+            return
+        }
         try {
             val appContext = context.applicationContext
             if (CryptoManager.isVaultUnlocked) {

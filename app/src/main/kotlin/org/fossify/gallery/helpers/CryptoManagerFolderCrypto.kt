@@ -19,6 +19,7 @@ import android.media.MediaScannerConnection
 import org.fossify.gallery.databases.GalleryDatabase
 import org.fossify.gallery.helpers.operations.BatchOperationInfo
 import org.fossify.gallery.helpers.operations.EncryptedSizeInput
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.JournalItem
 import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationFaults
@@ -29,6 +30,13 @@ import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictResolution
 import org.fossify.gallery.helpers.CryptoManager.AlbumCryptoOptions
+
+private data class AlbumTransferItem(
+    val source: File,
+    val dest: File,
+    val isOverwritten: Boolean,
+    val itemIndex: Int
+)
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerFolderCrypto.
@@ -47,6 +55,20 @@ fun CryptoManager.encryptFolder(
     if (unlockedMasterKey == null) {
         return null
     }
+
+    return ForegroundOperationRegistry.withOperation(context, "album-encrypt") {
+        encryptFolderRegistered(context, folder, folderPath, options, operation, onProgress)
+    }
+}
+
+private fun CryptoManager.encryptFolderRegistered(
+    context: Context,
+    folder: File,
+    folderPath: String,
+    options: AlbumCryptoOptions,
+    operation: OperationContext,
+    onProgress: ((current: Int, total: Int) -> Unit)?
+): String? {
 
     val rawFolderName = getDecryptedFolderName(folder) ?: folder.name
     val vaultRoot = findVaultRoot(context) ?: return null
@@ -130,7 +152,8 @@ fun CryptoManager.encryptFolder(
                 destPath = File(subfolder, it.name).absolutePath,
                 sourceSize = it.length(),
                 resolvedDestName = it.name,
-                kind = OperationJournal.KIND_ENCRYPT
+                kind = OperationJournal.KIND_ENCRYPT,
+                conflictResolution = (options.conflictResolutions[it.absolutePath] ?: CONFLICT_KEEP_BOTH).toString()
             )
         }
     )
@@ -152,11 +175,15 @@ fun CryptoManager.encryptFolder(
     val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
     val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder, preExistingBinPaths) else null
     val newlyCreatedBins = ArrayList<File>()
-    val encryptedPairs = ArrayList<Triple<File, File, Boolean>>()
+    val encryptedPairs = ArrayList<AlbumTransferItem>()
     val skippedConflictFiles = ArrayList<File>()
     var failed = false
 
     for ((index, file) in filesToEncrypt.withIndex()) {
+        if (ForegroundOperationRegistry.isCancelled) {
+            failed = true
+            break
+        }
         val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
         val itemOperation = OperationContext(
             operationId = batchOperation.operationId,
@@ -184,7 +211,7 @@ fun CryptoManager.encryptFolder(
         )
         if (enc != null && enc.exists()) {
             val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
-            encryptedPairs.add(Triple(file, enc, isOverwritten))
+            encryptedPairs.add(AlbumTransferItem(file, enc, isOverwritten, index))
             if (enc.absolutePath !in preExistingBinPaths || isOverwritten) {
                 newlyCreatedBins.add(enc)
             }
@@ -209,6 +236,9 @@ fun CryptoManager.encryptFolder(
         } else {
             subfolder.deleteRecursively()
         }
+        if (!operation.isJournalled) {
+            batchOperation.operationId?.let { OperationJournal.clear(it) }
+        }
         return null
     }
 
@@ -220,7 +250,13 @@ fun CryptoManager.encryptFolder(
     val encBaseProgress = (total * 7) / 10
     val wipeWeight = total - encBaseProgress
     for ((index, entry) in encryptedPairs.withIndex()) {
-        val (sourceFile, encFile, isOverwritten) = entry
+        val (sourceFile, encFile, isOverwritten, itemIndex) = entry
+        val itemOperation = OperationContext(
+            operationId = batchOperation.operationId,
+            itemIndex = itemIndex,
+            kind = OperationJournal.KIND_ENCRYPT,
+            batch = batchOperation.batch
+        )
         val isIdenticalPreExisting = !isOverwritten && (encFile.absolutePath in preExistingBinPaths)
         if (!isIdenticalPreExisting || options.deleteIdenticalSource) {
             val sourcePath = sourceFile.absolutePath
@@ -239,10 +275,12 @@ fun CryptoManager.encryptFolder(
             if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = false, purgeTraces = false)) {
                 wipedPaths.add(sourcePath)
                 wipedFileNames.add(sourceFile.name)
+                OperationJournal.markSourceDeleted(itemOperation)
             }
         } else {
             options.deferredSkippedSourceCollector?.add(sourceFile)
             options.deferredIdenticalTargetMap?.put(sourceFile.absolutePath, encFile)
+            OperationJournal.markSkipped(itemOperation)
         }
         val wipeProgress = if (encryptedPairs.isNotEmpty()) {
             encBaseProgress + ((index + 1) * wipeWeight) / encryptedPairs.size
@@ -449,6 +487,21 @@ fun CryptoManager.decryptFolder(
     if (!folder.exists() || !folder.isDirectory) return folderPath
     if (!isVaultUnlocked) return folderPath
 
+    return ForegroundOperationRegistry.withOperation(context, "album-decrypt") {
+        decryptFolderRegistered(context, folder, folderPath, targetFolderOverride, options, operation, onProgress)
+    }
+}
+
+private fun CryptoManager.decryptFolderRegistered(
+    context: Context,
+    folder: File,
+    folderPath: String,
+    targetFolderOverride: File?,
+    options: AlbumCryptoOptions,
+    operation: OperationContext,
+    onProgress: ((current: Int, total: Int) -> Unit)?
+): String? {
+
     val hadNoMedia = File(folder, NOMEDIA).exists()
     val initialTarget = resolveDecryptTargetFolder(context, folder, targetFolderOverride)
     val targetFolder = if (initialTarget.exists() && initialTarget.isDirectory && options.resolution == AlbumConflictResolution.RENAME) {
@@ -504,7 +557,8 @@ fun CryptoManager.decryptFolder(
                 destPath = File(targetFolder, it.name).absolutePath,
                 sourceSize = it.length(),
                 resolvedDestName = it.name,
-                kind = OperationJournal.KIND_DECRYPT
+                kind = OperationJournal.KIND_DECRYPT,
+                conflictResolution = (options.conflictResolutions[it.absolutePath] ?: CONFLICT_KEEP_BOTH).toString()
             )
         }
     )
@@ -512,11 +566,15 @@ fun CryptoManager.decryptFolder(
     val preExistingPlainPaths = targetFolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
     val targetPlainIndex = TargetPlainIndex(targetFolder, preExistingPlainPaths)
     val newlyCreatedPlainFiles = ArrayList<File>()
-    val decryptedPairs = ArrayList<Triple<File, File, Boolean>>()
+    val decryptedPairs = ArrayList<AlbumTransferItem>()
     val skippedConflictFiles = ArrayList<File>()
     var failed = false
 
     for ((index, file) in filesToDecrypt.withIndex()) {
+        if (ForegroundOperationRegistry.isCancelled) {
+            failed = true
+            break
+        }
         val fileResolution = options.conflictResolutions[file.absolutePath] ?: CONFLICT_KEEP_BOTH
         val itemOperation = OperationContext(
             operationId = batchOperation.operationId,
@@ -543,7 +601,7 @@ fun CryptoManager.decryptFolder(
         )
         if (decrypted != null && decrypted.exists()) {
             val isOverwritten = (fileResolution == CONFLICT_OVERWRITE)
-            decryptedPairs.add(Triple(file, decrypted, isOverwritten))
+            decryptedPairs.add(AlbumTransferItem(file, decrypted, isOverwritten, index))
             if (decrypted.absolutePath !in preExistingPlainPaths) {
                 newlyCreatedPlainFiles.add(decrypted)
             }
@@ -566,17 +624,27 @@ fun CryptoManager.decryptFolder(
         if (!targetExistedBefore && targetFolder.listFiles().isNullOrEmpty()) {
             try { targetFolder.deleteRecursively() } catch (_: Exception) {}
         }
+        if (!operation.isJournalled) {
+            batchOperation.operationId?.let { OperationJournal.clear(it) }
+        }
         return null
     }
 
     // ALL FILES DECRYPTED! Now delete encrypted files:
     val touchedAlbumIds = LinkedHashSet<Long>()
     var favoritesChanged = false
-    for ((encFile, decryptedFile, isOverwritten) in decryptedPairs) {
+    for ((encFile, decryptedFile, isOverwritten, itemIndex) in decryptedPairs) {
+        val itemOperation = OperationContext(
+            operationId = batchOperation.operationId,
+            itemIndex = itemIndex,
+            kind = OperationJournal.KIND_DECRYPT,
+            batch = batchOperation.batch
+        )
         val isIdenticalPreExisting = !isOverwritten && (decryptedFile.absolutePath in preExistingPlainPaths)
         if (isIdenticalPreExisting && !options.deleteIdenticalSource) {
             options.deferredSkippedSourceCollector?.add(encFile)
             options.deferredIdenticalTargetMap?.put(encFile.absolutePath, decryptedFile)
+            OperationJournal.markSkipped(itemOperation)
             continue
         }
         val encPath = encFile.absolutePath
@@ -592,7 +660,9 @@ fun CryptoManager.decryptFolder(
         }
         metadataCache.remove(encPath)?.fileKey?.fill(0)
         runCatching { context.mediaDB.deleteMediumPath(encPath) }
-        encFile.delete()
+        if (encFile.delete()) {
+            OperationJournal.markSourceDeleted(itemOperation)
+        }
     }
     for (albumId in touchedAlbumIds) {
         runCatching { VirtualAlbumSyncManager.saveAlbumToFile(context, albumId) }

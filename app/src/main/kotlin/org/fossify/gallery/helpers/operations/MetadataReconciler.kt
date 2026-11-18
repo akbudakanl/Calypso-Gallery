@@ -69,11 +69,18 @@ object MetadataReconciler {
                 touchedOperations.add(item.operationId)
             }
 
+        val activeOperationIds = OperationJournal.operationIds().toHashSet()
+        val prunedCount = done.count { key -> key.substringBefore(':') !in activeOperationIds }
+        if (prunedCount > 0) {
+            done.removeAll { key -> key.substringBefore(':') !in activeOperationIds }
+        }
         operations = touchedOperations.size
-        if (items > 0) {
+        if (items > 0 || prunedCount > 0) {
             prefs.edit().putStringSet(KEY_DONE, done).apply()
             // Favorites JSON may have been rewritten by updateDBMediaPath.
-            runCatching { ReferenceBackupManager.saveFavorites(context) }
+            if (items > 0) {
+                runCatching { ReferenceBackupManager.saveFavorites(context) }
+            }
         }
         return Result(operations, items)
     }

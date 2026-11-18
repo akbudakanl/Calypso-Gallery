@@ -134,6 +134,7 @@ import org.fossify.gallery.helpers.VIDEO_PLAYER_SYSTEM
 import org.fossify.gallery.helpers.VaultPullGestureHandler
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.VaultViewPolicy
+import org.fossify.gallery.helpers.operations.OperationRecovery
 import org.fossify.gallery.interfaces.MediaOperationsListener
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
@@ -374,6 +375,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     finish()
                 }
             }
+        }
+        if (CryptoManager.isVaultUnlocked) {
+            OperationRecovery.maybePromptResume(this)
         }
     }
 
