@@ -23,4 +23,7 @@ object OperationFaults {
         if (expectedOp != null && expectedOp != ctx.operationId) return false
         return itemIndex == targetIndex
     }
+
+    fun isSimulatedAbort(error: Throwable): Boolean =
+        BuildConfig.DEBUG && error.message?.startsWith("Fault injection: simulated process death") == true
 }

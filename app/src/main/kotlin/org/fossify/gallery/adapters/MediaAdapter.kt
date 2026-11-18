@@ -147,6 +147,12 @@ import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultMediaPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.operations.BatchOperationInfo
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.operations.JournalItem
+import org.fossify.gallery.helpers.operations.OperationContext
+import org.fossify.gallery.helpers.operations.OperationFaults
+import org.fossify.gallery.helpers.operations.OperationJournal
 
 class MediaAdapter(
     activity: BaseSimpleActivity,
@@ -754,6 +760,16 @@ class MediaAdapter(
                     progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
+                        val acquired = ForegroundOperationRegistry.acquire(activity, "crypto-decrypt")
+                        if (!acquired) {
+                            activity.runOnUiThread {
+                                try { progressDialog.dismiss() } catch (_: Exception) {}
+                                activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                VaultSessionManager.lockVaultIfOutsideSession(activity)
+                            }
+                            return@ensureBackgroundThread
+                        }
+                        try {
                         var processedCount = 0
                         var skippedCount = 0
                         var allSuccess = true
@@ -761,9 +777,53 @@ class MediaAdapter(
                         val identicalTargetMap = HashMap<String, File>()
                         val targetIndexes = HashMap<String, CryptoManager.TargetPlainIndex>(scan.plainIndexes)
 
+                        val encDecryptMedia = selectedMedia.filter { CryptoManager.isEncryptedFile(it.name) }
+                        val batchOp = if (encDecryptMedia.isNotEmpty()) {
+                            OperationContext(
+                                operationId = OperationJournal.newOperationId(),
+                                kind = OperationJournal.KIND_DECRYPT,
+                                batch = BatchOperationInfo(
+                                    sourceRoot = encDecryptMedia.first().parentPath,
+                                    destRoot = resolveTargetDir(File(encDecryptMedia.first().path), encDecryptMedia.first().parentPath).absolutePath,
+                                    isMove = true,
+                                    wipeSource = false,
+                                    deleteSource = true
+                                )
+                            ).also { op ->
+                                OperationJournal.beginBatch(
+                                    op,
+                                    encDecryptMedia.map { medium ->
+                                        val srcFile = File(medium.path)
+                                        val tDir = resolveTargetDir(srcFile, medium.parentPath)
+                                        JournalItem(
+                                            sourcePath = medium.path,
+                                            destPath = File(tDir, medium.name).absolutePath,
+                                            sourceSize = medium.size,
+                                            resolvedDestName = medium.name,
+                                            kind = OperationJournal.KIND_DECRYPT,
+                                            conflictResolution = (scan.resolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH).toString()
+                                        )
+                                    }
+                                )
+                            }
+                        } else {
+                            OperationContext.NONE
+                        }
+                        val encIndexByPath = encDecryptMedia.mapIndexed { idx, m -> m.path to idx }.toMap()
+
                         for (medium in selectedMedia) {
+                            if (ForegroundOperationRegistry.isCancelled) {
+                                allSuccess = false
+                                break
+                            }
                             val encFile = File(medium.path)
-                            if (!encFile.exists()) continue
+                            val itemOp = encIndexByPath[medium.path]?.let { idx ->
+                                OperationContext(batchOp.operationId, idx, OperationJournal.KIND_DECRYPT, batchOp.batch)
+                            } ?: OperationContext.NONE
+                            if (!encFile.exists()) {
+                                OperationJournal.markFailed(itemOp, "source missing")
+                                continue
+                            }
 
                             val targetDir = resolveTargetDir(encFile, medium.parentPath).apply { if (!exists()) mkdirs() }
                             val execPlainIndex = targetIndexes.getOrPut(targetDir.absolutePath) {
@@ -772,6 +832,7 @@ class MediaAdapter(
                             val resolution = scan.resolutions[encFile.absolutePath] ?: CONFLICT_KEEP_BOTH
 
                             if (resolution == CONFLICT_SKIP) {
+                                OperationJournal.markSkipped(itemOp)
                                 skippedCount++
                                 skippedSourceFiles.add(encFile)
                             } else {
@@ -791,6 +852,7 @@ class MediaAdapter(
                                     precheckedNonIdenticalPaths = scan.nonIdenticalPaths
                                 )
                                 if (identicalTarget != null) {
+                                    OperationJournal.markSkipped(itemOp)
                                     skippedCount++
                                     skippedSourceFiles.add(encFile)
                                     identicalTargetMap[encFile.absolutePath] = identicalTarget
@@ -804,7 +866,8 @@ class MediaAdapter(
                                             conflictResolution = resolution,
                                             targetIndex = execPlainIndex,
                                             skipDuplicateCheck = true,
-                                            deleteSourceOnIdentical = false
+                                            deleteSourceOnIdentical = false,
+                                            operation = itemOp
                                         )
                                     } else if (desiredHiddenName != null) {
                                         val exactTarget = execPlainIndex.findExact(desiredHiddenName) ?: File(targetDir, desiredHiddenName)
@@ -845,6 +908,7 @@ class MediaAdapter(
                             }
                         }
 
+                        batchOp.operationId?.let { OperationJournal.clear(it) }
                         CryptoManager.clearAppImageCaches(activity)
 
                         activity.runOnUiThread {
@@ -868,6 +932,9 @@ class MediaAdapter(
                                 finishActMode()
                                 listener?.refreshItems()
                             }
+                        }
+                        } finally {
+                            ForegroundOperationRegistry.release(activity, "crypto-decrypt")
                         }
                     }
                 }
@@ -942,18 +1009,64 @@ class MediaAdapter(
                     progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
+                        val acquired = ForegroundOperationRegistry.acquire(activity, "crypto-encrypt")
+                        if (!acquired) {
+                            activity.runOnUiThread {
+                                try { progressDialog.dismiss() } catch (_: Exception) {}
+                                activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                VaultSessionManager.lockVaultIfOutsideSession(activity)
+                            }
+                            return@ensureBackgroundThread
+                        }
+                        try {
                         val execEncIndex = precheckedEncIndex ?: CryptoManager.TargetEncryptedIndex(targetDir)
                         var processedCount = 0
                         var skippedCount = 0
                         var allSuccess = true
                         val skippedSourceFiles = ArrayList<File>()
                         val identicalTargetMap = HashMap<String, File>()
-                        for (medium in selectedMedia) {
+
+                        val batchOp = OperationContext(
+                            operationId = OperationJournal.newOperationId(),
+                            kind = OperationJournal.KIND_ENCRYPT,
+                            batch = BatchOperationInfo(
+                                sourceRoot = selectedMedia.firstOrNull()?.parentPath ?: "",
+                                destRoot = targetDir.absolutePath,
+                                isMove = true,
+                                wipeSource = true,
+                                deleteSource = true
+                            )
+                        )
+                        OperationJournal.beginBatch(
+                            batchOp,
+                            selectedMedia.map { medium ->
+                                val srcFile = File(medium.path)
+                                JournalItem(
+                                    sourcePath = medium.path,
+                                    destPath = File(targetDir, medium.name).absolutePath,
+                                    sourceSize = medium.size,
+                                    resolvedDestName = medium.name,
+                                    kind = OperationJournal.KIND_ENCRYPT,
+                                    conflictResolution = (conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH).toString()
+                                )
+                            }
+                        )
+
+                        for ((index, medium) in selectedMedia.withIndex()) {
+                            if (ForegroundOperationRegistry.isCancelled) {
+                                allSuccess = false
+                                break
+                            }
                             val srcFile = File(medium.path)
-                            if (!srcFile.exists()) continue
+                            val itemOp = OperationContext(batchOp.operationId, index, OperationJournal.KIND_ENCRYPT, batchOp.batch)
+                            if (!srcFile.exists()) {
+                                OperationJournal.markFailed(itemOp, "source missing")
+                                continue
+                            }
 
                             val resolution = conflictResolutions[srcFile.absolutePath] ?: CONFLICT_KEEP_BOTH
                             if (resolution == CONFLICT_SKIP) {
+                                OperationJournal.markSkipped(itemOp)
                                 skippedCount++
                                 skippedSourceFiles.add(srcFile)
                             } else {
@@ -967,6 +1080,7 @@ class MediaAdapter(
                                     precheckedNonIdenticalPaths = precheckedNonIdenticalPaths
                                 )
                                 if (identicalTarget != null) {
+                                    OperationJournal.markSkipped(itemOp)
                                     skippedCount++
                                     skippedSourceFiles.add(srcFile)
                                     identicalTargetMap[srcFile.absolutePath] = identicalTarget
@@ -980,7 +1094,8 @@ class MediaAdapter(
                                         conflictResolution = resolution,
                                         targetIndex = execEncIndex,
                                         skipDuplicateCheck = true,
-                                        deleteSourceOnIdentical = false
+                                        deleteSourceOnIdentical = false,
+                                        operation = itemOp
                                     )
 
                                     if (encFile != null && encFile.exists() && encFile.length() > 0L) {
@@ -996,6 +1111,7 @@ class MediaAdapter(
                             }
                         }
 
+                        batchOp.operationId?.let { OperationJournal.clear(it) }
                         CryptoManager.clearAppImageCaches(activity)
 
                         activity.runOnUiThread {
@@ -1024,6 +1140,9 @@ class MediaAdapter(
                                 finishActMode()
                                 listener?.refreshItems()
                             }
+                        }
+                        } finally {
+                            ForegroundOperationRegistry.release(activity, "crypto-encrypt")
                         }
                     }
                 }

@@ -42,7 +42,11 @@ object SpaceConfirmation {
      */
     fun confirmBlocking(context: Context, probe: SpaceProbe, estimate: SpaceEstimate): Boolean {
         if (probe.verifiable) return true
-        if (Looper.myLooper() == Looper.getMainLooper()) return false
+        val isMainThread = runCatching { Looper.myLooper() == Looper.getMainLooper() }.getOrElse {
+            // Pure JVM unit tests stub Looper with RuntimeException("Method ... not mocked").
+            return true
+        }
+        if (isMainThread) return false
 
         val latch = CountDownLatch(1)
         var approved = false

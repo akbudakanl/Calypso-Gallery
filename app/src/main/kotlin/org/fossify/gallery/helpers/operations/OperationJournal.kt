@@ -1,8 +1,10 @@
 package org.fossify.gallery.helpers.operations
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.google.gson.Gson
 import org.fossify.gallery.databases.PendingOperationsDatabase
+import org.fossify.gallery.interfaces.PendingOperationsDao
 import org.fossify.gallery.models.PendingOperation
 
 /**
@@ -35,12 +37,20 @@ object OperationJournal {
     @Volatile
     private var appContext: Context? = null
 
+    @Volatile
+    private var daoOverride: PendingOperationsDao? = null
+
     fun init(context: Context) {
         appContext = context.applicationContext
     }
 
+    @VisibleForTesting
+    fun initForTest(dao: PendingOperationsDao?) {
+        daoOverride = dao
+    }
+
     private val dao
-        get() = appContext?.let { PendingOperationsDatabase.getInstance(it).pendingOperationsDao() }
+        get() = daoOverride ?: appContext?.let { PendingOperationsDatabase.getInstance(it).pendingOperationsDao() }
 
     private fun update(
         ctx: OperationContext,
@@ -48,7 +58,7 @@ object OperationJournal {
     ) {
         val operationId = ctx.operationId ?: return
         val current = dao ?: return
-        val existing = current.forOperation(operationId).firstOrNull { it.itemIndex == ctx.itemIndex }
+        val existing = current.findItem(operationId, ctx.itemIndex)
             ?: PendingOperation(
                 operationId = operationId,
                 itemIndex = ctx.itemIndex,
@@ -62,33 +72,40 @@ object OperationJournal {
         runCatching { current.upsert(existing) }
     }
 
-    /** Inserts all PENDING rows of a batch. Call before the first byte is written. */
+    /** Inserts all PENDING rows of a batch in one transaction. Call before the first byte is written. */
     fun beginBatch(ctx: OperationContext, items: List<JournalItem>) {
         val operationId = ctx.operationId ?: return
+        if (items.isEmpty()) return
         val current = dao ?: return
         val now = System.currentTimeMillis()
-        items.forEachIndexed { index, item ->
-            current.upsert(
-                PendingOperation(
-                    operationId = operationId,
-                    itemIndex = if (ctx.itemIndex >= 0) ctx.itemIndex + index else index,
-                    kind = item.kind.ifEmpty { ctx.kind },
-                    createdAt = now,
-                    updatedAt = now,
-                    sourcePath = item.sourcePath,
-                    destPath = item.destPath,
-                    sourceSize = item.sourceSize,
-                    sourceFingerprint = item.sourceFingerprint,
-                    resolvedDestName = item.resolvedDestName,
-                    batchConflictResolution = ctx.batch?.conflictResolution ?: "",
-                    albumConflictResolution = ctx.batch?.albumConflictResolution ?: "",
-                    batchPayload = ctx.batch?.let { gson.toJson(it) } ?: "",
-                    estimatedRequiredBytes = ctx.batch?.estimatedRequiredBytes ?: 0L,
-                    peakBytes = ctx.batch?.peakBytes ?: 0L,
-                    state = STATE_PENDING
-                )
+        val startIndex = if (ctx.itemIndex >= 0) ctx.itemIndex else 0
+        val batchJson = ctx.batch?.let { gson.toJson(it) } ?: ""
+        val defaultConflict = ctx.batch?.conflictResolution ?: ""
+        val albumConflict = ctx.batch?.albumConflictResolution ?: ""
+        val estimatedBytes = ctx.batch?.estimatedRequiredBytes ?: 0L
+        val peakBytes = ctx.batch?.peakBytes ?: 0L
+
+        val rows = items.mapIndexed { index, item ->
+            PendingOperation(
+                operationId = operationId,
+                itemIndex = startIndex + index,
+                kind = item.kind.ifEmpty { ctx.kind },
+                createdAt = now,
+                updatedAt = now,
+                sourcePath = item.sourcePath,
+                destPath = item.destPath,
+                sourceSize = item.sourceSize,
+                sourceFingerprint = item.sourceFingerprint,
+                resolvedDestName = item.resolvedDestName,
+                batchConflictResolution = item.conflictResolution.ifEmpty { defaultConflict },
+                albumConflictResolution = albumConflict,
+                batchPayload = batchJson,
+                estimatedRequiredBytes = estimatedBytes,
+                peakBytes = peakBytes,
+                state = STATE_PENDING
             )
         }
+        runCatching { current.upsertAll(rows) }
     }
 
     fun markInFlight(ctx: OperationContext, stagingPath: String) = update(ctx) {
@@ -103,9 +120,16 @@ object OperationJournal {
     }
 
     /** Only reachable after the atomic commit and a successful read-back verification. */
-    fun markVerified(ctx: OperationContext, destFingerprint: String) = update(ctx) {
+    fun markVerified(
+        ctx: OperationContext,
+        destFingerprint: String,
+        actualDestPath: String = ""
+    ) = update(ctx) {
         it.state = STATE_VERIFIED
         it.destFingerprint = destFingerprint
+        if (actualDestPath.isNotEmpty()) {
+            it.destPath = actualDestPath
+        }
         it.stagingPath = ""
     }
 
@@ -139,17 +163,45 @@ object OperationJournal {
         it.message = ""
     }
 
+    fun decodeBatch(payload: String): BatchOperationInfo? =
+        if (payload.isBlank()) null
+        else runCatching { gson.fromJson(payload, BatchOperationInfo::class.java) }.getOrNull()
+
+    fun requiresSourceDeletion(item: PendingOperation, batch: BatchOperationInfo?): Boolean = when (item.kind) {
+        KIND_MOVE -> true
+        KIND_ENCRYPT -> batch?.wipeSource ?: true
+        KIND_DECRYPT -> batch?.deleteSource ?: true
+        else -> batch?.isMove == true
+    }
+
+    fun needsResume(item: PendingOperation, batch: BatchOperationInfo?): Boolean = when (item.state) {
+        STATE_PENDING,
+        STATE_IN_FLIGHT,
+        STATE_COPIED_UNVERIFIED,
+        STATE_WAITING_FOR_SPACE -> true
+        STATE_VERIFIED -> requiresSourceDeletion(item, batch)
+        else -> false
+    }
+
     fun allItems(): List<PendingOperation> = dao?.all() ?: emptyList()
 
     fun activeItems(): List<PendingOperation> = dao?.activeItems() ?: emptyList()
 
-    fun resumableItems(): List<PendingOperation> = dao?.resumableItems() ?: emptyList()
+    fun resumableItems(): List<PendingOperation> {
+        val raw = dao?.resumableItems() ?: return emptyList()
+        if (raw.isEmpty()) return emptyList()
+        val batchCache = HashMap<String, BatchOperationInfo?>()
+        return raw.filter { item ->
+            val batch = batchCache.getOrPut(item.operationId) { decodeBatch(item.batchPayload) }
+            needsResume(item, batch)
+        }
+    }
 
     fun itemsFor(operationId: String): List<PendingOperation> = dao?.forOperation(operationId) ?: emptyList()
 
     fun operationIds(): List<String> = dao?.operationIds() ?: emptyList()
 
     fun clear(operationId: String) {
-        dao?.deleteOperation(operationId)
+        runCatching { dao?.deleteOperation(operationId) }
     }
 }

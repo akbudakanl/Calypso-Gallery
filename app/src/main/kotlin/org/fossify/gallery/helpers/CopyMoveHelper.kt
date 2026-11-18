@@ -48,7 +48,9 @@ import org.fossify.gallery.helpers.operations.OperationFaults
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.SpaceEstimator
 import org.fossify.gallery.helpers.operations.SpaceConfirmation
+import org.fossify.gallery.helpers.operations.TransientOperationWaiter
 import java.io.IOException
+import java.security.MessageDigest
 import org.fossify.gallery.extensions.StandardConflictItem
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
@@ -61,7 +63,7 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
 
-private const val COPY_BUFFER_SIZE = 64 * 1024
+private const val COPY_BUFFER_SIZE = 256 * 1024
 private const val BYTES_PER_KB = 1000L
 private const val UI_PROGRESS_UPDATE_INTERVAL_MS = 100L
 
@@ -662,24 +664,40 @@ private class CopyMoveRunner(
                 deleteSource = !config.isCopyOperation
             )
         )
-        nextItemIndex = 0
+        val destDir = File(config.destination)
+        nextItemIndex = items.size
         OperationJournal.beginBatch(
             operation,
             items.map {
+                val targetPath = File(destDir, it.name).absolutePath
+                val resolution = config.conflictResolutions[targetPath] ?: CONFLICT_KEEP_BOTH
                 JournalItem(
                     sourcePath = it.path,
-                    destPath = File(config.destination, it.name).absolutePath,
+                    destPath = targetPath,
                     sourceSize = it.size,
                     resolvedDestName = it.name,
-                    kind = operation.kind
+                    kind = operation.kind,
+                    conflictResolution = resolution.toString()
                 )
             }
         )
 
         val succeeded = try {
-            for (item in items) {
+            for ((index, item) in items.withIndex()) {
+                if (ForegroundOperationRegistry.isCancelled) {
+                    operation.operationId?.let { OperationJournal.clear(it) }
+                    return CopyMoveResult(
+                        succeeded = false,
+                        transferredCount = transferredFiles.size,
+                        expectedCount = expectedCount,
+                        skippedConflictCount = skippedConflictCount,
+                        itemsToDeleteSdk30 = itemsToDeleteSdk30
+                    )
+                }
+                val itemCtx = OperationContext(operation.operationId, index, operation.kind, operation.batch)
                 when (val outcome = resolveTopLevelDestination(item)) {
                     TopLevelResolution.SkippedConflict -> {
+                        OperationJournal.markSkipped(itemCtx)
                         expectedCount--
                         skippedConflictCount++
                         processedItems++
@@ -687,7 +705,7 @@ private class CopyMoveRunner(
                     }
                     is TopLevelResolution.Proceed -> {
                         publishProgress(forceUi = true, filename = item.name)
-                        transferTopLevelItem(item, outcome.destItem)
+                        transferTopLevelItem(item, outcome.destItem, topLevelIndex = index)
                         processedItems++
                         publishProgress(forceUi = true, filename = item.name)
                         if (OperationFaults.abortAfterItem(operation, processedItems - 1)) {
@@ -714,6 +732,9 @@ private class CopyMoveRunner(
             operation.operationId?.let { OperationJournal.clear(it) }
             true
         } catch (e: Exception) {
+            if (OperationFaults.isSimulatedAbort(e)) {
+                throw e
+            }
             activity.showErrorToast(e)
             false
         }
@@ -785,7 +806,7 @@ private class CopyMoveRunner(
         return TopLevelResolution.Proceed(destItem)
     }
 
-    private fun transferTopLevelItem(source: FileDirItem, dest: FileDirItem) {
+    private fun transferTopLevelItem(source: FileDirItem, dest: FileDirItem, topLevelIndex: Int) {
         if (!config.useStreamCopy && !source.isDirectory) {
             val srcFile = File(source.path)
             val dstFile = File(dest.path)
@@ -801,30 +822,42 @@ private class CopyMoveRunner(
                 activity.deleteFromMediaStore(source.path)
                 transferredFiles.add(source)
                 transferredBytes += source.size
+                val itemCtx = OperationContext(operation.operationId, topLevelIndex, operation.kind, operation.batch)
+                OperationJournal.markVerified(itemCtx, "", dstFile.absolutePath)
+                if (!config.isCopyOperation) {
+                    OperationJournal.markSourceDeleted(itemCtx)
+                }
                 return
             }
         }
-        copy(source, dest)
+        copy(source, dest, topLevelIndex = topLevelIndex)
     }
 
-    private fun copy(source: FileDirItem, dest: FileDirItem) {
+    private fun copy(source: FileDirItem, dest: FileDirItem, topLevelIndex: Int? = null) {
         if (source.isDirectory) {
-            copyDirectory(source, dest.path)
+            copyDirectory(source, dest.path, topLevelIndex = topLevelIndex)
         } else {
-            copyFile(source, dest)
+            copyFile(source, dest, topLevelIndex = topLevelIndex)
         }
     }
 
-    private fun copyDirectory(source: FileDirItem, destPath: String) {
+    private fun copyDirectory(source: FileDirItem, destPath: String, topLevelIndex: Int? = null) {
+        val dirCtx = topLevelIndex?.let {
+            OperationContext(operation.operationId, it, operation.kind, operation.batch)
+        }
         if (!activity.createDirectorySync(destPath)) {
             val msg = activity.getString(org.fossify.commons.R.string.could_not_create_folder)
             activity.showErrorToast(String.format(msg, destPath))
+            dirCtx?.let { OperationJournal.markFailed(it, "could not create folder") }
             return
         }
 
         when {
             activity.isPathOnOTG(source.path) -> {
-                val children = activity.getDocumentFile(source.path)?.listFiles() ?: return
+                val children = activity.getDocumentFile(source.path)?.listFiles() ?: run {
+                    dirCtx?.let { OperationJournal.markSkipped(it) }
+                    return
+                }
                 copyDocumentChildren(source, destPath, children)
             }
             activity.isRestrictedSAFOnlyRoot(source.path) -> {
@@ -833,12 +866,24 @@ private class CopyMoveRunner(
                 }
             }
             activity.isAccessibleWithSAFSdk30(source.path) -> {
-                val children = activity.getDocumentSdk30(source.path)?.listFiles() ?: return
+                val children = activity.getDocumentSdk30(source.path)?.listFiles() ?: run {
+                    dirCtx?.let { OperationJournal.markSkipped(it) }
+                    return
+                }
                 copyDocumentChildren(source, destPath, children)
             }
             else -> {
-                val childNames = File(source.path).list() ?: return
+                val childNames = File(source.path).list() ?: run {
+                    dirCtx?.let { OperationJournal.markSkipped(it) }
+                    return
+                }
                 copyLocalChildren(source, destPath, childNames)
+            }
+        }
+        dirCtx?.let {
+            OperationJournal.markVerified(it, "", destPath)
+            if (!config.isCopyOperation && !File(source.path).exists()) {
+                OperationJournal.markSourceDeleted(it)
             }
         }
     }
@@ -939,8 +984,17 @@ private class CopyMoveRunner(
         }
     }
 
-    private fun copyFile(source: FileDirItem, dest: FileDirItem) {
+    private fun copyFile(source: FileDirItem, dest: FileDirItem, topLevelIndex: Int? = null) {
+        val itemIndex = topLevelIndex ?: nextItemIndex++
+        val itemContext = OperationContext(
+            operationId = operation.operationId,
+            itemIndex = itemIndex,
+            kind = operation.kind,
+            batch = operation.batch
+        )
+
         if (config.copyMediaOnly && !source.path.isMediaFile()) {
+            OperationJournal.markSkipped(itemContext)
             transferredBytes += source.size
             return
         }
@@ -949,6 +1003,7 @@ private class CopyMoveRunner(
         if (!activity.createDirectorySync(destParent)) {
             val msg = activity.getString(org.fossify.commons.R.string.could_not_create_folder)
             activity.showErrorToast(String.format(msg, destParent))
+            OperationJournal.markFailed(itemContext, "could not create folder")
             transferredBytes += source.size
             return
         }
@@ -969,14 +1024,20 @@ private class CopyMoveRunner(
             documents[destParent] = activity.getDocumentFile(destParent)
         }
 
-        val itemContext = OperationContext(
-            operationId = operation.operationId,
-            itemIndex = nextItemIndex++,
-            kind = operation.kind,
-            batch = operation.batch
-        )
         // Direct File targets use a File sibling; SAF targets use a sibling DocumentFile.
         val destDocument = documents[destParent]
+        if (destDocument == null) {
+            val ready = TransientOperationWaiter.awaitDestinationReady(
+                context = activity,
+                ctx = itemContext,
+                destDir = File(destParent),
+                requiredBytes = source.size
+            )
+            if (!ready) {
+                return
+            }
+        }
+
         val fileStaging = if (destDocument == null) {
             AtomicStaging.fileFor(File(dest.path), itemContext)
         } else {
@@ -997,12 +1058,16 @@ private class CopyMoveRunner(
             itemContext,
             fileStaging?.absolutePath ?: safStaging?.uri?.toString().orEmpty()
         )
-        val sourceFingerprint = if (safStaging != null) {
-            runCatching {
-                activity.getFileInputStreamSync(source.path)?.use { AtomicStaging.streamFingerprint(it) } ?: ""
-            }.getOrDefault("")
+        // Compute SAF source SHA-256 inline during the copy loop so we read the source stream once.
+        val safSourceDigest = if (safStaging != null) {
+            runCatching { MessageDigest.getInstance("SHA-256") }.getOrNull()
         } else {
+            null
+        }
+        val precomputedDirectFingerprint = if (safStaging == null) {
             MediaIdentity.computeFingerprint(sourceFile)
+        } else {
+            ""
         }
 
         var inputStream: InputStream? = null
@@ -1016,7 +1081,9 @@ private class CopyMoveRunner(
                 else -> activity.getFileOutputStreamSync(dest.path, source.path.getMimeType(), destDocument)
             }
             inputStream = activity.getFileInputStreamSync(source.path)
-            val bytesCopied = streamCopy(inputStream, outputStream, source.name)
+            val bytesCopied = streamCopy(inputStream, outputStream, source.name, safSourceDigest)
+            val sourceFingerprint = safSourceDigest?.digest()?.joinToString("") { "%02x".format(it) }
+                ?: precomputedDirectFingerprint
 
             val landed = when {
                 fileStaging != null -> fileStaging.exists() && fileStaging.length() == source.size
@@ -1041,11 +1108,13 @@ private class CopyMoveRunner(
                     MediaIdentity.computeFingerprint(File(dest.path))
                 }
                 if (sourceFingerprint.isEmpty() || destFingerprint == sourceFingerprint) {
-                    OperationJournal.markVerified(itemContext, destFingerprint)
+                    OperationJournal.markVerified(itemContext, destFingerprint, dest.path)
                     transferSuccess = true
                 } else {
                     OperationJournal.markFailed(itemContext, "copied fingerprint mismatch")
                 }
+            } else {
+                OperationJournal.markFailed(itemContext, "incomplete copy")
             }
         } catch (e: Exception) {
             activity.showErrorToast(e)
@@ -1085,7 +1154,8 @@ private class CopyMoveRunner(
     private fun streamCopy(
         inputStream: InputStream?,
         outputStream: OutputStream?,
-        filename: String
+        filename: String,
+        digest: MessageDigest? = null
     ): Long {
         if (inputStream == null || outputStream == null) {
             return 0L
@@ -1095,6 +1165,7 @@ private class CopyMoveRunner(
         var bytesRead = inputStream.read(buffer)
         while (bytesRead >= 0) {
             outputStream.write(buffer, 0, bytesRead)
+            digest?.update(buffer, 0, bytesRead)
             bytesCopied += bytesRead
             transferredBytes += bytesRead
             publishProgress(forceUi = false, filename = filename)

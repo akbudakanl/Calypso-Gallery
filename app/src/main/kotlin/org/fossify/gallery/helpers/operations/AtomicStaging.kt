@@ -34,9 +34,10 @@ object AtomicStaging {
     }
 
     /** Flush the staged bytes and commit them under the final name. */
-    fun commit(staging: File, target: File) {
-        RandomAccessFile(staging, "rw").use { it.fd.sync() }
-        CryptoManager.syncDir(staging.parentFile)
+    fun commit(staging: File, target: File, alreadyFileSynced: Boolean = false) {
+        if (!alreadyFileSynced) {
+            RandomAccessFile(staging, "rw").use { it.fd.sync() }
+        }
         Files.move(staging.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE)
         CryptoManager.syncDir(target.parentFile)
     }

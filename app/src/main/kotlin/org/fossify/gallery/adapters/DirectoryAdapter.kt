@@ -124,6 +124,8 @@ import org.fossify.gallery.helpers.AlbumTypeIconPolicy
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.operations.OperationFaults
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.HiddenFoldersPolicy
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -716,6 +718,16 @@ class DirectoryAdapter(
                     progressDialog.ensureNotificationStarted(notificationsAllowed)
 
                     ensureBackgroundThread {
+                        val acquired = ForegroundOperationRegistry.acquire(activity, "album-encrypt")
+                        if (!acquired) {
+                            activity.runOnUiThread {
+                                try { progressDialog.dismiss() } catch (_: Exception) {}
+                                activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                                VaultSessionManager.lockVaultIfOutsideSession(activity)
+                            }
+                            return@ensureBackgroundThread
+                        }
+                        try {
                         val totalFilesCount = paths.sumOf { path ->
                             File(path).listFiles()?.count { CryptoManager.isEncryptableMediaFile(it) } ?: 0
                         }
@@ -728,6 +740,10 @@ class DirectoryAdapter(
                         val deferredIdenticalTargets = java.util.Collections.synchronizedMap(LinkedHashMap<String, File>())
 
                         for (path in paths) {
+                            if (ForegroundOperationRegistry.isCancelled) {
+                                allSuccess = false
+                                break
+                            }
                             var folderLastCurrent = 0
                             val folderOptions = albumOptions.copy(
                                 deleteIdenticalSource = false,
@@ -737,15 +753,20 @@ class DirectoryAdapter(
                                 deferredSkippedSourceCollector = if (isMerge) deferredSkippedFiles else null,
                                 deferredIdenticalTargetMap = if (isMerge) deferredIdenticalTargets else null
                             )
-                            val result = CryptoManager.encryptFolder(activity, path, options = folderOptions) { current, _ ->
-                                val diff = current - folderLastCurrent
-                                if (diff > 0) {
-                                    globalProcessed += diff
-                                    folderLastCurrent = current
-                                    activity.runOnUiThread {
-                                        progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                            val result = try {
+                                CryptoManager.encryptFolder(activity, path, options = folderOptions) { current, _ ->
+                                    val diff = current - folderLastCurrent
+                                    if (diff > 0) {
+                                        globalProcessed += diff
+                                        folderLastCurrent = current
+                                        activity.runOnUiThread {
+                                            progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                                        }
                                     }
                                 }
+                            } catch (e: Exception) {
+                                if (OperationFaults.isSimulatedAbort(e)) throw e
+                                null
                             }
                             if (result == null) {
                                 allSuccess = false
@@ -776,6 +797,9 @@ class DirectoryAdapter(
                                 finishActMode()
                                 listener?.refreshItems()
                             }
+                        }
+                        } finally {
+                            ForegroundOperationRegistry.release(activity, "album-encrypt")
                         }
                     }
                 }

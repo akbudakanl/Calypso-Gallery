@@ -621,6 +621,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 runOnUiThread {
                     if (!isDestroyed && !isFinishing) {
                         toggleTemporarilyShowHidden(true)
+                        OperationRecovery.maybePromptResume(this)
                     }
                 }
             }
@@ -1241,6 +1242,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mIsSecretVaultView = true
         mHiddenDisplayMode = DISPLAY_SECRET_VAULT
         toast(R.string.secret_vault)
+        OperationRecovery.maybePromptResume(this)
         if (alreadyUnlocked) {
             updateVaultModeUi()
             binding.directoriesGrid.adapter = null

@@ -19,8 +19,10 @@ import org.fossify.gallery.models.DateTaken
 import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.operations.AtomicStaging
+import org.fossify.gallery.helpers.operations.EncryptedSizeInput
 import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationJournal
+import org.fossify.gallery.helpers.operations.TransientOperationWaiter
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerFileCrypto.
@@ -134,10 +136,17 @@ fun CryptoManager.encryptFileToDirectory(
     matchCollisionVariants: Boolean = true,
     operation: OperationContext = OperationContext.NONE
 ): File? {
-    if (!sourceFile.exists() || !sourceFile.isFile) return null
+    if (!sourceFile.exists() || !sourceFile.isFile) {
+        OperationJournal.markFailed(operation, "source missing")
+        return null
+    }
     if (isEncryptedFile(sourceFile.name)) return sourceFile
 
-    val kek = activeKek() ?: return null
+    val kek = activeKek()
+    if (kek == null) {
+        OperationJournal.markFailed(operation, "vault locked")
+        return null
+    }
     val versionByte = VaultContainer.VAULT_FORMAT_VERSION
 
     if (!targetDir.exists()) {
@@ -179,6 +188,7 @@ fun CryptoManager.encryptFileToDirectory(
                 }
                 if (arePlainAndEncryptedIdentical(sourceFile, existingBin, existingMeta)) {
                     applyDuplicateDateToEncryptedFile(context, existingBin, sourceLastModified)
+                    val dupFingerprint = MediaIdentity.computeFingerprint(existingBin)
                     if (wipeSource && deleteSourceOnIdentical) {
                         val duplicateSourcePath = sourceFile.absolutePath
                         val plainIdentity = runCatching {
@@ -195,6 +205,12 @@ fun CryptoManager.encryptFileToDirectory(
                         if (secureWipeAndDeleteFile(sourceFile, context, syncParentDir = true, purgeTraces = false)) {
                             runCatching { purgeMediaTracesPreservingReferences(context, duplicateSourcePath) }
                         }
+                        OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
+                        OperationJournal.markSourceDeleted(operation)
+                    } else if (!wipeSource) {
+                        OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
+                    } else {
+                        OperationJournal.markSkipped(operation)
                     }
                     if (clearCachesNow && deleteSourceOnIdentical) {
                         runCatching { clearAppImageCaches(context) }
@@ -207,7 +223,10 @@ fun CryptoManager.encryptFileToDirectory(
         val exactMatches = index.findExactEntries(originalName)
         if (exactMatches.isNotEmpty()) {
             when (conflictResolution) {
-                CONFLICT_SKIP -> return null
+                CONFLICT_SKIP -> {
+                    OperationJournal.markSkipped(operation)
+                    return null
+                }
                 CONFLICT_OVERWRITE -> {
                     val removed = index.removeExactEntries(originalName)
                     removed.forEach { existingBin ->
@@ -252,6 +271,14 @@ fun CryptoManager.encryptFileToDirectory(
         encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
     }
 
+    val expectedOutBytes = VaultContainerWriter.estimateEncryptedSize(
+        EncryptedSizeInput(originalSize, originalName, thumbBytes.size)
+    )
+    if (!TransientOperationWaiter.awaitDestinationReady(context, operation, targetDir, expectedOutBytes)) {
+        OperationJournal.markFailed(operation, "destination unavailable or insufficient space")
+        return null
+    }
+
     val staging = AtomicStaging.fileFor(encryptedFile, operation)
     OperationJournal.markInFlight(operation, staging.absolutePath)
 
@@ -264,14 +291,7 @@ fun CryptoManager.encryptFileToDirectory(
                 payloadProvider = { fis }
             )
         }
-        AtomicStaging.commit(staging, encryptedFile)
-        // ADR 0003 §3: no source is wiped on the strength of an unverified container.
-        if (!verifyFileIntegrity(encryptedFile)) {
-            throw IOException("Encrypted container failed read-back verification")
-        }
-        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(encryptedFile))
-
-        encryptedFile.setLastModified(lastModified)
+        AtomicStaging.commit(staging, encryptedFile, alreadyFileSynced = true)
 
         val newMeta = EncryptedFileMetadata(
             originalName = originalName,
@@ -292,6 +312,19 @@ fun CryptoManager.encryptFileToDirectory(
             isCanonicalFormat = true,
             segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
         )
+
+        // ADR 0003 §3: no source is wiped on the strength of an unverified container.
+        if (!verifyFileIntegrity(encryptedFile, newMeta)) {
+            throw IOException("Encrypted container failed read-back verification")
+        }
+        OperationJournal.markVerified(
+            operation,
+            MediaIdentity.computeFingerprint(encryptedFile),
+            encryptedFile.absolutePath
+        )
+
+        encryptedFile.setLastModified(lastModified)
+
         metadataCache[encryptedFile.absolutePath] = newMeta
         activeIndex?.addEntry(encryptedFile, newMeta)
 
@@ -484,10 +517,18 @@ fun CryptoManager.decryptFileToDirectory(
     matchCollisionVariants: Boolean = true,
     operation: OperationContext = OperationContext.NONE
 ): File? {
-    if (!encryptedFile.exists() || !isEncryptedFile(encryptedFile.name)) return null
-    val meta = readMetadata(encryptedFile, includeThumbnail = false, cacheResult = false) ?: return null
+    if (!encryptedFile.exists() || !isEncryptedFile(encryptedFile.name)) {
+        OperationJournal.markFailed(operation, "encrypted source missing")
+        return null
+    }
+    val meta = readMetadata(encryptedFile, includeThumbnail = false, cacheResult = false)
+    if (meta == null) {
+        OperationJournal.markFailed(operation, "could not read encrypted header")
+        return null
+    }
 
     if (meta.isMacAuthenticated && !verifyFileIntegrity(encryptedFile, meta)) {
+        OperationJournal.markFailed(operation, "encrypted source integrity check failed")
         return null
     }
 
@@ -514,6 +555,7 @@ fun CryptoManager.decryptFileToDirectory(
             if (arePlainAndEncryptedIdentical(existingPlain, encryptedFile, meta, verifyIntegrity = false)) {
                 applyDuplicateDateToPlainFile(context, existingPlain, meta.lastModified, meta.dateTaken)
                 val plainCanon = runCatching { existingPlain.canonicalPath }.getOrDefault(existingPlain.absolutePath)
+                val dupFingerprint = MediaIdentity.computeFingerprint(existingPlain)
                 if (deleteEncryptedSource && deleteSourceOnIdentical && encCanon != plainCanon) {
                     val encPath = encryptedFile.absolutePath
                     runCatching {
@@ -526,6 +568,8 @@ fun CryptoManager.decryptFileToDirectory(
                     metadataCache.remove(encPath)?.fileKey?.fill(0)
                     runCatching { context.mediaDB.deleteMediumPath(encPath) }
                     encryptedFile.delete()
+                    OperationJournal.markVerified(operation, dupFingerprint, existingPlain.absolutePath)
+                    OperationJournal.markSourceDeleted(operation)
                 } else if (deleteSourceOnIdentical && encCanon != plainCanon) {
                     runCatching {
                         context.markReferencesOnDecrypt(
@@ -534,6 +578,15 @@ fun CryptoManager.decryptFileToDirectory(
                             hideStealthReferences = false
                         )
                     }
+                    if (!deleteEncryptedSource) {
+                        OperationJournal.markVerified(operation, dupFingerprint, existingPlain.absolutePath)
+                    } else {
+                        OperationJournal.markSkipped(operation)
+                    }
+                } else if (!deleteEncryptedSource) {
+                    OperationJournal.markVerified(operation, dupFingerprint, existingPlain.absolutePath)
+                } else {
+                    OperationJournal.markSkipped(operation)
                 }
                 if (deleteSourceOnIdentical) {
                     persistDecryptedDateTaken(context, existingPlain, meta.dateTaken, meta.lastModified)
@@ -551,7 +604,10 @@ fun CryptoManager.decryptFileToDirectory(
     var outFile = index.findExact(meta.originalName) ?: File(targetDir, meta.originalName)
     if (outFile.exists()) {
         when (conflictResolution) {
-            CONFLICT_SKIP -> return null
+            CONFLICT_SKIP -> {
+                OperationJournal.markSkipped(operation)
+                return null
+            }
             CONFLICT_OVERWRITE -> {
                 outFile.delete()
                 index.removeFile(outFile)
@@ -560,6 +616,11 @@ fun CryptoManager.decryptFileToDirectory(
                 outFile = index.getAlternativeFile(meta.originalName)
             }
         }
+    }
+
+    if (!TransientOperationWaiter.awaitDestinationReady(context, operation, targetDir, meta.originalSize)) {
+        OperationJournal.markFailed(operation, "destination unavailable or insufficient space")
+        return null
     }
 
     val staging = AtomicStaging.fileFor(outFile, operation)
@@ -576,16 +637,16 @@ fun CryptoManager.decryptFileToDirectory(
                         bos.write(buffer, 0, read)
                     }
                     bos.flush()
+                    fos.fd.sync()
                 }
-                fos.fd.sync()
             }
-        } ?: return null
+        } ?: throw IOException("Could not open decrypted content stream")
 
-        AtomicStaging.commit(staging, outFile)
+        AtomicStaging.commit(staging, outFile, alreadyFileSynced = true)
         if (outFile.length() != meta.originalSize) {
             throw IOException("Decrypted output size does not match the container header")
         }
-        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(outFile))
+        OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(outFile), outFile.absolutePath)
 
         outFile.setLastModified(meta.lastModified)
         persistDecryptedDateTaken(context, outFile, meta.dateTaken, meta.lastModified)
