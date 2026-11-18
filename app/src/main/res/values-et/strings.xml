@@ -241,15 +241,15 @@
     <string name="faq_17_text">See funktsionaalsus lakkas tÃ¶Ã¶tamast tÃ¤nu sÃ¼steemimuudatustele, mis lisandusid Android 11-ga, mispuhul rakendus ei saa enam sirvida reaalseid kaustu, vaid tugineb andmete hankimisel nn MediaStore\'ile.</string>
     <string name="faq_18_title">Miks ma nÃ¤en video taasesituse ajal reklaami\?</string>
     <string name="faq_18_text">Meie rakendustes ei ole Ã¼ldse reklaami. Kui nÃ¤ed neid videote esitamise ajal, pead kasutama mÃµnda muud rakendust videomÃ¤ngijana. Proovi leida seadme seadetest oma vaikimisi videomÃ¤ngija, seejÃ¤rel tee selle kohta â€Eemalda vaikimisi seadedâ€œ. JÃ¤rgmine kord, kui alustad videoesitust, nÃ¤ed rakenduse valikut, kus saad valida, millist rakendust soovid kasutada.</string>
-    <string name="excluded_activity_placeholder">Kaustade vÃ¤listamisel peidetakse nad koos alamkaustadega Fossify Galeriist, kuid nad on jÃ¤tkuvalt nÃ¤htavalt muudes rakendustes.
+    <string name="excluded_activity_placeholder">Kaustade vÃ¤listamisel peidetakse nad koos alamkaustadega Calypso Galeriist, kuid nad on jÃ¤tkuvalt nÃ¤htavalt muudes rakendustes.
 \n
 \nKui sa soovid neid peita ka muudest rakendustest, siis kasuta funktsionaalsust â€Peidaâ€œ.</string>
-    <string name="faq_5_text">Kaustade vÃ¤listamisel ei kuvata neid koos alamkaustadega vaid Fossify Galeriis, kuid kaustade peitmine on nutiseadme Ã¼lene ning nad pole nÃ¤htavad ka muudest galeriirakendustest. Peitmisel luuakse peidetavasse kausta fail â€.nomediaâ€œ, mida saad soovi korral kustutada iga korraliku failihalduriga. Palun arvesta, et mÃµnede nutiseadmete puhul pole vÃµimalik peita kaustu Camera, Screenshots ja Downloads.</string>
-    <string name="faq_1_title">Kuidas saan Fossify galeriist teha selle seadme vaikimisi galeriirakenduse?</string>
-    <string name="exclude_folder_description">JÃ¤rgnevaga vÃ¤listad valiku koos alamkaustadega vaid Fossify galeriist. VÃ¤listatud kaustu saad hallata seadistustest.</string>
+    <string name="faq_5_text">Kaustade vÃ¤listamisel ei kuvata neid koos alamkaustadega vaid Calypso Galeriis, kuid kaustade peitmine on nutiseadme Ã¼lene ning nad pole nÃ¤htavad ka muudest galeriirakendustest. Peitmisel luuakse peidetavasse kausta fail â€.nomediaâ€œ, mida saad soovi korral kustutada iga korraliku failihalduriga. Palun arvesta, et mÃµnede nutiseadmete puhul pole vÃµimalik peita kaustu Camera, Screenshots ja Downloads.</string>
+    <string name="faq_1_title">Kuidas saan Calypso galeriist teha selle seadme vaikimisi galeriirakenduse?</string>
+    <string name="exclude_folder_description">JÃ¤rgnevaga vÃ¤listad valiku koos alamkaustadega vaid Calypso galeriist. VÃ¤listatud kaustu saad hallata seadistustest.</string>
     <string name="wallpaper">Taustapilt</string>
-    <string name="faq_1_text">Esmalt palun otsi oma nutiseadme seadistuste alajaotusest Rakendused hetkel vaikmisi kasutusel olev galeriirakendus. Selle alt leia valik, mille nimi vÃµib olla midagi sellist nagu â€Vaikimisi rakendusâ€œ. KlÃµpsi sellel ning vali â€Eelmalda vaikeseadistusedâ€œ. Kui jÃ¤rgmine kord pÃ¼Ã¼ad vaadata pilte vÃµi videosid, siis avaneb rakenduste valija, kust saad Fossify Galerii mÃ¤Ã¤rata vaikimisi kasutatavaks galeriirakenduseks.</string>
-    <string name="full_storage_permission_required">Fossify Galerii vajab kÃµikide sinu fotode ja videote nÃ¤itamiseks tÃ¤isÃµigusi. Ava Seadistused &gt; Ã•igused &gt; Fotod ja videod &gt; Luba kÃµik.</string>
+    <string name="faq_1_text">Esmalt palun otsi oma nutiseadme seadistuste alajaotusest Rakendused hetkel vaikmisi kasutusel olev galeriirakendus. Selle alt leia valik, mille nimi vÃµib olla midagi sellist nagu â€Vaikimisi rakendusâ€œ. KlÃµpsi sellel ning vali â€Eelmalda vaikeseadistusedâ€œ. Kui jÃ¤rgmine kord pÃ¼Ã¼ad vaadata pilte vÃµi videosid, siis avaneb rakenduste valija, kust saad Calypso Galerii mÃ¤Ã¤rata vaikimisi kasutatavaks galeriirakenduseks.</string>
+    <string name="full_storage_permission_required">Calypso Galerii vajab kÃµikide sinu fotode ja videote nÃ¤itamiseks tÃ¤isÃµigusi. Ava Seadistused &gt; Ã•igused &gt; Fotod ja videod &gt; Luba kÃµik.</string>
     <string name="playback_speed">Taasesituse kiirus</string>
     <string name="failed_to_load_media">Meedia laadimine ei Ãµnnestunud.</string>
     <string name="media_exceeds_device_capabilities">Meedia Ã¼letab selle seadme suutlikkuse.</string>

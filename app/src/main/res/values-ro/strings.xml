@@ -211,7 +211,7 @@
     <string name="faq_17_text">Aceasta a Ã®ncetat sÄƒ mai funcÈ›ioneze din cauza schimbÄƒrilor de sistem care au venit odatÄƒ cu Android 11. AplicaÈ›ia nu mai poate rÄƒsfoi dosare reale, ci se bazeazÄƒ pe aÈ™a-numitul MediaStore pentru a prelua informaÅ£iile.</string>
     <string name="faq_18_title">De ce vÄƒd reclame Ã®n timpul redÄƒrii video\?</string>
     <string name="faq_18_text">AplicaÈ›iile noastre nu au niciun fel de reclame. DacÄƒ le vedeÈ›i Ã®n timpul redÄƒrii video, Ã®nseamnÄƒ cÄƒ utilizaÈ›i un alt player video. ÃncercaÈ›i sÄƒ gÄƒsiÈ›i playerul video implicit Ã®n setÄƒrile dispozitivului, apoi efectuaÈ›i o operaÈ›iune de \"CurÄƒÅ£are a valorilor implicite\" pentru acesta. Data viitoare cÃ¢nd veÈ›i apela la o intenÈ›ie video, veÈ›i vedea o fereastrÄƒ de selectare a aplicaÈ›iei, unde puteÈ›i selecta aplicaÈ›ia pe care doriÈ›i sÄƒ o utilizaÈ›i.</string>
-    <string name="exclude_folder_description">Acest lucru va exclude selecÈ›ia Ã®mpreunÄƒ cu subfolderele sale numai din Galeria Fossify. PuteÈ›i gestiona folderele excluse Ã®n SetÄƒri.</string>
+    <string name="exclude_folder_description">Acest lucru va exclude selecÈ›ia Ã®mpreunÄƒ cu subfolderele sale numai din Galeria Calypso. PuteÈ›i gestiona folderele excluse Ã®n SetÄƒri.</string>
     <string name="excluded">(exclus)</string>
     <string name="editor">Editor</string>
     <string name="all_files">Toate fiÈ™ierele</string>
@@ -231,7 +231,7 @@
     <string name="interval">Interval</string>
     <string name="import_favorite_paths">ImportÄƒ favorite</string>
     <string name="paths_imported_successfully">CÄƒi importate cu succes</string>
-    <string name="faq_1_title">Cum pot face ca Galeria Fossify sÄƒ fie galeria implicitÄƒ a dispozitivului?</string>
+    <string name="faq_1_title">Cum pot face ca Galeria Calypso sÄƒ fie galeria implicitÄƒ a dispozitivului?</string>
     <string name="crop">Decupare</string>
     <string name="slide">Glisare</string>
     <string name="hidden_all_files">Trebuie sÄƒ acorzi aplicaÈ›iei acces la Toate fiÈ™ierele pentru a vedea fiÈ™ierele ascunse, altfel nu poate funcÈ›iona.</string>

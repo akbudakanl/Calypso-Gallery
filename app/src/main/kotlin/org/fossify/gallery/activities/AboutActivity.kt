@@ -50,6 +50,7 @@ class AboutActivity : SimpleActivity() {
             binding.aboutTitle,
             binding.aboutDescription,
             binding.aboutModificationNotice,
+            binding.aboutCopyrightNotice,
             binding.aboutLicenseNotice,
             binding.aboutSourceNotice,
         ).forEach { it.setTextColor(textColor) }
@@ -129,13 +130,6 @@ class AboutActivity : SimpleActivity() {
             FAQItem(R.string.faq_18_title, R.string.faq_18_text),
             FAQItem(org.fossify.commons.R.string.faq_9_title_commons, org.fossify.commons.R.string.faq_9_text_commons),
         )
-
-        if (resources.getBoolean(org.fossify.commons.R.bool.is_google_play_build)) {
-            faqItems.add(FAQItem(org.fossify.commons.R.string.faq_2_title_commons, org.fossify.commons.R.string.faq_2_text_commons))
-            faqItems.add(FAQItem(org.fossify.commons.R.string.faq_6_title_commons, org.fossify.commons.R.string.faq_6_text_commons))
-            faqItems.add(FAQItem(org.fossify.commons.R.string.faq_7_title_commons, org.fossify.commons.R.string.faq_7_text_commons))
-            faqItems.add(FAQItem(org.fossify.commons.R.string.faq_10_title_commons, org.fossify.commons.R.string.faq_10_text_commons))
-        }
 
         if (isRPlus() && !isExternalStorageManager()) {
             faqItems.add(0, FAQItem(R.string.faq_16_title, "${getString(R.string.faq_16_text)} ${getString(R.string.faq_16_text_extra)}"))

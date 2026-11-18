@@ -30,7 +30,7 @@
     <string name="show_all">Montri enhavon de Ä‰iuj dosierujoj</string>
     <string name="folder_view">ÅœanÄiÄi al dosieruja vido</string>
     <string name="force_portrait">Äˆiam uzi vertikalan orientiÄon</string>
-    <string name="full_storage_permission_required">Fossify Galerio bezonas tutan atingon por montri viajn fotojn kaj filmetojn. Iru al Agordoj &gt; Permesoj &gt; Fotoj kaj filmetoj &gt; Permesi Ä‰ion.</string>
+    <string name="full_storage_permission_required">Calypso Galerio bezonas tutan atingon por montri viajn fotojn kaj filmetojn. Iru al Agordoj &gt; Permesoj &gt; Fotoj kaj filmetoj &gt; Permesi Ä‰ion.</string>
     <string name="use_default_orientation">Uzi defaÅ­ltan orientiÄon</string>
     <string name="no_date_takens_found">Neniu prenodato estis trovita</string>
     <string name="force_landscape">Äˆiam uzi horizontalan orientiÄon</string>
@@ -47,7 +47,7 @@
     <string name="reorder_by_dragging_pro">Reordigi dosierujojn per treni (Pro)</string>
     <string name="restore_to_path">RestaÅ­rado al \"%s\"</string>
     <string name="filter_media">Filtri aÅ­dvidaÄµojn</string>
-    <string name="exclude_folder_description">Tio Ä‰i ekskluzivos la elekton kaj Äiajn subdosierujojn el nur Fossify Galario. Vi povas administri ekskluzivitajn dosierujojn en la agordoj.</string>
+    <string name="exclude_folder_description">Tio Ä‰i ekskluzivos la elekton kaj Äiajn subdosierujojn el nur Calypso Galario. Vi povas administri ekskluzivitajn dosierujojn en la agordoj.</string>
     <string name="keep_aspect_ratio">Gardi bildformaton</string>
     <string name="invalid_values">Bonvolu enigi validan distingivon</string>
     <string name="resize_multiple_images">Regrandigi multajn bildojn</string>
@@ -66,7 +66,7 @@
     <string name="advanced_editor">Altnivela redaktilo</string>
     <string name="rotate">Turni</string>
     <string name="invalid_image_path">Nevalida vojo de bildo</string>
-    <string name="excluded_activity_placeholder">Ekskluzivi dosierujojn kaÅos ilin kaj iliajn subdosierujojn nur en Fossify Galerio, sed ili restos videble en aliaj aplikaÄµoj.\n\nSe vi ankaÅ­ volas kaÅi ilin en aliaj aplikaÄµoj, uzu la funkcion KaÅi.</string>
+    <string name="excluded_activity_placeholder">Ekskluzivi dosierujojn kaÅos ilin kaj iliajn subdosierujojn nur en Calypso Galerio, sed ili restos videble en aliaj aplikaÄµoj.\n\nSe vi ankaÅ­ volas kaÅi ilin en aliaj aplikaÄµoj, uzu la funkcion KaÅi.</string>
     <string name="hidden_all_files">Endas koncedi al la aplikaÄµo atingon al Ä‰iuj dosieroj por vidi kaÅitajn dosierojn, aÅ­ Äi ne funkcios.</string>
     <string name="cant_unhide_folder">Se dosierujo aÅ­ ties patro havas punkton antaÅ­ sia nomo, Äi estas kaÅita kaj ne povas esti malkaÅita Ä‰i tiel. Vi devas forigi la punkton per renomi Äin.</string>
     <string name="include_folders">Inkluzivitaj dosierujoj</string>
@@ -214,11 +214,11 @@
     <string name="alternative_media_access">Alia, vi povas permesi atingon nur al aÅ­dvidaÄµaj dosieroj. Tiukaze, vi tamen ne povos interagi kun kaÅitaj dosieroj.</string>
     <string name="show_all_folders">Montri menubutonon por rapide baskuligi \"Montri enhavon de Ä‰iuj dosierujoj\"</string>
     <string name="toggle_file_visibility">Baskuligi videblecon de dosieroj</string>
-    <string name="faq_1_title">Kiel mi povas igi Fossify Galerio la defaÅ­lta aparata galerio?</string>
+    <string name="faq_1_title">Kiel mi povas igi Calypso Galerio la defaÅ­lta aparata galerio?</string>
     <string name="media_management_alternative">Se vi ne volas tion fari, vi ankaÅ­ povus iri al viaj aparataj Agordoj - AplikaÄµoj - Specialaj permesoj de aplikaÄµoj - AplikaÄµoj de administrado de aÅ­dvidaÄµoj kaj permesi, ke tiu Ä‰i aplikaÄµo administru aÅ­dvidaÄµoj.</string>
     <string name="fullscreen_media">Plenekranaj aÅ­dvidaÄµoj</string>
     <string name="faq_2_title">Mi Ålosis la aplikaÄµon per pasvorto, sed mi forgesis Äin. Kion mi povas fari?</string>
-    <string name="faq_1_text">Unue, vi devas trovi la aktualan defaÅ­ltan galerion en la sekcio de aplikaÄµoj de viaj aparataj agordoj. SerÄ‰u butonon kiu ion diras kiel \"Malfermi defaÅ­lte\", alklaku Äin, kaj elektu \"ForviÅi defaÅ­ltojn\". La sekvan fojon, ke vi provas malfermi bildon aÅ­ filmeton, vi devus vidi elektilon de aplikaÄµoj kie vi povas elekti Fossify Galerio kaj igi Äin la defaÅ­lta aplikaÄµo.</string>
+    <string name="faq_1_text">Unue, vi devas trovi la aktualan defaÅ­ltan galerion en la sekcio de aplikaÄµoj de viaj aparataj agordoj. SerÄ‰u butonon kiu ion diras kiel \"Malfermi defaÅ­lte\", alklaku Äin, kaj elektu \"ForviÅi defaÅ­ltojn\". La sekvan fojon, ke vi provas malfermi bildon aÅ­ filmeton, vi devus vidi elektilon de aplikaÄµoj kie vi povas elekti Calypso Galerio kaj igi Äin la defaÅ­lta aplikaÄµo.</string>
     <string name="faq_4_title">Kiel mi povas plirapidigi filmetojn?</string>
     <string name="faq_3_title">Kiel mi povas igi, ke albumo Ä‰iam aperu je la supro?</string>
     <string name="faq_3_text">Vi povas longe premi la deziratan albumon kaj elekti la pinglan bildsimbolon en la meno de akcioj por alpingli Äin al la supro. AnkaÅ­ eblas alpingli plurajn dosierujoj, kaj la alpinglitaj elementoj estos ordigitaj laÅ­ la defaÅ­lta ordigoreÄimo.</string>
@@ -232,7 +232,7 @@
     <string name="faq_8_title">Kion mi faras se mi nur volas, ke kelkaj specifaj dosierujoj aperu?</string>
     <string name="faq_6_text">Eblas, ke kelkaj nekutimaj albumoj aperas. Vi povas facile ekskluzivi ilin per longe premi ilin kaj elekti Ekskluzivi. Tiam vi povas elekti la patran dosierujon, kaj tio ankaÅ­ verÅajne evitos, ke aliaj rilataj albumoj aperu.</string>
     <string name="faq_6_title">Kial aperas dosierujoj kun albumartoj aÅ­ glumarkoj?</string>
-    <string name="faq_5_text">Ekskluzivi evitas montri la dosierujon nur en Fossify Galerio, kaj kaÅi funkcias tutsisteme por ankaÅ­ kaÅi la dosierujon el aliaj galerioj. Äœi tion faras per krei malplenan dosieron \".nomedia\" en la dosierujo, kiun oni ankaÅ­ povas forigi per iu ajn dosieradministrilo. Rimarku, ke kelkaj aparatoj ne permesas kaÅi dosierujojn kiel Kamerao, Ekrankopioj kaj ElÅutoj.</string>
+    <string name="faq_5_text">Ekskluzivi evitas montri la dosierujon nur en Calypso Galerio, kaj kaÅi funkcias tutsisteme por ankaÅ­ kaÅi la dosierujon el aliaj galerioj. Äœi tion faras per krei malplenan dosieron \".nomedia\" en la dosierujo, kiun oni ankaÅ­ povas forigi per iu ajn dosieradministrilo. Rimarku, ke kelkaj aparatoj ne permesas kaÅi dosierujojn kiel Kamerao, Ekrankopioj kaj ElÅutoj.</string>
     <string name="faq_10_text">Jes, vi povas tondi bildojn en la redaktilo per treni la angulojn de la bildo. Vi povas atingi la redaktilon per aÅ­ longe premi bildeton kaj elekti Redakti aÅ­ elekti Redakti el la plenekrana vido.</string>
     <string name="faq_7_text">Estas pluraj eblaj kaÅ­zoj, sed facilas solvi Äin. Nur iru al Agordoj -&gt; Administri inkluzivitajn dosierujojn, frapetu la + kaj iru al la dezirata dosierujo.</string>
     <string name="faq_11_title">Äˆu eblas iel grupigi bildetojn de aÅ­dvidaÄµaj dosierujoj?</string>

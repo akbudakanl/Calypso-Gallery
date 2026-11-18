@@ -258,12 +258,12 @@
     <string name="faq_18_title">為什麼我在播放影片時看到廣告？</string>
     <string name="faq_18_text">我們的應用程式完全沒有廣告。如果您在播放影片時看到它們，那麼您一定是在使用其他應用程式的影片播放器。請試著在裝置設定中找到您的預設影片播放器，並清除其預設值。下次您嘗試播放影片時，系統會提示您選擇應用程式，您可以在此選擇您想要使用的影片播放器。</string>
     <string name="wallpaper">桌布</string>
-    <string name="excluded_activity_placeholder">排除資料夾功能僅會在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾，在其他應用程式中仍會正常顯示。\n\n如要同時在其他應用程式中隱藏，請使用「隱藏」功能。</string>
-    <string name="exclude_folder_description">僅在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾。稍後可在設定中管理已排除的資料夾。</string>
+    <string name="excluded_activity_placeholder">排除資料夾功能僅會在 Calypso 圖庫中排除選定的資料夾及其所有子資料夾，在其他應用程式中仍會正常顯示。\n\n如要同時在其他應用程式中隱藏，請使用「隱藏」功能。</string>
+    <string name="exclude_folder_description">僅在 Calypso 圖庫中排除選定的資料夾及其所有子資料夾。稍後可在設定中管理已排除的資料夾。</string>
     <string name="faq_1_title">怎樣將 Calypso Gallery 設為本裝置的預設相簿？</string>
     <string name="faq_1_text">首先，您需要在裝置設定的應用程式部分找到目前預設的相簿，尋找一個寫著「預設開啟」之類的按鈕，點擊它，然後選擇「清除預設」。下次嘗試開啟圖片或影片時，您應該會看到一個應用程式選擇器，您可以在其中選擇 Calypso Gallery 並將其設為預設應用程式。</string>
     <string name="faq_5_text">排除是指僅在 Calypso Gallery 中不顯示該資料夾，而隱藏則是系統層級的操作，它也會將資料夾隱藏於其他相簿。這是透過在指定資料夾建立一個名為「.nomedia」的空檔案來實現的，您也可以使用任何檔案管理員刪除它。請注意，有些裝置不允許隱藏像是相機、螢幕截圖和下載等資料夾。</string>
-    <string name="full_storage_permission_required">Fossify 圖庫需要完整存取權限才能顯示您所有的照片與影片。請到「設定」→「隱私權」→「應用程式權限」→「相片和影片」→「一律全部允許」。</string>
+    <string name="full_storage_permission_required">Calypso 圖庫需要完整存取權限才能顯示您所有的照片與影片。請到「設定」→「隱私權」→「應用程式權限」→「相片和影片」→「一律全部允許」。</string>
     <string name="playback_speed">播放速度</string>
     <string name="failed_to_load_media">載入媒體失敗。</string>
     <string name="file_is_malformed_or_corrupted">檔案格式錯誤或損毀。</string>
@@ -513,8 +513,8 @@
     <string name="unhide_folder">取消隱藏</string>
     <string name="about_title">關於 Calypso Gallery</string>
     <string name="about_version">版本 %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。</string>
-    <string name="about_modification_notice">此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。</string>
+    <string name="about_fork_description">Calypso Gallery 是由個人獨立維護、強化安全性的 Fossify Gallery 分支。感謝 Fossify Gallery 的原始作者與貢獻者。此為非官方專案，與 Fossify 組織無任何關聯，亦未獲得其認可或支援。</string>
+    <string name="about_modification_notice">此發行版本是 Fossify Gallery v1.14.2 (2688360, 07-11-2026) 的修改版本。所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。</string>
     <string name="about_license_heading">授權條款</string>
     <string name="about_gpl_notice" formatted="false">本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。</string>
     <string name="about_read_gpl_license">閱讀 GNU GPL v3 授權條款</string>
@@ -529,9 +529,6 @@
     <string name="about_faq">常見問題</string>
     <string name="about_third_party_licenses">第三方授權條款</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">分支聲明</string>
-    <string name="fork_disclaimer_message">本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。</string>
-    <string name="fork_disclaimer_acknowledge">我瞭解</string>
     <string name="argon2_profile_title">暴力破解防護</string>
     <string name="brute_force_time_title">目標保險箱解鎖時間</string>
     <string name="brute_force_time_hint">秒數（2.0–7.0）。應用程式會對此裝置進行一次測量，並將產生的 KDF 參數儲存在保險箱中；實際解鎖時間在其他裝置上會有所不同。</string>

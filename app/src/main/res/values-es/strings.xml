@@ -55,7 +55,7 @@
         <item quantity="many">¿Confirma que quiere restaurar %d archivos?</item>
         <item quantity="other">¿Confirma que quiere restaurar %d archivos?</item>
     </plurals>
-    <string name="full_storage_permission_required">La Galería Fossify necesita acceso total para mostrar todas tus fotos y vídeos. Ve a Ajustes &gt; Permisos &gt; Fotos y vídeos &gt; Permitir todo.</string>
+    <string name="full_storage_permission_required">La Galería Calypso necesita acceso total para mostrar todas tus fotos y vídeos. Ve a Ajustes &gt; Permisos &gt; Fotos y vídeos &gt; Permitir todo.</string>
     <string name="filter_media">Filtro de medios</string>
     <string name="images">Imágenes</string>
     <string name="videos">Vídeos</string>
@@ -65,9 +65,9 @@
     <string name="portraits">Retratos</string>
     <string name="no_media_with_filters">No se han encontrado ficheros con los filtros seleccionados.</string>
     <string name="change_filters_underlined"><u>Cambiar filtros</u></string>
-    <string name="exclude_folder_description">Esto excluirá la selección junto con sus subcarpetas solo de la Galería Fossify. Puede gestionar las carpetas excluidas en los Ajustes.</string>
+    <string name="exclude_folder_description">Esto excluirá la selección junto con sus subcarpetas solo de la Galería Calypso. Puede gestionar las carpetas excluidas en los Ajustes.</string>
     <string name="exclude_folder_parent">¿Excluir mejor la carpeta superior?</string>
-    <string name="excluded_activity_placeholder">Al excluir las carpetas, estas y sus subcarpetas quedarán ocultas solo en la Galería Fossify, pero seguirán siendo visibles en otras aplicaciones.\n\nSi desea ocultarlas también de otras aplicaciones, utilice la función Ocultar.</string>
+    <string name="excluded_activity_placeholder">Al excluir las carpetas, estas y sus subcarpetas quedarán ocultas solo en la Galería Calypso, pero seguirán siendo visibles en otras aplicaciones.\n\nSi desea ocultarlas también de otras aplicaciones, utilice la función Ocultar.</string>
     <string name="hidden_folders">Carpetas ocultas</string>
     <string name="manage_hidden_folders">Gestionar carpetas ocultas</string>
     <string name="hidden_folders_placeholder">Parece que no tiene carpetas ocultas con archivos \".nomedia\".</string>
@@ -251,8 +251,8 @@
     <string name="media_exceeds_device_capabilities">Los medios superan las capacidades del dispositivo.</string>
     <string name="unsupported_format">Formato no soportado.</string>
     <string name="video_no_sound">Este vídeo no tiene audio</string>
-    <string name="faq_1_title">¿Cómo puedo hacer que la Galería Fossify sea la galería predeterminada del dispositivo?</string>
-    <string name="faq_1_text">Primero tienes que encontrar la galería actualmente predeterminada en la sección de Aplicaciones de los ajustes de tu dispositivo, busca un botón que diga algo así como \"Abrir por defecto\", haz clic en él y luego selecciona \"Borrar valores predeterminados\". La próxima vez que intentes abrir una imagen o un vídeo deberías ver un selector de aplicaciones, donde puedes seleccionar Galería Fossify y convertirla en la aplicación predeterminada.</string>
+    <string name="faq_1_title">¿Cómo puedo hacer que la Galería Calypso sea la galería predeterminada del dispositivo?</string>
+    <string name="faq_1_text">Primero tienes que encontrar la galería actualmente predeterminada en la sección de Aplicaciones de los ajustes de tu dispositivo, busca un botón que diga algo así como \"Abrir por defecto\", haz clic en él y luego selecciona \"Borrar valores predeterminados\". La próxima vez que intentes abrir una imagen o un vídeo deberías ver un selector de aplicaciones, donde puedes seleccionar Galería Calypso y convertirla en la aplicación predeterminada.</string>
     <string name="faq_2_title">He protegido la aplicación con una contraseña, pero la he olvidado. ¿Qué puedo hacer?</string>
     <string name="faq_2_text">Puede resolverlo de 2 maneras. Puede reinstalar la aplicación o encontrar la aplicación en los ajustes de su dispositivo y seleccionar \"Borrar datos\". Restablecerá todos sus ajustes, no eliminará ningún archivo multimedia.</string>
     <string name="faq_3_title">¿Cómo puedo hacer que un álbum siempre aparezca en la parte superior?</string>
@@ -260,7 +260,7 @@
     <string name="faq_4_title">¿Cómo puedo avanzar vídeos?</string>
     <string name="faq_4_text">Puede hacerlo tocando dos veces el costado de la pantalla o tocando los textos de duración actual o máxima cerca de la barra de progreso. Si habilita la apertura de vídeos en una pantalla separada en los ajustes de la aplicación, también puede usar gestos horizontales.</string>
     <string name="faq_5_title">¿Cuál es la diferencia entre ocultar y excluir una carpeta?</string>
-    <string name="faq_5_text">Excluir evita que la carpeta se muestre solo en la Galería Fossify, mientras que Ocultar funciona a nivel de sistema y oculta la carpeta de otras galerías también. Funciona mediante la creación de un archivo vacío \".nomedia\" en la carpeta dada, que luego se puede eliminar con cualquier gestor de archivos también. Ten en cuenta que algunos dispositivos no permiten ocultar carpetas como Cámara, Capturas de pantalla y Descargas.</string>
+    <string name="faq_5_text">Excluir evita que la carpeta se muestre solo en la Galería Calypso, mientras que Ocultar funciona a nivel de sistema y oculta la carpeta de otras galerías también. Funciona mediante la creación de un archivo vacío \".nomedia\" en la carpeta dada, que luego se puede eliminar con cualquier gestor de archivos también. Ten en cuenta que algunos dispositivos no permiten ocultar carpetas como Cámara, Capturas de pantalla y Descargas.</string>
     <string name="faq_6_title">¿Por qué aparecen carpetas con la portada de la música o pegatinas?</string>
     <string name="faq_6_text">Puede suceder que vea aparecer algunos álbumes inusuales. Puede excluirlos fácilmente manteniéndolos pulsados y seleccionando Excluir. En el siguiente cuadro de diálogo, puede seleccionar la carpeta principal; lo más probable es que evite que aparezcan otros álbumes relacionados.</string>
     <string name="faq_7_title">Una carpeta con imágenes no aparece, ¿qué puedo hacer?</string>
@@ -517,8 +517,8 @@
     <string name="unhide_folder">Mostrar</string>
     <string name="about_title">Acerca de Calypso Gallery</string>
     <string name="about_version">Versión %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery es un fork personal no oficial, mantenido de forma independiente, de Fossify Gallery. No está afiliado a Fossify ni cuenta con su respaldo.</string>
-    <string name="about_modification_notice">Esta distribución es una versión modificada de Fossify Gallery. El fork se creó a partir del commit original 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), y todas las modificaciones específicas del fork están documentadas en FORK_CHANGELOG.md.</string>
+    <string name="about_fork_description">Calypso Gallery es un fork personal reforzado en seguridad y mantenido de forma independiente de Fossify Gallery. Gracias a los autores y colaboradores originales de Fossify Gallery. Es un proyecto no oficial y no está afiliado a la organización Fossify, ni cuenta con su respaldo ni recibe su soporte.</string>
+    <string name="about_modification_notice">Esta distribución es una versión modificada de Fossify Gallery v1.14.2 (2688360, 07-11-2026). Todas las modificaciones específicas del fork están documentadas en FORK_CHANGELOG.md.</string>
     <string name="about_license_heading">Licencia</string>
     <string name="about_gpl_notice" formatted="false">Este programa es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la GNU General Public License tal como la publica la Free Software Foundation, en su versión 3 de la licencia.\n\nEste programa se distribuye con la esperanza de que resulte útil, pero SIN NINGUNA GARANTÍA; ni siquiera la garantía implícita de COMERCIABILIDAD o de IDONEIDAD PARA UN FIN DETERMINADO. Consulta la GNU General Public License para obtener más detalles.\n\nDeberías haber recibido una copia de la GNU General Public License junto con este programa. En caso contrario, usa la acción de licencia que aparece a continuación o visita https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Leer la licencia GNU GPL v3</string>
@@ -533,9 +533,6 @@
     <string name="about_faq">Preguntas frecuentes</string>
     <string name="about_third_party_licenses">Licencias de terceros</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">Aviso de fork</string>
-    <string name="fork_disclaimer_message">Esta aplicación no está desarrollada por el equipo de Fossify. Calypso Gallery es un fork no oficial, mantenido de forma independiente, de Fossify Gallery; el desarrollador original se menciona únicamente a modo de atribución. No está afiliado a Fossify, ni cuenta con su respaldo, ni recibe su soporte.\n\nAl continuar, aceptas este aviso. Los cambios específicos del fork están documentados en FORK_CHANGELOG.md.</string>
-    <string name="fork_disclaimer_acknowledge">Entendido</string>
     <string name="argon2_profile_title">Resistencia a la fuerza bruta</string>
     <string name="brute_force_time_title">Tiempo objetivo de desbloqueo de la bóveda</string>
     <string name="brute_force_time_hint">Segundos (2.0–7.0). La aplicación mide este dispositivo una vez y guarda los parámetros KDF resultantes en la bóveda; el tiempo real de desbloqueo varía en otros dispositivos.</string>

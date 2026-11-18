@@ -852,10 +852,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(WAS_AUTO_BACKUP_PROMPT_SHOWN, false)
         set(wasAutoBackupPromptShown) = prefs.edit().putBoolean(WAS_AUTO_BACKUP_PROMPT_SHOWN, wasAutoBackupPromptShown).apply()
 
-    var wasForkDisclaimerShown: Boolean
-        get() = prefs.getBoolean(WAS_FORK_DISCLAIMER_SHOWN, false)
-        set(wasForkDisclaimerShown) = prefs.edit().putBoolean(WAS_FORK_DISCLAIMER_SHOWN, wasForkDisclaimerShown).apply()
-
     var autoBackupFavoritesAndVirtualAlbums: Boolean
         get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, false)
         set(autoBackupFavoritesAndVirtualAlbums) = prefs.edit().putBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, autoBackupFavoritesAndVirtualAlbums).apply()

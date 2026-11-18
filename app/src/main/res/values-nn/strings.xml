@@ -377,7 +377,6 @@
     <string name="change_view_type">Endra syningstype</string>
     <string name="contributors">Bidragsytarar</string>
     <string name="known_issues">Kjende problem</string>
-    <string name="donate_to_fossify">Doner til Fossify</string>
     <string name="privacy_policy">Personvernerklæring</string>
     <string name="create_shortcut">Lag snarveg</string>
     <string name="print">Skriv ut</string>
@@ -584,8 +583,8 @@
     <string name="unhide_folder">Syn att</string>
     <string name="about_title">Om Calypso Gallery</string>
     <string name="about_version">Versjon %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell personleg fork av Fossify Gallery. Han er ikkje tilknytt eller støtta av Fossify.</string>
-    <string name="about_modification_notice">Denne distribusjonen er ein endra versjon av Fossify Gallery. Forken vart laga frå oppstraums-commiten 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), og alle forksspesifikke endringar er dokumenterte i FORK_CHANGELOG.md.</string>
+    <string name="about_fork_description">Calypso Gallery er ein tryggleiksherda, uavhengig vedlikehalden personleg fork av Fossify Gallery. Takk til dei opphavlege forfattarane og bidragsytarane til Fossify Gallery. Dette er eit uoffisielt prosjekt og er ikkje tilknytt, godkjent eller støtta av Fossify-organisasjonen.</string>
+    <string name="about_modification_notice">Denne distribusjonen er ein endra versjon av Fossify Gallery v1.14.2 (2688360, 07-11-2026). Alle forksspesifikke endringar er dokumenterte i FORK_CHANGELOG.md.</string>
     <string name="about_license_heading">Lisens</string>
     <string name="about_gpl_notice" formatted="false">Dette programmet er fri programvare: du kan distribuera det og/eller endra det i samsvar med vilkåra i GNU General Public License som publisert av Free Software Foundation, versjon 3 av lisensen.\n\nDette programmet vert distribuert i håp om at det skal vera nyttig, men UTAN NOKON GARANTI; utan ein gitt garanti for SALJGBARHEIT eller EIGNA FOR EIT FØREMÅL. Sjå GNU General Public License for fleire detaljar.\n\nDu skulle ha motteke ein kopi av GNU General Public License saman med dette programmet. Viss ikkje, bruk lisenshandlinga under eller besøk https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Les GNU GPL v3-lisensen</string>
@@ -600,9 +599,6 @@
     <string name="about_faq">Ofte stilte spørsmål</string>
     <string name="about_third_party_licenses">Lisensar frå tredjepart</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">Fork-merknad</string>
-    <string name="fork_disclaimer_message">Dette programmet er ikkje utvikla av Fossify-teamet. Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell fork av Fossify Gallery; den opphavlege utviklaren er berre nemnd for tilskriving. Det er ikkje tilknytt, støtta eller vedlikehalde av Fossify.\n\nVed å halda fram stadfestar du denne merknaden. Forkspesifikke endringar er dokumenterte i FORK_CHANGELOG.md.</string>
-    <string name="fork_disclaimer_acknowledge">Eg forstår</string>
     <string name="argon2_profile_title">Motstand mot brute-force</string>
     <string name="brute_force_time_title">Ønskt opplåsingstid for kvelvet</string>
     <string name="brute_force_time_hint">Sekund (2.0–7.0). Appen måler denne eininga éin gong og lagrar dei resulterande KDF-parametrane i kvelvet; faktisk opplåsingstid varierer på andre einingar.</string>

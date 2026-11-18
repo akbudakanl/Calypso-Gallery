@@ -54,7 +54,6 @@ import org.fossify.commons.extensions.isPathOnOTG
 import org.fossify.commons.extensions.isRawFast
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
-import org.fossify.commons.extensions.launchMoreAppsFromUsIntent
 import org.fossify.commons.extensions.recycleBinPath
 import org.fossify.commons.extensions.sdCardPath
 import org.fossify.commons.extensions.showErrorToast
@@ -87,7 +86,6 @@ import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
-import org.fossify.gallery.dialogs.ForkDisclaimerDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyVaultScreenProtection
@@ -271,7 +269,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mShouldStopFetching = false
     private var mWasDefaultFolderChecked = false
     private var mWasMediaManagementPromptShown = false
-    private var mIsForkDisclaimerDialogShowing = false
     private var mLatestMediaId = 0L
     private var mLatestMediaDateId = 0L
 
@@ -433,21 +430,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun handleMediaPermissions(callback: (() -> Unit)? = null) {
-        // The fork notice must be acknowledged before any permission is requested.
-        // onCreate and onResume both reach this method, so avoid showing it twice.
-        if (!config.wasForkDisclaimerShown) {
-            if (mIsForkDisclaimerDialogShowing) {
-                return
-            }
-            mIsForkDisclaimerDialogShowing = true
-            ForkDisclaimerDialog(this) {
-                config.wasForkDisclaimerShown = true
-                mIsForkDisclaimerDialogShowing = false
-                tryLoadGallery()
-            }
-            return
-        }
-
         requestMediaPermissions(enableRationale = true) {
             callback?.invoke()
             if (isRPlus() && !mWasMediaManagementPromptShown) {
@@ -826,8 +808,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 findItem(R.id.set_as_default_folder)?.isVisible = !mIsSecretVaultView && !config.defaultFolder.isEmpty()
                 findItem(R.id.open_recycle_bin)?.isVisible =
                     !mIsSecretVaultView && config.useRecycleBin && !config.showRecycleBinAtFolders
-                findItem(R.id.more_apps_from_us)?.isVisible =
-                    resources.getBoolean(org.fossify.commons.R.bool.is_google_play_build)
             }
         }
 
@@ -891,7 +871,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.open_recycle_bin -> openRecycleBin()
                 R.id.column_count -> changeColumnCount()
                 R.id.set_as_default_folder -> setAsDefaultFolder()
-                R.id.more_apps_from_us -> launchMoreAppsFromUsIntent()
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false

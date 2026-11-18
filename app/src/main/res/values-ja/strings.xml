@@ -249,7 +249,7 @@
     <string name="faq_18_title">動画の再生中に広告が表示されるのはなぜですか？</string>
     <string name="faq_18_text">私たちのアプリには広告は一切表示されません。動画の再生中に広告が表示される場合、他のアプリの動画プレーヤーを使用している可能性があります。端末の設定でデフォルトの動画プレーヤーを見つけて、「デフォルトの設定をクリア」（あるいは「設定を消去」や「デフォルトをクリア」といった表記のもの）を実行してみてください。次回以降、何らかの動画を開こうとすると、使用するアプリを選択するアプリ選択ダイアログが表示されます。</string>
     <string name="resize_factor_error">値は10から90までの間を指定してください</string>
-    <string name="full_storage_permission_required">Fossifyギャラリーは、全ての写真と動画を表示するために、完全なアクセスを必要としています。設定から「権限」、「画像と写真」を開き、全て許可を選択してください。</string>
+    <string name="full_storage_permission_required">Calypsoギャラリーは、全ての写真と動画を表示するために、完全なアクセスを必要としています。設定から「権限」、「画像と写真」を開き、全て許可を選択してください。</string>
     <string name="resize_factor">倍率を変更</string>
     <string name="resize_multiple_images">複数の画像のサイズを変更</string>
     <string name="failed_to_load_media">メディアを読み込めませんでした。</string>
@@ -260,13 +260,13 @@
     </plurals>
     <string name="images_resized_successfully">画像のサイズを変更しました</string>
     <string name="wallpaper">壁紙</string>
-    <string name="exclude_folder_description">選択したフォルダーとその子フォルダーをFossifyギャラリーから除外します。除外したフォルダーは設定画面で管理できます。</string>
+    <string name="exclude_folder_description">選択したフォルダーとその子フォルダーをCalypsoギャラリーから除外します。除外したフォルダーは設定画面で管理できます。</string>
     <plurals name="restore_confirmation">
         <item quantity="other">本当に %d ファイルを復元しますか?</item>
     </plurals>
     <string name="overwrite_original">元のファイルを上書きする</string>
     <string name="force_landscape_reverse">横で固定 (逆向き)</string>
-    <string name="excluded_activity_placeholder">フォルダーを除外すると、そのフォルダーとサブフォルダーはFossifyギャラリー上でのみ非表示になり、他のアプリでは引き続き表示されます。\n\n他のアプリからも非表示にしたい場合は、「非表示」機能を使用してください。</string>
+    <string name="excluded_activity_placeholder">フォルダーを除外すると、そのフォルダーとサブフォルダーはCalypsoギャラリー上でのみ非表示になり、他のアプリでは引き続き表示されます。\n\n他のアプリからも非表示にしたい場合は、「非表示」機能を使用してください。</string>
     <string name="video_double_tap_duration">ダブルタップ時のシーク時間</string>
     <string name="video_seek_duration_seconds">%d秒</string>
     <string name="render_ultra_hdr_photos">Ultra HDR写真をHDRで表示</string>
@@ -279,9 +279,9 @@
     <string name="media_exceeds_device_capabilities">メディアが端末の性能を超えています。</string>
     <string name="unsupported_format">サポートされていない形式です。</string>
     <string name="video_no_sound">この動画には音声がありません</string>
-    <string name="faq_1_title">Fossifyギャラリーを端末のデフォルトのギャラリーにするにはどうすればよいですか？</string>
-    <string name="faq_1_text">まず、端末の「設定」の「アプリ」セクションで現在デフォルトに設定されているギャラリーを見つけ、「デフォルトで開く」などのボタンをタップして「デフォルト設定をクリア」を選択します。次回、画像や動画を開こうとした際にアプリ選択画面が表示されるので、そこでFossifyギャラリーを選択してデフォルトのアプリに設定してください。</string>
-    <string name="faq_5_text">「除外」はFossifyギャラリー内でのみフォルダーを表示しないようにするのに対し、「非表示」はシステム全体で機能し、他のギャラリーアプリからもフォルダーを隠します。これは指定したフォルダー内に空の「.nomedia」ファイルを作成することで動作し、任意のファイルマネージャーで削除することもできます。なお、一部の端末では Camera、Screenshots、Downloads などのフォルダーを非表示にできない場合があります。</string>
+    <string name="faq_1_title">Calypsoギャラリーを端末のデフォルトのギャラリーにするにはどうすればよいですか？</string>
+    <string name="faq_1_text">まず、端末の「設定」の「アプリ」セクションで現在デフォルトに設定されているギャラリーを見つけ、「デフォルトで開く」などのボタンをタップして「デフォルト設定をクリア」を選択します。次回、画像や動画を開こうとした際にアプリ選択画面が表示されるので、そこでCalypsoギャラリーを選択してデフォルトのアプリに設定してください。</string>
+    <string name="faq_5_text">「除外」はCalypsoギャラリー内でのみフォルダーを表示しないようにするのに対し、「非表示」はシステム全体で機能し、他のギャラリーアプリからもフォルダーを隠します。これは指定したフォルダー内に空の「.nomedia」ファイルを作成することで動作し、任意のファイルマネージャーで削除することもできます。なお、一部の端末では Camera、Screenshots、Downloads などのフォルダーを非表示にできない場合があります。</string>
     <string name="create_virtual_album">仮想アルバムを作成</string>
     <string name="create_new_encrypted_virtual_album">新しい暗号化仮想アルバムを作成</string>
     <string name="new_virtual_album">新しいアルバム…</string>
@@ -516,8 +516,8 @@
     <string name="unhide_folder">再表示</string>
     <string name="about_title">Calypso Gallery について</string>
     <string name="about_version">バージョン %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery は、Fossify Gallery の独立して保守された非公式の個人フォークです。Fossify とは提携しておらず、Fossify によって推奨もされていません。</string>
-    <string name="about_modification_notice">この配布物は Fossify Gallery の改造版です。このフォークはアップストリームのコミット 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) から作成されており、フォーク固有のすべての変更は FORK_CHANGELOG.md に記載されています。</string>
+    <string name="about_fork_description">Calypso Gallery は、セキュリティを強化し独立して保守されている Fossify Gallery の個人フォークです。Fossify Gallery の元の作者および貢献者の皆様に感謝します。これは非公式プロジェクトであり、Fossify 組織との提携、推奨、サポートの関係にはありません。</string>
+    <string name="about_modification_notice">この配布物は Fossify Gallery v1.14.2 (2688360, 07-11-2026) の改造版です。フォーク固有のすべての変更は FORK_CHANGELOG.md に記載されています。</string>
     <string name="about_license_heading">ライセンス</string>
     <string name="about_gpl_notice" formatted="false">本プログラムはフリーソフトウェアです。フリーソフトウェア財団が公開する GNU General Public License（バージョン3）の条件に基づき、再配布および／または改変することができます。\n\n本プログラムは有用であることを願って配布されますが、無保証です。商品性および特定目的への適合性の黙示的保証を含む、いかなる保証もありません。詳細は GNU General Public License をご覧ください。\n\n本プログラムとともに GNU General Public License の写しを受け取っているはずです。受け取っていない場合は、下のライセンスの操作を実行するか、https://www.gnu.org/licenses/ にアクセスしてください。</string>
     <string name="about_read_gpl_license">GNU GPL v3 ライセンスを読む</string>
@@ -532,9 +532,6 @@
     <string name="about_faq">よくある質問</string>
     <string name="about_third_party_licenses">サードパーティのライセンス</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">フォークに関する通知</string>
-    <string name="fork_disclaimer_message">このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。</string>
-    <string name="fork_disclaimer_acknowledge">理解しました</string>
     <string name="argon2_profile_title">総当たり攻撃への耐性</string>
     <string name="brute_force_time_title">目標とする保管庫のロック解除時間</string>
     <string name="brute_force_time_hint">秒数（2.0–7.0）。アプリはこの端末を一度測定し、結果の KDF パラメーターを保管庫に保存します。実際のロック解除時間は他の端末では異なります。</string>

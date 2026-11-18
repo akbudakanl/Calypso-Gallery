@@ -250,7 +250,7 @@
     <string name="wallpaper">Tapeta</string>
     <string name="interval">Interval</string>
     <string name="faq_1_title">Jak mohu nastavit Calypso Gallery jako vÃ½chozÃ­ galerii zaÅ™Ã­zenÃ­?</string>
-    <string name="full_storage_permission_required">Galerie Fossify potÅ™ebuje plnÃ½ pÅ™Ã­stup ke zobrazenÃ­ vÅ¡ech vaÅ¡ich fotek a videÃ­. PÅ™ejdÄ›te do NastavenÃ­ &gt; OprÃ¡vnÄ›nÃ­ &gt; Fotky a videa &gt; Povolit vÅ¡e.</string>
+    <string name="full_storage_permission_required">Galerie Calypso potÅ™ebuje plnÃ½ pÅ™Ã­stup ke zobrazenÃ­ vÅ¡ech vaÅ¡ich fotek a videÃ­. PÅ™ejdÄ›te do NastavenÃ­ &gt; OprÃ¡vnÄ›nÃ­ &gt; Fotky a videa &gt; Povolit vÅ¡e.</string>
     <string name="playback_speed">Rychlost pÅ™ehrÃ¡vÃ¡nÃ­</string>
     <string name="failed_to_load_media">NepodaÅ™ilo se naÄÃ­st mÃ©dia.</string>
     <string name="media_exceeds_device_capabilities">MÃ©dia pÅ™esahujÃ­ schopnosti zaÅ™Ã­zenÃ­.</string>
