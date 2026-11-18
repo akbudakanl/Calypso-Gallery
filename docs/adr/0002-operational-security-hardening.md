@@ -35,7 +35,10 @@ ADR 0001 defines the canonical cryptographic format. This ADR covers the *operat
 
 ## 3. Decision — Argon2id profiles and unlock delay
 
-### 3.1 KDF profiles (advanced setting)
+> **Superseded by [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md) (2026-11-18).**
+> ADR 0004 raised the safe RFC 9106 floor to `64 MiB / t=3 / p=2`, removed the `32 MiB` low-end option, introduced a tiered `64 MiB -> 128 MiB` memory ceiling with `1.0 s` sweet-spot device calibration (`T_std_64 .. 10.0 s` slider in `0.1 s` steps, plus `Default` / `High` presets) in `BruteForceDialog` and `CryptoManagerCredentials`, and replaced artificial UI sleep delays with real time-calibrated Argon2id KDF cost so both online and offline attacks share the configured cost. Historical section kept below for context:
+
+### 3.1 KDF profiles (advanced setting) — historical
 
 Keep the current default **64 MiB / t=3 / p=2**. Expose **named profiles**, not raw sliders:
 
@@ -159,9 +162,9 @@ This is the single foreground-operation registry shared with the resumable-opera
 
 ## 8. Implementation checklist and tests
 
-1. RNG: audit all `SecureRandom` / `Math.random()` usages; add a unit test that no test vector uses a fixed RNG seed in production paths.
-2. KDF profiles: Settings UI with three profiles, enforced minimums, "(not recommended)" label and the advisory note; test that out-of-range values are rejected and that changing a profile preserves keyring/headers/biometric blob.
-3. Unlock delay: setting (1–10 s), equal success/failure delay, cancellable; test timing and cancellation.
+1. **[DONE — JVM verified]** RNG (§2): all cryptographic randomness uses unseeded `java.security.SecureRandom`; zero `setSeed()` / `Math.random()` / non-crypto `Random` usage in crypto modules (`VaultLockPolicyTest.productionCryptoUsesUnseededSecureRandomOnly`).
+2. **[DONE — superseded & implemented by [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md)]** KDF profiles (§3.1): `BruteForceDialog` exposes `Default` (`64 MiB / t=3 / p=2`) and `High` (`128 MiB`) presets plus device-calibrated `1.0 s` sweet-spot target-time slider (`T_std_64 .. 10.0 s`, `128 MiB` heap ceiling, `3..100` iterations, background-only derivation, `rewrapVaultHeaderWithCurrentKdf` preserving keyring/biometric blob). Verified in `VaultHeaderFormatTest`.
+3. **[SUPERSEDED by [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md)]** Unlock delay (§3.2): instead of an artificial coroutine `delay()`, `BruteForceDialog` applies real time-calibrated Argon2id work (`T_std_64 .. 10.0 s`) equally to unlock attempts so offline attacks face the same cost.
 4. **[DONE — code & JVM regression verified]** Trace audit (§4): encrypted Glide loads disable disk + memory caching (`applyEncryptedCachePolicy`, `MyGlideImageDecoder`, `Context`, `PhotoFragment`, `VideoFragment`, `PortraitPhotosAdapter`, `MyWidgetProvider`, `MediaActivity`, `EditActivity`, `Activity`), `clearAppImageCaches()` wipes cache dirs on lock, `allowBackup="false"` / `fullBackupContent="false"` / `data_extraction_rules.xml` exclude all backup domains, `dialog_vault_security.xml` sets `inputType="textPassword|textNoSuggestions"`, `imeOptions="actionDone|flagNoPersonalizedLearning"`, and `importantForAutofill="no"`, `ViewPagerActivity` blocks vault clipboard copies and `clearKeys(context)` wipes flagged clipboard, `saveRotatedImageToFile` securely wipes plaintext temp files in vault context, and `MediaReadPatternProbe` logs numeric read counters only (no paths/keys). Regression tests are in `VaultLockPolicyTest`; device-level Recents/IME smoke tests remain manual (§9).
 5. **[DONE — JVM verified]** Zeroization (§5): `withEphemeralVaultKey`, `CryptoManager.clearKeys()`, `CharArray` password boundary across UI and `CryptoManagerCredentials`, biometric buffer zeroization, plus background/screen-off immediate RAM key wipe with 30-minute resumable UI window behind `VaultLockActivity` (deferred only while a registered foreground operation is active). Verified in `VaultLockPolicyTest`.
 6. **[DONE — JVM verified]** Durable wipe (§6): foreground service + wake lock (§7), idempotent write-ahead `pending_wipe_journal.txt` (`appendPendingWipe` with `fd.sync()` before overwrite, `removePendingWipe` + journal wipe only after `delete()` + parent `syncDir()`), `1 MiB` `SecureRandom` overwrite + `FileChannel.force(true)` + `truncate(0)` + `FileChannel.force(true)` + parent `fsync`, and `processPendingWipeJournal` retry on startup/boot. Verified in `VaultLockPolicyTest`; on-device power-loss / hardware wear-leveling smoke tests remain manual (§9).
