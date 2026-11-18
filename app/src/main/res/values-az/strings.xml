@@ -457,6 +457,7 @@
     <string name="access_storage_prompt">Zəhmət olmasa, tətbiqimizə bütün fayllarınıza giriş icazəsi verin, bu olmadan düzgün işləməyə bilər.</string>
     <string name="encrypt_info_title">Şifrləmə necə işləyir</string>
     <string name="encrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni albom yaratmağı və ya mövcud şifrələnmiş alboma birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən mənbə faylların silinməsini və ya mənbə qovluğunda saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
+    <string name="encrypt_files_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.</string>
     <string name="decrypt_info_title">Şifrə açma necə işləyir</string>
     <string name="decrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnmiş albom və ya faylın şifrəsi açıldıqda, seçilmiş təyinat qovluğuna orijinal adı və formatı ilə bərpa olunur və şifrəli seyfdən silinir.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni qovluq yaratmağı və ya mövcud təyinat qovluğuna birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən şifrələnmiş nüsxələrin seyfdən silinməsini və ya saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
     <string name="vault_location">Seyf yeri</string>
@@ -580,7 +581,6 @@
     <string name="about_license_heading">Lisenziya</string>
     <string name="about_gpl_notice" formatted="false">Bu proqram sərbəst proqramdır: siz onu Free Software Foundation tərəfindən nəşr olunan GNU General Public License-ın (Lisenziyanın 3-cü versiyası) şərtlərinə əsasən yenidən paylaya və/və ya dəyişdirə bilərsiniz.\n\nBu proqram faydalı olacağı ümidi ilə paylanır, lakin HEÇ BİR ZƏMANƏT YOXDUR; hətta SATILA BİLƏRLİK və ya MÜƏYYƏN MƏQSƏDƏ YARARLILIQ barədə dolayı zəmanət də verilmir. Ətraflı məlumat üçün GNU General Public License-a baxın.\n\nBu proqramla birlikdə GNU General Public License-ın surətini almalısınız. Əgər almamısınızsa, aşağıdakı lisenziya əməliyyatından istifadə edin və ya https://www.gnu.org/licenses/ ünvanına baş çəkin.</string>
     <string name="about_read_gpl_license">GNU GPL v3 lisenziyasını oxu</string>
-    <string name="about_read_tink_license">Tink Apache 2.0 lisenziyasını və müəlliflik qeydini oxu</string>
     <string name="about_source_heading">Mənbə kodu</string>
     <string name="about_corresponding_source_notice">Bu fork-un tam müvafiq mənbə kodu fork deposunda saxlanılır. Etiketli buraxılışlarda uyğun mənbə arxivi də mövcuddur. Depoda layihəni yoxlamaq və yenidən qurmaq üçün tələb olunan qurma skriptləri, asılılıq bəyannamələri və tam fork tarixçəsi var.</string>
     <string name="about_fork_source">Fork mənbə kodu və müvafiq mənbə</string>
@@ -592,7 +592,6 @@
     <string name="about_faq">Tez-tez verilən suallar</string>
     <string name="about_third_party_licenses">Üçüncü tərəf lisenziyaları</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink lisenziyası və müəlliflik qeydi</string>
     <string name="fork_disclaimer_title">Fork bildirimi</string>
     <string name="fork_disclaimer_message">Bu tətbiq Fossify komandası tərəfindən hazırlanmamışdır. Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi forkudur; orijinal tərtibatçı yalnız müəlliflik qeydi məqsədilə göstərilir. Fossify ilə heç bir əlaqəsi yoxdur, o tərəfindən dəstəklənmir və ya dəstək verilmir.\n\nDavam edərək bu bildirimi qəbul etdiyinizi təsdiq edirsiniz. Fork-a xas dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur.</string>
     <string name="fork_disclaimer_acknowledge">Başa düşdüm</string>
@@ -610,4 +609,16 @@
     <string name="argon2_profile_high">Yüksək təhlükəsizlik</string>
     <string name="argon2_profile_hint">Nə etdiyinizi bilmirsinizsə, susmaya görə parametri saxlamaq tövsiyə olunur. Bu, yalnız yeni yaradılan seyflərə və parol dəyişikliklərinə təsir edir.</string>
     <string name="argon2_profile_current">Cari: %s</string>
+
+    <string name="color_customization">Görünüş və hiss</string>
+    <string name="application_settings">Tətbiq</string>
+    <string name="video_playback_settings">Video oxutma</string>
+    <string name="thumbnails_and_scrolling_settings">Miniatürlər və sürüşdürmə</string>
+    <string name="media_viewer_settings">Media görüntüləyicisi</string>
+    <string name="security_and_vault_settings">Təhlükəsizlik və şifrəli seyf</string>
+    <string name="migrating">Köçürmə</string>
+    <string name="font_system_default">Sistem (susmaya görə)</string>
+    <string name="font_monospace">Monospace</string>
+    <string name="app_font">Tətbiq şrifti</string>
+    <string name="select_font_file">Şrift faylını seçin…</string>
 </resources>

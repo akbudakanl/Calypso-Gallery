@@ -395,6 +395,7 @@
     <string name="auto_backup_prompt_message">¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto garantizará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento.</string>
     <string name="encrypt_info_title">Cómo funciona el cifrado</string>
     <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos.</string>
+    <string name="encrypt_files_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.</string>
     <string name="decrypt_info_title">Cómo funciona el descifrado</string>
     <string name="decrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se descifra un álbum o archivo cifrado, se restaura con su nombre y formato originales en la carpeta de destino seleccionada y se elimina de la bóveda cifrada.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear una carpeta nueva como Álbum(1) o fusionarla con la carpeta de destino existente (configurable en Configuración).\n• Al fusionar, puedes elegir si las copias cifradas verificadas como 100% idénticas bit a bit al destino se eliminan de la bóveda o se conservan.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos.</string>
     <string name="vault_location">Ubicación de la bóveda</string>
@@ -518,7 +519,6 @@
     <string name="about_license_heading">Licencia</string>
     <string name="about_gpl_notice" formatted="false">Este programa es software libre: puedes redistribuirlo y/o modificarlo según los términos de la GNU General Public License, tal como la publica la Free Software Foundation, versión 3 de la licencia.\n\nEste programa se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA; incluso sin la garantía implícita de COMERCIALIZACIÓN o de APTITUD PARA UN PROPÓSITO PARTICULAR. Consulta la GNU General Public License para obtener más detalles.\n\nDeberías haber recibido una copia de la GNU General Public License junto con este programa. Si no es así, usa la acción de licencia a continuación o visita https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Leer la licencia GNU GPL v3</string>
-    <string name="about_read_tink_license">Leer la licencia Tink Apache 2.0 y sus atribuciones</string>
     <string name="about_source_heading">Código fuente</string>
     <string name="about_corresponding_source_notice">El código fuente completo y correspondiente de este fork se mantiene en el repositorio del fork. Las versiones etiquetadas también cuentan con un archivo de código fuente correspondiente. El repositorio contiene los scripts de compilación, las declaraciones de dependencias y el historial completo del fork necesarios para inspeccionar y recompilar el proyecto.</string>
     <string name="about_fork_source">Código fuente del fork y código fuente correspondiente</string>
@@ -530,7 +530,6 @@
     <string name="about_faq">Preguntas frecuentes</string>
     <string name="about_third_party_licenses">Licencias de terceros</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Licencia y atribuciones de Tink</string>
     <string name="fork_disclaimer_title">Aviso sobre el fork</string>
     <string name="fork_disclaimer_message">Esta aplicación no está desarrollada por el equipo de Fossify. Calypso Gallery es un fork no oficial, mantenido de forma independiente, de Fossify Gallery; el desarrollador original se menciona únicamente para fines de atribución. No está afiliado a Fossify, ni cuenta con su respaldo ni su soporte.\n\nAl continuar, reconoces haber leído este aviso. Los cambios propios del fork están documentados en FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">Entiendo</string>
@@ -548,4 +547,12 @@
     <string name="argon2_profile_high">Alta seguridad</string>
     <string name="argon2_profile_hint">Si no sabes lo que estás haciendo, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña.</string>
     <string name="argon2_profile_current">Actual: %s</string>
+
+    <string name="application_settings">Aplicación</string>
+    <string name="video_playback_settings">Reproducción de video</string>
+    <string name="thumbnails_and_scrolling_settings">Miniaturas y desplazamiento</string>
+    <string name="media_viewer_settings">Visor de medios</string>
+    <string name="security_and_vault_settings">Seguridad y bóveda cifrada</string>
+    <string name="font_system_default">Predeterminado del sistema</string>
+    <string name="font_monospace">Monospace</string>
 </resources>

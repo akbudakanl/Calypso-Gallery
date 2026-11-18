@@ -759,3 +759,18 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 571 | `argon2_profile_high` | High security | 高いセキュリティ |
 | 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。 |
 | 573 | `argon2_profile_current` | Current: %s | 現在: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-ja/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Japanese (`values-ja/strings.xml`) |
+|--:|---|---|---|
+| 1 | `application_settings` | Application | アプリケーション |
+| 2 | `video_playback_settings` | Video playback | 動画再生 |
+| 3 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | サムネイルとスクロール |
+| 4 | `media_viewer_settings` | Media viewer | メディアビューアー |
+| 5 | `security_and_vault_settings` | Security & encrypted vault | セキュリティと暗号化された保管庫 |
+| 6 | `font_system_default` | System default | システムのデフォルト |
+| 7 | `font_monospace` | Monospace | Monospace |
+| 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。 |

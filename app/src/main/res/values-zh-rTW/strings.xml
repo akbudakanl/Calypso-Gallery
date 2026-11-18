@@ -387,6 +387,7 @@
     <string name="auto_backup_prompt_message">是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。</string>
     <string name="encrypt_info_title">加密運作方式</string>
     <string name="encrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
+    <string name="encrypt_files_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。</string>
     <string name="decrypt_info_title">解密運作方式</string>
     <string name="decrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將加密相簿或檔案解密時，會以原始名稱與格式還原至所選的目的地資料夾，並從加密保險箱中移除。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
     <string name="vault_location">保險箱位置</string>
@@ -510,7 +511,6 @@
     <string name="about_license_heading">授權條款</string>
     <string name="about_gpl_notice" formatted="false">本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。</string>
     <string name="about_read_gpl_license">閱讀 GNU GPL v3 授權條款</string>
-    <string name="about_read_tink_license">閱讀 Tink Apache 2.0 授權條款與歸屬聲明</string>
     <string name="about_source_heading">原始碼</string>
     <string name="about_corresponding_source_notice">本分支完整的對應原始碼保存在分支儲存庫中。已標記的發行版本也提供相對應的原始碼封存檔。該儲存庫包含檢視與重新建置專案所需的建置指令碼、相依性宣告及完整的分支歷史。</string>
     <string name="about_fork_source">分支原始碼與對應原始碼</string>
@@ -522,7 +522,6 @@
     <string name="about_faq">常見問題</string>
     <string name="about_third_party_licenses">第三方授權條款</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink 授權與歸屬聲明</string>
     <string name="fork_disclaimer_title">分支聲明</string>
     <string name="fork_disclaimer_message">本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。</string>
     <string name="fork_disclaimer_acknowledge">我瞭解</string>
@@ -540,4 +539,12 @@
     <string name="argon2_profile_high">高安全性</string>
     <string name="argon2_profile_hint">若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。</string>
     <string name="argon2_profile_current">目前：%s</string>
+
+    <string name="application_settings">應用程式</string>
+    <string name="video_playback_settings">影片播放</string>
+    <string name="thumbnails_and_scrolling_settings">縮圖與捲動</string>
+    <string name="media_viewer_settings">媒體檢視器</string>
+    <string name="security_and_vault_settings">安全性與加密保險箱</string>
+    <string name="font_system_default">系統預設</string>
+    <string name="font_monospace">等寬</string>
 </resources>

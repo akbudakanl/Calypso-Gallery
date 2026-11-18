@@ -356,6 +356,7 @@
     <string name="confirm_encrypt_files_to_vault">The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue?</string>
     <string name="encrypt_info_title">How Encryption Works</string>
     <string name="encrypt_info_message" formatted="false">Folder &amp; File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting.</string>
+    <string name="encrypt_files_info_message" formatted="false">Folder &amp; File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.</string>
 
     <!-- Virtual albums -->
     <string name="create_virtual_album">Create virtual album</string>
@@ -564,7 +565,6 @@
     <string name="about_license_heading">License</string>
     <string name="about_gpl_notice" formatted="false">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Read the GNU GPL v3 license</string>
-    <string name="about_read_tink_license">Read the Tink Apache 2.0 license and attribution</string>
     <string name="about_source_heading">Source code</string>
     <string name="about_corresponding_source_notice">The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project.</string>
     <string name="about_fork_source">Fork source code and corresponding source</string>
@@ -576,7 +576,35 @@
     <string name="about_faq">Frequently asked questions</string>
     <string name="about_third_party_licenses">Third-party licenses</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink license and attribution</string>
+
+    <!-- Third-party licenses -->
+    <string name="license_tink_title">Google Tink (streaming AEAD and HKDF cryptography)</string>
+    <string name="license_tink_url" translatable="false">https://github.com/tink-crypto/tink-java</string>
+    <string name="license_tink_text" translatable="false">Copyright 2022 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id key derivation)</string>
+    <string name="license_bouncycastle_url" translatable="false">https://www.bouncycastle.org/</string>
+    <string name="license_bouncycastle_text" translatable="false">Copyright (c) 2000 - 2024 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
+
+    <string name="license_webpdecoder_title">GlideWebpDecoder (animated WebP decoding)</string>
+    <string name="license_webpdecoder_url" translatable="false">https://github.com/zjupure/GlideWebpDecoder</string>
+    <string name="license_webpdecoder_text" translatable="false">Copyright 2018 zjupure\n\nLicensed under the Apache License, Version 2.0 and the Simplified BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL support)</string>
+    <string name="license_jxl_coder_url" translatable="false">https://github.com/awxkee/jxl-coder-glide</string>
+    <string name="license_jxl_coder_text" translatable="false">Copyright 2023 Radzivon Bartoshyk\n\nLicensed under the Apache License, Version 2.0 and the 3-Clause BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_androidsvg_title">AndroidSVG (SVG rendering)</string>
+    <string name="license_androidsvg_url" translatable="false">https://github.com/BigBadaboom/androidsvg</string>
+    <string name="license_androidsvg_text" translatable="false">Copyright 2013-2020 Paul LeBeau\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_exif_extended_title">Android-Exif-Extended (EXIF metadata handling)</string>
+    <string name="license_exif_extended_url" translatable="false">https://github.com/sephiroth74/Android-Exif-Extended</string>
+    <string name="license_exif_extended_text" translatable="false">Copyright 2013 Alessandro Crugnola\n\nReleased into the Public Domain, based on the jhead library and the Android Open Source Project ExifInterface.\n\nIncludes Apache Commons Lang and Apache Commons IO, Copyright The Apache Software Foundation, licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).</string>
+
+    <string name="license_material_icons_title">Material Design Icons (UI icons)</string>
+    <string name="license_material_icons_url" translatable="false">https://github.com/google/material-design-icons</string>
+    <string name="license_material_icons_text" translatable="false">Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
 
     <!-- Fork disclaimer, shown once before any runtime permission is requested -->
     <string name="fork_disclaimer_title">Fork notice</string>

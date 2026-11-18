@@ -768,3 +768,24 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 574 | `argon2_profile_high` | High security | Høg tryggleik |
 | 575 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Viss du ikkje veit kva du gjer, tilrår vi å behalda standardinnstillinga. Dette påverkar berre nye kvelv og passordendringar. |
 | 576 | `argon2_profile_current` | Current: %s | Gjeldande: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-nn/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Norwegian Nynorsk (`values-nn/strings.xml`) |
+|--:|---|---|---|
+| 1 | `color_customization` | Look & feel | Utsjånad og kjensle |
+| 2 | `application_settings` | Application | Applikasjon |
+| 3 | `video_playback_settings` | Video playback | Videoavspeling |
+| 4 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Minibilete og rulling |
+| 5 | `media_viewer_settings` | Media viewer | Medievisar |
+| 6 | `security_and_vault_settings` | Security & encrypted vault | Tryggleik og kryptert kvelv |
+| 7 | `file_operations` | File operations | Filoperasjonar |
+| 8 | `recycle_bin` | Recycle bin | Papirkorg |
+| 9 | `migrating` | Migrating | Overføring |
+| 10 | `font_system_default` | System default | Systemstandard |
+| 11 | `font_monospace` | Monospace | Monospace |
+| 12 | `app_font` | App font | App-skrifttype |
+| 13 | `select_font_file` | Select font file… | Vel skrifttypefil… |
+| 14 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen. |

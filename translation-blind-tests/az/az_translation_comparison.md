@@ -752,3 +752,22 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 573 | `argon2_profile_high` | High security | Yüksək təhlükəsizlik |
 | 574 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Nə etdiyinizi bilmirsinizsə, susmaya görə parametri saxlamaq tövsiyə olunur. Bu, yalnız yeni yaradılan seyflərə və parol dəyişikliklərinə təsir edir. |
 | 575 | `argon2_profile_current` | Current: %s | Cari: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-az/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Azerbaijani (`values-az/strings.xml`) |
+|--:|---|---|---|
+| 1 | `color_customization` | Look & feel | Görünüş və hiss |
+| 2 | `application_settings` | Application | Tətbiq |
+| 3 | `video_playback_settings` | Video playback | Video oxutma |
+| 4 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Miniatürlər və sürüşdürmə |
+| 5 | `media_viewer_settings` | Media viewer | Media görüntüləyicisi |
+| 6 | `security_and_vault_settings` | Security & encrypted vault | Təhlükəsizlik və şifrəli seyf |
+| 7 | `migrating` | Migrating | Köçürmə |
+| 8 | `font_system_default` | System default | Sistem (susmaya görə) |
+| 9 | `font_monospace` | Monospace | Monospace |
+| 10 | `app_font` | App font | Tətbiq şrifti |
+| 11 | `select_font_file` | Select font file… | Şrift faylını seçin… |
+| 12 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz. |

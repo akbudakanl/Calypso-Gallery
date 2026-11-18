@@ -389,6 +389,7 @@
     <string name="auto_backup_prompt_message">Möchtest du, dass deine Favoriten und virtuellen Alben regelmäßig außerhalb des App-Speichers im Systemspeicher gesichert werden? So gehen deine Favoritenliste und virtuellen Alben nicht verloren, wenn du die App deinstallierst. Du kannst jederzeit in den App-Einstellungen manuell eine Sicherung erstellen.</string>
     <string name="encrypt_info_title">So funktioniert die Verschlüsselung</string>
     <string name="encrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neues Album wie Album(1) erstellt oder in das vorhandene verschlüsselte Album zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob Quelldateien, die zu 100% bit-identisch mit dem Ziel sind, gelöscht oder im Quellordner behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
+    <string name="encrypt_files_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.</string>
     <string name="decrypt_info_title">So funktioniert die Entschlüsselung</string>
     <string name="decrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein verschlüsseltes Album oder eine verschlüsselte Datei entschlüsselt wird, wird es bzw. sie mit dem ursprünglichen Namen und Format im ausgewählten Zielordner wiederhergestellt und aus dem verschlüsselten Tresor entfernt.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neuer Ordner wie Album(1) erstellt oder in den vorhandenen Zielordner zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob verschlüsselte Kopien, die zu 100% bit-identisch mit dem Ziel sind, aus dem Tresor entfernt oder behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
     <string name="vault_location">Tresor-Speicherort</string>
@@ -512,7 +513,6 @@
     <string name="about_license_heading">Lizenz</string>
     <string name="about_gpl_notice" formatted="false">Dieses Programm ist freie Software: Sie können es unter den Bedingungen der GNU General Public License, wie von der Free Software Foundation veröffentlicht, in Version 3 der Lizenz weitergeben und/oder ändern.\n\nDieses Programm wird in der Hoffnung verbreitet, dass es nützlich sein wird, aber OHNE JEDE GEWÄHRLEISTUNG; sogar ohne die implizite Gewährleistung der MARKTGÄNGIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK. Weitere Einzelheiten finden Sie in der GNU General Public License.\n\nSie sollten eine Kopie der GNU General Public License zusammen mit diesem Programm erhalten haben. Falls nicht, nutzen Sie die Lizenzfunktion unten oder besuchen Sie https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">GNU-GPL-v3-Lizenz lesen</string>
-    <string name="about_read_tink_license">Tink-Apache-2.0-Lizenz und Urheberrechtshinweise lesen</string>
     <string name="about_source_heading">Quellcode</string>
     <string name="about_corresponding_source_notice">Der vollständige entsprechende Quellcode für diesen Fork befindet sich im Fork-Repository. Versionierte Veröffentlichungen haben zudem ein passendes Quellcode-Archiv. Das Repository enthält die Build-Skripte, die Abhängigkeitsdeklarationen und die vollständige Fork-Historie, die zum Prüfen und Nachbauen des Projekts erforderlich sind.</string>
     <string name="about_fork_source">Fork-Quellcode und entsprechender Quellcode</string>
@@ -524,7 +524,6 @@
     <string name="about_faq">Häufig gestellte Fragen</string>
     <string name="about_third_party_licenses">Lizenzen von Drittanbietern</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink-Lizenz und Urheberrechtshinweise</string>
     <string name="fork_disclaimer_title">Fork-Hinweis</string>
     <string name="fork_disclaimer_message">Diese Anwendung wird nicht vom Fossify-Team entwickelt. Calypso Gallery ist ein unabhängig gepflegter, inoffizieller Fork von Fossify Gallery; der ursprüngliche Entwickler wird ausschließlich zur Urheberzuordnung genannt. Er steht in keiner Verbindung zu Fossify, wird nicht von Fossify unterstützt und erhält auch keinen Support von Fossify.\n\nMit dem Fortfahren bestätigst du diesen Hinweis. Forkspezifische Änderungen sind in FORK_CHANGELOG.md dokumentiert.</string>
     <string name="fork_disclaimer_acknowledge">Ich verstehe</string>
@@ -542,4 +541,12 @@
     <string name="argon2_profile_high">Hohe Sicherheit</string>
     <string name="argon2_profile_hint">Wenn du nicht weißt, was du tust, wird empfohlen, die Standardeinstellung beizubehalten. Dies wirkt sich nur auf neu erstellte Tresore und Passwortänderungen aus.</string>
     <string name="argon2_profile_current">Aktuell: %s</string>
+
+    <string name="application_settings">Anwendung</string>
+    <string name="video_playback_settings">Videowiedergabe</string>
+    <string name="thumbnails_and_scrolling_settings">Vorschaubilder &amp; Scrollen</string>
+    <string name="media_viewer_settings">Medienbetrachter</string>
+    <string name="security_and_vault_settings">Sicherheit &amp; verschlüsselter Tresor</string>
+    <string name="font_system_default">Systemvorgabe</string>
+    <string name="font_monospace">Monospace</string>
 </resources>
