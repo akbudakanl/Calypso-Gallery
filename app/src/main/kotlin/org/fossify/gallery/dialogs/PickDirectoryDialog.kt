@@ -150,6 +150,7 @@ class PickDirectoryDialog(
     private fun MySearchMenu.updateSearchViewUi() {
         requireToolbar().beInvisible()
         updateColors()
+        applyCalypsoSearchBarStyle()
         setBackgroundColor(Color.TRANSPARENT)
         searchBarContainer.setBackgroundColor(Color.TRANSPARENT)
     }

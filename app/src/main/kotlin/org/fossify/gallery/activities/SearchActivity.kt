@@ -111,6 +111,7 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun updateMenuColors() {
         binding.searchMenu.updateColors()
+        binding.searchMenu.applyCalypsoSearchBarStyle()
     }
 
     private fun textChanged(text: String) {
