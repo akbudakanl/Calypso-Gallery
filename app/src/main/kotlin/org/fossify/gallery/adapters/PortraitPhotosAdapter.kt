@@ -64,6 +64,7 @@ class PortraitPhotosAdapter(val context: Context, val photos: ArrayList<String>,
                 val options = RequestOptions()
                     .signature(ObjectKey(photo.getFileKey()))
                     .diskCacheStrategy(diskCache)
+                    .skipMemoryCache(isEncrypted)
                     .centerCrop()
 
                 Glide.with(context)

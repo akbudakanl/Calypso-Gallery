@@ -97,24 +97,25 @@ unwrap/derive key → try { operation(key) } finally { key.fill(0); clearAllFile
 
 ### 5.2 Centralized wipe
 
-`CryptoManager.clearKeys()` wipes:
+`CryptoManager.clearKeys(context)` wipes:
 
 - `unlockedMasterKey`,
 - every `EncryptedFileMetadata.fileKey` in `metadataCache`, then clears the cache,
-- all transient KEK/DEK/VMK/PDK byte arrays held in manager state,
-- biometric bundle byte arrays after unwrapping,
-- any clipboard content holding vault data.
+- `unlockedKek` and decoded folder/name caches,
+- biometric bundle byte arrays after wrapping/unwrapping,
+- any clipboard content flagged as vault-derived.
 
 ### 5.3 Strings are not zeroable
 
-Passwords must be handled as `CharArray` from the UI boundary; `unlockWithSecret(secret: String)` is changed to accept `CharArray`. Java/Kotlin `String` is immutable and interned — a `String`-based password cannot be reliably erased. EditText content is converted to `CharArray`, used, then filled with `'\u0000'`.
+Passwords are handled as `CharArray` across the UI authentication boundary (`VaultAuthInputHelper`, `VaultSecurityDialog`, `VaultLockActivity`) into `CryptoManager.unlockWithSecret(context, CharArray)`, `setupOrUpdateCredentials`, `deriveKeyArgon2id`, and `withEphemeralVaultKey`. Java/Kotlin `String` is immutable and interned — a `String`-based password cannot be reliably erased. PIN buffers use fixed `CharArray(16)` storage and password inputs are copied directly via `Editable.getChars(...)` and filled with `'\u0000'` immediately after use.
 
 ### 5.4 Triggers
 
 - Vault closed / user "stop showing hidden items" → `clearKeys()`.
-- App backgrounded or screen turned off → `clearKeys()` **immediately** (replacing the current 30-minute timeout policy), **except** while a registered foreground operation is active (§7).
+- App backgrounded or screen turned off → `clearKeys()` **immediately** (wiping RAM keys and Glide image caches right away), **except** while a registered foreground operation is active (§7). At the same time, if the user was inside a vault viewing session, the UI activity stack remains resumable behind the isolated `VaultLockActivity` re-authentication gate for the 30-minute `VAULT_AUTO_LOCK_TIMEOUT_MS` window so returning from background or screen-off resumes directly on the exact photo/video after re-entering credentials; once that 30-minute window expires, the UI session expires as well (`lockNow()`).
+- Backgrounded registered operation finishes → `VaultSessionManager.onForegroundOperationEnded()` triggers `clearKeys()` immediately while keeping re-auth armed for the UI window.
 - Any ephemeral operation → wipe in `finally` regardless of success/failure.
-- JVM caveat: `fill(0)` is best-effort (stack/register copies, GC); document in DOCS.md.
+- JVM caveat: `fill(0)` / `fill('\u0000')` is best-effort (stack/register copies, GC); document in DOCS.md.
 
 ---
 
@@ -148,8 +149,8 @@ The background-lock rule ("on background / screen off → lock vault and wipe ke
 Behaviour:
 
 - While such an operation is registered, keys stay in RAM across backgrounding / screen-off; the app shows a persistent notification with progress where meaningful.
-- Returning to the app continues the operation **without a password prompt**.
-- On completion (or cancellation), the operation is unregistered, `CryptoManager.clearKeys()` runs, and the user must enter the password again to use the vault.
+- Returning to the app while the operation is still running continues the operation **without a password prompt** (unless `VaultLockActivity` was already armed for a viewing session).
+- On completion (or cancellation) while the app is in the background, `clearKeys()` runs immediately (`VaultSessionManager.onForegroundOperationEnded`) and `VaultLockActivity` requires re-authentication before resuming any vault viewing session.
 - `FLAG_KEEP_SCREEN_ON` may be set during the operation (hint, not guarantee).
 - Two concurrent foreground operations are serialized through a single owner token to avoid two independent wipe/clear decisions racing.
 - If the process is killed, the durable operation journals (ADR 0003) and the secure-wipe journal (§6) allow resumption after re-authentication.
@@ -163,10 +164,10 @@ This is the single foreground-operation registry shared with the resumable-opera
 1. RNG: audit all `SecureRandom` / `Math.random()` usages; add a unit test that no test vector uses a fixed RNG seed in production paths.
 2. KDF profiles: Settings UI with three profiles, enforced minimums, "(not recommended)" label and the advisory note; test that out-of-range values are rejected and that changing a profile preserves keyring/headers/biometric blob.
 3. Unlock delay: setting (1–10 s), equal success/failure delay, cancellable; test timing and cancellation.
-4. Trace audit: perform every row in §4; add regression tests for cache-disable and backup exclusion.
-5. Zeroization: `withEphemeralVaultKey`, `CryptoManager.clearKeys()`, CharArray password boundary; tests assert arrays are zero after each path and that backgrounding triggers a wipe except during a registered operation.
-6. Durable wipe: foreground service, wake lock, journal, resume; fault-injection tests (process kill, screen off, USB removal) verify resume and no plaintext leftovers.
-7. Foreground operation registry: single owner, registration/unregistration, notification, and the "re-auth after completion" rule; tests cover all operation types listed in §7.
+4. **[DONE — code & JVM regression verified]** Trace audit (§4): encrypted Glide loads disable disk + memory caching (`applyEncryptedCachePolicy`, `MyGlideImageDecoder`, `Context`, `PhotoFragment`, `VideoFragment`, `PortraitPhotosAdapter`, `MyWidgetProvider`, `MediaActivity`, `EditActivity`, `Activity`), `clearAppImageCaches()` wipes cache dirs on lock, `allowBackup="false"` / `fullBackupContent="false"` / `data_extraction_rules.xml` exclude all backup domains, `dialog_vault_security.xml` sets `inputType="textPassword|textNoSuggestions"`, `imeOptions="actionDone|flagNoPersonalizedLearning"`, and `importantForAutofill="no"`, `ViewPagerActivity` blocks vault clipboard copies and `clearKeys(context)` wipes flagged clipboard, `saveRotatedImageToFile` securely wipes plaintext temp files in vault context, and `MediaReadPatternProbe` logs numeric read counters only (no paths/keys). Regression tests are in `VaultLockPolicyTest`; device-level Recents/IME smoke tests remain manual (§9).
+5. **[DONE — JVM verified]** Zeroization (§5): `withEphemeralVaultKey`, `CryptoManager.clearKeys()`, `CharArray` password boundary across UI and `CryptoManagerCredentials`, biometric buffer zeroization, plus background/screen-off immediate RAM key wipe with 30-minute resumable UI window behind `VaultLockActivity` (deferred only while a registered foreground operation is active). Verified in `VaultLockPolicyTest`.
+6. **[PARTIAL]** Durable wipe (§6): `1 MiB` `SecureRandom` overwrite + `FileChannel.force(true)` + `truncate(0)` + parent `fsync` + `pending_wipe_journal.txt` retry are implemented; byte-offset `.wipe_progress` chunk-level resume and foreground-registry coverage for standalone delete/wipe callers remain pending.
+7. **[PARTIAL]** Foreground operation registry (§7): single owner token, re-entrancy, notification + wake lock, and background completion `clearKeys()` work across copy/move, album/file encrypt/decrypt, resume, and skipped-crypto wipe; standalone delete, external-vault sync (`CryptoManagerExportSync`), `encryptStreamToDirectory`, and `FLAG_KEEP_SCREEN_ON` remain to be wired.
 
 ---
 

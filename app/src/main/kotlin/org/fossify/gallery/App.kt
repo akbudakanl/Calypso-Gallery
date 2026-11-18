@@ -85,7 +85,7 @@ class App : FossifyApp() {
                 trackedActivities.add(activity)
                 startedActivities++
                 if (startedActivities == 1) {
-                    // Back in the foreground: wipe only if the 30 minute background deadline has passed.
+                    // Back in the foreground: expire session only if the 30 minute background deadline passed.
                     VaultSessionManager.onAppForegrounded(this@App)
                     RandomOrderManager.onAppForegrounded()
                 }
@@ -105,8 +105,8 @@ class App : FossifyApp() {
                 if (startedActivities <= 0) {
                     startedActivities = 0
                     if (!activity.isChangingConfigurations) {
-                        // No immediate wipe on onStop / screen off / UI hidden any more. Only remember the last
-                        // active time; the vault is wiped after VAULT_AUTO_LOCK_TIMEOUT_MS in the background.
+                        // Immediately wipe RAM keys (unless a foreground operation is running) while keeping
+                        // the UI session resumable behind VaultLockActivity for VAULT_AUTO_LOCK_TIMEOUT_MS.
                         VaultSessionManager.onAppBackgrounded(this@App)
                         RandomOrderManager.onAppBackgrounded()
                         syncPrivacyCurtainForTrackedActivities()

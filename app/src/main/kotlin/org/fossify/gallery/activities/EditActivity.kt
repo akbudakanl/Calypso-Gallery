@@ -76,6 +76,7 @@ import org.fossify.gallery.helpers.ASPECT_RATIO_ONE_ONE
 import org.fossify.gallery.helpers.ASPECT_RATIO_OTHER
 import org.fossify.gallery.helpers.ASPECT_RATIO_SIXTEEN_NINE
 import org.fossify.gallery.helpers.ColorModeHelper
+import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.FilterThumbnailsManager
 import org.fossify.gallery.helpers.getPermissionToRequest
 import org.fossify.gallery.models.FilterItem
@@ -419,9 +420,12 @@ class EditActivity : BaseCropActivity() {
     }
 
     private fun getOriginalBitmap(): Bitmap {
+        val isEncrypted = uri?.toString()?.let { CryptoManager.isEncryptedFile(it) } == true
         return Glide.with(applicationContext)
             .asBitmap()
             .load(uri)
+            .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.AUTOMATIC)
+            .skipMemoryCache(isEncrypted)
             .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
             .get()
     }
@@ -684,10 +688,14 @@ class EditActivity : BaseCropActivity() {
             ensureBackgroundThread {
                 val thumbnailSize = resources.getDimension(R.dimen.bottom_filters_thumbnail_size).toInt()
 
+                val isEncrypted = uri?.toString()?.let { CryptoManager.isEncryptedFile(it) } == true
                 val bitmap = try {
                     Glide.with(this)
                         .asBitmap()
-                        .load(uri).listener(object : RequestListener<Bitmap> {
+                        .load(uri)
+                        .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.AUTOMATIC)
+                        .skipMemoryCache(isEncrypted)
+                        .listener(object : RequestListener<Bitmap> {
                             override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>, isFirstResource: Boolean): Boolean {
                                 showErrorToast(e.toString())
                                 return false

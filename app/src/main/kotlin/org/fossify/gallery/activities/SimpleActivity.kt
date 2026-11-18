@@ -50,7 +50,7 @@ open class SimpleActivity : BaseSimpleActivity() {
 
     override fun onResume() {
         super.onResume()
-        val isVaultActive = CryptoManager.isVaultUnlocked
+        val isVaultActive = CryptoManager.isVaultUnlocked || VaultSessionManager.isReauthPending()
         if (isVaultActive) {
             applyVaultScreenProtection(true)
         } else {

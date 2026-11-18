@@ -533,9 +533,11 @@ class PhotoFragment : ViewPagerFragment() {
 
     private fun loadSVG() {
         if (context != null) {
+            val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
             Glide.with(requireContext())
                 .`as`(PictureDrawable::class.java)
-                .diskCacheStrategy(if (CryptoManager.isEncryptedFile(mMedium.path)) DiskCacheStrategy.NONE else DiskCacheStrategy.AUTOMATIC)
+                .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.AUTOMATIC)
+                .skipMemoryCache(isEncrypted)
                 .listener(SvgSoftwareLayerSetter())
                 .load(mMedium.path)
                 .into(binding.gesturesView)
@@ -593,6 +595,7 @@ class PhotoFragment : ViewPagerFragment() {
             .format(DecodeFormat.PREFER_ARGB_8888)
             .priority(priority)
             .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE)
+            .skipMemoryCache(isEncrypted)
             .fitCenter()
             .run {
                 if (mCurrentRotationDegrees != 0) {

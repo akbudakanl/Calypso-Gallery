@@ -164,6 +164,9 @@ object CryptoManager {
 
     internal val pendingLock = AtomicBoolean(false)
 
+    @Volatile
+    internal var vaultClipboardTouched = false
+
 
     fun isOperationInProgress(): Boolean = activeCryptoOperations.get() > 0
 
@@ -193,15 +196,24 @@ object CryptoManager {
 
 
     fun lockVault() {
+        clearKeys(context = null)
+    }
+
+    /**
+     * ADR 0002 §5.2 centralized key zeroization: zeroes [unlockedMasterKey], [unlockedKek], every
+     * cached per-file [EncryptedFileMetadata.fileKey], clears decoded folder/name caches, and
+     * clears any vault-derived clipboard content.
+     */
+    fun clearKeys(context: android.content.Context? = null) {
         if (isOperationInProgress()) {
             pendingLock.set(true)
             return
         }
-        lockVaultInternal()
+        lockVaultInternal(context)
     }
 
 
-    private fun lockVaultInternal() {
+    private fun lockVaultInternal(context: android.content.Context? = null) {
         unlockedMasterKey?.fill(0)
         unlockedMasterKey = null
         unlockedKek?.fill(0)
@@ -214,6 +226,17 @@ object CryptoManager {
         try {
             VideoFragment.clearFrameCache()
         } catch (_: Throwable) {}
+        if (context != null && vaultClipboardTouched) {
+            vaultClipboardTouched = false
+            runCatching {
+                val cm = context.getSystemService(android.content.ClipboardManager::class.java)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    cm?.clearPrimaryClip()
+                } else {
+                    cm?.setPrimaryClip(android.content.ClipData.newPlainText("", ""))
+                }
+            }
+        }
     }
 
 
