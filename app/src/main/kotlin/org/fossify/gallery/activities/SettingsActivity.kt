@@ -17,10 +17,8 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
-import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -1317,10 +1315,7 @@ class SettingsActivity : SimpleActivity() {
         setupSkippedFilesSetting(
             holderView = binding.settingsSkippedEncryptFilesHolder,
             valueView = binding.settingsSkippedEncryptFiles,
-            infoIconView = binding.settingsSkippedEncryptFilesInfo,
-            isEncrypt = true,
-            titleResId = R.string.skipped_encrypt_files_mode_label,
-            infoMessageResId = R.string.skipped_encrypt_files_info_message
+            isEncrypt = true
         )
     }
 
@@ -1328,20 +1323,14 @@ class SettingsActivity : SimpleActivity() {
         setupSkippedFilesSetting(
             holderView = binding.settingsSkippedDecryptFilesHolder,
             valueView = binding.settingsSkippedDecryptFiles,
-            infoIconView = binding.settingsSkippedDecryptFilesInfo,
-            isEncrypt = false,
-            titleResId = R.string.skipped_decrypt_files_mode_label,
-            infoMessageResId = R.string.skipped_decrypt_files_info_message
+            isEncrypt = false
         )
     }
 
     private fun setupSkippedFilesSetting(
         holderView: android.view.View,
         valueView: MyTextView,
-        infoIconView: ImageView,
-        isEncrypt: Boolean,
-        @StringRes titleResId: Int,
-        @StringRes infoMessageResId: Int
+        isEncrypt: Boolean
     ) {
         valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
         holderView.setOnClickListener {
@@ -1349,11 +1338,6 @@ class SettingsActivity : SimpleActivity() {
                 valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
             }
         }
-        bindSettingInfoIcon(
-            iconView = infoIconView,
-            titleResId = titleResId,
-            messageResId = infoMessageResId
-        )
     }
 
     private fun getSkippedCryptoFilesModeText(isEncrypt: Boolean): String {
@@ -1389,45 +1373,6 @@ class SettingsActivity : SimpleActivity() {
             else -> R.string.album_crypto_conflict_ask
         }
     )
-
-    /**
-     * Tints an inline settings info icon and opens a scrollable explanation dialog when tapped.
-     */
-    private fun bindSettingInfoIcon(
-        iconView: ImageView,
-        @StringRes titleResId: Int,
-        @StringRes messageResId: Int
-    ) {
-        iconView.applyColorFilter(getProperTextColor())
-        iconView.setOnClickListener {
-            showSettingInfoDialog(titleResId, messageResId)
-        }
-    }
-
-    /**
-     * Displays a themed scrollable information dialog describing a setting's purpose and trade-offs.
-     */
-    private fun showSettingInfoDialog(
-        @StringRes titleResId: Int,
-        @StringRes messageResId: Int
-    ) {
-        val paddingPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
-        val mediumPadPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
-        val messageView = MyTextView(this).apply {
-            text = getString(messageResId)
-            setTextColor(getProperTextColor())
-            setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(org.fossify.commons.R.dimen.normal_text_size))
-            setPadding(paddingPx, mediumPadPx, paddingPx, mediumPadPx)
-        }
-        val scrollView = ScrollView(this).apply {
-            addView(messageView)
-        }
-        getAlertDialogBuilder()
-            .setPositiveButton(org.fossify.commons.R.string.ok, null)
-            .apply {
-                setupDialogStuff(scrollView, this, titleResId)
-            }
-    }
 
     private fun setupDeleteEmptyFolders() {
         binding.settingsDeleteEmptyFolders.isChecked = config.deleteEmptyFolders

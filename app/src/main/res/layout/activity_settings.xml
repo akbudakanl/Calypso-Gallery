@@ -1000,7 +1000,7 @@
 
             </RelativeLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <RelativeLayout
                 android:id="@+id/settings_skipped_encrypt_files_holder"
                 style="@style/SettingsHolderTextViewStyle"
                 android:layout_width="match_parent"
@@ -1009,40 +1009,23 @@
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/settings_skipped_encrypt_files_label"
                     style="@style/SettingsTextLabelStyle"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    android:text="@string/skipped_encrypt_files_mode_label"
-                    app:layout_constraintEnd_toStartOf="@+id/settings_skipped_encrypt_files_info"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_marginEnd="36dp"
+                    android:text="@string/skipped_encrypt_files_mode_label" />
 
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/settings_skipped_encrypt_files"
                     style="@style/SettingsTextValueStyle"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    app:layout_constraintEnd_toStartOf="@+id/settings_skipped_encrypt_files_info"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/settings_skipped_encrypt_files_label"
+                    android:layout_below="@+id/settings_skipped_encrypt_files_label"
+                    android:layout_marginEnd="36dp"
                     tools:text="@string/skipped_crypto_files_ask" />
 
-                <ImageView
-                    android:id="@+id/settings_skipped_encrypt_files_info"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/skipped_encrypt_files_mode_label"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_info_vector"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+            </RelativeLayout>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <RelativeLayout
                 android:id="@+id/settings_skipped_decrypt_files_holder"
                 style="@style/SettingsHolderTextViewStyle"
                 android:layout_width="match_parent"
@@ -1051,38 +1034,21 @@
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/settings_skipped_decrypt_files_label"
                     style="@style/SettingsTextLabelStyle"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    android:text="@string/skipped_decrypt_files_mode_label"
-                    app:layout_constraintEnd_toStartOf="@+id/settings_skipped_decrypt_files_info"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_marginEnd="36dp"
+                    android:text="@string/skipped_decrypt_files_mode_label" />
 
                 <org.fossify.commons.views.MyTextView
                     android:id="@+id/settings_skipped_decrypt_files"
                     style="@style/SettingsTextValueStyle"
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    app:layout_constraintEnd_toStartOf="@+id/settings_skipped_decrypt_files_info"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/settings_skipped_decrypt_files_label"
+                    android:layout_below="@+id/settings_skipped_decrypt_files_label"
+                    android:layout_marginEnd="36dp"
                     tools:text="@string/skipped_crypto_files_ask" />
 
-                <ImageView
-                    android:id="@+id/settings_skipped_decrypt_files_info"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/skipped_decrypt_files_mode_label"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_info_vector"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            </RelativeLayout>
 
             <RelativeLayout
                 android:id="@+id/settings_album_crypto_conflict_holder"
