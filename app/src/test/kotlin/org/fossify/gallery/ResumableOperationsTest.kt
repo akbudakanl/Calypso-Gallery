@@ -29,6 +29,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -284,6 +285,46 @@ class ResumableOperationsTest {
         assertFalse(File(plainOut, "b.jpg").exists())
         assertTrue(binB.exists())
         assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun foregroundRegistrySupportsSameThreadReentrancyAndRejectsConcurrentThread() {
+        assertFalse(ForegroundOperationRegistry.isActive)
+        val outerResult = ForegroundOperationRegistry.withOperation(testContext, "album-encrypt") {
+            assertTrue(ForegroundOperationRegistry.isActive)
+
+            // Same thread (e.g. DirectoryAdapter outer batch -> CryptoManager.encryptFolder) shares token.
+            val nestedResult = ForegroundOperationRegistry.withOperation(testContext, "album-encrypt") {
+                assertTrue(ForegroundOperationRegistry.isActive)
+                ForegroundOperationRegistry.requestCancel()
+                assertTrue(ForegroundOperationRegistry.isCancelled)
+                "nested-ok"
+            }
+            assertEquals("nested-ok", nestedResult)
+            // Outer operation remains active until final release.
+            assertTrue(ForegroundOperationRegistry.isActive)
+
+            // Different thread must be rejected and receive null from withOperation.
+            var concurrentResult: String? = "unassigned"
+            val worker = Thread {
+                concurrentResult = ForegroundOperationRegistry.withOperation(testContext, "crypto-copy-move") {
+                    "should-not-run"
+                }
+            }
+            worker.start()
+            worker.join(5000)
+            assertNull(concurrentResult)
+            "outer-ok"
+        }
+
+        assertEquals("outer-ok", outerResult)
+        assertFalse(ForegroundOperationRegistry.isActive)
+        assertFalse(ForegroundOperationRegistry.isCancelled)
+
+        // Once released, another thread can acquire cleanly.
+        val afterRelease = ForegroundOperationRegistry.withOperation(testContext, "album-decrypt") { "next-ok" }
+        assertEquals("next-ok", afterRelease)
+        assertFalse(ForegroundOperationRegistry.isActive)
     }
 
     private fun unlockTestVault() {
