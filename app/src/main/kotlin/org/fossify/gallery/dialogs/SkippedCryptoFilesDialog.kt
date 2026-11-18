@@ -15,6 +15,8 @@ import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSkippedCryptoFilesBinding
 import org.fossify.gallery.databinding.DialogSkippedCryptoFilesModeBinding
+import org.fossify.gallery.databinding.DialogTitleWithInfoBinding
+import org.fossify.gallery.extensions.bindSettingInfoIcon
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.deleteDBPaths
@@ -140,14 +142,31 @@ fun showSkippedCryptoFilesSettingsDialog(
     } else {
         R.string.skipped_decrypt_files_mode_label
     }
+    val infoMessageResId = if (isEncrypt) {
+        R.string.skipped_encrypt_files_info_message
+    } else {
+        R.string.skipped_decrypt_files_info_message
+    }
+
+    val titleBinding = DialogTitleWithInfoBinding.inflate(activity.layoutInflater)
+    titleBinding.dialogTitleTextview.apply {
+        text = activity.getString(titleResId)
+        setTextColor(activity.getProperTextColor())
+    }
+    activity.bindSettingInfoIcon(
+        iconView = titleBinding.dialogTitleInfo,
+        titleResId = titleResId,
+        messageResId = infoMessageResId
+    )
 
     activity.getAlertDialogBuilder()
+        .setCustomTitle(titleBinding.root)
         .setNegativeButton(org.fossify.commons.R.string.cancel, null)
         .apply {
             activity.setupDialogStuff(
                 view = binding.root,
                 dialog = this,
-                titleId = titleResId
+                titleId = 0
             ) { alertDialog ->
                 val redColor = activity.getDestructiveRedColor()
                 val deleteRadio: RadioButton = binding.skippedCryptoFilesModeDelete

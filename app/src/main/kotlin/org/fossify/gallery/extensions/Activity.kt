@@ -3510,3 +3510,46 @@ fun Activity.applyVaultScreenProtection(enable: Boolean) {
     } catch (_: Throwable) {
     }
 }
+
+/**
+ * Tints an inline settings info icon and opens a scrollable explanation dialog when tapped.
+ */
+fun Activity.bindSettingInfoIcon(
+    iconView: android.widget.ImageView,
+    @androidx.annotation.StringRes titleResId: Int,
+    @androidx.annotation.StringRes messageResId: Int
+) {
+    iconView.applyColorFilter(getProperTextColor())
+    iconView.contentDescription = getString(titleResId)
+    iconView.setOnClickListener {
+        showSettingInfoDialog(titleResId, messageResId)
+    }
+}
+
+/**
+ * Displays a themed scrollable information dialog describing a setting's purpose and trade-offs.
+ */
+fun Activity.showSettingInfoDialog(
+    @androidx.annotation.StringRes titleResId: Int,
+    @androidx.annotation.StringRes messageResId: Int
+) {
+    val paddingPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+    val mediumPadPx = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.medium_margin)
+    val messageView = org.fossify.commons.views.MyTextView(this).apply {
+        text = getString(messageResId)
+        setTextColor(getProperTextColor())
+        setTextSize(
+            android.util.TypedValue.COMPLEX_UNIT_PX,
+            resources.getDimension(org.fossify.commons.R.dimen.normal_text_size)
+        )
+        setPadding(paddingPx, mediumPadPx, paddingPx, mediumPadPx)
+    }
+    val scrollView = android.widget.ScrollView(this).apply {
+        addView(messageView)
+    }
+    getAlertDialogBuilder()
+        .setPositiveButton(org.fossify.commons.R.string.ok, null)
+        .apply {
+            setupDialogStuff(scrollView, this, titleResId)
+        }
+}
