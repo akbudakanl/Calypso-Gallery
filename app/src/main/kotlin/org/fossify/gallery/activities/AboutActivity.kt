@@ -3,26 +3,11 @@ package org.fossify.gallery.activities
 import android.content.Intent
 import android.os.Bundle
 import org.fossify.commons.activities.FAQActivity
-import org.fossify.commons.activities.LicenseActivity
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.launchViewIntent
 import org.fossify.commons.extensions.viewBinding
-import org.fossify.commons.helpers.LICENSE_APNG
-import org.fossify.commons.helpers.LICENSE_CROPPER
-import org.fossify.commons.helpers.LICENSE_EXOPLAYER
-import org.fossify.commons.helpers.LICENSE_FILTERS
-import org.fossify.commons.helpers.LICENSE_GESTURE_VIEWS
-import org.fossify.commons.helpers.LICENSE_GIF_DRAWABLE
-import org.fossify.commons.helpers.LICENSE_GLIDE
-import org.fossify.commons.helpers.LICENSE_GSON
-import org.fossify.commons.helpers.LICENSE_PATTERN
-import org.fossify.commons.helpers.LICENSE_PICASSO
-import org.fossify.commons.helpers.LICENSE_REPRINT
-import org.fossify.commons.helpers.LICENSE_RTL
-import org.fossify.commons.helpers.LICENSE_SANSELAN
-import org.fossify.commons.helpers.LICENSE_SUBSAMPLING
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.models.FAQItem
@@ -78,7 +63,6 @@ class AboutActivity : SimpleActivity() {
 
         listOf(
             binding.aboutGplLicense,
-            binding.aboutTinkLicense,
             binding.aboutForkSource,
             binding.aboutReleaseSources,
             binding.aboutForkIssues,
@@ -92,9 +76,6 @@ class AboutActivity : SimpleActivity() {
     private fun setupActions() {
         binding.aboutGplLicense.setOnClickListener {
             startActivity(Intent(this, GplLicenseActivity::class.java))
-        }
-        binding.aboutTinkLicense.setOnClickListener {
-            startActivity(Intent(this, TinkLicenseActivity::class.java))
         }
         binding.aboutForkSource.setOnClickListener {
             launchViewIntent(FORK_REPOSITORY_URL)
@@ -128,16 +109,7 @@ class AboutActivity : SimpleActivity() {
     }
 
     private fun launchThirdPartyLicensesActivity() {
-        val licenses = LICENSE_GLIDE or LICENSE_CROPPER or LICENSE_RTL or LICENSE_SUBSAMPLING or
-            LICENSE_PATTERN or LICENSE_REPRINT or LICENSE_GIF_DRAWABLE or LICENSE_PICASSO or
-            LICENSE_EXOPLAYER or LICENSE_SANSELAN or LICENSE_FILTERS or LICENSE_GESTURE_VIEWS or
-            LICENSE_APNG or LICENSE_GSON
-
-        startActivity(Intent(this, LicenseActivity::class.java).apply {
-            putExtra("app_icon_ids", getAppIconIDs())
-            putExtra("app_launcher_name", getAppLauncherName())
-            putExtra("app_licenses", licenses)
-        })
+        startActivity(Intent(this, ThirdPartyLicensesActivity::class.java))
     }
 
     private fun getFaqItems(): ArrayList<FAQItem> {

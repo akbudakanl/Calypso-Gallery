@@ -35,7 +35,8 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 
 ### Teknik ve yasal
 
-- Kapsamlı mimari dokümantasyonu (DOCS.md, ADR'ler), yasal lisans ve atıflar (GPLv3, Tink), marka yeniden adlandırma ve ilk genel sürüm için sürüm/tooling sıfırlaması.
+- Kapsamlı mimari dokümantasyonu (DOCS.md, ADR'ler), yasal lisans ve atıflar (GPLv3, Tink, Bouncy Castle ve üçüncü taraf bileşenler), marka yeniden adlandırma ve ilk genel sürüm için sürüm/tooling sıfırlaması.
+- Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
 - Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
 
 [Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...HEAD
