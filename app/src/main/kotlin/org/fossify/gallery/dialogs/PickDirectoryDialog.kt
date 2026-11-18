@@ -72,6 +72,7 @@ class PickDirectoryDialog(
     private var dialog: AlertDialog? = null
     private var shownDirectories = ArrayList<Directory>()
     private var allDirectories = ArrayList<Directory>()
+    private val allowedDirectoryCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private var openedSubfolders = arrayListOf("")
     private var hasLoadedDirectories = false
     private var binding = DialogDirectoryPickerBinding.inflate(activity.layoutInflater)
@@ -207,10 +208,18 @@ class PickDirectoryDialog(
     }
 
     private fun isDirectoryAllowedForMode(dir: Directory): Boolean {
+        allowedDirectoryCache[dir.path]?.let { return it }
+        val allowed = computeIsDirectoryAllowedForMode(dir)
+        allowedDirectoryCache[dir.path] = allowed
+        return allowed
+    }
+
+    private fun computeIsDirectoryAllowedForMode(dir: Directory): Boolean {
         if (!showFavoritesBin && (dir.isRecycleBin() || dir.areFavorites())) {
             return false
         }
-        if (CryptoManager.isVaultRecycleBinPath(activity, dir.path)) {
+        val isVaultBin = CryptoManager.isVaultRecycleBinPath(activity, dir.path)
+        if (isVaultBin) {
             return false
         }
         if (effectiveMode == PickDirectoryMode.DEFAULT) {
@@ -221,13 +230,13 @@ class PickDirectoryDialog(
         val isEncrypted = if (isVirtual) {
             activity.isHiddenVirtualAlbumPath(dir.path)
         } else {
-            CryptoManager.isEncryptedFolderPath(activity, dir.path) || activity.isEncryptedVaultAlbum(dir.path)
+            CryptoManager.isEncryptedFolderPath(activity, dir.path)
         }
         return CopyMovePolicy.isAllowedDestination(
             mode = effectiveMode,
             isVirtualAlbum = isVirtual,
             isEncryptedAlbum = isEncrypted,
-            isRecycleBin = dir.isRecycleBin() || CryptoManager.isVaultRecycleBinPath(activity, dir.path),
+            isRecycleBin = dir.isRecycleBin() || isVaultBin,
             isFavorites = dir.areFavorites()
         )
     }

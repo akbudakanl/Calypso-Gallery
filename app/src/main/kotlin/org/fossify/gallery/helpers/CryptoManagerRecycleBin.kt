@@ -25,6 +25,7 @@ fun CryptoManager.isVaultRecycleBin(folder: File): Boolean {
     val raw = getDecryptedRawFolderName(folder)
     if (raw == VAULT_RECYCLE_BIN_NAME) {
         vaultRecycleBinFolder = folder
+        vaultRecycleBinResolved = true
         return true
     }
     return false
@@ -34,14 +35,23 @@ fun CryptoManager.isVaultRecycleBin(folder: File): Boolean {
 fun CryptoManager.getVaultRecycleBin(context: Context): File? {
     vaultRecycleBinFolder?.let {
         if (it.exists() && it.isDirectory) return it
+        vaultRecycleBinFolder = null
+        vaultRecycleBinResolved = false
+    }
+    if (vaultRecycleBinResolved) {
+        return null
     }
     val vaultRoot = findVaultRoot(context) ?: return null
     val subfolders = vaultRoot.listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: return null
     for (folder in subfolders) {
         if (isVaultRecycleBin(folder)) {
             vaultRecycleBinFolder = folder
+            vaultRecycleBinResolved = true
             return folder
         }
+    }
+    if (isVaultUnlocked) {
+        vaultRecycleBinResolved = true
     }
     return null
 }
@@ -60,6 +70,7 @@ fun CryptoManager.getOrCreateVaultRecycleBin(context: Context): File? {
     } catch (_: Exception) {}
     writeEncryptedFolderMeta(context, binFolder, VAULT_RECYCLE_BIN_NAME)
     vaultRecycleBinFolder = binFolder
+    vaultRecycleBinResolved = true
     return binFolder
 }
 

@@ -230,6 +230,7 @@ internal object FavoritesAndVirtualAlbumsImporter {
             } catch (_: Exception) {
             }
         }
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
         if (canWriteDisk) {
             VirtualAlbumSyncManager.saveAlbumToFile(context, newAlbumId)
         }

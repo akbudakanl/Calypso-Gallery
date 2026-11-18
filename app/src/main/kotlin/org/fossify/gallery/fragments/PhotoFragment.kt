@@ -590,17 +590,24 @@ class PhotoFragment : ViewPagerFragment() {
     private fun loadWithGlide(path: String, addZoomableView: Boolean) {
         val priority = if (mIsFragmentVisible) Priority.IMMEDIATE else Priority.NORMAL
         val isEncrypted = CryptoManager.isEncryptedFile(path)
+        val maxScreenDim = maxOf(mScreenWidth, mScreenHeight)
         val options = RequestOptions()
             .signature(mMedium.getKey())
             .format(DecodeFormat.PREFER_ARGB_8888)
             .priority(priority)
-            .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE)
+            .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(isEncrypted)
             .fitCenter()
             .run {
+                if (maxScreenDim > 0 && !mStoredShowHighestQuality) {
+                    override(maxScreenDim, maxScreenDim)
+                } else {
+                    this
+                }
+            }
+            .run {
                 if (mCurrentRotationDegrees != 0) {
                     transform(Rotate(mCurrentRotationDegrees))
-                        .diskCacheStrategy(DiskCacheStrategy.NONE)
                 } else {
                     this
                 }

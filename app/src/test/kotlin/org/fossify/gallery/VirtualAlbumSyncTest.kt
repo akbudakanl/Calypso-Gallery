@@ -306,4 +306,27 @@ class VirtualAlbumSyncTest {
         val needsConfirmation4 = (true) && isDestNonHiddenPhysical4
         assertFalse(needsConfirmation4)
     }
+
+    @Test
+    fun testDirectoryCacheVersionIncrementsOnInvalidateAndVaultLock() {
+        val before = VirtualAlbumSyncManager.getDirectoryCacheVersion()
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
+        val afterInvalidate = VirtualAlbumSyncManager.getDirectoryCacheVersion()
+        assertTrue(afterInvalidate > before)
+
+        CryptoManager.lockVault()
+        val afterLock = VirtualAlbumSyncManager.getDirectoryCacheVersion()
+        assertTrue(afterLock > afterInvalidate)
+    }
+
+    @Test
+    fun testVaultRecycleBinResolvedFlagResetsOnLockAndRootClear() {
+        CryptoManager.vaultRecycleBinResolved = true
+        CryptoManager.clearCachedVaultRoot()
+        assertFalse(CryptoManager.vaultRecycleBinResolved)
+
+        CryptoManager.vaultRecycleBinResolved = true
+        CryptoManager.lockVault()
+        assertFalse(CryptoManager.vaultRecycleBinResolved)
+    }
 }

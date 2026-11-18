@@ -231,6 +231,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     private var mPath = ""
     private var mDirectory = ""
+    private var mCachedDirectoryFlagsPath: String? = null
+    private var mCachedIsDirectoryEncryptedFolder = false
+    private var mCachedIsDirectoryHiddenVirtualAlbum = false
+    private var mIsMediaOrderDirty = false
     private var mIsFullScreen = false
     private var mPos = -1
     private var mShowAll = false
@@ -311,9 +315,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
 
         val currentPath = getCurrentPath().ifEmpty { mPath }
-        val requiresVaultAccess = CryptoManager.isEncryptedFile(currentPath) ||
-            (mDirectory.isNotEmpty() && !mDirectory.isVirtualAlbumPath() && CryptoManager.isEncryptedFolderPath(this, mDirectory)) ||
-            (mDirectory.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(mDirectory))
+        val requiresVaultAccess = CryptoManager.isEncryptedFile(currentPath) || isCurrentDirectoryVaultProtected()
         applyVaultScreenProtection(requiresVaultAccess)
         if (requiresVaultAccess && !canAccessHiddenVirtualAlbums()) {
             // The vault keys were wiped from RAM: hide the viewer, ask for the password again and show the same
@@ -334,6 +336,53 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     override fun onPause() {
         super.onPause()
         stopSlideshow()
+        flushPendingMediaOrderIfNeeded()
+    }
+
+    private fun ensureDirectoryFlagsCached() {
+        if (mCachedDirectoryFlagsPath == mDirectory) {
+            return
+        }
+        mCachedDirectoryFlagsPath = mDirectory
+        if (mDirectory.isEmpty()) {
+            mCachedIsDirectoryEncryptedFolder = false
+            mCachedIsDirectoryHiddenVirtualAlbum = false
+        } else if (mDirectory.isVirtualAlbumPath()) {
+            mCachedIsDirectoryEncryptedFolder = false
+            mCachedIsDirectoryHiddenVirtualAlbum = isHiddenVirtualAlbumPath(mDirectory)
+        } else {
+            mCachedIsDirectoryEncryptedFolder = CryptoManager.isEncryptedFolderPath(this, mDirectory)
+            mCachedIsDirectoryHiddenVirtualAlbum = false
+        }
+    }
+
+    private fun isCurrentDirectoryEncryptedFolder(): Boolean {
+        ensureDirectoryFlagsCached()
+        return mCachedIsDirectoryEncryptedFolder
+    }
+
+    private fun isCurrentDirectoryHiddenVirtualAlbum(): Boolean {
+        ensureDirectoryFlagsCached()
+        return mCachedIsDirectoryHiddenVirtualAlbum
+    }
+
+    private fun isCurrentDirectoryVaultProtected(): Boolean {
+        ensureDirectoryFlagsCached()
+        return mCachedIsDirectoryEncryptedFolder || mCachedIsDirectoryHiddenVirtualAlbum
+    }
+
+    private fun flushPendingMediaOrderIfNeeded() {
+        if (!mIsMediaOrderDirty) {
+            return
+        }
+        mIsMediaOrderDirty = false
+        if (!isExternalIntent() && !mDirectory.isVirtualAlbumPath()) {
+            val pathToUse = if (mShowAll) SHOW_ALL else mDirectory.ifEmpty { SHOW_ALL }
+            MediaActivity.mMedia = MediaFetcher(applicationContext, mIsVaultFilesView).groupMedia(
+                ArrayList(mMediaFiles),
+                pathToUse
+            )
+        }
     }
 
     override fun onDestroy() {
@@ -362,7 +411,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             CryptoManager.isVaultRecycleBinPath(currentMedium.path)
         val isInRecycleBin = currentMedium.getIsInRecycleBin() || mDirectory == RECYCLE_BIN || isVaultRecycleBin
         val isVaultMedium = CryptoManager.isVaultMediaPath(this@ViewPagerActivity, currentMedium.path) ||
-            (mDirectory.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(mDirectory))
+            isCurrentDirectoryHiddenVirtualAlbum()
 
         runOnUiThread {
             val rotationDegrees = getCurrentPhotoFragment()?.mCurrentRotationDegrees ?: 0
@@ -710,7 +759,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
 
         refreshViewPager(true)
-        binding.viewPager.offscreenPageLimit = 3
+        binding.viewPager.offscreenPageLimit = 1
 
         if (config.blackBackground) {
             binding.fragmentHolder.background = Color.BLACK.toDrawable()
@@ -1938,15 +1987,16 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             return
         }
 
+        val oldPos = mPos
         val currentPath = mMediaFiles.getOrNull(mPos)?.path
-        val previousOrder = mMediaFiles.map { it.path }
+        val previousSnapshot = ArrayList(mMediaFiles)
         val shuffled = ArrayList(mMediaFiles)
         // make sure the order really changes (relevant for tiny albums)
         var attempts = 0
         do {
             shuffled.shuffle()
             attempts++
-        } while (shuffled.map { it.path } == previousOrder && attempts < 5)
+        } while (attempts < 5 && hasSamePathsOrder(shuffled, previousSnapshot))
 
         mMediaFiles = shuffled
         mPrevHashcode = mMediaFiles.hashCode()
@@ -1960,17 +2010,40 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             val scopeKey = if (mShowAll && !isVirtualAlbum) (if (mIsVaultFilesView) "vault_show_all" else SHOW_ALL) else mDirectory
             RandomOrderManager.setMediaOrder(scopeKey, mMediaFiles.map { it.path })
             if (!isVirtualAlbum) {
-                val pathToUse = if (mShowAll) SHOW_ALL else mDirectory.ifEmpty { SHOW_ALL }
-                MediaActivity.mMedia = MediaFetcher(applicationContext, mIsVaultFilesView).groupMedia(
-                    ArrayList(mMediaFiles),
-                    pathToUse
-                )
+                mIsMediaOrderDirty = true
             }
         }
 
-        updatePagerItems(mMediaFiles.toMutableList())
+        val existingAdapter = binding.viewPager.adapter as? MyPagerAdapter
+        if (existingAdapter != null && !isDestroyed && oldPos >= 0) {
+            binding.viewPager.removeOnPageChangeListener(this)
+            val updatedInPlace = existingAdapter.updateItemsKeepingActiveFragment(
+                newMedia = mMediaFiles,
+                activeOldPos = oldPos,
+                activeNewPos = mPos
+            )
+            if (updatedInPlace) {
+                if (binding.viewPager.currentItem != mPos) {
+                    binding.viewPager.setCurrentItem(mPos, false)
+                }
+                binding.viewPager.addOnPageChangeListener(this)
+            } else {
+                binding.viewPager.addOnPageChangeListener(this)
+                updatePagerItems(mMediaFiles.toMutableList())
+            }
+        } else {
+            updatePagerItems(mMediaFiles.toMutableList())
+        }
         updateActionbarTitle()
         refreshMenuItems()
+    }
+
+    private fun hasSamePathsOrder(a: List<Medium>, b: List<Medium>): Boolean {
+        if (a.size != b.size) return false
+        for (i in a.indices) {
+            if (a[i].path != b[i].path) return false
+        }
+        return true
     }
 
     private fun refreshViewPager(refetchPosition: Boolean = false) {
@@ -2294,9 +2367,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     override fun onPageSelected(position: Int) {
         val path = mMediaFiles.getOrNull(position)?.path ?: mPath
-        val requiresVault = CryptoManager.isEncryptedFile(path) ||
-            (mDirectory.isNotEmpty() && !mDirectory.isVirtualAlbumPath() && CryptoManager.isEncryptedFolderPath(this, mDirectory)) ||
-            (mDirectory.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(mDirectory))
+        val requiresVault = CryptoManager.isEncryptedFile(path) || isCurrentDirectoryVaultProtected()
         applyVaultScreenProtection(requiresVault)
         if (mPos != position) {
             mPos = position

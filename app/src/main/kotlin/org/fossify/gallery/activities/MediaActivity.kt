@@ -1061,7 +1061,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     gotMedia(newMedia, false)
 
                     // remove cached files that are no longer valid for whatever reason
-                    val newPaths = newMedia.mapNotNull { it as? Medium }.map { it.path }
+                    val newPaths = newMedia.mapNotNull { it as? Medium }.mapTo(HashSet()) { it.path }
                     oldMedia
                         .mapNotNull { it as? Medium }
                         .filter { !newPaths.contains(it.path) }
@@ -1405,6 +1405,18 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             checkLastMediaChanged()
         }
 
+        val previousByPath = if (!isFromCache && !mPath.isVirtualAlbumPath() && !mIsVaultFilesView && mMedia.isNotEmpty()) {
+            val map = HashMap<String, Medium>(mMedia.size)
+            for (item in mMedia) {
+                if (item is Medium) {
+                    map[item.path] = item
+                }
+            }
+            map
+        } else {
+            emptyMap()
+        }
+
         runOnUiThread {
             if (isDestroyed || isFinishing) {
                 return@runOnUiThread
@@ -1435,15 +1447,27 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         mLatestMediaDateId = getLatestMediaByDateId()
         if (!isFromCache && !mPath.isVirtualAlbumPath() && !mIsVaultFilesView) {
             val mediaToInsert = media
+                .asSequence()
                 .filter { it is Medium && it.deletedTS == 0L && !isPathHiddenOrEncrypted(it.path) }
                 .map { it as Medium }
+                .filter { fresh ->
+                    val prev = previousByPath[fresh.path]
+                    prev == null ||
+                        prev.modified != fresh.modified ||
+                        prev.taken != fresh.taken ||
+                        prev.size != fresh.size ||
+                        prev.isFavorite != fresh.isFavorite ||
+                        prev.videoDuration != fresh.videoDuration ||
+                        prev.name != fresh.name
+                }
+                .toList()
             if (mediaToInsert.isNotEmpty()) {
-                Thread {
+                ensureBackgroundThread {
                     try {
                         mediaDB.insertAll(mediaToInsert)
                     } catch (e: Exception) {
                     }
-                }.start()
+                }
             }
         }
     }
