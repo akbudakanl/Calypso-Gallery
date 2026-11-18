@@ -25,7 +25,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DecodeFormat
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import com.squareup.picasso.Picasso
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.FileConflictDialog
@@ -1167,6 +1166,7 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
         EncryptConfirmationDialog(
             activity = this,
             message = getString(R.string.confirm_encrypt_file),
+            infoMessageResId = R.string.encrypt_files_info_message,
             onCancel = {
                 callback?.invoke(oldPath)
             }
@@ -2690,7 +2690,8 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
         } else if (needsEncryptionConfirmation) {
             EncryptConfirmationDialog(
                 activity = this,
-                message = getString(R.string.confirm_encrypt_files_to_vault)
+                message = getString(R.string.confirm_encrypt_files_to_vault),
+                infoMessageResId = R.string.encrypt_files_info_message
             ) {
                 proceedWithCopyMove()
             }
@@ -3139,7 +3140,6 @@ fun Activity.fileRotatedSuccessfully(path: String, lastModified: Long) {
         updateLastModified(path, lastModified)
     }
 
-    Picasso.get().invalidate(path.getFileKey(lastModified))
     // we cannot refresh a specific image in Glide Cache, so just clear it all
     val glide = Glide.get(applicationContext)
     glide.clearDiskCache()
