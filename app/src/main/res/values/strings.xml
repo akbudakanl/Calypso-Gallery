@@ -623,13 +623,19 @@
     <string name="brute_force_mode_time">Via vault unlock time</string>
     <string name="brute_force_mode_presets">Via ready-made modes</string>
     <string name="brute_force_time_title">Target vault unlock time</string>
-    <string name="brute_force_time_hint">Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices.</string>
+    <string name="brute_force_time_hint">Seconds (%1$.1f–10.0, in 0.1 s steps). The minimum is this device\'s safe standard (64 MiB / 3 rounds) time; default is 1.0 s (or the safe floor on slower devices). Parameters are stored in the vault; unlock time varies on other devices.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
+    <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d rounds)</string>
     <string name="brute_force_actual_params">Stored: %1$d MiB / %2$d rounds</string>
     <string name="brute_force_clamped"> (clamped)</string>
     <string name="argon2_profile_low">Low-end device (not recommended)</string>
     <string name="argon2_profile_default">Default</string>
     <string name="argon2_profile_high">High security</string>
-    <string name="argon2_profile_hint">If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes.</string>
+    <string name="argon2_profile_default_with_params">Default (64 MiB / 3 rounds)</string>
+    <string name="argon2_profile_high_with_params">High security (128 MiB / 4 rounds)</string>
+    <string name="argon2_profile_hint">If you don\'t know what you\'re doing, it is recommended to keep the default setting. Changing this updates your vault header after verifying your password.</string>
     <string name="argon2_profile_current">Current: %s</string>
+    <string name="unlocking_encrypted_vault">Unlocking encrypted vault…</string>
+    <string name="measuring_device_kdf_speed">Measuring standard KDF speed on this device…</string>
+    <string name="kdf_settings_updated_successfully">Brute-Force resistance updated for encrypted vault</string>
 </resources>

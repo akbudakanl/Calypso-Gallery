@@ -22,6 +22,19 @@ class Config(context: Context) : BaseConfig(context) {
         const val APPEARANCE_DARK = 2
         const val APPEARANCE_CUSTOM = 3
 
+        const val ARGON2_PROFILE_DEFAULT = 1
+        const val ARGON2_PROFILE_HIGH = 2
+        const val MIN_UNLOCK_TARGET_MS = 100
+        const val SWEET_SPOT_UNLOCK_TARGET_MS = 1_000
+        const val MAX_UNLOCK_TARGET_MS = 10_000
+        const val DEFAULT_UNLOCK_TARGET_MS = 1_000
+        private const val KIB_PER_MIB = 1024
+        private const val DEFAULT_STD_MEMORY_MIB = 64
+        private const val HIGH_STD_MEMORY_MIB = 128
+        private const val DEFAULT_STD_ITERATIONS = 3
+        private const val HIGH_PROFILE_ITERATIONS = 4
+        private const val DEFAULT_PARALLELISM = 2
+
         private const val APPEARANCE_MODE = "appearance_mode"
         private const val SAVED_APPEARANCE_THEMES = "saved_appearance_themes"
 
@@ -182,47 +195,77 @@ class Config(context: Context) : BaseConfig(context) {
 
     /** Son kalibrasyonun urettigi gercek parametreler (arayuzde gosterim icin). */
     var lastCalibratedMemoryKb: Int
-        get() = prefs.getInt(LAST_CALIBRATED_MEMORY_KB, 64 * 1024)
+        get() = prefs.getInt(LAST_CALIBRATED_MEMORY_KB, DEFAULT_STD_MEMORY_MIB * KIB_PER_MIB)
         set(value) = prefs.edit().putInt(LAST_CALIBRATED_MEMORY_KB, value).apply()
 
     var lastCalibratedIterations: Int
-        get() = prefs.getInt(LAST_CALIBRATED_ITERATIONS, 3)
+        get() = prefs.getInt(LAST_CALIBRATED_ITERATIONS, DEFAULT_STD_ITERATIONS)
         set(value) = prefs.edit().putInt(LAST_CALIBRATED_ITERATIONS, value).apply()
 
-    /** Son kalibrasyonda hedefe ulasilamayip 2/16 tur sinirlarina kirpildi mi. */
+    /** Cihazda olculen standart (64 MiB / 3 tur / p=2) Argon2id suresi (ms). */
+    var cachedStdArgon2Ms: Int
+        get() = prefs.getInt(CACHED_STD_ARGON2_MS, 0)
+        set(value) = prefs.edit().putInt(CACHED_STD_ARGON2_MS, value.coerceAtLeast(0)).apply()
+
+    /** Cihazin standart KDF tabanina gore izin verilen en dusuk acilis suresi (ms). */
+    val minUnlockTargetMs: Int
+        get() = if (cachedStdArgon2Ms > 0) {
+            cachedStdArgon2Ms.coerceIn(MIN_UNLOCK_TARGET_MS, MAX_UNLOCK_TARGET_MS)
+        } else {
+            MIN_UNLOCK_TARGET_MS
+        }
+
+    /** Varsayilan kasa acilis suresi: T_sinir <= 1.0 sn ise 1.0 sn (sweet spot), degilse T_sinir. */
+    val defaultUnlockTargetMs: Int
+        get() = maxOf(SWEET_SPOT_UNLOCK_TARGET_MS, minUnlockTargetMs)
+            .coerceIn(minUnlockTargetMs, MAX_UNLOCK_TARGET_MS)
+
+    /** Son kalibrasyonda hedefe ulasilamayip sinirlara kirpildi mi. */
     var argon2CalibrationClamped: Boolean
         get() = prefs.getBoolean(ARGON2_CALIBRATION_CLAMPED, false)
         set(value) = prefs.edit().putBoolean(ARGON2_CALIBRATION_CLAMPED, value).apply()
 
-    /** Hedef kasa acilis suresi, milisaniye (2.1 sn = 2100). */
+    /** Hedef kasa acilis suresi, milisaniye. */
     var unlockTargetMs: Int
-        get() = prefs.getInt(UNLOCK_TARGET_MS, 2400).coerceIn(2_000, 7_000)
-        set(value) = prefs.edit().putInt(UNLOCK_TARGET_MS, value.coerceIn(2_000, 7_000)).apply()
+        get() {
+            val raw = if (prefs.contains(UNLOCK_TARGET_MS)) {
+                prefs.getInt(UNLOCK_TARGET_MS, defaultUnlockTargetMs)
+            } else {
+                defaultUnlockTargetMs
+            }
+            return raw.coerceIn(minUnlockTargetMs, MAX_UNLOCK_TARGET_MS)
+        }
+        set(value) = prefs.edit().putInt(
+            UNLOCK_TARGET_MS,
+            value.coerceIn(minUnlockTargetMs, MAX_UNLOCK_TARGET_MS)
+        ).apply()
 
     /**
-     * Argon2id profili: 0 = dusuk cihaz (oneri edilmez),
-     * 1 = varsayilan, 2 = yuksek guvenlik. Sadece YENI kasa/sifre degisiminde kullanilir.
+     * Argon2id profili: 1 = varsayilan (64 MiB / 3 tur),
+     * 2 = yuksek guvenlik (128 MiB / 4 tur). Eski 0 (dusuk) ayari 1'e cekilir.
      */
     var argon2Profile: Int
-        get() = prefs.getInt(ARGON2_PROFILE, 1).coerceIn(0, 2)
-        set(value) = prefs.edit().putInt(ARGON2_PROFILE, value.coerceIn(0, 2)).apply()
+        get() = prefs.getInt(ARGON2_PROFILE, ARGON2_PROFILE_DEFAULT)
+            .coerceIn(ARGON2_PROFILE_DEFAULT, ARGON2_PROFILE_HIGH)
+        set(value) = prefs.edit().putInt(
+            ARGON2_PROFILE,
+            value.coerceIn(ARGON2_PROFILE_DEFAULT, ARGON2_PROFILE_HIGH)
+        ).apply()
 
     val argon2MemoryKb: Int
         get() = when (argon2Profile) {
-            0 -> 32 * 1024
-            2 -> 128 * 1024
-            else -> 64 * 1024
+            ARGON2_PROFILE_HIGH -> HIGH_STD_MEMORY_MIB * KIB_PER_MIB
+            else -> DEFAULT_STD_MEMORY_MIB * KIB_PER_MIB
         }
 
     val argon2Iterations: Int
         get() = when (argon2Profile) {
-            0 -> 2
-            2 -> 4
-            else -> 3
+            ARGON2_PROFILE_HIGH -> HIGH_PROFILE_ITERATIONS
+            else -> DEFAULT_STD_ITERATIONS
         }
 
     val argon2Parallelism: Int
-        get() = if (argon2Profile == 0) 1 else 2
+        get() = DEFAULT_PARALLELISM
 
     var hasShownVaultImportInfo: Boolean
         get() = prefs.getBoolean(HAS_SHOWN_VAULT_IMPORT_INFO, false)

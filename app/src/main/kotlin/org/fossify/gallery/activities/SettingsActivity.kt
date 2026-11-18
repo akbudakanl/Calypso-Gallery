@@ -820,91 +820,59 @@ class SettingsActivity : SimpleActivity() {
                 org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
         }
         refreshSummary()
+        if (config.cachedStdArgon2Ms <= 0) {
+            ensureBackgroundThread {
+                CryptoManager.measureStandardArgon2Ms(this)
+                runOnUiThread {
+                    if (!isFinishing && !isDestroyed) {
+                        refreshSummary()
+                    }
+                }
+            }
+        }
 
         binding.settingsArgon2ProfileHolder.setOnClickListener {
-            val modes = arrayOf(
-                getString(R.string.brute_force_mode_time),
-                getString(R.string.brute_force_mode_presets)
-            )
-            getAlertDialogBuilder()
-                .setTitle(R.string.brute_force_mode_title)
-                .setSingleChoiceItems(modes, config.bruteForceMode) { dialog, which ->
-                    dialog.dismiss()
-                    config.bruteForceMode = which
-                    if (which == 0) showUnlockTimeDialog(::refreshSummary) else showPresetDialog(::refreshSummary)
+            val prevMode = config.bruteForceMode
+            val prevProfile = config.argon2Profile
+            val prevTargetMs = config.unlockTargetMs
+            val prevMemKb = config.lastCalibratedMemoryKb
+            val prevIter = config.lastCalibratedIterations
+            val prevClamped = config.argon2CalibrationClamped
+
+            org.fossify.gallery.dialogs.BruteForceDialog.show(this) {
+                refreshSummary()
+                if (doesVaultExist()) {
+                    val currentType = CryptoManager.getVaultProtectionType(this)
+                        ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) {
+                            PROTECTION_PASSWORD
+                        } else {
+                            PROTECTION_PIN
+                        }
+                    VaultSecurityDialog(
+                        activity = this,
+                        requiredHash = config.hiddenPasswordHash,
+                        showTabIndex = currentType,
+                        minimalist = false,
+                        allowBiometrics = false,
+                        rewrapKdfOnUnlock = true
+                    ) { _, _, success ->
+                        if (success) {
+                            VaultSessionManager.lockVaultIfOutsideSession(this)
+                            refreshSummary()
+                            toast(R.string.kdf_settings_updated_successfully)
+                        } else {
+                            config.bruteForceMode = prevMode
+                            config.argon2Profile = prevProfile
+                            config.unlockTargetMs = prevTargetMs
+                            config.lastCalibratedMemoryKb = prevMemKb
+                            config.lastCalibratedIterations = prevIter
+                            config.argon2CalibrationClamped = prevClamped
+                            refreshSummary()
+                        }
+                    }
                 }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-        }
-    }
-
-    private fun showPresetDialog(refresh: () -> Unit) {
-        val labels = arrayOf(
-            getString(R.string.argon2_profile_low),
-            getString(R.string.argon2_profile_default),
-            getString(R.string.argon2_profile_high)
-        )
-        getAlertDialogBuilder()
-            .setTitle(R.string.argon2_profile_title)
-            .setMessage(R.string.argon2_profile_hint)
-            .setSingleChoiceItems(labels, config.argon2Profile) { dialog, which ->
-                config.argon2Profile = which
-                refresh()
-                dialog.dismiss()
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun showUnlockTimeDialog(refresh: () -> Unit) {
-        val padding = (20 * resources.displayMetrics.density).toInt()
-        val view = android.widget.LinearLayout(this).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(padding, padding / 2, padding, 0)
         }
-        val valueText = android.widget.TextView(this).apply {
-            text = getString(R.string.brute_force_time_value, config.unlockTargetMs / 1000f)
-            textSize = 18f
-        }
-        val hint = android.widget.TextView(this).apply {
-            text = getString(R.string.brute_force_time_hint)
-        }
-        val seek = android.widget.SeekBar(this).apply {
-            max = 50
-            progress = (config.unlockTargetMs - 2_000) / 100
-        }
-        val input = android.widget.EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER or
-                android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
-            setText(String.format(java.util.Locale.US, "%.1f", config.unlockTargetMs / 1000f))
-        }
-        seek.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(s: android.widget.SeekBar?, p: Int, fromUser: Boolean) {
-                if (!fromUser) return
-                val sec = 2.0 + p / 10.0
-                valueText.text = getString(R.string.brute_force_time_value, sec.toFloat())
-                input.setText(String.format(java.util.Locale.US, "%.1f", sec))
-            }
-            override fun onStartTrackingTouch(s: android.widget.SeekBar?) {}
-            override fun onStopTrackingTouch(s: android.widget.SeekBar?) {}
-        })
-        view.addView(hint)
-        view.addView(valueText)
-        view.addView(seek)
-        view.addView(input)
-
-        getAlertDialogBuilder()
-            .setTitle(R.string.brute_force_time_title)
-            .setView(view)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                val parsed = input.text.toString().replace(',', '.').toFloatOrNull() ?: (config.unlockTargetMs / 1000f)
-                val clamped = parsed.coerceIn(2.0f, 7.0f)
-                config.unlockTargetMs = Math.round(clamped * 1000f)
-                refresh()
-                dialog.dismiss()
-            }
-            .show()
     }
 
     private fun setupVaultLocation() {
@@ -1017,7 +985,13 @@ class SettingsActivity : SimpleActivity() {
 
             val currentType = CryptoManager.getVaultProtectionType(this)
                 ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
-            VaultSecurityDialog(this, config.hiddenPasswordHash, currentType, minimalist = false) { _, _, authSuccess ->
+            VaultSecurityDialog(
+                activity = this,
+                requiredHash = config.hiddenPasswordHash,
+                showTabIndex = currentType,
+                minimalist = false,
+                allowBiometrics = false
+            ) { _, _, authSuccess ->
                 if (authSuccess) {
                     promptChangeVaultPassword()
                 }

@@ -143,10 +143,13 @@ fun CryptoManager.getBiometricEncryptCipher(): Cipher? {
 
 fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Boolean {
     val masterKey = unlockedMasterKey ?: return false
+    var encrypted: ByteArray? = null
+    var iv: ByteArray? = null
+    var combined: ByteArray? = null
     return try {
-        val encrypted = cipher.doFinal(masterKey)
-        val iv = cipher.iv
-        val combined = ByteArray(iv.size + encrypted.size)
+        encrypted = cipher.doFinal(masterKey)
+        iv = cipher.iv
+        combined = ByteArray(iv.size + encrypted.size)
         System.arraycopy(iv, 0, combined, 0, iv.size)
         System.arraycopy(encrypted, 0, combined, iv.size, encrypted.size)
 
@@ -155,6 +158,10 @@ fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Bool
         true
     } catch (_: Throwable) {
         false
+    } finally {
+        encrypted?.fill(0)
+        iv?.fill(0)
+        combined?.fill(0)
     }
 }
 
@@ -167,8 +174,12 @@ fun CryptoManager.getBiometricDecryptCipher(context: Context): Cipher? {
     } catch (_: Throwable) {
         return null
     }
-    if (combined.size <= GCM_IV_LENGTH) return null
+    if (combined.size <= GCM_IV_LENGTH) {
+        combined.fill(0)
+        return null
+    }
     val iv = combined.copyOfRange(0, GCM_IV_LENGTH)
+    combined.fill(0)
 
     return try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
@@ -186,6 +197,8 @@ fun CryptoManager.getBiometricDecryptCipher(context: Context): Cipher? {
         null
     } catch (_: Throwable) {
         null
+    } finally {
+        iv.fill(0)
     }
 }
 
@@ -199,23 +212,38 @@ fun CryptoManager.completeBiometricUnlock(context: Context, cipher: Cipher): Boo
     } catch (_: Throwable) {
         return false
     }
-    if (combined.size <= GCM_IV_LENGTH) return false
+    if (combined.size <= GCM_IV_LENGTH) {
+        combined.fill(0)
+        return false
+    }
     val encrypted = combined.copyOfRange(GCM_IV_LENGTH, combined.size)
+    combined.fill(0)
 
+    var bundle: ByteArray? = null
     return try {
-        val bundle = cipher.doFinal(encrypted)
+        bundle = cipher.doFinal(encrypted)
         if (bundle.size < 32) {
-            bundle.fill(0)
             return false
         }
-        unlockedMasterKey = bundle.copyOf(32)
-        bundle.fill(0)
+        val vmk = bundle.copyOf(32)
+        val kek = loadKekFromVaultHeaderWithVmk(context, vmk)
+        if (kek == null) {
+            vmk.fill(0)
+            return false
+        }
+        unlockedMasterKey?.fill(0)
+        unlockedKek?.fill(0)
+        unlockedMasterKey = vmk
+        unlockedKek = kek
         context.config.hiddenPasswordHash = "argon2id_aes256_gcm"
         context.config.isHiddenPasswordProtectionOn = true
         findVaultRoot(context)?.let { context.config.vaultRootPath = it.absolutePath }
         true
     } catch (_: Throwable) {
         false
+    } finally {
+        encrypted.fill(0)
+        bundle?.fill(0)
     }
 }
 

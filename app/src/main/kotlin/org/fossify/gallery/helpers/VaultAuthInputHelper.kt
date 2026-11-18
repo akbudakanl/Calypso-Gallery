@@ -14,6 +14,7 @@ import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.PROTECTION_PIN
+import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogVaultSecurityBinding
 import org.fossify.gallery.extensions.applyVaultScreenProtection
@@ -27,7 +28,23 @@ class VaultAuthInputHelper(
     private val activity: BaseSimpleActivity,
     private val binding: DialogVaultSecurityBinding
 ) {
-    private val currentPin = StringBuilder()
+    private val currentPin = CharArray(16)
+    private var pinLength = 0
+    private var isBusy = false
+
+    fun setInputsEnabled(enabled: Boolean) {
+        val pinButtons = listOf(
+            binding.pin0, binding.pin1, binding.pin2, binding.pin3, binding.pin4,
+            binding.pin5, binding.pin6, binding.pin7, binding.pin8, binding.pin9,
+            binding.pinBackspace, binding.pinOk
+        )
+        pinButtons.forEach { it.isEnabled = enabled }
+        binding.vaultPasswordInput.isEnabled = enabled
+        binding.vaultPasswordOkBtn.isEnabled = enabled
+        binding.vaultBiometricBtn.isEnabled = enabled
+        binding.vaultBruteForceHolder.isEnabled = enabled
+        binding.vaultTabs.isEnabled = enabled
+    }
 
     fun applyTouchFilter() {
         binding.root.filterTouchesWhenObscured = true
@@ -35,53 +52,59 @@ class VaultAuthInputHelper(
         binding.vaultPasswordHolder.filterTouchesWhenObscured = true
     }
 
-    fun setupPinInput(onPinSubmit: (String) -> Unit) {
+    fun setupPinInput(onPinSubmit: (CharArray) -> Unit) {
         val digitButtons = listOf(
-            binding.pin0 to "0",
-            binding.pin1 to "1",
-            binding.pin2 to "2",
-            binding.pin3 to "3",
-            binding.pin4 to "4",
-            binding.pin5 to "5",
-            binding.pin6 to "6",
-            binding.pin7 to "7",
-            binding.pin8 to "8",
-            binding.pin9 to "9"
+            binding.pin0 to '0',
+            binding.pin1 to '1',
+            binding.pin2 to '2',
+            binding.pin3 to '3',
+            binding.pin4 to '4',
+            binding.pin5 to '5',
+            binding.pin6 to '6',
+            binding.pin7 to '7',
+            binding.pin8 to '8',
+            binding.pin9 to '9'
         )
 
         for ((btn, digit) in digitButtons) {
             btn.setOnClickListener {
-                if (currentPin.length < 16) {
-                    currentPin.append(digit)
+                if (pinLength < currentPin.size) {
+                    currentPin[pinLength++] = digit
                     updatePinDots()
                 }
             }
         }
 
         binding.pinBackspace.setOnClickListener {
-            if (currentPin.isNotEmpty()) {
-                currentPin.deleteCharAt(currentPin.length - 1)
+            if (pinLength > 0) {
+                pinLength--
+                currentPin[pinLength] = '\u0000'
                 updatePinDots()
             }
         }
 
         binding.pinBackspace.setOnLongClickListener {
-            currentPin.clear()
+            currentPin.fill('\u0000')
+            pinLength = 0
             updatePinDots()
             true
         }
 
         binding.pinOk.setOnClickListener {
-            val pin = currentPin.toString()
-            if (pin.length < 4) {
+            if (pinLength < 4) {
                 activity.toast(org.fossify.commons.R.string.pin_must_be_4_digits_long)
             } else {
-                onPinSubmit(pin)
+                val chars = currentPin.copyOf(pinLength)
+                try {
+                    onPinSubmit(chars)
+                } finally {
+                    chars.fill('\u0000')
+                }
             }
         }
     }
 
-    fun setupPasswordInput(onPasswordSubmit: (String) -> Unit) {
+    fun setupPasswordInput(onPasswordSubmit: (CharArray) -> Unit) {
         binding.vaultPasswordOkBtn.setOnClickListener {
             submitPassword(onPasswordSubmit)
         }
@@ -95,10 +118,16 @@ class VaultAuthInputHelper(
         }
     }
 
-    private fun submitPassword(onPasswordSubmit: (String) -> Unit) {
-        val pwd = binding.vaultPasswordInput.text?.toString() ?: ""
-        if (pwd.isNotEmpty()) {
-            onPasswordSubmit(pwd)
+    private fun submitPassword(onPasswordSubmit: (CharArray) -> Unit) {
+        val editable = binding.vaultPasswordInput.text ?: return
+        val len = editable.length
+        if (len <= 0) return
+        val chars = CharArray(len)
+        editable.getChars(0, len, chars, 0)
+        try {
+            onPasswordSubmit(chars)
+        } finally {
+            chars.fill('\u0000')
         }
     }
 
@@ -126,13 +155,14 @@ class VaultAuthInputHelper(
     }
 
     fun clearInputs() {
-        currentPin.clear()
+        currentPin.fill('\u0000')
+        pinLength = 0
         updatePinDots()
-        binding.vaultPasswordInput.setText("")
+        binding.vaultPasswordInput.text?.clear()
     }
 
     private fun updatePinDots() {
-        binding.vaultPinDots.text = "•".repeat(currentPin.length)
+        binding.vaultPinDots.text = "•".repeat(pinLength)
     }
 
     fun setupBiometricButton(enabled: Boolean, onAuthenticated: () -> Unit) {
@@ -191,7 +221,65 @@ class VaultAuthInputHelper(
         biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
     }
 
-    fun unlockWithSecret(secret: String, currentType: Int): Boolean {
+    fun unlockWithSecretAsync(
+        secret: CharArray,
+        currentType: Int,
+        rewrapKdfOnSuccess: Boolean = false,
+        onPreExecute: (() -> Unit)? = null,
+        onPostExecute: (() -> Unit)? = null,
+        onResult: (Boolean) -> Unit
+    ) {
+        if (isBusy) return
+        isBusy = true
+        setInputsEnabled(false)
+        onPreExecute?.invoke()
+        binding.vaultStatusLabel.beVisible()
+        binding.vaultStatusLabel.setText(R.string.unlocking_encrypted_vault)
+
+        val secretCopy = secret.copyOf()
+        ensureBackgroundThread {
+            val unlocked = try {
+                if (rewrapKdfOnSuccess) {
+                    CryptoManager.rewrapVaultHeaderWithCurrentKdf(activity, secretCopy)
+                } else {
+                    CryptoManager.unlockWithSecret(activity, secretCopy)
+                }
+            } catch (_: OutOfMemoryError) {
+                System.gc()
+                false
+            } catch (_: Throwable) {
+                false
+            } finally {
+                secretCopy.fill('\u0000')
+            }
+
+            activity.runOnUiThread {
+                isBusy = false
+                if (activity.isFinishing || activity.isDestroyed) return@runOnUiThread
+                setInputsEnabled(true)
+                onPostExecute?.invoke()
+                if (unlocked) {
+                    activity.config.hiddenProtectionType = currentType
+                    if (!rewrapKdfOnSuccess) {
+                        activity.applyVaultScreenProtection(true)
+                    }
+                    activity.hideKeyboard()
+                    onResult(true)
+                } else {
+                    clearInputs()
+                    val errId = if (currentType == PROTECTION_PASSWORD) {
+                        R.string.wrong_password
+                    } else {
+                        org.fossify.commons.R.string.wrong_pin
+                    }
+                    activity.toast(errId)
+                    onResult(false)
+                }
+            }
+        }
+    }
+
+    fun unlockWithSecret(secret: CharArray, currentType: Int): Boolean {
         val unlocked = CryptoManager.unlockWithSecret(activity, secret)
         if (unlocked) {
             activity.config.hiddenProtectionType = currentType
@@ -200,7 +288,11 @@ class VaultAuthInputHelper(
             return true
         }
         clearInputs()
-        val errId = if (currentType == PROTECTION_PASSWORD) R.string.wrong_password else org.fossify.commons.R.string.wrong_pin
+        val errId = if (currentType == PROTECTION_PASSWORD) {
+            R.string.wrong_password
+        } else {
+            org.fossify.commons.R.string.wrong_pin
+        }
         activity.toast(errId)
         return false
     }
