@@ -12,15 +12,18 @@ import org.fossify.gallery.helpers.EncryptedFileMetadata
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
 import org.fossify.gallery.helpers.VaultLockPolicy
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.appendPendingWipe
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.emptyVaultRecycleBin
 import org.fossify.gallery.helpers.encryptStreamToDirectory
 import org.fossify.gallery.helpers.exportEncryptedVault
+import org.fossify.gallery.helpers.getPendingWipeJournalFile
 import org.fossify.gallery.helpers.getVaultRecycleBin
 import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
+import org.fossify.gallery.helpers.processPendingWipeJournalSync
 import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
@@ -390,6 +393,48 @@ class VaultLockPolicyTest {
             assertTrue(stateTransitions[i])
             assertFalse(stateTransitions[i + 1])
         }
+    }
+
+    @Test
+    fun durableWipeJournalPersistsEntriesOnFailureAndClearsOnlyAfterDeletion() {
+        val journalFile = CryptoManager.getPendingWipeJournalFile(testContext)
+        assertFalse(journalFile.exists())
+
+        // Idempotent append: repeated path does not duplicate lines.
+        val targetA = File(tempRoot, "secret_a.tmp").apply { writeBytes(ByteArray(4096) { 0x5A }) }
+        val targetB = File(tempRoot, "secret_b.tmp").apply { writeBytes(ByteArray(2048) { 0x3C }) }
+        CryptoManager.appendPendingWipe(testContext, targetA.absolutePath)
+        CryptoManager.appendPendingWipe(testContext, targetA.absolutePath)
+        CryptoManager.appendPendingWipe(testContext, targetB.absolutePath)
+        assertEquals(listOf(targetA.absolutePath, targetB.absolutePath), journalFile.readLines())
+
+        // Wiping a read-only file fails and must leave both targets still flagged in the journal.
+        assertTrue(targetA.setWritable(false))
+        try {
+            assertFalse(CryptoManager.secureWipeAndDeleteFile(targetA, testContext))
+            assertTrue(targetA.exists())
+            assertTrue(journalFile.exists())
+            assertTrue(targetA.absolutePath in journalFile.readLines())
+
+            // Startup retry wipes targetB cleanly while preserving un-wiped targetA.
+            assertEquals(1, CryptoManager.processPendingWipeJournalSync(testContext))
+            assertFalse(targetB.exists())
+            assertTrue(targetA.exists())
+            assertEquals(listOf(targetA.absolutePath), journalFile.readLines())
+        } finally {
+            targetA.setWritable(true)
+        }
+
+        // Making targetA writable again lets retry wipe & delete it and wipe the empty journal.
+        assertEquals(1, CryptoManager.processPendingWipeJournalSync(testContext))
+        assertFalse(targetA.exists())
+        assertFalse(journalFile.exists())
+
+        // Direct standalone secureWipeAndDeleteFile also removes any existing journal traces cleanly.
+        val targetC = File(tempRoot, "secret_c.tmp").apply { writeBytes(ByteArray(512) { 0x7E }) }
+        assertTrue(CryptoManager.secureWipeAndDeleteFile(targetC, testContext))
+        assertFalse(targetC.exists())
+        assertFalse(journalFile.exists())
     }
 
     private fun writeSyntheticVaultHeader(
