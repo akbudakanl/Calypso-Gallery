@@ -63,13 +63,12 @@ data class AppearancePalette(
             }
             val border = ColorUtils.blendARGB(surface, text, 0.16f)
             val effectiveSecondary = if (secondary != 0) secondary else shiftHue(primary, 35f)
-            val effectiveIcon = if (appIcon != 0) appIcon else primary
             return AppearancePalette(
                 text = text,
                 background = background,
                 primary = primary,
                 secondary = effectiveSecondary,
-                appIcon = effectiveIcon,
+                appIcon = DARK.appIcon,
                 surface = surface,
                 border = border,
                 onPrimary = contrastText(primary),

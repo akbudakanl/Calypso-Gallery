@@ -96,9 +96,6 @@ class AppearanceActivity : SimpleActivity() {
         binding.appearancePrimaryColorRow.setOnClickListener {
             pickCustomColor(config.customPrimaryColor) { config.customPrimaryColor = it }
         }
-        binding.appearanceAppIconColorRow.setOnClickListener {
-            pickCustomColor(config.customAppIconColor) { config.customAppIconColor = it }
-        }
         binding.appearanceSavedThemesRow.setOnClickListener {
             showSavedThemes()
         }
@@ -149,16 +146,12 @@ class AppearanceActivity : SimpleActivity() {
             binding.appearanceTextColorRow,
             binding.appearanceBackgroundColorRow,
             binding.appearancePrimaryColorRow,
-            binding.appearanceAppIconColorRow,
             binding.appearanceSavedThemesRow,
         ).forEach { it.isVisible = isCustom }
 
         binding.appearanceTextColorSwatch.setBackgroundColor(config.customTextColor)
         binding.appearanceBackgroundColorSwatch.setBackgroundColor(config.customBackgroundColor)
         binding.appearancePrimaryColorSwatch.setBackgroundColor(config.customPrimaryColor)
-        // Show the color actually applied to the launcher alias, which may be the nearest
-        // supported md_* shade rather than the raw custom value.
-        binding.appearanceAppIconColorSwatch.setBackgroundColor(config.appIconColor)
 
         val tint = ColorStateList.valueOf(palette.primary)
         listOf(
@@ -188,9 +181,7 @@ class AppearanceActivity : SimpleActivity() {
     }
 
     private fun applyAndRefresh() {
-        val palette = AppearanceManager.apply(this, config)
-        AppearanceManager.applyLauncherIcon(this, palette.appIcon)
-        config.lastIconColor = config.appIconColor
+        AppearanceManager.apply(this, config)
         recreate()
     }
 

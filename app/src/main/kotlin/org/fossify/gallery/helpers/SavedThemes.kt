@@ -11,7 +11,7 @@ data class SavedTheme(
     val appIconColor: Int,
 ) {
     fun matches(text: Int, background: Int, primary: Int, appIcon: Int): Boolean =
-        textColor == text && backgroundColor == background && primaryColor == primary && appIconColor == appIcon
+        textColor == text && backgroundColor == background && primaryColor == primary
 }
 
 /** Persists user-created Custom palettes so they survive process restarts. */
@@ -32,7 +32,7 @@ object SavedThemes {
     fun isBuiltIn(text: Int, background: Int, primary: Int, appIcon: Int): Boolean {
         for (preset in listOf(AppearancePalette.LIGHT, AppearancePalette.DARK)) {
             if (preset.text == text && preset.background == background &&
-                preset.primary == primary && preset.appIcon == appIcon
+                preset.primary == primary
             ) {
                 return true
             }
