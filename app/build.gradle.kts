@@ -195,13 +195,8 @@ dependencies {
     implementation(libs.avif)
     implementation(libs.avif.integration)
     implementation(libs.jxl.integration)
-    implementation(libs.okio)
     implementation(libs.bouncycastle.bcprov)
     implementation(libs.tink.android)
-    implementation(libs.picasso) {
-        exclude(group = "com.squareup.okhttp3", module = "okhttp")
-    }
-    compileOnly(libs.okhttp)
 
     ksp(libs.glide.compiler)
     implementation(libs.zjupure.webpdecoder)

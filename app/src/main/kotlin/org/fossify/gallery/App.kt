@@ -9,10 +9,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import com.github.ajalt.reprint.core.Reprint
-import com.squareup.picasso.Downloader
-import com.squareup.picasso.Picasso
-import okhttp3.Request
-import okhttp3.Response
 import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.SplashActivity
@@ -68,11 +64,6 @@ class App : FossifyApp() {
         AppearanceManager.applyLauncherIcon(this, palette.appIcon)
         installCodeLevelNetworkBlocker()
         Reprint.initialize(this)
-        Picasso.setSingletonInstance(Picasso.Builder(this).downloader(object : Downloader {
-            override fun load(request: Request) = Response.Builder().build()
-
-            override fun shutdown() {}
-        }).build())
 
         registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent?) {

@@ -99,20 +99,6 @@
                 android:text="@string/about_read_gpl_license" />
 
             <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_tink_license"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_read_tink_license" />
-
-            <org.fossify.commons.views.MyTextView
                 android:id="@+id/about_source_heading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
