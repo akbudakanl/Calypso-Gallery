@@ -8,18 +8,17 @@ sürecin öldürülmesi) sırasında verilerin ne olduğu. Referanslar: `DOCS.md
 [ADR 0003](adr/0003-resumable-file-operations.md) ve
 [crypto-design-review.md](crypto-design-review.md).
 
-> **Formal durum:** Bu belge bir kod değişikliği kaydı değil, **mevcut davranışın analizi ve
-> önerilen çözümün tasarım notudur.** ADR 0003 hâlâ *Proposed* durumundadır ve §9'da uygulama
-> "staged, not yet started" olarak geçer. Aşağıda "planlanan" veya "önerilen" olarak işaretlenen
-> hiçbir değişiklik şu an kodda yoktur. ADR 0002 §7 (foreground operation registry) de aynı
-> şekilde yalnızca tasarımdır; kodda yalnızca `OperationProgressNotifier` bulunur.
+> **Belge durumu:** §1–§3 ve §6.1, değişiklik öncesi (*upstream/fork başlangıç*) davranışının
+> tarihsel analizini ve tasarım önerisini korur. [ADR 0003](adr/0003-resumable-file-operations.md)
+> kabul edilmiş ve temel fazları uygulanmıştır; **kodda şu an çalışan güncel durum** §5, §6.4, §8
+> ve ADR 0003 §11'de belgelenmektedir.
 >
 > **Bağımsız kriptografik denetim yapılmamıştır.** Konteyner yerleşimi proje özgüdür; iyi bilinen
 > primitiflerin kullanılması tasarım hatası olmadığını kanıtlamaz.
 
 ---
 
-## 1. Başlangıçta uygulamanın davranışı (mevcut kod)
+## 1. Başlangıçta uygulamanın davranışı (değişiklik öncesi tarihsel analiz)
 
 ### 1.1 Temel güvenlik invariant'ı
 
@@ -93,16 +92,15 @@ Bu proje (Fossify Gallery fork'u) veri bütünlüğü açısından aşağıdakil
   (`CryptoManagerExportSync.kt:276-330`); sanal albüm ve favorites manifest'leri `*.tmp` + `renameTo`
   (`VirtualAlbumSyncManager.kt:271-294`, `ReferenceBackupManager.kt:113`). Bu desenler **bazı**
   yollarda yarım dosya oluşumunu zaten engeller — ama ana kopyalama/şifreleme yollarında yoktur.
-- **İlerleme bildirimi:** `OperationProgressNotifier` + `CryptoProgressDialog` (foreground *service*
-  değil, yalnızca bildirim).
-- **Tasarım kararları:** ADR 0002 (operasyonel güvenlik) ve ADR 0003 (resumable file operations)
-  dokümante edilmiş, henüz uygulanmamıştır.
+- **İlerleme bildirimi (uygulama öncesi):** `OperationProgressNotifier` + `CryptoProgressDialog`
+  (foreground *service* olmadan yalnızca bildirim; güncel foreground servisi için bkz. §8.2).
+- **Tasarım ve uygulama durumu:** ADR 0002 ve ADR 0003'ün güncel kod karşılığı §8'dedir.
 
 ---
 
-## 3. Önerilen değişiklikler — HENÜZ UYGULANMADI
+## 3. Önerilen değişiklikler (uygulama özeti için bkz. §8)
 
-Aşağıdakiler bu analizin çıktısıdır; kodda karşılığı yoktur ve ADR 0003 §9 checklist'i ile uyumludur.
+Aşağıdaki maddeler başlangıç analizinde önerilen hedeflerdir; güncel kod durumu §8'de ve ADR 0003 §11'de izlenmektedir.
 
 1. **Staging + atomik commit (yarım dosyanın asıl çözümü).** Her öğe, nihai dosyayla **aynı
    dizinde** bir `.stage_<operationId>_<itemIndex>` dosyasına yazılır; `fd.sync()` + dizin fsync
@@ -150,13 +148,13 @@ Bu hedef şu varsayımlara dayanır:
 | # | Risk | Açıklama / önlem |
 |---|---|---|
 | 1 | **Atomik rename garantisi yok (kısmen giderildi)** | Copy/move, SAF ve external sync yolları artık staging + atomik commit kullanıyor: doğrudan `File` hedeflerde `Files.move(ATOMIC_MOVE)`, SAF hedeflerde kardeş `DocumentFile` ile `DocumentFile.renameTo()`, `CryptoManagerExportSync`'te önce `ATOMIC_MOVE`; desteklenmezse yalnızca **aynı file store** üzerinde rename'e izin verilir, aksi halde öğe `FAILED`. Cross-store kopyala-sil fallback yok. **Kalan:** bazı SAF sağlayıcıları rename'i hiç desteklemez; o durumda işlem güvenli biçimde reddedilir. |
-| 2 | **Doğrulama kapsamı/maliyeti** | Şifreli kopyada hızlı örnekleme kullanılıyor (`Activity.kt:2417`); sync yolu tam `verifyFileIntegrity` yapıyor (`:279`). Sadece boyut+fingerprint "VERIFIED" dersen bozuk `.bin` doğrulanmış sayılabilir. Tam doğrulama büyük videolarda 2x okuma maliyeti getirir; bu maliyet kabul edilmelidir. |
-| 3 | **Journal kaybı / reddi** | Journal app-private; app verisi silinirse veya expire olursa (ADR §10 açık soru) ya da kullanıcı resume'u reddederse: commit edilmiş ama kaynağı silinmemiş öğeler **duplicate** kalır; `resolvedDestName` gider → `(1)/(2)` kayar; albüm batch kaydı gider → yeni rastgele alt klasör (`CryptoManagerFolderCrypto.kt:79-84`). |
-| 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
-| 5 | **Foreground service sınırları** | Force-stop `onDestroy` çağırmadan öldürür (journal `IN_FLIGHT` kalır — resume halleder). OEM battery optimizer / Doze servisi duraklatabilir, wake lock kaybolabilir, harici birim geri gelmeyebilir → işlem "waiting" takılabilir. Timeout/cancel politikası gerekir. |
+| 2 | **Doğrulama kapsamı/maliyeti** | Şifreli `.bin` kopyada (`copyOrMoveEncryptedFileToDirectory`), encrypt sonrası ve external sync yolunda tam `verifyFileIntegrity` yapılır (çakışma ön taramasında `allowFastSampling = true` yalnızca aday dedup kontrolü içindir). Düz kopyada yalnızca boyut + `MediaIdentity` fingerprint (SAF'ta tam akış SHA-256), decrypt'te çıktı uzunluk doğrulaması yapılır. Tam doğrulama büyük videolarda 2x okuma maliyeti getirir; bu maliyet kabul edilmelidir. |
+| 3 | **Journal kaybı / reddi** | Journal app-private; app verisi silinirse veya expire olursa (ADR §10 açık soru) ya da kullanıcı resume'u reddederse: commit edilmiş ama kaynağı silinmemiş öğeler **duplicate** kalır; `resolvedDestName` gider → `(1)/(2)` kayar; albüm batch kaydı gider → yeni rastgele alt klasör (`CryptoManagerFolderCrypto.kt`). |
+| 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar; temizlenmiş işlemlerin eski anahtarları prefs'ten budanır. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
+| 5 | **Foreground service sınırları** | Force-stop `onDestroy` çağırmadan öldürür (journal `IN_FLIGHT` kalır — resume halleder). `FileOperationService` + `ForegroundOperationRegistry` tüm işlem yollarını kapsar ve `ACTION_CANCEL` bildirim iptali ile `TransientOperationWaiter` (120 sn zaman aşımı) içerir; ancak OEM battery optimizer / Doze servisi yine de duraklatabilir veya harici birim geri gelmeyebilir. |
 | 6 | **Plaintext staging izi** | Decrypt ve düz kopya staging dosyaları düz metin tutar; `delete()` ile silinirse flash'te iz kalır. Secure wipe şart (ADR 0002 §7). Ciphertext staging için normal `delete()` yeterli. |
-| 7 | **Tek seferlik alan kontrolü** | Alan kontrolü batch başında yapılır; uzun süren işlemde başka uygulamalar alan tüketebilir veya harici birim çıkarılabilir. Öğe başına yeniden kontrol gerekir. |
-| 8 | **Eşzamanlılık** | Owner token olmadan iki işlem aynı hedefi seçebilir veya biri diğerinin kaynağını silebilir. Staging isimleri `operationId + itemIndex` ile benzersiz olmalı. |
+| 7 | **Öğe başı ve batch alan kontrolü (kısmen giderildi)** | Batch başı `SpaceEstimator` kontrolüne ek olarak `TransientOperationWaiter.awaitDestinationReady` her yazma öncesinde hedef dizin erişilebilirliğini ve doğrulanabilir boş alanı yeniden kontrol eder. Yazma ortasında gerçekleşen `ENOSPC` / IO hatasında aynı dosya içinde otomatik yeniden deneme henüz yoktur; öğe `FAILED` olur ve kaynak korunur. |
+| 8 | **Eşzamanlılık (giderildi)** | `ForegroundOperationRegistry` aynı anda çalışan farklı thread'lerdeki işlemleri tek owner token ile serileştirir (aynı thread içi çağrılar re-entrant'tır). Staging isimleri `operationId + itemIndex` ile benzersizdir. |
 
 Bu risklerin **hiçbiri** "kaynak ve hedefin yarısı kalıp birleştirilemez veri kaybı" şeklinde
 değildir; hepsi "kirli durum, askıda işlem, duplicate, yanlış doğrulama veya gizlilik izi"
@@ -166,10 +164,9 @@ kategorisindedir.
 
 ## 6. Düşük depolama alanı ve "depolama yeterliliği" özelliği
 
-### 6.1 Mevcut kontrol
+### 6.1 Başlangıç (uygulama öncesi) kontrolü
 
-Uygulamadaki depolama yeterliliği kontrolü **yalnızca** `CopyMoveHelper.prepareAndRunCopyMove`
-içinde vardır (`CopyMoveHelper.kt:376-401`):
+ADR 0003 §3a öncesinde uygulamadaki depolama yeterliliği kontrolü **yalnızca** `CopyMoveHelper.prepareAndRunCopyMove` içinde bulunuyordu:
 
 - Yalnızca `useStreamCopy == true` ise çalışır (SD/OTG/SAF veya copy). Aynı FS içi move'da
   `renameTo` kullanıldığı için kontrol atlanır — doğrudur, rename ek alan istemez.
@@ -249,7 +246,7 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
 
 - Bu belge **garanti değildir.** Yazılım "olduğu gibi" sağlanır; hiçbir veri kaybı, bozulma veya
   gizlilik ihlali olmayacağına dair açık veya zımni taahhüt verilmez.
-- ADR 0003 hâlâ öneri aşamasındadır; §3'teki değişikliklerin uygulanması bu belgeyi güncel tutmak zorunluluğu doğurur. Kod ile belge çelişirse **kod geçerlidir.**
+- ADR 0003 uygulama ilerledikçe bu belge güncellenir; kod ile belge çelişirse **kod geçerlidir.**
 - Flash depolamada CSPRNG overwrite + `fsync` en iyi çabadır; FTL wear-leveling ve journal
   metadata nedeniyle uygulama düzeyinde "forensik olarak iz bırakmayan silme" mümkün değildir
   (DOCS §2, §2.4.7).
@@ -262,18 +259,23 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
 
 ---
 
-## 8. Uygulama durumu (Faz 1) ve opsiyonel gerçek cihaz testleri
+## 8. Uygulama durumu (Faz 1–3) ve opsiyonel gerçek cihaz testleri
 
 ### 8.1 Faz 1'de kodlananlar
 
-- Ayrı Room DB (`pending_operations.db`), `PendingOperation` entity'si ve DAO.
-- `OperationJournal` API'si (PENDING → IN_FLIGHT → VERIFIED → SOURCE_DELETED; FAILED/SKIPPED).
+- Ayrı Room DB (`pending_operations.db`), `PendingOperation` entity'si ve DAO (`upsertAll` toplu
+  işlemi ve `findItem` tekli indeksli sorgusu ile).
+- `OperationJournal` API'si (`PENDING → IN_FLIGHT → VERIFIED → SOURCE_DELETED`; `FAILED/SKIPPED`),
+  tek atomik transaction içinde batch yazımı ve `COPY` vs `MOVE/wipe/delete` ayrımıyla
+  `requiresSourceDeletion` / `needsResume` kuralları.
 - `AtomicStaging`: aynı dizinde `.stage_<operationId>_<index>.tmp` dosyası, `fd.sync()` + dizin
-  fsync + `ATOMIC_MOVE`; desteklenmezse `FAILED` (kopyala-sil fallback'i yok).
+  fsync (arayan önceden sync ettiyse `alreadyFileSynced = true` ile çift sync'ten kaçınır) +
+  `ATOMIC_MOVE`; desteklenmezse `FAILED` (kopyala-sil fallback'i yok).
 - Dört çekirdek yazma yolu staging + doğrulama + journal ile güncellendi:
-  `CopyMoveHelper.copyFile` (düz kopya/taşıma), `encryptFileToDirectory` (encrypt sonrası tam
-  `verifyFileIntegrity`), `decryptFileToDirectory` (uzunluk doğrulaması),
-  `copyOrMoveEncryptedFileToDirectory` (kopya sonrası integrity).
+  `CopyMoveHelper.copyFile` (düz kopya/taşıma, 256 KiB tampon ve SAF akışı sırasında tek geçişli
+  SHA-256), `encryptFileToDirectory` (encrypt sonrası tam `verifyFileIntegrity`),
+  `decryptFileToDirectory` (uzunluk doğrulaması), `copyOrMoveEncryptedFileToDirectory`
+  (kopya sonrası tam `verifyFileIntegrity`).
 - Düz kopyada kaynak/hedef fingerprint karşılaştırması; plaintext staging hatalarda secure wipe.
 - `SpaceEstimator` + saf `VaultContainerWriter.estimateEncryptedSize(...)`; düz kopya alan kontrolü
   yeni estimator'a bağlandı ve SAF `-1` için açıklayıcı uyarı eklendi (`space_unverified_warning`).
@@ -282,25 +284,36 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
 **Albüm/Activity batch hook'ları da bağlandı:**
 
 - `encryptFolder` / `decryptFolder`: batch journal, `peakBytes = Σ çıktılar` alan kontrolü, öğe
-  başına item context, fault injection, başarıda journal temizliği. Mevcut `.bin` dosyalarının
-  taşınması da ayrı item olarak journal'lanır.
+  başına item context, fault injection, başarı/tam geri alma sonrası journal temizliği, `wipeSource` /
+  `deleteSource` kaynak silme adımlarında `SOURCE_DELETED` / `SKIPPED_CONFLICT` kaydı. Mevcut
+  `.bin` dosyalarının taşınması da ayrı item olarak journal'lanır.
 - `tryCopyMoveFilesTo` (Activity): şifreli kasa içi/dışı karma batch için tek journal, her öğeye
   item context, duplicate'ler `SKIPPED_CONFLICT`, karışık düz→düz kopyada staging + fingerprint
   doğrulaması, başarıda journal temizliği.
 
 ### 8.2 Faz 2 — süreç ölümü kurtarma
 
-- `OperationRecovery.reconcile()`: startup'ta orphan `.stage_*` dosyalarını temizler (vault magic'i
-  olmayanları secure wipe), `IN_FLIGHT/COPIED_UNVERIFIED/WAITING_FOR_SPACE` kayıtlarını `PENDING`'e
-  sıfırlar; her öğe sağlam kaynağından yeniden yazılır.
+- `OperationRecovery.reconcile()`: startup'ta `ForegroundOperationRegistry.isActive` ise erken
+  çıkar; aksi halde orphan `.stage_*` dosyalarını temizler (vault magic'i olmayanları secure wipe),
+  `MetadataReconciler.reconcile()` çalıştırır, `IN_FLIGHT/COPIED_UNVERIFIED/WAITING_FOR_SPACE`
+  kayıtlarını `PENDING`'e sıfırlar ve yalnızca `needsResume` öğesi kalmayan tamamlanmış batch'leri
+  temizler.
 - `OperationRecovery.resume()`: journal'daki batch bayraklarını (`isMove`, `wipeSource`,
-  `deleteSource`, conflict payload) kullanarak dört işlem türünü öğe öğe yeniden çalıştırır.
-- **Tek diyalog:** `MainActivity.onResume` içinde çağrılır; şifreli işlemler kasa açılana kadar
-  bekletilir ("türüne göre tetikleme" kararı), düz işlemler uygulama açılışında gösterilir.
-  Mesaj: "Veri kaybı yok; kaldığınız yerden devam edilsin mi?"
-- `FileOperationService` + `ForegroundOperationRegistry`: tek owner token, kalıcı bildirim,
-  PARTIAL_WAKE_LOCK; manifest'te `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_DATA_SYNC`, `WAKE_LOCK`.
-  Düz copy/move ve resume akışına bağlandı; aktif işlem varken orphan temizliği atlanır.
+  `deleteSource`, per-item `conflictResolution`) kullanarak dört işlem türünü arka plan thread'inde
+  (`CryptoProgressDialog` ile) öğe öğe yeniden çalıştırır; hedefe kopyası/şifrelemesi doğrulanıp
+  (`STATE_VERIFIED`) kaynak silmesi yarım kalan öğeleri `completePendingSourceDeletion` ile
+  tamamlar ve gerekirse `finalizeAlbumRootsIfEmpty` ile boş albüm klasörlerini temizler.
+- **Tek diyalog:** `MainActivity.onResume` (`promptToResumeVault` / `enterSecretVault` dahil) ve
+  kasa açıkken `MediaActivity.onResume` içinde çağrılır; `reconcile` arka plan thread'inde
+  çalıştırılır. Şifreli işlemler kasa açılana kadar bekletilir ("türüne göre tetikleme" kararı),
+  düz işlemler uygulama açılışında gösterilir. Mesaj: "Veri kaybı yok; kaldığınız yerden devam
+  edilsin mi?" (Reddedilince Secure Erase adımı henüz kısmi/beklemede.)
+- `FileOperationService` + `ForegroundOperationRegistry`: aynı thread içi re-entrant sahiplik
+  sayacı (`depth` + `ownerThread`), kalıcı bildirim (`FOREGROUND_SERVICE_TYPE_DATA_SYNC`),
+  `ACTION_CANCEL` iptal desteği, `PARTIAL_WAKE_LOCK` ve aktif işlem boyunca `VaultSessionManager`
+  tarafından RAM kasa anahtarının silinmesini engelleme koruması. Düz copy/move, `resume`,
+  `encryptFolder`/`decryptFolder` ve `Activity`/`DirectoryAdapter`/`MediaAdapter` girişlerinin
+  tamamı kayıtlıdır; aktif işlem varken `reconcile`/orphan temizliği atlanır.
 
 ### 8.3 SAF atomik commit (Faz 3/1)
 
@@ -324,11 +337,13 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
   `COPY` için kaynak korunduğundan yalnızca yeni hedefin kimliği kaydedilir.
 - Sanal albümün kendi `parentPhysicalPath` değeri eski klasöre işaret ediyorsa düzeltilip manifest
   yeniden yazılır; düz dosyalar için MediaStore rescan yapılır.
-- **Idempotency:** işlenen **öğeler** (`operationId:itemIndex`) app-private SharedPreferences'da
-  tutulur; UPDATE-by-old-path semantics'i sayesinde ikinci çağrı satır çoğaltmaz. Bu sayede resume
-  sırasında ikinci bir süreç ölümü olursa, ilk turda `PENDING` olan ve sonradan tamamlanan öğeler
-  bir sonraki startup'ta yeniden reconcile edilir. `reconciled_items_v2` anahtarı, eski
-  operasyon-bazlı işaretleyiciden gelen kayıtları geçersiz kılar.
+- **Idempotency ve temizlik:** işlenen **öğeler** (`operationId:itemIndex`) app-private
+  SharedPreferences'da tutulur; UPDATE-by-old-path semantics'i sayesinde ikinci çağrı satır
+  çoğaltmaz. Bu sayede resume sırasında ikinci bir süreç ölümü olursa, ilk turda `PENDING` olan
+  ve sonradan tamamlanan öğeler bir sonraki startup'ta yeniden reconcile edilir.
+  `reconciled_items_v2` anahtarı, eski operasyon-bazlı işaretleyiciden gelen kayıtları geçersiz
+  kılar ve artık `OperationJournal.operationIds()` içinde yer almayan tamamlanmış/silinmiş
+  operasyonların kayıtlarını otomatik olarak budar.
 - Reconcile yalnızca commit edilmiş öğeleri kapsar; yarım kalan öğeler resume sırasında kendi yazma
   yollarında güncellenir.
 
@@ -347,19 +362,26 @@ bırakabilir; ancak **bu belge kapsamında bunlar için kod değişikliği planl
 
 Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okunması gerekir.
 
-### 8.3.3 Açık alan onayı (Faz 3/3)
+### 8.3.3 Açık alan onayı (Faz 3/3) ve geçici kesinti beklemesi
 
 - `SpaceConfirmation.askAsync`: düz kopya/taşıma akışında, `-1` (SAF/OTG) durumunda "boş alan
   doğrulanamadı" başlıklı diyalog gösterir; gereken boyut ve neden açıklayıcı mesajda yer alır.
   Onaylanırsa işlem başlar, reddedilirse ilerleme diyaloğu kapanır.
 - `SpaceConfirmation.confirmBlocking`: albüm encrypt/decrypt gibi senkron arka plan işlemlerinde
   aynı onayı alır; ana thread'de asla bloklamaz (orada `false` döner).
+- `TransientOperationWaiter`: geçici hedef yolu ulaşılmazlığı veya yetersiz boş alan durumunda
+  aktif foreground işlem varken öğeyi `WAITING_FOR_SPACE` durumuna alıp 1 saniyelik aralıklarla
+  en fazla 120 saniye bekler (`isCancelled` ile erken iptal edilebilir).
 - Yeni metinler (başlık + "Yine de devam et") tüm 9 locale'e ve blind-test md'lerine eklendi.
 
-**Kalan (Faz 3):** yalnızca albüm/Activity batch işlemlerinin foreground registry'ye kaydı.
-Bu eksikliğin kapsamı, etkisi ve yapılacaklar listesi
-[pending-foreground-registry-registration.md](pending-foreground-registry-registration.md)
-dosyasında ayrıca takip ediliyor.
+**Tamamlanan ve kalan Faz 3/4 kalemleri:** Albüm ve Activity batch işlemlerinin
+`ForegroundOperationRegistry` kaydı tüm ilgili giriş noktalarına (`encryptFolder`, `decryptFolder`,
+`tryCopyMoveFilesTo`, `DirectoryAdapter`, `MediaAdapter` ve `Activity`) uygulanmıştır. Kalan
+kısmi/bekleyen maddeler (`resolvedDestName` çakışma soneki takibi, albüm birleştirme hedef albüm
+takibi, kesinti reddedilince Secure Erase adımı, bekleme bildirimine özel yerel metin ve akış
+ortası `IOException` yeniden denemesi)
+[ADR 0003 §11](adr/0003-resumable-file-operations.md#11-current-implementation-audit-checklist)
+altında takip edilir.
 
 ### 8.4 Opsiyonel gerçek cihaz testleri (otomasyon yok)
 
