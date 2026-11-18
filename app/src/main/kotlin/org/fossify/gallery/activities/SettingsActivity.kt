@@ -111,13 +111,18 @@ class SettingsActivity : SimpleActivity() {
             padTopSystem = listOf(binding.settingsAppbar),
             padBottomSystem = listOf(binding.settingsNestedScrollview)
         )
-        setupMaterialScrollListener(binding.settingsNestedScrollview, binding.settingsAppbar)
         setupSettingsSearch()
     }
 
     override fun onResume() {
         super.onResume()
-        setupTopAppBar(binding.settingsAppbar, NavigationIcon.Arrow)
+        // Keep the top bar in the normal background color. The commons scroll listener
+        // would animate it to the primary color on the first downward scroll.
+        setupTopAppBar(
+            binding.settingsAppbar,
+            NavigationIcon.Arrow,
+            topBarColor = getProperBackgroundColor()
+        )
         setupSettingItems()
         registerVaultSectionScrollRecheck()
     }
@@ -699,7 +704,8 @@ class SettingsActivity : SimpleActivity() {
 
     private var isVaultSectionNearViewport = false
 
-    // Not setOnScrollChangeListener(): setupMaterialScrollListener() already owns that slot.
+    // Use a ViewTreeObserver listener: setOnScrollChangeListener() is intentionally left free
+    // (setting up the material scroll listener would tint the top bar on scroll).
     private val vaultSectionScrollListener = android.view.ViewTreeObserver.OnScrollChangedListener {
         // The section header was merged into "Security & encrypted vault"; the always-visible
         // vault location row is now the anchor for the deferred on-disk vault check.
