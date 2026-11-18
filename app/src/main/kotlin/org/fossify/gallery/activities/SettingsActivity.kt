@@ -249,6 +249,7 @@ class SettingsActivity : SimpleActivity() {
                 applySettingsSearch()
             }
         })
+        binding.settingsSearch.setBackgroundColor(resolveCalypsoSearchBarFillColor(this))
         binding.settingsSearch.setTextColor(getProperTextColor())
         binding.settingsSearch.setHintTextColor(
             ColorUtils.blendARGB(getProperTextColor(), getProperBackgroundColor(), 0.45f),
