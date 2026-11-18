@@ -18,6 +18,7 @@ import android.media.MediaScannerConnection
 import android.os.Build
 import org.fossify.gallery.databases.GalleryDatabase
 import org.fossify.gallery.extensions.favoritesDB
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerWipe.
@@ -54,21 +55,32 @@ internal fun CryptoManager.removePendingWipe(context: Context, path: String) {
 
 fun CryptoManager.processPendingWipeJournal(context: Context) {
     ensureBackgroundThread {
-        try {
-            val file = getPendingWipeJournalFile(context)
-            if (!file.exists()) return@ensureBackgroundThread
-            val lines = file.readLines(Charsets.UTF_8)
-            for (line in lines) {
-                val trimmed = line.trim()
-                if (trimmed.isNotEmpty()) {
+        ForegroundOperationRegistry.withOperation(context, "pending-wipe") {
+            try {
+                val file = getPendingWipeJournalFile(context)
+                if (!file.exists()) return@withOperation
+                val lines = file.readLines(Charsets.UTF_8).map { it.trim() }.filter { it.isNotEmpty() }
+                val remaining = ArrayList<String>()
+                for (i in lines.indices) {
+                    if (ForegroundOperationRegistry.isCancelled) {
+                        for (rem in i until lines.size) {
+                            remaining.add(lines[rem])
+                        }
+                        break
+                    }
+                    val trimmed = lines[i]
                     val target = File(trimmed)
-                    if (target.exists()) {
-                        secureWipeAndDeleteFile(target, context)
+                    if (target.exists() && !secureWipeAndDeleteFile(target, context)) {
+                        remaining.add(trimmed)
                     }
                 }
-            }
-            secureWipeAndDeleteFile(file, null)
-        } catch (_: Exception) {}
+                if (remaining.isEmpty()) {
+                    secureWipeAndDeleteFile(file, null)
+                } else {
+                    file.writeText(remaining.joinToString("\n") + "\n", Charsets.UTF_8)
+                }
+            } catch (_: Exception) {}
+        }
     }
 }
 
@@ -244,28 +256,36 @@ fun CryptoManager.secureWipeAndDeleteFile(
     syncParentDir: Boolean = true,
     purgeTraces: Boolean = true
 ): Boolean {
-    if (!file.exists()) return true
-    val originalPath = file.absolutePath
+    fun perform(): Boolean {
+        if (!file.exists()) return true
+        val originalPath = file.absolutePath
 
-    val wiped = secureWipeFileInternal(file)
-    if (!wiped) {
-        return false
+        val wiped = secureWipeFileInternal(file)
+        if (!wiped) {
+            return false
+        }
+
+        var deleted = file.delete()
+        if (!deleted && context != null) {
+            deleted = context.tryFastDocumentDelete(originalPath, false)
+        }
+
+        if (syncParentDir) {
+            syncDir(file.parentFile)
+        }
+
+        if (purgeTraces && context != null) {
+            runCatching { purgeTracesForFile(context, originalPath) }
+        }
+
+        return deleted
     }
 
-    var deleted = file.delete()
-    if (!deleted && context != null) {
-        deleted = context.tryFastDocumentDelete(originalPath, false)
+    return if (context != null) {
+        ForegroundOperationRegistry.withOperation(context, "secure-wipe") { perform() } ?: false
+    } else {
+        perform()
     }
-
-    if (syncParentDir) {
-        syncDir(file.parentFile)
-    }
-
-    if (purgeTraces && context != null) {
-        runCatching { purgeTracesForFile(context, originalPath) }
-    }
-
-    return deleted
 }
 
 

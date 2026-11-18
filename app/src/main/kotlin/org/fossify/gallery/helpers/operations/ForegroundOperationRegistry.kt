@@ -20,6 +20,9 @@ object ForegroundOperationRegistry {
     @Volatile
     private var cancelRequested = false
 
+    @Volatile
+    var onStateChanged: ((isActive: Boolean) -> Unit)? = null
+
     val isActive: Boolean get() = currentOwner != null
     val isCancelled: Boolean get() = cancelRequested
 
@@ -38,6 +41,7 @@ object ForegroundOperationRegistry {
         depth = 1
         cancelRequested = false
         FileOperationService.start(context, owner)
+        runCatching { onStateChanged?.invoke(true) }
         return true
     }
 
@@ -64,6 +68,7 @@ object ForegroundOperationRegistry {
             depth = 0
             cancelRequested = false
             FileOperationService.stop(context)
+            runCatching { onStateChanged?.invoke(false) }
             org.fossify.gallery.helpers.VaultSessionManager.onForegroundOperationEnded(context)
         }
     }
