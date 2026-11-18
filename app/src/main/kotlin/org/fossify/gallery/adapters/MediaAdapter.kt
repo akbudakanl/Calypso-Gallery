@@ -674,7 +674,11 @@ class MediaAdapter(
                 activity.getString(R.string.confirm_encrypt_files)
             }
 
-            EncryptConfirmationDialog(activity, message) {
+            EncryptConfirmationDialog(
+                activity = activity,
+                message = message,
+                infoMessageResId = R.string.encrypt_files_info_message
+            ) {
                 encryptFiles(selectedMedia)
             }
         } else {
