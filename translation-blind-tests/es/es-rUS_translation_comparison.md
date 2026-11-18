@@ -758,3 +758,24 @@ Following the previous audit, 22 additional keys were localized in `values-es-rU
 | 576 | `argon2_profile_high` | High security | Alta seguridad |
 | 577 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Si no sabes lo que estás haciendo, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña. |
 | 578 | `argon2_profile_current` | Current: %s | Actual: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-es-rUS/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Spanish (United States) (`values-es-rUS/strings.xml`) |
+|--:|---|---|---|
+| 1 | `color_customization` | Look & feel | Aspecto y comportamiento |
+| 2 | `application_settings` | Application | Aplicación |
+| 3 | `video_playback_settings` | Video playback | Reproducción de video |
+| 4 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Miniaturas y desplazamiento |
+| 5 | `media_viewer_settings` | Media viewer | Visor de medios |
+| 6 | `security_and_vault_settings` | Security & encrypted vault | Seguridad y bóveda cifrada |
+| 7 | `file_operations` | File operations | Operaciones de archivo |
+| 8 | `recycle_bin` | Recycle bin | Papelera |
+| 9 | `migrating` | Migrating | Migrando |
+| 10 | `font_system_default` | System default | Predeterminado del sistema |
+| 11 | `font_monospace` | Monospace | Monospace |
+| 12 | `app_font` | App font | Letra de la aplicación |
+| 13 | `select_font_file` | Select font file… | Seleccionar archivo de letra… |
+| 14 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación. |

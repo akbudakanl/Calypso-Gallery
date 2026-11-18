@@ -779,3 +779,21 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 564 | `argon2_profile_high` | High security | Høy sikkerhet |
 | 565 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Hvis du ikke vet hva du gjør, anbefales det å beholde standardinnstillingen. Dette påvirker bare nyopprettede hvelv og passordendringer. |
 | 566 | `argon2_profile_current` | Current: %s | Gjeldende: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-nb-rNO/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Norwegian Bokmål (`values-nb-rNO/strings.xml`) |
+|--:|---|---|---|
+| 1 | `color_customization` | Look & feel | Utseende og følelse |
+| 2 | `application_settings` | Application | Applikasjon |
+| 3 | `video_playback_settings` | Video playback | Videoavspilling |
+| 4 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Minibilder og rulling |
+| 5 | `media_viewer_settings` | Media viewer | Medieviser |
+| 6 | `security_and_vault_settings` | Security & encrypted vault | Sikkerhet og kryptert hvelv |
+| 7 | `font_system_default` | System default | Systemstandard |
+| 8 | `font_monospace` | Monospace | Monospace |
+| 9 | `app_font` | App font | App-skrifttype |
+| 10 | `select_font_file` | Select font file… | Velg skrifttypefil… |
+| 11 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Mappe- og filstruktur:\n• Når et ukryptert album krypteres, gjøres det om til en kryptert undermappe inne i hvelvet (Secrets).\n• Både mappenavnet og alle filnavn og filinnhold inni det krypteres, slik at ingenting er lesbart utenfor appen. |

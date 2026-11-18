@@ -390,6 +390,7 @@
     <string name="auto_backup_prompt_message">お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。</string>
     <string name="encrypt_info_title">暗号化の仕組み</string>
     <string name="encrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
+    <string name="encrypt_files_info_message" formatted="false">フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。</string>
     <string name="decrypt_info_title">復号の仕組み</string>
     <string name="decrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 暗号化されたアルバムまたはファイルを復号すると、元の名前と形式で選択した保存先フォルダーに復元され、暗号化された保管庫から削除されます。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいフォルダーを作成するか、既存の保存先フォルダーに統合するかを確認します（設定で変更可能）。\n• 統合時は、保存先とビット単位で100%一致することが確認された暗号化コピーを保管庫から削除するか残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
     <string name="vault_location">保管庫の場所</string>
@@ -513,7 +514,6 @@
     <string name="about_license_heading">ライセンス</string>
     <string name="about_gpl_notice" formatted="false">本プログラムはフリーソフトウェアです。フリーソフトウェア財団が公開する GNU General Public License（バージョン3）の条件に基づき、再配布および／または改変することができます。\n\n本プログラムは有用であることを願って配布されますが、無保証です。商品性および特定目的への適合性の黙示的保証を含む、いかなる保証もありません。詳細は GNU General Public License をご覧ください。\n\n本プログラムとともに GNU General Public License の写しを受け取っているはずです。受け取っていない場合は、下のライセンスの操作を実行するか、https://www.gnu.org/licenses/ にアクセスしてください。</string>
     <string name="about_read_gpl_license">GNU GPL v3 ライセンスを読む</string>
-    <string name="about_read_tink_license">Tink の Apache 2.0 ライセンスと帰属表示を読む</string>
     <string name="about_source_heading">ソースコード</string>
     <string name="about_corresponding_source_notice">このフォークの完全な対応ソースはフォークのリポジトリに保管されています。タグ付けされたリリースには、対応するソースアーカイブもあります。リポジトリには、プロジェクトの調査と再ビルドに必要なビルドスクリプト、依存関係の宣言、および完全なフォーク履歴が含まれています。</string>
     <string name="about_fork_source">フォークのソースコードと対応ソース</string>
@@ -525,7 +525,6 @@
     <string name="about_faq">よくある質問</string>
     <string name="about_third_party_licenses">サードパーティのライセンス</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink のライセンスと帰属表示</string>
     <string name="fork_disclaimer_title">フォークに関する通知</string>
     <string name="fork_disclaimer_message">このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。</string>
     <string name="fork_disclaimer_acknowledge">理解しました</string>
@@ -543,4 +542,12 @@
     <string name="argon2_profile_high">高いセキュリティ</string>
     <string name="argon2_profile_hint">設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。</string>
     <string name="argon2_profile_current">現在: %s</string>
+
+    <string name="application_settings">アプリケーション</string>
+    <string name="video_playback_settings">動画再生</string>
+    <string name="thumbnails_and_scrolling_settings">サムネイルとスクロール</string>
+    <string name="media_viewer_settings">メディアビューアー</string>
+    <string name="security_and_vault_settings">セキュリティと暗号化された保管庫</string>
+    <string name="font_system_default">システムのデフォルト</string>
+    <string name="font_monospace">Monospace</string>
 </resources>

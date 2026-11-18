@@ -767,3 +767,18 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 571 | `argon2_profile_high` | High security | 高安全性 |
 | 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。 |
 | 573 | `argon2_profile_current` | Current: %s | 目前：%s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-zh-rTW/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) |
+|--:|---|---|---|
+| 1 | `application_settings` | Application | 應用程式 |
+| 2 | `video_playback_settings` | Video playback | 影片播放 |
+| 3 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | 縮圖與捲動 |
+| 4 | `media_viewer_settings` | Media viewer | 媒體檢視器 |
+| 5 | `security_and_vault_settings` | Security & encrypted vault | 安全性與加密保險箱 |
+| 6 | `font_system_default` | System default | 系統預設 |
+| 7 | `font_monospace` | Monospace | 等寬 |
+| 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | 資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。 |

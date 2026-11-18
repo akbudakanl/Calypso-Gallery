@@ -458,6 +458,7 @@
     <string name="access_storage_prompt">Ver venleg og gje appen vår tilgang til alle filene dine, han fungerer kanskje ikkje så godt utan dette.</string>
     <string name="encrypt_info_title">Korleis kryptering fungerer</string>
     <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
+    <string name="encrypt_files_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.</string>
     <string name="decrypt_info_title">Korleis dekryptering fungerer</string>
     <string name="decrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit kryptert album eller ei kryptert fil blir dekryptert, blir det/ho gjenoppretta med opphavleg namn og format til den valde målmappa og fjerna frå det krypterte kvelvet.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta ei ny mappe som Album(1) eller slå saman med den eksisterande målmappa (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om krypterte kopiar som er stadfesta 100% bit-for-bit identiske med målet skal fjernast frå kvelvet eller behaldast.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
     <string name="vault_location">Kvelvplassering</string>
@@ -581,7 +582,6 @@
     <string name="about_license_heading">Lisens</string>
     <string name="about_gpl_notice" formatted="false">Dette programmet er fri programvare: du kan distribuera det og/eller endra det i samsvar med vilkåra i GNU General Public License som publisert av Free Software Foundation, versjon 3 av lisensen.\n\nDette programmet vert distribuert i håp om at det skal vera nyttig, men UTAN NOKON GARANTI; utan ein gitt garanti for SALJGBARHEIT eller EIGNA FOR EIT FØREMÅL. Sjå GNU General Public License for fleire detaljar.\n\nDu skulle ha motteke ein kopi av GNU General Public License saman med dette programmet. Viss ikkje, bruk lisenshandlinga under eller besøk https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">Les GNU GPL v3-lisensen</string>
-    <string name="about_read_tink_license">Les Tink Apache 2.0-lisensen og tilskrivinga</string>
     <string name="about_source_heading">Kjeldekode</string>
     <string name="about_corresponding_source_notice">Den fullstendige tilhøyrande kjeldekoden for denne forken finst i fork-repositoriet. Merkelagde utgåver har òg eit tilhøyrande kjeldearkiv. Repositoriet inneheld byggjeskripta, avhengighetserklæringane og den fullstendige fork-historikken som trengst for å granska og byggja prosjektet på nytt.</string>
     <string name="about_fork_source">Kjeldekode for forken og tilhøyrande kjelde</string>
@@ -593,7 +593,6 @@
     <string name="about_faq">Ofte stilte spørsmål</string>
     <string name="about_third_party_licenses">Lisensar frå tredjepart</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="tink_license_title">Tink-lisens og tilskriving</string>
     <string name="fork_disclaimer_title">Fork-merknad</string>
     <string name="fork_disclaimer_message">Dette programmet er ikkje utvikla av Fossify-teamet. Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell fork av Fossify Gallery; den opphavlege utviklaren er berre nemnd for tilskriving. Det er ikkje tilknytt, støtta eller vedlikehalde av Fossify.\n\nVed å halda fram stadfestar du denne merknaden. Forkspesifikke endringar er dokumenterte i FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">Eg forstår</string>
@@ -611,4 +610,18 @@
     <string name="argon2_profile_high">Høg tryggleik</string>
     <string name="argon2_profile_hint">Viss du ikkje veit kva du gjer, tilrår vi å behalda standardinnstillinga. Dette påverkar berre nye kvelv og passordendringar.</string>
     <string name="argon2_profile_current">Gjeldande: %s</string>
+
+    <string name="color_customization">Utsjånad og kjensle</string>
+    <string name="application_settings">Applikasjon</string>
+    <string name="video_playback_settings">Videoavspeling</string>
+    <string name="thumbnails_and_scrolling_settings">Minibilete og rulling</string>
+    <string name="media_viewer_settings">Medievisar</string>
+    <string name="security_and_vault_settings">Tryggleik og kryptert kvelv</string>
+    <string name="file_operations">Filoperasjonar</string>
+    <string name="recycle_bin">Papirkorg</string>
+    <string name="migrating">Overføring</string>
+    <string name="font_system_default">Systemstandard</string>
+    <string name="font_monospace">Monospace</string>
+    <string name="app_font">App-skrifttype</string>
+    <string name="select_font_file">Vel skrifttypefil…</string>
 </resources>

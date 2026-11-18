@@ -718,3 +718,18 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 558 | `argon2_profile_high` | High security | Hohe Sicherheit |
 | 559 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Wenn du nicht weißt, was du tust, wird empfohlen, die Standardeinstellung beizubehalten. Dies wirkt sich nur auf neu erstellte Tresore und Passwortänderungen aus. |
 | 560 | `argon2_profile_current` | Current: %s | Aktuell: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-de/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | German (`values-de/strings.xml`) |
+|--:|---|---|---|
+| 1 | `application_settings` | Application | Anwendung |
+| 2 | `video_playback_settings` | Video playback | Videowiedergabe |
+| 3 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Vorschaubilder & Scrollen |
+| 4 | `media_viewer_settings` | Media viewer | Medienbetrachter |
+| 5 | `security_and_vault_settings` | Security & encrypted vault | Sicherheit & verschlüsselter Tresor |
+| 6 | `font_system_default` | System default | Systemvorgabe |
+| 7 | `font_monospace` | Monospace | Monospace |
+| 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Ordner- & Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist. |

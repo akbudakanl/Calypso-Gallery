@@ -756,3 +756,18 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 560 | `argon2_profile_high` | High security | Alta seguridad |
 | 561 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Si no sabes lo que haces, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña. |
 | 562 | `argon2_profile_current` | Current: %s | Actual: %s |
+
+## Settings Headers, Font Options & File Encryption Info
+
+Added/overridden in `values-es/strings.xml` for Settings section headers, font picker options (`Monospace` standardized), and file-only encryption info dialog:
+
+| # | Key (`name`) | English | Spanish (Standard) (`values-es/strings.xml`) |
+|--:|---|---|---|
+| 1 | `application_settings` | Application | Aplicación |
+| 2 | `video_playback_settings` | Video playback | Reproducción de vídeo |
+| 3 | `thumbnails_and_scrolling_settings` | Thumbnails & scrolling | Miniaturas y desplazamiento |
+| 4 | `media_viewer_settings` | Media viewer | Visor de medios |
+| 5 | `security_and_vault_settings` | Security & encrypted vault | Seguridad y bóveda cifrada |
+| 6 | `font_system_default` | System default | Sistema por defecto |
+| 7 | `font_monospace` | Monospace | Monospace |
+| 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación. |
