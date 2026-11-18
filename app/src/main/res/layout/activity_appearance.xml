@@ -150,27 +150,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/appearance_app_icon_color_row"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <org.fossify.commons.views.MyTextView
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/app_icon_color" />
-
-                <View
-                    android:id="@+id/appearance_app_icon_color_swatch"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:layout_marginEnd="16dp" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/appearance_saved_themes_row"
                 style="@style/SettingsHolderTextViewOneLinerStyle"
                 android:layout_width="match_parent"
