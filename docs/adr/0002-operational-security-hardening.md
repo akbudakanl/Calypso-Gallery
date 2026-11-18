@@ -121,18 +121,16 @@ Passwords are handled as `CharArray` across the UI authentication boundary (`Vau
 
 ## 6. Decision — durable secure wipe
 
-Interrupting a chunked CSPRNG overwrite can leave the tail of a file unoverwritten, and unflushed page cache can lose the part that was written.
+Interrupting a CSPRNG overwrite can leave file data unoverwritten, and unflushed page cache can lose the part that was written or leave directory entries pointing to stale contents.
 
 Mandatory mechanism for every secure delete:
 
-1. **Foreground service + notification** and `PowerManager.PARTIAL_WAKE_LOCK` so the process survives backgrounding and the CPU does not sleep.
-2. **Chunk-level durability:** after each chunk (or small group), `FileChannel.force(true)` / `fd.sync()`.
-3. **Progress journal** (e.g. `.wipe_progress`): stores only the target path and bytes-overwritten-so-far — **never file contents**. Updated after each durable chunk.
-4. **Resume on startup:** if a journal exists, continue from the recorded offset; only after final `truncate(0)`, `fsync`, `delete()`, and parent-directory `fsync` is the journal removed.
-5. **Never report success early:** if interrupted, the file stays flagged for retry.
+1. **Foreground service + notification** and `PowerManager.PARTIAL_WAKE_LOCK` (plus `FLAG_KEEP_SCREEN_ON` hint while active, via `ForegroundOperationRegistry` §7) so the process survives backgrounding and the CPU does not sleep.
+2. **Write-ahead pending-wipe journal (`pending_wipe_journal.txt`):** before overwriting begins, `secureWipeAndDeleteFile(file, context)` appends the canonical target path idempotently to `pending_wipe_journal.txt` and flushes/syncs the journal (`fd.sync()`). Only the path is stored — **never file contents**.
+3. **Chunked CSPRNG overwrite + final flush/truncate:** overwrites `0..length` in `1 MiB` `SecureRandom` chunks (zeroing the buffer in `finally`), flushes with `FileChannel.force(true)`, truncates to `0L`, flushes again with `FileChannel.force(true)`, deletes the file, and calls `fsync` on the parent directory (`syncDir`). We intentionally avoid per-chunk `fsync` and byte-offset `.wipe_progress` seeks so normal deletes do not trigger flash write-amplification stalls while foreground-service execution prevents routine background kills.
+4. **Resume on startup / boot:** `App.onCreate()` and `BootCompletedReceiver` run `processPendingWipeJournal(context)` (registered in `ForegroundOperationRegistry`) to finish any pending targets cleanly from offset `0`. Cancellation preserves unprocessed entries for the next startup.
+5. **Never report success early:** `removePendingWipe` removes the entry — and securely wipes `pending_wipe_journal.txt` itself once empty — **only after** `file.delete()` and parent `syncDir()` complete; if interrupted or failed, the file remains flagged for retry.
 6. **Hardware caveat:** flash FTL wear-leveling means a completed overwrite is still best-effort; full physical erasure requires hardware secure erase or full-disk encryption. Keep the existing DOCS.md §2 wording.
-
-Optional for highly sensitive data: verify by reading back all-zero bytes before the final delete (doubles I/O).
 
 ---
 
@@ -166,7 +164,7 @@ This is the single foreground-operation registry shared with the resumable-opera
 3. Unlock delay: setting (1–10 s), equal success/failure delay, cancellable; test timing and cancellation.
 4. **[DONE — code & JVM regression verified]** Trace audit (§4): encrypted Glide loads disable disk + memory caching (`applyEncryptedCachePolicy`, `MyGlideImageDecoder`, `Context`, `PhotoFragment`, `VideoFragment`, `PortraitPhotosAdapter`, `MyWidgetProvider`, `MediaActivity`, `EditActivity`, `Activity`), `clearAppImageCaches()` wipes cache dirs on lock, `allowBackup="false"` / `fullBackupContent="false"` / `data_extraction_rules.xml` exclude all backup domains, `dialog_vault_security.xml` sets `inputType="textPassword|textNoSuggestions"`, `imeOptions="actionDone|flagNoPersonalizedLearning"`, and `importantForAutofill="no"`, `ViewPagerActivity` blocks vault clipboard copies and `clearKeys(context)` wipes flagged clipboard, `saveRotatedImageToFile` securely wipes plaintext temp files in vault context, and `MediaReadPatternProbe` logs numeric read counters only (no paths/keys). Regression tests are in `VaultLockPolicyTest`; device-level Recents/IME smoke tests remain manual (§9).
 5. **[DONE — JVM verified]** Zeroization (§5): `withEphemeralVaultKey`, `CryptoManager.clearKeys()`, `CharArray` password boundary across UI and `CryptoManagerCredentials`, biometric buffer zeroization, plus background/screen-off immediate RAM key wipe with 30-minute resumable UI window behind `VaultLockActivity` (deferred only while a registered foreground operation is active). Verified in `VaultLockPolicyTest`.
-6. **[PARTIAL]** Durable wipe (§6): `1 MiB` `SecureRandom` overwrite + `FileChannel.force(true)` + `truncate(0)` + parent `fsync` + `pending_wipe_journal.txt` retry are implemented; byte-offset `.wipe_progress` chunk-level resume and foreground-registry coverage for standalone delete/wipe callers remain pending.
+6. **[DONE — JVM verified]** Durable wipe (§6): foreground service + wake lock (§7), idempotent write-ahead `pending_wipe_journal.txt` (`appendPendingWipe` with `fd.sync()` before overwrite, `removePendingWipe` + journal wipe only after `delete()` + parent `syncDir()`), `1 MiB` `SecureRandom` overwrite + `FileChannel.force(true)` + `truncate(0)` + `FileChannel.force(true)` + parent `fsync`, and `processPendingWipeJournal` retry on startup/boot. Verified in `VaultLockPolicyTest`; on-device power-loss / hardware wear-leveling smoke tests remain manual (§9).
 7. **[DONE — JVM verified]** Foreground operation registry (§7): single owner token, re-entrancy, notification + wake lock, `FLAG_KEEP_SCREEN_ON` lifecycle hook, cancellation propagation, and background completion `clearKeys()` + re-auth work across copy/move, album/file/stream encrypt/decrypt, resume, skipped-crypto wipe, pending-wipe journal, standalone secure wipe, vault recycle bin move/restore/delete/empty, plain recycle move/restore/empty, batch delete, vault export, and external-vault sync (`VaultLockPolicyTest` & `ResumableOperationsTest`).
 
 ---

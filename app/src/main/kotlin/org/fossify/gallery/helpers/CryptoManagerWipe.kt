@@ -26,62 +26,88 @@ import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 // ==================== ANTI-RECOVERY / SECURE WIPE ====================
 
+private val pendingWipeLock = Any()
+
 internal fun CryptoManager.getPendingWipeJournalFile(context: Context): File {
     return File(context.filesDir, "pending_wipe_journal.txt")
 }
 
 
 internal fun CryptoManager.appendPendingWipe(context: Context, path: String) {
-    try {
-        val file = getPendingWipeJournalFile(context)
-        file.appendText(path + "\n", Charsets.UTF_8)
-    } catch (_: Exception) {}
+    synchronized(pendingWipeLock) {
+        try {
+            val file = getPendingWipeJournalFile(context)
+            file.parentFile?.let { if (!it.exists()) it.mkdirs() }
+            val existing = if (file.exists()) {
+                file.readLines(Charsets.UTF_8).map { it.trim() }.filter { it.isNotEmpty() }
+            } else {
+                emptyList()
+            }
+            if (path in existing) return
+            FileOutputStream(file, true).use { fos ->
+                fos.write((path + "\n").toByteArray(Charsets.UTF_8))
+                fos.flush()
+                runCatching { fos.fd.sync() }
+            }
+        } catch (_: Exception) {}
+    }
 }
 
 
 internal fun CryptoManager.removePendingWipe(context: Context, path: String) {
-    try {
-        val file = getPendingWipeJournalFile(context)
-        if (!file.exists()) return
-        val lines = file.readLines(Charsets.UTF_8).filter { it.trim().isNotEmpty() && it.trim() != path }
-        if (lines.isEmpty()) {
-            secureWipeAndDeleteFile(file, null)
-        } else {
-            file.writeText(lines.joinToString("\n") + "\n", Charsets.UTF_8)
-        }
-    } catch (_: Exception) {}
+    synchronized(pendingWipeLock) {
+        try {
+            val file = getPendingWipeJournalFile(context)
+            if (!file.exists()) return
+            val lines = file.readLines(Charsets.UTF_8).map { it.trim() }.filter { it.isNotEmpty() && it != path }
+            if (lines.isEmpty()) {
+                secureWipeAndDeleteFile(file, null, syncParentDir = false, purgeTraces = false)
+            } else {
+                FileOutputStream(file, false).use { fos ->
+                    fos.write((lines.joinToString("\n") + "\n").toByteArray(Charsets.UTF_8))
+                    fos.flush()
+                    runCatching { fos.fd.sync() }
+                }
+            }
+        } catch (_: Exception) {}
+    }
 }
 
 
 fun CryptoManager.processPendingWipeJournal(context: Context) {
     ensureBackgroundThread {
-        ForegroundOperationRegistry.withOperation(context, "pending-wipe") {
-            try {
-                val file = getPendingWipeJournalFile(context)
-                if (!file.exists()) return@withOperation
-                val lines = file.readLines(Charsets.UTF_8).map { it.trim() }.filter { it.isNotEmpty() }
-                val remaining = ArrayList<String>()
-                for (i in lines.indices) {
-                    if (ForegroundOperationRegistry.isCancelled) {
-                        for (rem in i until lines.size) {
-                            remaining.add(lines[rem])
-                        }
-                        break
-                    }
-                    val trimmed = lines[i]
-                    val target = File(trimmed)
-                    if (target.exists() && !secureWipeAndDeleteFile(target, context)) {
-                        remaining.add(trimmed)
-                    }
-                }
-                if (remaining.isEmpty()) {
-                    secureWipeAndDeleteFile(file, null)
-                } else {
-                    file.writeText(remaining.joinToString("\n") + "\n", Charsets.UTF_8)
-                }
-            } catch (_: Exception) {}
-        }
+        processPendingWipeJournalSync(context)
     }
+}
+
+
+internal fun CryptoManager.processPendingWipeJournalSync(context: Context): Int {
+    return ForegroundOperationRegistry.withOperation(context, "pending-wipe") {
+        try {
+            val snapshot = synchronized(pendingWipeLock) {
+                val file = getPendingWipeJournalFile(context)
+                if (!file.exists()) emptyList()
+                else file.readLines(Charsets.UTF_8).map { it.trim() }.filter { it.isNotEmpty() }
+            }
+            if (snapshot.isEmpty()) return@withOperation 0
+
+            var wipedCount = 0
+            for (trimmed in snapshot) {
+                if (ForegroundOperationRegistry.isCancelled) {
+                    break
+                }
+                val target = File(trimmed)
+                if (!target.exists()) {
+                    removePendingWipe(context, trimmed)
+                } else if (secureWipeAndDeleteFile(target, context)) {
+                    wipedCount++
+                }
+            }
+            wipedCount
+        } catch (_: Exception) {
+            0
+        }
+    } ?: 0
 }
 
 
@@ -257,8 +283,15 @@ fun CryptoManager.secureWipeAndDeleteFile(
     purgeTraces: Boolean = true
 ): Boolean {
     fun perform(): Boolean {
-        if (!file.exists()) return true
         val originalPath = file.absolutePath
+        if (!file.exists()) {
+            if (context != null) removePendingWipe(context, originalPath)
+            return true
+        }
+
+        if (context != null) {
+            appendPendingWipe(context, originalPath)
+        }
 
         val wiped = secureWipeFileInternal(file)
         if (!wiped) {
@@ -276,6 +309,10 @@ fun CryptoManager.secureWipeAndDeleteFile(
 
         if (purgeTraces && context != null) {
             runCatching { purgeTracesForFile(context, originalPath) }
+        }
+
+        if (deleted && context != null) {
+            removePendingWipe(context, originalPath)
         }
 
         return deleted
@@ -302,11 +339,11 @@ fun CryptoManager.deleteEncryptedFile(context: Context, file: File): Boolean {
 
 
 internal fun CryptoManager.secureWipeFileInternal(file: File): Boolean {
+    val bufSize = 1024 * 1024 // 1 MiB chunk
+    val buf = ByteArray(bufSize)
     return try {
         val length = file.length()
         if (length > 0L) {
-            val bufSize = 1024 * 1024 // 1 MiB chunk
-            val buf = ByteArray(bufSize)
             RandomAccessFile(file, "rw").use { raf ->
                 val ch = raf.channel
                 var rem = length
@@ -328,6 +365,8 @@ internal fun CryptoManager.secureWipeFileInternal(file: File): Boolean {
         true
     } catch (_: Exception) {
         false
+    } finally {
+        buf.fill(0)
     }
 }
 
