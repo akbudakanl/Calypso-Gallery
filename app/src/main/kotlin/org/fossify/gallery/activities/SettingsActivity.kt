@@ -83,7 +83,6 @@ class SettingsActivity : SimpleActivity() {
             R.id.settings_vault_subheading,
             R.id.settings_fullscreen_subheading,
             R.id.settings_deep_zoom_subheading,
-            R.id.settings_extended_details_subheading,
         )
 
         private val SECTION_ICONS = listOf(
@@ -212,10 +211,11 @@ class SettingsActivity : SimpleActivity() {
             label.letterSpacing = 0.08f
             label.setTypeface(null, android.graphics.Typeface.BOLD)
             val density = resources.displayMetrics
-            val side = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20f, density).toInt()
+            val end = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.settings_label_start_margin)
             val top = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18f, density).toInt()
             val bottom = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, density).toInt()
-            label.setPadding(side, top, side, bottom)
+            // SettingsSectionLabelStyle already applies layout_marginStart; keep start padding at 0 so the icon aligns with row labels.
+            label.setPaddingRelative(0, top, end, bottom)
             label.compoundDrawablePadding = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, 8f, density,
             ).toInt()
@@ -229,7 +229,6 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsVaultSubheading,
             binding.settingsFullscreenSubheading,
             binding.settingsDeepZoomSubheading,
-            binding.settingsExtendedDetailsSubheading,
         ).forEach {
             it.setTextColor(ColorUtils.setAlphaComponent(getProperTextColor(), 170))
             it.setTypeface(null, android.graphics.Typeface.BOLD)
