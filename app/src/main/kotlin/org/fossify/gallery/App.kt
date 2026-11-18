@@ -6,8 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import com.github.ajalt.reprint.core.Reprint
 import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
@@ -30,6 +33,7 @@ import java.net.URLStreamHandler
 import java.util.Collections
 import java.util.WeakHashMap
 import org.fossify.gallery.helpers.processPendingWipeJournal
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.OperationJournal
 
 class App : FossifyApp() {
@@ -37,6 +41,7 @@ class App : FossifyApp() {
     override val isAppLockFeatureAvailable = true
     private var startedActivities = 0
     private val trackedActivities = Collections.newSetFromMap(WeakHashMap<Activity, Boolean>())
+    private val operationKeepScreenOnActivities = Collections.newSetFromMap(WeakHashMap<Activity, Boolean>())
 
     companion object {
         private const val PRIVACY_CURTAIN_TAG = "vault_privacy_curtain"
@@ -46,6 +51,10 @@ class App : FossifyApp() {
         super.onCreate()
         // ADR 0003: durable operation journal must be available before any file operation starts.
         OperationJournal.init(this)
+        val mainHandler = runCatching { Handler(Looper.getMainLooper()) }.getOrNull()
+        ForegroundOperationRegistry.onStateChanged = { active ->
+            mainHandler?.post { syncKeepScreenOnForTrackedActivities(active) }
+        }
         // Neutralize Commons' fake-app warning before any activity can query the cached verdict.
         SideloadCheck.disable(this)
         // Commons' legacy launcher-icon migration in appLaunched() builds alias ComponentNames
@@ -90,6 +99,7 @@ class App : FossifyApp() {
                     RandomOrderManager.onAppForegrounded()
                 }
                 syncPrivacyCurtain(activity)
+                syncKeepScreenOn(activity, ForegroundOperationRegistry.isActive)
                 maybeLaunchVaultLockScreen(activity)
             }
             override fun onActivityResumed(activity: Activity) {
@@ -97,6 +107,7 @@ class App : FossifyApp() {
                     AppearanceManager.apply(this@App, config)
                 }
                 syncPrivacyCurtain(activity)
+                syncKeepScreenOn(activity, ForegroundOperationRegistry.isActive)
                 maybeLaunchVaultLockScreen(activity)
             }
             override fun onActivityPaused(activity: Activity) {}
@@ -116,12 +127,35 @@ class App : FossifyApp() {
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
             override fun onActivityDestroyed(activity: Activity) {
                 trackedActivities.remove(activity)
+                operationKeepScreenOnActivities.remove(activity)
             }
         })
 
         try {
             org.fossify.gallery.helpers.CryptoManager.processPendingWipeJournal(this)
         } catch (_: Throwable) {}
+    }
+
+    private fun syncKeepScreenOnForTrackedActivities(active: Boolean) {
+        for (activity in trackedActivities.toList()) {
+            syncKeepScreenOn(activity, active)
+        }
+    }
+
+    private fun syncKeepScreenOn(activity: Activity, active: Boolean) {
+        if (activity.isFinishing || activity.isDestroyed) {
+            operationKeepScreenOnActivities.remove(activity)
+            return
+        }
+        val window = activity.window ?: return
+        if (active) {
+            if ((window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) == 0) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                operationKeepScreenOnActivities.add(activity)
+            }
+        } else if (operationKeepScreenOnActivities.remove(activity)) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun syncPrivacyCurtainForTrackedActivities() {

@@ -2936,18 +2936,119 @@ fun BaseSimpleActivity.tryDeleteFileDirItem(
 
 fun BaseSimpleActivity.movePathsInRecycleBin(paths: ArrayList<String>, callback: ((wasSuccess: Boolean) -> Unit)?) {
     ensureBackgroundThread {
-        var pathsCnt = paths.size
-        val OTGPath = config.OTGPath
+        ForegroundOperationRegistry.withOperation(this, "recycle-move") {
+            var pathsCnt = paths.size
+            val OTGPath = config.OTGPath
 
-        for (source in paths) {
-            if (OTGPath.isNotEmpty() && source.startsWith(OTGPath)) {
+            for (source in paths) {
+                if (ForegroundOperationRegistry.isCancelled) {
+                    return@withOperation
+                }
+                if (OTGPath.isNotEmpty() && source.startsWith(OTGPath)) {
+                    var inputStream: InputStream? = null
+                    var out: OutputStream? = null
+                    try {
+                        val destination = "$recycleBinPath/$source"
+                        val fileDocument = getSomeDocumentFile(source)
+                        inputStream = applicationContext.contentResolver.openInputStream(fileDocument?.uri!!)
+                        out = getFileOutputStreamSync(destination, source.getMimeType())
+
+                        var copiedSize = 0L
+                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                        var bytes = inputStream!!.read(buffer)
+                        while (bytes >= 0) {
+                            out!!.write(buffer, 0, bytes)
+                            copiedSize += bytes
+                            bytes = inputStream.read(buffer)
+                        }
+
+                        out?.flush()
+
+                        if (fileDocument.getItemSize(true) == copiedSize && getDoesFilePathExist(destination)) {
+                            mediaDB.updateDeleted("$RECYCLE_BIN$source", System.currentTimeMillis(), source)
+                            pathsCnt--
+                        }
+                    } catch (e: Exception) {
+                        showErrorToast(e)
+                        return@withOperation
+                    } finally {
+                        inputStream?.close()
+                        out?.close()
+                    }
+                } else {
+                    val file = File(source)
+                    val internalFile = File(recycleBinPath, source)
+                    val lastModified = file.lastModified()
+                    try {
+                        if (file.copyRecursively(internalFile, true)) {
+                            mediaDB.updateDeleted("$RECYCLE_BIN$source", System.currentTimeMillis(), source)
+                            pathsCnt--
+
+                            if (config.keepLastModified && lastModified != 0L) {
+                                internalFile.setLastModified(lastModified)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        showErrorToast(e)
+                        return@withOperation
+                    }
+                }
+            }
+            callback?.invoke(pathsCnt == 0)
+        }
+    }
+}
+
+fun BaseSimpleActivity.restoreRecycleBinPath(path: String, callback: () -> Unit) {
+    restoreRecycleBinPaths(arrayListOf(path), callback)
+}
+
+fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback: () -> Unit) {
+    ensureBackgroundThread {
+        ForegroundOperationRegistry.withOperation(this, "recycle-restore") {
+            val newPaths = ArrayList<String>()
+            val restoredPairs = ArrayList<Pair<String, String>>()
+            var shownRestoringToPictures = false
+            for (source in paths) {
+                if (ForegroundOperationRegistry.isCancelled) {
+                    break
+                }
+                val origPath = source.removePrefix(recycleBinPath)
+                var destination = origPath
+
+                val destinationParent = destination.getParentPath()
+                if (isRestrictedWithSAFSdk30(destinationParent) && !isInDownloadDir(destinationParent)) {
+                    // if the file is not writeable on SDK30+, change it to Pictures
+                    val picturesDirectory = getPicturesDirectoryPath(destination)
+                    destination = File(picturesDirectory, destination.getFilenameFromPath()).path
+                    if (!shownRestoringToPictures) {
+                        toast(getString(R.string.restore_to_path, humanizePath(picturesDirectory)))
+                        shownRestoringToPictures = true
+                    }
+                }
+
+                val lastModified = File(source).lastModified()
+
+                val isShowingSAF = handleSAFDialog(destination) {}
+                if (isShowingSAF) {
+                    return@withOperation
+                }
+
+                val isShowingSAFSdk30 = handleSAFDialogSdk30(destination) {}
+                if (isShowingSAFSdk30) {
+                    return@withOperation
+                }
+
+                if (getDoesFilePathExist(destination)) {
+                    val newFile = getAlternativeFile(File(destination))
+                    destination = newFile.path
+                }
+
                 var inputStream: InputStream? = null
                 var out: OutputStream? = null
                 try {
-                    val destination = "$recycleBinPath/$source"
-                    val fileDocument = getSomeDocumentFile(source)
-                    inputStream = applicationContext.contentResolver.openInputStream(fileDocument?.uri!!)
                     out = getFileOutputStreamSync(destination, source.getMimeType())
+                    inputStream = getFileInputStreamSync(source)
 
                     var copiedSize = 0L
                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -2960,147 +3061,58 @@ fun BaseSimpleActivity.movePathsInRecycleBin(paths: ArrayList<String>, callback:
 
                     out?.flush()
 
-                    if (fileDocument.getItemSize(true) == copiedSize && getDoesFilePathExist(destination)) {
-                        mediaDB.updateDeleted("$RECYCLE_BIN$source", System.currentTimeMillis(), source)
-                        pathsCnt--
+                    if (File(source).length() == copiedSize) {
+                        mediaDB.updateDeleted(destination.removePrefix(recycleBinPath), 0, "$RECYCLE_BIN${source.removePrefix(recycleBinPath)}")
+                        restoredPairs.add(origPath to destination)
+                    }
+                    newPaths.add(destination)
+
+                    if (config.keepLastModified && lastModified != 0L) {
+                        File(destination).setLastModified(lastModified)
                     }
                 } catch (e: Exception) {
                     showErrorToast(e)
-                    return@ensureBackgroundThread
                 } finally {
                     inputStream?.close()
                     out?.close()
                 }
-            } else {
-                val file = File(source)
-                val internalFile = File(recycleBinPath, source)
-                val lastModified = file.lastModified()
-                try {
-                    if (file.copyRecursively(internalFile, true)) {
-                        mediaDB.updateDeleted("$RECYCLE_BIN$source", System.currentTimeMillis(), source)
-                        pathsCnt--
-
-                        if (config.keepLastModified && lastModified != 0L) {
-                            internalFile.setLastModified(lastModified)
-                        }
-                    }
-                } catch (e: Exception) {
-                    showErrorToast(e)
-                    return@ensureBackgroundThread
-                }
-            }
-        }
-        callback?.invoke(pathsCnt == 0)
-    }
-}
-
-fun BaseSimpleActivity.restoreRecycleBinPath(path: String, callback: () -> Unit) {
-    restoreRecycleBinPaths(arrayListOf(path), callback)
-}
-
-fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback: () -> Unit) {
-    ensureBackgroundThread {
-        val newPaths = ArrayList<String>()
-        val restoredPairs = ArrayList<Pair<String, String>>()
-        var shownRestoringToPictures = false
-        for (source in paths) {
-            val origPath = source.removePrefix(recycleBinPath)
-            var destination = origPath
-
-            val destinationParent = destination.getParentPath()
-            if (isRestrictedWithSAFSdk30(destinationParent) && !isInDownloadDir(destinationParent)) {
-                // if the file is not writeable on SDK30+, change it to Pictures
-                val picturesDirectory = getPicturesDirectoryPath(destination)
-                destination = File(picturesDirectory, destination.getFilenameFromPath()).path
-                if (!shownRestoringToPictures) {
-                    toast(getString(R.string.restore_to_path, humanizePath(picturesDirectory)))
-                    shownRestoringToPictures = true
-                }
             }
 
-            val lastModified = File(source).lastModified()
-
-            val isShowingSAF = handleSAFDialog(destination) {}
-            if (isShowingSAF) {
-                return@ensureBackgroundThread
+            if (restoredPairs.isNotEmpty()) {
+                restoreReferencesAfterRecycleBinRestore(restoredPairs)
             }
 
-            val isShowingSAFSdk30 = handleSAFDialogSdk30(destination) {}
-            if (isShowingSAFSdk30) {
-                return@ensureBackgroundThread
+            runOnUiThread {
+                callback()
             }
 
-            if (getDoesFilePathExist(destination)) {
-                val newFile = getAlternativeFile(File(destination))
-                destination = newFile.path
+            rescanPaths(newPaths) {
+                fixDateTaken(newPaths, false)
             }
-
-            var inputStream: InputStream? = null
-            var out: OutputStream? = null
-            try {
-                out = getFileOutputStreamSync(destination, source.getMimeType())
-                inputStream = getFileInputStreamSync(source)
-
-                var copiedSize = 0L
-                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                var bytes = inputStream!!.read(buffer)
-                while (bytes >= 0) {
-                    out!!.write(buffer, 0, bytes)
-                    copiedSize += bytes
-                    bytes = inputStream.read(buffer)
-                }
-
-                out?.flush()
-
-                if (File(source).length() == copiedSize) {
-                    mediaDB.updateDeleted(destination.removePrefix(recycleBinPath), 0, "$RECYCLE_BIN${source.removePrefix(recycleBinPath)}")
-                    restoredPairs.add(origPath to destination)
-                }
-                newPaths.add(destination)
-
-                if (config.keepLastModified && lastModified != 0L) {
-                    File(destination).setLastModified(lastModified)
-                }
-            } catch (e: Exception) {
-                showErrorToast(e)
-            } finally {
-                inputStream?.close()
-                out?.close()
-            }
-        }
-
-        if (restoredPairs.isNotEmpty()) {
-            restoreReferencesAfterRecycleBinRestore(restoredPairs)
-        }
-
-        runOnUiThread {
-            callback()
-        }
-
-        rescanPaths(newPaths) {
-            fixDateTaken(newPaths, false)
         }
     }
 }
 
 fun BaseSimpleActivity.emptyTheRecycleBin(callback: (() -> Unit)? = null) {
     ensureBackgroundThread {
-        try {
-            val deletedOrigPaths = try {
-                mediaDB.getDeletedMedia().map { it.path.removePrefix(RECYCLE_BIN) }
-            } catch (_: Exception) {
-                emptyList()
+        ForegroundOperationRegistry.withOperation(this, "recycle-empty") {
+            try {
+                val deletedOrigPaths = try {
+                    mediaDB.getDeletedMedia().map { it.path.removePrefix(RECYCLE_BIN) }
+                } catch (_: Exception) {
+                    emptyList()
+                }
+                recycleBin.deleteRecursively()
+                mediaDB.clearRecycleBin()
+                directoryDB.deleteRecycleBin()
+                if (deletedOrigPaths.isNotEmpty()) {
+                    deleteDBPaths(deletedOrigPaths)
+                }
+                toast(org.fossify.commons.R.string.recycle_bin_emptied)
+                callback?.invoke()
+            } catch (e: Exception) {
+                toast(org.fossify.commons.R.string.unknown_error_occurred)
             }
-            recycleBin.deleteRecursively()
-            mediaDB.clearRecycleBin()
-            directoryDB.deleteRecycleBin()
-            if (deletedOrigPaths.isNotEmpty()) {
-                deleteDBPaths(deletedOrigPaths)
-            }
-            toast(org.fossify.commons.R.string.recycle_bin_emptied)
-            callback?.invoke()
-        } catch (e: Exception) {
-            toast(org.fossify.commons.R.string.unknown_error_occurred)
         }
     }
 }

@@ -14,7 +14,16 @@ import org.fossify.gallery.helpers.VaultLockPolicy
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.gallery.helpers.deriveKeyArgon2id
+import org.fossify.gallery.helpers.emptyVaultRecycleBin
+import org.fossify.gallery.helpers.encryptStreamToDirectory
+import org.fossify.gallery.helpers.exportEncryptedVault
+import org.fossify.gallery.helpers.getVaultRecycleBin
+import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.secureWipeAndDeleteFile
+import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.withEphemeralVaultKey
 import org.fossify.gallery.helpers.writeVaultHeader
@@ -46,14 +55,18 @@ class VaultLockPolicyTest {
         testContext = FakeContext(tempRoot)
         CryptoManager.clearKeys()
         CryptoManager.cachedVaultRoot = null
+        CryptoManager.vaultRecycleBinFolder = null
+        ForegroundOperationRegistry.onStateChanged = null
         VaultSessionManager.onVaultExited()
     }
 
     @After
     fun tearDown() {
+        ForegroundOperationRegistry.onStateChanged = null
         VaultSessionManager.onVaultExited()
         CryptoManager.clearKeys()
         CryptoManager.cachedVaultRoot = null
+        CryptoManager.vaultRecycleBinFolder = null
         tempRoot.deleteRecursively()
     }
 
@@ -264,6 +277,119 @@ class VaultLockPolicyTest {
 
         val decoderText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/MyGlideImageDecoder.kt").readText()
         assertFalse(decoderText.contains("skipMemoryCache(false)"))
+    }
+
+    @Test
+    fun foregroundOperationRegistryNotifiesStateChangesAndSerializesConcurrentOwners() {
+        val states = ArrayList<Boolean>()
+        ForegroundOperationRegistry.onStateChanged = { states.add(it) }
+
+        assertEquals("ok", ForegroundOperationRegistry.withOperation(testContext, "vault-sync") {
+            assertTrue(ForegroundOperationRegistry.isActive)
+            // Same-thread re-entrant nesting must not emit duplicate state transitions.
+            val nested = ForegroundOperationRegistry.withOperation(testContext, "secure-wipe") {
+                assertTrue(ForegroundOperationRegistry.isActive)
+                "nested"
+            }
+            assertEquals("nested", nested)
+
+            // Different-thread acquisition must be rejected while outer owner holds token.
+            var otherThreadAcquired = true
+            val t = Thread {
+                otherThreadAcquired = ForegroundOperationRegistry.acquire(testContext, "vault-export")
+            }
+            t.start()
+            t.join()
+            assertFalse(otherThreadAcquired)
+            "ok"
+        })
+
+        assertFalse(ForegroundOperationRegistry.isActive)
+        assertEquals(listOf(true, false), states)
+    }
+
+    @Test
+    fun foregroundOperationRegistryCoversExportSyncStreamWipeAndVaultRecycleBinOps() {
+        val vaultDir = File(tempRoot, "Secrets").apply { mkdirs() }
+        val albumDir = File(vaultDir, "album01").apply { mkdirs() }
+        File(vaultDir, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        testContext.config.vaultRootPath = vaultDir.absolutePath
+        CryptoManager.cachedVaultRoot = vaultDir
+        CryptoManager.unlockedMasterKey = ByteArray(32) { 3 }
+        CryptoManager.unlockedKek = ByteArray(32) { 4 }
+
+        val stateTransitions = ArrayList<Boolean>()
+        ForegroundOperationRegistry.onStateChanged = { stateTransitions.add(it) }
+
+        // 1. encryptStreamToDirectory registers foreground operation during streaming write.
+        var activeDuringStream = false
+        val encFile = CryptoManager.encryptStreamToDirectory(
+            context = testContext,
+            inputStream = "<svg/>".byteInputStream(Charsets.UTF_8),
+            targetDir = albumDir,
+            originalName = "sample.svg",
+            contentLength = 6L,
+            onProgress = { _, _ ->
+                activeDuringStream = activeDuringStream || ForegroundOperationRegistry.isActive
+            }
+        )
+        assertNotNull(encFile)
+        assertTrue(activeDuringStream)
+        assertFalse(ForegroundOperationRegistry.isActive)
+
+        // 2. exportEncryptedVault registers foreground operation across file copy.
+        val exportTarget = File(tempRoot, "export_out").apply { mkdirs() }
+        var activeDuringExport = false
+        val exportResult = CryptoManager.exportEncryptedVault(
+            context = testContext,
+            targetDir = exportTarget,
+            onlyVaultHeader = false
+        ) { _, _ ->
+            activeDuringExport = activeDuringExport || ForegroundOperationRegistry.isActive
+        }
+        assertNotNull(exportResult)
+        assertTrue(activeDuringExport)
+        assertFalse(ForegroundOperationRegistry.isActive)
+
+        // 3. syncVaultFromExternalDirectory registers foreground operation.
+        val syncSource = File(tempRoot, "sync_src").apply { mkdirs() }
+        File(syncSource, "dummy.bin").writeBytes(ByteArray(4))
+        File(syncSource, CryptoManager.PENDING_SYNC_FILE_NAME).writeText("dummy.bin\n")
+        val syncResult = CryptoManager.syncVaultFromExternalDirectory(
+            context = testContext,
+            sourceDir = syncSource,
+            requirePendingManifest = true
+        )
+        assertNotNull(syncResult)
+        assertFalse(ForegroundOperationRegistry.isActive)
+
+        // 4. Vault recycle bin move / restore / permanent delete / empty + standalone secure wipe.
+        val moved = CryptoManager.moveEncryptedFilesToVaultRecycleBin(testContext, listOf(encFile!!.absolutePath))
+        assertTrue(moved)
+        val binDir = CryptoManager.getVaultRecycleBin(testContext)!!
+        val binnedFile = binDir.listFiles()?.firstOrNull { it.name.endsWith(".bin") }
+        assertNotNull(binnedFile)
+        assertEquals(1, CryptoManager.restoreVaultRecycleBinFiles(testContext, listOf(binnedFile!!.absolutePath)))
+
+        val restoredFile = albumDir.listFiles()?.firstOrNull { it.name.endsWith(".bin") }
+        assertNotNull(restoredFile)
+        assertTrue(CryptoManager.moveEncryptedFilesToVaultRecycleBin(testContext, listOf(restoredFile!!.absolutePath)))
+        val reBinned = binDir.listFiles()?.firstOrNull { it.name.endsWith(".bin") }!!
+        assertEquals(1, CryptoManager.permanentlyDeleteVaultRecycleBinFiles(testContext, listOf(reBinned.absolutePath)))
+        assertFalse(reBinned.exists())
+        assertTrue(CryptoManager.emptyVaultRecycleBin(testContext))
+
+        val wipeTarget = File(tempRoot, "wipe_me.tmp").apply { writeBytes(ByteArray(128) { 9 }) }
+        assertTrue(CryptoManager.secureWipeAndDeleteFile(wipeTarget, testContext))
+        assertFalse(wipeTarget.exists())
+        assertFalse(ForegroundOperationRegistry.isActive)
+
+        // Every registered operation emitted a balanced true -> false transition pair.
+        assertTrue("Expected at least 7 operation cycles", stateTransitions.size >= 14)
+        for (i in stateTransitions.indices step 2) {
+            assertTrue(stateTransitions[i])
+            assertFalse(stateTransitions[i + 1])
+        }
     }
 
     private fun writeSyntheticVaultHeader(

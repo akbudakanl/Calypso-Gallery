@@ -20,6 +20,7 @@ import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.operations.AtomicStaging
 import org.fossify.gallery.helpers.operations.EncryptedSizeInput
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.TransientOperationWaiter
@@ -391,93 +392,103 @@ fun CryptoManager.encryptStreamToDirectory(
     lastModifiedOverride: Long? = null,
     dateTakenOverride: Long? = null
 ): File? {
-    val kek = activeKek() ?: return null
-    val versionByte = VaultContainer.VAULT_FORMAT_VERSION
+    fun perform(): File? {
+        val kek = activeKek() ?: return null
+        val versionByte = VaultContainer.VAULT_FORMAT_VERSION
 
-    if (!targetDir.exists()) {
-        targetDir.mkdirs()
-    }
+        if (!targetDir.exists()) {
+            targetDir.mkdirs()
+        }
 
-    val fallbackNow = System.currentTimeMillis()
-    val lastModified = lastModifiedOverride?.takeIf { it > 0L } ?: fallbackNow
-    val dateTaken = dateTakenOverride?.takeIf { it > 0L } ?: lastModified
-    val initialSize = if (contentLength > 0L) contentLength else 0L
-    val mediaType = getMediaTypeForName(originalName)
-    val videoDuration = 0
-    val prepared = VaultContainerWriter.prepare(
-        kek = kek,
-        keyId = 1,
-        originalName = originalName,
-        lastModified = lastModified,
-        dateTaken = dateTaken,
-        originalSize = initialSize,
-        mediaType = mediaType,
-        videoDuration = videoDuration,
-        thumbnail = null,
-        version = versionByte
-    )
-
-    var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-    while (encryptedFile.exists()) {
-        encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-    }
-
-    return try {
-        val totalBytesRead = VaultContainerWriter.writeContainer(
-            target = encryptedFile,
-            prepared = prepared,
-            payloadProvider = { inputStream },
-            onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
+        val fallbackNow = System.currentTimeMillis()
+        val lastModified = lastModifiedOverride?.takeIf { it > 0L } ?: fallbackNow
+        val dateTaken = dateTakenOverride?.takeIf { it > 0L } ?: lastModified
+        val initialSize = if (contentLength > 0L) contentLength else 0L
+        val mediaType = getMediaTypeForName(originalName)
+        val videoDuration = 0
+        val prepared = VaultContainerWriter.prepare(
+            kek = kek,
+            keyId = 1,
+            originalName = originalName,
+            lastModified = lastModified,
+            dateTaken = dateTaken,
+            originalSize = initialSize,
+            mediaType = mediaType,
+            videoDuration = videoDuration,
+            thumbnail = null,
+            version = versionByte
         )
 
-        if (contentLength <= 0L || contentLength != totalBytesRead) {
-            // Gerçek boyut baştan bilinmiyordu: header'daki sabit uzunluklu alanları düzelt.
-            // fileId/dek korunduğu için Tink akışı geçerli kalır.
-            VaultContainerWriter.rewriteHeaderInPlace(
-                file = encryptedFile,
-                kek = kek,
-                keyId = 1,
+        var encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+        while (encryptedFile.exists()) {
+            encryptedFile = File(targetDir, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+        }
+
+        return try {
+            val totalBytesRead = VaultContainerWriter.writeContainer(
+                target = encryptedFile,
                 prepared = prepared,
+                payloadProvider = { inputStream },
+                onPayloadBytes = { bytesRead -> onProgress?.invoke(bytesRead, contentLength) }
+            )
+
+            if (contentLength <= 0L || contentLength != totalBytesRead) {
+                // Gerçek boyut baştan bilinmiyordu: header'daki sabit uzunluklu alanları düzelt.
+                // fileId/dek korunduğu için Tink akışı geçerli kalır.
+                VaultContainerWriter.rewriteHeaderInPlace(
+                    file = encryptedFile,
+                    kek = kek,
+                    keyId = 1,
+                    prepared = prepared,
+                    originalName = originalName,
+                    lastModified = lastModified,
+                    dateTaken = dateTaken,
+                    originalSize = totalBytesRead,
+                    mediaType = mediaType,
+                    videoDuration = videoDuration,
+                    thumbnail = null
+                )
+            }
+
+            encryptedFile.setLastModified(lastModified)
+
+            val finalThumbBytes = if (mediaType == TYPE_IMAGES) {
+                generateEmbeddedThumbnailFromEncryptedFile(encryptedFile)
+            } else null
+
+            metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
                 originalName = originalName,
                 lastModified = lastModified,
                 dateTaken = dateTaken,
                 originalSize = totalBytesRead,
                 mediaType = mediaType,
                 videoDuration = videoDuration,
-                thumbnail = null
+                payloadOffset = prepared.payloadOffset,
+                contentIv = ByteArray(0),
+                fileKey = prepared.dek.copyOf(),
+                version = versionByte,
+                isMacAuthenticated = true,
+                thumbnailBytes = finalThumbBytes,
+                fileId = prepared.fileId.copyOf(),
+                keyId = 1,
+                ciphertextLength = TinkStreamSpec.expectedCiphertextSize(totalBytesRead),
+                isCanonicalFormat = true,
+                segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
             )
+
+            encryptedFile
+        } catch (e: Exception) {
+            encryptedFile.delete()
+            null
+        } finally {
+            prepared.dek.fill(0)
         }
+    }
 
-        encryptedFile.setLastModified(lastModified)
-
-        val finalThumbBytes = if (mediaType == TYPE_IMAGES) {
-            generateEmbeddedThumbnailFromEncryptedFile(encryptedFile)
-        } else null
-
-        metadataCache[encryptedFile.absolutePath] = EncryptedFileMetadata(
-            originalName = originalName,
-            lastModified = lastModified,
-            dateTaken = dateTaken,
-            originalSize = totalBytesRead,
-            mediaType = mediaType,
-            videoDuration = videoDuration,
-            payloadOffset = prepared.payloadOffset,
-            contentIv = ByteArray(0),
-            fileKey = prepared.dek.copyOf(),
-            version = versionByte,
-            isMacAuthenticated = true,
-            thumbnailBytes = finalThumbBytes,
-            fileId = prepared.fileId.copyOf(),
-            keyId = 1,
-            ciphertextLength = TinkStreamSpec.expectedCiphertextSize(totalBytesRead),
-            isCanonicalFormat = true,
-            segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE
-        )
-
-        encryptedFile
-    } catch (e: Exception) {
-        encryptedFile.delete()
-        null
+    return if (context != null) {
+        ForegroundOperationRegistry.withOperation(context, "stream-encrypt") { perform() }
+    } else {
+        perform()
     }
 }
 

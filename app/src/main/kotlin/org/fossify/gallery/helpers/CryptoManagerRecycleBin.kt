@@ -5,6 +5,7 @@ import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.gallery.extensions.deleteVirtualAlbumItemFromAllAlbums
 import org.fossify.gallery.extensions.updateVirtualAlbumItemPath
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
@@ -138,122 +139,138 @@ fun CryptoManager.saveVaultRecycleBinRestoreMap(context: Context, map: HashMap<S
 
 fun CryptoManager.moveEncryptedFilesToVaultRecycleBin(context: Context, paths: List<String>): Boolean {
     if (paths.isEmpty()) return true
-    val binFolder = getOrCreateVaultRecycleBin(context) ?: return false
-    val restoreMap = getVaultRecycleBinRestoreMap(context)
-    var success = true
+    return ForegroundOperationRegistry.withOperation(context, "vault-delete") {
+        val binFolder = getOrCreateVaultRecycleBin(context) ?: return@withOperation false
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
+        var success = true
 
-    for (path in paths) {
-        val sourceFile = File(path)
-        if (!sourceFile.exists() || !isEncryptedFile(sourceFile.name)) continue
-        val parentPath = sourceFile.parent ?: continue
-        if (parentPath == binFolder.absolutePath) continue
+        for (path in paths) {
+            if (ForegroundOperationRegistry.isCancelled) break
+            val sourceFile = File(path)
+            if (!sourceFile.exists() || !isEncryptedFile(sourceFile.name)) continue
+            val parentPath = sourceFile.parent ?: continue
+            if (parentPath == binFolder.absolutePath) continue
 
-        var destFile = File(binFolder, sourceFile.name)
-        while (destFile.exists()) {
-            destFile = File(binFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-        }
-
-        val destPath = destFile.absolutePath
-        if (sourceFile.renameTo(destFile)) {
-            restoreMap[destFile.name] = parentPath
-            context.updateVirtualAlbumItemPath(path, destPath)
-            metadataCache.remove(path)?.let { meta ->
-                metadataCache[destPath] = meta
+            var destFile = File(binFolder, sourceFile.name)
+            while (destFile.exists()) {
+                destFile = File(binFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
             }
-        } else {
-            success = false
-        }
-    }
 
-    saveVaultRecycleBinRestoreMap(context, restoreMap)
-    return success
+            val destPath = destFile.absolutePath
+            if (sourceFile.renameTo(destFile)) {
+                restoreMap[destFile.name] = parentPath
+                context.updateVirtualAlbumItemPath(path, destPath)
+                metadataCache.remove(path)?.let { meta ->
+                    metadataCache[destPath] = meta
+                }
+            } else {
+                success = false
+            }
+        }
+
+        saveVaultRecycleBinRestoreMap(context, restoreMap)
+        success
+    } ?: false
 }
 
 
 fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<String>): Int {
     if (paths.isEmpty()) return 0
-    val binFolder = getVaultRecycleBin(context) ?: return 0
-    val restoreMap = getVaultRecycleBinRestoreMap(context)
-    val vaultRoot = findVaultRoot(context) ?: return 0
-    var restoredCount = 0
+    return ForegroundOperationRegistry.withOperation(context, "vault-restore") {
+        val binFolder = getVaultRecycleBin(context) ?: return@withOperation 0
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
+        val vaultRoot = findVaultRoot(context) ?: return@withOperation 0
+        var restoredCount = 0
 
-    for (path in paths) {
-        val binFile = File(path)
-        if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
+        for (path in paths) {
+            if (ForegroundOperationRegistry.isCancelled) break
+            val binFile = File(path)
+            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
 
-        val originalParentPath = restoreMap[binFile.name]
-        var targetFolder = if (!originalParentPath.isNullOrEmpty()) File(originalParentPath) else null
+            val originalParentPath = restoreMap[binFile.name]
+            var targetFolder = if (!originalParentPath.isNullOrEmpty()) File(originalParentPath) else null
 
-        if (targetFolder == null || !targetFolder.exists() || !targetFolder.isDirectory) {
-            val existingFolders = vaultRoot.listFiles()?.filter {
-                it.isDirectory && !it.name.startsWith(".") && !isVaultRecycleBin(it)
-            }
-            targetFolder = existingFolders?.firstOrNull() ?: run {
-                var newSub = File(vaultRoot, randomHex(6))
-                while (newSub.exists()) {
-                    newSub = File(vaultRoot, randomHex(6))
+            if (targetFolder == null || !targetFolder.exists() || !targetFolder.isDirectory) {
+                val existingFolders = vaultRoot.listFiles()?.filter {
+                    it.isDirectory && !it.name.startsWith(".") && !isVaultRecycleBin(it)
                 }
-                newSub.mkdirs()
-                writeEncryptedFolderMeta(context, newSub, "Restored")
-                newSub
+                targetFolder = existingFolders?.firstOrNull() ?: run {
+                    var newSub = File(vaultRoot, randomHex(6))
+                    while (newSub.exists()) {
+                        newSub = File(vaultRoot, randomHex(6))
+                    }
+                    newSub.mkdirs()
+                    writeEncryptedFolderMeta(context, newSub, "Restored")
+                    newSub
+                }
+            }
+
+            var targetFile = File(targetFolder, binFile.name)
+            while (targetFile.exists()) {
+                targetFile = File(targetFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+            }
+
+            val targetPath = targetFile.absolutePath
+            if (binFile.renameTo(targetFile)) {
+                restoreMap.remove(binFile.name)
+                context.updateVirtualAlbumItemPath(path, targetPath)
+                metadataCache.remove(path)?.let { meta ->
+                    metadataCache[targetPath] = meta
+                }
+                restoredCount++
             }
         }
 
-        var targetFile = File(targetFolder, binFile.name)
-        while (targetFile.exists()) {
-            targetFile = File(targetFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-        }
-
-        val targetPath = targetFile.absolutePath
-        if (binFile.renameTo(targetFile)) {
-            restoreMap.remove(binFile.name)
-            context.updateVirtualAlbumItemPath(path, targetPath)
-            metadataCache.remove(path)?.let { meta ->
-                metadataCache[targetPath] = meta
-            }
-            restoredCount++
-        }
-    }
-
-    saveVaultRecycleBinRestoreMap(context, restoreMap)
-    return restoredCount
+        saveVaultRecycleBinRestoreMap(context, restoreMap)
+        restoredCount
+    } ?: 0
 }
 
 
 fun CryptoManager.permanentlyDeleteVaultRecycleBinFiles(context: Context, paths: List<String>): Int {
     if (paths.isEmpty()) return 0
-    val binFolder = getVaultRecycleBin(context) ?: return 0
-    val restoreMap = getVaultRecycleBinRestoreMap(context)
-    var deletedCount = 0
+    return ForegroundOperationRegistry.withOperation(context, "secure-wipe") {
+        val binFolder = getVaultRecycleBin(context) ?: return@withOperation 0
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
+        var deletedCount = 0
 
-    for (path in paths) {
-        val binFile = File(path)
-        if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
+        for (path in paths) {
+            if (ForegroundOperationRegistry.isCancelled) break
+            val binFile = File(path)
+            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
 
-        metadataCache.remove(path)
-        context.deleteVirtualAlbumItemFromAllAlbums(path)
-        secureWipeAndDeleteFile(context, binFile)
-        restoreMap.remove(binFile.name)
-        deletedCount++
-    }
+            metadataCache.remove(path)?.fileKey?.fill(0)
+            context.deleteVirtualAlbumItemFromAllAlbums(path)
+            secureWipeAndDeleteFile(context, binFile)
+            restoreMap.remove(binFile.name)
+            deletedCount++
+        }
 
-    saveVaultRecycleBinRestoreMap(context, restoreMap)
-    return deletedCount
+        saveVaultRecycleBinRestoreMap(context, restoreMap)
+        deletedCount
+    } ?: 0
 }
 
 
 fun CryptoManager.emptyVaultRecycleBin(context: Context): Boolean {
-    val binFolder = getVaultRecycleBin(context) ?: return true
-    val binFiles = binFolder.listFiles()?.filter { isEncryptedFile(it.name) } ?: emptyList()
-    for (file in binFiles) {
-        val path = file.absolutePath
-        metadataCache.remove(path)
-        context.deleteVirtualAlbumItemFromAllAlbums(path)
-        secureWipeAndDeleteFile(context, file)
-    }
-    val restoreFile = File(binFolder, VAULT_RESTORE_INFO_FILE)
-    if (restoreFile.exists()) {
-        restoreFile.delete()
-    }
-    return true
+    return ForegroundOperationRegistry.withOperation(context, "secure-wipe") {
+        val binFolder = getVaultRecycleBin(context) ?: return@withOperation true
+        val binFiles = binFolder.listFiles()?.filter { isEncryptedFile(it.name) } ?: emptyList()
+        var cancelled = false
+        for (file in binFiles) {
+            if (ForegroundOperationRegistry.isCancelled) {
+                cancelled = true
+                break
+            }
+            val path = file.absolutePath
+            metadataCache.remove(path)?.fileKey?.fill(0)
+            context.deleteVirtualAlbumItemFromAllAlbums(path)
+            secureWipeAndDeleteFile(context, file)
+        }
+        val restoreFile = File(binFolder, VAULT_RESTORE_INFO_FILE)
+        if (!cancelled && restoreFile.exists()) {
+            restoreFile.delete()
+        }
+        !cancelled
+    } ?: false
 }

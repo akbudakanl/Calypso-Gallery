@@ -10,6 +10,7 @@ import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
 import org.fossify.gallery.helpers.CryptoManager.VaultExportResult
 import org.fossify.gallery.helpers.CryptoManager.AlbumConflictPreview
 import org.fossify.gallery.helpers.CryptoManager.SyncPendingItem
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerExportSync.
@@ -49,63 +50,66 @@ fun CryptoManager.exportEncryptedVault(
         return null
     }
 
-    val nomediaFile = File(exportDir, ".nomedia")
-    if (!nomediaFile.exists()) {
-        runCatching { nomediaFile.createNewFile() }
-    }
-
-    if (onlyVaultHeader) {
-        val sourceVaultFile = File(vaultRoot, ".vault")
-        if (!sourceVaultFile.isFile) {
-            return null
+    return ForegroundOperationRegistry.withOperation(context, "vault-export") {
+        val nomediaFile = File(exportDir, ".nomedia")
+        if (!nomediaFile.exists()) {
+            runCatching { nomediaFile.createNewFile() }
         }
-        onProgress?.invoke(0, 1)
-        val copied = runCatching {
-            sourceVaultFile.copyTo(File(exportDir, ".vault"), overwrite = true)
-            true
-        }.getOrDefault(false)
-        onProgress?.invoke(1, 1)
-        return if (copied) {
-            VaultExportResult(exportedFilesCount = 1, failedFilesCount = 0, exportDirectory = exportDir)
-        } else {
-            VaultExportResult(exportedFilesCount = 0, failedFilesCount = 1, exportDirectory = exportDir)
-        }
-    }
 
-    val allFiles = vaultRoot.walkTopDown().filter { it.isFile }.toList()
-    val total = allFiles.size
-    onProgress?.invoke(0, total)
-    var exportedCount = 0
-    var failedCount = 0
-
-    allFiles.forEachIndexed { index, srcFile ->
-        val relPath = srcFile.relativeTo(vaultRoot).path
-        val destFile = File(exportDir, relPath)
-        val copied = runCatching {
-            destFile.parentFile?.let { parent ->
-                if (!parent.exists()) parent.mkdirs()
+        if (onlyVaultHeader) {
+            val sourceVaultFile = File(vaultRoot, ".vault")
+            if (!sourceVaultFile.isFile) {
+                return@withOperation null
             }
-            srcFile.copyTo(destFile, overwrite = true)
-            true
-        }.getOrDefault(false)
-
-        if (copied) {
-            exportedCount++
-        } else {
-            failedCount++
+            onProgress?.invoke(0, 1)
+            val copied = runCatching {
+                sourceVaultFile.copyTo(File(exportDir, ".vault"), overwrite = true)
+                true
+            }.getOrDefault(false)
+            onProgress?.invoke(1, 1)
+            return@withOperation if (copied) {
+                VaultExportResult(exportedFilesCount = 1, failedFilesCount = 0, exportDirectory = exportDir)
+            } else {
+                VaultExportResult(exportedFilesCount = 0, failedFilesCount = 1, exportDirectory = exportDir)
+            }
         }
-        onProgress?.invoke(index + 1, total)
-    }
 
-    if (!nomediaFile.exists()) {
-        runCatching { nomediaFile.createNewFile() }
-    }
+        val allFiles = vaultRoot.walkTopDown().filter { it.isFile }.toList()
+        val total = allFiles.size
+        onProgress?.invoke(0, total)
+        var exportedCount = 0
+        var failedCount = 0
 
-    return VaultExportResult(
-        exportedFilesCount = exportedCount,
-        failedFilesCount = failedCount,
-        exportDirectory = exportDir
-    )
+        for ((index, srcFile) in allFiles.withIndex()) {
+            if (ForegroundOperationRegistry.isCancelled) break
+            val relPath = srcFile.relativeTo(vaultRoot).path
+            val destFile = File(exportDir, relPath)
+            val copied = runCatching {
+                destFile.parentFile?.let { parent ->
+                    if (!parent.exists()) parent.mkdirs()
+                }
+                srcFile.copyTo(destFile, overwrite = true)
+                true
+            }.getOrDefault(false)
+
+            if (copied) {
+                exportedCount++
+            } else {
+                failedCount++
+            }
+            onProgress?.invoke(index + 1, total)
+        }
+
+        if (!nomediaFile.exists()) {
+            runCatching { nomediaFile.createNewFile() }
+        }
+
+        VaultExportResult(
+            exportedFilesCount = exportedCount,
+            failedFilesCount = failedCount,
+            exportDirectory = exportDir
+        )
+    }
 }
 
 
@@ -217,15 +221,27 @@ fun CryptoManager.syncVaultFromExternalDirectory(
         manifestEntryByBinPath[sourceBin.absolutePath]?.let { failedManifestEntries.add(it) }
     }
 
-    runCryptoOperation {
-        val resolvedAlbumMap = HashMap<String, File>()
-        val existingAlbumLookedUp = HashSet<String>()
-        val albumIndexMap = HashMap<File, TargetEncryptedIndex>()
-        val albumBinNameIndex = HashMap<File, HashMap<String, File>>()
+    return ForegroundOperationRegistry.withOperation(context, "vault-sync") {
+        runCryptoOperation {
+            val resolvedAlbumMap = HashMap<String, File>()
+            val existingAlbumLookedUp = HashSet<String>()
+            val albumIndexMap = HashMap<File, TargetEncryptedIndex>()
+            val albumBinNameIndex = HashMap<File, HashMap<String, File>>()
 
-        var processed = 0
-        for (item in pendingItems) {
-            val sourceBin = item.sourceBin
+            var processed = 0
+            for (idx in pendingItems.indices) {
+                val item = pendingItems[idx]
+                if (ForegroundOperationRegistry.isCancelled) {
+                    if (requirePendingManifest) {
+                        for (remIdx in idx until pendingItems.size) {
+                            manifestEntryByBinPath[pendingItems[remIdx].sourceBin.absolutePath]?.let {
+                                failedManifestEntries.add(it)
+                            }
+                        }
+                    }
+                    break
+                }
+                val sourceBin = item.sourceBin
             val albumKey = if (item.isDefaultTarget) {
                 "__DEFAULT__"
             } else {
@@ -375,35 +391,36 @@ fun CryptoManager.syncVaultFromExternalDirectory(
             processed++
             onProgress?.invoke(processed, total)
         }
-    }
+        }
 
-    if (requirePendingManifest && pendingFile.isFile) {
-        runCatching {
-            if (failedManifestEntries.isEmpty()) {
-                pendingFile.delete()
-            } else {
-                pendingFile.writeText(failedManifestEntries.joinToString("\n") + "\n", Charsets.UTF_8)
+        if (requirePendingManifest && pendingFile.isFile) {
+            runCatching {
+                if (failedManifestEntries.isEmpty()) {
+                    pendingFile.delete()
+                } else {
+                    pendingFile.writeText(failedManifestEntries.joinToString("\n") + "\n", Charsets.UTF_8)
+                }
             }
         }
-    }
 
-    if (touchedTargetAlbums.isNotEmpty()) {
-        touchedTargetAlbums.forEach { albumPath ->
-            syncDir(File(albumPath))
+        if (touchedTargetAlbums.isNotEmpty()) {
+            touchedTargetAlbums.forEach { albumPath ->
+                syncDir(File(albumPath))
+            }
         }
-    }
-    if (copiedCount + renamedCount > 0) {
-        invalidateFolderCache()
-        runCatching { clearAppImageCaches(context) }
-    }
+        if (copiedCount + renamedCount > 0) {
+            invalidateFolderCache()
+            runCatching { clearAppImageCaches(context) }
+        }
 
-    return VaultSyncResult(
-        copiedCount = copiedCount,
-        renamedCount = renamedCount,
-        skippedDuplicateCount = skippedDuplicateCount,
-        failedCount = failedCount,
-        syncedAlbumsCount = touchedTargetAlbums.size
-    )
+        VaultSyncResult(
+            copiedCount = copiedCount,
+            renamedCount = renamedCount,
+            skippedDuplicateCount = skippedDuplicateCount,
+            failedCount = failedCount,
+            syncedAlbumsCount = touchedTargetAlbums.size
+        )
+    }
 }
 
 
