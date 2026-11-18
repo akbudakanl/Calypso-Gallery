@@ -28,7 +28,7 @@ The "Brute-Force direnci" setting originally let a user pick a fixed target unlo
 
 Current safety & standard bounds (implemented 2026-11-18):
 
-- **RFC 9106 safe floor & "1.0 s sweet spot" default:** Minimum parameters are `64 MiB` (`65,536 KiB`) / `3` iterations / `2` parallelism (the legacy `32 MiB / 2 rounds` profile was removed). In the default time-based mode (`bruteForceMode = 0`), `defaultUnlockTargetMs = max(1_000 ms, T_std_64)`: fast devices default to `1.0 s` (and can even step down to `T_std_64`, e.g. `0.4–0.9 s`), while slower devices default to `T_std_64`.
+- **RFC 9106 safe floor & "1.0 s sweet spot" default:** Minimum parameters are `64 MiB` (`65,536 KiB`) / `3` iterations / `2` parallelism (the legacy `32 MiB / 2 rounds` profile and ready-made preset modes were removed). With unlock-time calibration, `defaultUnlockTargetMs = max(1_000 ms, T_std_64)`: fast devices default to `1.0 s` (and can even step down to `T_std_64`, e.g. `0.4–0.9 s`), while slower devices default to `T_std_64`.
 - **Dynamic slider range (`T_std_64 .. 10.0 s` in `0.1 s` steps):** Replaces the old hardcoded `2.0–7.0 s` bounds.
 - **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** Targets `>= 2 * T_std_64` step up to `128 MiB` when `Runtime.maxMemory() / 2 >= 128 MiB` (falling back to `64 MiB` on constrained heaps or `OutOfMemoryError`), and scale `iterations` in `3..100` up to `10.0 s`. Memory never exceeds `128 MiB`.
 - **`android:largeHeap="true"` + OOM cache trim:** Enabled in `AndroidManifest.xml` (expanding Java heap limits from 128–256 MB to 256–512+ MB) alongside automatic Glide RAM cache clearing and GC retry on `OutOfMemoryError`.
@@ -195,7 +195,7 @@ Deferred / future options:
 ## 12. Consequences of this decision
 
 - No `.vault` container format break; no NDK/CMake build complexity added.
-- Both `Default (64 MiB / 3 rounds)` and `High security (128 MiB / 4 rounds)` ready-made profiles, as well as `Via vault unlock time` (`T_std_64 .. 10.0 s` in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`), enforce RFC 9106 minimums and keep cross-device compatibility intact.
+- Ready-made preset profiles (`Default` / `High security`) were removed in favor of unified unlock-time calibration (`T_std_64 .. 10.0 s` in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`), enforcing RFC 9106 minimums and keeping cross-device compatibility intact.
 - Native JNI Argon2 (§9) can still be dropped in later as a pure allocator swap without changing derived keys or `.vault` headers.
 
 ---

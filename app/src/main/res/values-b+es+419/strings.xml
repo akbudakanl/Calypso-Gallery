@@ -541,19 +541,11 @@
     <string name="fork_disclaimer_message">Esta aplicación no está desarrollada por el equipo de Fossify. Calypso Gallery es un fork no oficial, mantenido de forma independiente, de Fossify Gallery; el desarrollador original se menciona únicamente para fines de atribución. No está afiliado a Fossify, ni cuenta con su respaldo ni su soporte.\n\nAl continuar, reconoces haber leído este aviso. Los cambios propios del fork están documentados en FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">Entiendo</string>
     <string name="argon2_profile_title">Resistencia a la fuerza bruta</string>
-    <string name="brute_force_mode_title">Modo de calibración</string>
-    <string name="brute_force_mode_time">Según el tiempo de desbloqueo de la bóveda</string>
-    <string name="brute_force_mode_presets">Según modos predefinidos</string>
     <string name="brute_force_time_title">Tiempo objetivo de desbloqueo de la bóveda</string>
     <string name="brute_force_time_hint">Segundos (2,0–7,0). La aplicación mide este dispositivo una sola vez y guarda los parámetros KDF resultantes en la bóveda; el tiempo real de desbloqueo varía en otros dispositivos.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Guardado: %1$d MiB / %2$d rondas</string>
     <string name="brute_force_clamped"> (limitado)</string>
-    <string name="argon2_profile_low">Dispositivo de gama baja (no recomendado)</string>
-    <string name="argon2_profile_default">Predeterminado</string>
-    <string name="argon2_profile_high">Alta seguridad</string>
-    <string name="argon2_profile_hint">Si no sabes lo que estás haciendo, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña.</string>
-    <string name="argon2_profile_current">Actual: %s</string>
 
     <string name="application_settings">Aplicación</string>
     <string name="video_playback_settings">Reproducción de video</string>

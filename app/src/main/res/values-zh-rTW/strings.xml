@@ -533,19 +533,11 @@
     <string name="fork_disclaimer_message">本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。</string>
     <string name="fork_disclaimer_acknowledge">我瞭解</string>
     <string name="argon2_profile_title">暴力破解防護</string>
-    <string name="brute_force_mode_title">校正模式</string>
-    <string name="brute_force_mode_time">透過保險箱解鎖時間</string>
-    <string name="brute_force_mode_presets">透過現成模式</string>
     <string name="brute_force_time_title">目標保險箱解鎖時間</string>
     <string name="brute_force_time_hint">秒數（2.0–7.0）。應用程式會對此裝置進行一次測量，並將產生的 KDF 參數儲存在保險箱中；實際解鎖時間在其他裝置上會有所不同。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
     <string name="brute_force_actual_params">已儲存：%1$d MiB / %2$d 回合</string>
     <string name="brute_force_clamped"> （已限制）</string>
-    <string name="argon2_profile_low">低階裝置（不建議）</string>
-    <string name="argon2_profile_default">預設</string>
-    <string name="argon2_profile_high">高安全性</string>
-    <string name="argon2_profile_hint">若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。</string>
-    <string name="argon2_profile_current">目前：%s</string>
 
     <string name="application_settings">應用程式</string>
     <string name="video_playback_settings">影片播放</string>

@@ -535,19 +535,11 @@
     <string name="fork_disclaimer_message">Diese Anwendung wird nicht vom Fossify-Team entwickelt. Calypso Gallery ist ein unabhängig gepflegter, inoffizieller Fork von Fossify Gallery; der ursprüngliche Entwickler wird ausschließlich zur Urheberzuordnung genannt. Er steht in keiner Verbindung zu Fossify, wird nicht von Fossify unterstützt und erhält auch keinen Support von Fossify.\n\nMit dem Fortfahren bestätigst du diesen Hinweis. Forkspezifische Änderungen sind in FORK_CHANGELOG.md dokumentiert.</string>
     <string name="fork_disclaimer_acknowledge">Ich verstehe</string>
     <string name="argon2_profile_title">Brute-Force-Widerstand</string>
-    <string name="brute_force_mode_title">Kalibrierungsmodus</string>
-    <string name="brute_force_mode_time">Über die Entsperrzeit des Tresors</string>
-    <string name="brute_force_mode_presets">Über vorgefertigte Modi</string>
     <string name="brute_force_time_title">Zielwert für die Entsperrzeit des Tresors</string>
     <string name="brute_force_time_hint">Sekunden (2,0–7,0). Die App misst dieses Gerät einmal und speichert die daraus resultierenden KDF-Parameter im Tresor; die tatsächliche Entsperrzeit kann auf anderen Geräten abweichen.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Gespeichert: %1$d MiB / %2$d Runden</string>
     <string name="brute_force_clamped"> (begrenzt)</string>
-    <string name="argon2_profile_low">Low-End-Gerät (nicht empfohlen)</string>
-    <string name="argon2_profile_default">Standard</string>
-    <string name="argon2_profile_high">Hohe Sicherheit</string>
-    <string name="argon2_profile_hint">Wenn du nicht weißt, was du tust, wird empfohlen, die Standardeinstellung beizubehalten. Dies wirkt sich nur auf neu erstellte Tresore und Passwortänderungen aus.</string>
-    <string name="argon2_profile_current">Aktuell: %s</string>
 
     <string name="application_settings">Anwendung</string>
     <string name="video_playback_settings">Videowiedergabe</string>

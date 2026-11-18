@@ -859,7 +859,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/settings_argon2_profile_label"
-                    tools:text="@string/argon2_profile_default" />
+                    tools:text="@string/brute_force_time_title" />
 
             </RelativeLayout>
 

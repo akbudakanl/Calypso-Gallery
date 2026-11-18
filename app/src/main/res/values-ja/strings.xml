@@ -536,19 +536,11 @@
     <string name="fork_disclaimer_message">このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。</string>
     <string name="fork_disclaimer_acknowledge">理解しました</string>
     <string name="argon2_profile_title">総当たり攻撃への耐性</string>
-    <string name="brute_force_mode_title">調整モード</string>
-    <string name="brute_force_mode_time">保管庫のロック解除時間を使用</string>
-    <string name="brute_force_mode_presets">用意されたモードを使用</string>
     <string name="brute_force_time_title">目標とする保管庫のロック解除時間</string>
     <string name="brute_force_time_hint">秒数（2.0–7.0）。アプリはこの端末を一度測定し、結果の KDF パラメーターを保管庫に保存します。実際のロック解除時間は他の端末では異なります。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
     <string name="brute_force_actual_params">保存済み: %1$d MiB / %2$d ラウンド</string>
     <string name="brute_force_clamped"> (範囲内に制限されました)</string>
-    <string name="argon2_profile_low">ローエンド端末（非推奨）</string>
-    <string name="argon2_profile_default">既定</string>
-    <string name="argon2_profile_high">高いセキュリティ</string>
-    <string name="argon2_profile_hint">設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。</string>
-    <string name="argon2_profile_current">現在: %s</string>
 
     <string name="application_settings">アプリケーション</string>
     <string name="video_playback_settings">動画再生</string>
