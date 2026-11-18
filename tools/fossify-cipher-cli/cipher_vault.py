@@ -762,7 +762,7 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
         raise ValueError("Unsupported KDF algorithm (only Argon2id is supported).")
 
     iterations, memory_kb, parallelism = struct.unpack(">3i", take(12))
-    if not (1 <= iterations <= 100 and 1024 <= memory_kb <= 1_048_576 and 1 <= parallelism <= 32):
+    if not (1 <= iterations <= 256 and 1024 <= memory_kb <= 1_048_576 and 1 <= parallelism <= 32):
         raise ValueError("Invalid Argon2id parameters in .vault header.")
 
     take(1)  # protection type (password / PIN / pattern)

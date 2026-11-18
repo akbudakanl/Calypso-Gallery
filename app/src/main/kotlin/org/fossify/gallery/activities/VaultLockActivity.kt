@@ -90,9 +90,13 @@ class VaultLockActivity : SimpleActivity() {
         super.onDestroy()
     }
 
-    private fun handleSecretSubmission(secret: String) {
-        if (inputHelper.unlockWithSecret(secret, currentType)) {
-            onAuthenticated()
+    private fun handleSecretSubmission(secret: CharArray) {
+        inputHelper.unlockWithSecretAsync(secret, currentType) { success ->
+            if (success) {
+                onAuthenticated()
+            } else {
+                binding.vaultSecurityContent.vaultStatusLabel.beGone()
+            }
         }
     }
 

@@ -58,33 +58,32 @@ target footprint 268435456, growth limit 268435456 ..."
 
 The Android heap growth limit for this app is **256 MB**, so a single 256 MiB Argon2 buffer cannot be allocated regardless of the device's 8 GB physical RAM. Any target time that requires more than 128 MiB of Argon2 memory is **not achievable on Android** with the current heap limit.
 
-## 5. Derived model
+## 5. Derived model (updated 2026-11-18, ADR 0004 Implemented)
 
-- At fixed memory and parallelism, Argon2id time scales approximately **linearly with iterations**. This allows calibration from a single measured reference point instead of a long search:
-  1. Measure one reference run at `64 MiB / 2 iterations / p=2` on the device.
-  2. `msPerIteration ≈ measuredMs / 2`.
-  3. `iterations = clamp(round(targetMs / msPerIteration), MIN=2, MAX=16)`.
-  4. If target > 5 s and the device heap allows, prefer 128 MiB and recompute iterations accordingly.
-- OWASP baseline is ≥19 MiB, ≥2 iterations, ≥1 thread. Since `iterations` is clamped to ≥2, the **minimum practical target on this device is ~1.6 s at 64 MiB**; a 1.0 s request would silently clamp to the minimum. The UI must communicate this rather than pretend a 1.0 s target is achievable.
-- Practical, safe target range on this device: **~2.0 s – ~7.0 s**, default **2.4 s** (the measured DEFAULT profile).
-- The chosen target is a **device-side preference used only at vault creation / password change**. The calibrated `memoryKb / iterations / parallelism` are written into `.vault`; unlocking always uses the stored values, so the vault behaves like a KeePass database — same KDF cost everywhere, different wall-clock time per device.
+- At fixed memory and parallelism, Argon2id time scales approximately **linearly with iterations**. This allows calibration from a single measured standard run instead of a long search:
+  1. Measure one standard run at `64 MiB / 3 iterations / p=2` on the device (`std64Ms`, cached in `cachedStdArgon2Ms`).
+  2. In the default time-based mode (`bruteForceMode = 0`), the default unlock target uses a **"1.0 s sweet spot"** (`max(1.0 s, std64Ms)`): fast phones default to `1.0 s` (scaling rounds/memory above the `64 MiB / 3 rounds` floor), while slower phones default to `std64Ms`.
+  3. In **"Via vault unlock time"**, the slider's lower bound is the device's measured `std64Ms` (`T_std_64`) and the upper bound is **`10.0 s`** in `0.1 s` increments.
+  4. If the target time `>= 2 * std64Ms` and `Runtime.maxMemory() / 2 >= 128 MiB`, calibration measures `128 MiB / 3 iterations / p=2` (`measureHighMemoryArgon2Ms`, falling back cleanly to `64 MiB` on `OutOfMemoryError`) and scales `iterations = clamp(round(targetMs / perIterMs), 3, 100)` up to `10.0 s`. Memory never exceeds `128 MiB`.
+- The chosen target and resulting `memoryKb / iterations / parallelism` are written into `.vault`; changing settings on an existing vault re-wraps the same `VMK`/`KEK` after verifying the user's current password/PIN (`rewrapVaultHeaderWithCurrentKdf`).
 
 ## 6. Safety bounds (implemented)
 
-To prevent crashes and unusable vaults on low-end devices:
+To prevent crashes, ANRs, and cross-device lockouts:
 
-- **Iterations** are clamped to **2…16** regardless of target. A very fast device asking for 2.4 s may hit the 16-round ceiling and unlock sooner than requested; a very slow device hits the 2-round floor and cannot go weaker.
-- **Memory** is capped at **half of `Runtime.maxMemory()`**, with a floor of 64 MiB. Requesting 128 MiB on a device with a 128 MiB heap therefore degrades to 64 MiB instead of crashing.
-- If the 128 MiB reference allocation still throws `OutOfMemoryError`, calibration falls back to 64 MiB and retries; if even that fails, the OWASP floor is used.
-- When the target could not be met (clamped at 2/16 rounds or memory reduced), the UI shows a **"(kırpıldı) / (clamped)"** marker together with the **actually stored parameters** (`memory MiB / rounds`), so the target-time label is never mistaken for a portable security guarantee.
+- **RFC 9106 Floor:** Minimum parameters are **`64 MiB / 3 iterations / 2 parallelism`** (`32 MiB / 2 rounds` removed).
+- **Elastic Iteration Ceiling:** Calibrated iterations are clamped to **`3…100`** (allowing `10.0 s` targets on flagship devices at `64–128 MiB` without inflating memory to `256 MiB`). `.vault` header validation on both Android and CLI accepts **`1…256`** iterations.
+- **Portable Memory Ceiling + `android:largeHeap="true"`:** Memory is capped at **`128 MiB`** (half of `Runtime.maxMemory()` check + `largeHeap="true"` in `AndroidManifest.xml`), with automatic Glide RAM cache trimming + GC retry on `OutOfMemoryError`.
+- **Background Thread Execution:** All Argon2id operations (`setupOrUpdateCredentials`, `unlockWithSecret`, `rewrapVaultHeaderWithCurrentKdf`, `measureStandardArgon2Ms`) run off the UI thread so `10–30 s` unlocks never trigger an Android 5-second ANR.
+- When the target could not be met (clamped to floor/ceiling or heap-limited to `64 MiB`), the UI shows a **"(kırpıldı) / (clamped)"** marker together with the **actually stored parameters** (`memory MiB / rounds`).
 
 ## 7. Limitations
 
-- One device, one build, two samples per point. Numbers are order-of-magnitude guidance, not a benchmark suite.
+- One device, one build, two samples per point in initial measurements. Numbers are order-of-magnitude guidance, not a benchmark suite.
 - Thermal throttling, battery saver and background load can shift results.
-- Calibration itself costs roughly one reference run (~1.5–2.5 s on this device). It must run off the main thread with a progress indicator; a "use default" escape hatch is required.
-- Wall-clock target cannot be guaranteed across devices; only the stored KDF parameters are portable (by design, matching KeePass).
+- Measuring `std64Ms` costs one `64 MiB / 3 rounds` run (~0.4–2.5 s depending on hardware) on background startup of Settings or first entry to the custom time dialog.
+- Wall-clock target cannot be guaranteed across devices; only the stored KDF parameters are portable (by design, matching KeePass — e.g. a `7–10 s` flagship vault takes longer on a slower phone without OOM).
 
-## 7. Status
+## 8. Status
 
-These measurements are the basis for the "Brute-Force direnci" setting: a mode switch between **unlock-time-based** (default) and **preset-mode-based** calibration. See the implementation in `SettingsActivity` and `CryptoManagerCredentials`.
+These measurements and ADR 0004 are the basis for the "Brute-Force direnci" implementation across `BruteForceDialog`, `SettingsActivity`, `VaultSecurityDialog`, `VaultAuthInputHelper`, and `CryptoManagerCredentials`.

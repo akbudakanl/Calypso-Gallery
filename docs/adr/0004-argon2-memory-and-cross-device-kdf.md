@@ -1,9 +1,9 @@
 # ADR 0004 — Argon2 memory allocation, cross-device KDF compatibility and the unlock deadlock
 
-- **Status:** Proposed — **no implementation decision has been taken yet**
-- **Date:** 2026-11-17
-- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md ("Brute-Force direnci"); `CryptoManagerCredentials.resolveArgon2Params`
-- **Decision owner:** open (see §11)
+- **Status:** Implemented (2026-11-18)
+- **Date:** 2026-11-17 (implemented 2026-11-18)
+- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md ("Brute-Force direnci"); `CryptoManagerCredentials.kt`
+- **Decision owner:** Accepted and implemented (2026-11-18)
 
 > **Terminology.** User-facing text uses **"Encrypted Vault" / "Şifreli Kasa"** and keeps the English phrase **"Brute-Force"** in Turkish strings, as decided earlier.
 
@@ -11,29 +11,28 @@
 
 ## 1. Context
 
-The "Brute-Force direnci" setting lets a user pick a target unlock time (2.0–7.0 s). The app calibrates Argon2id parameters on the device and stores the resulting `memoryKb / iterations / parallelism` in the `.vault` header, so the KDF cost travels with the vault like KeePass stores KDF rounds in `.kdbx`.
-
-Two concerns were raised:
+The "Brute-Force direnci" setting originally let a user pick a fixed target unlock time (`2.0–7.0 s`) for all devices. Two additional requirements and two safety concerns drove the final architecture:
 
 1. **A user must never crash the app merely by picking a target time** in the settings dialog.
-2. **A vault created on a strong device must be openable on a weaker device.** If the stored parameters cannot run there, the vault cannot be unlocked — and its parameters cannot be lowered without unlocking it first.
-
-This ADR records the analysis, the rejected options, the remaining theoretical gap and the open decision. It does **not** change any code: the current dynamic memory scheme stays in place until a decision is made.
+2. **A vault created on a strong device must be openable on a weaker device.** If the stored parameters exceed what the weaker device can allocate (`OOM`), the vault cannot be unlocked — whereas taking longer in CPU time (e.g., `20–30 s` on a weak phone for a `7–10 s` flagship vault) is acceptable.
+3. **Standard security should be measured in KDF parameters, with a "1.0 s sweet spot" default.** The safe RFC 9106 floor is `64 MiB / 3 rounds / p=2`. If this floor runs in `<= 1.0 s` on the device, the default unlock target is `1.0 s`; if the device is slower, the default equals the device's measured safe-floor duration (`T_std_64`). Users can adjust the slider in `0.1 s` increments from `T_std_64` up to `10.0 s`.
+4. **Users should still be able to step up to `128 MiB` memory** when device heap permits, without risking cross-device OOM deadlocks (`256 MiB` must never be selected automatically).
 
 ---
 
-## 2. What we use today
+## 2. What we use today (Post-Decision)
 
-- **Variant: Argon2id, version 1.3.** `deriveKeyArgon2id` uses `Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)` with `ARGON2_VERSION_13` (BouncyCastle). The header stores `KDF: 1 = Argon2id` and the marker is `argon2id_aes256_gcm_v2`.
+- **Variant: Argon2id, version 1.3.** `deriveKeyArgon2id` uses `Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)` with `ARGON2_VERSION_13` (BouncyCastle). The header stores `KDF: 1 = Argon2id` and the marker is `argon2id_aes256_gcm`.
 - **Rationale for Argon2id:** Argon2d is stronger against GPU/ASIC but side-channel sensitive; Argon2i is the opposite; Argon2id is the hybrid and the RFC 9106 / OWASP recommended default.
 - **Implementation constraint:** BouncyCastle's `Argon2BytesGenerator` allocates the whole working memory as a **single Java `int[]`** — inside the **Java heap**.
 
-Current safety bounds (already implemented, and to be kept for now):
+Current safety & standard bounds (implemented 2026-11-18):
 
-- iterations clamped to **2…16**,
-- memory capped at `Runtime.maxMemory()/2` with a **64 MiB floor**, 128 MiB only for targets > 5 s,
-- `OutOfMemoryError` during calibration falls back from 128 MiB to 64 MiB,
-- a "(clamped) / (kırpıldı)" marker shows the **actually stored** parameters.
+- **RFC 9106 safe floor & "1.0 s sweet spot" default:** Minimum parameters are `64 MiB` (`65,536 KiB`) / `3` iterations / `2` parallelism (the legacy `32 MiB / 2 rounds` profile was removed). In the default time-based mode (`bruteForceMode = 0`), `defaultUnlockTargetMs = max(1_000 ms, T_std_64)`: fast devices default to `1.0 s` (and can even step down to `T_std_64`, e.g. `0.4–0.9 s`), while slower devices default to `T_std_64`.
+- **Dynamic slider range (`T_std_64 .. 10.0 s` in `0.1 s` steps):** Replaces the old hardcoded `2.0–7.0 s` bounds.
+- **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** Targets `>= 2 * T_std_64` step up to `128 MiB` when `Runtime.maxMemory() / 2 >= 128 MiB` (falling back to `64 MiB` on constrained heaps or `OutOfMemoryError`), and scale `iterations` in `3..100` up to `10.0 s`. Memory never exceeds `128 MiB`.
+- **`android:largeHeap="true"` + OOM cache trim:** Enabled in `AndroidManifest.xml` (expanding Java heap limits from 128–256 MB to 256–512+ MB) alongside automatic Glide RAM cache clearing and GC retry on `OutOfMemoryError`.
+- **`.vault` header validation & background execution:** Both Android (`CryptoManagerCredentials.kt`) and Python CLI (`cipher_vault.py`) accept `iterations in 1..256` (fixing the prior `1..10` vs `2..16` unlock deadlock), and Argon2id runs exclusively on background threads to prevent 5-second Android ANRs on 7–30s unlocks.
 
 ---
 
@@ -175,25 +174,29 @@ This breaks the §6 deadlock **without weakening password security**: an attacke
 
 ---
 
-## 11. Decision status and open questions
+## 11. Decision (Implemented 2026-11-18)
 
-**No decision has been taken.** The current dynamic scheme stays. Outstanding choices:
+Rather than introducing an NDK/CMake build pipeline for native C Argon2 right away, the project adopts a **Java-heap portable ceiling + RFC 9106 parameter floor + authenticated re-wrapping** architecture:
 
-1. Implement the JNI prototype + an **equivalence test** proving BC and native Argon2 produce the identical 32-byte key for the same `(password, salt, m, t, p, version)` — the proof that both implementations derive the same key.
-2. Add the recovery-key mechanism as a separate ADR / feature, for the formal cross-device case.
-3. Add cheap hardening regardless of 1 and 2: `android:largeHeap="true"`, capability probing by **actual allocation attempt** instead of the `maxMemory()/2` estimate, OOM handling on the vault-creation and unlock paths, and an explanatory dialog instead of a crash when stored parameters exceed device capacity.
-4. Keep the "(clamped)" UI marker and real-parameter display in all cases.
+1. **RFC 9106 safe floor & "1.0 s sweet spot" default (`max(1.0 s, T_std_64)`):** The safe minimum is `64 MiB / 3 rounds / 2 parallelism`. When `T_std_64 <= 1.0 s`, the default unlock target is `1.0 s`; on slower phones where `T_std_64 > 1.0 s`, the default equals `T_std_64`. In the unlock-time dialog, users can dial in `0.1 s` increments from `T_std_64` (including `< 1.0 s` on fast phones) up to `10.0 s`.
+2. **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** High-target calibrations (`>= 2 * T_std_64`) step up to `128 MiB` (never `256 MiB`) when `maxMemory() / 2 >= 128 MiB`, then scale `iterations` up to `100` (reaching `10.0 s` without needing `256 MiB`). Because memory stays capped at `<= 128 MiB` and `android:largeHeap="true"` provides a 256–512+ MB heap across devices (with automatic Glide RAM cache trimming + GC retry on OOM), even a `10.0 s` flagship vault opens reliably on weaker devices instead of deadlocking.
+3. **Authenticated in-place `.vault` header re-wrapping:** When changing Brute-Force resistance on an existing vault, the app prompts for the current password/PIN (biometrics disabled), unwraps `VMK` and `KEK` under the old KDF on a background thread, and atomically re-wraps them under the newly calibrated PDK (`rewrapVaultHeaderWithCurrentKdf`). No weaker fallback wrapper is ever stored.
+4. **Critical hardening applied alongside the decision:**
+   - Expanded `.vault` header validation from `1..10` to `1..256` iterations in both Android (`CryptoManagerCredentials.kt`) and `cipher_vault.py`.
+   - Caught `OutOfMemoryError` (`java.lang.Error`) on unlock/setup/rewrap paths so allocation failure never crashes the app.
+   - Moved all Argon2id work off the Android UI thread (`VaultAuthInputHelper.unlockWithSecretAsync` and `VaultSecurityDialog`) to prevent 5-second ANRs during slow unlocks.
+   - Updated `completeBiometricUnlock` in `CryptoManagerBiometrics.kt` to unwrap `unlockedKek` from `.vault` using the biometric-unwrapped `VMK`, and guarded `setupOrUpdateCredentialsInternal` against replacing an unloaded `KEK`.
 
-The project currently has **no** `android:largeHeap`, **no** NDK/CMake setup and **no** native Argon2 dependency (verified 2026-11-17).
+Deferred / future options:
+- Native JNI Argon2 (`§9`) and exported Recovery Key (`§10`) remain valid future enhancements if memory requirements above `128 MiB` or sub-128 MB heap legacy hardware ever need to be supported.
 
 ---
 
-## 12. Consequences if JNI is adopted
+## 12. Consequences of this decision
 
-- No `.vault` format change, no CLI change.
-- Build pipeline gains native compilation and ABI-specific artifacts; reproducibility and library provenance must be documented.
-- The existing Argon2 calibration, clamping and UI marker remain valid; only the allocator changes.
-- The recovery-key design remains a separate, optional layer for the residual transfer case.
+- No `.vault` container format break; no NDK/CMake build complexity added.
+- Both `Default (64 MiB / 3 rounds)` and `High security (128 MiB / 4 rounds)` ready-made profiles, as well as `Via vault unlock time` (`T_std_64 .. 10.0 s` in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`), enforce RFC 9106 minimums and keep cross-device compatibility intact.
+- Native JNI Argon2 (§9) can still be dropped in later as a pure allocator swap without changing derived keys or `.vault` headers.
 
 ---
 
