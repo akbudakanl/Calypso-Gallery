@@ -1,6 +1,6 @@
 # ADR 0003 — Resumable file operations
 
-- **Status:** Accepted — core phases implemented (see §11 for exact per-item status)
+- **Status:** Implemented — all ADR 0003 code items complete (see §11; optional hardware tests in §8.4 of results doc)
 - **Date:** 2026-11-17 (updated 2026-11-18)
 - **Relates to:** ADR 0002 §7, DOCS.md §2.4/§2.5, `docs/transfer-data-integrity.md` §6/§8
 - **Reading guide:** this ADR records the *decisions and rationale*. The current runtime state,
@@ -21,7 +21,7 @@ This ADR specifies a unified resume framework for those operations; §9 and §11
 | Layer | Trigger | Behaviour | User prompt |
 |---|---|---|---|
 | **Transient wait** | Process alive; external volume unmounted, write error, temporary I/O failure | Service stays alive, keys stay in RAM, notification/progress shows "waiting", polls until the resource returns, then continues from the journal | None |
-| **Process death** | App killed, reboot, user force-closed, service cancelled | Journal persists; on next app start + vault unlock, one combined dialog explains the partial operation and asks whether to continue | **One-time** "previous operation interrupted, no data lost, continue?" — **no "always show" setting** |
+| **Process death** | App killed, reboot, user force-closed, service cancelled | Journal persists; Encrypt Phase-2 wipes & approved skipped deletes finish silently on vault unlock, unanswered `ASK` skipped-crypto dialogs re-open, and incomplete Phase-1 transfers show one Yes/No prompt (plain on app start; vault/encrypted on vault unlock) | **One-time Yes/No** per eligible batch (`No` clears permanently and never re-prompts) |
 
 The resume dialog is deliberately shown once per interrupted operation, with no persistent preference: a partially copied or encrypted file does not change the vault format, so there is no risk the user might miss a state change.
 
@@ -49,7 +49,7 @@ Per-item state machine:
 
 ```
 PENDING → IN_FLIGHT → COPIED_UNVERIFIED → VERIFIED → SOURCE_DELETED
-                   ↘ FAILED           ↘ SKIPPED_CONFLICT
+                   ↘ FAILED           ↘ SKIPPED_CONFLICT → AWAITING_SKIP_CONFIRM → DELETE_SKIPPED_APPROVED
                    ↘ WAITING_FOR_SPACE → IN_FLIGHT
                    ↘ SPACE_CHECK_FAILED
 ```
@@ -110,11 +110,17 @@ and an explicit confirmation dialog for the `-1` case (see §11 and the results 
 
 While a standard or smart conflict dialog is still open for an item, **no I/O is in flight** for that item, so the journal must not mark it `IN_FLIGHT`. If the process dies at that moment, the batch simply stops before that item; on resume the dialog is re-asked (or the recorded batch decision is applied). This keeps the journal limited to items with real I/O and removes a whole class of ambiguous states.
 
-## 6. Decision — skipped files and secure erase
+## 6. Decision — skipped files, declined resume, and Phase-2 secure wipe
 
 - A source is "skipped" only when a conflict decision was **settled** (`SKIPPED_CONFLICT`) and the source is still intact.
 - A source whose destination write or verification failed is **never** eligible for secure erase, even if it resembles a duplicate.
-- If the user declines to resume, the app offers one Secure Erase prompt listing only the eligible skipped files from the completed part of the operation ("delete these now?"). Saying yes deletes exactly those; saying no leaves everything untouched. This implements the rule agreed with the maintainer.
+- The resume dialog is a **one-time Yes / No decision** (plain copy/move on app start; vault/encrypted operations only upon vault unlock):
+  - **Automatic Encrypt Phase-2 wipe:** if an interrupted `KIND_ENCRYPT` batch already committed and verified `.bin` files (`STATE_VERIFIED` with `wipeSource = true`), unlocking the vault silently finishes secure-wiping the plaintext originals in background without asking the user again (re-verifying each container before wiping).
+  - Incomplete Phase-1 transfers / copy / move / decrypt show a single operation-typed prompt asking whether to continue.
+  - Selecting **No** permanently clears those Phase-1 journal entries (never prompting again), keeps already-completed files untouched without data loss, shows `<Operation> aborted` (`OK`), and does **not** surface skipped-file Secure Erase prompts.
+  - **Completed-transfer skipped crypto decisions (`SkippedCryptoFilesDialog`):** when an encrypt/decrypt operation finishes normally and enters `resolveSkippedCryptoFiles`, skipped files stay tracked in `pending_operations` as `AWAITING_SKIP_CONFIRM` or `DELETE_SKIPPED_APPROVED` until settled:
+    - If `DELETE` is already chosen in settings (`CRYPTO_SKIPPED_FILES_DELETE`) or confirmed before interruption (`DELETE_SKIPPED_APPROVED`), next vault unlock silently completes deletion in background without re-prompting.
+    - If `ASK` mode was active and the user hadn't answered yet when killed, next vault unlock re-opens `SkippedCryptoFilesDialog` for those exact skipped files.
 
 ## 7. Decision — foreground service and operation registry
 
@@ -145,39 +151,44 @@ Status markers: **[DONE]** implemented, **[PARTIAL]** partly implemented, **[PEN
 Details and code pointers are in §11 and in `docs/transfer-data-integrity.md` §8.
 
 1. **[DONE]** Room table `pending_operations` + schema registration (including `stagingPath` and batch estimates, single-transaction batch `upsertAll`, and indexed `findItem` lookup).
-2. **[PARTIAL]** `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)` wired into operation
+2. **[DONE]** `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)` wired into operation
    entry points; state machine includes `WAITING_FOR_SPACE` / `SPACE_CHECK_FAILED`, and
-   `TransientOperationWaiter` polls before each item enters `IN_FLIGHT` when a destination disappears
-   or verifiable free space drops below threshold (mid-stream `IOException` retry inside a single
-   file write is not yet implemented).
+   `TransientOperationWaiter` handles both pre-item readiness polling (`awaitDestinationReady`) and
+   mid-stream `IOException` retry (`runWithTransientRetry`, discarding partial staging and waiting
+   for storage/space recovery while a foreground operation is active).
 3. **[DONE]** Journal hooks in `CopyMoveHelper` (copy/move, plain and encrypted, cross-album, including
    `renameTo` fast-path, `CONFLICT_SKIP`, and non-colliding top-level vs. child `itemIndex` tracking).
 4. **[DONE]** Journal hooks in encrypt/decrypt paths (file, album, and `tryCopyMoveFilesTo` / `MediaAdapter`
-   batches), including per-item `kind` and `conflictResolution`, actual committed `destPath` on
-   `markVerified`, and rollback cleanup.
+   batches), including per-item `kind`, `conflictResolution`, `resolvedDestName` suffix pinning,
+   album `mergeTargetRoot` / `foldedSourceRoots` tracking, actual committed `destPath` on `markVerified`,
+   and rollback cleanup.
 5. **[DONE]** Staging + same-directory atomic commit (`ATOMIC_MOVE`, SAF `DocumentFile.renameTo`, no
    cross-store copy+delete fallback) in all write paths, including external-vault sync.
-6. **[PARTIAL]** Notification/progress state, explicit `-1` confirmation, `TransientOperationWaiter`
-   pre-item polling loop, and `FileOperationService` notification Cancel action (`ACTION_CANCEL`) are
-   implemented; a dedicated localized "waiting for free space" notification string and mid-stream
-   write retry are not.
-7. **[PARTIAL]** Process-death resume dialog implemented (off the UI thread, triggered on resume and
-   vault unlock); the Secure Erase list prompt for eligible skipped files when the user declines
-   resume is not.
+6. **[DONE]** Notification/progress state, explicit `-1` confirmation, `TransientOperationWaiter`
+   pre-item + mid-stream retry loop, localized `waiting_for_free_space_or_storage` notification
+   string (11 locales), and `FileOperationService` notification Cancel action (`ACTION_CANCEL`).
+7. **[DONE]** One-time process-death resume dialog (`Yes` / `No`, non-cancelable, plain ops on start,
+   vault ops only on vault unlock), permanent journal clear + `<Operation> aborted` notice on `No`
+   (without surfacing skipped-file Secure Erase prompts), silent background Phase-2 encrypt
+   secure-wipe completion on vault unlock, and persisted post-transfer `SkippedCryptoFilesDialog`
+   recovery (silent background delete if setting is `DELETE` or approved; re-open dialog if `ASK` was
+   unanswered).
 8. **[DONE]** Startup reconciliation: orphan staging cleanup (background thread), stale active-state
-   reset, non-resumable (`COPY` `VERIFIED`, `FAILED`, etc.) operation pruning, and per-item idempotent
-   reconciliation of MediaStore/Room/virtual-album manifests.
+   reset, non-resumable (`COPY` `VERIFIED`, `FAILED`, etc.) operation pruning, matched-destination
+   size+fingerprint reuse on resume, and per-item idempotent reconciliation of MediaStore/Room/virtual-album manifests.
 9. **[PARTIAL]** JVM unit tests (`ResumableOperationsTest`) cover estimator, margin, staging names,
-   false-positive pruning, active-operation exclusion, and interrupted encrypt/decrypt recovery via an
-   in-memory DAO; on-device kill/remount/ENOSPC scenarios remain manual (`docs/transfer-data-integrity.md` §8.4).
+   false-positive pruning, active-operation exclusion, foreground re-entrancy/concurrency, pinned
+   `resolvedDestName` & destination reuse, folded merge skip, prompt split + silent Phase-2 encrypt
+   wipe, persisted `SkippedCryptoFilesDialog` reopen/auto-delete, and transient `IOException` retry
+   via an in-memory DAO; physical force-stop/remount/ENOSPC scenarios remain manual
+   (`docs/transfer-data-integrity.md` §8.4).
 
 ## 10. Open questions
 
-- Should the resume prompt appear on **any** app start, or only on vault unlock? (Proposed: only on vault unlock for encrypted operations; on app start for plain-only operations.)
-- Should a journalled operation expire after N days, or persist until explicitly resolved?
+- **Resolved:** Should the resume prompt appear on **any** app start, or only on vault unlock? — Plain-only `COPY`/`MOVE` prompts on app start; `ENCRYPT`, `DECRYPT`, and encrypted-album transfers prompt only upon vault unlock (`OperationRecovery.selectPromptBatch`).
+- **Resolved:** Should a journalled operation expire after N days, or persist until explicitly resolved? — No day-based TTL needed: each interrupted batch shows a one-time `Yes` / `No` decision; `No` permanently clears its journal rows and never re-prompts.
 - Should the CLI share this journal format for external-storage transfers? (Currently out of scope.)
-- What exact safety margin should §3a use? (`max(64 MiB, 1%)` is implemented; the SAF `-1` case was
-  **resolved** in favour of explicit user confirmation — see results document §8.3.3.)
+- **Resolved:** What exact safety margin should §3a use? — `max(64 MiB, 1%)` is implemented, and SAF `-1` uses explicit user confirmation (`docs/transfer-data-integrity.md` §8.3.3).
 
 ## 11. Implementation status
 
@@ -191,20 +202,16 @@ separate conversation is needed to reconstruct what has been built.
 | Separate `pending_operations` Room DB (§3) | **DONE** | `PendingOperationsDatabase`, `PendingOperation`, `PendingOperationsDao` (`findItem`, `upsertAll`), `OperationJournal` (batch transaction + `O(1)` updates) |
 | `stagingPath`, batch flags and per-item state machine (§3) | **DONE** | `operationId:itemIndex` keys; `isMove`, `wipeSource`, `deleteSource`; `markVerified` records actual committed `destPath`; `needsResume` distinguishes `COPY` (`VERIFIED` terminal) from pending source deletion |
 | Space estimator and container-size formula (§3a) | **DONE** | `SpaceEstimator`, `VaultContainerWriter.estimateEncryptedSize`, wired into copy/move and album operations |
-| Explicit confirmation for unverifiable free space (§3a, §10) | **DONE** | `SpaceConfirmation` (async + blocking variants), 9 locales translated |
+| Explicit confirmation for unverifiable free space (§3a, §10) | **DONE** | `SpaceConfirmation` (async + blocking variants), localized across 11 `values*` resource sets |
 | Staging + atomic commit in all write paths (§3a, §5) | **DONE** | `AtomicStaging` (File + SAF, `alreadyFileSynced`), `CryptoManagerFileCrypto`, `CryptoManagerConflict`, `CopyMoveHelper`, `CryptoManagerExportSync` (`ATOMIC_MOVE`) |
 | Journal hooks in copy/move, album, and Activity/Adapter batches (§9/3-4) | **DONE** | `CopyMoveHelper`, `CryptoManagerFolderCrypto`, `tryCopyMoveFilesTo`, `MediaAdapter`, single/multi-file encrypt/decrypt (`Activity.kt`) |
 | Read-back verification before source deletion (§3, §8) | **DONE** | Full `verifyFileIntegrity` after encrypt and `.bin` copy; output-length check after decrypt; fingerprint check after plain copy |
-| Process-death resume dialog (§2, §9/7) | **DONE** | `OperationRecovery.maybePromptResume`, triggered from `MainActivity.onResume`, vault unlock (`promptToResumeVault`, `enterSecretVault`), and `MediaActivity.onResume`; runs `reconcile` and `resume` off the UI thread with `CryptoProgressDialog` |
+| Process-death resume dialog (§2, §9/7) | **DONE** | `OperationRecovery.maybePromptResume` (type-split plain vs vault unlock, silent Phase-2 encrypt wipe, persistent `AWAITING_SKIP_CONFIRM` / `DELETE_SKIPPED_APPROVED` skipped-crypto recovery, permanent clear + aborted notice on `No`), triggered from `MainActivity.onResume`, vault unlock (`promptToResumeVault`, `enterSecretVault`), and `MediaActivity.onResume` |
 | Startup reconciliation and orphan cleanup (§8, §9/8) | **DONE** | `OperationRecovery.reconcile` (prunes non-resumable batches, skips when `ForegroundOperationRegistry.isActive`), `MetadataReconciler` (per-item, prunes cleared operations) |
 | Foreground service and single owner token (§7) | **DONE** | `FileOperationService` (`ACTION_CANCEL`) + same-thread re-entrant `ForegroundOperationRegistry` wired into all copy/move, album, Activity/MediaAdapter crypto, and resume paths; `VaultSessionManager` keeps RAM keys while `isActive` |
-| Transient-wait loop for removed volume / low space (§2, §9/6) | **PARTIAL** | `TransientOperationWaiter.awaitDestinationReady` polls pre-item destination readiness & space with `WAITING_FOR_SPACE` and `ACTION_CANCEL`; dedicated localized wait label & mid-stream write retry remain pending |
-| Secure Erase prompt when resume is declined (§6, §9/7) | **PENDING** | Not implemented |
-| Re-applying recorded conflict decisions / `resolvedDestName` on resume (§4) | **PARTIAL** | Per-item `conflictResolution` (incl. `CONFLICT_SKIP`), duplicate re-check (`skipDuplicateCheck = false`), and `STATE_VERIFIED` pending source deletion/wipe work on resume; `resolvedDestName` `(1)/(2)` suffix pinning and album merge target tracking remain pending |
-| Automated fault-injection / device tests (§9/9) | **PARTIAL** | `ResumableOperationsTest` covers estimator, staging, false-positive pruning, active-operation exclusion, and interrupted encrypt/decrypt recovery; kill/remount/ENOSPC device scenarios remain manual (`docs/transfer-data-integrity.md` §8.4) |
+| Transient-wait loop for removed volume / low space (§2, §9/6) | **DONE** | `TransientOperationWaiter` (`awaitDestinationReady` + mid-stream `runWithTransientRetry`), localized `waiting_for_free_space_or_storage` status string, `WAITING_FOR_SPACE`, `ACTION_CANCEL` |
+| Declined-resume & post-transfer skipped-crypto wipe handling (§6, §9/7) | **DONE** | One-time Phase-1 `Yes`/`No` clears journal permanently on `No` with aborted notice and no duplicate Secure Erase dialog; `STATE_VERIFIED` Phase-2 encrypt wipes complete silently on unlock; `SkippedCryptoFilesDialog` `ASK` re-opens if unanswered and `DELETE`/approved runs silently |
+| Re-applying conflict decisions / `resolvedDestName` / merge tracking (§4) | **DONE** | Pinned `resolvedDestName` & `destPath` recorded in `markInFlight`, existing committed plain output reused via size+fingerprint match, per-item `conflictResolution`, `mergeTargetRoot` + `foldedSourceRoots` |
+| Automated fault-injection / device tests (§9/9) | **PARTIAL** | `ResumableOperationsTest` covers JVM primitives, concurrency/re-entrancy, pinned dest names, destination reuse, folded merge skip, prompt split + silent Phase-2 encrypt wipe, deferred skipped-crypto reopen/auto-delete, and transient retry; physical device kill/remount tests remain manual (`docs/transfer-data-integrity.md` §8.4) |
 
-**Remaining code work:** dedicated localized wait string + mid-stream `IOException` transient retry,
-Secure Erase prompt when resume is declined, `resolvedDestName` `(1)/(2)` suffix pinning & album
-merge target tracking on resume, and on-device fault-injection tests. See §9 markers and the results
-document §8 for the full breakdown. The data-loss invariant (§8/2) is preserved by all implemented
-paths.
+**Remaining work:** optional on-device hardware fault-injection smoke tests (`docs/transfer-data-integrity.md` §8.4). All code items under ADR 0003 are implemented and covered by JVM tests; the data-loss invariant (§8/2) is preserved by all paths.

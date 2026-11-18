@@ -1,6 +1,7 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.content.Context
 import android.graphics.Color
 import android.widget.RadioButton
 import androidx.appcompat.app.AlertDialog
@@ -36,6 +37,8 @@ import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.deleteEncryptedFile
 import org.fossify.gallery.helpers.isEncryptedFolder
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 fun resolveSkippedCryptoMessageRes(
@@ -110,8 +113,86 @@ fun showDeleteSkippedFilesConfirmation(
         }
 }
 
-private fun Activity.getSkippedCryptoFilesMode(isEncrypt: Boolean): Int {
+internal fun Context.getSkippedCryptoFilesMode(isEncrypt: Boolean): Int {
     return if (isEncrypt) config.skippedEncryptFilesMode else config.skippedDecryptFilesMode
+}
+
+internal fun deleteSkippedCryptoSourcesBlocking(
+    context: Context,
+    skippedFiles: List<File>,
+    identicalTargetMap: Map<String, File> = emptyMap(),
+    forceCleanupEmptyAlbum: Boolean = false
+): Int {
+    val existingSkipped = skippedFiles.filter { it.exists() && it.isFile }
+    if (existingSkipped.isEmpty()) return 0
+
+    var deletedCount = 0
+    val deletedPaths = ArrayList<String>(existingSkipped.size)
+    val sourceDirs = LinkedHashSet<File>()
+
+    for (file in existingSkipped) {
+        file.parentFile?.let { sourceDirs.add(it) }
+        val sourcePath = file.absolutePath
+        val isEnc = CryptoManager.isEncryptedFile(file.name)
+        val identicalTarget = identicalTargetMap[sourcePath]
+        if (identicalTarget != null) {
+            val isTargetEnc = CryptoManager.isEncryptedFile(identicalTarget.name)
+            when {
+                !isEnc && isTargetEnc -> {
+                    val plainIdentity = runCatching { MediaIdentity.ofWithFolder(context, file) }.getOrNull()
+                    runCatching {
+                        context.markReferencesOnEncrypt(
+                            sourcePath = sourcePath,
+                            encPath = identicalTarget.absolutePath,
+                            plaintextIdentity = plainIdentity,
+                            markPlaintextDormant = true
+                        )
+                    }
+                }
+                isEnc && !isTargetEnc -> {
+                    runCatching {
+                        context.markReferencesOnDecrypt(
+                            encPath = sourcePath,
+                            decryptedFile = identicalTarget,
+                            hideStealthReferences = true
+                        )
+                    }
+                }
+                isEnc && isTargetEnc -> {
+                    runCatching {
+                        context.updateVirtualAlbumItemPath(sourcePath, identicalTarget.absolutePath)
+                    }
+                }
+                else -> {
+                    runCatching {
+                        context.updateDBMediaPath(sourcePath, identicalTarget.absolutePath)
+                    }
+                }
+            }
+        }
+        val deleted = if (isEnc) {
+            CryptoManager.deleteEncryptedFile(context, file)
+        } else {
+            CryptoManager.secureWipeAndDeleteFile(context, file)
+        }
+        if (deleted || !file.exists()) {
+            deletedCount++
+            deletedPaths.add(sourcePath)
+        }
+    }
+
+    if (deletedPaths.isNotEmpty()) {
+        runCatching { context.deleteDBPaths(deletedPaths) }
+    }
+    sourceDirs.forEach { dir ->
+        if (CryptoManager.isEncryptedFolder(dir)) {
+            CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(context, dir)
+        } else {
+            (context as? BaseSimpleActivity)?.cleanupEmptyPlaintextAlbumIfNeeded(dir, forceIfEmpty = forceCleanupEmptyAlbum)
+        }
+    }
+    runCatching { CryptoManager.clearAppImageCaches(context) }
+    return deletedCount
 }
 
 private fun Activity.setSkippedCryptoFilesMode(isEncrypt: Boolean, mode: Int) {
@@ -205,145 +286,120 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
     identicalTargetMap: Map<String, File> = emptyMap(),
     identicalSkippedPaths: Set<String> = identicalTargetMap.keys,
     forceCleanupEmptyAlbum: Boolean = false,
+    existingSkipOpId: String? = null,
     onComplete: (deletedCount: Int) -> Unit
 ) {
     val existingSkipped = skippedFiles.filter { it.exists() && it.isFile }
     if (existingSkipped.isEmpty()) {
+        existingSkipOpId?.takeIf { it.isNotEmpty() }?.let { OperationJournal.clear(it) }
         onComplete(0)
         return
     }
     val hasIdenticalSkipped = existingSkipped.any { it.absolutePath in identicalSkippedPaths }
     val hasUserSkipped = existingSkipped.any { it.absolutePath !in identicalSkippedPaths }
 
+    val mode = getSkippedCryptoFilesMode(isEncrypt)
+    if (mode == CRYPTO_SKIPPED_FILES_KEEP) {
+        existingSkipOpId?.takeIf { it.isNotEmpty() }?.let { OperationJournal.clear(it) }
+        onComplete(0)
+        return
+    }
+
+    val skipOpId = existingSkipOpId?.takeIf { it.isNotEmpty() }
+        ?: OperationJournal.registerSkippedCryptoDecisionBatch(
+            isEncrypt = isEncrypt,
+            skippedFiles = existingSkipped,
+            identicalTargetMap = identicalTargetMap,
+            approvedDelete = mode == CRYPTO_SKIPPED_FILES_DELETE,
+            forceCleanupEmptyAlbum = forceCleanupEmptyAlbum
+        )
+
     val performDelete = {
         ensureBackgroundThread {
-            var deletedCount = 0
-            val deletedPaths = ArrayList<String>(existingSkipped.size)
-            val sourceDirs = LinkedHashSet<File>()
-
-            for (file in existingSkipped) {
-                file.parentFile?.let { sourceDirs.add(it) }
-                val sourcePath = file.absolutePath
-                val isEnc = CryptoManager.isEncryptedFile(file.name)
-                val identicalTarget = identicalTargetMap[sourcePath]
-                if (identicalTarget != null) {
-                    val isTargetEnc = CryptoManager.isEncryptedFile(identicalTarget.name)
-                    when {
-                        !isEnc && isTargetEnc -> {
-                            val plainIdentity = runCatching { MediaIdentity.ofWithFolder(this, file) }.getOrNull()
-                            runCatching {
-                                markReferencesOnEncrypt(
-                                    sourcePath = sourcePath,
-                                    encPath = identicalTarget.absolutePath,
-                                    plaintextIdentity = plainIdentity,
-                                    markPlaintextDormant = true
-                                )
-                            }
-                        }
-                        isEnc && !isTargetEnc -> {
-                            runCatching {
-                                markReferencesOnDecrypt(
-                                    encPath = sourcePath,
-                                    decryptedFile = identicalTarget,
-                                    hideStealthReferences = true
-                                )
-                            }
-                        }
-                        isEnc && isTargetEnc -> {
-                            runCatching {
-                                updateVirtualAlbumItemPath(sourcePath, identicalTarget.absolutePath)
-                            }
-                        }
-                        else -> {
-                            runCatching {
-                                updateDBMediaPath(sourcePath, identicalTarget.absolutePath)
-                            }
-                        }
-                    }
-                }
-                val deleted = if (isEnc) {
-                    CryptoManager.deleteEncryptedFile(this, file)
-                } else {
-                    CryptoManager.secureWipeAndDeleteFile(this, file)
-                }
-                if (deleted || !file.exists()) {
-                    deletedCount++
-                    deletedPaths.add(sourcePath)
-                }
+            if (skipOpId.isNotEmpty()) {
+                OperationJournal.markSkippedCryptoApproved(skipOpId)
             }
-
-            if (deletedPaths.isNotEmpty()) {
-                runCatching { deleteDBPaths(deletedPaths) }
+            val deletedCount = ForegroundOperationRegistry.withOperation(this, "skipped-crypto-wipe") {
+                deleteSkippedCryptoSourcesBlocking(
+                    context = this,
+                    skippedFiles = existingSkipped,
+                    identicalTargetMap = identicalTargetMap,
+                    forceCleanupEmptyAlbum = forceCleanupEmptyAlbum
+                )
+            } ?: deleteSkippedCryptoSourcesBlocking(
+                context = this,
+                skippedFiles = existingSkipped,
+                identicalTargetMap = identicalTargetMap,
+                forceCleanupEmptyAlbum = forceCleanupEmptyAlbum
+            )
+            if (skipOpId.isNotEmpty()) {
+                OperationJournal.clear(skipOpId)
             }
-            sourceDirs.forEach { dir ->
-                if (CryptoManager.isEncryptedFolder(dir)) {
-                    CryptoManager.cleanupEmptyEncryptedAlbumIfNeeded(this, dir)
-                } else {
-                    cleanupEmptyPlaintextAlbumIfNeeded(dir, forceIfEmpty = forceCleanupEmptyAlbum)
-                }
-            }
-            CryptoManager.clearAppImageCaches(this)
-
             runOnUiThread {
                 onComplete(deletedCount)
             }
         }
     }
 
-    when (getSkippedCryptoFilesMode(isEncrypt)) {
-        CRYPTO_SKIPPED_FILES_KEEP -> onComplete(0)
-        CRYPTO_SKIPPED_FILES_DELETE -> performDelete()
-        else -> {
-            if (isFinishing || isDestroyed) {
-                onComplete(0)
-                return
-            }
-
-            val binding = DialogSkippedCryptoFilesBinding.inflate(layoutInflater)
-            binding.skippedCryptoFilesMessage.text = getString(
-                resolveSkippedCryptoMessageRes(
-                    isEncrypt = isEncrypt,
-                    conflictHandlingMode = config.conflictHandlingMode,
-                    hasUserSkipped = hasUserSkipped,
-                    hasIdenticalSkipped = hasIdenticalSkipped
-                )
-            )
-
-            var handled = false
-            getAlertDialogBuilder()
-                .setNegativeButton(org.fossify.commons.R.string.delete, null)
-                .setPositiveButton(R.string.skipped_crypto_files_keep) { _, _ ->
-                    handled = true
-                    if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
-                        setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_KEEP)
-                    }
-                    onComplete(0)
-                }
-                .setOnCancelListener {
-                    if (!handled) {
-                        handled = true
-                        onComplete(0)
-                    }
-                }
-                .apply {
-                    setupDialogStuff(binding.root, this) { alertDialog ->
-                        val deleteBtn = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
-                        deleteBtn?.setTextColor(getDestructiveRedColor())
-                        deleteBtn?.setOnClickListener {
-                            showDeleteSkippedFilesConfirmation(
-                                activity = this@resolveSkippedCryptoFiles,
-                                onConfirm = {
-                                    handled = true
-                                    if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
-                                        setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_DELETE)
-                                    }
-                                    alertDialog.dismiss()
-                                    performDelete()
-                                }
-                            )
-                        }
-                    }
-                }
-        }
+    if (mode == CRYPTO_SKIPPED_FILES_DELETE) {
+        performDelete()
+        return
     }
+
+    if (isFinishing || isDestroyed) {
+        onComplete(0)
+        return
+    }
+
+    val binding = DialogSkippedCryptoFilesBinding.inflate(layoutInflater)
+    binding.skippedCryptoFilesMessage.text = getString(
+        resolveSkippedCryptoMessageRes(
+            isEncrypt = isEncrypt,
+            conflictHandlingMode = config.conflictHandlingMode,
+            hasUserSkipped = hasUserSkipped,
+            hasIdenticalSkipped = hasIdenticalSkipped
+        )
+    )
+
+    var handled = false
+    getAlertDialogBuilder()
+        .setNegativeButton(org.fossify.commons.R.string.delete, null)
+        .setPositiveButton(R.string.skipped_crypto_files_keep) { _, _ ->
+            handled = true
+            if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
+                setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_KEEP)
+            }
+            if (skipOpId.isNotEmpty()) {
+                ensureBackgroundThread { OperationJournal.clear(skipOpId) }
+            }
+            onComplete(0)
+        }
+        .setOnCancelListener {
+            if (!handled) {
+                handled = true
+                if (skipOpId.isNotEmpty()) {
+                    ensureBackgroundThread { OperationJournal.clear(skipOpId) }
+                }
+                onComplete(0)
+            }
+        }
+        .apply {
+            setupDialogStuff(binding.root, this) { alertDialog ->
+                val deleteBtn = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                deleteBtn?.setTextColor(getDestructiveRedColor())
+                deleteBtn?.setOnClickListener {
+                    showDeleteSkippedFilesConfirmation(
+                        activity = this@resolveSkippedCryptoFiles,
+                        onConfirm = {
+                            handled = true
+                            if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
+                                setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_DELETE)
+                            }
+                            alertDialog.dismiss()
+                            performDelete()
+                        }
+                    )
+                }
+            }
+        }
 }

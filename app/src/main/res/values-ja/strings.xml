@@ -10,6 +10,13 @@
     <string name="resume_later">後で</string>
     <string name="resume_done">操作が完了しました。</string>
     <string name="resume_failed">一部の操作を完了できませんでした。元のファイルは保持されています。</string>
+    <string name="resume_op_copy">コピー</string>
+    <string name="resume_op_move">移動</string>
+    <string name="resume_op_encrypt">暗号化</string>
+    <string name="resume_op_decrypt">復号</string>
+    <string name="resume_operation_interrupted_message">%1$s 操作が中断されました（残り %2$d 件）。データは失われていません。続行しますか？</string>
+    <string name="resume_operation_aborted_message">%1$s 操作は中止されました。完了済みのファイルは保持されています。</string>
+    <string name="waiting_for_free_space_or_storage">空き領域または保存先ストレージを待機しています…</string>
     <string name="edit">編集</string>
     <string name="open_camera">カメラを開く</string>
     <string name="hidden">(非表示)</string>

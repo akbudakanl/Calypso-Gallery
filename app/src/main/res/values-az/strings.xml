@@ -10,6 +10,13 @@
     <string name="resume_later">İndi deyil</string>
     <string name="resume_done">Əməliyyatlar tamamlandı.</string>
     <string name="resume_failed">Bəzi əməliyyatlar tamamlanamadı; mənbə fayllar qorunub.</string>
+    <string name="resume_op_copy">Kopyalama</string>
+    <string name="resume_op_move">Köçürmə</string>
+    <string name="resume_op_encrypt">Şifrələmə</string>
+    <string name="resume_op_decrypt">Şifrəni açma</string>
+    <string name="resume_operation_interrupted_message">%1$s əməliyyatı yarımçıq qaldı (%2$d qalan element). Məlumat itkisi yoxdur; davam etmək istəyirsiniz?</string>
+    <string name="resume_operation_aborted_message">%1$s əməliyyatı yarımçıq saxlanıldı. Artıq tamamlanmış fayllar qorundu.</string>
+    <string name="waiting_for_free_space_or_storage">Boş yer və ya hədəf yaddaş gözlənilir…</string>
     <string name="edit">Redaktə</string>
     <string name="open_camera">Kameranı aç</string>
     <string name="hidden">(gizli)</string>

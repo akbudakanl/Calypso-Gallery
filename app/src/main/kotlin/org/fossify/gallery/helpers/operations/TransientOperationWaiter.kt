@@ -3,6 +3,7 @@ package org.fossify.gallery.helpers.operations
 import android.content.Context
 import org.fossify.gallery.R
 import java.io.File
+import java.io.IOException
 
 /**
  * ADR 0003 §2 / §9/6 — transient-wait layer while the process is alive.
@@ -46,8 +47,8 @@ object TransientOperationWaiter {
             return false
         }
 
-        val waitLabel = runCatching { context.getString(R.string.resume_operations_title) }
-            .getOrDefault("Waiting for storage")
+        val waitLabel = runCatching { context.getString(R.string.waiting_for_free_space_or_storage) }
+            .getOrDefault("Waiting for free space or destination storage")
         OperationJournal.markWaitingForSpace(ctx, waitLabel)
         ForegroundOperationRegistry.updateStatus(context, waitLabel)
         onStatus?.invoke(waitLabel)
@@ -71,6 +72,42 @@ object TransientOperationWaiter {
 
         OperationJournal.markSpaceCheckFailed(ctx, "timed out waiting for storage or free space")
         return false
+    }
+
+    /**
+     * Runs a single item write/commit [block], discarding partial staging and waiting for transient
+     * destination/space recovery once if an [IOException] occurs mid-stream while a foreground
+     * operation owns this thread. Simulated fault-injection aborts are never swallowed.
+     */
+    fun <T> runWithTransientRetry(
+        context: Context,
+        ctx: OperationContext,
+        destDir: File,
+        requiredBytes: Long,
+        maxWaitMs: Long = DEFAULT_MAX_WAIT_MS,
+        maxAttempts: Int = 2,
+        onDiscardAttempt: () -> Unit = {},
+        block: (attempt: Int) -> T
+    ): T {
+        var attempt = 1
+        while (true) {
+            try {
+                return block(attempt)
+            } catch (e: IOException) {
+                if (OperationFaults.isSimulatedAbort(e) ||
+                    attempt >= maxAttempts ||
+                    !ForegroundOperationRegistry.isActive ||
+                    ForegroundOperationRegistry.isCancelled
+                ) {
+                    throw e
+                }
+                runCatching { onDiscardAttempt() }
+                if (!awaitDestinationReady(context, ctx, destDir, requiredBytes, maxWaitMs = maxWaitMs)) {
+                    throw e
+                }
+                attempt++
+            }
+        }
     }
 
     private fun isDestinationReady(destDir: File, requiredBytes: Long): Boolean {

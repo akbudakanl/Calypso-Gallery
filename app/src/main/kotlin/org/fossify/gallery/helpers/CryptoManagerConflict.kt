@@ -442,7 +442,8 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     deleteSourceOnIdentical: Boolean = true,
     matchCollisionVariants: Boolean = true,
     fastSampling: Boolean = false,
-    operation: OperationContext = OperationContext.NONE
+    operation: OperationContext = OperationContext.NONE,
+    forcedDesiredName: String? = null
 ): File? {
     if (!sourceBin.isFile || !isEncryptedFile(sourceBin.name)) {
         OperationJournal.markFailed(operation, "encrypted source missing")
@@ -503,7 +504,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
         }
     }
 
-    var desiredName = sourceMeta.originalName
+    var desiredName = forcedDesiredName?.takeIf { it.isNotEmpty() } ?: sourceMeta.originalName
     val exactMatches = index.findExactEntries(desiredName)
     if (exactMatches.isNotEmpty()) {
         when (conflictResolution) {
@@ -538,7 +539,13 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
         }
     }
     val staging = AtomicStaging.fileFor(destBin, operation)
-    OperationJournal.markInFlight(operation, staging.absolutePath)
+    OperationJournal.markInFlight(
+        ctx = operation,
+        stagingPath = staging.absolutePath,
+        resolvedDestName = desiredName,
+        actualDestPath = destBin.absolutePath,
+        sourceFingerprint = MediaIdentity.computeFingerprint(sourceBin)
+    )
     val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
         // Same-filesystem rename is already atomic — no staging involved.
         OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin), destBin.absolutePath)
@@ -546,18 +553,35 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
         true
     } else {
         try {
-            FileInputStream(sourceBin).use { fis ->
-                BufferedInputStream(fis, 256 * 1024).use { bis ->
-                    FileOutputStream(staging).use { fos ->
-                        BufferedOutputStream(fos, 256 * 1024).use { bos ->
-                            bis.copyTo(bos, 256 * 1024)
-                            bos.flush()
-                            fos.fd.sync()
+            TransientOperationWaiter.runWithTransientRetry(
+                context = context,
+                ctx = operation,
+                destDir = targetDir,
+                requiredBytes = sourceBin.length(),
+                onDiscardAttempt = {
+                    AtomicStaging.discard(staging, containsPlaintext = false, context = context)
+                }
+            ) {
+                OperationJournal.markInFlight(
+                    ctx = operation,
+                    stagingPath = staging.absolutePath,
+                    resolvedDestName = desiredName,
+                    actualDestPath = destBin.absolutePath,
+                    sourceFingerprint = MediaIdentity.computeFingerprint(sourceBin)
+                )
+                FileInputStream(sourceBin).use { fis ->
+                    BufferedInputStream(fis, 256 * 1024).use { bis ->
+                        FileOutputStream(staging).use { fos ->
+                            BufferedOutputStream(fos, 256 * 1024).use { bos ->
+                                bis.copyTo(bos, 256 * 1024)
+                                bos.flush()
+                                fos.fd.sync()
+                            }
                         }
                     }
                 }
+                AtomicStaging.commit(staging, destBin, alreadyFileSynced = true)
             }
-            AtomicStaging.commit(staging, destBin, alreadyFileSynced = true)
             if (!verifyFileIntegrity(destBin, sourceMeta)) {
                 throw IOException("Copied container failed read-back verification")
             }

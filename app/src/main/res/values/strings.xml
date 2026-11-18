@@ -12,6 +12,13 @@
     <string name="resume_later">Not now</string>
     <string name="resume_done">Operations completed.</string>
     <string name="resume_failed">Some operations could not be completed; source files were preserved.</string>
+    <string name="resume_op_copy">Copy</string>
+    <string name="resume_op_move">Move</string>
+    <string name="resume_op_encrypt">Encryption</string>
+    <string name="resume_op_decrypt">Decryption</string>
+    <string name="resume_operation_interrupted_message">%1$s operation was interrupted (%2$d remaining item(s)). No data was lost — do you want to continue?</string>
+    <string name="resume_operation_aborted_message">%1$s operation was aborted. Already completed files were kept.</string>
+    <string name="waiting_for_free_space_or_storage">Waiting for free space or destination storage…</string>
     <string name="appearance_title">Appearance</string>
     <string name="application_settings">Application</string>
     <string name="saved_themes">Saved themes</string>

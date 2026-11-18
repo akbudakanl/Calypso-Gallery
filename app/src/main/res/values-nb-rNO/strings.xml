@@ -10,6 +10,13 @@
     <string name="resume_later">Ikke nå</string>
     <string name="resume_done">Operasjonene er fullført.</string>
     <string name="resume_failed">Noen operasjoner kunne ikke fullføres; kildefilene ble beholdt.</string>
+    <string name="resume_op_copy">Kopiering</string>
+    <string name="resume_op_move">Flytting</string>
+    <string name="resume_op_encrypt">Kryptering</string>
+    <string name="resume_op_decrypt">Dekryptering</string>
+    <string name="resume_operation_interrupted_message">%1$s-operasjonen ble avbrutt (%2$d gjenstående elementer). Ingen data gikk tapt – vil du fortsette?</string>
+    <string name="resume_operation_aborted_message">%1$s-operasjonen ble avbrutt. Filer som allerede var fullført ble beholdt.</string>
+    <string name="waiting_for_free_space_or_storage">Venter på ledig plass eller mållagring…</string>
     <string name="edit">Rediger</string>
     <string name="open_camera">Åpne kamera</string>
     <string name="hidden">(skjult)</string>

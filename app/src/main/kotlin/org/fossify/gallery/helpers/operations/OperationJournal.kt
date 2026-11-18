@@ -24,6 +24,8 @@ object OperationJournal {
     const val STATE_SKIPPED_CONFLICT = "SKIPPED_CONFLICT"
     const val STATE_WAITING_FOR_SPACE = "WAITING_FOR_SPACE"
     const val STATE_SPACE_CHECK_FAILED = "SPACE_CHECK_FAILED"
+    const val STATE_AWAITING_SKIP_CONFIRM = "AWAITING_SKIP_CONFIRM"
+    const val STATE_DELETE_SKIPPED_APPROVED = "DELETE_SKIPPED_APPROVED"
 
     const val KIND_COPY = "COPY"
     const val KIND_MOVE = "MOVE"
@@ -108,10 +110,25 @@ object OperationJournal {
         runCatching { current.upsertAll(rows) }
     }
 
-    fun markInFlight(ctx: OperationContext, stagingPath: String) = update(ctx) {
+    fun markInFlight(
+        ctx: OperationContext,
+        stagingPath: String,
+        resolvedDestName: String = "",
+        actualDestPath: String = "",
+        sourceFingerprint: String = ""
+    ) = update(ctx) {
         it.state = STATE_IN_FLIGHT
         it.stagingPath = stagingPath
         it.kind = ctx.kind.ifEmpty { it.kind }
+        if (resolvedDestName.isNotEmpty()) {
+            it.resolvedDestName = resolvedDestName
+        }
+        if (actualDestPath.isNotEmpty()) {
+            it.destPath = actualDestPath
+        }
+        if (sourceFingerprint.isNotEmpty()) {
+            it.sourceFingerprint = sourceFingerprint
+        }
     }
 
     fun markCopiedUnverified(ctx: OperationContext, destFingerprint: String) = update(ctx) {
@@ -183,6 +200,72 @@ object OperationJournal {
         else -> false
     }
 
+    fun isEncryptPhase2Wipe(item: PendingOperation, batch: BatchOperationInfo?): Boolean =
+        item.state == STATE_VERIFIED &&
+            item.kind == KIND_ENCRYPT &&
+            requiresSourceDeletion(item, batch)
+
+    fun hasDeferredSkippedWork(item: PendingOperation): Boolean =
+        item.state == STATE_AWAITING_SKIP_CONFIRM || item.state == STATE_DELETE_SKIPPED_APPROVED
+
+    fun registerSkippedCryptoDecisionBatch(
+        isEncrypt: Boolean,
+        skippedFiles: List<java.io.File>,
+        identicalTargetMap: Map<String, java.io.File>,
+        approvedDelete: Boolean,
+        forceCleanupEmptyAlbum: Boolean = false
+    ): String {
+        val current = dao ?: return ""
+        if (skippedFiles.isEmpty()) return ""
+        val opId = "skipdec_${newOperationId()}"
+        val now = System.currentTimeMillis()
+        val kind = if (isEncrypt) KIND_ENCRYPT else KIND_DECRYPT
+        val state = if (approvedDelete) STATE_DELETE_SKIPPED_APPROVED else STATE_AWAITING_SKIP_CONFIRM
+        val batchJson = gson.toJson(
+            BatchOperationInfo(
+                isMove = true,
+                wipeSource = forceCleanupEmptyAlbum,
+                deleteSource = true
+            )
+        )
+        val rows = skippedFiles.mapIndexed { index, srcFile ->
+            val target = identicalTargetMap[srcFile.absolutePath]
+            PendingOperation(
+                operationId = opId,
+                itemIndex = index,
+                kind = kind,
+                createdAt = now,
+                updatedAt = now,
+                sourcePath = srcFile.absolutePath,
+                destPath = target?.absolutePath.orEmpty(),
+                sourceSize = srcFile.length(),
+                batchPayload = batchJson,
+                state = state
+            )
+        }
+        runCatching { current.upsertAll(rows) }
+        return opId
+    }
+
+    fun markSkippedCryptoApproved(operationId: String) {
+        if (operationId.isBlank()) return
+        val current = dao ?: return
+        val rows = current.forOperation(operationId)
+        if (rows.isEmpty()) return
+        val now = System.currentTimeMillis()
+        runCatching {
+            current.upsertAll(
+                rows.map {
+                    if (it.state == STATE_AWAITING_SKIP_CONFIRM) {
+                        it.copy(state = STATE_DELETE_SKIPPED_APPROVED, updatedAt = now)
+                    } else {
+                        it
+                    }
+                }
+            )
+        }
+    }
+
     fun allItems(): List<PendingOperation> = dao?.all() ?: emptyList()
 
     fun activeItems(): List<PendingOperation> = dao?.activeItems() ?: emptyList()
@@ -200,6 +283,20 @@ object OperationJournal {
     fun itemsFor(operationId: String): List<PendingOperation> = dao?.forOperation(operationId) ?: emptyList()
 
     fun operationIds(): List<String> = dao?.operationIds() ?: emptyList()
+
+    fun markSourceAlbumFolded(operationId: String, sourceRoot: String) {
+        if (operationId.isBlank() || sourceRoot.isBlank()) return
+        val current = dao ?: return
+        val rows = current.forOperation(operationId)
+        if (rows.isEmpty()) return
+        val baseBatch = rows.firstNotNullOfOrNull { decodeBatch(it.batchPayload) } ?: BatchOperationInfo()
+        val existing = baseBatch.foldedRoots()
+        if (sourceRoot in existing) return
+        val updatedBatch = baseBatch.copy(foldedSourceRoots = existing + sourceRoot)
+        val batchJson = gson.toJson(updatedBatch)
+        val now = System.currentTimeMillis()
+        current.upsertAll(rows.map { it.copy(batchPayload = batchJson, updatedAt = now) })
+    }
 
     fun clear(operationId: String) {
         runCatching { dao?.deleteOperation(operationId) }

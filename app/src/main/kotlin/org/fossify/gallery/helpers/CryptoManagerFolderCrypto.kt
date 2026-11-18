@@ -141,7 +141,8 @@ private fun CryptoManager.encryptFolderRegistered(
             peakBytes = estimate.peakBytes,
             isMove = true,
             wipeSource = true,
-            deleteSource = true
+            deleteSource = true,
+            mergeTargetRoot = if (shouldMergeIntoExisting) subfolder.absolutePath else ""
         )
     )
     OperationJournal.beginBatch(
@@ -465,7 +466,11 @@ private fun CryptoManager.encryptFolderRegistered(
     encryptedFolderCache[folder.absolutePath] = false
     encryptedFolderCache[subfolder.absolutePath] = true
     runCatching { clearAppImageCaches(context) }
-    batchOperation.operationId?.let { OperationJournal.clear(it) }
+    if (!operation.isJournalled) {
+        batchOperation.operationId?.let { OperationJournal.clear(it) }
+    } else if (shouldMergeIntoExisting) {
+        batchOperation.operationId?.let { OperationJournal.markSourceAlbumFolded(it, folderPath) }
+    }
 
     return subfolder.absolutePath
 }
@@ -546,7 +551,12 @@ private fun CryptoManager.decryptFolderRegistered(
             peakBytes = estimate.peakBytes,
             isMove = true,
             wipeSource = false,
-            deleteSource = true
+            deleteSource = true,
+            mergeTargetRoot = if (options.resolution == AlbumConflictResolution.MERGE && targetExistedBefore) {
+                targetFolder.absolutePath
+            } else {
+                ""
+            }
         )
     )
     OperationJournal.beginBatch(
@@ -731,6 +741,10 @@ private fun CryptoManager.decryptFolderRegistered(
             runCatching { context.rescanPaths(arrayListOf(targetNoMedia.absolutePath)) }
         }
     }
-    batchOperation.operationId?.let { OperationJournal.clear(it) }
+    if (!operation.isJournalled) {
+        batchOperation.operationId?.let { OperationJournal.clear(it) }
+    } else if (options.resolution == AlbumConflictResolution.MERGE && targetExistedBefore) {
+        batchOperation.operationId?.let { OperationJournal.markSourceAlbumFolded(it, folderPath) }
+    }
     return targetFolder.absolutePath
 }

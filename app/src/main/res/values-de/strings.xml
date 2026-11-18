@@ -10,6 +10,13 @@
     <string name="resume_later">Später</string>
     <string name="resume_done">Vorgänge abgeschlossen.</string>
     <string name="resume_failed">Einige Vorgänge konnten nicht abgeschlossen werden; die Quelldateien wurden beibehalten.</string>
+    <string name="resume_op_copy">Kopieren</string>
+    <string name="resume_op_move">Verschieben</string>
+    <string name="resume_op_encrypt">Verschlüsselung</string>
+    <string name="resume_op_decrypt">Entschlüsselung</string>
+    <string name="resume_operation_interrupted_message">Vorgang „%1$s“ wurde unterbrochen (%2$d verbleibende Elemente). Keine Daten verloren – möchten Sie fortfahren?</string>
+    <string name="resume_operation_aborted_message">Vorgang „%1$s“ wurde abgebrochen. Bereits abgeschlossene Dateien wurden beibehalten.</string>
+    <string name="waiting_for_free_space_or_storage">Warten auf freien Speicherplatz oder Zielspeicher…</string>
     <string name="edit">Bearbeiten</string>
     <string name="open_camera">Kamera öffnen</string>
     <string name="hidden">(versteckt)</string>

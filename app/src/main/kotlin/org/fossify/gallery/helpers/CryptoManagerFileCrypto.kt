@@ -134,7 +134,8 @@ fun CryptoManager.encryptFileToDirectory(
     skipDuplicateCheck: Boolean = false,
     deleteSourceOnIdentical: Boolean = true,
     matchCollisionVariants: Boolean = true,
-    operation: OperationContext = OperationContext.NONE
+    operation: OperationContext = OperationContext.NONE,
+    forcedOriginalName: String? = null
 ): File? {
     if (!sourceFile.exists() || !sourceFile.isFile) {
         OperationJournal.markFailed(operation, "source missing")
@@ -153,7 +154,7 @@ fun CryptoManager.encryptFileToDirectory(
         targetDir.mkdirs()
     }
 
-    var originalName = sourceFile.name
+    var originalName = forcedOriginalName?.takeIf { it.isNotEmpty() } ?: sourceFile.name
     val sourceLastModified = sourceFile.lastModified()
     val originalSize = sourceFile.length()
     val sourceMediaType = getMediaTypeForName(originalName)
@@ -280,18 +281,35 @@ fun CryptoManager.encryptFileToDirectory(
     }
 
     val staging = AtomicStaging.fileFor(encryptedFile, operation)
-    OperationJournal.markInFlight(operation, staging.absolutePath)
+    val sourceFp = MediaIdentity.computeFingerprint(sourceFile)
 
     return try {
         val sourcePath = sourceFile.absolutePath
-        FileInputStream(sourceFile).use { fis ->
-            VaultContainerWriter.writeContainer(
-                target = staging,
-                prepared = prepared,
-                payloadProvider = { fis }
+        TransientOperationWaiter.runWithTransientRetry(
+            context = context,
+            ctx = operation,
+            destDir = targetDir,
+            requiredBytes = expectedOutBytes,
+            onDiscardAttempt = {
+                AtomicStaging.discard(staging, containsPlaintext = false, context = context)
+            }
+        ) {
+            OperationJournal.markInFlight(
+                ctx = operation,
+                stagingPath = staging.absolutePath,
+                resolvedDestName = originalName,
+                actualDestPath = encryptedFile.absolutePath,
+                sourceFingerprint = sourceFp
             )
+            FileInputStream(sourceFile).use { fis ->
+                VaultContainerWriter.writeContainer(
+                    target = staging,
+                    prepared = prepared,
+                    payloadProvider = { fis }
+                )
+            }
+            AtomicStaging.commit(staging, encryptedFile, alreadyFileSynced = true)
         }
-        AtomicStaging.commit(staging, encryptedFile, alreadyFileSynced = true)
 
         val newMeta = EncryptedFileMetadata(
             originalName = originalName,
@@ -515,7 +533,8 @@ fun CryptoManager.decryptFileToDirectory(
     skipDuplicateCheck: Boolean = false,
     deleteSourceOnIdentical: Boolean = true,
     matchCollisionVariants: Boolean = true,
-    operation: OperationContext = OperationContext.NONE
+    operation: OperationContext = OperationContext.NONE,
+    forcedDestName: String? = null
 ): File? {
     if (!encryptedFile.exists() || !isEncryptedFile(encryptedFile.name)) {
         OperationJournal.markFailed(operation, "encrypted source missing")
@@ -601,7 +620,8 @@ fun CryptoManager.decryptFileToDirectory(
         }
     }
 
-    var outFile = index.findExact(meta.originalName) ?: File(targetDir, meta.originalName)
+    val preferredOutName = forcedDestName?.takeIf { it.isNotEmpty() } ?: meta.originalName
+    var outFile = index.findExact(preferredOutName) ?: File(targetDir, preferredOutName)
     if (outFile.exists()) {
         when (conflictResolution) {
             CONFLICT_SKIP -> {
@@ -613,7 +633,7 @@ fun CryptoManager.decryptFileToDirectory(
                 index.removeFile(outFile)
             }
             else -> {
-                outFile = index.getAlternativeFile(meta.originalName)
+                outFile = index.getAlternativeFile(preferredOutName)
             }
         }
     }
@@ -624,25 +644,42 @@ fun CryptoManager.decryptFileToDirectory(
     }
 
     val staging = AtomicStaging.fileFor(outFile, operation)
-    OperationJournal.markInFlight(operation, staging.absolutePath)
+    val encSourceFp = MediaIdentity.computeFingerprint(encryptedFile)
 
     return try {
         val encPath = encryptedFile.absolutePath
-        openDecryptedContentStream(encryptedFile, 0L, meta)?.use { cis ->
-            FileOutputStream(staging).use { fos ->
-                BufferedOutputStream(fos, 256 * 1024).use { bos ->
-                    val buffer = ByteArray(256 * 1024)
-                    var read: Int
-                    while (cis.read(buffer).also { read = it } != -1) {
-                        bos.write(buffer, 0, read)
-                    }
-                    bos.flush()
-                    fos.fd.sync()
-                }
+        TransientOperationWaiter.runWithTransientRetry(
+            context = context,
+            ctx = operation,
+            destDir = targetDir,
+            requiredBytes = meta.originalSize,
+            onDiscardAttempt = {
+                AtomicStaging.discard(staging, containsPlaintext = true, context = context)
             }
-        } ?: throw IOException("Could not open decrypted content stream")
+        ) {
+            OperationJournal.markInFlight(
+                ctx = operation,
+                stagingPath = staging.absolutePath,
+                resolvedDestName = outFile.name,
+                actualDestPath = outFile.absolutePath,
+                sourceFingerprint = encSourceFp
+            )
+            openDecryptedContentStream(encryptedFile, 0L, meta)?.use { cis ->
+                FileOutputStream(staging).use { fos ->
+                    BufferedOutputStream(fos, 256 * 1024).use { bos ->
+                        val buffer = ByteArray(256 * 1024)
+                        var read: Int
+                        while (cis.read(buffer).also { read = it } != -1) {
+                            bos.write(buffer, 0, read)
+                        }
+                        bos.flush()
+                        fos.fd.sync()
+                    }
+                }
+            } ?: throw IOException("Could not open decrypted content stream")
 
-        AtomicStaging.commit(staging, outFile, alreadyFileSynced = true)
+            AtomicStaging.commit(staging, outFile, alreadyFileSynced = true)
+        }
         if (outFile.length() != meta.originalSize) {
             throw IOException("Decrypted output size does not match the container header")
         }
