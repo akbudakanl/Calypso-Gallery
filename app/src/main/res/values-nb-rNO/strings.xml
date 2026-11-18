@@ -550,19 +550,11 @@
     <string name="fork_disclaimer_message">Denne applikasjonen er ikke utviklet av Fossify-teamet. Calypso Gallery er en uavhengig vedlikeholdt, uoffisiell fork av Fossify Gallery; den opprinnelige utvikleren nevnes kun for tilskrivning. Den er ikke tilknyttet, godkjent eller støttet av Fossify.\n\nVed å fortsette bekrefter du at du er kjent med denne meldingen. Forkspesifikke endringer er dokumentert i FORK_CHANGELOG.md.</string>
     <string name="fork_disclaimer_acknowledge">Jeg forstår</string>
     <string name="argon2_profile_title">Brute-force-motstand</string>
-    <string name="brute_force_mode_title">Kalibreringsmodus</string>
-    <string name="brute_force_mode_time">Via opplåsingstid for hvelvet</string>
-    <string name="brute_force_mode_presets">Via forhåndsdefinerte moduser</string>
     <string name="brute_force_time_title">Ønsket opplåsingstid for hvelvet</string>
     <string name="brute_force_time_hint">Sekunder (2,0–7,0). Appen måler denne enheten én gang og lagrer de resulterende KDF-parameterne i hvelvet; faktisk opplåsingstid varierer på andre enheter.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Lagret: %1$d MiB / %2$d runder</string>
     <string name="brute_force_clamped"> (begrenset)</string>
-    <string name="argon2_profile_low">Lavendt enhet (anbefales ikke)</string>
-    <string name="argon2_profile_default">Standard</string>
-    <string name="argon2_profile_high">Høy sikkerhet</string>
-    <string name="argon2_profile_hint">Hvis du ikke vet hva du gjør, anbefales det å beholde standardinnstillingen. Dette påvirker bare nyopprettede hvelv og passordendringer.</string>
-    <string name="argon2_profile_current">Gjeldende: %s</string>
 
     <string name="color_customization">Utseende og følelse</string>
     <string name="application_settings">Applikasjon</string>

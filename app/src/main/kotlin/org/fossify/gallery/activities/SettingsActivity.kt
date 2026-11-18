@@ -832,8 +832,6 @@ class SettingsActivity : SimpleActivity() {
         }
 
         binding.settingsArgon2ProfileHolder.setOnClickListener {
-            val prevMode = config.bruteForceMode
-            val prevProfile = config.argon2Profile
             val prevTargetMs = config.unlockTargetMs
             val prevMemKb = config.lastCalibratedMemoryKb
             val prevIter = config.lastCalibratedIterations
@@ -861,8 +859,6 @@ class SettingsActivity : SimpleActivity() {
                             refreshSummary()
                             toast(R.string.kdf_settings_updated_successfully)
                         } else {
-                            config.bruteForceMode = prevMode
-                            config.argon2Profile = prevProfile
                             config.unlockTargetMs = prevTargetMs
                             config.lastCalibratedMemoryKb = prevMemKb
                             config.lastCalibratedIterations = prevIter
@@ -1841,8 +1837,6 @@ class SettingsActivity : SimpleActivity() {
                 put(EXCLUDED_FOLDERS, TextUtils.join(",", config.excludedFolders))
                 put(SHOW_HIDDEN_MEDIA, config.showHiddenMedia)
                 put(BLOCK_VAULT_SCREENSHOTS, config.blockVaultScreenshots)
-                put(ARGON2_PROFILE, config.argon2Profile)
-                put(BRUTE_FORCE_MODE, config.bruteForceMode)
                 put(UNLOCK_TARGET_MS, config.unlockTargetMs)
                 put(ARGON2_CALIBRATION_CLAMPED, config.argon2CalibrationClamped)
                 put(LAST_CALIBRATED_MEMORY_KB, config.lastCalibratedMemoryKb)
@@ -2008,8 +2002,6 @@ class SettingsActivity : SimpleActivity() {
                 EXCLUDED_FOLDERS -> config.addExcludedFolders(value.toStringSet())
                 SHOW_HIDDEN_MEDIA -> config.showHiddenMedia = value.toBoolean()
                 BLOCK_VAULT_SCREENSHOTS -> config.blockVaultScreenshots = value.toBoolean()
-                ARGON2_PROFILE -> config.argon2Profile = value.toInt()
-                BRUTE_FORCE_MODE -> config.bruteForceMode = value.toInt()
                 UNLOCK_TARGET_MS -> config.unlockTargetMs = value.toInt()
                 ARGON2_CALIBRATION_CLAMPED -> config.argon2CalibrationClamped = value.toBoolean()
                 LAST_CALIBRATED_MEMORY_KB -> config.lastCalibratedMemoryKb = value.toInt()

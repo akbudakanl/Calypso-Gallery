@@ -16,7 +16,7 @@ import org.fossify.gallery.helpers.calculateTieredArgon2Params
 import org.fossify.gallery.helpers.measureStandardArgon2Ms
 import java.util.Locale
 
-/** "Brute-Force direnci" ayari: hedef acilis suresi veya hazir modlar. */
+/** "Brute-Force direnci" ayari: hedef kasa acilis suresi. */
 object BruteForceDialog {
     private const val KIB_PER_MIB = 1024
     private const val BYTES_PER_KIB = 1024L
@@ -32,73 +32,19 @@ object BruteForceDialog {
 
     fun summary(activity: Activity): String {
         val config = activity.config
-        val base = if (config.bruteForceMode == 0) {
-            activity.getString(R.string.brute_force_time_value, config.unlockTargetMs / MS_PER_SECOND)
-        } else {
-            val labels = arrayOf(
-                activity.getString(R.string.argon2_profile_default_with_params),
-                activity.getString(R.string.argon2_profile_high_with_params)
-            )
-            val idx = (config.argon2Profile - Config.ARGON2_PROFILE_DEFAULT).coerceIn(0, 1)
-            activity.getString(R.string.argon2_profile_current, labels[idx])
-        }
+        val base = activity.getString(R.string.brute_force_time_value, config.unlockTargetMs / MS_PER_SECOND)
         val clamped = if (config.argon2CalibrationClamped) {
             activity.getString(R.string.brute_force_clamped)
         } else {
             ""
         }
-        val memMb = if (config.bruteForceMode == 1 && !config.argon2CalibrationClamped) {
-            config.argon2MemoryKb / KIB_PER_MIB
-        } else {
-            config.lastCalibratedMemoryKb / KIB_PER_MIB
-        }
-        val iters = if (config.bruteForceMode == 1 && !config.argon2CalibrationClamped) {
-            config.argon2Iterations
-        } else {
-            config.lastCalibratedIterations
-        }
+        val memMb = config.lastCalibratedMemoryKb / KIB_PER_MIB
+        val iters = config.lastCalibratedIterations
         val params = activity.getString(R.string.brute_force_actual_params, memMb, iters)
         return "$base$clamped\n$params"
     }
 
     fun show(activity: Activity, onChanged: () -> Unit) {
-        val modes = arrayOf(
-            activity.getString(R.string.brute_force_mode_time),
-            activity.getString(R.string.brute_force_mode_presets)
-        )
-        activity.getAlertDialogBuilder()
-            .setTitle(R.string.brute_force_mode_title)
-            .setSingleChoiceItems(modes, activity.config.bruteForceMode) { dialog, which ->
-                dialog.dismiss()
-                if (which == 0) showTime(activity, onChanged) else showPresets(activity, onChanged)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun showPresets(activity: Activity, onChanged: () -> Unit) {
-        val labels = arrayOf(
-            activity.getString(R.string.argon2_profile_default_with_params),
-            activity.getString(R.string.argon2_profile_high_with_params)
-        )
-        val currentIndex = (activity.config.argon2Profile - Config.ARGON2_PROFILE_DEFAULT).coerceIn(0, 1)
-        activity.getAlertDialogBuilder()
-            .setTitle(R.string.argon2_profile_title)
-            .setMessage(R.string.argon2_profile_hint)
-            .setSingleChoiceItems(labels, currentIndex) { dialog, which ->
-                activity.config.bruteForceMode = 1
-                activity.config.argon2Profile = which + Config.ARGON2_PROFILE_DEFAULT
-                activity.config.lastCalibratedMemoryKb = activity.config.argon2MemoryKb
-                activity.config.lastCalibratedIterations = activity.config.argon2Iterations
-                activity.config.argon2CalibrationClamped = false
-                onChanged()
-                dialog.dismiss()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun showTime(activity: Activity, onChanged: () -> Unit) {
         if (activity.config.cachedStdArgon2Ms > 0) {
             showTimeDialogWithMeasurement(activity, onChanged)
             return
@@ -186,7 +132,6 @@ object BruteForceDialog {
                 val clampedSec = parsed.coerceIn(minSec, MAX_SECONDS)
                 val targetMs = Math.round(clampedSec * MS_PER_SECOND)
                 val (memKb, iters, clampedFlag) = calculateTieredArgon2Params(targetMs, stdMs, maxHeapKb)
-                activity.config.bruteForceMode = 0
                 activity.config.unlockTargetMs = targetMs
                 activity.config.lastCalibratedMemoryKb = memKb
                 activity.config.lastCalibratedIterations = iters

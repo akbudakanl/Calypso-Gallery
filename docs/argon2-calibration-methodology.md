@@ -62,8 +62,8 @@ The Android heap growth limit for this app is **256 MB**, so a single 256 MiB Ar
 
 - At fixed memory and parallelism, Argon2id time scales approximately **linearly with iterations**. This allows calibration from a single measured standard run instead of a long search:
   1. Measure one standard run at `64 MiB / 3 iterations / p=2` on the device (`std64Ms`, cached in `cachedStdArgon2Ms`).
-  2. In the default time-based mode (`bruteForceMode = 0`), the default unlock target uses a **"1.0 s sweet spot"** (`max(1.0 s, std64Ms)`): fast phones default to `1.0 s` (scaling rounds/memory above the `64 MiB / 3 rounds` floor), while slower phones default to `std64Ms`.
-  3. In **"Via vault unlock time"**, the slider's lower bound is the device's measured `std64Ms` (`T_std_64`) and the upper bound is **`10.0 s`** in `0.1 s` increments.
+  2. The default unlock target uses a **"1.0 s sweet spot"** (`max(1.0 s, std64Ms)`): fast phones default to `1.0 s` (scaling rounds/memory above the `64 MiB / 3 rounds` floor), while slower phones default to `std64Ms`.
+  3. In the **"Target vault unlock time"** dialog (`BruteForceDialog`), the slider's lower bound is the device's measured `std64Ms` (`T_std_64`) and the upper bound is **`10.0 s`** in `0.1 s` increments (ready-made preset modes were removed so users configure protection exclusively via unlock time).
   4. If the target time `>= 2 * std64Ms` and `Runtime.maxMemory() / 2 >= 128 MiB`, calibration measures `128 MiB / 3 iterations / p=2` (`measureHighMemoryArgon2Ms`, falling back cleanly to `64 MiB` on `OutOfMemoryError`) and scales `iterations = clamp(round(targetMs / perIterMs), 3, 100)` up to `10.0 s`. Memory never exceeds `128 MiB`.
 - The chosen target and resulting `memoryKb / iterations / parallelism` are written into `.vault`; changing settings on an existing vault re-wraps the same `VMK`/`KEK` after verifying the user's current password/PIN (`rewrapVaultHeaderWithCurrentKdf`).
 

@@ -46,7 +46,6 @@ private const val ARGON2_MAX_WRAPPED_LEN = 65_536
 private const val ARGON2_MAX_KEYRING_LEN = 4_096
 private const val ARGON2_KEYRING_MIN_SIZE = 34
 private const val ARGON2_V3_MIN_VERSION = 3
-private const val ARGON2_HIGH_FALLBACK_64_ITERATIONS = 8
 private const val ARGON2_MIN_MEASURED_MS = 100
 private const val ARGON2_MAX_CACHED_MS = 30_000
 private const val ARGON2_DEFAULT_FALLBACK_STD_MS = 2_400
@@ -619,7 +618,7 @@ fun CryptoManager.measureStandardArgon2Ms(context: Context, force: Boolean = fal
         probeChars.fill('\u0000')
     }
     context.config.cachedStdArgon2Ms = measured
-    if (!isVaultUnlocked && context.config.bruteForceMode == 0) {
+    if (!isVaultUnlocked) {
         val maxHeapKb = (Runtime.getRuntime().maxMemory() / BYTES_PER_KIB).coerceAtLeast(1L)
         val (memKb, iters, clamped) = calculateTieredArgon2Params(
             targetMs = context.config.unlockTargetMs,
@@ -656,25 +655,11 @@ private fun CryptoManager.measureHighMemoryArgon2Ms(context: Context): Long {
 }
 
 /**
- * "Kasa acilis suresi" modunda standart (64 MiB / 3 tur) tabanindan yukari kademeli (64->128 MiB)
- * kalibrasyon yapar. Hazir mod modundaysa profilin sabit degerleri dondurulur.
+ * Standart (64 MiB / 3 tur) tabanindan yukari kademeli (64->128 MiB) kalibrasyon yapar.
  * NOT: Agir is oldugu icin arka planda cagrilmalidir.
  */
 internal fun CryptoManager.resolveArgon2Params(context: Context): Triple<Int, Int, Int> {
     val maxHeapKb = (Runtime.getRuntime().maxMemory() / BYTES_PER_KIB).coerceAtLeast(1L)
-    if (context.config.bruteForceMode == 1) {
-        val desiredMemoryKb = context.config.argon2MemoryKb
-        val desiredIterations = context.config.argon2Iterations
-        val useFallback = desiredMemoryKb == ARGON2_HIGH_MEMORY_KB &&
-            (maxHeapKb / 2) < ARGON2_HIGH_MEMORY_KB
-        val memoryKb = if (useFallback) ARGON2_MIN_MEMORY_KB else desiredMemoryKb
-        val iterations = if (useFallback) ARGON2_HIGH_FALLBACK_64_ITERATIONS else desiredIterations
-        context.config.argon2CalibrationClamped = useFallback
-        context.config.lastCalibratedMemoryKb = memoryKb
-        context.config.lastCalibratedIterations = iterations
-        return Triple(memoryKb, iterations, context.config.argon2Parallelism)
-    }
-
     val std64Ms = measureStandardArgon2Ms(context)
     val (memoryKb, iterations, clamped) = calculateTieredArgon2Params(
         targetMs = context.config.unlockTargetMs,

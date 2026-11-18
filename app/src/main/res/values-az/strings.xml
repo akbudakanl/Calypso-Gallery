@@ -603,19 +603,11 @@
     <string name="fork_disclaimer_message">Bu tətbiq Fossify komandası tərəfindən hazırlanmamışdır. Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi forkudur; orijinal tərtibatçı yalnız müəlliflik qeydi məqsədilə göstərilir. Fossify ilə heç bir əlaqəsi yoxdur, o tərəfindən dəstəklənmir və ya dəstək verilmir.\n\nDavam edərək bu bildirimi qəbul etdiyinizi təsdiq edirsiniz. Fork-a xas dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur.</string>
     <string name="fork_disclaimer_acknowledge">Başa düşdüm</string>
     <string name="argon2_profile_title">Brute-Force direnci</string>
-    <string name="brute_force_mode_title">Kalibrasiya rejimi</string>
-    <string name="brute_force_mode_time">Seyfin kilidini açma vaxtı ilə</string>
-    <string name="brute_force_mode_presets">Hazır rejimlərlə</string>
     <string name="brute_force_time_title">Seyfin kilidini açmaq üçün hədəf vaxt</string>
     <string name="brute_force_time_hint">Saniyələr (2.0–7.0). Tətbiq bu cihazı bir dəfə ölçür və əldə edilən KDF parametrlərini seyfdə saxlayır; real açılma vaxtı digər cihazlarda fərqli ola bilər.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Saxlanılıb: %1$d MiB / %2$d dövr</string>
     <string name="brute_force_clamped"> (məhdudlaşdırılıb)</string>
-    <string name="argon2_profile_low">Aşağı səviyyəli cihaz (tövsiyə olunmur)</string>
-    <string name="argon2_profile_default">Susmaya görə</string>
-    <string name="argon2_profile_high">Yüksək təhlükəsizlik</string>
-    <string name="argon2_profile_hint">Nə etdiyinizi bilmirsinizsə, susmaya görə parametri saxlamaq tövsiyə olunur. Bu, yalnız yeni yaradılan seyflərə və parol dəyişikliklərinə təsir edir.</string>
-    <string name="argon2_profile_current">Cari: %s</string>
 
     <string name="color_customization">Görünüş və hiss</string>
     <string name="application_settings">Tətbiq</string>
