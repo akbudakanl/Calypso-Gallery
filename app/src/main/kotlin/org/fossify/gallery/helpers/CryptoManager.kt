@@ -159,6 +159,9 @@ object CryptoManager {
     @Volatile
     var vaultRecycleBinFolder: File? = null
 
+    @Volatile
+    internal var vaultRecycleBinResolved = false
+
 
     internal val activeCryptoOperations = AtomicInteger(0)
 
@@ -223,6 +226,8 @@ object CryptoManager {
         folderNameCache.clear()
         encryptedFolderCache.clear()
         vaultRecycleBinFolder = null
+        vaultRecycleBinResolved = false
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
         try {
             VideoFragment.clearFrameCache()
         } catch (_: Throwable) {}

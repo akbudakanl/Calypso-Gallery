@@ -5,6 +5,7 @@ import android.os.AsyncTask
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.getFavoritePaths
+import org.fossify.gallery.extensions.isHiddenVirtualAlbumPath
 import org.fossify.gallery.extensions.isVirtualAlbumPath
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.helpers.*
@@ -28,13 +29,16 @@ class GetMediaAsynctask(
         }
         val favoritePaths = context.getFavoritePaths()
         val getVideoDurations = context.config.showThumbnailVideoDuration
+        val isVirtualAlbum = mPath.isVirtualAlbumPath()
         val lastModifieds = when {
-            showAll || mPath == FAVORITES || mPath.isVirtualAlbumPath() -> mediaFetcher.getLastModifieds()
+            showAll || mPath == FAVORITES -> mediaFetcher.getLastModifieds()
+            isVirtualAlbum -> HashMap()
             mPath != RECYCLE_BIN -> mediaFetcher.getFolderLastModifieds(mPath)
             else -> HashMap()
         }
         val dateTakens = when {
-            showAll || mPath == FAVORITES || mPath.isVirtualAlbumPath() -> mediaFetcher.getDateTakens()
+            showAll || mPath == FAVORITES -> mediaFetcher.getDateTakens()
+            isVirtualAlbum -> if (context.isHiddenVirtualAlbumPath(mPath)) HashMap() else mediaFetcher.getDateTakens()
             mPath != RECYCLE_BIN -> mediaFetcher.getFolderDateTakens(mPath)
             else -> HashMap()
         }

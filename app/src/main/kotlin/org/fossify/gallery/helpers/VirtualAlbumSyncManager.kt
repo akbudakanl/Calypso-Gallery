@@ -19,6 +19,7 @@ import org.fossify.gallery.models.VirtualAlbum
 import org.fossify.gallery.models.VirtualAlbumItem
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicLong
 
 data class VirtualAlbumBackup(
     @SerializedName("version") val version: Int = 1,
@@ -60,6 +61,14 @@ object VirtualAlbumSyncManager {
 
     @Volatile
     private var lastSyncTs = 0L
+
+    private val directoryCacheVersion = AtomicLong(1L)
+
+    fun invalidateDirectoryCache() {
+        directoryCacheVersion.incrementAndGet()
+    }
+
+    fun getDirectoryCacheVersion(): Long = directoryCacheVersion.get()
 
     private fun getDao(context: Context): VirtualAlbumsDao {
         return daoProviderForTest?.invoke(context) ?: context.virtualAlbumsDB
@@ -129,6 +138,7 @@ object VirtualAlbumSyncManager {
     }
 
     fun evictHiddenVirtualAlbumsFromDbCache(context: Context) {
+        invalidateDirectoryCache()
         try {
             val dao = getDao(context)
             dao.getAllAlbums().filter { it.isHidden }.forEach { album ->
@@ -221,6 +231,7 @@ object VirtualAlbumSyncManager {
     }
 
     fun saveAlbumToFile(context: Context, albumId: Long) {
+        invalidateDirectoryCache()
         try {
             val dao = getDao(context)
             val album = dao.getAlbumById(albumId) ?: return
@@ -299,6 +310,7 @@ object VirtualAlbumSyncManager {
     }
 
     fun deleteAlbumFile(context: Context, album: VirtualAlbum) {
+        invalidateDirectoryCache()
         try {
             val file = getAlbumFile(context, album)
             if (file.exists()) {
@@ -752,6 +764,9 @@ object VirtualAlbumSyncManager {
                     saveAlbumToFile(context, albumId)
                 }
             }
+        }
+        if (anyDbChange) {
+            invalidateDirectoryCache()
         }
         return anyDbChange
     }

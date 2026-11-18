@@ -209,14 +209,17 @@ fun Context.getVirtualAlbumMedia(
         val result = ArrayList<Medium>()
         val newlyMissingPaths = ArrayList<String>()
         var repairedAny = false
+        val vaultRecycleBinPrefix = CryptoManager.getVaultRecycleBin(this)?.absolutePath?.trimEnd('/')
 
         for (item in items) {
             if (item.state == ITEM_STATE_ENCRYPTED || item.state == ITEM_STATE_DECRYPTED) continue
             val path = item.fullPath
+            val isInVaultBin = vaultRecycleBinPrefix != null &&
+                (path == vaultRecycleBinPrefix || path.startsWith("$vaultRecycleBinPrefix/"))
             if (deletedPaths.contains(path) ||
                 path.lowercase() in deletedOrigPaths ||
                 path.startsWith(recycleBinPath) ||
-                CryptoManager.isVaultRecycleBinPath(this, path)
+                isInVaultBin
             ) {
                 continue
             }
@@ -455,6 +458,7 @@ fun Context.deleteVirtualAlbum(albumId: Long) {
         }
         virtualAlbumsDB.deleteAlbumById(albumId)
         directoryDB.deleteDirPath(getVirtualAlbumPath(albumId))
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
     } catch (ignored: Exception) {
     }
 }
@@ -774,6 +778,9 @@ fun Context.markReferencesOnEncrypt(
             }
         }
 
+        if (touchedAlbums.isNotEmpty()) {
+            VirtualAlbumSyncManager.invalidateDirectoryCache()
+        }
         if (saveBackups) {
             touchedAlbums.forEach { VirtualAlbumSyncManager.saveAlbumToFile(this, it) }
             if (favoritesChanged) {
@@ -889,6 +896,9 @@ fun Context.markReferencesOnDecrypt(
             }
         }
 
+        if (touchedAlbums.isNotEmpty()) {
+            VirtualAlbumSyncManager.invalidateDirectoryCache()
+        }
         if (saveBackups) {
             touchedAlbums.forEach { VirtualAlbumSyncManager.saveAlbumToFile(this, it) }
             if (favoritesChanged) {
@@ -999,6 +1009,7 @@ fun Context.resolveVirtualAlbumItemPath(
         if (item.state == ITEM_STATE_UNRESOLVED) {
             try {
                 virtualAlbumsDB.markItemResolved(item.albumId, item.fullPath)
+                VirtualAlbumSyncManager.invalidateDirectoryCache()
             } catch (_: Exception) {
             }
         }
@@ -1014,6 +1025,7 @@ fun Context.resolveVirtualAlbumItemPath(
         )
         virtualAlbumsDB.markItemResolved(item.albumId, resolution.path)
         updateReferenceIdentitiesForPath(resolution.path, resolution.mediaStoreId)
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
         if (saveBackup) {
             VirtualAlbumSyncManager.saveAlbumToFile(this, item.albumId)
         }
@@ -1141,8 +1153,11 @@ fun Context.repairVirtualAlbumItems(
         }
     }
 
-    if (repaired > 0 && saveBackup) {
-        VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+    if (repaired > 0) {
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
+        if (saveBackup) {
+            VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+        }
     }
 
     return repaired
@@ -1152,10 +1167,31 @@ fun Context.deleteVirtualAlbumItemFromAllAlbums(path: String) {
     try {
         val albumIds = virtualAlbumsDB.getAlbumIdsWithItem(path)
         virtualAlbumsDB.removeItemFromAllAlbums(path)
+        VirtualAlbumSyncManager.invalidateDirectoryCache()
         albumIds.forEach { VirtualAlbumSyncManager.saveAlbumToFile(this, it) }
     } catch (ignored: Exception) {
     }
 }
+
+private data class VirtualAlbumDirCacheKey(
+    val cacheVersion: Long,
+    val isSecretVaultView: Boolean,
+    val getVideosOnly: Boolean,
+    val getImagesOnly: Boolean,
+    val canAccessHidden: Boolean,
+    val isVaultUnlocked: Boolean,
+    val filterMedia: Int,
+    val directorySorting: Int,
+    val albumCoversJson: String,
+    val deletedCount: Int,
+    val albumsSignature: Int
+)
+
+private val virtualAlbumDirCacheLock = Any()
+private var cachedVirtualAlbumDirKey: VirtualAlbumDirCacheKey? = null
+private var cachedVirtualAlbumDirs: List<Directory> = emptyList()
+private var cachedVirtualAlbumDirsAtMs: Long = 0L
+private const val VIRTUAL_ALBUM_DIR_CACHE_TTL_MS = 15_000L
 
 /**
  * Builds the main screen entries of all virtual albums, so they can be shown immediately.
@@ -1178,20 +1214,53 @@ fun Context.getVirtualAlbumDirectories(
         return directories
     }
 
+    val canAccessHidden = canAccessHiddenVirtualAlbums()
+    val filterMedia = config.filterMedia
+    val deletedOrigPaths = try {
+        mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN).lowercase() }
+    } catch (_: Exception) {
+        emptySet()
+    }
+
+    var albumsSig = 1
+    for (album in albums) {
+        val id = album.id ?: continue
+        val path = getVirtualAlbumPath(id)
+        albumsSig = 31 * albumsSig + id.hashCode()
+        albumsSig = 31 * albumsSig + album.name.hashCode()
+        albumsSig = 31 * albumsSig + album.isHidden.hashCode()
+        albumsSig = 31 * albumsSig + config.getFolderSorting(path)
+        albumsSig = 31 * albumsSig + config.getFolderGrouping(path)
+    }
+
+    val cacheKey = VirtualAlbumDirCacheKey(
+        cacheVersion = VirtualAlbumSyncManager.getDirectoryCacheVersion(),
+        isSecretVaultView = isSecretVaultView,
+        getVideosOnly = getVideosOnly,
+        getImagesOnly = getImagesOnly,
+        canAccessHidden = canAccessHidden,
+        isVaultUnlocked = CryptoManager.isVaultUnlocked,
+        filterMedia = filterMedia,
+        directorySorting = config.directorySorting,
+        albumCoversJson = config.albumCovers,
+        deletedCount = deletedOrigPaths.size,
+        albumsSignature = albumsSig
+    )
+
+    val now = System.currentTimeMillis()
+    synchronized(virtualAlbumDirCacheLock) {
+        if (cachedVirtualAlbumDirKey == cacheKey && now - cachedVirtualAlbumDirsAtMs < VIRTUAL_ALBUM_DIR_CACHE_TTL_MS) {
+            return cachedVirtualAlbumDirs.mapTo(ArrayList(cachedVirtualAlbumDirs.size)) { it.copy() }
+        }
+    }
+
     val albumCovers = config.parseAlbumCovers()
     val includedFolders = config.includedFolders
-    val canAccessHidden = canAccessHiddenVirtualAlbums()
     val getProperFileSize = true
-    val filterMedia = config.filterMedia
     val hiddenString = getString(R.string.hidden)
     val mediaFetcher = MediaFetcher(this)
     val favoritePaths = try {
         favoritesDB.getValidFavoritePaths().toHashSet()
-    } catch (_: Exception) {
-        emptySet()
-    }
-    val deletedOrigPaths = try {
-        mediaDB.getDeletedMedia().mapTo(HashSet()) { it.path.removePrefix(RECYCLE_BIN).lowercase() }
     } catch (_: Exception) {
         emptySet()
     }
@@ -1244,6 +1313,14 @@ fun Context.getVirtualAlbumDirectories(
 
         directory.name = resolvedName
         directories.add(directory)
+    }
+
+    synchronized(virtualAlbumDirCacheLock) {
+        if (VirtualAlbumSyncManager.getDirectoryCacheVersion() == cacheKey.cacheVersion) {
+            cachedVirtualAlbumDirKey = cacheKey
+            cachedVirtualAlbumDirs = directories.map { it.copy() }
+            cachedVirtualAlbumDirsAtMs = System.currentTimeMillis()
+        }
     }
 
     return directories

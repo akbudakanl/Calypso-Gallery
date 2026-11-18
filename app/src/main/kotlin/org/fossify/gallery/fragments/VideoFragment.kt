@@ -312,11 +312,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         storeStateVariables()
 
-        // The media player reports the exact display size of the video, but it may take a moment.
-        // Reading the dimensions of the file in the background allows rotating the screen to the
-        // aspect ratio of the video even before the player is ready.
-        listener?.applyAspectRatioOrientation(mMedium.path, 0, 0)
-
         // Starting Glide's video-frame decoder and ExoPlayer at the same time makes both
         // compete for I/O and the hardware decoder. That was introduced by player
         // pre-warming and is most visible during the first seconds of autoplay.
@@ -356,9 +351,21 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         // checkIfPanorama() TODO: Implement panorama using a FOSS library
 
         ensureBackgroundThread {
-            activity.getVideoResolution(mMedium.path)?.apply {
-                mVideoSize.x = x
-                mVideoSize.y = y
+            val resolution = activity.getVideoResolution(mMedium.path)
+            if (resolution != null) {
+                mVideoSize.x = resolution.x
+                mVideoSize.y = resolution.y
+                activity.runOnUiThread {
+                    if (isAdded) {
+                        listener?.applyAspectRatioOrientation(mMedium.path, resolution.x, resolution.y)
+                    }
+                }
+            } else if (mIsFragmentVisible) {
+                activity.runOnUiThread {
+                    if (isAdded) {
+                        listener?.applyAspectRatioOrientation(mMedium.path, 0, 0)
+                    }
+                }
             }
         }
 
@@ -435,7 +442,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         restoreSessionPlaybackPosition()
         setupVideoDuration()
 
-        if (mIsFragmentVisible || mPositionAtPause > 0L) {
+        if (mIsFragmentVisible) {
             initExoPlayer()
         }
         return mView
@@ -483,7 +490,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         mIsFragmentVisible = menuVisible
         val shouldPlayVideo = mWasFragmentInit && menuVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
-        if (shouldPlayVideo) playVideo()
+        if (shouldPlayVideo) {
+            playVideo()
+        } else if (mWasFragmentInit && menuVisible && mPositionAtPause > 0L && mExoPlayer == null) {
+            initExoPlayer()
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

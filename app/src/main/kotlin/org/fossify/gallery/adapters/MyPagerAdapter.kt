@@ -18,6 +18,8 @@ import org.fossify.gallery.models.Medium
 class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val media: MutableList<Medium>) : FragmentStatePagerAdapter(fm) {
     private val fragments = HashMap<Int, ViewPagerFragment>()
     var shouldInitFragment = true
+    private var preservedFragment: ViewPagerFragment? = null
+    private var preservedNewPosition: Int = PagerAdapter.POSITION_NONE
 
     override fun getCount() = media.size
 
@@ -37,7 +39,12 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
         return fragment
     }
 
-    override fun getItemPosition(item: Any) = PagerAdapter.POSITION_NONE
+    override fun getItemPosition(item: Any): Int {
+        if (preservedFragment != null && item === preservedFragment) {
+            return preservedNewPosition
+        }
+        return PagerAdapter.POSITION_NONE
+    }
 
     override fun instantiateItem(container: ViewGroup, position: Int): Any {
         val fragment = super.instantiateItem(container, position) as ViewPagerFragment
@@ -50,8 +57,56 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
     }
 
     override fun destroyItem(container: ViewGroup, position: Int, any: Any) {
-        fragments.remove(position)
+        if (fragments[position] === any) {
+            fragments.remove(position)
+        }
         super.destroyItem(container, position, any)
+    }
+
+    /**
+     * Updates the backing media list on shuffle while keeping the currently visible fragment
+     * alive (so an active video continues playing without recreating ExoPlayer), only replacing
+     * the offscreen neighbour fragments.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun updateItemsKeepingActiveFragment(
+        newMedia: List<Medium>,
+        activeOldPos: Int,
+        activeNewPos: Int
+    ): Boolean {
+        val activeFragment = fragments[activeOldPos] ?: return false
+        return try {
+            val mFragmentsField = FragmentStatePagerAdapter::class.java.getDeclaredField("mFragments").apply {
+                isAccessible = true
+            }
+            val internalFragments = mFragmentsField.get(this) as? ArrayList<Fragment?> ?: return false
+
+            if (activeOldPos in 0 until internalFragments.size) {
+                internalFragments[activeOldPos] = null
+            }
+            fragments.remove(activeOldPos)
+
+            media.clear()
+            media.addAll(newMedia)
+
+            preservedFragment = activeFragment
+            preservedNewPosition = activeNewPos
+            try {
+                notifyDataSetChanged()
+            } finally {
+                preservedFragment = null
+                preservedNewPosition = PagerAdapter.POSITION_NONE
+            }
+
+            while (internalFragments.size <= activeNewPos) {
+                internalFragments.add(null)
+            }
+            internalFragments[activeNewPos] = activeFragment
+            fragments[activeNewPos] = activeFragment
+            true
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     fun getCurrentFragment(position: Int) = fragments[position]

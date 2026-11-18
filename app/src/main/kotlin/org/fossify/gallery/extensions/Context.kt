@@ -702,12 +702,7 @@ fun Context.isEncryptedVaultAlbum(path: String): Boolean {
         return isHiddenVirtualAlbumPath(path)
     }
 
-    if (CryptoManager.isEncryptedFolderPath(this, path)) {
-        return true
-    }
-
-    val file = File(path)
-    return CryptoManager.isEncryptedFolder(file)
+    return CryptoManager.isEncryptedFolderPath(this, path)
 }
 
 fun Context.isEncryptedVaultAlbum(directory: Directory): Boolean = isEncryptedVaultAlbum(directory.path)
@@ -1594,7 +1589,7 @@ fun Context.getCachedDirectories(
                     isSecretVaultView = isSecretVaultView,
                     getVideosOnly = getVideosOnly,
                     getImagesOnly = getImagesOnly,
-                    syncFromDisk = true
+                    syncFromDisk = false
                 )
             )
         }

@@ -271,6 +271,7 @@ fun CryptoManager.setVaultRootLocation(context: Context, vaultDir: File) {
     encryptedFolderCache.clear()
     folderNameCache.clear()
     vaultRecycleBinFolder = null
+    vaultRecycleBinResolved = false
     if (context.config.vaultRootPath != vaultDir.absolutePath) {
         context.config.vaultRootPath = vaultDir.absolutePath
     }
@@ -282,6 +283,7 @@ fun CryptoManager.clearCachedVaultRoot() {
     encryptedFolderCache.clear()
     folderNameCache.clear()
     vaultRecycleBinFolder = null
+    vaultRecycleBinResolved = false
 }
 
 
@@ -295,6 +297,7 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
     encryptedFolderCache.clear()
     folderNameCache.clear()
     vaultRecycleBinFolder = null
+    vaultRecycleBinResolved = false
     clearBiometricKey(context)
     val cfg = context.config
     cfg.vaultRootPath = newVaultRoot?.absolutePath ?: ""
@@ -481,6 +484,7 @@ fun CryptoManager.resetStaleVaultState(context: Context) {
     encryptedFolderCache.clear()
     folderNameCache.clear()
     vaultRecycleBinFolder = null
+    vaultRecycleBinResolved = false
     clearBiometricKey(context)
     val cfg = context.config
     cfg.vaultRootPath = ""
@@ -509,6 +513,7 @@ fun CryptoManager.verifyVaultOnDisk(context: Context): Boolean {
         encryptedFolderCache.clear()
         folderNameCache.clear()
         vaultRecycleBinFolder = null
+    vaultRecycleBinResolved = false
         return false
     }
     val exists = vaultExistsOnDisk(context)
