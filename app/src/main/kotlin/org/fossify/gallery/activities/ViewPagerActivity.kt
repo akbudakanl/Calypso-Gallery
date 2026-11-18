@@ -489,6 +489,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             }
 
             if (visibleBottomActions != 0) {
+                initBottomActionButtons()
                 updateBottomActionIcons(currentMedium)
             }
             initBottomActionsLayout()
@@ -1249,8 +1250,14 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
+    private fun shouldShowBottomActions(): Boolean {
+        return config.bottomActions && !isCurrentMediumInVault() && !isCurrentMediumHidden()
+    }
+
     private fun initBottomActionsLayout() {
-        if (config.bottomActions && !isCurrentMediumInVault() && !isCurrentMediumHidden()) {
+        binding.bottomActions.root.animate().cancel()
+        if (shouldShowBottomActions() && !mIsFullScreen) {
+            binding.bottomActions.root.alpha = 1f
             binding.bottomActions.root.beVisible()
         } else {
             binding.bottomActions.root.beGone()
@@ -2327,13 +2334,21 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         binding.viewPager.adapter?.let {
             (it as MyPagerAdapter).toggleFullscreen(mIsFullScreen)
             val newAlpha = if (mIsFullScreen) 0f else 1f
+            binding.topShadow.animate().cancel()
             binding.topShadow.animate().alpha(newAlpha).start()
-            binding.bottomActions.root.animate().alpha(newAlpha).withStartAction {
-                binding.bottomActions.root.beVisible()
-            }.withEndAction {
-                binding.bottomActions.root.beVisibleIf(newAlpha == 1f)
-            }.start()
 
+            binding.bottomActions.root.animate().cancel()
+            if (shouldShowBottomActions()) {
+                binding.bottomActions.root.animate().alpha(newAlpha).withStartAction {
+                    binding.bottomActions.root.beVisible()
+                }.withEndAction {
+                    binding.bottomActions.root.beVisibleIf(newAlpha == 1f && shouldShowBottomActions())
+                }.start()
+            } else {
+                binding.bottomActions.root.beGone()
+            }
+
+            binding.mediumViewerAppbar.animate().cancel()
             binding.mediumViewerAppbar.animate().alpha(newAlpha).withStartAction {
                 binding.mediumViewerAppbar.beVisible()
             }.withEndAction {
