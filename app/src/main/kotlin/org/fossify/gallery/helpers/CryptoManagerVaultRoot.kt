@@ -553,8 +553,7 @@ fun CryptoManager.deleteExistingVault(context: Context) {
         }
     }
 
-    lockVault()
-    unlockedMasterKey = null
+    clearKeys(context)
     cachedVaultRoot = null
     encryptedFolderCache.clear()
 

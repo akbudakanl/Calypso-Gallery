@@ -19,12 +19,7 @@ class MyGlideImageDecoder(val degrees: Int, val signature: ObjectKey) : ImageDec
             .format(DecodeFormat.PREFER_ARGB_8888)
             .signature(signature)
             .fitCenter()
-            .apply {
-                if (CryptoManager.isEncryptedFile(cleanPath)) {
-                    diskCacheStrategy(DiskCacheStrategy.NONE)
-                    skipMemoryCache(false)
-                }
-            }
+            .applyEncryptedCachePolicy(CryptoManager.isEncryptedFile(cleanPath))
 
         val builder = Glide.with(context)
             .asBitmap()

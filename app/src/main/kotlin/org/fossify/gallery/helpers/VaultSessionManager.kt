@@ -8,23 +8,29 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 /**
- * Decides WHEN the unlocked vault (master key, decrypted metadata, image caches) is wiped from RAM.
+ * Decides WHEN the unlocked vault keys (master key, KEK, decrypted metadata, image caches) are wiped
+ * from RAM vs when the UI viewing session expires.
  *
- * Previously the vault was wiped the moment the last activity stopped (home button, screen off, app switch).
- * Now only the "last active time" is remembered: the moment the app left the foreground. The vault is wiped
- * once the app has stayed in the background for [VAULT_AUTO_LOCK_TIMEOUT_MS] (30 minutes), or never when that
- * constant is <= 0. While the app is in the foreground it is never wiped by this class.
- *
- * Two independent mechanisms make the timeout reliable:
- *  1. a delayed task wipes RAM while the app sits in the background (frees memory / keys on time);
- *  2. a deadline check when the app comes back to the foreground is the authoritative one, because a delayed
- *     Handler task does not advance while the device is in deep sleep, but SystemClock.elapsedRealtime() does.
+ * Security & UX rule:
+ *  - Whenever the user leaves the app or turns off the screen while NO registered foreground file
+ *    operation is active, vault keys and image caches are wiped from RAM immediately.
+ *  - If the user was actively inside the vault (e.g. watching a video or browsing an encrypted
+ *    album), the underlying activity and session state are kept resumable behind the isolated
+ *    [org.fossify.gallery.activities.VaultLockActivity] gate for [VAULT_AUTO_LOCK_TIMEOUT_MS]
+ *    (30 minutes), so re-authenticating returns directly to the exact media item.
+ *  - If the app stays in the background past [VAULT_AUTO_LOCK_TIMEOUT_MS] (or expires once a
+ *    background operation ends), the resumable UI session expires as well.
  */
 object VaultSessionManager {
-    private val handler = Handler(Looper.getMainLooper())
+    private val handler: Handler? by lazy {
+        runCatching { Handler(Looper.getMainLooper()) }.getOrNull()
+    }
+
+    private fun elapsedNowMs(): Long =
+        runCatching { SystemClock.elapsedRealtime() }.getOrElse { System.currentTimeMillis() }
 
     @Volatile
-    private var lastActiveAt = SystemClock.elapsedRealtime()
+    private var lastActiveAt = elapsedNowMs()
 
     @Volatile
     private var isInBackground = false
@@ -75,7 +81,7 @@ object VaultSessionManager {
 
     private fun isExpired(): Boolean {
         val timeout = timeoutMs()
-        return timeout > 0 && SystemClock.elapsedRealtime() - lastActiveAt >= timeout
+        return timeout > 0 && elapsedNowMs() - lastActiveAt >= timeout
     }
 
     private fun armReauthIfNeeded(context: Context) {
@@ -94,31 +100,63 @@ object VaultSessionManager {
 
     /** Called when the first activity of the app becomes visible. */
     fun onAppForegrounded(context: Context) {
-        handler.removeCallbacksAndMessages(null)
+        handler?.removeCallbacksAndMessages(null)
         if (isInBackground && isExpired() && !ForegroundOperationRegistry.isActive) {
             lockNow(context)
         }
         isInBackground = false
-        lastActiveAt = SystemClock.elapsedRealtime()
+        lastActiveAt = elapsedNowMs()
     }
 
     /** Called when the last visible activity of the app stopped (not for rotation / theme changes). */
     fun onAppBackgrounded(context: Context) {
         armReauthIfNeeded(context)
         isInBackground = true
-        lastActiveAt = SystemClock.elapsedRealtime()
-        handler.removeCallbacksAndMessages(null)
+        lastActiveAt = elapsedNowMs()
+        handler?.removeCallbacksAndMessages(null)
+
+        wipeRamKeysPreservingSession(context)
 
         val timeout = timeoutMs()
         if (timeout > 0) {
             val appContext = context.applicationContext
-            handler.postDelayed({ lockNow(appContext) }, timeout)
+            handler?.postDelayed({ lockNow(appContext) }, timeout)
         }
     }
 
     /** Called when the device screen turns off while the app is running. */
     fun onScreenOff(context: Context) {
         armReauthIfNeeded(context)
+        wipeRamKeysPreservingSession(context)
+    }
+
+    /**
+     * Called when the last registered foreground operation finishes. If the app was backgrounded
+     * during the transfer, wipe RAM keys immediately now that protection is no longer needed.
+     */
+    fun onForegroundOperationEnded(context: Context) {
+        if (isInBackground && !ForegroundOperationRegistry.isActive) {
+            wipeRamKeysPreservingSession(context)
+        }
+    }
+
+    /**
+     * Zeroizes vault keys and decrypted image caches from RAM immediately on background/screen-off,
+     * while preserving [requiresVaultReauth] and UI state for the 30-minute re-auth window.
+     */
+    private fun wipeRamKeysPreservingSession(context: Context) {
+        if (ForegroundOperationRegistry.isActive) return
+        try {
+            val appContext = context.applicationContext
+            CryptoManager.clearKeys(appContext)
+            CryptoManager.clearAppImageCaches(appContext)
+            if (!requiresVaultReauth) {
+                preserveVaultOnSwitch = false
+                appContext.config.temporarilyShowHidden = false
+                appContext.config.temporarilyShowVaultExcluded = false
+            }
+        } catch (_: Throwable) {
+        }
     }
 
     fun isReauthPending(): Boolean = requiresVaultReauth
@@ -146,13 +184,14 @@ object VaultSessionManager {
         autoWiped = false
         lockScreenOpen = false
         lockScreenLaunching = false
+        lastActiveAt = elapsedNowMs()
         if (restoreTemporarilyShowHidden) {
             context.applicationContext.config.temporarilyShowHidden = true
             restoreTemporarilyShowHidden = false
         }
     }
 
-    /** Wipes the keys and the decrypted caches from RAM right now. */
+    /** Expires the full vault session (wipes RAM keys and closes resumable UI flags after 30 min). */
     fun lockNow(context: Context) {
         if (ForegroundOperationRegistry.isActive) {
             // ADR 0002 §7 & ADR 0003 §2: keep vault keys in RAM while a registered foreground
@@ -160,21 +199,22 @@ object VaultSessionManager {
             val timeout = timeoutMs()
             if (timeout > 0) {
                 val appContext = context.applicationContext
-                handler.postDelayed({ lockNow(appContext) }, timeout)
+                handler?.postDelayed({ lockNow(appContext) }, timeout)
             }
             return
         }
         try {
             val appContext = context.applicationContext
-            if (CryptoManager.isVaultUnlocked) {
+            if (CryptoManager.isVaultUnlocked || requiresVaultReauth) {
                 autoWiped = true
                 if (appContext.config.temporarilyShowHidden) {
                     restoreTemporarilyShowHidden = true
                 }
             }
+            requiresVaultReauth = false
             preserveVaultOnSwitch = false
-            CryptoManager.lockVault()
-            CryptoManager.clearAppImageCaches(context)
+            CryptoManager.clearKeys(appContext)
+            CryptoManager.clearAppImageCaches(appContext)
             appContext.config.temporarilyShowHidden = false
             appContext.config.temporarilyShowVaultExcluded = false
         } catch (_: Throwable) {
@@ -188,7 +228,7 @@ object VaultSessionManager {
     }
 
     fun onVaultExited() {
-        handler.removeCallbacksAndMessages(null)
+        handler?.removeCallbacksAndMessages(null)
         requiresVaultReauth = false
         autoWiped = false
         preserveVaultOnSwitch = false
@@ -204,19 +244,19 @@ object VaultSessionManager {
     fun lockVaultIfOutsideSession(context: Context) {
         val appContext = context.applicationContext
         if (!appContext.config.temporarilyShowHidden) {
-            CryptoManager.lockVault()
+            CryptoManager.clearKeys(appContext)
             onVaultExited()
         }
     }
 
     fun markUnlockDeclined() {
-        unlockDeclinedAt = SystemClock.elapsedRealtime()
+        unlockDeclinedAt = elapsedNowMs()
     }
 
     /** True only if the prompt was dismissed a moment ago (the screen above finished right after it). */
     fun consumeUnlockDeclined(): Boolean {
         val declinedAt = unlockDeclinedAt
         unlockDeclinedAt = 0L
-        return declinedAt != 0L && SystemClock.elapsedRealtime() - declinedAt < DECLINE_WINDOW_MS
+        return declinedAt != 0L && elapsedNowMs() - declinedAt < DECLINE_WINDOW_MS
     }
 }

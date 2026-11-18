@@ -1324,6 +1324,12 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             val options = RequestOptions()
                 .override((wantedWidth * ratio).toInt(), wantedHeight)
                 .fitCenter()
+                .apply {
+                    if (CryptoManager.isEncryptedFile(path)) {
+                        diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+                        skipMemoryCache(true)
+                    }
+                }
 
             Glide.with(this)
                 .asBitmap()

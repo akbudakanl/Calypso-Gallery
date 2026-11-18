@@ -50,10 +50,12 @@ class MyWidgetProvider : AppWidgetProvider() {
                 }
 
                 val path = context.directoryDB.getDirectoryThumbnail(it.folderPath) ?: return@forEach
-                val diskCache = if (CryptoManager.isEncryptedFile(path)) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE
+                val isEncrypted = CryptoManager.isEncryptedFile(path)
+                val diskCache = if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE
                 val options = RequestOptions()
                     .signature(path.getFileSignature())
                     .diskCacheStrategy(diskCache)
+                    .skipMemoryCache(isEncrypted)
 
                 if (context.config.cropThumbnails) {
                     options.centerCrop()

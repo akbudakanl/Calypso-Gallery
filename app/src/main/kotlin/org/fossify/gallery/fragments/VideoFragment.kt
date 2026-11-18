@@ -328,6 +328,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
 
         val startsPlayingImmediately = mIsFragmentVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
+        val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
         val cachedFrame = sVideoFrameCache.get(mMedium.path)
         if (cachedFrame != null && !cachedFrame.isRecycled) {
             binding.videoPreview.setImageBitmap(cachedFrame)
@@ -335,7 +336,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         } else if (!startsPlayingImmediately) {
             Glide.with(context)
                 .load(mMedium.path)
-                .diskCacheStrategy(if (CryptoManager.isEncryptedFile(mMedium.path)) com.bumptech.glide.load.engine.DiskCacheStrategy.NONE else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC)
+                .diskCacheStrategy(if (isEncrypted) com.bumptech.glide.load.engine.DiskCacheStrategy.NONE else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC)
+                .skipMemoryCache(isEncrypted)
                 .into(binding.videoPreview)
         } else {
             binding.videoPreview.beGone()
@@ -366,7 +368,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 videoPlayOutline.beGone()
                 mVolumeSideScroll.beGone()
                 mBrightnessSideScroll.beGone()
-                Glide.with(context).load(mMedium.path).into(videoPreview)
+                Glide.with(context)
+                    .load(mMedium.path)
+                    .diskCacheStrategy(if (isEncrypted) com.bumptech.glide.load.engine.DiskCacheStrategy.NONE else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC)
+                    .skipMemoryCache(isEncrypted)
+                    .into(videoPreview)
             }
         }
 

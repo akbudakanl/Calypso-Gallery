@@ -64,6 +64,7 @@ object ForegroundOperationRegistry {
             depth = 0
             cancelRequested = false
             FileOperationService.stop(context)
+            org.fossify.gallery.helpers.VaultSessionManager.onForegroundOperationEnded(context)
         }
     }
 

@@ -85,6 +85,7 @@ import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.clearBiometricKey
 import org.fossify.gallery.helpers.clearCachedVaultRoot
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
 import org.fossify.gallery.helpers.operations.AtomicStaging
 import org.fossify.gallery.helpers.operations.BatchOperationInfo
@@ -3321,6 +3322,10 @@ fun BaseSimpleActivity.saveRotatedImageToFile(oldPath: String, newPath: String, 
             showErrorToast(e)
         }
     } finally {
+        val tmpFile = File(tmpPath)
+        if (tmpFile.exists() && (CryptoManager.isVaultUnlocked || CryptoManager.isEncryptedFile(oldPath))) {
+            CryptoManager.secureWipeAndDeleteFile(tmpFile, this)
+        }
         tryDeleteFileDirItem(tmpFileDirItem, false, true)
     }
 }
@@ -3467,7 +3472,15 @@ fun BaseSimpleActivity.resizeImage(oldPath: String, newPath: String, size: Point
     val inputStream = contentResolver.openInputStream(Uri.fromFile(File(oldPath)))
     oldExif = ExifInterface(inputStream!!)
 
-    val newBitmap = Glide.with(applicationContext).asBitmap().load(oldPath).submit(size.x, size.y).get()
+    val newBitmap = Glide.with(applicationContext)
+        .asBitmap()
+        .load(oldPath)
+        .apply(
+            com.bumptech.glide.request.RequestOptions()
+                .applyEncryptedCachePolicy(CryptoManager.isEncryptedFile(oldPath) || CryptoManager.isVaultUnlocked)
+        )
+        .submit(size.x, size.y)
+        .get()
 
     val newFile = File(newPath)
     val newFileDirItem = FileDirItem(newPath, newPath.getFilenameFromPath())

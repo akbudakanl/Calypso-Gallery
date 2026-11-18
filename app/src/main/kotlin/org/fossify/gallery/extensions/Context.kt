@@ -58,6 +58,7 @@ import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
 import org.fossify.commons.extensions.isWebP
 import org.fossify.gallery.helpers.EncryptedGlideOptions
+import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.commons.extensions.normalizeString
 import org.fossify.commons.extensions.otgPath
 import org.fossify.commons.extensions.recycleBinPath
@@ -1359,7 +1360,7 @@ fun Context.loadImageBase(
     val isEncrypted = CryptoManager.isEncryptedFile(path)
     val options = RequestOptions()
         .signature(signature)
-        .skipMemoryCache(skipMemoryCacheAtPaths?.contains(path) == true)
+        .skipMemoryCache(isEncrypted || skipMemoryCacheAtPaths?.contains(path) == true)
         .priority(Priority.LOW)
         .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE)
         .format(DecodeFormat.PREFER_ARGB_8888)
@@ -1449,7 +1450,9 @@ fun Context.loadSVG(
         ImageView.ScaleType.FIT_CENTER
     }
 
-    val options = RequestOptions().signature(signature)
+    val options = RequestOptions()
+        .signature(signature)
+        .applyEncryptedCachePolicy(CryptoManager.isEncryptedFile(path))
     var builder = Glide.with(applicationContext)
         .`as`(PictureDrawable::class.java)
         .listener(SvgSoftwareLayerSetter())

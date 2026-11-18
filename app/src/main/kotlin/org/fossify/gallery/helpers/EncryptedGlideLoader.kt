@@ -30,6 +30,16 @@ object EncryptedGlideOptions {
         Option.memory("org.fossify.gallery.prefer_full_decrypted_content", false)
 }
 
+/** ADR 0002 §4: never retain decrypted vault bitmaps in Glide's disk or memory caches. */
+fun <T : com.bumptech.glide.request.BaseRequestOptions<T>> T.applyEncryptedCachePolicy(
+    isEncrypted: Boolean
+): T = apply {
+    if (isEncrypted) {
+        diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+        skipMemoryCache(true)
+    }
+}
+
 class EncryptedStringModelLoader : ModelLoader<String, InputStream> {
     override fun handles(model: String): Boolean {
         val cleanPath = model.removePrefix("file://")
