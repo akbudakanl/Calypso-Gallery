@@ -21,7 +21,7 @@ import java.nio.file.StandardOpenOption
  * KEY_SIZE          = 32
  * DERIVED_KEY_SIZE  = 32
  * HKDF_HASH         = SHA-256
- * SEGMENT_SIZE      = 65536
+ * SEGMENT_SIZE      = 262144
  * OUTPUT_PREFIX     = RAW (subtle API, keyset prefix yok)
  * TINK_AAD          = fileId (16 ham bayt)
  * ```
