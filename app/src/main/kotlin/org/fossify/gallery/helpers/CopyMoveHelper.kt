@@ -1054,16 +1054,6 @@ private class CopyMoveRunner(
             OperationJournal.markFailed(itemContext, "could not create SAF staging document")
             return
         }
-        OperationJournal.markInFlight(
-            itemContext,
-            fileStaging?.absolutePath ?: safStaging?.uri?.toString().orEmpty()
-        )
-        // Compute SAF source SHA-256 inline during the copy loop so we read the source stream once.
-        val safSourceDigest = if (safStaging != null) {
-            runCatching { MessageDigest.getInstance("SHA-256") }.getOrNull()
-        } else {
-            null
-        }
         val precomputedDirectFingerprint = if (safStaging == null) {
             MediaIdentity.computeFingerprint(sourceFile)
         } else {
@@ -1075,15 +1065,54 @@ private class CopyMoveRunner(
         var transferSuccess = false
         var committed = false
         try {
-            outputStream = when {
-                fileStaging != null -> FileOutputStream(fileStaging)
-                safStaging != null -> activity.contentResolver.openOutputStream(safStaging.uri)
-                else -> activity.getFileOutputStreamSync(dest.path, source.path.getMimeType(), destDocument)
+            val (bytesCopied, sourceFingerprint) = TransientOperationWaiter.runWithTransientRetry(
+                context = activity,
+                ctx = itemContext,
+                destDir = File(destParent),
+                requiredBytes = source.size,
+                maxAttempts = if (destDocument == null) 2 else 1,
+                onDiscardAttempt = {
+                    closeQuietly(inputStream)
+                    closeQuietly(outputStream)
+                    inputStream = null
+                    outputStream = null
+                    if (fileStaging != null) {
+                        AtomicStaging.discard(fileStaging, containsPlaintext = true, context = activity.applicationContext)
+                    }
+                    if (safStaging != null) {
+                        safStaging.uri.let {
+                            runCatching { activity.contentResolver.openOutputStream(it, "wt")?.close() }
+                        }
+                    }
+                }
+            ) {
+                OperationJournal.markInFlight(
+                    ctx = itemContext,
+                    stagingPath = fileStaging?.absolutePath ?: safStaging?.uri?.toString().orEmpty(),
+                    resolvedDestName = dest.name,
+                    actualDestPath = dest.path,
+                    sourceFingerprint = precomputedDirectFingerprint
+                )
+                val attemptDigest = if (safStaging != null) {
+                    runCatching { MessageDigest.getInstance("SHA-256") }.getOrNull()
+                } else {
+                    null
+                }
+                outputStream = when {
+                    fileStaging != null -> FileOutputStream(fileStaging)
+                    safStaging != null -> activity.contentResolver.openOutputStream(safStaging.uri)
+                    else -> activity.getFileOutputStreamSync(dest.path, source.path.getMimeType(), destDocument)
+                }
+                inputStream = activity.getFileInputStreamSync(source.path)
+                val copied = streamCopy(inputStream, outputStream, source.name, attemptDigest)
+                closeQuietly(inputStream)
+                closeQuietly(outputStream)
+                inputStream = null
+                outputStream = null
+                val fp = attemptDigest?.digest()?.joinToString("") { "%02x".format(it) }
+                    ?: precomputedDirectFingerprint
+                copied to fp
             }
-            inputStream = activity.getFileInputStreamSync(source.path)
-            val bytesCopied = streamCopy(inputStream, outputStream, source.name, safSourceDigest)
-            val sourceFingerprint = safSourceDigest?.digest()?.joinToString("") { "%02x".format(it) }
-                ?: precomputedDirectFingerprint
 
             val landed = when {
                 fileStaging != null -> fileStaging.exists() && fileStaging.length() == source.size

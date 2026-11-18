@@ -303,11 +303,21 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
   (`CryptoProgressDialog` ile) öğe öğe yeniden çalıştırır; hedefe kopyası/şifrelemesi doğrulanıp
   (`STATE_VERIFIED`) kaynak silmesi yarım kalan öğeleri `completePendingSourceDeletion` ile
   tamamlar ve gerekirse `finalizeAlbumRootsIfEmpty` ile boş albüm klasörlerini temizler.
-- **Tek diyalog:** `MainActivity.onResume` (`promptToResumeVault` / `enterSecretVault` dahil) ve
-  kasa açıkken `MediaActivity.onResume` içinde çağrılır; `reconcile` arka plan thread'inde
-  çalıştırılır. Şifreli işlemler kasa açılana kadar bekletilir ("türüne göre tetikleme" kararı),
-  düz işlemler uygulama açılışında gösterilir. Mesaj: "Veri kaybı yok; kaldığınız yerden devam
-  edilsin mi?" (Reddedilince Secure Erase adımı henüz kısmi/beklemede.)
+- **Tek ve kesin diyalog:** `MainActivity.onResume` (`promptToResumeVault` / `enterSecretVault` dahil)
+  ve kasa açıkken `MediaActivity.onResume` içinde çağrılır; `reconcile` arka plan thread'inde
+  çalıştırılır. Düz `COPY/MOVE` uygulamaya girişte, şifreli/kasa işlemleri ise yalnızca kasa
+  kilidi açıldığında ayrı ayrı sorulur (`selectPromptBatch`).
+  - Standart şifrelemede `.bin` doğrulaması tamamlanıp (`STATE_VERIFIED` `KIND_ENCRYPT`) orijinal
+    düz dosyalar silinmeden uygulama kapandıysa, kasa açılışında kullanıcıya sormadan arka planda
+    otomatik olarak güvenli silme tamamlanır (`resumeSilentPhase2EncryptWipes`).
+  - Aktarım sırasında atlanan dosyalar için `SkippedCryptoFilesDialog` açıkken (`ASK` modunda karar
+    verilmeden) uygulama kapanırsa kasa açılışında aynı onay kutusu yeniden açılır; ayar `DELETE`
+    ise veya kullanıcı silmeyi onaylayıp kesildiyse silme arka planda sormadan tamamlanır
+    (`processPendingSkippedCryptoWork`).
+  - Yarım kalan Faz-1 işlemlerinde sağdaki buton **Evet** (devam et), soldaki buton **Hayır**
+    (kalıcı olarak iptal et) şeklindedir. **Hayır** seçilirse journal kalıcı olarak silinir,
+    atlanan dosya Secure Erase istemi açılmaz ve yalnızca `<İşlem> işlemi yarıda bırakıldı`
+    (`Tamam`) bilgilendirmesi gösterilir.
 - `FileOperationService` + `ForegroundOperationRegistry`: aynı thread içi re-entrant sahiplik
   sayacı (`depth` + `ownerThread`), kalıcı bildirim (`FOREGROUND_SERVICE_TYPE_DATA_SYNC`),
   `ACTION_CANCEL` iptal desteği, `PARTIAL_WAKE_LOCK` ve aktif işlem boyunca `VaultSessionManager`
@@ -370,18 +380,21 @@ Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okun
 - `SpaceConfirmation.confirmBlocking`: albüm encrypt/decrypt gibi senkron arka plan işlemlerinde
   aynı onayı alır; ana thread'de asla bloklamaz (orada `false` döner).
 - `TransientOperationWaiter`: geçici hedef yolu ulaşılmazlığı veya yetersiz boş alan durumunda
-  aktif foreground işlem varken öğeyi `WAITING_FOR_SPACE` durumuna alıp 1 saniyelik aralıklarla
-  en fazla 120 saniye bekler (`isCancelled` ile erken iptal edilebilir).
-- Yeni metinler (başlık + "Yine de devam et") tüm 9 locale'e ve blind-test md'lerine eklendi.
+  aktif foreground işlem varken öğeyi `WAITING_FOR_SPACE` durumuna alıp yerel bildirim metniyle
+  (`waiting_for_free_space_or_storage`) 1 saniyelik aralıklarla en fazla 120 saniye bekler
+  (`isCancelled` ile erken iptal edilebilir); ayrıca tüm dört yazma yolunda akış ortası `IOException`
+  hatalarında `runWithTransientRetry` kısmi staging'i temizleyip depolama geri gelince öğeyi
+  yeniden dener.
+- Yeni metinler (alan uyarısı, bekleme bildirimi, Faz-2 güvenli silme istemi ve işlem bazlı
+  iptal metinleri) desteklenen 11 locale kaynağına eklendi.
 
-**Tamamlanan ve kalan Faz 3/4 kalemleri:** Albüm ve Activity batch işlemlerinin
-`ForegroundOperationRegistry` kaydı tüm ilgili giriş noktalarına (`encryptFolder`, `decryptFolder`,
-`tryCopyMoveFilesTo`, `DirectoryAdapter`, `MediaAdapter` ve `Activity`) uygulanmıştır. Kalan
-kısmi/bekleyen maddeler (`resolvedDestName` çakışma soneki takibi, albüm birleştirme hedef albüm
-takibi, kesinti reddedilince Secure Erase adımı, bekleme bildirimine özel yerel metin ve akış
-ortası `IOException` yeniden denemesi)
-[ADR 0003 §11](adr/0003-resumable-file-operations.md#11-current-implementation-audit-checklist)
-altında takip edilir.
+**Tamamlanan Faz 3/4 kalemleri:** Albüm ve Activity batch işlemlerinin `ForegroundOperationRegistry`
+kaydı, `resolvedDestName` çakışma soneki sabitleme, commit edilmiş hedefin boyut + parmak iziyle
+yeniden kullanımı, albüm birleştirme `mergeTargetRoot` / `foldedSourceRoots` takibi, tek seferlik
+Evet/Hayır kurtarma kararı, otomatik Faz-2 şifreleme güvenli silmesi, `SkippedCryptoFilesDialog`
+karar kalıcılığı ve akış ortası `IOException` yeniden denemesi tamamlanmıştır. Durum özeti
+[ADR 0003 §11](adr/0003-resumable-file-operations.md#11-implementation-status)
+altında yer alır.
 
 ### 8.4 Opsiyonel gerçek cihaz testleri (otomasyon yok)
 

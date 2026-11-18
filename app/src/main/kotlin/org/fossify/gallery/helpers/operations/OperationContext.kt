@@ -37,8 +37,12 @@ data class BatchOperationInfo(
     /** Encrypt: wipe the plaintext source. Decrypt: delete the encrypted source. */
     val wipeSource: Boolean = true,
     val deleteSource: Boolean = true,
-    val payload: String = ""
-)
+    val payload: String = "",
+    val mergeTargetRoot: String = "",
+    val foldedSourceRoots: List<String>? = emptyList()
+) {
+    fun foldedRoots(): List<String> = foldedSourceRoots.orEmpty()
+}
 
 /** One item handed to [OperationJournal.beginBatch]. */
 data class JournalItem(

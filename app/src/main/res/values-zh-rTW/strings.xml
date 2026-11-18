@@ -10,6 +10,13 @@
     <string name="resume_later">稍後</string>
     <string name="resume_done">操作已完成。</string>
     <string name="resume_failed">部分操作無法完成；來源檔案已保留。</string>
+    <string name="resume_op_copy">複製</string>
+    <string name="resume_op_move">移動</string>
+    <string name="resume_op_encrypt">加密</string>
+    <string name="resume_op_decrypt">解密</string>
+    <string name="resume_operation_interrupted_message">%1$s操作已中斷（尚餘 %2$d 個項目）。資料未遺失，是否要繼續？</string>
+    <string name="resume_operation_aborted_message">%1$s操作已中止。已完成的檔案仍會保留。</string>
+    <string name="waiting_for_free_space_or_storage">正在等待可用空間或目標儲存裝置…</string>
     <string name="edit">編輯</string>
     <string name="open_camera">開啟相機</string>
     <string name="hidden">（已隱藏）</string>

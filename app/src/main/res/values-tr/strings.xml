@@ -10,6 +10,13 @@
     <string name="resume_later">Şimdi değil</string>
     <string name="resume_done">İşlemler tamamlandı.</string>
     <string name="resume_failed">Bazı işlemler tamamlanamadı; kaynak dosyalar korundu.</string>
+    <string name="resume_op_copy">Kopyalama</string>
+    <string name="resume_op_move">Taşıma</string>
+    <string name="resume_op_encrypt">Şifreleme</string>
+    <string name="resume_op_decrypt">Şifre çözme</string>
+    <string name="resume_operation_interrupted_message">%1$s işlemi yarıda kaldı (%2$d kalan öğe). Veri kaybı yok; devam etmek istiyor musunuz?</string>
+    <string name="resume_operation_aborted_message">%1$s işlemi yarıda bırakıldı. Önceden tamamlanan dosyalar korundu.</string>
+    <string name="waiting_for_free_space_or_storage">Boş alan veya hedef depolama bekleniyor…</string>
     <string name="appearance_title">Görünüm</string>
     <string name="application_settings">Uygulama</string>
     <string name="saved_themes">Kayıtlı temalar</string>

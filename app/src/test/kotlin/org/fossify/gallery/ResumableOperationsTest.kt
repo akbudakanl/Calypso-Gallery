@@ -20,6 +20,7 @@ import org.fossify.gallery.helpers.operations.OperationContext
 import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.OperationRecovery
 import org.fossify.gallery.helpers.operations.SpaceEstimator
+import org.fossify.gallery.helpers.operations.TransientOperationWaiter
 import org.fossify.gallery.helpers.setVaultRootLocation
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
 import org.fossify.gallery.helpers.verifyFileIntegrity
@@ -34,6 +35,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -325,6 +327,217 @@ class ResumableOperationsTest {
         val afterRelease = ForegroundOperationRegistry.withOperation(testContext, "album-decrypt") { "next-ok" }
         assertEquals("next-ok", afterRelease)
         assertFalse(ForegroundOperationRegistry.isActive)
+    }
+
+    @Test
+    fun resumeHonorsPinnedResolvedDestNameAndReusesMatchedDestination() {
+        val srcDir = File(tempRoot, "plain_src").apply { mkdirs() }
+        val dstDir = File(tempRoot, "plain_dst").apply { mkdirs() }
+
+        // Existing different photo in dst forces "photo (1).jpg" under KEEP_BOTH.
+        val existingCollision = File(dstDir, "photo.jpg").apply { writeBytes(ByteArray(900) { 1 }) }
+        val srcMoved = File(srcDir, "photo.jpg").apply { writeBytes(ByteArray(1200) { 2 }) }
+        val srcAlreadyLanded = File(srcDir, "done.jpg").apply { writeBytes(ByteArray(1400) { 3 }) }
+        val preCommittedDest = File(dstDir, "done.jpg").apply { writeBytes(srcAlreadyLanded.readBytes()) }
+
+        val opId = "move_pin_op"
+        val batch = BatchOperationInfo(
+            sourceRoot = srcDir.absolutePath,
+            destRoot = dstDir.absolutePath,
+            isMove = true,
+            wipeSource = false,
+            deleteSource = true
+        )
+        OperationJournal.beginBatch(
+            OperationContext(opId, kind = OperationJournal.KIND_MOVE, batch = batch),
+            listOf(
+                JournalItem(
+                    sourcePath = srcMoved.absolutePath,
+                    destPath = File(dstDir, "photo (1).jpg").absolutePath,
+                    sourceSize = srcMoved.length(),
+                    resolvedDestName = "photo (1).jpg",
+                    kind = OperationJournal.KIND_MOVE,
+                    conflictResolution = CONFLICT_KEEP_BOTH.toString()
+                ),
+                JournalItem(
+                    sourcePath = srcAlreadyLanded.absolutePath,
+                    destPath = preCommittedDest.absolutePath,
+                    sourceSize = srcAlreadyLanded.length(),
+                    resolvedDestName = "done.jpg",
+                    kind = OperationJournal.KIND_MOVE,
+                    conflictResolution = CONFLICT_KEEP_BOTH.toString()
+                )
+            )
+        )
+        // Item 0 died in-flight before commit; item 1 landed atomically before markVerified persisted.
+        OperationJournal.markInFlight(
+            OperationContext(opId, 0, OperationJournal.KIND_MOVE, batch),
+            AtomicStaging.fileFor(File(dstDir, "photo (1).jpg"), OperationContext(opId, 0)).absolutePath,
+            resolvedDestName = "photo (1).jpg",
+            actualDestPath = File(dstDir, "photo (1).jpg").absolutePath
+        )
+
+        OperationRecovery.reconcile(testContext)
+        var resumed = false
+        OperationRecovery.resume(testContext) { resumed = it }
+
+        assertTrue(resumed)
+        assertEquals(900L, existingCollision.length())
+        assertTrue("Pinned name photo (1).jpg must be created", File(dstDir, "photo (1).jpg").exists())
+        assertFalse("Must not drift to photo (2).jpg", File(dstDir, "photo (2).jpg").exists())
+        assertFalse(srcMoved.exists())
+        // Item 1 was reused without creating done (1).jpg and its source was deleted.
+        assertFalse(srcAlreadyLanded.exists())
+        assertFalse(File(dstDir, "done (1).jpg").exists())
+        assertEquals(1400L, preCommittedDest.length())
+        assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun resumeSkipsAlreadyFoldedSourceAlbumDuringMerge() {
+        val srcAlbum = File(tempRoot, "album_src").apply { mkdirs() }
+        val mergeTarget = File(tempRoot, "vault/target_album").apply { mkdirs() }
+        val fileA = File(srcAlbum, "dup.jpg").apply { writeBytes(ByteArray(1024) { 4 }) }
+
+        val opId = "merge_op_1"
+        val batch = BatchOperationInfo(
+            sourceRoot = srcAlbum.absolutePath,
+            destRoot = mergeTarget.absolutePath,
+            albumConflictResolution = "MERGE",
+            isMove = true,
+            wipeSource = true,
+            deleteSource = true,
+            mergeTargetRoot = mergeTarget.absolutePath
+        )
+        OperationJournal.beginBatch(
+            OperationContext(opId, kind = OperationJournal.KIND_ENCRYPT, batch = batch),
+            listOf(
+                JournalItem(
+                    sourcePath = fileA.absolutePath,
+                    destPath = File(mergeTarget, "dup.jpg").absolutePath,
+                    sourceSize = fileA.length(),
+                    resolvedDestName = "dup.jpg",
+                    kind = OperationJournal.KIND_ENCRYPT,
+                    conflictResolution = CONFLICT_KEEP_BOTH.toString()
+                )
+            )
+        )
+        OperationJournal.markSourceAlbumFolded(opId, srcAlbum.absolutePath)
+
+        var resumed = false
+        OperationRecovery.resume(testContext) { resumed = it }
+
+        assertTrue(resumed)
+        // Must not re-encrypt or merge srcAlbum once marked folded.
+        assertEquals(0, mergeTarget.listFiles()?.size ?: 0)
+        assertTrue(fileA.exists())
+        assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun selectPromptBatchSplitsPlainAndAutoWipesPhase2Encrypt() {
+        val plainBatch = BatchOperationInfo(isMove = false, wipeSource = false, deleteSource = false)
+        val plainCtx = OperationContext("plain_copy_1", kind = OperationJournal.KIND_COPY, batch = plainBatch)
+        OperationJournal.beginBatch(
+            plainCtx,
+            listOf(JournalItem("/src/c.jpg", "/dst/c.jpg", 500L, kind = OperationJournal.KIND_COPY))
+        )
+
+        val srcDir = File(tempRoot, "phase2_src").apply { mkdirs() }
+        val vaultSub = File(tempRoot, "vault/sub_phase2").apply { mkdirs() }
+        val srcSecret = File(srcDir, "secret.jpg").apply { writeBytes(ByteArray(800) { 9 }) }
+        val encBin = CryptoManager.encryptFileToDirectory(testContext, srcSecret, vaultSub, wipeSource = false)!!
+
+        val encBatch = BatchOperationInfo(isMove = true, wipeSource = true, deleteSource = true)
+        val encCtx = OperationContext("enc_phase2_1", kind = OperationJournal.KIND_ENCRYPT, batch = encBatch)
+        OperationJournal.beginBatch(
+            encCtx,
+            listOf(JournalItem(srcSecret.absolutePath, encBin.absolutePath, srcSecret.length(), kind = OperationJournal.KIND_ENCRYPT))
+        )
+        OperationJournal.markVerified(encCtx.copy(itemIndex = 0), "fp_enc", encBin.absolutePath)
+
+        // Locked vault: only the plain copy prompts; Phase-2 encrypt never prompts.
+        val lockedSelection = OperationRecovery.selectPromptBatch(isVaultUnlocked = false)
+        assertEquals(setOf("plain_copy_1"), lockedSelection.operationIds)
+        assertEquals(OperationRecovery.PromptMode.STANDARD, lockedSelection.mode)
+        assertEquals(listOf(OperationJournal.KIND_COPY), lockedSelection.distinctKinds)
+
+        // Declining plain operation clears only plain_copy_1 permanently.
+        OperationRecovery.discardOperations(lockedSelection.operationIds)
+        assertTrue(OperationJournal.itemsFor("plain_copy_1").isEmpty())
+        assertEquals(1, OperationJournal.itemsFor("enc_phase2_1").size)
+
+        // Unlocked vault: Phase-2 encrypt is silently wiped in background with zero prompt needed.
+        assertEquals(OperationRecovery.PromptMode.NONE, OperationRecovery.selectPromptBatch(isVaultUnlocked = true).mode)
+        assertEquals(1, OperationRecovery.resumeSilentPhase2EncryptWipes(testContext))
+        assertFalse("Original plaintext must be wiped automatically", srcSecret.exists())
+        assertTrue("Encrypted container must stay intact", encBin.exists())
+        assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun skippedCryptoDecisionBatchReopensAskDialogAndSilentDeletesApproved() {
+        val srcDir = File(tempRoot, "skip_src").apply { mkdirs() }
+        val vaultSub = File(tempRoot, "vault/sub_skip").apply { mkdirs() }
+        val skippedFile = File(srcDir, "dup.jpg").apply { writeBytes(ByteArray(1024) { 4 }) }
+        val targetBin = CryptoManager.encryptFileToDirectory(testContext, skippedFile, vaultSub, wipeSource = false)!!
+
+        val skipOpId = OperationJournal.registerSkippedCryptoDecisionBatch(
+            isEncrypt = true,
+            skippedFiles = listOf(skippedFile),
+            identicalTargetMap = mapOf(skippedFile.absolutePath to targetBin),
+            approvedDelete = false
+        )
+        assertTrue(skipOpId.isNotEmpty())
+
+        // Reconcile must preserve deferred skipped decision rows without counting them as Phase-1 interrupts.
+        assertEquals(0, OperationRecovery.reconcile(testContext))
+        assertEquals(OperationRecovery.PromptMode.NONE, OperationRecovery.selectPromptBatch(isVaultUnlocked = true).mode)
+
+        // Under ASK mode, unanswered batch returns to re-open SkippedCryptoFilesDialog.
+        val reopened = OperationRecovery.processPendingSkippedCryptoWork(testContext)
+        assertEquals(1, reopened.size)
+        assertEquals(skipOpId, reopened.single().operationId)
+        assertTrue(skippedFile.exists())
+
+        // Once Delete is approved (or setting is DELETE), next recovery wipes silently without UI dialog.
+        OperationJournal.markSkippedCryptoApproved(skipOpId)
+        val afterApprove = OperationRecovery.processPendingSkippedCryptoWork(testContext)
+        assertTrue(afterApprove.isEmpty())
+        assertFalse("Approved skipped plaintext must be wiped silently", skippedFile.exists())
+        assertTrue(targetBin.exists())
+        assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun transientRetryDiscardsAttemptAndRetriesAfterIOExceptionWhileActive() {
+        val dstDir = File(tempRoot, "transient_dst")
+        val opCtx = OperationContext("retry_op", 0, OperationJournal.KIND_COPY)
+        OperationJournal.beginBatch(
+            opCtx,
+            listOf(JournalItem("/src/x.jpg", File(dstDir, "x.jpg").absolutePath, 100L, kind = OperationJournal.KIND_COPY))
+        )
+
+        var discardCount = 0
+        val result = ForegroundOperationRegistry.withOperation(testContext, "copy-move") {
+            TransientOperationWaiter.runWithTransientRetry(
+                context = testContext,
+                ctx = opCtx,
+                destDir = dstDir,
+                requiredBytes = 100L,
+                maxWaitMs = 2_000L,
+                onDiscardAttempt = { discardCount++ }
+            ) { attempt ->
+                if (attempt == 1) {
+                    dstDir.mkdirs()
+                    throw IOException("simulated transient write interruption")
+                }
+                "recovered-attempt-$attempt"
+            }
+        }
+
+        assertEquals(1, discardCount)
+        assertEquals("recovered-attempt-2", result)
     }
 
     private fun unlockTestVault() {

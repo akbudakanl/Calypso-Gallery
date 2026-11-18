@@ -10,6 +10,13 @@
     <string name="resume_later">Ahora no</string>
     <string name="resume_done">Operaciones completadas.</string>
     <string name="resume_failed">No se pudieron completar algunas operaciones; los archivos de origen se conservaron.</string>
+    <string name="resume_op_copy">Copia</string>
+    <string name="resume_op_move">Movimiento</string>
+    <string name="resume_op_encrypt">Cifrado</string>
+    <string name="resume_op_decrypt">Descifrado</string>
+    <string name="resume_operation_interrupted_message">La operación de %1$s se interrumpió (%2$d elemento(s) pendiente(s)). No se perdió ningún dato; ¿desea continuar?</string>
+    <string name="resume_operation_aborted_message">La operación de %1$s fue cancelada. Se conservaron los archivos ya completados.</string>
+    <string name="waiting_for_free_space_or_storage">Esperando espacio libre o almacenamiento de destino…</string>
     <string name="edit">Editar</string>
     <string name="open_camera">Abrir la cámara</string>
     <string name="hidden">(oculto)</string>
