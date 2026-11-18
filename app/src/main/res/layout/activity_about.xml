@@ -77,10 +77,18 @@
                 android:textSize="18sp" />
 
             <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_license_notice"
+                android:id="@+id/about_copyright_notice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/tiny_margin"
+                android:lineSpacingExtra="3dp"
+                android:text="@string/about_copyright_notice" />
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/about_license_notice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/small_margin"
                 android:lineSpacingExtra="3dp"
                 android:text="@string/about_gpl_notice" />
 

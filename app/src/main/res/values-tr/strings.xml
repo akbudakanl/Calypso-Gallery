@@ -80,9 +80,9 @@
     <string name="portraits">Portreler</string>
     <string name="no_media_with_filters">Seçilen süzgeçlerle hiçbir medya dosyası bulunamadı.</string>
     <string name="change_filters_underlined"><u>Süzgeçleri değiştir</u></string>
-    <string name="exclude_folder_description">Bu, alt klasörleriyle birlikte seçimi yalnızca Fossify Galeriden hariç tutacaktır. Hariç tutulan klasörleri Ayarlardan yönetebilirsiniz.</string>
+    <string name="exclude_folder_description">Bu, alt klasörleriyle birlikte seçimi yalnızca Calypso Galeriden hariç tutacaktır. Hariç tutulan klasörleri Ayarlardan yönetebilirsiniz.</string>
     <string name="exclude_folder_parent">Bunun yerine bir üst dizin hariç tutulsun mu\?</string>
-    <string name="excluded_activity_placeholder">Klasörleri hariç tutmak, onları yalnızca Fossify Galeri\'de gizlenen alt klasörleriyle bir araya getirecek, diğer uygulamalarda görünmeye devam edecektir.
+    <string name="excluded_activity_placeholder">Klasörleri hariç tutmak, onları yalnızca Calypso Galeri\'de gizlenen alt klasörleriyle bir araya getirecek, diğer uygulamalarda görünmeye devam edecektir.
 \n
 \nOnları diğer uygulamalardan gizlemek istiyorsanız, şifreleme işlevini kullanın.</string>
     <string name="hidden_folders">Gizli klasörler</string>
@@ -257,8 +257,8 @@
     <string name="manage_bottom_actions">Görünür alt eylemleri yönet</string>
     <string name="toggle_favorite">Favoriyi göster/gizle</string>
     <string name="toggle_file_visibility">Dosya görünürlüğünü aç/kapat</string>
-    <string name="faq_1_title">Fossify Galeri\'yi nasıl öntanımlı aygıt galerisi yapabilirim?</string>
-    <string name="faq_1_text">Önce aygıt ayarlarınızın Uygulamalar bölümünde öntanımlı galeriyi bulmanız, \"Öntanımlı olarak aç\" gibi bir şey söyleyen bir düğme aramanız, üzerine tıklamanız ve ardından \"Öntanımlıları Temizle\" seçeneğini seçmeniz gerekir. Gelecek sefer video veya resim açmayı denediğinizde, Fossify Galeri\'yi seçip öntanımlı uygulama haline getirebileceğiniz bir uygulama seçicisini görmelisiniz.</string>
+    <string name="faq_1_title">Calypso Galeri\'yi nasıl öntanımlı aygıt galerisi yapabilirim?</string>
+    <string name="faq_1_text">Önce aygıt ayarlarınızın Uygulamalar bölümünde öntanımlı galeriyi bulmanız, \"Öntanımlı olarak aç\" gibi bir şey söyleyen bir düğme aramanız, üzerine tıklamanız ve ardından \"Öntanımlıları Temizle\" seçeneğini seçmeniz gerekir. Gelecek sefer video veya resim açmayı denediğinizde, Calypso Galeri\'yi seçip öntanımlı uygulama haline getirebileceğiniz bir uygulama seçicisini görmelisiniz.</string>
     <string name="faq_2_title">Uygulamayı bir şifre ile kilitledim ama unuttum. Ne yapabilirim\?</string>
     <string name="faq_2_text">Bunu 2 şekilde çözebilirsiniz. Uygulamayı yeniden kurabilir veya uygulamayı aygıt ayarlarınızdan bulabilir ve \"Verileri temizle\" seçeneğini seçebilirsiniz. Bu, tüm ayarlarınızı sıfırlayacak, herhangi bir medya dosyasını kaldırmayacaktır.</string>
     <string name="faq_3_title">Bir albümün her zaman en üstte görünmesini nasıl sağlayabilirim\?</string>
@@ -266,7 +266,7 @@
     <string name="faq_4_title">Videoları nasıl hızlıca ileri sarabilirim\?</string>
     <string name="faq_4_text">Ekranın yan tarafına iki kez dokunarak veya arama çubuğunun yanındaki geçerli veya maksimum süre metinlerine dokunarak bunu yapabilirsiniz. Videoları uygulama ayarlarından ayrı bir ekranda açmayı etkinleştirirseniz yatay hareketleri de kullanabilirsiniz.</string>
     <string name="faq_5_title">Klasörün gizlenmesi ve hariç tutulması arasındaki fark nedir\?</string>
-    <string name="faq_5_text">Hariç tut, klasörü yalnızca Fossify Galeri\'de görüntülemeyi engellerken, Gizle sistem genelinde çalışır ve klasörü diğer galerilerden de gizler. Verilen klasörde boş bir \".nomedia\" dosyası oluşturarak çalışır, daha sonra herhangi bir dosya yöneticisi ile kaldırabilirsiniz. Bazı aygıtların Kamera, Ekran Görüntüleri ve İndirilenler gibi klasörlerin gizlenmesine izin vermediğini unutmayın.</string>
+    <string name="faq_5_text">Hariç tut, klasörü yalnızca Calypso Galeri\'de görüntülemeyi engellerken, Gizle sistem genelinde çalışır ve klasörü diğer galerilerden de gizler. Verilen klasörde boş bir \".nomedia\" dosyası oluşturarak çalışır, daha sonra herhangi bir dosya yöneticisi ile kaldırabilirsiniz. Bazı aygıtların Kamera, Ekran Görüntüleri ve İndirilenler gibi klasörlerin gizlenmesine izin vermediğini unutmayın.</string>
     <string name="faq_6_title">Neden albüm resimlerini içeren klasörler görünüyor\?</string>
     <string name="faq_6_text">Bazı olağandışı albümlerin ortaya çıktığını göreceksiniz. Onları uzun süre basarak ve Hariç tut\'u seçerek kolayca hariç tutabilirsiniz. Bir sonraki iletişim kutusunda, üst klasörü seçebilirsiniz, ancak diğer ilgili albümlerin de gösterilmesini önleyecektir.</string>
     <string name="faq_7_title">Resimler içeren bir klasör görünmüyor, ne yapabilirim\?</string>
@@ -292,7 +292,7 @@
     <string name="faq_17_text">Bu, Android 11 ile birlikte gelen sistem değişiklikleri nedeniyle çalışmayı durdurdu, uygulama artık gerçek klasörlere göz atamıyor, verileri almak için MediaStore kullanıyor.</string>
     <string name="faq_18_title">Video oynatılırken neden reklam görüyorum\?</string>
     <string name="faq_18_text">Uygulamalarımızda hiçbir şekilde reklam yoktur. Video oynatılırken reklam görüyorsanız, başka bir uygulamanın video oynatıcısını kullanıyor olmalısınız. Aygıt ayarlarında öntanımlı video oynatıcınızı bulmayı deneyin, ardından \"Öntanımlıları temizle\" yapın. Bir dahaki sefere video oynatmayı istediğinizde, kullanmak istediğiniz uygulamayı seçebileceğiniz bir uygulama seçici istemi göreceksiniz.</string>
-    <string name="full_storage_permission_required">Fossify Galeri tüm fotoğraf ve videolarınızı görüntülemek için tam erişime ihtiyaç duyar. Ayarlar &gt; İzinler &gt; Fotoğraf ve videolar &gt; Tümüne izin ver bölümüne gidin.</string>
+    <string name="full_storage_permission_required">Calypso Galeri tüm fotoğraf ve videolarınızı görüntülemek için tam erişime ihtiyaç duyar. Ayarlar &gt; İzinler &gt; Fotoğraf ve videolar &gt; Tümüne izin ver bölümüne gidin.</string>
     <string name="playback_speed">Oynatma hızı</string>
     <string name="failed_to_load_media">Medya yüklenemedi.</string>
     <string name="file_is_malformed_or_corrupted">Dosya hatalı biçimlendirilmiş veya bozuk.</string>
@@ -533,9 +533,6 @@
     <string name="unhide_folder">Gizlemeyi bırak</string>
 
     <!-- Fork uyarısı, ilk açılışta izin isteklerinden önce bir kez gösterilir -->
-    <string name="fork_disclaimer_title">Fork uyarısı</string>
-    <string name="fork_disclaimer_message">Bu uygulama, Fossify ekibi tarafından geliştirilmemiştir. Calypso Gallery, Fossify Gallery uygulamasının bağımsız olarak sürdürülen resmi olmayan bir forkudur; orijinal geliştiriciye yalnızca kaynak göstermek amacıyla referans verilmektedir. Fossify ile herhangi bir bağlantısı, onayı veya desteği yoktur.\n\nDevam ederek bu uyarıyı onaylamış olursunuz. Fork ile ilgili değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
-    <string name="fork_disclaimer_acknowledge">Anladım</string>
 
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_time_title">Hedef kasa açılış süresi</string>
@@ -549,8 +546,8 @@
     <string name="kdf_settings_updated_successfully">Brute-Force direnci şifreli kasaya uygulandı</string>
     <string name="about_title">Calypso Gallery Hakkında</string>
     <string name="about_version">Sürüm %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery, Fossify Gallery\'nin bağımsız olarak sürdürülen, resmi olmayan kişisel bir forkudur. Fossify ile herhangi bir bağlantısı veya onayı yoktur.</string>
-    <string name="about_modification_notice">Bu dağıtım, Fossify Gallery\'nin değiştirilmiş bir sürümüdür. Fork, 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) yukarı akış commit\'inden oluşturulmuştur ve fork\'a özgü tüm değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
+    <string name="about_fork_description">Calypso Gallery, Fossify Gallery\'nin güvenlik odaklı, bağımsız olarak sürdürülen kişisel bir forkudur. Fossify Gallery\'nin özgün yazarlarına ve katkıda bulunanlara teşekkür ederiz. Resmi olmayan bir projedir ve Fossify kuruluşu ile herhangi bir bağlantısı, onayı veya desteği yoktur.</string>
+    <string name="about_modification_notice">Bu dağıtım, Fossify Gallery v1.14.2 (2688360, 07-11-2026) sürümünün değiştirilmiş bir sürümüdür. Fork\'a özgü tüm değişiklikler FORK_CHANGELOG.md dosyasında belgelenmiştir.</string>
     <string name="about_license_heading">Lisans</string>
     <string name="about_gpl_notice" formatted="false">Bu program özgür yazılımdır: GNU Yazılım Vakfı tarafından yayımlanan GNU Genel Kamu Lisansı\'nın 3. sürümü koşulları altında yeniden dağıtabilir ve/veya değiştirebilirsiniz.\n\nBu program, yararlı olacağı umuduyla dağıtılmaktadır; ancak HİÇBİR GARANTİ YOKTUR; hatta TİCARİLİK ve BELİRLİ BİR AMACA UYGUNLUK için zımni garanti bile yoktur. Ayrıntılar için GNU Genel Kamu Lisansı\'na bakın.\n\nBu programla birlikte GNU Genel Kamu Lisansı\'nın bir kopyasını almış olmanız gerekir. Almadıysanız aşağıdaki lisans eylemini kullanın veya https://www.gnu.org/licenses/ adresini ziyaret edin.</string>
     <string name="about_read_gpl_license">GNU GPL v3 lisansını oku</string>

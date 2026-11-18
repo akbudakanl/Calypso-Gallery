@@ -34,8 +34,8 @@ data class AppearancePalette(
             background = Color.parseColor("#FAFAFA"),
             primary = Color.parseColor("#27272A"),
             secondary = Color.parseColor("#52525B"),
-            // Brand indigo stays on the launcher icon even though the UI itself is neutral.
-            appIcon = Color.parseColor("#3F51B5"),
+            // Minimalist dark launcher icon matches the neutral Calypso Gallery identity.
+            appIcon = Color.parseColor("#09090B"),
             surface = Color.parseColor("#FFFFFF"),
             border = Color.parseColor("#E4E4E7"),
             onPrimary = Color.WHITE,
@@ -47,7 +47,7 @@ data class AppearancePalette(
             background = Color.parseColor("#09090B"),
             primary = Color.parseColor("#E4E4E7"),
             secondary = Color.parseColor("#A1A1AA"),
-            appIcon = Color.parseColor("#8C9EFF"),
+            appIcon = Color.parseColor("#09090B"),
             surface = Color.parseColor("#18181B"),
             border = Color.parseColor("#27272A"),
             onPrimary = Color.parseColor("#09090B"),

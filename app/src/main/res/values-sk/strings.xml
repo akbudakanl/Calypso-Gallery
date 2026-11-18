@@ -245,7 +245,7 @@
         <item quantity="few">Naozaj chcete obnoviÅ¥ %d sÃºbory?</item>
         <item quantity="other">Naozaj chcete obnoviÅ¥ %d sÃºborov?</item>
     </plurals>
-    <string name="full_storage_permission_required">Fossify GalÃ©ria potrebuje plnÃ½ prÃ­stup pre zobrazenie vÅ¡etkÃ½ch vaÅ¡ich fotiek a videÃ­. Å¤uknite na Nastavenia &gt; Povolenia &gt; Fotky a videÃ¡ &gt; VÅ¾dy povoliÅ¥ vÅ¡etko.</string>
+    <string name="full_storage_permission_required">Calypso GalÃ©ria potrebuje plnÃ½ prÃ­stup pre zobrazenie vÅ¡etkÃ½ch vaÅ¡ich fotiek a videÃ­. Å¤uknite na Nastavenia &gt; Povolenia &gt; Fotky a videÃ¡ &gt; VÅ¾dy povoliÅ¥ vÅ¡etko.</string>
     <string name="editor">Editor</string>
     <string name="wallpaper">Tapeta</string>
     <string name="interval">Interval</string>
@@ -253,13 +253,13 @@
     <string name="playback_speed">RÃ½chlosÅ¥ prehrÃ¡vania</string>
     <string name="failed_to_load_media">Nepodarilo sa naÄÃ­taÅ¥ mÃ©diÃ¡.</string>
     <string name="file_is_malformed_or_corrupted">SÃºbor je poÅ¡kodenÃ½.</string>
-    <string name="exclude_folder_description">VybranÃ© prieÄinky aj s ich podprieÄinkami budÃº vylÃºÄenÃ© iba z Fossify GalÃ©rie. VylÃºÄenÃ© prieÄinky mÃ´Å¾ete spravovaÅ¥ v nastaveniach aplikÃ¡cie.</string>
-    <string name="excluded_activity_placeholder">VylÃºÄenÃ­m sa prieÄinky aj s ich podprieÄinkami stÃ¡vajÃº neviditeÄ¾nÃ½mi iba pre Fossify GalÃ©riu, pre ostatnÃ© aplikÃ¡cie budÃº stÃ¡le viditeÄ¾nÃ©.\n\nAk chcete, aby tieto prieÄinky neboli viditeÄ¾nÃ© ani v inÃ½ch aplikÃ¡ciÃ¡ch, pouÅ¾ite funkciu SkryÅ¥.</string>
+    <string name="exclude_folder_description">VybranÃ© prieÄinky aj s ich podprieÄinkami budÃº vylÃºÄenÃ© iba z Calypso GalÃ©rie. VylÃºÄenÃ© prieÄinky mÃ´Å¾ete spravovaÅ¥ v nastaveniach aplikÃ¡cie.</string>
+    <string name="excluded_activity_placeholder">VylÃºÄenÃ­m sa prieÄinky aj s ich podprieÄinkami stÃ¡vajÃº neviditeÄ¾nÃ½mi iba pre Calypso GalÃ©riu, pre ostatnÃ© aplikÃ¡cie budÃº stÃ¡le viditeÄ¾nÃ©.\n\nAk chcete, aby tieto prieÄinky neboli viditeÄ¾nÃ© ani v inÃ½ch aplikÃ¡ciÃ¡ch, pouÅ¾ite funkciu SkryÅ¥.</string>
     <string name="media_exceeds_device_capabilities">MediÃ¡ presahujÃº schopnosti zariadenia.</string>
     <string name="unsupported_format">NepodporovanÃ½ formÃ¡t.</string>
-    <string name="faq_1_title">Ako viem Fossify GalÃ©riu nastaviÅ¥ ako predvolenÃº galÃ©riu v zariadenÃ­?</string>
-    <string name="faq_1_text">Najprv vyhÄ¾adajte aktuÃ¡lnu predvolenÃº galÃ©riu v sekcii AplikÃ¡cie v nastaveniach zariadenia, stlaÄte \"PredvolenÃ© otvÃ¡ranie\", potom \"VymazaÅ¥ predvolenÃ© predvoÄ¾by\". KeÄ potom budete otvÃ¡raÅ¥ obrÃ¡zok alebo video, zobrazÃ­ sa ponuka aplikÃ¡ciÃ­ na jeho otvorenie, v ktorej viete vybraÅ¥ Fossify GalÃ©riu ako predvolenÃº.</string>
-    <string name="faq_5_text">VylÃºÄenie prieÄinka zabraÅˆuje zobrazeniu prieÄinka iba vo Fossify GalÃ©rii, ale SkryÅ¥ funguje v rÃ¡mci celÃ©ho zariadenia, takÅ¾e skryje tieto prieÄinky aj v inÃ½ch galÃ©riÃ¡ch. Funguje to tak, Å¾e sa vytvorÃ­ \".nomedia\" sÃºbor v danom prieÄinku, ktorÃ½ sa potom dÃ¡ tieÅ¾ zmazaÅ¥ s akoukoÄ¾vek aplikÃ¡ciou na sprÃ¡vu sÃºborov. PoznÃ¡mka: niektorÃ© zariadenia neumoÅ¾ÅˆujÃº skrytie prieÄinkov ako Camera, Screenshots a Downloads.</string>
+    <string name="faq_1_title">Ako viem Calypso GalÃ©riu nastaviÅ¥ ako predvolenÃº galÃ©riu v zariadenÃ­?</string>
+    <string name="faq_1_text">Najprv vyhÄ¾adajte aktuÃ¡lnu predvolenÃº galÃ©riu v sekcii AplikÃ¡cie v nastaveniach zariadenia, stlaÄte \"PredvolenÃ© otvÃ¡ranie\", potom \"VymazaÅ¥ predvolenÃ© predvoÄ¾by\". KeÄ potom budete otvÃ¡raÅ¥ obrÃ¡zok alebo video, zobrazÃ­ sa ponuka aplikÃ¡ciÃ­ na jeho otvorenie, v ktorej viete vybraÅ¥ Calypso GalÃ©riu ako predvolenÃº.</string>
+    <string name="faq_5_text">VylÃºÄenie prieÄinka zabraÅˆuje zobrazeniu prieÄinka iba vo Calypso GalÃ©rii, ale SkryÅ¥ funguje v rÃ¡mci celÃ©ho zariadenia, takÅ¾e skryje tieto prieÄinky aj v inÃ½ch galÃ©riÃ¡ch. Funguje to tak, Å¾e sa vytvorÃ­ \".nomedia\" sÃºbor v danom prieÄinku, ktorÃ½ sa potom dÃ¡ tieÅ¾ zmazaÅ¥ s akoukoÄ¾vek aplikÃ¡ciou na sprÃ¡vu sÃºborov. PoznÃ¡mka: niektorÃ© zariadenia neumoÅ¾ÅˆujÃº skrytie prieÄinkov ako Camera, Screenshots a Downloads.</string>
     <string name="overwrite_original">PrepÃ­saÅ¥ originÃ¡l</string>
     <string name="render_ultra_hdr_photos">UkÃ¡zaÅ¥ Ultra HDR fotky v HDR</string>
     <string name="open_in_app_player">OtvoriÅ¥ prehrÃ¡vaÄ v aplikÃ¡cii</string>

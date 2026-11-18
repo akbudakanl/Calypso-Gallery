@@ -73,7 +73,7 @@
     <string name="wallpaper_set_successfully">Tugna n ugdil tettwasbedd akken iwata</string>
     <string name="images">Tugniwin</string>
     <string name="videos">Tividyutin</string>
-    <string name="exclude_folder_description">Ayagi ad d-iá¹£á¹­ixer afran akked wid yellan s yikaramen inaddawen si Timidelt Fossify kan. Tzemreá¸ ad tesferkeá¸ ikaramen yettwaÉ›ezlen deg iÉ£ewwaá¹›en.</string>
+    <string name="exclude_folder_description">Ayagi ad d-iá¹£á¹­ixer afran akked wid yellan s yikaramen inaddawen si Timidelt Calypso kan. Tzemreá¸ ad tesferkeá¸ ikaramen yettwaÉ›ezlen deg iÉ£ewwaá¹›en.</string>
     <string name="excluded_activity_placeholder">Asá¹­axer n yikaramen ad ten-yerr d wid n yikaramen inaddawen imuffiren deg timidelt Fossy kan, ad d-banen daÉ£en deg yisnasen-nniá¸en.\n\nMa tebÉ£iá¸ ad ten-teffreá¸ seg yisnasen-nniá¸en, seqdec tawuri n tuffirt.</string>
     <string name="hidden_folders">Ikaraman yettwaffren</string>
     <string name="by_last_modified">Asnifel aneggaru</string>
@@ -144,7 +144,7 @@
         <item quantity="one">Tetá¸¥eqqeá¸ tebÉ£iá¸ ad d-terreá¸ afaylu %d?</item>
         <item quantity="other">Tetá¸¥eqqeá¸ tebÉ£iá¸ ad d-terreá¸ ifuyla %d?</item>
     </plurals>
-    <string name="full_storage_permission_required">Timidelt n Fossify teá¸¥waÇ§ anekcum ummid akken ad d-tesken akk tiwlafin-ik-im d tvidyutin-ik-im. Ruá¸¥ É£er iÉ£ewwaá¹›en &gt; Tisirag&gt; Tiwlafin d tvidyutin &gt; Sireg kullec.</string>
+    <string name="full_storage_permission_required">Timidelt n Calypso teá¸¥waÇ§ anekcum ummid akken ad d-tesken akk tiwlafin-ik-im d tvidyutin-ik-im. Ruá¸¥ É£er iÉ£ewwaá¹›en &gt; Tisirag&gt; Tiwlafin d tvidyutin &gt; Sireg kullec.</string>
     <string name="svgs">Tugniwin SVG</string>
     <string name="portraits">S ibedditin</string>
     <string name="no_media_with_filters">Ulac ifuyla n umidya s imzizdigen yettwafernen.</string>
@@ -231,8 +231,8 @@
     <string name="show_all_folders">Sken-d taqeffalt n umuÉ£ i ubeddel n uskan n wakk agbur n Ikaramans s tÉ£awla</string>
     <string name="media_exceeds_device_capabilities">Amidya iÉ›edda i tzemmar n yibenk.</string>
     <string name="unsupported_format">Amasal ur yettusefrak ara.</string>
-    <string name="faq_1_title">Amek ara rreÉ£ timidelt n Fossify d amezwer n yibenk n tmidelt?</string>
-    <string name="faq_1_text">Tazwara ilaq-ak ad d-tafeá¸ timidelt tamezwert deg weá¸¥ric n yisnasen n yiÉ£ewwaren-ik-im n yibenk, nadi É£ef tqeffalt i d-yeqqaren taÉ£awsa am \"Ldi s wudem amezwer\", sit fell-as, sakin fren \"Sfeá¸ imezwar\".Tikkelt i d-iteddun ad tÉ›erá¸eá¸ ad teldiá¸ tugna neÉ£ tavidyut ilaq ad twaliá¸ amextaf n usnas, anda tzemreá¸ ad tferneá¸ Timidelt n Fossify u ad tt-terreá¸ d asnas amezwer.</string>
+    <string name="faq_1_title">Amek ara rreÉ£ timidelt n Calypso d amezwer n yibenk n tmidelt?</string>
+    <string name="faq_1_text">Tazwara ilaq-ak ad d-tafeá¸ timidelt tamezwert deg weá¸¥ric n yisnasen n yiÉ£ewwaren-ik-im n yibenk, nadi É£ef tqeffalt i d-yeqqaren taÉ£awsa am \"Ldi s wudem amezwer\", sit fell-as, sakin fren \"Sfeá¸ imezwar\".Tikkelt i d-iteddun ad tÉ›erá¸eá¸ ad teldiá¸ tugna neÉ£ tavidyut ilaq ad twaliá¸ amextaf n usnas, anda tzemreá¸ ad tferneá¸ Timidelt n Calypso u ad tt-terreá¸ d asnas amezwer.</string>
     <string name="faq_2_title">Sekkeá¹› asnas s wawal uffir, maca ttuÉ£-t. D acu i zemreÉ£ ad t-xedmeÉ£?</string>
     <string name="slideshow">Askan n tmaccagin</string>
     <string name="loop_slideshow">askan n tmaccagin s teneddict</string>
@@ -248,7 +248,7 @@
     <string name="show_notch">Sken tanqiá¸t n ugdil ma tewjed</string>
     <string name="faq_3_text">Tzemreá¸ ad ttekkiá¸ É£ef walbum yerna ad tferneá¸ tignit usená¹­eá¸ deg umuÉ£ n tigawin, aya ad t-yessená¹­eá¸ É£er tqacuct. Tzemreá¸ ad tsenteá¸eá¸ aá¹­as n yikaramen, ad myizwarent iferdisen ittwasenteá¸en s tarrayt n usmizzwer amezwer.</string>
     <string name="faq_4_text">Tzemreá¸ ad t-tgeá¸ s usiti snat n tikkal deg yidis n ugdil, neÉ£ s usiti n yiá¸risen n tenzagt tamirant neÉ£ tafellayt zdat n ufeggag n unadi. Ma tremdeá¸ tulya n tvidyutin É£ef ugdil i yiman-is deg iÉ£ewwaá¹›en n usnas, tzemreá¸ daÉ£en ad tesqedceá¸ tigawin tiglawanen.</string>
-    <string name="faq_5_text">Astixer ur iseá¸¥bes ara askan n ukaram ala deg Timidelt n Fossify, ulamma Tuffra tetteddu deg uswir n unagraw u daÉ£en akaram ittwaffer seg tmideltin nniden. Iteddu s tmerna n ufaylu ilem \".nomedia \" deg ukaram i d-muddeá¸, sakin tzemreá¸ ad tekkseá¸ s yal amsefrak n ufaylu. Ger tamawt d akken kra n ibenkan ur ttaÇ§Ç§an ara ad ffren ikaramen am tkamiá¹›at, tuá¹­á¹­fiwin n ugdil akked isidar.</string>
+    <string name="faq_5_text">Astixer ur iseá¸¥bes ara askan n ukaram ala deg Timidelt n Calypso, ulamma Tuffra tetteddu deg uswir n unagraw u daÉ£en akaram ittwaffer seg tmideltin nniden. Iteddu s tmerna n ufaylu ilem \".nomedia \" deg ukaram i d-muddeá¸, sakin tzemreá¸ ad tekkseá¸ s yal amsefrak n ufaylu. Ger tamawt d akken kra n ibenkan ur ttaÇ§Ç§an ara ad ffren ikaramen am tkamiá¹›at, tuá¹­á¹­fiwin n ugdil akked isidar.</string>
     <string name="faq_6_text">Aya yezmer ad yeá¸ru dakken ad twaliá¸ kra n yilbumen ur nennum ara. Tzemreá¸ ad ten-stixreá¸ s sshala s usiti aÉ£ezzfan fell-asen syin fren Stixer. Di tenkult n udiwenni i d-iteddun tzemreá¸ ad tferneá¸ akaram amarraw, yezmer lá¸¥al ad yili waya d ayen ara yeÇ§Ç§en ikaramen nniá¸en ur ttbanen ara.</string>
     <string name="faq_7_title">Akaram s tugniwin ur d-ittban ara, neÉ£ ur d-ittban ara akk iferdisen. D acu i zemreÉ£ ad t-xedmeÉ£?</string>
     <string name="faq_7_text">Aya yezmer ad yesÉ›u aá¹­as n ssebbat, maca yeshel maá¸i. Kcem kan É£er yiÉ£ewwaren -&gt; Sefrek ikaramen yedduklen, fren Ugar sakin inig É£er ukaram ilaqen.</string>

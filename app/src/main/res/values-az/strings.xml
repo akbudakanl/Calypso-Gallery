@@ -54,7 +54,7 @@
         <item quantity="one">%d faylı bərpa etmək istədiyinizə əminsiniz?</item>
         <item quantity="other">%d faylı bərpa etmək istədiyinizə əminsiniz?</item>
     </plurals>
-    <string name="full_storage_permission_required">Fossify Qalereya bütün foto və videolarınızı göstərmək üçün tam giriş icazəsinə ehtiyac duyur. Parametrlər &gt; İcazələr &gt; Foto və videolar &gt; Hamısına icazə ver bölməsinə keçin.</string>
+    <string name="full_storage_permission_required">Calypso Qalereya bütün foto və videolarınızı göstərmək üçün tam giriş icazəsinə ehtiyac duyur. Parametrlər &gt; İcazələr &gt; Foto və videolar &gt; Hamısına icazə ver bölməsinə keçin.</string>
 
     <!-- Filter -->
     <string name="filter_media">Medianı süzgəcdən keçir</string>
@@ -68,9 +68,9 @@
     <string name="change_filters_underlined"><u>Süzgəcləri dəyiş</u></string>
 
     <!-- Hide / Exclude -->
-    <string name="exclude_folder_description">Bu, seçilmiş qovluğu alt qovluqları ilə birlikdə yalnız Fossify Qalereyadan istisna edəcək. İstisna edilmiş qovluqları Parametrlərdən idarə edə bilərsiniz.</string>
+    <string name="exclude_folder_description">Bu, seçilmiş qovluğu alt qovluqları ilə birlikdə yalnız Calypso Qalereyadan istisna edəcək. İstisna edilmiş qovluqları Parametrlərdən idarə edə bilərsiniz.</string>
     <string name="exclude_folder_parent">Əvəzində üst qovluq istisna edilsin?</string>
-    <string name="excluded_activity_placeholder">Qovluqları istisna etmək onları alt qovluqları ilə birlikdə yalnız Fossify Qalereyada gizlədər, digər tətbiqlərdə görünməyə davam edər.\n\nƏgər onları digər tətbiqlərdən də gizlətmək istəyirsinizsə, Gizlət funksiyasından istifadə edin.</string>
+    <string name="excluded_activity_placeholder">Qovluqları istisna etmək onları alt qovluqları ilə birlikdə yalnız Calypso Qalereyada gizlədər, digər tətbiqlərdə görünməyə davam edər.\n\nƏgər onları digər tətbiqlərdən də gizlətmək istəyirsinizsə, Gizlət funksiyasından istifadə edin.</string>
     <string name="hidden_folders">Gizli qovluqlar</string>
     <string name="manage_hidden_folders">Gizli qovluqları idarə et</string>
     <string name="hidden_folders_placeholder">Görünür, \".nomedia\" faylı ilə gizlədilmiş heç bir qovluğunuz yoxdur.</string>
@@ -281,8 +281,8 @@
     <string name="video_no_sound">Bu videoda səs yoxdur</string>
 
     <!-- FAQ -->
-    <string name="faq_1_title">Fossify Qalereyanı necə susmaya görə cihaz qalereyası edə bilərəm?</string>
-    <string name="faq_1_text">Əvvəlcə cihaz parametrlərinizin Tətbiqlər bölməsində hazırda susmaya görə təyin edilmiş qalereyanı tapmalı, \"Susmaya görə aç\" kimi bir düyməyə toxunub \"Susmaya görə tənzimləmələri təmizlə\" seçimini etməlisiniz.\nNövbəti dəfə şəkil və ya video açmağa çalışdığınızda tətbiq seçicisi görünəcək; oradan Fossify Qalereyanı seçib susmaya görə tətbiq edə bilərsiniz.</string>
+    <string name="faq_1_title">Calypso Qalereyanı necə susmaya görə cihaz qalereyası edə bilərəm?</string>
+    <string name="faq_1_text">Əvvəlcə cihaz parametrlərinizin Tətbiqlər bölməsində hazırda susmaya görə təyin edilmiş qalereyanı tapmalı, \"Susmaya görə aç\" kimi bir düyməyə toxunub \"Susmaya görə tənzimləmələri təmizlə\" seçimini etməlisiniz.\nNövbəti dəfə şəkil və ya video açmağa çalışdığınızda tətbiq seçicisi görünəcək; oradan Calypso Qalereyanı seçib susmaya görə tətbiq edə bilərsiniz.</string>
     <string name="faq_2_title">Tətbiqi parolla kilidlədim, amma unutdum. Nə edə bilərəm?</string>
     <string name="faq_2_text">Bunu 2 yolla həll edə bilərsiniz. Ya tətbiqi yenidən quraşdırın, ya da cihaz parametrlərindən tətbiqi tapıb \"Məlumatları təmizlə\" seçin. Bu, bütün parametrlərinizi sıfırlayacaq, lakin heç bir media faylını silməyəcək.</string>
     <string name="faq_3_title">Bir albomun həmişə ən yuxarıda görünməsini necə təmin edə bilərəm?</string>
@@ -290,7 +290,7 @@
     <string name="faq_4_title">Videoları necə sürətlə irəli çəkə bilərəm?</string>
     <string name="faq_4_text">Bunu ekranın kənarına iki dəfə toxunmaqla və ya axtarış zolağının yanındakı cari və ya maksimum müddət yazılarına toxunmaqla edə bilərsiniz. Tətbiq parametrlərində videoların ayrı ekranda açılmasını aktivləşdirsəniz, üfüqi jestlərdən də istifadə edə bilərsiniz.</string>
     <string name="faq_5_title">Qovluğu gizlətmək ilə istisna etmək arasında fərq nədir?</string>
-    <string name="faq_5_text">İstisna et qovluğun yalnız Fossify Qalereyada göstərilməsinin qarşısını alır, Gizlət isə sistem səviyyəsində işləyir və qovluğu digər qalereyalardan da gizlədir. Bu, həmin qovluqda boş \".nomedia\" faylı yaratmaqla işləyir və onu istənilən fayl meneceri ilə də silə bilərsiniz. Nəzərə alın ki, bəzi cihazlar Camera, Screenshots və Downloads kimi qovluqların gizlədilməsinə icazə vermir.</string>
+    <string name="faq_5_text">İstisna et qovluğun yalnız Calypso Qalereyada göstərilməsinin qarşısını alır, Gizlət isə sistem səviyyəsində işləyir və qovluğu digər qalereyalardan da gizlədir. Bu, həmin qovluqda boş \".nomedia\" faylı yaratmaqla işləyir və onu istənilən fayl meneceri ilə də silə bilərsiniz. Nəzərə alın ki, bəzi cihazlar Camera, Screenshots və Downloads kimi qovluqların gizlədilməsinə icazə vermir.</string>
     <string name="faq_6_title">Niyə musiqi üz qabıqları və ya stikerlər olan qovluqlar görünür?</string>
     <string name="faq_6_text">Bəzən qeyri-adi albomların göründüyünü müşahidə edə bilərsiniz. Onların üzərinə uzun basıb İstisna et seçməklə asanlıqla gizlədə bilərsiniz. Növbəti pəncərədə üst qovluğu seçə bilərsiniz; çox güman ki, bu, əlaqəli digər albomların da görünməsinin qarşısını alacaq.</string>
     <string name="faq_7_title">Şəkillər olan qovluq görünmür və ya bütün elementləri göstərmir. Nə edə bilərəm?</string>
@@ -377,7 +377,6 @@
     <string name="change_view_type">Görünüş növünü dəyiş</string>
     <string name="contributors">Töhfə verənlər</string>
     <string name="known_issues">Məlum problemlər</string>
-    <string name="donate_to_fossify">Fossify-a ianə et</string>
     <string name="privacy_policy">Məxfilik siyasəti</string>
     <string name="create_shortcut">Qısayol yarat</string>
     <string name="print">Çap et</string>
@@ -583,8 +582,8 @@
     <string name="unhide_folder">Gizlətməni ləğv et</string>
     <string name="about_title">Calypso Gallery haqqında</string>
     <string name="about_version">Versiya %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi şəxsi forkudur. Fossify ilə heç bir əlaqəsi yoxdur və onun tərəfindən dəstəklənmir.</string>
-    <string name="about_modification_notice">Bu paylama Fossify Gallery-nin dəyişdirilmiş versiyasıdır. Fork, 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) upstream kommitindən yaradılmışdır və fork-a xas bütün dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur.</string>
+    <string name="about_fork_description">Calypso Gallery, Fossify Gallery-nin təhlükəsizlik yönümlü, müstəqil olaraq saxlanılan şəxsi forkudur. Fossify Gallery-nin orijinal müəlliflərinə və töhfə verənlərə təşəkkür edirik. Bu, qeyri-rəsmi layihədir və Fossify təşkilatı ilə heç bir əlaqəsi yoxdur, o tərəfindən təsdiqlənmir və dəstəklənmir.</string>
+    <string name="about_modification_notice">Bu paylama Fossify Gallery v1.14.2 (2688360, 07-11-2026) versiyasının dəyişdirilmiş sürümüdür. Fork-a xas bütün dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur.</string>
     <string name="about_license_heading">Lisenziya</string>
     <string name="about_gpl_notice" formatted="false">Bu proqram sərbəst proqramdır: siz onu Free Software Foundation tərəfindən nəşr olunan GNU General Public License-ın (Lisenziyanın 3-cü versiyası) şərtlərinə əsasən yenidən paylaya və/və ya dəyişdirə bilərsiniz.\n\nBu proqram faydalı olacağı ümidi ilə paylanır, lakin HEÇ BİR ZƏMANƏT YOXDUR; hətta SATILA BİLƏRLİK və ya MÜƏYYƏN MƏQSƏDƏ YARARLILIQ barədə dolayı zəmanət də verilmir. Ətraflı məlumat üçün GNU General Public License-a baxın.\n\nBu proqramla birlikdə GNU General Public License-ın surətini almalısınız. Əgər almamısınızsa, aşağıdakı lisenziya əməliyyatından istifadə edin və ya https://www.gnu.org/licenses/ ünvanına baş çəkin.</string>
     <string name="about_read_gpl_license">GNU GPL v3 lisenziyasını oxu</string>
@@ -599,9 +598,6 @@
     <string name="about_faq">Tez-tez verilən suallar</string>
     <string name="about_third_party_licenses">Üçüncü tərəf lisenziyaları</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">Fork bildirimi</string>
-    <string name="fork_disclaimer_message">Bu tətbiq Fossify komandası tərəfindən hazırlanmamışdır. Calypso Gallery, Fossify Gallery-nin müstəqil olaraq saxlanılan, qeyri-rəsmi forkudur; orijinal tərtibatçı yalnız müəlliflik qeydi məqsədilə göstərilir. Fossify ilə heç bir əlaqəsi yoxdur, o tərəfindən dəstəklənmir və ya dəstək verilmir.\n\nDavam edərək bu bildirimi qəbul etdiyinizi təsdiq edirsiniz. Fork-a xas dəyişikliklər FORK_CHANGELOG.md sənədində qeyd olunmuşdur.</string>
-    <string name="fork_disclaimer_acknowledge">Başa düşdüm</string>
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_time_title">Seyfin kilidini açmaq üçün hədəf vaxt</string>
     <string name="brute_force_time_hint">Saniyələr (2.0–7.0). Tətbiq bu cihazı bir dəfə ölçür və əldə edilən KDF parametrlərini seyfdə saxlayır; real açılma vaxtı digər cihazlarda fərqli ola bilər.</string>

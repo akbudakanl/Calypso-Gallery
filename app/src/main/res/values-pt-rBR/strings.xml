@@ -236,12 +236,12 @@
     <string name="faq_17_text">Isso parou de funcionar devido a mudanÃ§as de sistema do Android 11, pois o aplicativo nÃ£o pode mais gerenciar pastas verdadeiras, precisa utilizar algo chamado MediaStore para obter os dados.</string>
     <string name="faq_18_title">Por que estou vendo anÃºncios durante o playback do vÃ­deo\?</string>
     <string name="faq_18_text">Nossos aplicativos nÃ£o mostram anÃºncios, nunca. Se vocÃª encontrar algum durante um playback de vÃ­deo, deve estar utilizando o reprodutor de vÃ­deo de outro aplicativo. Tente encontrar o seu reprodutor de vÃ­deo padrÃ£o nas configuraÃ§Ãµes de dispositivo e clique em \"Limpar padrÃµes\". Na prÃ³xima vez que tentar assistir a um vÃ­deo, poderÃ¡ escolhar o reprodutor que desejar.</string>
-    <string name="faq_1_title">Como posso tornar a Galeria Fossify a galeria padrÃ£o do dispositivo?</string>
-    <string name="exclude_folder_description">Isso ignorarÃ¡ a seleÃ§Ã£o junto com suas subpastas apenas na Galeria Fossify. VocÃª pode gerenciar as pastas ignoradas nas ConfiguraÃ§Ãµes.</string>
-    <string name="excluded_activity_placeholder">A ignoraÃ§Ã£o de pastas farÃ¡ com que elas fiquem ocultas junto com suas subpastas apenas na Galeria Fossify, elas ainda estarÃ£o visÃ­veis em outros aplicativos.\n\nSe vocÃª quiser ocultÃ¡-los tambÃ©m de outros aplicativos, use a funÃ§Ã£o Ocultar.</string>
+    <string name="faq_1_title">Como posso tornar a Galeria Calypso a galeria padrÃ£o do dispositivo?</string>
+    <string name="exclude_folder_description">Isso ignorarÃ¡ a seleÃ§Ã£o junto com suas subpastas apenas na Galeria Calypso. VocÃª pode gerenciar as pastas ignoradas nas ConfiguraÃ§Ãµes.</string>
+    <string name="excluded_activity_placeholder">A ignoraÃ§Ã£o de pastas farÃ¡ com que elas fiquem ocultas junto com suas subpastas apenas na Galeria Calypso, elas ainda estarÃ£o visÃ­veis em outros aplicativos.\n\nSe vocÃª quiser ocultÃ¡-los tambÃ©m de outros aplicativos, use a funÃ§Ã£o Ocultar.</string>
     <string name="wallpaper">Plano de fundo</string>
-    <string name="faq_1_text">Primeiro vocÃª precisa encontrar a galeria padrÃ£o atual na seÃ§Ã£o de Apps das configuraÃ§Ãµes do seu dispositivo, procurar um botÃ£o que diz algo como \"Abrir por padrÃ£o\", clicar nele e selecionar \"Limpar padrÃµes\". Na prÃ³xima vez que vocÃª tentar abrir uma imagem ou vÃ­deo, vocÃª verÃ¡ um seletor de aplicativos, onde poderÃ¡ selecionar Galeria Fossify e tornÃ¡-la o aplicativo padrÃ£o.</string>
-    <string name="faq_5_text">Ignorar impede a exibiÃ§Ã£o da pasta apenas na Galeria Fossify, enquanto Ocultar funciona a nÃ­vel de sistema e oculta a pasta de outras galerias tambÃ©m. Ele funciona criando um arquivo â€œ.nomediaâ€ vazio na pasta fornecida, que vocÃª tambÃ©m pode remover com qualquer gerenciador de arquivos. Observe que alguns dispositivos nÃ£o permitem ocultar pastas como CÃ¢mera, Capturas de tela e Downloads.</string>
+    <string name="faq_1_text">Primeiro vocÃª precisa encontrar a galeria padrÃ£o atual na seÃ§Ã£o de Apps das configuraÃ§Ãµes do seu dispositivo, procurar um botÃ£o que diz algo como \"Abrir por padrÃ£o\", clicar nele e selecionar \"Limpar padrÃµes\". Na prÃ³xima vez que vocÃª tentar abrir uma imagem ou vÃ­deo, vocÃª verÃ¡ um seletor de aplicativos, onde poderÃ¡ selecionar Galeria Calypso e tornÃ¡-la o aplicativo padrÃ£o.</string>
+    <string name="faq_5_text">Ignorar impede a exibiÃ§Ã£o da pasta apenas na Galeria Calypso, enquanto Ocultar funciona a nÃ­vel de sistema e oculta a pasta de outras galerias tambÃ©m. Ele funciona criando um arquivo â€œ.nomediaâ€ vazio na pasta fornecida, que vocÃª tambÃ©m pode remover com qualquer gerenciador de arquivos. Observe que alguns dispositivos nÃ£o permitem ocultar pastas como CÃ¢mera, Capturas de tela e Downloads.</string>
     <string name="gifs">GIFs</string>
     <string name="svgs">SVGs</string>
     <string name="volume">Volume</string>
@@ -249,7 +249,7 @@
     <string name="unsupported_format">Formato nÃ£o suportado.</string>
     <string name="media_exceeds_device_capabilities">A mÃ­dia excede as capacidades do dispositivo.</string>
     <string name="failed_to_load_media">Falha ao carregar a mÃ­dia.</string>
-    <string name="full_storage_permission_required">A Galeria Fossify precisa de acesso total para exibir todas as suas fotos e vÃ­deos. VÃ¡ para ConfiguraÃ§Ãµes &gt; PermissÃµes &gt; Fotos e vÃ­deos &gt; Permitir tudo.</string>
+    <string name="full_storage_permission_required">A Galeria Calypso precisa de acesso total para exibir todas as suas fotos e vÃ­deos. VÃ¡ para ConfiguraÃ§Ãµes &gt; PermissÃµes &gt; Fotos e vÃ­deos &gt; Permitir tudo.</string>
     <string name="file_is_malformed_or_corrupted">O arquivo estÃ¡ malformado ou corrompido.</string>
     <string name="playback_speed">Velocidade de reproduÃ§Ã£o</string>
     <string name="keep_screen_on_fullscreen_photos">Manter a tela ligada enquanto vÃª fotos em tela cheia</string>

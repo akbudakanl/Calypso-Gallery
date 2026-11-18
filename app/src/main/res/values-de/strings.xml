@@ -515,8 +515,8 @@
     <string name="unhide_folder">Nicht mehr verstecken</string>
     <string name="about_title">Über Calypso Gallery</string>
     <string name="about_version">Version %1$s (%2$s)</string>
-    <string name="about_fork_description">Calypso Gallery ist ein unabhängig gepflegter, inoffizieller persönlicher Fork von Fossify Gallery. Er steht in keiner Verbindung zu Fossify und wird nicht von Fossify unterstützt.</string>
-    <string name="about_modification_notice">Diese Distribution ist eine modifizierte Version von Fossify Gallery. Der Fork wurde aus dem Upstream-Commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) erstellt; alle forkspezifischen Änderungen sind in FORK_CHANGELOG.md dokumentiert.</string>
+    <string name="about_fork_description">Calypso Gallery ist ein sicherheitsgehärteter, unabhängig gepflegter persönlicher Fork von Fossify Gallery. Vielen Dank an die ursprünglichen Autoren und Mitwirkenden von Fossify Gallery. Es handelt sich um ein inoffizielles Projekt, das in keiner Verbindung zur Fossify-Organisation steht und von ihr weder gebilligt noch unterstützt wird.</string>
+    <string name="about_modification_notice">Diese Distribution ist eine modifizierte Version von Fossify Gallery v1.14.2 (2688360, 07-11-2026). Alle forkspezifischen Änderungen sind in FORK_CHANGELOG.md dokumentiert.</string>
     <string name="about_license_heading">Lizenz</string>
     <string name="about_gpl_notice" formatted="false">Dieses Programm ist freie Software: Sie können es unter den Bedingungen der GNU General Public License, wie von der Free Software Foundation veröffentlicht, in Version 3 der Lizenz weitergeben und/oder ändern.\n\nDieses Programm wird in der Hoffnung verbreitet, dass es nützlich sein wird, aber OHNE JEDE GEWÄHRLEISTUNG; sogar ohne die implizite Gewährleistung der MARKTGÄNGIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK. Weitere Einzelheiten finden Sie in der GNU General Public License.\n\nSie sollten eine Kopie der GNU General Public License zusammen mit diesem Programm erhalten haben. Falls nicht, nutzen Sie die Lizenzfunktion unten oder besuchen Sie https://www.gnu.org/licenses/.</string>
     <string name="about_read_gpl_license">GNU-GPL-v3-Lizenz lesen</string>
@@ -531,9 +531,6 @@
     <string name="about_faq">Häufig gestellte Fragen</string>
     <string name="about_third_party_licenses">Lizenzen von Drittanbietern</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
-    <string name="fork_disclaimer_title">Fork-Hinweis</string>
-    <string name="fork_disclaimer_message">Diese Anwendung wird nicht vom Fossify-Team entwickelt. Calypso Gallery ist ein unabhängig gepflegter, inoffizieller Fork von Fossify Gallery; der ursprüngliche Entwickler wird ausschließlich zur Urheberzuordnung genannt. Er steht in keiner Verbindung zu Fossify, wird nicht von Fossify unterstützt und erhält auch keinen Support von Fossify.\n\nMit dem Fortfahren bestätigst du diesen Hinweis. Forkspezifische Änderungen sind in FORK_CHANGELOG.md dokumentiert.</string>
-    <string name="fork_disclaimer_acknowledge">Ich verstehe</string>
     <string name="argon2_profile_title">Brute-Force-Widerstand</string>
     <string name="brute_force_time_title">Zielwert für die Entsperrzeit des Tresors</string>
     <string name="brute_force_time_hint">Sekunden (2,0–7,0). Die App misst dieses Gerät einmal und speichert die daraus resultierenden KDF-Parameter im Tresor; die tatsächliche Entsperrzeit kann auf anderen Geräten abweichen.</string>

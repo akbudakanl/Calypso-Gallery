@@ -230,14 +230,14 @@
     <string name="faq_18_title">Zakaj vidim reklame med predvajanjem videa\?</string>
     <string name="faq_18_text">NaÅ¡e aplikacije so brez reklam! ÄŒe jih vidite med predvajanjem videa, potem sigurno uporabljate nek drug video predvajalnik. Poskusite poiskati privzeti video predvajalnik v nastavitvah naprave. Nato v njenih opcijah pritisnite \"PoÄisti privzete nastavitve\". Ko boste naslednjiÄ nameravali odpreti video, se bo prikazal poziv za izbiro aplikacije, kjer izberete Å¾eljeno.</string>
     <string name="cant_unhide_folder">ÄŒe ima mapa ali ena od njenih nadrejenih map pred imenom piko, je skrita in je ni mogoÄe odkriti na ta naÄin. Piko morate odstraniti tako, da mapo preimenujete.</string>
-    <string name="faq_1_title">Kako lahko Galerijo Fossify nastavim kot privzeto galerijo naprave?</string>
+    <string name="faq_1_title">Kako lahko Galerijo Calypso nastavim kot privzeto galerijo naprave?</string>
     <string name="images_resized_successfully">Spreminjanje velikosti slik je bilo uspeÅ¡no</string>
     <string name="resize_multiple_images">Spremeni velikost veÄ slik</string>
     <string name="resize_factor">Faktor spremembe velikosti</string>
     <string name="resize_factor_info">Spremeni velikost slik na dani odstotek, vrednost mora biti med 10 in 90.</string>
     <string name="resize_factor_error">Vnesite Å¡tevilo med 10 in 90</string>
     <string name="no_animation">Brez</string>
-    <string name="excluded_activity_placeholder">IzkljuÄene mape bodo skrite samo v Galeriji Fossify, v drugih aplikacijah pa bodo Å¡e vedno vidne.
+    <string name="excluded_activity_placeholder">IzkljuÄene mape bodo skrite samo v Galeriji Calypso, v drugih aplikacijah pa bodo Å¡e vedno vidne.
 \n
 \nÄŒe jih Å¾elite skriti tudi pred drugimi aplikacijami, uporabite funkcijo Skrij.</string>
     <plurals name="failed_to_resize_images">
@@ -249,8 +249,8 @@
     <string name="wallpaper">Ozadje</string>
     <string name="faq_1_text">Najprej morate v razdelku Aplikacije v nastavitvah naprave poiskati trenutno privzeto galerijo, poiskati gumb z napisom \"Odpri privzeto\", ga klikniti in izbrati moÅ¾nost \"IzbriÅ¡i privzete nastavitve\". Ko boste naslednjiÄ poskuÅ¡ali odpreti sliko ali videoposnetek, se vam bo prikazal izbirnik aplikacij, v katerem lahko izberete Calypso Gallery in jo spremenite v privzeto aplikacijo.</string>
     <string name="slide">Diapozitiv</string>
-    <string name="faq_5_text">Funkcija IzkljuÄi prepreÄi prikaz mape samo v galeriji Fossify, medtem ko funkcija Skrij deluje sistemsko in skrije mapo tudi iz drugih galerij. Deluje tako, da v dani mapi ustvari prazno datoteko \".nomedia\", ki jo lahko nato odstranite tudi s katerim koli upraviteljem datotek. UpoÅ¡tevajte, da nekatere naprave ne omogoÄajo skrivanja map, kot so Kamera, Posnetki zaslona in Prenosi.</string>
-    <string name="exclude_folder_description">Izbrano skupaj z njenimi podmapami boste izkljuÄili samo iz Galerije Fossify. IzkljuÄene mape lahko upravljate v nastavitvah.</string>
+    <string name="faq_5_text">Funkcija IzkljuÄi prepreÄi prikaz mape samo v galeriji Calypso, medtem ko funkcija Skrij deluje sistemsko in skrije mapo tudi iz drugih galerij. Deluje tako, da v dani mapi ustvari prazno datoteko \".nomedia\", ki jo lahko nato odstranite tudi s katerim koli upraviteljem datotek. UpoÅ¡tevajte, da nekatere naprave ne omogoÄajo skrivanja map, kot so Kamera, Posnetki zaslona in Prenosi.</string>
+    <string name="exclude_folder_description">Izbrano skupaj z njenimi podmapami boste izkljuÄili samo iz Galerije Calypso. IzkljuÄene mape lahko upravljate v nastavitvah.</string>
     <string name="force_landscape_reverse">Vsili leÅ¾eÄe (obratno)</string>
     <plurals name="restore_confirmation">
         <item quantity="one">Ali ste prepriÄani, da Å¾elite obnoviti %d datoteko?</item>
@@ -258,7 +258,7 @@
         <item quantity="few">Ali ste prepriÄani, da Å¾elite obnoviti %d datoteke?</item>
         <item quantity="other">Ali ste prepriÄani, da Å¾elite obnoviti %d datotek?</item>
     </plurals>
-    <string name="full_storage_permission_required">Galerija Fossify potrebuje poln dostop za prikaz vseh vaÅ¡ih fotografij in videoposnetkov. Pojdite v Nastavitve &gt; Dovoljenja &gt; Fotografije in videoposnetki &gt; Dovoli vse.</string>
+    <string name="full_storage_permission_required">Galerija Calypso potrebuje poln dostop za prikaz vseh vaÅ¡ih fotografij in videoposnetkov. Pojdite v Nastavitve &gt; Dovoljenja &gt; Fotografije in videoposnetki &gt; Dovoli vse.</string>
     <string name="overwrite_original">PrepiÅ¡i izvirnik</string>
     <string name="render_ultra_hdr_photos">PrikaÅ¾i fotografije Ultra HDR v HDR</string>
     <string name="keep_screen_on_fullscreen_photos">Med ogledom fotografij na celotnem zaslonu naj bo zaslon vklopljen</string>
