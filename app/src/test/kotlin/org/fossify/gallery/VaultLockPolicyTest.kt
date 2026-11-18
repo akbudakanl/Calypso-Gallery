@@ -255,14 +255,6 @@ class VaultLockPolicyTest {
 
     @Test
     fun manifestBackupRulesAndPasswordImeHygieneMatchAdr0002() {
-        fun locateAppFile(relPath: String): File {
-            val direct = File(relPath)
-            if (direct.isFile) return direct
-            val fromRoot = File("app", relPath)
-            assertTrue("Missing $relPath", fromRoot.isFile)
-            return fromRoot
-        }
-
         val manifestText = locateAppFile("src/main/AndroidManifest.xml").readText()
         assertTrue(manifestText.contains("android:allowBackup=\"false\""))
         assertTrue(manifestText.contains("android:fullBackupContent=\"false\""))
@@ -280,6 +272,26 @@ class VaultLockPolicyTest {
 
         val decoderText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/MyGlideImageDecoder.kt").readText()
         assertFalse(decoderText.contains("skipMemoryCache(false)"))
+    }
+
+    @Test
+    fun productionCryptoUsesUnseededSecureRandomOnly() {
+        val mainKotlinDir = locateAppFile("src/main/kotlin")
+        val allSources = mainKotlinDir.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+        assertTrue("Expected production Kotlin sources", allSources.isNotEmpty())
+
+        for (src in allSources) {
+            val content = src.readText()
+            assertFalse("${src.name} must never call SecureRandom.setSeed()", content.contains("setSeed("))
+            assertFalse("${src.name} must never call Math.random()", content.contains("Math.random("))
+
+            val isCryptoModule = src.name.startsWith("CryptoManager") ||
+                src.absolutePath.contains("${File.separator}vault${File.separator}")
+            if (isCryptoModule) {
+                assertFalse("${src.name} must not use kotlin.random.Random", content.contains("kotlin.random"))
+                assertFalse("${src.name} must not use java.util.Random", content.contains("java.util.Random"))
+            }
+        }
     }
 
     @Test
@@ -435,6 +447,14 @@ class VaultLockPolicyTest {
         assertTrue(CryptoManager.secureWipeAndDeleteFile(targetC, testContext))
         assertFalse(targetC.exists())
         assertFalse(journalFile.exists())
+    }
+
+    private fun locateAppFile(relPath: String): File {
+        val direct = File(relPath)
+        if (direct.exists()) return direct
+        val fromRoot = File("app", relPath)
+        assertTrue("Missing $relPath", fromRoot.exists())
+        return fromRoot
     }
 
     private fun writeSyntheticVaultHeader(
