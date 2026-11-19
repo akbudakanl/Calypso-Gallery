@@ -45,7 +45,6 @@ private const val ARGON2_MAX_SALT_LEN = 256
 private const val ARGON2_MAX_WRAPPED_LEN = 65_536
 private const val ARGON2_MAX_KEYRING_LEN = 4_096
 private const val ARGON2_KEYRING_MIN_SIZE = 34
-private const val ARGON2_V3_MIN_VERSION = 3
 private const val ARGON2_MIN_MEASURED_MS = 100
 private const val ARGON2_MAX_CACHED_MS = 30_000
 private const val ARGON2_DEFAULT_FALLBACK_STD_MS = 2_400
@@ -467,36 +466,25 @@ private fun CryptoManager.unpackKeyring(bytes: ByteArray): Pair<Short, ByteArray
     }
 }
 
+/**
+ * Reads the protection type that was written into the portable `.vault` header. The canonical
+ * header parser is reused so this can never drift from the format the writer actually produces.
+ */
+internal fun readVaultProtectionType(headerFile: File): Int? {
+    if (!headerFile.exists()) return null
+    val header = readParsedVaultHeader(headerFile) ?: return null
+    return try {
+        header.storedProtectionType.takeIf {
+            it in listOf(PROTECTION_PATTERN, PROTECTION_PIN, PROTECTION_PASSWORD)
+        }
+    } finally {
+        header.wipe()
+    }
+}
+
 fun CryptoManager.getVaultProtectionType(context: Context): Int? {
     val vaultRoot = findVaultRoot(context) ?: return null
-    val headerFile = File(vaultRoot, VAULT_HEADER_FILE)
-    if (!headerFile.exists()) return null
-    return try {
-        FileInputStream(headerFile).use { fis ->
-            DataInputStream(BufferedInputStream(fis)).use { dis ->
-                val magicBytes = ByteArray(VAULT_HEADER_MAGIC.length)
-                dis.readFully(magicBytes)
-                if (String(magicBytes, Charsets.US_ASCII) != VAULT_HEADER_MAGIC) return null
-                val version = dis.readByte().toInt()
-                if (version >= ARGON2_V3_MIN_VERSION) {
-                    dis.readByte() // kdfType
-                    dis.readInt()  // iterations
-                    dis.readInt()  // memoryKb
-                    dis.readInt()  // parallelism
-                    val protType = dis.readByte().toInt()
-                    if (protType in listOf(PROTECTION_PATTERN, PROTECTION_PIN, PROTECTION_PASSWORD)) {
-                        protType
-                    } else {
-                        null
-                    }
-                } else {
-                    null
-                }
-            }
-        }
-    } catch (_: Exception) {
-        null
-    }
+    return readVaultProtectionType(File(vaultRoot, VAULT_HEADER_FILE))
 }
 
 

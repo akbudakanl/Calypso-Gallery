@@ -1,11 +1,14 @@
 package org.fossify.gallery
 
+import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.helpers.ARGON2_HIGH_MEMORY_KB
 import org.fossify.gallery.helpers.ARGON2_MIN_MEMORY_KB
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.readVaultHeaderVersion
+import org.fossify.gallery.helpers.readVaultProtectionType
 import org.fossify.gallery.helpers.unwrapVaultKeysEphemeral
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
@@ -45,6 +48,28 @@ class VaultHeaderFormatTest {
         )
 
         assertEquals(VaultContainer.VAULT_FORMAT_VERSION.toInt(), readVaultHeaderVersion(header))
+    }
+
+    @Test
+    fun vaultHeader_roundTripsStoredProtectionType() {
+        val header = File.createTempFile("calypso_prot_type_", ".vault")
+        header.deleteOnExit()
+
+        listOf(PROTECTION_PIN, PROTECTION_PASSWORD).forEach { type ->
+            CryptoManager.writeVaultHeader(
+                headerFile = header,
+                salt = ByteArray(16) { 1 },
+                memoryKb = 65_536,
+                iterations = 3,
+                parallelism = 2,
+                ivPdk = ByteArray(GCM_IV_LENGTH) { 2 },
+                wrappedVmK = ByteArray(48) { 3 },
+                ivVmk = ByteArray(GCM_IV_LENGTH) { 4 },
+                wrappedKeyring = ByteArray(48) { 5 },
+                protectionType = type
+            )
+            assertEquals("Header must preserve the chosen unlock method", type, readVaultProtectionType(header))
+        }
     }
 
     @Test
