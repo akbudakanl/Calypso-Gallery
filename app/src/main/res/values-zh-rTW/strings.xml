@@ -550,4 +550,14 @@
     <string name="authenticate">驗證</string>
     <string name="unlocking_encrypted_vault">正在解鎖加密保險箱…</string>
 
+    <string name="custom_colors">自訂顏色</string>
+    <string name="saved_themes">已儲存的主題</string>
+    <string name="save_theme">儲存主題</string>
+    <string name="theme_saved">已儲存主題</string>
+    <string name="theme_already_saved">此主題已儲存</string>
+    <string name="no_saved_themes">尚無已儲存的主題</string>
+    <string name="custom_theme_name">自訂主題</string>
+    <string name="discard_changes_question">要儲存您的變更嗎？</string>
+    <string name="continue_without_saving">不儲存並繼續</string>
+
 </resources>

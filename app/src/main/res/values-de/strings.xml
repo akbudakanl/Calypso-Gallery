@@ -552,4 +552,14 @@
     <string name="authenticate">Authentifizieren</string>
     <string name="unlocking_encrypted_vault">Verschlüsselter Tresor wird entsperrt…</string>
 
+    <string name="custom_colors">Benutzerdefinierte Farben</string>
+    <string name="saved_themes">Gespeicherte Designs</string>
+    <string name="save_theme">Design speichern</string>
+    <string name="theme_saved">Design gespeichert</string>
+    <string name="theme_already_saved">Dieses Design ist bereits gespeichert</string>
+    <string name="no_saved_themes">Noch keine gespeicherten Designs</string>
+    <string name="custom_theme_name">Benutzerdefiniertes Design</string>
+    <string name="discard_changes_question">Möchtest du deine Änderungen speichern?</string>
+    <string name="continue_without_saving">Ohne Speichern fortfahren</string>
+
 </resources>

@@ -800,3 +800,19 @@ Added/overridden in `values-nn/strings.xml` for Settings section headers, font p
 | `open_biometric_dialog` | Open biometric ID verification dialog | Opne dialog for biometrisk ID-verifisering | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | Autentiser | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | Låser opp det krypterte hvelvet… | App-owned key; consistent with `hvelv` terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-nn/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | Eigendefinerte fargar | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | Lagra tema | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | Lagra tema | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | Tema lagra | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | Dette temaet er allereie lagra | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | Ingen lagra tema enno | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | Eigendefinert tema | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | Vil du lagra endringane dine? | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | Hald fram utan å lagra | Negative dialog button to discard unsaved custom color changes |

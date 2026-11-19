@@ -557,4 +557,14 @@
     <string name="authenticate">Autenticar</string>
     <string name="unlocking_encrypted_vault">Desbloqueando la bóveda cifrada…</string>
 
+    <string name="custom_colors">Colores personalizados</string>
+    <string name="saved_themes">Temas guardados</string>
+    <string name="save_theme">Guardar tema</string>
+    <string name="theme_saved">Tema guardado</string>
+    <string name="theme_already_saved">Este tema ya está guardado</string>
+    <string name="no_saved_themes">Aún no hay temas guardados</string>
+    <string name="custom_theme_name">Tema personalizado</string>
+    <string name="discard_changes_question">¿Quieres guardar tus cambios?</string>
+    <string name="continue_without_saving">Continuar sin guardar</string>
+
 </resources>

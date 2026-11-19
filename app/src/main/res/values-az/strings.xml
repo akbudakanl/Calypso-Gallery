@@ -623,4 +623,14 @@
     <string name="authenticate">Doğrula</string>
     <string name="unlocking_encrypted_vault">Şifrəli seyfin kilidi açılır…</string>
 
+    <string name="custom_colors">Fərdi rənglər</string>
+    <string name="saved_themes">Saxlanılmış temalar</string>
+    <string name="save_theme">Temanı saxla</string>
+    <string name="theme_saved">Tema saxlanıldı</string>
+    <string name="theme_already_saved">Bu tema artıq saxlanılıb</string>
+    <string name="no_saved_themes">Hələ saxlanılmış tema yoxdur</string>
+    <string name="custom_theme_name">Fərdi tema</string>
+    <string name="discard_changes_question">Dəyişikliklərinizi saxlamaq istəyirsiniz?</string>
+    <string name="continue_without_saving">Saxlamadan davam et</string>
+
 </resources>

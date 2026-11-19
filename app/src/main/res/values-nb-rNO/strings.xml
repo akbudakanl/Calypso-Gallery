@@ -569,4 +569,14 @@
     <string name="authenticate">Autentiser</string>
     <string name="unlocking_encrypted_vault">Låser opp det krypterte hvelvet…</string>
 
+    <string name="custom_colors">Egendefinerte farger</string>
+    <string name="saved_themes">Lagrede temaer</string>
+    <string name="save_theme">Lagre tema</string>
+    <string name="theme_saved">Tema lagret</string>
+    <string name="theme_already_saved">Dette temaet er allerede lagret</string>
+    <string name="no_saved_themes">Ingen lagrede temaer ennå</string>
+    <string name="custom_theme_name">Egendefinert tema</string>
+    <string name="discard_changes_question">Vil du lagre endringene dine?</string>
+    <string name="continue_without_saving">Fortsett uten å lagre</string>
+
 </resources>

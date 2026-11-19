@@ -782,3 +782,19 @@ Added/overridden in `values-az/strings.xml` for Settings section headers, font p
 | `open_biometric_dialog` | Open biometric ID verification dialog | Biometrik şəxsiyyət doğrulama pəncərəsini aç | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | Doğrula | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | Şifrəli seyfin kilidi açılır… | App-owned key; consistent with `Şifrəli Seyf` terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-az/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | Fərdi rənglər | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | Saxlanılmış temalar | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | Temanı saxla | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | Tema saxlanıldı | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | Bu tema artıq saxlanılıb | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | Hələ saxlanılmış tema yoxdur | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | Fərdi tema | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | Dəyişikliklərinizi saxlamaq istəyirsiniz? | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | Saxlamadan davam et | Negative dialog button to discard unsaved custom color changes |

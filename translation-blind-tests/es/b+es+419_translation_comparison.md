@@ -782,3 +782,19 @@ Added/overridden in `values-b+es+419/strings.xml` for Settings section headers, 
 | `open_biometric_dialog` | Open biometric ID verification dialog | Abrir diálogo de verificación de ID biométrico | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | Autenticar | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | Desbloqueando la bóveda cifrada… | App-owned key; consistent with `bóveda cifrada` terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-b+es+419/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | Colores personalizados | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | Temas guardados | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | Guardar tema | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | Tema guardado | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | Este tema ya está guardado | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | Aún no hay temas guardados | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | Tema personalizado | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | ¿Quieres guardar tus cambios? | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | Continuar sin guardar | Negative dialog button to discard unsaved custom color changes |

@@ -808,3 +808,19 @@ Added/overridden in `values-nb-rNO/strings.xml` for Settings section headers, fo
 | `open_biometric_dialog` | Open biometric ID verification dialog | Åpne dialog for biometrisk ID-verifisering | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | Autentiser | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | Låser opp det krypterte hvelvet… | App-owned key; consistent with `hvelv` terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-nb-rNO/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | Egendefinerte farger | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | Lagrede temaer | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | Lagre tema | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | Tema lagret | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | Dette temaet er allerede lagret | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | Ingen lagrede temaer ennå | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | Egendefinert tema | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | Vil du lagre endringene dine? | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | Fortsett uten å lagre | Negative dialog button to discard unsaved custom color changes |

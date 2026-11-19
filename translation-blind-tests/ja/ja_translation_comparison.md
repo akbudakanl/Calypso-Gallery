@@ -785,3 +785,19 @@ Added/overridden in `values-ja/strings.xml` for Settings section headers, font p
 | `open_biometric_dialog` | Open biometric ID verification dialog | 生体認証IDの確認ダイアログを開く | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | 認証 | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | 暗号化された金庫を開錠しています… | App-owned key; consistent with existing vault terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-ja/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | カスタムカラー | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | 保存済みのテーマ | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | テーマを保存 | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | テーマを保存しました | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | このテーマはすでに保存されています | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | 保存済みのテーマはまだありません | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | カスタムテーマ | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | 変更を保存しますか？ | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | 保存せずに続行 | Negative dialog button to discard unsaved custom color changes |

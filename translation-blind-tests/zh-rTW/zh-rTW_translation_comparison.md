@@ -793,3 +793,19 @@ Added/overridden in `values-zh-rTW/strings.xml` for Settings section headers, fo
 | `open_biometric_dialog` | Open biometric ID verification dialog | 開啟生物辨識 ID 驗證對話框 | fossify-commons override; Biometrics tab of the inherited security dialog |
 | `authenticate` | Authenticate | 驗證 | fossify-commons override; system biometric prompt title |
 | `unlocking_encrypted_vault` | Unlocking encrypted vault… | 正在解鎖加密保險箱… | App-owned key; consistent with existing vault terminology |
+
+## Appearance — Custom Colors & Saved Themes (9 keys)
+
+Added to `values-zh-rTW/strings.xml` for the Appearance settings **Custom colors** section and **Saved themes** workflow (English source strings in `values/strings.xml` were also completed):
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `custom_colors` | Custom colors | 自訂顏色 | Appearance settings section header |
+| 2 | `saved_themes` | Saved themes | 已儲存的主題 | Appearance settings row and dialog title |
+| 3 | `save_theme` | Save theme | 儲存主題 | Positive dialog button to save current custom theme |
+| 4 | `theme_saved` | Theme saved | 已儲存主題 | Toast shown after saving a custom theme |
+| 5 | `theme_already_saved` | This theme is already saved | 此主題已儲存 | Toast shown when the current palette is already saved or built-in |
+| 6 | `no_saved_themes` | No saved themes yet | 尚無已儲存的主題 | Empty state message in the Saved themes dialog |
+| 7 | `custom_theme_name` | Custom theme | 自訂主題 | Base name for newly saved custom themes (suffixed with index) |
+| 8 | `discard_changes_question` | Do you want to save your changes? | 要儲存您的變更嗎？ | Prompt shown when switching themes with unsaved custom color changes |
+| 9 | `continue_without_saving` | Continue without saving | 不儲存並繼續 | Negative dialog button to discard unsaved custom color changes |

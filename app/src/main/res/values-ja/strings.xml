@@ -553,4 +553,14 @@
     <string name="authenticate">認証</string>
     <string name="unlocking_encrypted_vault">暗号化された金庫を開錠しています…</string>
 
+    <string name="custom_colors">カスタムカラー</string>
+    <string name="saved_themes">保存済みのテーマ</string>
+    <string name="save_theme">テーマを保存</string>
+    <string name="theme_saved">テーマを保存しました</string>
+    <string name="theme_already_saved">このテーマはすでに保存されています</string>
+    <string name="no_saved_themes">保存済みのテーマはまだありません</string>
+    <string name="custom_theme_name">カスタムテーマ</string>
+    <string name="discard_changes_question">変更を保存しますか？</string>
+    <string name="continue_without_saving">保存せずに続行</string>
+
 </resources>
