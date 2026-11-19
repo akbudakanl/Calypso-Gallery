@@ -212,6 +212,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 20 | `lock_album` | Lock album | 鎖定相簿 | Album selection menu action replacing lock_folder |
 | 21 | `unlock_album` | Unlock album | 解鎖相簿 | Album selection menu action replacing unlock_folder |
 | 22 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | 是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。 | Full-screen prompt asking whether to regularly back up favorites and virtual albums to shared storage |
+| 23 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | 將我的最愛和虛擬相簿備份至裝置儲存空間 | Settings switch under File operations (shown after first auto-backup prompt) |
 
 ## 2. Full 1-to-1 Comparison: English vs. Traditional Chinese (Taiwan)
 
@@ -604,6 +605,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 391 | `lock_album` | Lock album | 鎖定相簿 |
 | 392 | `unlock_album` | Unlock album | 解鎖相簿 |
 | 393 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | 是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。 |
+| 394 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | 將我的最愛和虛擬相簿備份至裝置儲存空間 |
 | 394 | `encrypt_info_title` | How Encryption Works | 加密運作方式 |
 | 395 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 |
 | 396 | `decrypt_info_title` | How Decryption Works | 解密運作方式 |

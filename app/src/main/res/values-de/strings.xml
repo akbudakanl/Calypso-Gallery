@@ -395,6 +395,7 @@
     <string name="lock_album">Album sperren</string>
     <string name="unlock_album">Album entsperren</string>
     <string name="auto_backup_prompt_message">Möchtest du, dass deine Favoriten und virtuellen Alben regelmäßig außerhalb des App-Speichers im Systemspeicher gesichert werden? So gehen deine Favoritenliste und virtuellen Alben nicht verloren, wenn du die App deinstallierst. Du kannst jederzeit in den App-Einstellungen manuell eine Sicherung erstellen.</string>
+    <string name="auto_backup_favorites_and_virtual_albums">Favoriten und virtuelle Alben im Gerätespeicher sichern</string>
     <string name="encrypt_info_title">So funktioniert die Verschlüsselung</string>
     <string name="encrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neues Album wie Album(1) erstellt oder in das vorhandene verschlüsselte Album zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob Quelldateien, die zu 100% bit-identisch mit dem Ziel sind, gelöscht oder im Quellordner behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
     <string name="encrypt_files_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.</string>
@@ -561,5 +562,6 @@
     <string name="custom_theme_name">Benutzerdefiniertes Design</string>
     <string name="discard_changes_question">Möchtest du deine Änderungen speichern?</string>
     <string name="continue_without_saving">Ohne Speichern fortfahren</string>
+    <string name="vault_no_recovery_warning">Es wird Offline-Verschlüsselung verwendet. Wenn Sie Ihr Passwort oder Ihre PIN vergessen, gibt es keine Möglichkeit, Ihren Tresor wiederherzustellen.</string>
 
 </resources>

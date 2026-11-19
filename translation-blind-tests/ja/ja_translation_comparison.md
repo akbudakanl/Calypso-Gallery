@@ -204,6 +204,7 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 20 | `lock_album` | Lock album | アルバムをロック | Album selection menu action replacing lock_folder |
 | 21 | `unlock_album` | Unlock album | アルバムのロックを解除 | Album selection menu action replacing unlock_folder |
 | 22 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。 | Full-screen prompt asking whether to regularly back up favorites and virtual albums to shared storage |
+| 23 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | お気に入りと仮想アルバムを端末のストレージにバックアップする | Settings switch under File operations (shown after first auto-backup prompt) |
 
 ## 2. Full 1-to-1 Comparison: English vs. Japanese
 
@@ -596,6 +597,7 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 391 | `lock_album` | Lock album | アルバムをロック |
 | 392 | `unlock_album` | Unlock album | アルバムのロックを解除 |
 | 393 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。 |
+| 394 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | お気に入りと仮想アルバムを端末のストレージにバックアップする |
 | 394 | `encrypt_info_title` | How Encryption Works | 暗号化の仕組み |
 | 395 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 |
 | 396 | `decrypt_info_title` | How Decryption Works | 復号の仕組み |

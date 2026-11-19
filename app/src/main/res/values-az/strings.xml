@@ -461,6 +461,7 @@
     <string name="lock_album">Albomu kilidlə</string>
     <string name="unlock_album">Albomun kilidini aç</string>
     <string name="auto_backup_prompt_message">Sevimlilərinizin və virtual albomlarınızın tətbiq yaddaşından kənarda sistem yaddaşına müntəzəm olaraq yazılmasını istəyirsiniz? Bu, tətbiqi sildiyiniz halda sevimlilər siyahınızı və virtual albomlarınızı itirməməyinizi təmin edəcək. İstənilən vaxt tətbiq parametrlərindən əl ilə ehtiyat nüsxə yarada bilərsiniz.</string>
+    <string name="auto_backup_favorites_and_virtual_albums">Sevimlilərin və virtual albomların cihaz yaddaşında ehtiyat nüsxəsini yarat</string>
     <string name="access_storage_prompt">Zəhmət olmasa, tətbiqimizə bütün fayllarınıza giriş icazəsi verin, bu olmadan düzgün işləməyə bilər.</string>
     <string name="encrypt_info_title">Şifrləmə necə işləyir</string>
     <string name="encrypt_info_message" formatted="false">Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz.\n\nEyni adda albom artıq mövcuddursa:\n• Susmaya görə, tətbiq Albom(1) kimi yeni albom yaratmağı və ya mövcud şifrələnmiş alboma birləşdirməyi soruşur (Parametrlərdə tənzimlənə bilər).\n• Birləşdirərkən təyinat yerindəki faylla 100% bit-bə-bit eyni olduğu təsdiqlənən mənbə faylların silinməsini və ya mənbə qovluğunda saxlanmasını seçə bilərsiniz.\n• Eyni adda fərqli fayllar (məs., download.jpg) download(1).jpg kimi saxlanır və ya ziddiyyət həlli parametrinizə uyğun idarə olunur.</string>
@@ -632,5 +633,6 @@
     <string name="custom_theme_name">Fərdi tema</string>
     <string name="discard_changes_question">Dəyişikliklərinizi saxlamaq istəyirsiniz?</string>
     <string name="continue_without_saving">Saxlamadan davam et</string>
+    <string name="vault_no_recovery_warning">Oflayn şifrələmə istifadə olunur. Parolunuzu və ya PIN kodunuzu unutsanız, kassanızı bərpa etməyin heç bir yolu yoxdur.</string>
 
 </resources>

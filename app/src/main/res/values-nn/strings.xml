@@ -462,6 +462,7 @@
     <string name="lock_album">Lås album</string>
     <string name="unlock_album">Lås opp album</string>
     <string name="auto_backup_prompt_message">Vil du at favorittane og dei virtuelle albuma dine skal lagrast regelmessig i systemlagringa utanfor appminnet? Dette sikrar at du ikkje mistar favorittlista og dei virtuelle albuma dine om du avinstallerer appen. Du kan når som helst laga ei tryggingskopi manuelt frå appinnstillingane.</string>
+    <string name="auto_backup_favorites_and_virtual_albums">Tryggingskopier favorittar og virtuelle album til einingslagringa</string>
     <string name="access_storage_prompt">Ver venleg og gje appen vår tilgang til alle filene dine, han fungerer kanskje ikkje så godt utan dette.</string>
     <string name="encrypt_info_title">Korleis kryptering fungerer</string>
     <string name="encrypt_info_message" formatted="false">Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing.</string>
@@ -635,5 +636,6 @@
     <string name="custom_theme_name">Eigendefinert tema</string>
     <string name="discard_changes_question">Vil du lagra endringane dine?</string>
     <string name="continue_without_saving">Hald fram utan å lagra</string>
+    <string name="vault_no_recovery_warning">Fråkopla kryptering vert nytta. Dersom du gløymer passordet eller PIN-koden, finst det ingen måte å gjenopprette kvelvet på.</string>
 
 </resources>

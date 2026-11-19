@@ -400,6 +400,7 @@
     <string name="lock_album">Bloquear álbum</string>
     <string name="unlock_album">Desbloquear álbum</string>
     <string name="auto_backup_prompt_message">¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto garantizará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento.</string>
+    <string name="auto_backup_favorites_and_virtual_albums">Respaldar favoritos y álbumes virtuales en el almacenamiento del dispositivo</string>
     <string name="encrypt_info_title">Cómo funciona el cifrado</string>
     <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos.</string>
     <string name="encrypt_files_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.</string>
@@ -566,5 +567,6 @@
     <string name="custom_theme_name">Tema personalizado</string>
     <string name="discard_changes_question">¿Quieres guardar tus cambios?</string>
     <string name="continue_without_saving">Continuar sin guardar</string>
+    <string name="vault_no_recovery_warning">Se usa cifrado sin conexión. Si olvidas tu contraseña o PIN, no hay forma de recuperar tu bóveda.</string>
 
 </resources>
