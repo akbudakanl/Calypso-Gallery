@@ -467,6 +467,7 @@
     <string name="vault_sync_same_folder_error">Seçilen kaynak klasör aktif kasanızla aynı.</string>
     <string name="change_encrypted_vault_password">Şifreli kasa şifresini değiştir</string>
     <string name="biometric_access_to_encrypted_vault">Şifreli kasaya biyometrik ile giriş</string>
+    <string name="auto_biometric_prompt_on_vault_return">Uygulamaya dönerken biyometrik doğrulamayı otomatik aç</string>
     <string name="block_vault_screenshots">Gizli kasada ekran görüntüsü almayı yasakla</string>
     <string name="empty_encrypted_vault">Şifreli kasayı boşalt</string>
     <string name="enter_new_pin">Yeni PIN\'i girin</string>
@@ -556,8 +557,8 @@
     <string name="about_fork_source">Fork kaynak kodu ve karşılık gelen kaynak</string>
     <string name="about_release_sources">Sürüm kaynak arşivleri</string>
     <string name="about_fork_issues">Fork sorun izleyicisi</string>
-    <string name="about_upstream_source">Yukarı akış Fossify Gallery kaynak kodu</string>
-    <string name="about_upstream_project">Yukarı akış Fossify projesi</string>
+    <string name="about_upstream_source">Upstream Fossify Gallery kaynak kodu</string>
+    <string name="about_upstream_project">Upstream Fossify projesi</string>
     <string name="about_help_heading">Yardım ve yasal bilgiler</string>
     <string name="about_faq">Sıkça sorulan sorular</string>
     <string name="about_third_party_licenses">Üçüncü taraf lisansları</string>
@@ -569,4 +570,9 @@
     <string name="license_androidsvg_title">AndroidSVG (SVG görüntüleme)</string>
     <string name="license_exif_extended_title">Android-Exif-Extended (EXIF meta veri işleme)</string>
     <string name="license_material_icons_title">Material Design Icons (arayüz ikonları)</string>
+    <!-- fossify-commons UI overrides missing from the library's Turkish resources -->
+    <string name="search_in_placeholder">%s içinde ara</string>
+    <string name="open_biometric_dialog">Biyometrik kimlik doğrulama penceresini aç</string>
+    <string name="authenticate">Kimlik doğrula</string>
+
 </resources>

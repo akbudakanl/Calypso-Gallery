@@ -774,3 +774,14 @@ Added/overridden in `values-ja/strings.xml` for Settings section headers, font p
 | 6 | `font_system_default` | System default | システムのデフォルト |
 | 7 | `font_monospace` | Monospace | Monospace |
 | 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。 |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for Japanese, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-ja/strings.xml`.
+
+| Key (`name`) | English source | Japanese | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | %s 内を検索 | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | 生体認証IDの確認ダイアログを開く | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | 認証 | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | 暗号化された金庫を開錠しています… | App-owned key; consistent with existing vault terminology |

@@ -345,6 +345,7 @@
     <string name="create_encrypted_vault">暗号化された保管庫を作成</string>
     <string name="change_encrypted_vault_password">暗号化された保管庫のパスワードを変更</string>
     <string name="biometric_access_to_encrypted_vault">生体認証で暗号化された保管庫にアクセス</string>
+    <string name="auto_biometric_prompt_on_vault_return">アプリに戻ったときに生体認証を自動で表示する</string>
     <string name="block_vault_screenshots">隠し保管庫でのスクリーンショットを禁止する</string>
     <string name="empty_encrypted_vault">暗号化された保管庫を空にする</string>
     <string name="enter_new_pin">新しいPINを入力</string>
@@ -546,4 +547,10 @@
     <string name="security_and_vault_settings">セキュリティと暗号化された保管庫</string>
     <string name="font_system_default">システムのデフォルト</string>
     <string name="font_monospace">Monospace</string>
+    <!-- fossify-commons UI overrides missing from the library's Japanese resources -->
+    <string name="search_in_placeholder">%s 内を検索</string>
+    <string name="open_biometric_dialog">生体認証IDの確認ダイアログを開く</string>
+    <string name="authenticate">認証</string>
+    <string name="unlocking_encrypted_vault">暗号化された金庫を開錠しています…</string>
+
 </resources>

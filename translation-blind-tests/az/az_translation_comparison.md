@@ -771,3 +771,14 @@ Added/overridden in `values-az/strings.xml` for Settings section headers, font p
 | 10 | `app_font` | App font | Tətbiq şrifti |
 | 11 | `select_font_file` | Select font file… | Şrift faylını seçin… |
 | 12 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Qovluq və Fayl Strukturu:\n• Şifrələnməmiş albom şifrələndikdə, seyf daxilində (Secrets) şifrələnmiş alt qovluğa çevrilir.\n• Həm qovluq adı, həm də içindəki bütün fayl adları/məzmunu şifrələnir, buna görə tətbiqdən kənarda heç nə oxuna bilməz. |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for Azerbaijani, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-az/strings.xml`.
+
+| Key (`name`) | English source | Azerbaijani | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | %s daxilində axtar | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | Biometrik şəxsiyyət doğrulama pəncərəsini aç | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | Doğrula | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | Şifrəli seyfin kilidi açılır… | App-owned key; consistent with `Şifrəli Seyf` terminology |

@@ -347,6 +347,7 @@
     <string name="create_encrypted_vault">Verschlüsselten Tresor erstellen</string>
     <string name="change_encrypted_vault_password">Passwort des verschlüsselten Tresors ändern</string>
     <string name="biometric_access_to_encrypted_vault">Biometrischer Zugriff auf den verschlüsselten Tresor</string>
+    <string name="auto_biometric_prompt_on_vault_return">Biometrische Abfrage bei Rückkehr zur App automatisch anzeigen</string>
     <string name="block_vault_screenshots">Screenshots im versteckten Tresor blockieren</string>
     <string name="empty_encrypted_vault">Verschlüsselten Tresor leeren</string>
     <string name="enter_new_pin">Neue PIN eingeben</string>
@@ -545,4 +546,10 @@
     <string name="security_and_vault_settings">Sicherheit &amp; verschlüsselter Tresor</string>
     <string name="font_system_default">Systemvorgabe</string>
     <string name="font_monospace">Monospace</string>
+    <!-- fossify-commons UI overrides missing from the library's German resources -->
+    <string name="search_in_placeholder">In %s suchen</string>
+    <string name="open_biometric_dialog">Dialog zur biometrischen ID-Verifizierung öffnen</string>
+    <string name="authenticate">Authentifizieren</string>
+    <string name="unlocking_encrypted_vault">Verschlüsselter Tresor wird entsperrt…</string>
+
 </resources>

@@ -360,6 +360,7 @@
     <string name="create_encrypted_vault">Opprett kryptert hvelv</string>
     <string name="change_encrypted_vault_password">Endre passord for kryptert hvelv</string>
     <string name="biometric_access_to_encrypted_vault">Biometrisk tilgang til kryptert hvelv</string>
+    <string name="auto_biometric_prompt_on_vault_return">Vis biometrisk bekreftelse automatisk når du går tilbake til appen</string>
     <string name="block_vault_screenshots">Blokker skjermbilder i det skjulte hvelvet</string>
     <string name="empty_encrypted_vault">Tøm kryptert hvelv</string>
     <string name="enter_new_pin">Skriv inn ny PIN</string>
@@ -562,4 +563,10 @@
     <string name="font_monospace">Monospace</string>
     <string name="app_font">App-skrifttype</string>
     <string name="select_font_file">Velg skrifttypefil…</string>
+    <!-- fossify-commons UI overrides missing from the library's Norwegian Bokmål resources -->
+    <string name="search_in_placeholder">Søk i %s</string>
+    <string name="open_biometric_dialog">Åpne dialog for biometrisk ID-verifisering</string>
+    <string name="authenticate">Autentiser</string>
+    <string name="unlocking_encrypted_vault">Låser opp det krypterte hvelvet…</string>
+
 </resources>

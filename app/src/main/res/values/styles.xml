@@ -2,6 +2,19 @@
 
     <style name="AppTheme" parent="AppTheme.Base" />
 
+    <!-- Only org.fossify.commons' tab_biometric_id.xml uses this style. Its default background is
+         tied to the green fallback primary color, which clashes with this fork's neutral palette. -->
+    <style name="ColoredButtonStyle" parent="@android:style/Widget.TextView">
+        <item name="android:textSize">@dimen/bigger_text_size</item>
+        <item name="android:paddingStart">@dimen/big_margin</item>
+        <item name="android:paddingEnd">@dimen/big_margin</item>
+        <item name="android:paddingTop">@dimen/normal_margin</item>
+        <item name="android:paddingBottom">@dimen/normal_margin</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:background">@drawable/biometric_button_background</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
     <style name="SettingsSubHeadingStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
