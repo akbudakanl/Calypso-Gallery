@@ -153,6 +153,23 @@ class ChangeLanguageDialog(
             }
             return getNativeDisplayName(systemLocale)
         }
+
+        internal fun findSelectedIndex(options: List<LanguageOption>, currentTag: String): Int {
+            if (currentTag.isEmpty()) {
+                return options.indexOfFirst { it.code.isEmpty() }
+            }
+            val exactIndex = options.indexOfFirst { it.code.equals(currentTag, ignoreCase = true) }
+            if (exactIndex >= 0) {
+                return exactIndex
+            }
+            return when {
+                currentTag.equals("en", ignoreCase = true) || currentTag.startsWith("en-", ignoreCase = true) ->
+                    options.indexOfFirst { it.code.equals("en", ignoreCase = true) }
+                currentTag.equals("tr", ignoreCase = true) || currentTag.startsWith("tr-", ignoreCase = true) ->
+                    options.indexOfFirst { it.code.equals("tr", ignoreCase = true) }
+                else -> -1
+            }
+        }
     }
 
     init {
@@ -221,22 +238,16 @@ class ChangeLanguageDialog(
         }
 
         fun updateSelection() {
-            var selectedIdx = -1
-            for (i in filteredOptions.indices) {
-                val opt = filteredOptions[i]
-                if (currentTag.isEmpty() && opt.code.isEmpty()) {
-                    selectedIdx = i
-                    break
-                } else if (currentTag.isNotEmpty() && (opt.code.equals(currentTag, ignoreCase = true) ||
-                            (currentTag.startsWith("en", ignoreCase = true) && opt.code.equals("en", ignoreCase = true)) ||
-                            (currentTag.startsWith("tr", ignoreCase = true) && opt.code.equals("tr", ignoreCase = true)))) {
-                    selectedIdx = i
-                    break
-                }
-            }
+            val selectedIdx = findSelectedIndex(filteredOptions, currentTag)
             if (selectedIdx >= 0) {
                 binding.languageList.setItemChecked(selectedIdx, true)
                 binding.languageList.setSelection(selectedIdx)
+            } else {
+                val checkedPos = binding.languageList.checkedItemPosition
+                if (checkedPos != ListView.INVALID_POSITION) {
+                    binding.languageList.setItemChecked(checkedPos, false)
+                }
+                binding.languageList.clearChoices()
             }
         }
 
@@ -256,6 +267,7 @@ class ChangeLanguageDialog(
                                 it.englishName.contains(query, ignoreCase = true)
                     })
                 }
+                binding.languageList.clearChoices()
                 adapter.notifyDataSetChanged()
                 updateSelection()
             }
