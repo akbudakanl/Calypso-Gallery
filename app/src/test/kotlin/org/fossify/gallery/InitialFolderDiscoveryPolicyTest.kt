@@ -2,6 +2,7 @@ package org.fossify.gallery
 
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.gallery.helpers.InitialFolderDiscoveryPolicy
+import org.fossify.gallery.helpers.VAULT_SUBFOLDER_META_FILE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -17,17 +18,34 @@ class InitialFolderDiscoveryPolicyTest {
     val tempFolder = TemporaryFolder()
 
     @Test
-    fun freshInstallRunsDiscoveryEvenWhenAppRunCountWasBumpedToTwo() {
-        // App.onCreate sets appRunCount=1 and MainActivity.appLaunched increments it to 2 on first launch.
+    fun scopedStorageNeverRunsDirectFilesystemWalk() {
         val scopedLevel = InitialFolderDiscoveryPolicy.currentStorageScanLevel(
             isRPlus = true,
             hasAllFilesAccess = false
         )
         assertEquals(InitialFolderDiscoveryPolicy.SCAN_LEVEL_SCOPED, scopedLevel)
-        assertTrue(
+        assertFalse(
             InitialFolderDiscoveryPolicy.shouldRunStorageFolderDiscovery(
                 completedLevel = InitialFolderDiscoveryPolicy.SCAN_LEVEL_NONE,
                 currentLevel = scopedLevel,
+                appRunCount = 2,
+                isSecretVaultView = false
+            )
+        )
+    }
+
+    @Test
+    fun freshInstallWithFullAccessRunsDiscoveryEvenWhenAppRunCountWasBumpedToTwo() {
+        // App.onCreate sets appRunCount=1 and MainActivity.appLaunched increments it to 2 on first launch.
+        val fullLevel = InitialFolderDiscoveryPolicy.currentStorageScanLevel(
+            isRPlus = true,
+            hasAllFilesAccess = true
+        )
+        assertEquals(InitialFolderDiscoveryPolicy.SCAN_LEVEL_FULL, fullLevel)
+        assertTrue(
+            InitialFolderDiscoveryPolicy.shouldRunStorageFolderDiscovery(
+                completedLevel = InitialFolderDiscoveryPolicy.SCAN_LEVEL_NONE,
+                currentLevel = fullLevel,
                 appRunCount = 2,
                 isSecretVaultView = false
             )
@@ -156,7 +174,7 @@ class InitialFolderDiscoveryPolicyTest {
     }
 
     @Test
-    fun discoverMediaFoldersFindsInternalAndroidMediaAndSdCardWhileSkippingRestrictedAndHidden() {
+    fun discoverMediaFoldersFindsInternalAndroidMediaAndSdCardWhileSkippingRestrictedHiddenAndEncrypted() {
         val internal = tempFolder.newFolder("internal")
         val sdCard = tempFolder.newFolder("sdcard")
 
@@ -184,8 +202,13 @@ class InitialFolderDiscoveryPolicyTest {
         val noMediaChild = File(noMediaDir, "Nested").apply { mkdirs() }
         File(noMediaChild, "nested.jpg").writeText("jpg")
 
-        val vaultDir = File(internal, "Calypso Gallery/Secrets/album1").apply { mkdirs() }
+        val cipherRoot = File(internal, "Calypso Gallery").apply { mkdirs() }
+        val vaultDir = File(cipherRoot, "Secrets/album1").apply { mkdirs() }
         File(vaultDir, "photo.jpg").writeText("jpg")
+
+        val standaloneMetaDir = File(internal, "CustomVaultAlbum").apply { mkdirs() }
+        File(standaloneMetaDir, VAULT_SUBFOLDER_META_FILE).writeText("meta")
+        File(standaloneMetaDir, "photo.jpg").writeText("jpg")
 
         val sdAlbumDir = File(sdCard, "Travel/2026").apply { mkdirs() }
         File(sdAlbumDir, "clip.mp4").writeText("mp4")
@@ -198,10 +221,10 @@ class InitialFolderDiscoveryPolicyTest {
         val discovered = InitialFolderDiscoveryPolicy.discoverMediaFoldersInRoots(
             roots = listOf(internal, sdCard),
             internalStoragePath = internal.absolutePath,
+            excludedPrefixes = listOf(cipherRoot.absolutePath),
             includeHidden = false,
             includePortraits = true,
-            isExcludedSubtree = { dir -> dir.name == "Calypso Gallery" },
-            isMediaFile = { file -> file.extension.lowercase() in mediaExts }
+            isMediaFileName = { name -> name.substringAfterLast('.', "").lowercase() in mediaExts }
         )
 
         assertTrue(cameraDir.absolutePath in discovered)
@@ -216,6 +239,7 @@ class InitialFolderDiscoveryPolicyTest {
         assertFalse(noMediaDir.absolutePath in discovered)
         assertFalse(noMediaChild.absolutePath in discovered)
         assertFalse(vaultDir.absolutePath in discovered)
+        assertFalse(standaloneMetaDir.absolutePath in discovered)
     }
 
     @Test

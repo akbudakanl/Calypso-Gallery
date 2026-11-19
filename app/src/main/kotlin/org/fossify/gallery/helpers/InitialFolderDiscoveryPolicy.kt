@@ -2,17 +2,19 @@ package org.fossify.gallery.helpers
 
 import org.fossify.commons.helpers.NOMEDIA
 import java.io.File
+import java.util.Locale
 
 /**
- * Pure policy and filesystem-discovery helpers ensuring first-launch and permission-upgrade album
- * scans find all visible media folders immediately rather than deferring them to a later run.
+ * Pure policy and fast filesystem-discovery helpers ensuring first-launch and permission-upgrade
+ * album scans find all visible media folders without blocking MediaStore display.
  */
 object InitialFolderDiscoveryPolicy {
     const val SCAN_LEVEL_NONE = 0
     const val SCAN_LEVEL_SCOPED = 1
     const val SCAN_LEVEL_FULL = 2
 
-    private const val DEFAULT_MAX_DEPTH = 10
+    private const val DEFAULT_MAX_DEPTH = 8
+    private const val DEFAULT_MAX_DURATION_MS = 3_000L
     private const val PERIODIC_SCAN_RUN_INTERVAL = 30
 
     /**
@@ -25,9 +27,10 @@ object InitialFolderDiscoveryPolicy {
     }
 
     /**
-     * Returns true when a direct storage folder discovery pass should run as part of the current
-     * album load: on first install, after upgrading from scoped storage to All Files Access, or
-     * periodically every [PERIODIC_SCAN_RUN_INTERVAL] runs.
+     * Returns true when a direct filesystem folder discovery pass should run AFTER Phase 1
+     * MediaStore display: only when full filesystem access is available ([SCAN_LEVEL_FULL]), never
+     * under scoped storage (where MediaStore already covers everything readable) and never in
+     * secret vault view.
      */
     fun shouldRunStorageFolderDiscovery(
         completedLevel: Int,
@@ -35,10 +38,10 @@ object InitialFolderDiscoveryPolicy {
         appRunCount: Int,
         isSecretVaultView: Boolean
     ): Boolean {
-        if (isSecretVaultView) {
+        if (isSecretVaultView || currentLevel < SCAN_LEVEL_FULL) {
             return false
         }
-        if (completedLevel < currentLevel) {
+        if (completedLevel < SCAN_LEVEL_FULL) {
             return true
         }
         return appRunCount > 0 && appRunCount % PERIODIC_SCAN_RUN_INTERVAL == 0
@@ -79,76 +82,127 @@ object InitialFolderDiscoveryPolicy {
     }
 
     /**
-     * Walks storage [roots] (internal storage, SD card) and returns every directory containing at
-     * least one displayable media file. Skips `Android/data` and `Android/obb` while still scanning
-     * `Android/media` (used by messaging apps on Android 11+), skips encrypted/vault subtrees, and
-     * skips dot-hidden or `.nomedia` subtrees unless [includeHidden] is true.
+     * Walks storage [roots] (internal storage, SD card) using lightweight [File.list] calls so
+     * media files are detected by filename without per-file `stat()` syscalls. Skips `Android/data`
+     * and `Android/obb` while still scanning `Android/media`, skips precomputed [excludedPrefixes]
+     * and encrypted vault folders, skips dot-hidden and `.nomedia` subtrees unless [includeHidden]
+     * is true, and enforces a [maxDurationMs] time budget so discovery can never stall.
      */
     fun discoverMediaFoldersInRoots(
         roots: Collection<File>,
         internalStoragePath: String,
+        excludedPrefixes: Collection<String> = emptyList(),
         includeHidden: Boolean = false,
         includePortraits: Boolean = false,
         maxDepth: Int = DEFAULT_MAX_DEPTH,
-        isExcludedSubtree: (File) -> Boolean = { false },
-        isMediaFile: (File) -> Boolean,
+        maxDurationMs: Long = DEFAULT_MAX_DURATION_MS,
+        isMediaFileName: (String) -> Boolean,
         shouldStop: () -> Boolean = { false }
     ): LinkedHashSet<String> {
         val discovered = LinkedHashSet<String>()
-        val visitedCanonical = HashSet<String>()
+        val visitedPaths = HashSet<String>()
         val internalRootClean = internalStoragePath.trimEnd('/')
+        val normalizedExcluded = excludedPrefixes
+            .map { it.trimEnd('/').lowercase(Locale.ROOT) }
+            .filter { it.isNotEmpty() }
+        val deadlineNanos = if (maxDurationMs > 0L) {
+            System.nanoTime() + maxDurationMs * 1_000_000L
+        } else {
+            Long.MAX_VALUE
+        }
+
+        fun isStopped(): Boolean = shouldStop() || System.nanoTime() > deadlineNanos
+
+        fun isExcludedPath(cleanPath: String): Boolean {
+            val lower = cleanPath.lowercase(Locale.ROOT)
+            for (prefix in normalizedExcluded) {
+                if (lower == prefix || lower.startsWith("$prefix/")) {
+                    return true
+                }
+            }
+            return false
+        }
 
         fun walk(dir: File, depth: Int) {
-            if (shouldStop() || depth > maxDepth) {
-                return
-            }
-            if (!dir.exists() || !dir.isDirectory) {
+            if (isStopped() || depth > maxDepth) {
                 return
             }
             val absPath = dir.absolutePath.trimEnd('/')
+            if (absPath.isEmpty()) {
+                return
+            }
             if (HiddenFoldersPolicy.isAndroidRestrictedSubpath(absPath, internalRootClean)) {
                 return
             }
-            if (isExcludedSubtree(dir)) {
+            if (isExcludedPath(absPath)) {
+                return
+            }
+            if (!visitedPaths.add(absPath.lowercase(Locale.ROOT))) {
                 return
             }
 
-            val canonical = try {
-                dir.canonicalPath
-            } catch (_: Exception) {
-                absPath
-            }
-            if (!visitedCanonical.add(canonical)) {
-                return
-            }
-
-            if (depth > 0 && !includeHidden) {
-                if (dir.name.startsWith('.') || File(dir, NOMEDIA).exists()) {
+            if (depth > 0) {
+                val dirName = dir.name
+                if (dirName.startsWith(ENCRYPTED_FOLDER_PREFIX)) {
+                    return
+                }
+                if (!includeHidden && dirName.startsWith('.')) {
                     return
                 }
             }
 
-            val children = try {
-                dir.listFiles()
+            val names = try {
+                dir.list()
             } catch (_: Exception) {
                 null
             } ?: return
 
+            if (depth > 0) {
+                for (name in names) {
+                    if (name == VAULT_SUBFOLDER_META_FILE) {
+                        return
+                    }
+                    if (!includeHidden && name == NOMEDIA) {
+                        return
+                    }
+                }
+            }
+
             var hasDirectMedia = false
             val isStorageRoot = depth == 0
-            for (child in children) {
-                if (shouldStop()) {
+            for (name in names) {
+                if (isStopped()) {
                     return
                 }
-                if (child.isDirectory) {
-                    if (isStorageRoot && child.name.equals("Android", ignoreCase = true)) {
-                        val androidMedia = File(child, "media")
-                        if (androidMedia.isDirectory) {
-                            walk(androidMedia, depth + 1)
+                if (!includeHidden && name.startsWith('.')) {
+                    continue
+                }
+                if (isMediaFileName(name)) {
+                    if (!hasDirectMedia) {
+                        val candidate = File(dir, name)
+                        if (candidate.isFile) {
+                            hasDirectMedia = true
                         }
-                        continue
                     }
-                    if (!hasDirectMedia && includePortraits && child.name.startsWith("img_", ignoreCase = true)) {
+                    // Skip stat()/isDirectory on media filenames (thousands of files in Camera/WhatsApp).
+                    continue
+                }
+
+                if (isStorageRoot && name.equals("Android", ignoreCase = true)) {
+                    val androidMedia = File(File(dir, name), "media")
+                    if (androidMedia.isDirectory) {
+                        walk(androidMedia, depth + 1)
+                    }
+                    continue
+                }
+
+                if (name.startsWith(ENCRYPTED_FOLDER_PREFIX)) {
+                    continue
+                }
+
+                val child = File(dir, name)
+                if (child.isDirectory) {
+                    if (!hasDirectMedia && includePortraits && name.startsWith("img_", ignoreCase = true)) {
                         val portraitChildren = try {
                             child.list()
                         } catch (_: Exception) {
@@ -159,23 +213,21 @@ object InitialFolderDiscoveryPolicy {
                         }
                     }
                     walk(child, depth + 1)
-                } else if (!hasDirectMedia && child.isFile) {
-                    if ((includeHidden || !child.name.startsWith('.')) && isMediaFile(child)) {
-                        hasDirectMedia = true
-                    }
                 }
             }
 
             if (hasDirectMedia) {
-                discovered.add(dir.absolutePath)
+                discovered.add(absPath)
             }
         }
 
         for (root in roots) {
-            if (shouldStop()) {
+            if (isStopped()) {
                 break
             }
-            walk(root, 0)
+            if (root.isDirectory) {
+                walk(root, 0)
+            }
         }
         return discovered
     }
@@ -187,7 +239,7 @@ object InitialFolderDiscoveryPolicy {
     fun mergeDiscoveredFolders(
         baseFolders: List<String>,
         discoveredFolders: Collection<String>,
-        distinctKey: (String) -> String = { it.trimEnd('/').lowercase() }
+        distinctKey: (String) -> String = { it.trimEnd('/').lowercase(Locale.ROOT) }
     ): ArrayList<String> {
         val merged = ArrayList<String>(baseFolders.size + discoveredFolders.size)
         val seenKeys = HashSet<String>(baseFolders.size + discoveredFolders.size)

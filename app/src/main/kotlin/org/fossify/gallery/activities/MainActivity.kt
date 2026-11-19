@@ -112,7 +112,6 @@ import org.fossify.gallery.extensions.promptVaultUnlock
 import org.fossify.gallery.extensions.restoreScrollOffset
 import org.fossify.gallery.extensions.hasExcludedNormalFolders
 import org.fossify.gallery.extensions.hasHiddenNormalFolders
-import org.fossify.gallery.extensions.isCipherSystemPath
 import org.fossify.gallery.extensions.isDirectoryExcludedForBadge
 import org.fossify.gallery.extensions.isDirectoryHiddenForBadge
 import org.fossify.gallery.extensions.isDownloadsFolder
@@ -189,6 +188,8 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicLong
 import org.fossify.gallery.helpers.clearAppImageCaches
+import org.fossify.gallery.helpers.findVaultRoot
+import org.fossify.gallery.helpers.getCipherRootDirectory
 import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
 import org.fossify.gallery.helpers.isEncryptedFolder
 import org.fossify.gallery.helpers.isEncryptedFolderPath
@@ -1897,22 +1898,20 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             dateTakens = dateTakens
         )
 
-        val discoveredDiskFolders = if (needsStorageFolderDiscovery) {
-            discoverStorageMediaFolders {
-                generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing
-            }
-        } else {
-            emptySet()
-        }
-        if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
-            return
-        }
-
-        val extraFoldersToScan = LinkedHashSet<String>(android11Files.size + discoveredDiskFolders.size).apply {
+        // Include parent folders already returned in memory by MediaStore (android11Files and
+        // lastModifieds) without any filesystem walk so Phase 1 renders immediately.
+        val extraFoldersToScan = LinkedHashSet<String>(android11Files.size).apply {
             android11Files.values.forEach { folderMedia ->
                 folderMedia.firstOrNull()?.parentPath?.takeIf { it.isNotEmpty() }?.let { add(it) }
             }
-            addAll(discoveredDiskFolders)
+            for (path in lastModifieds.keys) {
+                if (path.isMediaFile()) {
+                    val separator = path.lastIndexOf('/')
+                    if (separator > 0) {
+                        add(path.substring(0, separator))
+                    }
+                }
+            }
         }
 
         val latestFolders = fetcher.getLatestFileFolders()
@@ -2156,6 +2155,100 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
             }
         } catch (ignored: Exception) {
+        }
+
+        // Phase 3: after MediaStore albums are already displayed, run a fast full-storage discovery
+        // pass on first full-access run (or every 30th run) to catch any disk-only folders MediaStore missed.
+        val discoveredDiskFolders = if (needsStorageFolderDiscovery &&
+            generation == mFetchGeneration.get() && !mShouldStopFetching && !isDestroyed && !isFinishing
+        ) {
+            discoverStorageMediaFolders {
+                generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing
+            }
+        } else {
+            emptySet()
+        }
+
+        if (discoveredDiskFolders.isNotEmpty() &&
+            generation == mFetchGeneration.get() && !mShouldStopFetching && !isDestroyed && !isFinishing
+        ) {
+            val knownDistinctPaths = dirs.mapTo(HashSet(dirs.size)) { it.path.getDistinctPath() }
+            var diskFoldersAdded = false
+            for (folder in discoveredDiskFolders) {
+                if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
+                    return
+                }
+                val distinctKey = folder.getDistinctPath()
+                if (!knownDistinctPaths.add(distinctKey)) {
+                    continue
+                }
+                if (isEncryptedVaultAlbum(folder)) {
+                    continue
+                }
+                val isExcluded = !config.temporarilyShowExcluded &&
+                    isDirectoryExcludedForBadge(folder, hiddenCheckExcludedFolders, hiddenCheckIncludedFolders)
+                val isHidden = !config.temporarilyShowHiddenFolders &&
+                    isDirectoryHiddenForBadge(folder, hiddenCheckIncludedFolders, hiddenCheckNoMediaStatuses)
+                if (isExcluded || isHidden) {
+                    continue
+                }
+
+                val diskMedia = fetcher.getFilesFrom(
+                    curPath = folder,
+                    isPickImage = getImagesOnly,
+                    isPickVideo = getVideosOnly,
+                    getProperDateTaken = true,
+                    getProperLastModified = true,
+                    getProperFileSize = true,
+                    favoritePaths = favoritePaths,
+                    getVideoDurations = false,
+                    lastModifieds = lastModifieds,
+                    dateTakens = dateTakens,
+                    android11Files = android11Files
+                )
+                if (diskMedia.isEmpty()) {
+                    continue
+                }
+
+                if (isPlaceholderVisible) {
+                    isPlaceholderVisible = false
+                    runOnUiThread {
+                        binding.directoriesEmptyPlaceholder.beGone()
+                        binding.directoriesEmptyPlaceholder2.beGone()
+                        binding.directoriesFastscroller.beVisible()
+                    }
+                }
+
+                val newDir = createDirectoryFromMedia(
+                    path = folder,
+                    curMedia = diskMedia,
+                    albumCovers = albumCovers,
+                    hiddenString = hiddenString,
+                    includedFolders = includedFolders,
+                    getProperFileSize = getProperFileSize,
+                    noMediaFolders = noMediaFolders
+                )
+                dirs.add(newDir)
+                diskFoldersAdded = true
+                if (!newDir.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, folder)) {
+                    newDirsToInsert.add(newDir)
+                    if (folder != RECYCLE_BIN && folder != FAVORITES) {
+                        folderMediaToSync.add(newDir to diskMedia)
+                    }
+                }
+            }
+
+            if (diskFoldersAdded) {
+                val sortedDirs = getSortedDirectories(dirs)
+                dirs.clear()
+                dirs.addAll(sortedDirs)
+                val diskHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
+                mDirs = dirs.clone() as ArrayList<Directory>
+                if (diskHash != lastDispatchedDirsHash) {
+                    lastDispatchedDirsHash = diskHash
+                    setupAdapter(dirs.clone() as ArrayList<Directory>)
+                }
+            }
         }
 
         if ((newDirsToInsert.isNotEmpty() || (!getImagesOnly && !getVideosOnly && folderMediaToSync.isNotEmpty())) &&
@@ -2600,25 +2693,36 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun discoverStorageMediaFolders(shouldStop: () -> Boolean): LinkedHashSet<String> {
-        val roots = ArrayList<File>()
-        if (config.internalStoragePath.isNotEmpty()) {
-            roots.add(File(config.internalStoragePath))
+        return try {
+            val roots = ArrayList<File>()
+            if (config.internalStoragePath.isNotEmpty()) {
+                roots.add(File(config.internalStoragePath))
+            }
+            val externalSd = sdCardPath
+            if (externalSd.isNotEmpty() && !externalSd.equals(config.internalStoragePath, ignoreCase = true)) {
+                roots.add(File(externalSd))
+            }
+            val excludedPrefixes = ArrayList<String>().apply {
+                add(CryptoManager.getCipherRootDirectory().absolutePath)
+                CryptoManager.findVaultRoot(this@MainActivity)?.absolutePath?.let { add(it) }
+                config.vaultRootPath.takeIf { it.isNotEmpty() }?.let { add(it) }
+                addAll(config.encryptedFolders)
+                if (!config.temporarilyShowExcluded) {
+                    addAll(config.excludedFolders)
+                }
+            }
+            InitialFolderDiscoveryPolicy.discoverMediaFoldersInRoots(
+                roots = roots,
+                internalStoragePath = config.internalStoragePath,
+                excludedPrefixes = excludedPrefixes,
+                includeHidden = false,
+                includePortraits = config.filterMedia and TYPE_PORTRAITS != 0,
+                isMediaFileName = { name -> name.isMediaFile() },
+                shouldStop = shouldStop
+            )
+        } catch (_: Exception) {
+            LinkedHashSet()
         }
-        val externalSd = sdCardPath
-        if (externalSd.isNotEmpty() && !externalSd.equals(config.internalStoragePath, ignoreCase = true)) {
-            roots.add(File(externalSd))
-        }
-        return InitialFolderDiscoveryPolicy.discoverMediaFoldersInRoots(
-            roots = roots,
-            internalStoragePath = config.internalStoragePath,
-            includeHidden = false,
-            includePortraits = config.filterMedia and TYPE_PORTRAITS != 0,
-            isExcludedSubtree = { dir ->
-                isCipherSystemPath(dir.absolutePath) || CryptoManager.isEncryptedFolder(dir)
-            },
-            isMediaFile = { file -> file.isMediaFile() },
-            shouldStop = shouldStop
-        )
     }
 
     override fun refreshItems() {
