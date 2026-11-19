@@ -87,6 +87,7 @@ class VaultAuthInputHelper(
         binding.vaultPinDots.setTextColor(palette.text)
         binding.vaultStatusLabel.setTextColor(palette.text)
         binding.vaultBruteForceHolder.setTextColor(palette.text)
+        binding.vaultNoRecoveryWarning.setTextColor(palette.secondary)
         binding.vaultBiometricBtn.setTextColor(palette.text)
 
         binding.vaultPasswordInputLayout.setColors(palette.text, palette.primary, palette.background)

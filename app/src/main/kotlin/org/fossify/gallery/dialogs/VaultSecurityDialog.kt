@@ -91,6 +91,7 @@ class VaultSecurityDialog(
         binding.vaultPatternHolder.beGone()
 
         if (isSetupMode) {
+            binding.vaultNoRecoveryWarning.beVisible()
             binding.vaultBruteForceHolder.apply {
                 beVisible()
                 text = activity.getString(R.string.argon2_profile_title) + "\n" + BruteForceDialog.summary(activity)
