@@ -82,6 +82,45 @@ object InitialFolderDiscoveryPolicy {
     }
 
     /**
+     * Returns true when a pull-to-refresh gesture during an uncached cold initial load should keep
+     * the active initial scan running rather than aborting and restarting it from scratch.
+     */
+    fun shouldReuseInFlightInitialLoadOnRefresh(
+        loadedInitialPhotos: Boolean,
+        activeInitialGeneration: Long,
+        currentGeneration: Long
+    ): Boolean {
+        return !loadedInitialPhotos && activeInitialGeneration != 0L && activeInitialGeneration == currentGeneration
+    }
+
+    /**
+     * Returns true when Phase 1 can build a normal album directly from the in-memory MediaStore
+     * snapshot instead of walking the directory via FUSE `File.listFiles()`.
+     */
+    fun canUseMediaStoreFastPathForFolder(
+        folder: String,
+        isSecretVaultView: Boolean,
+        isFavorites: Boolean,
+        isRecycleBin: Boolean,
+        isVirtualAlbum: Boolean,
+        isOnOtg: Boolean,
+        temporarilyShowHiddenFolders: Boolean,
+        hasMediaStoreEntries: Boolean
+    ): Boolean {
+        if (folder.isEmpty() ||
+            isSecretVaultView ||
+            isFavorites ||
+            isRecycleBin ||
+            isVirtualAlbum ||
+            isOnOtg ||
+            temporarilyShowHiddenFolders
+        ) {
+            return false
+        }
+        return hasMediaStoreEntries
+    }
+
+    /**
      * Walks storage [roots] (internal storage, SD card) using lightweight [File.list] calls so
      * media files are detected by filename without per-file `stat()` syscalls. Skips `Android/data`
      * and `Android/obb` while still scanning `Android/media`, skips precomputed [excludedPrefixes]

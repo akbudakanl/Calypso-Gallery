@@ -1205,7 +1205,7 @@ fun Context.getVirtualAlbumDirectories(
     syncFromDisk: Boolean = true
 ): ArrayList<Directory> {
     var albums = getVirtualAlbums()
-    if (syncFromDisk || albums.isEmpty() || (CryptoManager.isVaultUnlocked && albums.none { it.isHidden })) {
+    if (syncFromDisk || (isSecretVaultView && CryptoManager.isVaultUnlocked && albums.none { it.isHidden })) {
         VirtualAlbumSyncManager.syncVirtualAlbums(this)
         albums = getVirtualAlbums()
     }
