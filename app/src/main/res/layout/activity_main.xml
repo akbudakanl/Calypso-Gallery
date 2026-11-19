@@ -13,7 +13,7 @@
     <RelativeLayout
         android:id="@+id/directories_holder"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <org.fossify.commons.views.MyTextView
@@ -25,6 +25,30 @@
             android:padding="@dimen/activity_margin"
             android:text="@string/switch_to_file_search"
             android:visibility="gone" />
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/directories_refresh_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/directories_switch_searching">
+
+            <com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
+                android:id="@+id/directories_fastscroller"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:supportSwipeToRefresh="true">
+
+                <org.fossify.commons.views.MyRecyclerView
+                    android:id="@+id/directories_grid"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layoutAnimation="@anim/layout_animation"
+                    android:scrollbars="none"
+                    app:layoutManager="org.fossify.commons.views.MyGridLayoutManager"
+                    app:spanCount="@integer/directory_columns_vertical_scroll" />
+
+            </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/directories_empty_placeholder"
@@ -79,29 +103,5 @@
                 android:text="@string/pull_down_to_open_vault"
                 android:textSize="@dimen/normal_text_size" />
         </LinearLayout>
-
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/directories_refresh_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/directories_switch_searching">
-
-            <com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
-                android:id="@+id/directories_fastscroller"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:supportSwipeToRefresh="true">
-
-                <org.fossify.commons.views.MyRecyclerView
-                    android:id="@+id/directories_grid"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layoutAnimation="@anim/layout_animation"
-                    android:scrollbars="none"
-                    app:layoutManager="org.fossify.commons.views.MyGridLayoutManager"
-                    app:spanCount="@integer/directory_columns_vertical_scroll" />
-
-            </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </RelativeLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

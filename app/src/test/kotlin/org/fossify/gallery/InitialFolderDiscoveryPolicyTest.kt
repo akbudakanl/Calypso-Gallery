@@ -243,6 +243,71 @@ class InitialFolderDiscoveryPolicyTest {
     }
 
     @Test
+    fun pullToRefreshReusesOnlyTheMatchingInFlightColdLoad() {
+        assertTrue(
+            InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
+                loadedInitialPhotos = false,
+                activeInitialGeneration = 7L,
+                currentGeneration = 7L
+            )
+        )
+        assertFalse(
+            InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
+                loadedInitialPhotos = true,
+                activeInitialGeneration = 7L,
+                currentGeneration = 7L
+            )
+        )
+        assertFalse(
+            InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
+                loadedInitialPhotos = false,
+                activeInitialGeneration = 0L,
+                currentGeneration = 7L
+            )
+        )
+        assertFalse(
+            InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
+                loadedInitialPhotos = false,
+                activeInitialGeneration = 6L,
+                currentGeneration = 7L
+            )
+        )
+    }
+
+    @Test
+    fun mediaStoreFastPathOnlyAppliesToNormalFoldersWithEntries() {
+        fun canUse(
+            folder: String = "/storage/emulated/0/DCIM/Camera",
+            isSecretVaultView: Boolean = false,
+            isFavorites: Boolean = false,
+            isRecycleBin: Boolean = false,
+            isVirtualAlbum: Boolean = false,
+            isOnOtg: Boolean = false,
+            temporarilyShowHiddenFolders: Boolean = false,
+            hasMediaStoreEntries: Boolean = true
+        ) = InitialFolderDiscoveryPolicy.canUseMediaStoreFastPathForFolder(
+            folder = folder,
+            isSecretVaultView = isSecretVaultView,
+            isFavorites = isFavorites,
+            isRecycleBin = isRecycleBin,
+            isVirtualAlbum = isVirtualAlbum,
+            isOnOtg = isOnOtg,
+            temporarilyShowHiddenFolders = temporarilyShowHiddenFolders,
+            hasMediaStoreEntries = hasMediaStoreEntries
+        )
+
+        assertTrue(canUse())
+        assertFalse(canUse(hasMediaStoreEntries = false))
+        assertFalse(canUse(folder = ""))
+        assertFalse(canUse(isSecretVaultView = true))
+        assertFalse(canUse(isFavorites = true))
+        assertFalse(canUse(isRecycleBin = true))
+        assertFalse(canUse(isVirtualAlbum = true))
+        assertFalse(canUse(isOnOtg = true))
+        assertFalse(canUse(temporarilyShowHiddenFolders = true))
+    }
+
+    @Test
     fun mergeDiscoveredFoldersPreservesOrderAndDeduplicatesCaseInsensitively() {
         val merged = InitialFolderDiscoveryPolicy.mergeDiscoveredFolders(
             baseFolders = listOf("/storage/emulated/0/DCIM/Camera", "/storage/emulated/0/Pictures"),

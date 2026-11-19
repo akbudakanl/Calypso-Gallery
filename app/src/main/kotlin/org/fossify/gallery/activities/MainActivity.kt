@@ -186,6 +186,7 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.findVaultRoot
@@ -320,6 +321,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mVaultResumeBlob: String? = null
     private var mVaultResume: VaultResumeState? = null
     private val mFetchGeneration = AtomicLong(0L)
+    private val mFetcherLock = Any()
+    @Volatile
+    private var mActiveInitialScanGeneration = 0L
     private val mExcludedCheckGeneration = AtomicLong(0L)
     @Volatile
     private var mHasNormalExcludedFolders = false
@@ -331,6 +335,18 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mLastKnownAllFilesAccess = false
     @Volatile
     private var mHasRestoredFavoritesBackup = false
+
+    private fun bindMediaFetcherForGeneration(generation: Long): MediaFetcher? {
+        synchronized(mFetcherLock) {
+            if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
+                return null
+            }
+            mLastMediaFetcher?.shouldStop = true
+            return MediaFetcher(applicationContext, isSecretVaultView = mIsSecretVaultView).also {
+                mLastMediaFetcher = it
+            }
+        }
+    }
 
     private val vaultPullGesture by lazy {
         VaultPullGestureHandler(
@@ -349,7 +365,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 if (config.enablePullToRefresh) {
                     RandomOrderManager.invalidateDirectoryOrder()
                     binding.directoriesRefreshLayout.isRefreshing = true
-                    getDirectories()
+                    if (!InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
+                            loadedInitialPhotos = mLoadedInitialPhotos,
+                            activeInitialGeneration = mActiveInitialScanGeneration,
+                            currentGeneration = mFetchGeneration.get()
+                        )
+                    ) {
+                        getDirectories(forceRepair = true)
+                    }
                 }
             }
         )
@@ -556,7 +579,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.directoriesEmptyPlaceholder2.setTextColor(primaryColor)
         binding.directoriesSwitchSearching.setTextColor(primaryColor)
         binding.directoriesSwitchSearching.underlineText()
+        binding.directoriesEmptyPlaceholder.bringToFront()
         binding.directoriesEmptyPlaceholder2.bringToFront()
+        binding.vaultPullIndicator.bringToFront()
 
         val hasAllFilesAccessNow = !isRPlus() || isExternalStorageManager()
         if (InitialFolderDiscoveryPolicy.shouldForceFullReloadOnAccessChange(mLastKnownAllFilesAccess, hasAllFilesAccessNow)) {
@@ -656,9 +681,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mVaultBackHelper.cancelToast()
         binding.directoriesRefreshLayout.isRefreshing = false
         mFetchGeneration.incrementAndGet()
-        mLastMediaFetcher?.shouldStop = true
+        synchronized(mFetcherLock) {
+            mLastMediaFetcher?.shouldStop = true
+        }
         mShouldStopFetching = true
         mIsGettingDirs = false
+        mActiveInitialScanGeneration = 0L
         storeStateVariables()
         mLastMediaHandler.removeCallbacksAndMessages(null)
     }
@@ -710,7 +738,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             unregisterFileUpdateListener()
 
             if (!config.showAll) {
-                mLastMediaFetcher?.shouldStop = true
+                synchronized(mFetcherLock) {
+                    mLastMediaFetcher?.shouldStop = true
+                }
             }
         }
     }
@@ -988,9 +1018,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun tryLoadGallery() {
-        // avoid calling anything right after granting the permission, it will be called from onResume()
-        val wasMissingPermission =
-            config.appRunCount == 1 && !hasAllPermissions(getPermissionsToRequest())
+        // avoid calling anything right after granting the permission, it will be called from onResume().
+        // (appRunCount is already 2 on the very first launch, so it must not be part of this check.)
+        val wasMissingPermission = !hasAllPermissions(getPermissionsToRequest())
         handleMediaPermissions {
             if (wasMissingPermission) {
                 return@handleMediaPermissions
@@ -1027,7 +1057,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         prioritySet.addAll(prioritizedPaths)
 
         val generation = mFetchGeneration.incrementAndGet()
-        mLastMediaFetcher?.shouldStop = true
+        if (mActiveInitialScanGeneration != 0L && mActiveInitialScanGeneration != generation) {
+            mActiveInitialScanGeneration = 0L
+        }
+        synchronized(mFetcherLock) {
+            mLastMediaFetcher?.shouldStop = true
+        }
         mShouldStopFetching = false
         mIsGettingDirs = true
 
@@ -1036,6 +1071,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         val shouldLoadFromCache = !mLoadedInitialPhotos || mDirs.isEmpty() || binding.directoriesGrid.adapter == null
         if (shouldLoadFromCache) {
+            // Keep this generation marked as an in-flight cold load so a pull-to-refresh does not
+            // abort it and restart the scan from scratch (which made refresh appear broken).
+            mActiveInitialScanGeneration = generation
             getCachedDirectories(getVideos && !getImages, getImages && !getVideos, includeVirtualAlbums = true, isSecretVaultView = mIsSecretVaultView) {
                 if (generation != mFetchGeneration.get() || isDestroyed || isFinishing) {
                     return@getCachedDirectories
@@ -1101,9 +1139,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     private fun stopDirectoryFetching() {
         mFetchGeneration.incrementAndGet()
-        mLastMediaFetcher?.shouldStop = true
+        synchronized(mFetcherLock) {
+            mLastMediaFetcher?.shouldStop = true
+        }
         mShouldStopFetching = true
         mIsGettingDirs = false
+        mActiveInitialScanGeneration = 0L
     }
 
     private fun showAllMedia() {
@@ -1502,21 +1543,14 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     private fun setupGridLayoutManager() {
         val layoutManager = binding.directoriesGrid.layoutManager as MyGridLayoutManager
-        if (config.scrollHorizontally) {
-            layoutManager.orientation = RecyclerView.HORIZONTAL
-            binding.directoriesRefreshLayout.layoutParams =
-                RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        } else {
-            layoutManager.orientation = RecyclerView.VERTICAL
-            binding.directoriesRefreshLayout.layoutParams =
-                RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-        }
+        // The refresh layout must always fill the viewport, otherwise it collapses to 0px while the
+        // grid is still empty and neither the refresh spinner nor the pull gesture are usable.
+        layoutManager.orientation = if (config.scrollHorizontally) RecyclerView.HORIZONTAL else RecyclerView.VERTICAL
+        binding.directoriesRefreshLayout.layoutParams =
+            RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
 
         layoutManager.spanCount = config.dirColumnCnt
     }
@@ -1527,7 +1561,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         layoutManager.orientation = RecyclerView.VERTICAL
         binding.directoriesRefreshLayout.layoutParams = RelativeLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
+            ViewGroup.LayoutParams.MATCH_PARENT
         )
         mZoomListener = null
     }
@@ -1819,9 +1853,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         updateExcludedFoldersAvailability()
 
         // cached folders have been loaded, prioritize new/recent folders before scanning unchanged ones
-        mLastMediaFetcher?.shouldStop = true
-        mLastMediaFetcher = MediaFetcher(applicationContext, isSecretVaultView = mIsSecretVaultView)
-        val fetcher = mLastMediaFetcher!!
+        val fetcher = bindMediaFetcherForGeneration(generation) ?: return
         val getImages = mIsPickImageIntent || mIsGetImageContentIntent
         val getVideos = mIsPickVideoIntent || mIsGetVideoContentIntent
         val getImagesOnly = getImages && !getVideos
@@ -1880,30 +1912,33 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val tempFolderPath = config.tempFolderPath
         val getProperFileSize = true
         val dirPathsToRemove = ArrayList<String>()
-        val lastModifieds = fetcher.getLastModifieds()
+        // One indexed MediaStore pass feeds every phase: folder media, timestamps, sizes and
+        // folder lists. This replaces five separate full cursor scans, so the first album grid
+        // can be rendered immediately regardless of All Files Access state. The snapshot is also
+        // available when All Files Access is granted, where getAndroid11FolderMedia() returned
+        // nothing and Phase 1 had to walk every folder through FUSE before showing an album.
+        val snapshot = fetcher.loadMediaStoreSnapshot(
+            isPickImage = getImagesOnly,
+            isPickVideo = getVideosOnly,
+            favoritePaths = favoritePaths,
+            getProperDateTaken = true
+        )
+        val lastModifieds = snapshot.lastModifieds
+        val dateTakens = snapshot.dateTakens
+        val android11Files = snapshot.folderMedia
+        val mediaFolders = snapshot.mediaFolders
+        val latestFolders = snapshot.latestFolders
+
         // Derive folder fingerprints from the MediaStore data we already queried above. They let
         // Phase 2 skip the expensive per-folder re-scan when a folder's media set is unchanged.
         val folderSignatures = computeFolderMediaSignatures(lastModifieds)
         val signatureStamp = currentFolderSignatureStamp()
         val signaturesUsable = signatureStamp == cachedFolderSignaturesStamp
-        val dateTakens = fetcher.getDateTakens()
 
-        // fetch files from MediaStore only, unless the app has the MANAGE_EXTERNAL_STORAGE permission on Android 11+
-        val android11Files = fetcher.getAndroid11FolderMedia(
-            isPickImage = getImagesOnly,
-            isPickVideo = getVideosOnly,
-            favoritePaths = favoritePaths,
-            getFavoritePathsOnly = false,
-            getProperDateTaken = true,
-            dateTakens = dateTakens
-        )
-
-        // Include parent folders already returned in memory by MediaStore (android11Files and
-        // lastModifieds) without any filesystem walk so Phase 1 renders immediately.
-        val extraFoldersToScan = LinkedHashSet<String>(android11Files.size).apply {
-            android11Files.values.forEach { folderMedia ->
-                folderMedia.firstOrNull()?.parentPath?.takeIf { it.isNotEmpty() }?.let { add(it) }
-            }
+        // Include parent folders already returned in memory by MediaStore without any filesystem
+        // walk so Phase 1 renders immediately.
+        val extraFoldersToScan = LinkedHashSet<String>(mediaFolders.size + lastModifieds.size).apply {
+            addAll(mediaFolders)
             for (path in lastModifieds.keys) {
                 if (path.isMediaFile()) {
                     val separator = path.lastIndexOf('/')
@@ -1914,13 +1949,17 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             }
         }
 
-        val latestFolders = fetcher.getLatestFileFolders()
         val prioritySet = HashSet<String>(prioritizedPaths.size + latestFolders.size).apply {
             addAll(prioritizedPaths)
             addAll(latestFolders)
         }
 
-        val foldersToScan = fetcher.getFoldersToScan(extraFoldersToScan)
+        val foldersToScan = fetcher.getFoldersToScan(
+            extraFolders = extraFoldersToScan,
+            preloadedMediaFolders = mediaFolders,
+            preloadedLatestFolders = latestFolders,
+            preloadedNoMediaFolders = noMediaFolders
+        )
         foldersToScan.remove(FAVORITES)
         foldersToScan.add(0, FAVORITES)
         if (config.showRecycleBinAtFolders) {
@@ -1964,6 +2003,19 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 return
             }
 
+            // A normal folder that has MediaStore entries can be built straight from the snapshot,
+            // even with All Files Access, instead of walking it through FUSE. That walk was the
+            // reason only virtual albums showed up for the first few seconds after granting access.
+            val useMediaStoreFastPath = InitialFolderDiscoveryPolicy.canUseMediaStoreFastPathForFolder(
+                folder = folder,
+                isSecretVaultView = mIsSecretVaultView,
+                isFavorites = folder == FAVORITES,
+                isRecycleBin = folder == RECYCLE_BIN,
+                isVirtualAlbum = folder.isVirtualAlbumPath(),
+                isOnOtg = isPathOnOTG(folder),
+                temporarilyShowHiddenFolders = config.temporarilyShowHiddenFolders,
+                hasMediaStoreEntries = android11Files.containsKey(folder.lowercase(Locale.getDefault()))
+            )
             val newMedia = fetcher.getFilesFrom(
                 curPath = folder,
                 isPickImage = getImagesOnly,
@@ -1975,7 +2027,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 getVideoDurations = false,
                 lastModifieds = lastModifieds,
                 dateTakens = dateTakens,
-                android11Files = android11Files
+                android11Files = android11Files,
+                preferMediaStoreCache = useMediaStoreFastPath
             )
 
             if (newMedia.isEmpty()) {
@@ -2309,6 +2362,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         cachedFolderSignaturesStamp = signatureStamp
 
         mLoadedInitialPhotos = true
+        mActiveInitialScanGeneration = 0L
         if (hasAllPermissions(getPermissionsToRequest())) {
             mLatestMediaId = getLatestMediaId()
             mLatestMediaDateId = getLatestMediaByDateId()
