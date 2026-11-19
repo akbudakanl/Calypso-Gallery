@@ -30,7 +30,7 @@ The inherited upstream source remains available from [FossifyOrg/Gallery](https:
 
 ## Third-party cryptographic components
 
-The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0 (Apache License, Version 2.0) for streaming AEAD and HKDF, and [Bouncy Castle](https://www.bouncycastle.org/) (`org.bouncycastle:bcprov-jdk18on` 1.78.1, Bouncy Castle License / MIT-style) for `Argon2id` key derivation. The companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) (`tink>=1.16.1,<2`, Apache 2.0), [`cryptography`](https://github.com/pyca/cryptography) (Apache 2.0 / BSD-3-Clause), [`argon2-cffi`](https://github.com/hynek/argon2-cffi) (MIT), and [`Pillow`](https://github.com/python-pillow/Pillow) (MIT-CMU) packages in [tools/fossify-cipher-cli/requirements.txt](tools/fossify-cipher-cli/requirements.txt). In-app third-party attributions and licenses (including Tink, Bouncy Castle, Gson, image decoders, and Material Design Icons) are shown under **About → Third-party licenses**; the full raw Tink attribution and Apache 2.0 license text also remains in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt).
+The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0 (Apache License, Version 2.0) for streaming AEAD and HKDF, and [Bouncy Castle](https://www.bouncycastle.org/) (`org.bouncycastle:bcprov-jdk18on` 1.78.1, Bouncy Castle License / MIT-style) for `Argon2id` key derivation. The companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) (`tink>=1.16.1,<2`, Apache 2.0), [`cryptography`](https://github.com/pyca/cryptography) (Apache 2.0 / BSD-3-Clause), [`argon2-cffi`](https://github.com/hynek/argon2-cffi) (MIT), and [`Pillow`](https://github.com/python-pillow/Pillow) (MIT-CMU) packages in [tools/calypso-cli/requirements.txt](tools/calypso-cli/requirements.txt). In-app third-party attributions and licenses (including Tink, Bouncy Castle, Gson, image decoders, and Material Design Icons) are shown under **About → Third-party licenses**; the full raw Tink attribution and Apache 2.0 license text also remains in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt).
 
 ## Android package identity
 
@@ -67,7 +67,7 @@ Use the Material Design interface with dynamic color and theme support.
 - [DOCS.md](DOCS.md) — architecture, cryptography specifications, vault design, and user documentation
 - [FORK_CHANGELOG.md](FORK_CHANGELOG.md) — fork-only change and modification record
 - [CHANGELOG.md](CHANGELOG.md) — upstream-only Fossify Gallery release history
-- [tools/fossify-cipher-cli/README.md](tools/fossify-cipher-cli/README.md) — command-line vault tooling
+- [tools/calypso-cli/README.md](tools/calypso-cli/README.md) — command-line vault tooling
 
 ### Fork release process
 

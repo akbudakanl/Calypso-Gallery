@@ -121,7 +121,7 @@ if [ "$OS_NAME" = "Darwin" ]; then
     else
         echo "[Sandbox] Python network audit hook active (OS-level bwrap sandbox is Linux-only)."
     fi
-    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 fi
 
 # 4. Create double-clickable Desktop shortcut icon (Linux)
@@ -157,7 +157,7 @@ fi
 # 6. Per-process Network & Disk Sandbox Wrapper (does not affect other Python processes)
 if [ "$NEED_ADB" -eq 1 ]; then
     echo "[*] --adb specified: running without network namespace isolation."
-    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 elif command -v bwrap >/dev/null 2>&1; then
     mkdir -p "$DESKTOP_DIR" 2>/dev/null || true
     BWRAP_ARGS=(
@@ -242,14 +242,14 @@ elif command -v bwrap >/dev/null 2>&1; then
     done
 
     echo "[Sandbox] Network OFF + Restricted Disk (bwrap)"
-    exec bwrap "${BWRAP_ARGS[@]}" "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec bwrap "${BWRAP_ARGS[@]}" "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 elif command -v firejail >/dev/null 2>&1; then
     echo "[Sandbox] Network OFF + Restricted Filesystem (firejail)"
-    exec firejail --quiet --net=none --private-tmp "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec firejail --quiet --net=none --private-tmp "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 elif command -v unshare >/dev/null 2>&1 && unshare --user --net true 2>/dev/null; then
     echo "[Sandbox] Network OFF (Linux kernel unshare --user --net)"
-    exec unshare --user --net "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec unshare --user --net "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 else
     echo "[!] Sandbox unavailable on this kernel; running Python directly."
-    exec "$PYTHON_BIN" "$DIR/cipher_vault.py" "$@"
+    exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 fi

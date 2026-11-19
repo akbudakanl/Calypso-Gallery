@@ -8,7 +8,7 @@ Uretilen konteynerler kanonik FGVLTENC v1 formatindadir:
   - Tink AES256_GCM_HKDF uyumlu akis (AAD = fileId, 256 KiB segment).
 
 Kullanim:
-    cd tools/fossify-cipher-cli
+    cd tools/calypso-cli
     python make_fixtures.py
 
 Cikti:
@@ -80,10 +80,10 @@ def _real_image_case():
 def main() -> int:
     sys.path.insert(0, str(SCRIPT_DIR))
     try:
-        import cipher_vault as cv
+        import calypso_vault as cv
     except ImportError as exc:
-        print(f"[ERROR] cipher_vault import edilemedi: {exc}")
-        print("Bu scripti tools/fossify-cipher-cli icinden calistirin.")
+        print(f"[ERROR] calypso_vault import edilemedi: {exc}")
+        print("Bu scripti tools/calypso-cli icinden calistirin.")
         return 1
 
     if len(KEK) != 32:

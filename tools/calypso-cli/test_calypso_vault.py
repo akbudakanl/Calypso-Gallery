@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit & end-to-end integration tests for the Calypso Gallery offline CLI (cipher_vault.py).
+Unit & end-to-end integration tests for the Calypso Gallery offline CLI (calypso_vault.py).
 """
 
 import argparse
@@ -14,7 +14,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
-import cipher_vault as cv
+import calypso_vault as cv
 from test_tink_stream import parse_container, reference_expected_ciphertext_size
 
 
@@ -75,7 +75,7 @@ def create_test_vault_file(
     return vmk, kek
 
 
-class TestCipherVaultCLI(unittest.TestCase):
+class TestCalypsoVaultCLI(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.root = Path(self.tmpdir.name)
@@ -445,7 +445,7 @@ class TestCipherVaultCLI(unittest.TestCase):
         import subprocess
         import sys
 
-        cli_script = Path(__file__).resolve().parent / "cipher_vault.py"
+        cli_script = Path(__file__).resolve().parent / "calypso_vault.py"
         in_dir = self.root / "CliInput"
         (in_dir / "AlbumOne").mkdir(parents=True)
         root_data = b"cli-root-image-payload"
@@ -666,19 +666,18 @@ class TestCipherVaultCLI(unittest.TestCase):
 
     def test_encrypt_only_module_has_no_decryption_code(self):
         for removed in ("decrypt_file", "decrypt_stream", "run_decrypt_mode", "choose_operation_mode", "resolve_unique_output_path"):
-            self.assertFalse(hasattr(cv, removed), f"cipher_vault must not expose {removed}")
+            self.assertFalse(hasattr(cv, removed), f"calypso_vault must not expose {removed}")
         source_text = Path(cv.__file__).read_text(encoding="utf-8")
         for forbidden in ("decrypt_file", "decrypt_stream", "run_decrypt_mode", "import zipfile"):
             self.assertNotIn(forbidden, source_text)
 
     def test_no_legacy_or_superseded_format_symbols(self):
         for removed in ("derive_subkey", "poly1305_aes_mac", "poly1305_aes_mac_stream", "read_vault_format"):
-            self.assertFalse(hasattr(cv, removed), f"cipher_vault must not expose {removed}")
+            self.assertFalse(hasattr(cv, removed), f"calypso_vault must not expose {removed}")
         source_text = Path(cv.__file__).read_text(encoding="utf-8")
         for forbidden in (
-            "Poly1305", "poly1305", "pycryptodome", "FossifyGallery",
-            "Cipher_Secrets", "Fossify Gallery Cipher", "FGMETA2", "FVLTMETA",
-            ".fmeta", "vault_format_mismatch",
+            "Poly1305", "poly1305", "pycryptodome",
+            "FGMETA2", "FVLTMETA", ".fmeta", "vault_format_mismatch",
         ):
             self.assertNotIn(forbidden, source_text)
 

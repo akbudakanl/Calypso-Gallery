@@ -27,7 +27,7 @@ Handling or deleting sensitive plaintext media on a standard disk-backed OS leav
 
 ### Tier 2 — Standard / Convenience Mode: **Windows & macOS**
 If you already have photos/videos stored on a Windows or macOS computer and want to encrypt them directly onto an external USB/SD `Secrets` vault (or push via `--adb`) without copying plaintext files onto your phone first:
-* **Automatic adaptation:** `cipher_vault.py` automatically detects Windows drive letters (`D:\`, `E:\`, ...) or macOS `/Volumes/<USB>` mounts, enables Windows UTF-8/ANSI console support, and uses local `.venv` via `run.bat` (Windows) or `run.sh` (macOS).
+* **Automatic adaptation:** `calypso_vault.py` automatically detects Windows drive letters (`D:\`, `E:\`, ...) or macOS `/Volumes/<USB>` mounts, enables Windows UTF-8/ANSI console support, and uses local `.venv` via `run.bat` (Windows) or `run.sh` (macOS).
 * **Important caveats (shown automatically by the CLI):**
   * Standard disk-backed mode does **not** clear OS thumbnail caches (`Thumbs.db`, QuickLook), search indexes (Windows Search / Spotlight), swap/pagefile, NTFS/APFS journals, shadow copies/Time Machine snapshots, or SSD wear-leveling blocks—even with `--delete-source`.
   * **Cloud-sync warning (OneDrive / iCloud Drive):** If your `Desktop` is synced to OneDrive or iCloud, staging plaintext files or copying `.vault` onto the Desktop may upload them to the cloud. The CLI warns when a cloud-synced path is detected and skips auto-copying `.vault` to cloud-synced Desktops—prefer `-i` / `-o` on a local non-synced folder or external USB drive.
@@ -36,18 +36,18 @@ If you already have photos/videos stored on a Windows or macOS computer and want
 
 ## 🔒 Built-In Per-Process Isolation
 
-* **Linux (`run.sh`):** Automatically wraps **only this single `cipher_vault.py` process** using:
+* **Linux (`run.sh`):** Automatically wraps **only this single `calypso_vault.py` process** using:
   1. **`bwrap` (`bubblewrap`):** Cuts off all network access (`--unshare-net`) and restricts filesystem access strictly to system libraries, your Desktop, and mounted external drives / CLI-specified folders (blocking `~/.ssh`, `~/.gnupg`, `~/.config`, etc.).
   2. **`firejail` (`--net=none`):** Used if `bwrap` is unavailable.
   3. **`unshare --user --net`:** Kernel-level network namespace isolation fallback available on almost all Linux distributions.
-* **All OSes — Linux, macOS, Windows (`cipher_vault.py`):**
-  4. **Python `sys.addaudithook`:** Defense-in-depth guard inside `cipher_vault.py` that blocks socket/network operations unless `--adb` is explicitly passed. *(Note: OS-level `bwrap`/`unshare` filesystem/network sandboxing is Linux-only.)*
+* **All OSes — Linux, macOS, Windows (`calypso_vault.py`):**
+  4. **Python `sys.addaudithook`:** Defense-in-depth guard inside `calypso_vault.py` that blocks socket/network operations unless `--adb` is explicitly passed. *(Note: OS-level `bwrap`/`unshare` filesystem/network sandboxing is Linux-only.)*
 
 ---
 
 ## 💾 Unified `Secrets` External-Drive Workflows (Tails OS RAM-Only)
 
-Both workflows use **one unified folder structure (`Secrets/`)** on your external USB/SD drive, with **no interactive output destination prompt** in `cipher_vault.py`:
+Both workflows use **one unified folder structure (`Secrets/`)** on your external USB/SD drive, with **no interactive output destination prompt** in `calypso_vault.py`:
 
 ### Workflow 1: Direct External Vault (`Secrets` directly on USB/SD)
 Use your external USB/SD drive as the vault itself from Android without copying encrypted media into your phone's internal storage:
@@ -66,12 +66,12 @@ Keep your primary `Secrets` vault on your phone while encrypting new media insid
      * *(Tip: Even if you place `.vault` directly at the external drive root `<USB>/.vault`, `choose_encrypt_output_dir` automatically targets `<USB>/Secrets/`! By contrast, a standalone `.vault` copied onto `~/Desktop/.vault` or `~/` falls back to `~/Desktop/Encrypted_Output` / `~/Desktop/Sifreli_Cikti`, and `-o` / `--output` always lets you specify any explicit folder.)*
 2. **Stage & encrypt new media in Tails OS (`./run.sh`):**
    * Place new plaintext files in `~/Desktop/To_Encrypt` (or `~/Desktop/Sifrelenecek`): files directly in the root route to **`Default Secret Album`**, while named subfolders (e.g., `To_Encrypt/Vacation/photo.jpg`) match existing `.meta` albums or create new encrypted ones.
-   * Run `./run.sh` and enter your vault password/PIN/pattern. **No output destination prompt is shown** — `cipher_vault.py` unlocks `.vault` and automatically encrypts into `<USB>/Secrets/`. Optionally zero-wipe the RAM source files (`--delete-source` or interactive prompt).
+   * Run `./run.sh` and enter your vault password/PIN/pattern. **No output destination prompt is shown** — `calypso_vault.py` unlocks `.vault` and automatically encrypts into `<USB>/Secrets/`. Optionally zero-wipe the RAM source files (`--delete-source` or interactive prompt).
 3. **Sync into your phone inside the Android app:**
    * Connect the USB/SD drive to your phone, open **Calypso Gallery**, go to **Settings > Encrypted vault > Sync vault from external drive** (*"Ayarlar > Şifreli Kasa > Harici diskten kasayı eşitle"*), unlock your vault if prompted, and select `<USB>/Secrets` (or the USB root).
    * **Identical handling for both scenarios:** Whether your USB's `Secrets/` holds a full vault mirror (Scenario 1) or only `.vault` plus newly encrypted additions (Scenario 2), Android sync processes it identically. In Scenario 2, once syncing completes, you can delete the synced `.bin` files and album subfolders from `<USB>/Secrets/` while keeping only `.vault` for next time.
    * **Incremental `.pending_sync` Manifest (Zero Archive Re-Scan):**
-     * After encrypting new media, `cipher_vault.py` **appends** the newly created `.bin` relative paths to `<output_dir>/.pending_sync` (preserving any earlier unsynced CLI batches).
+     * After encrypting new media, `calypso_vault.py` **appends** the newly created `.bin` relative paths to `<output_dir>/.pending_sync` (preserving any earlier unsynced CLI batches).
      * When you run **Sync vault from external drive** on Android, the app **only** processes entries listed in `.pending_sync`—it does not scan older archive files (avoiding wasted I/O and false `Failed` warnings from bit-rot in unrelated archive files), removes successfully synced entries, and deletes `.pending_sync` once empty. Without `.pending_sync`, sync is rejected so the same batch is not re-synced twice.
      * **Note for Future Desktop Clients:** Any separate desktop application/client must maintain its **own** independent pending-sync queue (e.g., `.pending_sync_desktop`) rather than consuming or deleting `.pending_sync`, so files already synced to the phone remain pending for the desktop client (and vice versa).
    * **4-Stage Single-Pass Sync Optimization & Duplicate Checking:**
@@ -84,7 +84,7 @@ Keep your primary `Secrets` vault on your phone while encrypting new media insid
 ## 📁 Supported Media Verification & Folder Routing
 
 ### Pre-Encryption Supported Media Check
-Before encrypting, `cipher_vault.py` checks every file against the exact gallery-supported media extensions used by Android `CryptoManager` (`isSupportedMediaName` / `org.fossify.commons`):
+Before encrypting, `calypso_vault.py` checks every file against the exact gallery-supported media extensions used by Android `CryptoManager` (`isSupportedMediaName`):
 * **Photos:** `.jpg`, `.jpeg`, `.png`, `.webp`, `.heic`, `.heif`, `.apng`, `.avif`, `.bmp`, `.wbmp`, `.ico`, `.jxl`, `.jfif`, `.pjpeg`, `.pjp`
 * **GIF & SVG:** `.gif`, `.svg`
 * **RAW:** `.dng`, `.cr2`, `.cr3`, `.nef`, `.nrw`, `.arw`, `.srf`, `.sr2`, `.orf`, `.rw2`, `.pef`, `.raf`, `.srw`, `.x3f`, `.erf`, `.mef`, `.mos`, `.mrw`, `.dcr`, `.kdc`, `.3fr`, `.fff`, `.iiq`, `.rwl`
@@ -100,7 +100,7 @@ Unsupported files (such as `.txt`, `.pdf`, `.md`, `.zip`) as well as `.bin` file
   * `.nomedia` is placed at the vault root (`Secrets/.nomedia`), **not** inside normal album subfolders, matching Android's `ExcludedMenuPolicy` so your albums appear normally in the unlocked vault. (Only explicitly dot-prefixed hidden albums like `.Private` receive an inner `.nomedia`.)
   * Nested subfolders (e.g., `To_Encrypt/Vacation/Day1/img.jpg`) flatten cleanly into their top-level album name (`Vacation`) so all vault folders stay 1 level deep inside `Secrets/`.
 * **Mixed Inputs:** Having some files in the input root and others in subfolders works seamlessly in a single pass.
-* **Virtual Albums (`JSON/`) Are Independent:** Virtual Albums stored in `Secrets/JSON/` are completely untouched and disconnected from `cipher_vault.py` — they are managed solely inside the Android app.
+* **Virtual Albums (`JSON/`) Are Independent:** Virtual Albums stored in `Secrets/JSON/` are completely untouched and disconnected from `calypso_vault.py` — they are managed solely inside the Android app.
 
 ---
 
@@ -121,7 +121,7 @@ On interactive launch, the tool asks you to choose **English** or **Türkçe** (
 2. **Run Launcher (auto-detects your OS with no extra prompts):**
    * **Linux / Tails / macOS:**
      ```bash
-     chmod +x run.sh cipher_vault.py
+     chmod +x run.sh calypso_vault.py
      ./run.sh
      ```
      *(On Linux: auto-detects `apt`/`dnf`/`pacman`/`zypper`, creates the Desktop shortcut, and starts the sandboxed CLI. On macOS: creates a local `.venv` if needed and activates the Python network audit hook.)*
@@ -176,7 +176,7 @@ CLI çalıştığında işletim sisteminizi **ek bir soru sormadan** otomatik al
 
 ### 💾 Birleşik `Secrets` Harici Disk İş Akışları (Tails OS RAM Üzerinde)
 
-Her iki iş akışı da harici USB/SD diskinizde **tek bir birleşik `Secrets/` klasör yapısı** kullanır ve `cipher_vault.py` size etkileşimli çıktı hedefi sormaz:
+Her iki iş akışı da harici USB/SD diskinizde **tek bir birleşik `Secrets/` klasör yapısı** kullanır ve `calypso_vault.py` size etkileşimli çıktı hedefi sormaz:
 
 #### 1. Doğrudan Harici Disk Kasası (Direct External Vault)
 Telefonun dahili depolamasına kopyalama yapmadan, Android uygulamasından harici USB/SD diskinizdeki `Secrets` klasörünü doğrudan kasa olarak kullanın:
@@ -211,12 +211,12 @@ Ana kasanızı telefonunuzda tutup, Tails OS'te yeni medyaları harici diske şi
   * `.nomedia` yalnızca kasa kökünde (`Secrets/.nomedia`) bulunur; normal albüm klasörlerinin içine yazılmaz (böylece Android uygulaması albümleri gizlenmiş/hariç tutulmuş saymaz). Yalnızca `.` ile başlayan gizli alt klasörler için iç `.nomedia` oluşturulur.
   * İç içe alt klasörler (örn. `Tatil/1_Gun/foto.jpg`) Android'in tek seviyeli kasa yapısına uygun olarak en üst albüm adına (`Tatil`) yönlendirilir.
 * **Karma Girdi:** Aynı çalıştırmada hem kökte hem alt klasörlerde dosya bulunması sorunsuz desteklenir.
-* **Sanal Albümler (`JSON/`):** Kasa içindeki `JSON/` sanal albümleri `cipher_vault.py` aracından tamamen bağımsızdır, dokunulmaz ve yalnızca Android uygulaması içinde yönetilir.
+* **Sanal Albümler (`JSON/`):** Kasa içindeki `JSON/` sanal albümleri `calypso_vault.py` aracından tamamen bağımsızdır, dokunulmaz ve yalnızca Android uygulaması içinde yönetilir.
 
 ### 🚀 Hızlı Başlangıç ve Komut Örnekleri
 ```bash
 # Linux / Tails / macOS
-chmod +x run.sh cipher_vault.py
+chmod +x run.sh calypso_vault.py
 ./run.sh
 
 # Windows (çift tıklayarak veya Komut İstemi / PowerShell içinden)

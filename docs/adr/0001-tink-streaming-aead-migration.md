@@ -142,7 +142,7 @@ Two distinct authenticated formats are used depending on whether the record live
 
 ### 4.1 Folder `.meta` files (`FGMETA`)
 
-Encrypted physical album directories (`Secrets/<subfolder>/.meta`) use a shared binary layout read and written identically by Android (`CryptoManagerAlbums.kt`) and the desktop CLI (`cipher_vault.py`):
+Encrypted physical album directories (`Secrets/<subfolder>/.meta`) use a shared binary layout read and written identically by Android (`CryptoManagerAlbums.kt`) and the desktop CLI (`calypso_vault.py`):
 
 ```
 magic "FGMETA" (6 B) | iv (12 B) | encLen (i32) | AES-256-GCM(VMK, iv, originalFolderName)
@@ -183,7 +183,7 @@ The header keeps the outer `writeVaultHeader` framing (magic `FGVLT`, Argon2id p
 
 ## 6. CLI interoperability contract
 
-The CLI is **encrypt-only by design**. The frozen shared spec is mirrored in `helpers/vault/TinkStreamSpec.kt` and a `SPEC` block in `cipher_vault.py`:
+The CLI is **encrypt-only by design**. The frozen shared spec is mirrored in `helpers/vault/TinkStreamSpec.kt` and a `SPEC` block in `calypso_vault.py`:
 
 ```
 ALGORITHM           = AES256_GCM_HKDF

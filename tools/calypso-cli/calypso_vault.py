@@ -10,8 +10,7 @@ metadata header (key derived from the vault KEK via HKDF-SHA256) followed by a
 Tink-compatible AES256_GCM_HKDF streaming-AEAD payload. Album `.meta` folders
 use the canonical FGMETA layout. No other container format is written.
 
-This is an unofficial companion tool for the independently maintained Calypso Gallery fork;
-it is not affiliated with, endorsed by, or supported by Fossify.
+This is an unofficial companion tool for the independently maintained Calypso Gallery fork.
 
 IMPORTANT SECURITY NOTICE (TIER 1 LIVE BOOT vs. TIER 2 STANDARD OS):
   - Tier 1 (Recommended for maximum privacy): Run inside a RAM-only Live Boot OS
@@ -1711,9 +1710,9 @@ SECURITY NOTICE (Tier 1 Live Boot vs. Tier 2 Standard OS):
 
 Desktop Usage:
   Encrypt (English: To_Encrypt -> Vault or Encrypted_Output | Türkçe: Sifrelenecek -> Kasa veya Sifreli_Cikti):
-     python3 cipher_vault.py --lang en
+     python3 calypso_vault.py --lang en
   Direct external vault example (Linux / macOS / Windows):
-     python3 cipher_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/.vault
+     python3 calypso_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/.vault
 
         """
     )

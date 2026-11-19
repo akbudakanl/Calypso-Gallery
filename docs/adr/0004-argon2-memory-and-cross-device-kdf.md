@@ -32,7 +32,7 @@ Current safety & standard bounds (implemented 2026-11-18):
 - **Dynamic slider range (`T_std_64 .. 10.0 s` in `0.1 s` steps):** Replaces the old hardcoded `2.0–7.0 s` bounds.
 - **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** Targets `>= 2 * T_std_64` step up to `128 MiB` when `Runtime.maxMemory() / 2 >= 128 MiB` (falling back to `64 MiB` on constrained heaps or `OutOfMemoryError`), and scale `iterations` in `3..100` up to `10.0 s`. Memory never exceeds `128 MiB`.
 - **`android:largeHeap="true"` + OOM cache trim:** Enabled in `AndroidManifest.xml` (expanding Java heap limits from 128–256 MB to 256–512+ MB) alongside automatic Glide RAM cache clearing and GC retry on `OutOfMemoryError`.
-- **`.vault` header validation & background execution:** Both Android (`CryptoManagerCredentials.kt`) and Python CLI (`cipher_vault.py`) accept `iterations in 1..256` (fixing the prior `1..10` vs `2..16` unlock deadlock), and Argon2id runs exclusively on background threads to prevent 5-second Android ANRs on 7–30s unlocks.
+- **`.vault` header validation & background execution:** Both Android (`CryptoManagerCredentials.kt`) and Python CLI (`calypso_vault.py`) accept `iterations in 1..256` (fixing the prior `1..10` vs `2..16` unlock deadlock), and Argon2id runs exclusively on background threads to prevent 5-second Android ANRs on 7–30s unlocks.
 
 ---
 
@@ -182,7 +182,7 @@ Rather than introducing an NDK/CMake build pipeline for native C Argon2 right aw
 2. **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** High-target calibrations (`>= 2 * T_std_64`) step up to `128 MiB` (never `256 MiB`) when `maxMemory() / 2 >= 128 MiB`, then scale `iterations` up to `100` (reaching `10.0 s` without needing `256 MiB`). Because memory stays capped at `<= 128 MiB` and `android:largeHeap="true"` provides a 256–512+ MB heap across devices (with automatic Glide RAM cache trimming + GC retry on OOM), even a `10.0 s` flagship vault opens reliably on weaker devices instead of deadlocking.
 3. **Authenticated in-place `.vault` header re-wrapping:** When changing Brute-Force resistance on an existing vault, the app prompts for the current password/PIN (biometrics disabled), unwraps `VMK` and `KEK` under the old KDF on a background thread, and atomically re-wraps them under the newly calibrated PDK (`rewrapVaultHeaderWithCurrentKdf`). No weaker fallback wrapper is ever stored.
 4. **Critical hardening applied alongside the decision:**
-   - Expanded `.vault` header validation from `1..10` to `1..256` iterations in both Android (`CryptoManagerCredentials.kt`) and `cipher_vault.py`.
+   - Expanded `.vault` header validation from `1..10` to `1..256` iterations in both Android (`CryptoManagerCredentials.kt`) and `calypso_vault.py`.
    - Caught `OutOfMemoryError` (`java.lang.Error`) on unlock/setup/rewrap paths so allocation failure never crashes the app.
    - Moved all Argon2id work off the Android UI thread (`VaultAuthInputHelper.unlockWithSecretAsync` and `VaultSecurityDialog`) to prevent 5-second ANRs during slow unlocks.
    - Updated `completeBiometricUnlock` in `CryptoManagerBiometrics.kt` to unwrap `unlockedKek` from `.vault` using the biometric-unwrapped `VMK`, and guarded `setupOrUpdateCredentialsInternal` against replacing an unloaded `KEK`.

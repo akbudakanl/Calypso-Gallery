@@ -104,7 +104,7 @@ if "%HAS_ADB%"=="1" (
     echo [Sandbox] Python network audit hook active ^(OS-level bwrap sandbox is Linux-only^).
 )
 
-%PYTHON_CMD% "%SCRIPT_DIR%\cipher_vault.py" %*
+%PYTHON_CMD% "%SCRIPT_DIR%\calypso_vault.py" %*
 set "EXIT_CODE=%errorlevel%"
 
 if "%~1"=="" (

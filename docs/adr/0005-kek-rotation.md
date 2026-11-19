@@ -59,7 +59,7 @@ parola / PIN ──► Argon2id(salt, params) ──► PDK   (.vault içinde VM
 Bireysel kullanıcılar için KEK rotasyonunun getirdiği mühendislik ve operasyonel riskler, sağladığı marjinal kurumsal uyumluluk faydasından çok daha büyüktür:
 1. **Toplu Yeniden Yazma Sırasında Veri ve Küçük Resim (Thumbnail) Kaybı Riski:** Kasadaki tüm `.bin` dosyalarının başlıklarının yerinde (in-place) yeniden yazılması sırasında pil bitmesi, OS tarafından sürecin öldürülmesi (`SIGKILL`), depolama dolması veya OTG bağlantısının kopması yarım kalmış durumlar yaratır; ayrıca başlıktaki gömülü küçük resim (`thumbnail`) baytlarının yanlışlıkla düşürülmesi riski taşır.
 2. **Metadata (`FVSTR:`) Kayıtlarının Okunamaz Hale Gelme Riski:** Mevcut `decryptStringFromVault` implementasyonu kayıttaki `keyId` alanını okuyup kullanmaz ve her zaman aktif KEK'e (`activeKek()`) başvurur. Rotasyondan sonra eski KEK ile yazılmış Room SQLite gizli sanal albüm adları, `JSON/` dışa aktarımları, geri yükleme manifestleri ve resume kayıtları çözülemez hale gelir.
-3. **Harici Disk / Masaüstü CLI (`cipher_vault.py`) "Split-Brain" Riski:** Kullanıcı **"Sadece `.vault` dosyası içeren klasörü dışa aktar"** seçeneğiyle PC'deki Python CLI aracını kullanıyorsa, telefonda KEK rotasyonu yapıldığı anda PC'deki/harici diskteki eski `.vault` dosyası yeni `keyId` ile oluşturulan `.bin` dosyalarını açamaz; kullanıcı güncel `.vault` başlığını dışa aktarmayı unutursa senkronizasyon sessizce bozulur.
+3. **Harici Disk / Masaüstü CLI (`calypso_vault.py`) "Split-Brain" Riski:** Kullanıcı **"Sadece `.vault` dosyası içeren klasörü dışa aktar"** seçeneğiyle PC'deki Python CLI aracını kullanıyorsa, telefonda KEK rotasyonu yapıldığı anda PC'deki/harici diskteki eski `.vault` dosyası yeni `keyId` ile oluşturulan `.bin` dosyalarını açamaz; kullanıcı güncel `.vault` başlığını dışa aktarmayı unutursa senkronizasyon sessizce bozulur.
 
 ---
 
@@ -79,7 +79,7 @@ Bireysel kullanıcılar için KEK rotasyonunun getirdiği mühendislik ve operas
 Bu özellik bireysel kullanımdan ziyade **kurumsal uyumluluk** (ör. PCI DSS 3.6/12.3, ISO 27001 A.8.24, NIST SP 800-57 anahtar ömrü politikaları veya personel/cihaz devri sonrası zorunlu anahtar yenileme) sebebiyle gündeme gelirse aşağıdaki mimari uygulanmalıdır:
 
 ### 4.1. Çoklu Keyring ve `kekFor(keyId)` Altyapısı (Android + Python CLI)
-- `CryptoManager` ve `tools/fossify-cipher-cli/cipher_vault.py` tek bir `unlockedKek` yerine bellek içi anahtar halkası haritası (`unlockedKeyring: Map<Short, ByteArray>`) ve `activeKeyId: Short` tutmalıdır.
+- `CryptoManager` ve `tools/calypso-cli/calypso_vault.py` tek bir `unlockedKek` yerine bellek içi anahtar halkası haritası (`unlockedKeyring: Map<Short, ByteArray>`) ve `activeKeyId: Short` tutmalıdır.
 - `.vault` okuyucuları `keyringLen == 34` ise tekil anahtar olarak yüklemeli; `keyringLen > 34` ise `keyCount` kadar `(keyId, KEK)` çiftini okumalıdır.
 - **Kritik Ön Koşul (`FVSTR:`):** `decryptStringFromVault` kayıttaki `keyId` değerini okuyarak doğrudan `kekFor(keyId)` ile anahtar türetmelidir; yeni yazılan her `FVSTR:` kaydı `activeKeyId` ve `activeKek()` kullanmalıdır.
 - **Kritik Ön Koşul (`VaultContainer`):** `readMetadata(file)` başlıktaki `keyId` alanına göre `kekFor(keyId)` seçmeli; yalnızca yeni/güncellenmiş başlıklar `activeKeyId` ile yazılmalıdır.
@@ -113,4 +113,4 @@ Kurumsal sürümde KEK rotasyonu açılmadan önce şu testlerin tamamı geçmel
 - Gömülü küçük resimler (`thumbnailBytes`) rotasyon sonrası %100 korunur.
 - Kesinti simülasyonu: `N` dosya dönüştürüldükten sonra süreç öldürülür (`SIGKILL`), yeniden başlatmada kalan dosyalar kaldığı yerden tamamlanır ve hiçbir dosya okunamaz kalmaz.
 - Eşzamanlı silme/taşıma/şifreleme istekleri rotasyon kilidi tarafından güvenli şekilde engellenir veya sıraya alınır.
-- Android ↔ Python CLI (`cipher_vault.py`) çoklu keyring okuma/yazma uyumluluğu testlerle doğrulanır.
+- Android ↔ Python CLI (`calypso_vault.py`) çoklu keyring okuma/yazma uyumluluğu testlerle doğrulanır.

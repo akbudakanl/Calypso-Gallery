@@ -6,7 +6,7 @@ DEK with RAW output prefix); these tests verify byte layout, the exact
 expected-ciphertext-size formula, tamper detection and the container header.
 
 The decryption helpers below are test-only and intentionally kept out of
-cipher_vault.py (which is encrypt-only).
+calypso_vault.py (which is encrypt-only).
 """
 
 import io
@@ -21,7 +21,7 @@ from cryptography.exceptions import InvalidTag
 
 import tink
 
-import cipher_vault as cv
+import calypso_vault as cv
 
 
 def reference_expected_ciphertext_size(plaintext_size: int) -> int:
