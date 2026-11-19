@@ -123,6 +123,10 @@ class SettingsActivity : SimpleActivity() {
         )
         setupSettingItems()
         registerVaultSectionScrollRecheck()
+        // Returning from Appearance recreates that activity but not this one, so the search bar
+        // colors and TextViews inflated with the previous font would otherwise stay stale.
+        refreshSettingsSearchColors()
+        applyFontToViewRecursively(binding.root)
     }
 
     override fun onPause() {
@@ -249,6 +253,10 @@ class SettingsActivity : SimpleActivity() {
                 applySettingsSearch()
             }
         })
+        refreshSettingsSearchColors()
+    }
+
+    private fun refreshSettingsSearchColors() {
         binding.settingsSearch.setBackgroundColor(resolveCalypsoSearchBarFillColor(this))
         binding.settingsSearch.setTextColor(getProperTextColor())
         binding.settingsSearch.setHintTextColor(
