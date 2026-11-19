@@ -902,9 +902,13 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getString(VAULT_WRAPPED_KEY_DATA, "")!!
         set(value) = prefs.edit().putString(VAULT_WRAPPED_KEY_DATA, value).apply()
 
-        var isVaultBiometricEnabled: Boolean
+    var isVaultBiometricEnabled: Boolean
         get() = prefs.getBoolean(IS_VAULT_BIOMETRIC_ENABLED, false)
         set(value) = prefs.edit().putBoolean(IS_VAULT_BIOMETRIC_ENABLED, value).apply()
+
+    var autoBiometricPromptOnVaultReturn: Boolean
+        get() = prefs.getBoolean(AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN, false)
+        set(value) = prefs.edit().putBoolean(AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN, value).apply()
 
     var vaultBiometricWrappedBundle: String
         get() = prefs.getString(VAULT_BIOMETRIC_WRAPPED_BUNDLE, "")!!

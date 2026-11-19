@@ -7,6 +7,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.BiometricCipherResult
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.EncryptedFileMetadata
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
@@ -14,6 +15,7 @@ import org.fossify.gallery.helpers.VaultLockPolicy
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.appendPendingWipe
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
+import org.fossify.gallery.helpers.classifyBiometricCipherFailure
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.emptyVaultRecycleBin
 import org.fossify.gallery.helpers.encryptStreamToDirectory
@@ -447,6 +449,83 @@ class VaultLockPolicyTest {
         assertTrue(CryptoManager.secureWipeAndDeleteFile(targetC, testContext))
         assertFalse(targetC.exists())
         assertFalse(journalFile.exists())
+    }
+
+    @Test
+    fun classifyBiometricCipherFailureDistinguishesInvalidatedFromLockedAndTransient() {
+        class FakeKeyInvalidated : Exception("invalidated")
+        class FakeUserNotAuth : Exception("not auth")
+
+        val directInvalidated = classifyBiometricCipherFailure(
+            error = FakeKeyInvalidated(),
+            deviceLocked = false,
+            isKeyInvalidatedError = { it is FakeKeyInvalidated },
+            isUserNotAuthenticatedError = { it is FakeUserNotAuth }
+        )
+        assertEquals(BiometricCipherResult.KeyInvalidated, directInvalidated)
+
+        val wrappedInvalidated = classifyBiometricCipherFailure(
+            error = RuntimeException("wrapper", FakeKeyInvalidated()),
+            deviceLocked = true,
+            isKeyInvalidatedError = { it is FakeKeyInvalidated },
+            isUserNotAuthenticatedError = { it is FakeUserNotAuth }
+        )
+        assertEquals(BiometricCipherResult.KeyInvalidated, wrappedInvalidated)
+
+        val userNotAuthAfterUnlock = classifyBiometricCipherFailure(
+            error = FakeUserNotAuth(),
+            deviceLocked = false,
+            isKeyInvalidatedError = { it is FakeKeyInvalidated },
+            isUserNotAuthenticatedError = { it is FakeUserNotAuth }
+        )
+        assertEquals(BiometricCipherResult.DeviceLocked, userNotAuthAfterUnlock)
+
+        val lockedTransient = classifyBiometricCipherFailure(
+            error = IllegalStateException("Keystore operation failed"),
+            deviceLocked = true,
+            isKeyInvalidatedError = { it is FakeKeyInvalidated },
+            isUserNotAuthenticatedError = { it is FakeUserNotAuth }
+        )
+        assertEquals(BiometricCipherResult.DeviceLocked, lockedTransient)
+
+        val strongBoxBusy = classifyBiometricCipherFailure(
+            error = IllegalStateException("StrongBox backend busy"),
+            deviceLocked = false,
+            isKeyInvalidatedError = { it is FakeKeyInvalidated },
+            isUserNotAuthenticatedError = { it is FakeUserNotAuth }
+        )
+        assertEquals(BiometricCipherResult.TransientError, strongBoxBusy)
+    }
+
+    @Test
+    fun vaultLockReturnDefaultsToManualBiometricAndExposesBackExitButton() {
+        assertFalse(
+            "autoBiometricPromptOnVaultReturn must default to false for security",
+            testContext.config.autoBiometricPromptOnVaultReturn
+        )
+        testContext.config.autoBiometricPromptOnVaultReturn = true
+        assertTrue(testContext.config.autoBiometricPromptOnVaultReturn)
+
+        val lockActivityText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/VaultLockActivity.kt").readText()
+        assertTrue(
+            "VaultLockActivity must gate auto biometric prompt behind config, window focus, and unlocked device",
+            lockActivityText.contains("config.autoBiometricPromptOnVaultReturn") &&
+                lockActivityText.contains("hasWindowFocus()") &&
+                lockActivityText.contains("CryptoManager.isDeviceLocked(this)")
+        )
+        assertTrue(
+            "VaultLockActivity must expose a top-left back button to exit back to the normal gallery",
+            lockActivityText.contains("vaultLockBackBtn") && lockActivityText.contains("exitVaultToNormalGallery")
+        )
+
+        val lockLayoutText = locateAppFile("src/main/res/layout/activity_vault_lock.xml").readText()
+        assertTrue(lockLayoutText.contains("vault_lock_back_btn"))
+
+        val resumeText = locateAppFile("src/main/kotlin/org/fossify/gallery/extensions/VaultResume.kt").readText()
+        assertTrue(
+            "VaultResume must respect config.autoBiometricPromptOnVaultReturn",
+            resumeText.contains("autoPromptBiometrics = config.autoBiometricPromptOnVaultReturn")
+        )
     }
 
     private fun locateAppFile(relPath: String): File {

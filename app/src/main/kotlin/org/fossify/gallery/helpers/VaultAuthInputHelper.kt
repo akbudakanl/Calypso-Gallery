@@ -36,6 +36,8 @@ class VaultAuthInputHelper(
     private val currentPin = CharArray(16)
     private var pinLength = 0
     private var isBusy = false
+    private var biometricKeyInvalidated = false
+    private var biometricPromptInFlight = false
 
     fun setInputsEnabled(enabled: Boolean) {
         val pinButtons = listOf(
@@ -213,39 +215,85 @@ class VaultAuthInputHelper(
     }
 
     fun setupBiometricButton(enabled: Boolean, onAuthenticated: () -> Unit) {
+        biometricKeyInvalidated = false
         if (enabled && CryptoManager.canUnlockWithBiometrics(activity)) {
             binding.vaultBiometricBtn.beVisible()
             binding.vaultBiometricBtn.setOnClickListener {
-                promptBiometricUnlock(onAuthenticated)
+                promptBiometricUnlock(isAutoTrigger = false, onAuthenticated = onAuthenticated)
             }
         } else {
             binding.vaultBiometricBtn.beGone()
         }
     }
 
-    fun promptBiometricUnlock(onAuthenticated: () -> Unit) {
-        if (!CryptoManager.canUnlockWithBiometrics(activity)) return
-        val cipher = CryptoManager.getBiometricDecryptCipher(activity)
-        if (cipher == null) {
-            if (activity.config.isVaultBiometricEnabled) {
-                activity.toast(R.string.biometric_key_invalidated)
+    fun resetBiometricPromptState() {
+        biometricPromptInFlight = false
+    }
+
+    fun promptBiometricUnlock(
+        isAutoTrigger: Boolean = false,
+        onAuthenticated: () -> Unit
+    ) {
+        if (biometricPromptInFlight || activity.isFinishing || activity.isDestroyed) return
+        if (isAutoTrigger && CryptoManager.isDeviceLocked(activity)) return
+
+        if (biometricKeyInvalidated) {
+            if (!isAutoTrigger) {
+                showInvalidatedBiometricPrompt()
             }
-            binding.vaultBiometricBtn.beGone()
             return
         }
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        if (!CryptoManager.canUnlockWithBiometrics(activity)) return
+
+        var cipherResult = CryptoManager.getBiometricDecryptCipherResult(activity)
+        if (!isAutoTrigger && cipherResult == BiometricCipherResult.TransientError) {
+            cipherResult = CryptoManager.getBiometricDecryptCipherResult(activity)
+        }
+
+        when (cipherResult) {
+            is BiometricCipherResult.Ready -> {
+                showCryptoBiometricPrompt(cipherResult.cipher, onAuthenticated)
+            }
+            BiometricCipherResult.KeyInvalidated -> {
+                biometricKeyInvalidated = true
+                if (isAutoTrigger) {
+                    activity.toast(R.string.biometric_key_invalidated)
+                } else {
+                    showInvalidatedBiometricPrompt()
+                }
+            }
+            BiometricCipherResult.DeviceLocked,
+            BiometricCipherResult.TransientError -> {
+                // Keep biometric key and button intact so the user can retry once Keystore/keyguard settles.
+                if (!isAutoTrigger) {
+                    activity.toast(org.fossify.commons.R.string.an_error_occurred)
+                }
+            }
+            BiometricCipherResult.Unavailable -> Unit
+        }
+    }
+
+    private fun buildBiometricPromptInfo(): BiometricPrompt.PromptInfo {
+        return BiometricPrompt.PromptInfo.Builder()
             .setTitle(activity.getString(R.string.biometric_unlock_vault))
             .setSubtitle(activity.getString(R.string.biometric_unlock_prompt))
             .setNegativeButtonText(activity.getString(R.string.use_password_or_pin))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
+    }
 
+    private fun showCryptoBiometricPrompt(
+        cipher: javax.crypto.Cipher,
+        onAuthenticated: () -> Unit
+    ) {
+        val promptInfo = buildBiometricPromptInfo()
         val biometricPrompt = BiometricPrompt(
             activity,
             ContextCompat.getMainExecutor(activity),
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    biometricPromptInFlight = false
                     val authCipher = result.cryptoObject?.cipher
                     if (authCipher != null && CryptoManager.completeBiometricUnlock(activity, authCipher)) {
                         activity.applyVaultScreenProtection(true)
@@ -257,7 +305,8 @@ class VaultAuthInputHelper(
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    // User stays on PIN/password screen
+                    biometricPromptInFlight = false
+                    // User stays on PIN/password screen and can retry via the biometric button
                 }
 
                 override fun onAuthenticationFailed() {
@@ -265,7 +314,47 @@ class VaultAuthInputHelper(
                 }
             }
         )
-        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+        biometricPromptInFlight = true
+        try {
+            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+        } catch (_: Throwable) {
+            biometricPromptInFlight = false
+            activity.toast(org.fossify.commons.R.string.an_error_occurred)
+        }
+    }
+
+    private fun showInvalidatedBiometricPrompt() {
+        if (!CryptoManager.isBiometricHardwareAvailable(activity)) {
+            activity.toast(R.string.biometric_key_invalidated)
+            return
+        }
+        val promptInfo = buildBiometricPromptInfo()
+        val biometricPrompt = BiometricPrompt(
+            activity,
+            ContextCompat.getMainExecutor(activity),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    biometricPromptInFlight = false
+                    // The hardware key was permanently invalidated by Android; never unlock without a valid CryptoObject.
+                    activity.toast(R.string.biometric_key_invalidated)
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    biometricPromptInFlight = false
+                }
+
+                override fun onAuthenticationFailed() {
+                    // Fingerprint unrecognized; BiometricPrompt allows retry
+                }
+            }
+        )
+        biometricPromptInFlight = true
+        try {
+            biometricPrompt.authenticate(promptInfo)
+        } catch (_: Throwable) {
+            biometricPromptInFlight = false
+            activity.toast(R.string.biometric_key_invalidated)
+        }
     }
 
     fun unlockWithSecretAsync(

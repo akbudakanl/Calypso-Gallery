@@ -770,6 +770,7 @@ class SettingsActivity : SimpleActivity() {
 
         // 3) Şifreli kasaya biyometrik ile giriş (sadece bu kaydırılabilir)
         binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
+        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(hasStoragePermission && vaultExists && config.isVaultBiometricEnabled)
 
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
@@ -787,6 +788,7 @@ class SettingsActivity : SimpleActivity() {
         setupSyncVault()
         setupChangeVaultPassword()
         setupVaultBiometric()
+        setupVaultBiometricAutoReturn()
         setupBlockVaultScreenshots()
         setupEmptyVault()
     }
@@ -1050,11 +1052,24 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupVaultBiometricAutoReturn() {
+        binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
+        binding.settingsVaultBiometricAutoReturnHolder.setOnClickListener {
+            if (!doesVaultExist() || !config.isVaultBiometricEnabled) return@setOnClickListener
+            binding.settingsVaultBiometricAutoReturn.toggle()
+            config.autoBiometricPromptOnVaultReturn = binding.settingsVaultBiometricAutoReturn.isChecked
+        }
+    }
+
     private fun updateVaultBiometricSwitch() {
         val vaultExists = doesVaultExist()
+        val hasStoragePermission = !isRPlus() || isExternalStorageManager()
+        val biometricEnabled = vaultExists && config.isVaultBiometricEnabled
         binding.settingsVaultBiometric.isEnabled = vaultExists
         binding.settingsVaultBiometricHolder.alpha = if (vaultExists) 1.0f else 0.4f
-        binding.settingsVaultBiometric.isChecked = vaultExists && config.isVaultBiometricEnabled
+        binding.settingsVaultBiometric.isChecked = biometricEnabled
+        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(hasStoragePermission && biometricEnabled)
+        binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
     }
 
     private fun showBiometricEnrollmentPrompt(lockVaultAfter: Boolean) {
@@ -1838,6 +1853,7 @@ class SettingsActivity : SimpleActivity() {
                 put(EXCLUDED_FOLDERS, TextUtils.join(",", config.excludedFolders))
                 put(SHOW_HIDDEN_MEDIA, config.showHiddenMedia)
                 put(BLOCK_VAULT_SCREENSHOTS, config.blockVaultScreenshots)
+                put(AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN, config.autoBiometricPromptOnVaultReturn)
                 put(UNLOCK_TARGET_MS, config.unlockTargetMs)
                 put(ARGON2_CALIBRATION_CLAMPED, config.argon2CalibrationClamped)
                 put(LAST_CALIBRATED_MEMORY_KB, config.lastCalibratedMemoryKb)
@@ -2003,6 +2019,7 @@ class SettingsActivity : SimpleActivity() {
                 EXCLUDED_FOLDERS -> config.addExcludedFolders(value.toStringSet())
                 SHOW_HIDDEN_MEDIA -> config.showHiddenMedia = value.toBoolean()
                 BLOCK_VAULT_SCREENSHOTS -> config.blockVaultScreenshots = value.toBoolean()
+                AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN -> config.autoBiometricPromptOnVaultReturn = value.toBoolean()
                 UNLOCK_TARGET_MS -> config.unlockTargetMs = value.toInt()
                 ARGON2_CALIBRATION_CLAMPED -> config.argon2CalibrationClamped = value.toBoolean()
                 LAST_CALIBRATED_MEMORY_KB -> config.lastCalibratedMemoryKb = value.toInt()

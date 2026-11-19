@@ -117,6 +117,28 @@ object ReferenceBackupManager {
         }
     }
 
+    internal fun resolveRestoredFavoriteIdentity(
+        entry: FavoriteBackup,
+        diskSize: Long,
+        diskLastModified: Long,
+        fallbackCapture: () -> MediaIdentity
+    ): MediaIdentity {
+        val backupSize = entry.fileSize ?: 0L
+        val backupFingerprint = entry.fingerprint.orEmpty()
+        if (backupFingerprint.isNotEmpty() && backupSize > 0L && diskSize == backupSize) {
+            return MediaIdentity(
+                mediaStoreId = entry.mediaStoreId ?: 0L,
+                size = backupSize,
+                lastModified = (entry.lastModified ?: 0L).takeIf { it > 0L } ?: diskLastModified,
+                fingerprint = backupFingerprint,
+                folderInode = entry.folderInode ?: 0L,
+                folderSignature = entry.folderSignature ?: "",
+                capturedAtSec = entry.capturedAtSec ?: 0L
+            )
+        }
+        return fallbackCapture()
+    }
+
     /**
      * Restores the favorites from the backup file. Only entries whose file still exists are
      * restored, so a stale backup cannot resurrect deleted files.
@@ -128,11 +150,11 @@ object ReferenceBackupManager {
             return 0
         }
 
-        val file = getFavoritesBackupFile().takeIf { it.isFile }
+        val backupFile = getFavoritesBackupFile().takeIf { it.isFile }
             ?: return 0
 
         return try {
-            val content = file.readText(Charsets.UTF_8).trim()
+            val content = backupFile.readText(Charsets.UTF_8).trim()
             if (content.isEmpty()) {
                 return 0
             }
@@ -140,19 +162,20 @@ object ReferenceBackupManager {
             val backup = Gson().fromJson(content, FavoritesBackup::class.java) ?: return 0
             val entries = backup.favorites ?: return 0
 
+            val folderCaptureSession = FolderIdentity.CaptureSession()
             var restored = 0
             for (entry in entries) {
                 val path = entry.fullPath ?: continue
                 val isEncryptedDormant = entry.state == ITEM_STATE_ENCRYPTED
-                if (!isEncryptedDormant && !File(path).exists()) {
+                val targetFile = File(path)
+                if (!isEncryptedDormant && !targetFile.isFile) {
                     continue
                 }
 
                 try {
                     val existing = context.favoritesDB.getFavorite(path)
                     if (existing == null) {
-                        val file = File(path)
-                        val identity = if (isEncryptedDormant || !file.isFile) {
+                        val identity = if (isEncryptedDormant) {
                             MediaIdentity(
                                 mediaStoreId = entry.mediaStoreId ?: 0L,
                                 size = entry.fileSize ?: 0L,
@@ -163,7 +186,18 @@ object ReferenceBackupManager {
                                 capturedAtSec = entry.capturedAtSec ?: 0L
                             )
                         } else {
-                            MediaIdentity.ofWithFolder(context, file, entry.mediaStoreId ?: 0L)
+                            resolveRestoredFavoriteIdentity(
+                                entry = entry,
+                                diskSize = targetFile.length(),
+                                diskLastModified = targetFile.lastModified()
+                            ) {
+                                MediaIdentity.ofWithFolder(
+                                    context = context,
+                                    file = targetFile,
+                                    mediaStoreId = entry.mediaStoreId ?: 0L,
+                                    captureSession = folderCaptureSession
+                                )
+                            }
                         }
                         context.favoritesDB.insert(
                             org.fossify.gallery.models.Favorite(

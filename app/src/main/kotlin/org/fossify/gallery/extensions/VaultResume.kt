@@ -29,7 +29,8 @@ fun BaseSimpleActivity.promptVaultUnlock(onResult: (success: Boolean) -> Unit) {
         activity = this,
         requiredHash = config.hiddenPasswordHash,
         showTabIndex = initialType,
-        minimalist = true
+        minimalist = true,
+        autoPromptBiometrics = config.autoBiometricPromptOnVaultReturn
     ) { _, type, success ->
         if (success) {
             config.hiddenProtectionType = type

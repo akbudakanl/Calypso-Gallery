@@ -92,6 +92,7 @@ import org.fossify.gallery.helpers.GROUP_BY_DATE_TAKEN_DAILY
 import org.fossify.gallery.helpers.GROUP_BY_DATE_TAKEN_MONTHLY
 import org.fossify.gallery.helpers.GROUP_BY_LAST_MODIFIED_DAILY
 import org.fossify.gallery.helpers.GROUP_BY_LAST_MODIFIED_MONTHLY
+import org.fossify.gallery.helpers.GROUP_BY_NONE
 import org.fossify.gallery.helpers.IsoTypeReader
 import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.LOCATION_OTG
@@ -1499,48 +1500,52 @@ fun Context.getCachedDirectories(
         val shouldShowHidden = config.shouldShowHidden || forceShowHidden
         val showExcludedInScope = !isSecretVaultView && (config.temporarilyShowExcluded || forceShowExcluded)
         val showHiddenFoldersInScope = !isSecretVaultView && (config.temporarilyShowHiddenFolders || forceShowHidden)
-        val excludedPaths = if (showExcludedInScope) {
-            HashSet()
+        var filteredDirectories = if (directories.isEmpty()) {
+            ArrayList()
         } else {
-            config.excludedFolders
-        }
-
-        val includedPaths = config.includedFolders
-
-        val folderNoMediaStatuses = HashMap<String, Boolean>()
-        val noMediaFolders = getNoMediaFoldersSync()
-        noMediaFolders.forEach { folder ->
-            folderNoMediaStatuses["$folder/$NOMEDIA"] = true
-        }
-
-        var filteredDirectories = directories.filter {
-            if (CryptoManager.isEncryptedFolderPath(this, it.path)) {
-                shouldShowHidden && CryptoManager.isVaultUnlocked
+            val excludedPaths = if (showExcludedInScope) {
+                HashSet()
             } else {
-                it.path.shouldFolderBeVisible(
-                    excludedPaths = excludedPaths,
-                    includedPaths = includedPaths,
-                    showHidden = showHiddenFoldersInScope,
-                    folderNoMediaStatuses = folderNoMediaStatuses
-                ) { path, hasNoMedia ->
-                    folderNoMediaStatuses[path] = hasNoMedia
-                }
+                config.excludedFolders
             }
-        } as ArrayList<Directory>
 
-        val filterMedia = config.filterMedia
-        filteredDirectories = (when {
-            getVideosOnly -> filteredDirectories.filter { it.types and TYPE_VIDEOS != 0 }
-            getImagesOnly -> filteredDirectories.filter { it.types and TYPE_IMAGES != 0 }
-            else -> filteredDirectories.filter {
-                (filterMedia and TYPE_IMAGES != 0 && it.types and TYPE_IMAGES != 0)
-                        || (filterMedia and TYPE_VIDEOS != 0 && it.types and TYPE_VIDEOS != 0)
-                        || (filterMedia and TYPE_GIFS != 0 && it.types and TYPE_GIFS != 0)
-                        || (filterMedia and TYPE_RAWS != 0 && it.types and TYPE_RAWS != 0)
-                        || (filterMedia and TYPE_SVGS != 0 && it.types and TYPE_SVGS != 0)
-                        || (filterMedia and TYPE_PORTRAITS != 0 && it.types and TYPE_PORTRAITS != 0)
+            val includedPaths = config.includedFolders
+
+            val folderNoMediaStatuses = HashMap<String, Boolean>()
+            val noMediaFolders = getNoMediaFoldersSync()
+            noMediaFolders.forEach { folder ->
+                folderNoMediaStatuses["$folder/$NOMEDIA"] = true
             }
-        }) as ArrayList<Directory>
+
+            val visibleDirectories = directories.filter {
+                if (CryptoManager.isEncryptedFolderPath(this, it.path)) {
+                    shouldShowHidden && CryptoManager.isVaultUnlocked
+                } else {
+                    it.path.shouldFolderBeVisible(
+                        excludedPaths = excludedPaths,
+                        includedPaths = includedPaths,
+                        showHidden = showHiddenFoldersInScope,
+                        folderNoMediaStatuses = folderNoMediaStatuses
+                    ) { path, hasNoMedia ->
+                        folderNoMediaStatuses[path] = hasNoMedia
+                    }
+                }
+            } as ArrayList<Directory>
+
+            val filterMedia = config.filterMedia
+            (when {
+                getVideosOnly -> visibleDirectories.filter { it.types and TYPE_VIDEOS != 0 }
+                getImagesOnly -> visibleDirectories.filter { it.types and TYPE_IMAGES != 0 }
+                else -> visibleDirectories.filter {
+                    (filterMedia and TYPE_IMAGES != 0 && it.types and TYPE_IMAGES != 0)
+                            || (filterMedia and TYPE_VIDEOS != 0 && it.types and TYPE_VIDEOS != 0)
+                            || (filterMedia and TYPE_GIFS != 0 && it.types and TYPE_GIFS != 0)
+                            || (filterMedia and TYPE_RAWS != 0 && it.types and TYPE_RAWS != 0)
+                            || (filterMedia and TYPE_SVGS != 0 && it.types and TYPE_SVGS != 0)
+                            || (filterMedia and TYPE_PORTRAITS != 0 && it.types and TYPE_PORTRAITS != 0)
+                }
+            }) as ArrayList<Directory>
+        }
 
         if (shouldShowHidden || showHiddenFoldersInScope) {
             val hiddenString = resources.getString(R.string.hidden)
@@ -1595,7 +1600,9 @@ fun Context.getCachedDirectories(
         }
 
         callback(result)
-        removeInvalidDBDirectories(filteredDirectories)
+        if (filteredDirectories.isNotEmpty()) {
+            removeInvalidDBDirectories(filteredDirectories)
+        }
     }
 }
 
@@ -2160,7 +2167,13 @@ fun Context.createDirectoryFromMedia(
     noMediaFolders: ArrayList<String>,
 ): Directory {
     val OTGPath = config.OTGPath
-    val grouped = MediaFetcher(this).groupMedia(curMedia, path)
+    val pathToCheck = if (path.isEmpty()) SHOW_ALL else path
+    val currentGrouping = config.getFolderGrouping(pathToCheck)
+    val sortedMedia: List<Medium> = if (currentGrouping and GROUP_BY_NONE == 0 && !config.scrollHorizontally) {
+        MediaFetcher(this).groupMedia(curMedia, path).filterIsInstance<Medium>()
+    } else {
+        curMedia
+    }
     var thumbnail: String? = null
 
     albumCovers.forEach {
@@ -2170,8 +2183,18 @@ fun Context.createDirectoryFromMedia(
     }
 
     if (thumbnail == null) {
-        val sortedMedia = grouped.filter { it is Medium }.toMutableList() as ArrayList<Medium>
-        thumbnail = sortedMedia.firstOrNull { getDoesFilePathExist(it.path, OTGPath) }?.path ?: ""
+        val folderReachable = sortedMedia.isNotEmpty() && (
+            isPathOnOTG(path) ||
+                path == FAVORITES ||
+                path == RECYCLE_BIN ||
+                path.isVirtualAlbumPath() ||
+                getDoesFilePathExist(path, OTGPath)
+            )
+        thumbnail = if (folderReachable) {
+            sortedMedia.firstOrNull { getDoesFilePathExist(it.path, OTGPath) }?.path ?: ""
+        } else {
+            ""
+        }
     }
 
     if (config.OTGPath.isNotEmpty() && thumbnail!!.startsWith(config.OTGPath)) {

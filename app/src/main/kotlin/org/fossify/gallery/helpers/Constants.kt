@@ -160,6 +160,7 @@ const val PROTECTION_PASSWORD = 3
 const val VAULT_WRAPPED_KEY_DATA = "vault_wrapped_key_data"
 const val VAULT_ROOT_PATH = "vault_root_path"
 const val IS_VAULT_BIOMETRIC_ENABLED = "is_vault_biometric_enabled"
+const val AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN = "auto_biometric_prompt_on_vault_return"
 const val VAULT_BIOMETRIC_WRAPPED_BUNDLE = "vault_biometric_wrapped_bundle"
 const val VAULT_HEADER_FILE = ".vault"
 const val VAULT_SUBFOLDER_META_FILE = ".meta"
