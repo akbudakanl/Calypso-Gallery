@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -126,7 +127,7 @@ class SettingsActivity : SimpleActivity() {
         // Returning from Appearance recreates that activity but not this one, so the search bar
         // colors and TextViews inflated with the previous font would otherwise stay stale.
         refreshSettingsSearchColors()
-        applyFontToViewRecursively(binding.root)
+        refreshSettingsFont()
     }
 
     override fun onPause() {
@@ -254,6 +255,31 @@ class SettingsActivity : SimpleActivity() {
             }
         })
         refreshSettingsSearchColors()
+    }
+
+    /**
+     * Commons' applyFontToTextView returns early for Typeface.DEFAULT, so returning from a custom
+     * font to the system font would leave the old typeface on already inflated views. Apply the
+     * typeface explicitly here, preserving each view's bold/italic style.
+     */
+    private fun refreshSettingsFont() {
+        val typeface = if (config.fontType == FONT_TYPE_SYSTEM_DEFAULT && config.fontName.isEmpty()) {
+            Typeface.DEFAULT
+        } else {
+            FontHelper.getTypeface(this, config.fontType, config.fontName) ?: Typeface.DEFAULT
+        }
+        fun apply(view: View) {
+            if (view is TextView) {
+                val style = view.typeface?.style ?: Typeface.NORMAL
+                view.typeface = Typeface.create(typeface, style)
+            }
+            if (view is ViewGroup) {
+                for (i in 0 until view.childCount) {
+                    apply(view.getChildAt(i))
+                }
+            }
+        }
+        apply(binding.root)
     }
 
     private fun refreshSettingsSearchColors() {
