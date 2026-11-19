@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="license_fossify_commons_title" translatable="false">Fossify Commons</string>
+    <string name="license_fossify_commons_text" translatable="false">GNU General Public License v3.0 — Copyright © Fossify Commons contributors.</string>
+    <string name="license_fossify_commons_url" translatable="false">https://github.com/FossifyOrg/Commons</string>
+</resources>

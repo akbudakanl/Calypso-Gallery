@@ -733,3 +733,14 @@ Added/overridden in `values-de/strings.xml` for Settings section headers, font p
 | 6 | `font_system_default` | System default | Systemvorgabe |
 | 7 | `font_monospace` | Monospace | Monospace |
 | 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Ordner- & Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist. |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for German, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-de/strings.xml`.
+
+| Key (`name`) | English source | German | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | In %s suchen | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | Dialog zur biometrischen ID-Verifizierung öffnen | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | Authentifizieren | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | Verschlüsselter Tresor wird entsperrt… | App-owned key; consistent with `Tresor` terminology |

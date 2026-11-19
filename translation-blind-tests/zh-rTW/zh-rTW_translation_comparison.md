@@ -782,3 +782,14 @@ Added/overridden in `values-zh-rTW/strings.xml` for Settings section headers, fo
 | 6 | `font_system_default` | System default | 系統預設 |
 | 7 | `font_monospace` | Monospace | 等寬 |
 | 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | 資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。 |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for Traditional Chinese, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-zh-rTW/strings.xml`.
+
+| Key (`name`) | English source | Traditional Chinese | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | 在 %s 中搜尋 | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | 開啟生物辨識 ID 驗證對話框 | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | 驗證 | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | 正在解鎖加密保險箱… | App-owned key; consistent with existing vault terminology |

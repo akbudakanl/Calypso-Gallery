@@ -413,6 +413,7 @@
     <string name="create_encrypted_vault">Şifrəli seyf yarat</string>
     <string name="change_encrypted_vault_password">Şifrəli seyfin şifrəsini dəyiş</string>
     <string name="biometric_access_to_encrypted_vault">Şifrəli seyfə biometrik ilə giriş</string>
+    <string name="auto_biometric_prompt_on_vault_return">Tətbiqə qayıdarkən biometrik doğrulamanı avtomatik aç</string>
     <string name="block_vault_screenshots">Gizli seyfdə ekran görüntüsü çəkməyi qadağan et</string>
     <string name="empty_encrypted_vault">Şifrəli seyfi boşalt</string>
     <string name="enter_new_pin">Yeni PIN daxil edin</string>
@@ -616,4 +617,10 @@
     <string name="font_monospace">Monospace</string>
     <string name="app_font">Tətbiq şrifti</string>
     <string name="select_font_file">Şrift faylını seçin…</string>
+    <!-- fossify-commons UI overrides missing from the library's Azerbaijani resources -->
+    <string name="search_in_placeholder">%s daxilində axtar</string>
+    <string name="open_biometric_dialog">Biometrik şəxsiyyət doğrulama pəncərəsini aç</string>
+    <string name="authenticate">Doğrula</string>
+    <string name="unlocking_encrypted_vault">Şifrəli seyfin kilidi açılır…</string>
+
 </resources>

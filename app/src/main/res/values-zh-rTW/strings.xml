@@ -345,6 +345,7 @@
     <string name="create_encrypted_vault">建立加密保險箱</string>
     <string name="change_encrypted_vault_password">變更加密保險箱密碼</string>
     <string name="biometric_access_to_encrypted_vault">透過生物辨識存取加密保險箱</string>
+    <string name="auto_biometric_prompt_on_vault_return">返回應用程式時自動顯示生物辨識提示</string>
     <string name="block_vault_screenshots">禁止在隱藏保險箱中擷取螢幕截圖</string>
     <string name="empty_encrypted_vault">清空加密保險箱</string>
     <string name="enter_new_pin">輸入新 PIN</string>
@@ -543,4 +544,10 @@
     <string name="security_and_vault_settings">安全性與加密保險箱</string>
     <string name="font_system_default">系統預設</string>
     <string name="font_monospace">等寬</string>
+    <!-- fossify-commons UI overrides missing from the library's Traditional Chinese resources -->
+    <string name="search_in_placeholder">在 %s 中搜尋</string>
+    <string name="open_biometric_dialog">開啟生物辨識 ID 驗證對話框</string>
+    <string name="authenticate">驗證</string>
+    <string name="unlocking_encrypted_vault">正在解鎖加密保險箱…</string>
+
 </resources>

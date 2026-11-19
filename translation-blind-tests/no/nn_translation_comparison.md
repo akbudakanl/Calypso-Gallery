@@ -789,3 +789,14 @@ Added/overridden in `values-nn/strings.xml` for Settings section headers, font p
 | 12 | `app_font` | App font | App-skrifttype |
 | 13 | `select_font_file` | Select font file… | Vel skrifttypefil… |
 | 14 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen. |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for Norwegian Nynorsk, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-nn/strings.xml`.
+
+| Key (`name`) | English source | Norwegian Nynorsk | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | Søk i %s | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | Opne dialog for biometrisk ID-verifisering | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | Autentiser | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | Låser opp det krypterte hvelvet… | App-owned key; consistent with `hvelv` terminology |

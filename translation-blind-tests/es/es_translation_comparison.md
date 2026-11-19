@@ -771,3 +771,14 @@ Added/overridden in `values-es/strings.xml` for Settings section headers, font p
 | 6 | `font_system_default` | System default | Sistema por defecto |
 | 7 | `font_monospace` | Monospace | Monospace |
 | 8 | `encrypt_files_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app. | Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación. |
+
+## Missing UI strings added (this revision)
+
+`org.fossify:commons:7.1.3` does not provide these keys for Spanish, and `unlocking_encrypted_vault` was missing from the app-owned resources, so local overrides were added to `values-es/strings.xml`.
+
+| Key (`name`) | English source | Spanish | Notes |
+|---|---|---|---|
+| `search_in_placeholder` | Search in %s | Buscar en %s | fossify-commons override; `%s` = album/folder name |
+| `open_biometric_dialog` | Open biometric ID verification dialog | Abrir cuadro de verificación de ID biométrica | fossify-commons override; Biometrics tab of the inherited security dialog |
+| `authenticate` | Authenticate | Autenticar | fossify-commons override; system biometric prompt title |
+| `unlocking_encrypted_vault` | Unlocking encrypted vault… | Desbloqueando la bóveda cifrada… | App-owned key; consistent with `bóveda cifrada` terminology |

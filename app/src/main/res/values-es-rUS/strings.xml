@@ -382,6 +382,7 @@
     <string name="create_encrypted_vault">Crear bóveda cifrada</string>
     <string name="change_encrypted_vault_password">Cambiar contraseña de la bóveda cifrada</string>
     <string name="biometric_access_to_encrypted_vault">Acceso biométrico a la bóveda cifrada</string>
+    <string name="auto_biometric_prompt_on_vault_return">Mostrar automáticamente la solicitud biométrica al volver a la aplicación</string>
     <string name="block_vault_screenshots">Bloquear capturas de pantalla en la bóveda oculta</string>
     <string name="empty_encrypted_vault">Vaciar bóveda cifrada</string>
     <string name="enter_new_pin">Ingrese el nuevo PIN</string>
@@ -587,4 +588,10 @@
     <string name="font_monospace">Monospace</string>
     <string name="app_font">Letra de la aplicación</string>
     <string name="select_font_file">Seleccionar archivo de letra…</string>
+    <!-- fossify-commons UI overrides missing from the library's US Spanish resources -->
+    <string name="search_in_placeholder">Buscar en %s</string>
+    <string name="open_biometric_dialog">Abrir cuadro de verificación de ID biométrica</string>
+    <string name="authenticate">Autenticar</string>
+    <string name="unlocking_encrypted_vault">Desbloqueando la bóveda cifrada…</string>
+
 </resources>

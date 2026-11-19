@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The inherited commons biometric tab uses a green primary fallback theme. Commons sets this
+     button's text to the contrast color of the app primary (white for Calypso's neutral palette),
+     so use a matching neutral fill instead of the green one. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#27272A" />
+    <corners android:radius="8dp" />
+</shape>

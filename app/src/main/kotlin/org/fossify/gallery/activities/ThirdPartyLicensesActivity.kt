@@ -132,6 +132,11 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.kotlin_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_fossify_commons_title,
+            R.string.license_fossify_commons_text,
+            R.string.license_fossify_commons_url,
+        ),
+        ThirdPartyLicenseItem(
             R.string.license_tink_title,
             R.string.license_tink_text,
             R.string.license_tink_url,
