@@ -4,12 +4,15 @@ import android.app.Activity
 import android.app.Dialog
 import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
+import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogAutoBackupPromptBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.FavoritesAndVirtualAlbumsBackupManager
@@ -50,9 +53,33 @@ class AutoBackupPromptDialog(
             window?.apply {
                 setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                 setBackgroundDrawable(ColorDrawable(bgColor))
+                setWindowAnimations(R.style.AutoBackupPromptDialogAnimation)
                 statusBarColor = bgColor
                 navigationBarColor = bgColor
             }
+        }
+
+        val density = activity.resources.displayMetrics.density
+        val slideOffset = 16f * density
+        val interpolator = DecelerateInterpolator()
+
+        fun prepareAndAnimate(view: View, startDelay: Long) {
+            view.alpha = 0f
+            view.translationY = slideOffset
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(260L)
+                .setStartDelay(startDelay)
+                .setInterpolator(interpolator)
+                .start()
+        }
+
+        dialog.setOnShowListener {
+            prepareAndAnimate(binding.autoBackupPromptIcon, 60L)
+            prepareAndAnimate(binding.autoBackupPromptMessage, 110L)
+            prepareAndAnimate(binding.autoBackupBtnNo, 160L)
+            prepareAndAnimate(binding.autoBackupBtnYes, 160L)
         }
 
         binding.autoBackupBtnYes.setOnClickListener {

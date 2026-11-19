@@ -494,6 +494,7 @@
     <string name="encrypt_album">Albümü şifrele</string>
     <string name="decrypt_album">Albümün şifresini çöz</string>
     <string name="auto_backup_prompt_message">Favorilerinizin ve sanal albümlerinizin uygulama hafızası dışında düzenli olarak sistem belleğine yazılmasını istiyor musunuz? Bu, uygulamayı silmeniz durumunda favoriler listenizi ve sanal albümlerinizi kaybetmemenizi sağlayacaktır. İstediğiniz zaman uygulama ayarlarından manuel olarak backup oluşturabilirsiniz</string>
+    <string name="auto_backup_favorites_and_virtual_albums">Favorileri ve sanal albümleri cihaz hafızasında yedekle</string>
     <string name="filename_without_zip">Dosya adı (.zip olmadan)</string>
     <string name="favorites_already_exist">Zaten bir favoriler listeniz var</string>
     <string name="delete_existing_list">Mevcut listeyi sil</string>
@@ -574,5 +575,6 @@
     <string name="search_in_placeholder">%s içinde ara</string>
     <string name="open_biometric_dialog">Biyometrik kimlik doğrulama penceresini aç</string>
     <string name="authenticate">Kimlik doğrula</string>
+    <string name="vault_no_recovery_warning">Çevrimdışı şifreleme kullanılır. Parolanızı veya PIN\'inizi unutursanız kasanızı kurtarmanın hiçbir yolu yoktur.</string>
 
 </resources>

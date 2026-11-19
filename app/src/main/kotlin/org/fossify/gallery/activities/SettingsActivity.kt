@@ -190,6 +190,7 @@ class SettingsActivity : SimpleActivity() {
         setupManageExtendedDetails()
         setupSkipDeleteConfirmation()
         setupDeleteOriginalFromFavoritesAndVirtualAlbums()
+        setupAutoBackupFavoritesAndVirtualAlbums()
         setupUseRecycleBin()
         setupShowRecycleBin()
         setupShowRecycleBinLast()
@@ -1577,6 +1578,28 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsDeleteOriginalFromFavoritesAndVirtualAlbumsHolder.setOnClickListener {
             binding.settingsDeleteOriginalFromFavoritesAndVirtualAlbums.toggle()
             config.deleteOriginalFromFavoritesAndVirtualAlbums = binding.settingsDeleteOriginalFromFavoritesAndVirtualAlbums.isChecked
+        }
+    }
+
+    private fun setupAutoBackupFavoritesAndVirtualAlbums() {
+        binding.settingsAutoBackupFavoritesAndVirtualAlbumsHolder.beVisibleIf(config.wasAutoBackupPromptShown)
+        binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked = config.autoBackupFavoritesAndVirtualAlbums
+        binding.settingsAutoBackupFavoritesAndVirtualAlbumsHolder.setOnClickListener {
+            binding.settingsAutoBackupFavoritesAndVirtualAlbums.toggle()
+            val isEnabled = binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked
+            config.autoBackupFavoritesAndVirtualAlbums = isEnabled
+            if (isEnabled) {
+                ensureBackgroundThread {
+                    ReferenceBackupManager.saveFavorites(this)
+                    virtualAlbumsDB.getAllAlbums()
+                        .filter { !it.isHidden }
+                        .forEach { album ->
+                            album.id?.let { albumId ->
+                                VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+                            }
+                        }
+                }
+            }
         }
     }
 

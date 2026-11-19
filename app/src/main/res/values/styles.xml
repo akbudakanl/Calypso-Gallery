@@ -40,4 +40,9 @@
     </style>
 
     <style name="FullScreenTheme" parent="FullScreenTheme.Base" />
+
+    <style name="AutoBackupPromptDialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/auto_backup_prompt_enter</item>
+        <item name="android:windowExitAnimation">@anim/auto_backup_prompt_exit</item>
+    </style>
 </resources>

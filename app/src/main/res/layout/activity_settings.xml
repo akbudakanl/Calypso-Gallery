@@ -1148,6 +1148,22 @@
 
             </RelativeLayout>
 
+            <RelativeLayout
+                android:id="@+id/settings_auto_backup_favorites_and_virtual_albums_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_auto_backup_favorites_and_virtual_albums"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/auto_backup_favorites_and_virtual_albums" />
+
+            </RelativeLayout>
+
 
             <include layout="@layout/divider" />
 
