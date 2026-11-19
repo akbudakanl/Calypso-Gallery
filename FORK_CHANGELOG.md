@@ -2,9 +2,7 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yayınlanmadığı için bu dosya yalnızca ilk genel sürümü (1.0.0) kapsar. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
-## [Unreleased]
-
-## [1.0.0] - 2026-11-17
+## [1.0.0] - 2026-11-19
 
 İlk genel sürüm. Fossify Gallery 1.14.2 temelinden bağımsız geliştirilen, çevrimdışı çalışan ve kanonik Tink şifreleme biçimini kullanan bir galeri uygulamasıdır.
 
@@ -19,6 +17,15 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 - Dosya işlemleri: bit düzeyinde yineleme ayıklama, akıllı/standart çakışma pencereleri, önizleme ve bayt/tarih karşılaştırması, boş albüm temizliği, büyük dosyalar için hızlı kontrol, eşleşen içerik için tarih eşitlik ayarı.
 - Favori ve sanal albüm yedekleme: otomatik yedekler, ZIP dışa/içe aktarma, çakışma birleştirme ve kasa geri dönüşüm kutusu istisnaları.
 - Arayüz: uygulama içi dil seçici, albüm türü simgeleri, gizle/şifrele ve hariç tut akışlarının ayrılması, bağımsız görünüm modları, parmak kaydırmalı kasa açma, arama ve görünüm tercihleri.
+- Kasa kilidi: uygulamaya dönüldüğünde biyometrik istemi gösterme davranışı varsayılan olarak kapalı, ayarlardan açılabilir; kilit ekranındaki geri butonu kasayı kilitler, görsel önbellekleri temizler ve normal galeriye döner.
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- Biyometrik hata sınıflandırması: anahtarın kalıcı olarak geçersiz olması, cihazın kilitli olması ve geçici Keystore hataları ayrım yapılır. Geçici hatalarda anahtar ve biyometrik düğmesi korunur; otomatik istemler yalnızca pencere odakta ve cihaz açıkken tetiklenir, geçersiz anahtar geçerli bir CryptoObject olmadan asla açılış sağlamaz.
+- Kasa geri dönüş davranışı: otomatik biyometrik istemi ayarı dışa/içe aktarma dahil tüm ayar akışlarına bağlandı; kilit ekranı düzeni geri butonu ve kaydırılabilir içerik için yeniden düzenlendi.
+- Favori yedekleri: diskteki boyut eşleştiğinde yedekteki parmak izi ve kimlik bilgileri yeniden kullanılarak dosya taşıma sonrası favori kimliği korunur.
+- Albüm ve izin akışları: boş dizin listelerinde geçersiz DB dizini temizliği atlanır, `GROUP_BY_NONE` seçiliyken albüm kapağı oluşturma sıralaması bozulmaz, yinelenen medya izin istekleri engellenir.
+- Biyometrik hata sınıflandırması ve kasa kilit politikası için regresyon testleri eklendi.
 
 ### Orijinal uygulamadan gelen düzeltmeler
 
@@ -39,5 +46,4 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 - Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
 - Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
 
-[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...HEAD
-[1.0.0]: https://github.com/akbudakanl/Gallery-Cipher/releases/tag/1.0.0
+[1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
