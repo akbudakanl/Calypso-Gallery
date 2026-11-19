@@ -1876,35 +1876,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             restoreFavoritesFromBackup()
             mHasRestoredFavoritesBackup = true
         }
-        if (!isIncremental) {
-            val synced = VirtualAlbumSyncManager.syncVirtualAlbums(
-                context = this,
-                force = forceRepair || (hasAllFilesAccess && needsStorageFolderDiscovery)
-            )
-            val repaired = repairReferencesAfterExternalChange(force = forceRepair)
-            if ((synced || repaired > 0) && generation == mFetchGeneration.get() && !isDestroyed && !isFinishing) {
-                dirs.removeAll { it.isVirtualAlbum() }
-                dirs.addAll(
-                    getVirtualAlbumDirectories(
-                        isSecretVaultView = mIsSecretVaultView,
-                        getVideosOnly = getVideosOnly,
-                        getImagesOnly = getImagesOnly,
-                        syncFromDisk = false
-                    )
-                )
-                val resorted = getSortedDirectories(dirs)
-                dirs.clear()
-                dirs.addAll(resorted)
-                val postRepairHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
-                mDirs = dirs.clone() as ArrayList<Directory>
-                if (postRepairHash != lastDispatchedDirsHash) {
-                    lastDispatchedDirsHash = postRepairHash
-                    setupAdapter(dirs.clone() as ArrayList<Directory>)
-                }
-            }
-        }
 
-        val favoritePaths = getFavoritePaths()
+        var favoritePaths = getFavoritePaths()
         val hiddenString = getString(R.string.hidden)
         val albumCovers = config.parseAlbumCovers()
         val includedFolders = config.includedFolders
@@ -2073,6 +2046,47 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             if (newHash != lastDispatchedDirsHash) {
                 lastDispatchedDirsHash = newHash
                 setupAdapter(dirs.clone() as ArrayList<Directory>)
+            }
+        }
+
+        // Phase 1b: on the first All Files Access run the forced virtual-album JSON sync and the
+        // reference repair stat many paths through FUSE. Running them only after the MediaStore
+        // albums are already on screen keeps the first launch from looking empty; the same
+        // virtual albums and repairs are delivered in a second update shortly afterwards.
+        if (!isIncremental &&
+            generation == mFetchGeneration.get() &&
+            !mShouldStopFetching &&
+            !isDestroyed && !isFinishing
+        ) {
+            val synced = VirtualAlbumSyncManager.syncVirtualAlbums(
+                context = this,
+                force = forceRepair || (hasAllFilesAccess && needsStorageFolderDiscovery)
+            )
+            val repaired = repairReferencesAfterExternalChange(force = forceRepair)
+            if (synced || repaired > 0) {
+                favoritePaths = getFavoritePaths()
+                dirs.removeAll { it.isVirtualAlbum() }
+                dirs.addAll(
+                    getVirtualAlbumDirectories(
+                        isSecretVaultView = mIsSecretVaultView,
+                        getVideosOnly = getVideosOnly,
+                        getImagesOnly = getImagesOnly,
+                        syncFromDisk = false
+                    )
+                )
+                val resorted = getSortedDirectories(dirs)
+                dirs.clear()
+                dirs.addAll(resorted)
+                val postRepairHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
+                mDirs = dirs.clone() as ArrayList<Directory>
+                if (postRepairHash != lastDispatchedDirsHash &&
+                    generation == mFetchGeneration.get() &&
+                    !mShouldStopFetching &&
+                    !isDestroyed && !isFinishing
+                ) {
+                    lastDispatchedDirsHash = postRepairHash
+                    setupAdapter(dirs.clone() as ArrayList<Directory>)
+                }
             }
         }
 
