@@ -365,12 +365,23 @@ object VirtualAlbumSyncManager {
         }
     }
 
+    fun resetSyncThrottle() {
+        lastSyncTs = 0L
+        invalidateDirectoryCache()
+    }
+
     fun syncVirtualAlbums(context: Context, force: Boolean = false): Boolean {
+        val canReadSharedStorage = customStorageDirForTest != null ||
+            customVaultDirForTest != null ||
+            android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R ||
+            Environment.isExternalStorageManager()
         val now = System.currentTimeMillis()
         if (!force && now - lastSyncTs < 30_000L) {
             return false
         }
-        lastSyncTs = now
+        if (canReadSharedStorage) {
+            lastSyncTs = now
+        }
         var anyDbChange = false
 
         val dao = getDao(context)
