@@ -1,14 +1,20 @@
 package org.fossify.gallery.dialogs
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Resources
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.CheckedTextView
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.graphics.ColorUtils
 import androidx.core.os.LocaleListCompat
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
@@ -17,6 +23,7 @@ import org.fossify.commons.extensions.toast
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSelectLanguageBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
 import java.util.Locale
 
 class ChangeLanguageDialog(
@@ -182,14 +189,26 @@ class ChangeLanguageDialog(
 
         allOptions.addAll(sortedLanguages)
 
+        val palette = AppearanceManager.resolve(activity, activity.config)
         val filteredOptions = ArrayList(allOptions)
-        val adapter = ArrayAdapter(
+        val adapter = object : ArrayAdapter<LanguageOption>(
             activity,
             android.R.layout.simple_list_item_single_choice,
             filteredOptions
-        )
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                if (view is CheckedTextView) {
+                    view.setTextColor(palette.text)
+                    view.checkMarkTintList = ColorStateList.valueOf(palette.primary)
+                }
+                return view
+            }
+        }
         binding.languageList.adapter = adapter
         binding.languageList.choiceMode = ListView.CHOICE_MODE_SINGLE
+        binding.languageList.divider = ColorDrawable(ColorUtils.setAlphaComponent(palette.text, 0x26))
+        binding.languageList.dividerHeight = 1
 
         // Determine currently active language tag
         val currentLocales = AppCompatDelegate.getApplicationLocales()

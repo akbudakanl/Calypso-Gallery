@@ -1,11 +1,16 @@
 package org.fossify.gallery.helpers
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
@@ -44,6 +49,48 @@ class VaultAuthInputHelper(
         binding.vaultBiometricBtn.isEnabled = enabled
         binding.vaultBruteForceHolder.isEnabled = enabled
         binding.vaultTabs.isEnabled = enabled
+    }
+
+    fun applyThemeColors() {
+        val palette = AppearanceManager.resolve(activity, activity.config)
+        val disabledTextColor = ColorUtils.setAlphaComponent(palette.text, DISABLED_TEXT_ALPHA)
+        val buttonTextColors = ColorStateList(
+            arrayOf(
+                intArrayOf(-android.R.attr.state_enabled),
+                intArrayOf(),
+            ),
+            intArrayOf(
+                disabledTextColor,
+                palette.text,
+            ),
+        )
+        val rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(palette.text, BUTTON_RIPPLE_ALPHA))
+        val cornerRadiusPx = PIN_BUTTON_RIPPLE_RADIUS_DP * activity.resources.displayMetrics.density
+
+        val actionButtons = listOf(
+            binding.pin0, binding.pin1, binding.pin2, binding.pin3, binding.pin4,
+            binding.pin5, binding.pin6, binding.pin7, binding.pin8, binding.pin9,
+            binding.pinBackspace, binding.pinOk, binding.vaultPasswordOkBtn
+        )
+        actionButtons.forEach { button ->
+            button.setTextColor(buttonTextColors)
+            val mask = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = cornerRadiusPx
+                setColor(Color.WHITE)
+            }
+            button.background = RippleDrawable(rippleColor, null, mask)
+        }
+
+        binding.vaultPinDots.setTextColor(palette.text)
+        binding.vaultStatusLabel.setTextColor(palette.text)
+        binding.vaultBruteForceHolder.setTextColor(palette.text)
+        binding.vaultBiometricBtn.setTextColor(palette.text)
+
+        binding.vaultPasswordInputLayout.setColors(palette.text, palette.primary, palette.background)
+        binding.vaultPasswordInputLayout.setEndIconTintList(ColorStateList.valueOf(palette.secondary))
+        binding.vaultPasswordInput.setTextColor(palette.text)
+        binding.vaultPasswordInput.setHintTextColor(palette.secondary)
     }
 
     fun applyTouchFilter() {
@@ -295,5 +342,11 @@ class VaultAuthInputHelper(
         }
         activity.toast(errId)
         return false
+    }
+
+    companion object {
+        private const val DISABLED_TEXT_ALPHA = 0x61
+        private const val BUTTON_RIPPLE_ALPHA = 0x1F
+        private const val PIN_BUTTON_RIPPLE_RADIUS_DP = 12f
     }
 }

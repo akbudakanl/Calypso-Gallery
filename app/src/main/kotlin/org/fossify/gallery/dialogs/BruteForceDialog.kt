@@ -2,12 +2,15 @@ package org.fossify.gallery.dialogs
 
 import android.app.Activity
 import android.text.InputType
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.views.MyEditText
+import org.fossify.commons.views.MySeekBar
+import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.Config
@@ -49,15 +52,23 @@ object BruteForceDialog {
             showTimeDialogWithMeasurement(activity, onChanged)
             return
         }
-        val progressDialog = activity.getAlertDialogBuilder()
-            .setMessage(R.string.measuring_device_kdf_speed)
+        val padding = (DIALOG_PADDING_DP * activity.resources.displayMetrics.density).toInt()
+        val messageView = MyTextView(activity).apply {
+            setPadding(padding, padding, padding, padding)
+            setText(R.string.measuring_device_kdf_speed)
+        }
+        var progressDialog: AlertDialog? = null
+        activity.getAlertDialogBuilder()
             .setCancelable(false)
-            .create()
-        progressDialog.show()
+            .apply {
+                activity.setupDialogStuff(messageView, this, cancelOnTouchOutside = false) { dialog ->
+                    progressDialog = dialog
+                }
+            }
         ensureBackgroundThread {
             CryptoManager.measureStandardArgon2Ms(activity)
             activity.runOnUiThread {
-                runCatching { progressDialog.dismiss() }
+                runCatching { progressDialog?.dismiss() }
                 if (!activity.isFinishing && !activity.isDestroyed) {
                     showTimeDialogWithMeasurement(activity, onChanged)
                 }
@@ -78,13 +89,13 @@ object BruteForceDialog {
             orientation = LinearLayout.VERTICAL
             setPadding(padding, padding / 2, padding, 0)
         }
-        val valueText = TextView(activity).apply {
+        val valueText = MyTextView(activity).apply {
             textSize = VALUE_TEXT_SP
         }
-        val hint = TextView(activity).apply {
+        val hint = MyTextView(activity).apply {
             text = activity.getString(R.string.brute_force_time_hint, minSec)
         }
-        val input = EditText(activity).apply {
+        val input = MyEditText(activity).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
             setText(String.format(Locale.US, "%.1f", initialTenths / TENTHS_PER_SECOND))
         }
@@ -100,7 +111,7 @@ object BruteForceDialog {
         }
         updatePreview(initialTenths)
 
-        val seek = SeekBar(activity).apply {
+        val seek = MySeekBar(activity).apply {
             max = (MAX_TENTHS - minTenths).coerceAtLeast(0)
             progress = (initialTenths - minTenths).coerceAtLeast(0)
             isEnabled = MAX_TENTHS > minTenths
@@ -123,10 +134,8 @@ object BruteForceDialog {
         view.addView(input)
 
         activity.getAlertDialogBuilder()
-            .setTitle(R.string.brute_force_time_title)
-            .setView(view)
-            .setNegativeButton(android.R.string.cancel, null)
-            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+            .setPositiveButton(org.fossify.commons.R.string.ok) { dialog, _ ->
                 val parsed = input.text.toString().replace(',', '.').toFloatOrNull()
                     ?: (initialTenths / TENTHS_PER_SECOND)
                 val clampedSec = parsed.coerceIn(minSec, MAX_SECONDS)
@@ -139,6 +148,8 @@ object BruteForceDialog {
                 onChanged()
                 dialog.dismiss()
             }
-            .show()
+            .apply {
+                activity.setupDialogStuff(view, this, titleId = R.string.brute_force_time_title)
+            }
     }
 }

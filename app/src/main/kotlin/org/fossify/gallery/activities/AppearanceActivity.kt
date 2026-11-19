@@ -1,13 +1,22 @@
 package org.fossify.gallery.activities
 
 import android.content.res.ColorStateList
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import org.fossify.commons.dialogs.ColorPickerDialog
+import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
@@ -16,6 +25,7 @@ import org.fossify.commons.helpers.FONT_TYPE_CUSTOM
 import org.fossify.commons.helpers.FONT_TYPE_MONOSPACE
 import org.fossify.commons.helpers.FONT_TYPE_SYSTEM_DEFAULT
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivityAppearanceBinding
 import org.fossify.gallery.extensions.config
@@ -268,8 +278,12 @@ class AppearanceActivity : SimpleActivity() {
             action()
             return
         }
-        AlertDialog.Builder(this)
-            .setTitle(R.string.discard_changes_question)
+        val padding = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+        val messageView = MyTextView(this).apply {
+            setPadding(padding, padding, padding, 0)
+            setText(R.string.discard_changes_question)
+        }
+        getAlertDialogBuilder()
             .setPositiveButton(R.string.save_theme) { _, _ ->
                 saveCurrentTheme()
                 action()
@@ -277,7 +291,9 @@ class AppearanceActivity : SimpleActivity() {
             .setNegativeButton(R.string.continue_without_saving) { _, _ ->
                 action()
             }
-            .show()
+            .apply {
+                setupDialogStuff(messageView, this)
+            }
     }
 
     private fun applySavedTheme(theme: SavedTheme) {
@@ -289,45 +305,75 @@ class AppearanceActivity : SimpleActivity() {
         applyAndRefresh()
     }
 
+    private fun buildThemedDialogListView(items: List<String>, onItemClick: (Int) -> Unit): ListView {
+        val palette = AppearanceManager.resolve(this, config)
+        return ListView(this).apply {
+            adapter = object : ArrayAdapter<String>(this@AppearanceActivity, android.R.layout.simple_list_item_1, items) {
+                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                    val view = super.getView(position, convertView, parent)
+                    (view as? TextView)?.setTextColor(palette.text)
+                    return view
+                }
+            }
+            divider = ColorDrawable(ColorUtils.setAlphaComponent(palette.text, 0x26))
+            dividerHeight = 1
+            setOnItemClickListener { _, _, which, _ -> onItemClick(which) }
+        }
+    }
+
     private fun showSavedThemes() {
         val themes = SavedThemes.load(config)
-        val builder = AlertDialog.Builder(this).setTitle(R.string.saved_themes)
-        if (themes.isNotEmpty()) {
-            builder.setItems(themes.map { it.name }.toTypedArray()) { _, which ->
+        var dialog: AlertDialog? = null
+        val contentView: View = if (themes.isNotEmpty()) {
+            buildThemedDialogListView(themes.map { it.name }) { which ->
+                dialog?.dismiss()
                 val theme = themes[which]
                 confirmUnsavedChanges { applySavedTheme(theme) }
             }
         } else {
-            builder.setMessage(R.string.no_saved_themes)
+            val padding = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+            MyTextView(this).apply {
+                setPadding(padding, padding, padding, 0)
+                setText(R.string.no_saved_themes)
+            }
         }
-        builder.setPositiveButton(R.string.save_theme) { _, _ -> saveCurrentTheme() }
-        builder.show()
+        getAlertDialogBuilder()
+            .setPositiveButton(R.string.save_theme) { _, _ -> saveCurrentTheme() }
+            .apply {
+                setupDialogStuff(contentView, this, R.string.saved_themes) { alertDialog ->
+                    dialog = alertDialog
+                }
+            }
     }
 
     private fun showFontOptions() {
-        val labels = arrayOf(
+        val labels = listOf(
             getString(R.string.font_system_default),
             getString(org.fossify.commons.R.string.font_monospace),
             getString(org.fossify.commons.R.string.select_font_file),
         )
-        AlertDialog.Builder(this)
-            .setTitle(org.fossify.commons.R.string.app_font)
-            .setItems(labels) { _, which ->
-                when (which) {
-                    0 -> {
-                        config.fontType = FONT_TYPE_SYSTEM_DEFAULT
-                        config.fontName = ""
-                        applyAndRefresh()
-                    }
-                    1 -> {
-                        config.fontType = FONT_TYPE_MONOSPACE
-                        config.fontName = ""
-                        applyAndRefresh()
-                    }
-                    2 -> fontPicker.launch("*/*")
+        var dialog: AlertDialog? = null
+        val listView = buildThemedDialogListView(labels) { which ->
+            dialog?.dismiss()
+            when (which) {
+                0 -> {
+                    config.fontType = FONT_TYPE_SYSTEM_DEFAULT
+                    config.fontName = ""
+                    applyAndRefresh()
                 }
+                1 -> {
+                    config.fontType = FONT_TYPE_MONOSPACE
+                    config.fontName = ""
+                    applyAndRefresh()
+                }
+                2 -> fontPicker.launch("*/*")
             }
-            .show()
+        }
+        getAlertDialogBuilder().apply {
+            setupDialogStuff(listView, this, org.fossify.commons.R.string.app_font) { alertDialog ->
+                dialog = alertDialog
+            }
+        }
     }
 
     private fun handleFontFile(uri: Uri) {

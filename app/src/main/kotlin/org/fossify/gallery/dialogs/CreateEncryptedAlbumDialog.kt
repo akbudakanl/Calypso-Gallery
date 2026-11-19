@@ -6,12 +6,12 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.AppCompatEditText
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.views.MyEditText
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.CryptoManager
 import java.io.File
@@ -29,7 +29,7 @@ class CreateEncryptedAlbumDialog(
 
     init {
         val padding = (20 * activity.resources.displayMetrics.density).toInt()
-        val editText = AppCompatEditText(activity).apply {
+        val editText = MyEditText(activity).apply {
             hint = activity.getString(R.string.new_hidden_album)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             imeOptions = EditorInfo.IME_ACTION_DONE

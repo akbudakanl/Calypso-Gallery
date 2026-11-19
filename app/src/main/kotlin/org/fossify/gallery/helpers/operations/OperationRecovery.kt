@@ -2,11 +2,13 @@ package org.fossify.gallery.helpers.operations
 
 import android.content.Context
 import android.net.Uri
-import androidx.appcompat.app.AlertDialog
 import androidx.documentfile.provider.DocumentFile
 import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.internalStoragePath
+import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
+import org.fossify.commons.views.MyTextView
 import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
@@ -808,9 +810,12 @@ object OperationRecovery {
                     if (targetOpIds.any { it in promptedOperationIds }) return@runOnUiThread
                     promptedOperationIds.addAll(targetOpIds)
 
-                    AlertDialog.Builder(activity)
-                        .setTitle(R.string.resume_operations_title)
-                        .setMessage(promptMessage)
+                    val padding = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+                    val promptView = MyTextView(activity).apply {
+                        setPadding(padding, padding, padding, 0)
+                        text = promptMessage
+                    }
+                    activity.getAlertDialogBuilder()
                         .setCancelable(false)
                         .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
                             val progressDialog = CryptoProgressDialog(
@@ -848,15 +853,31 @@ object OperationRecovery {
                                 discardOperations(targetOpIds)
                             }
                             if (!activity.isFinishing && !activity.isDestroyed) {
-                                AlertDialog.Builder(activity)
-                                    .setTitle(R.string.resume_operations_title)
-                                    .setMessage(abortedMessage)
+                                val abortedView = MyTextView(activity).apply {
+                                    setPadding(padding, padding, padding, 0)
+                                    text = abortedMessage
+                                }
+                                activity.getAlertDialogBuilder()
                                     .setCancelable(false)
                                     .setPositiveButton(org.fossify.commons.R.string.ok, null)
-                                    .show()
+                                    .apply {
+                                        activity.setupDialogStuff(
+                                            abortedView,
+                                            this,
+                                            titleId = R.string.resume_operations_title,
+                                            cancelOnTouchOutside = false
+                                        )
+                                    }
                             }
                         }
-                        .show()
+                        .apply {
+                            activity.setupDialogStuff(
+                                promptView,
+                                this,
+                                titleId = R.string.resume_operations_title,
+                                cancelOnTouchOutside = false
+                            )
+                        }
                 }
             } finally {
                 promptCheckInFlight.set(false)
