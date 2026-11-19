@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Default (English) values for fork strings that were only defined in locale files. Without a
+     default, aapt2 drops them from the APK and any locale without a translation cannot resolve them. -->
+<resources>
+    <string name="album_crypto_conflict_merge_delete_identical">Merge into existing album and automatically delete identical sources</string>
+    <string name="album_crypto_delete_identical_source">Delete identical source files (100% bit-by-bit verified)</string>
+    <string name="album_crypto_merge_identical_message">When merging into "%1$s", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept?</string>
+    <string name="album_crypto_merge_identical_message_multiple">When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept?</string>
+    <string name="album_crypto_merge_identical_title">Identical Files During Merge</string>
+    <string name="delete_identical_sources">Delete identical</string>
+    <string name="keep_identical_sources">Keep in source</string>
+</resources>
