@@ -523,6 +523,7 @@
     <string name="vault_sync_same_folder_error">The selected source folder is the same as your active vault.</string>
     <string name="change_encrypted_vault_password">Change encrypted vault password</string>
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>
+    <string name="auto_biometric_prompt_on_vault_return">Automatically show biometric prompt when returning to app</string>
     <string name="block_vault_screenshots">Block screenshots in hidden vault</string>
     <string name="empty_encrypted_vault">Empty encrypted vault</string>
     <string name="enter_new_pin">Enter new PIN</string>

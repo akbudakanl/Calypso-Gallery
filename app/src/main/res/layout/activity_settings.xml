@@ -936,6 +936,21 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/settings_vault_biometric_auto_return_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_vault_biometric_auto_return"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/auto_biometric_prompt_on_vault_return" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:id="@+id/settings_block_vault_screenshots_holder"
                 style="@style/SettingsHolderSwitchStyle"
                 android:layout_width="match_parent"

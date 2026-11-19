@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import android.view.View
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.tabs.TabLayout
@@ -25,6 +27,7 @@ import java.io.File
 import org.fossify.gallery.helpers.canUnlockWithBiometrics
 import org.fossify.gallery.helpers.getVaultProtectionType
 import org.fossify.gallery.helpers.hasExistingVault
+import org.fossify.gallery.helpers.isDeviceLocked
 import org.fossify.gallery.helpers.setupOrUpdateCredentials
 
 class VaultSecurityDialog(
@@ -35,6 +38,7 @@ class VaultSecurityDialog(
     private val isChangePasswordMode: Boolean = false,
     private val customTargetDir: File? = null,
     private val allowBiometrics: Boolean = true,
+    private val autoPromptBiometrics: Boolean = true,
     private val rewrapKdfOnUnlock: Boolean = false,
     private val onCancelCallback: (() -> Unit)? = null,
     private val callback: (hash: String, type: Int, success: Boolean) -> Unit
@@ -43,6 +47,8 @@ class VaultSecurityDialog(
     private var dialogSucceeded = false
     private var cancelNotified = false
     private var setupInFlight = false
+    private var autoPromptDecorView: View? = null
+    private var autoPromptFocusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
     private val binding = DialogVaultSecurityBinding.inflate(activity.layoutInflater)
     private val inputHelper = VaultAuthInputHelper(activity, binding)
     private val isSetupMode = isChangePasswordMode || customTargetDir != null ||
@@ -148,6 +154,7 @@ class VaultSecurityDialog(
             activity.setupDialogStuff(binding.root, this) { alertDialog ->
                 dialog = alertDialog
                 alertDialog.setOnDismissListener {
+                    clearAutoPromptFocusListener()
                     if (!dialogSucceeded) {
                         cancelDialog()
                     }
@@ -163,17 +170,58 @@ class VaultSecurityDialog(
                     inputHelper.focusPasswordInput(alertDialog.window)
                 }
 
-                if (biometricsEnabled && CryptoManager.canUnlockWithBiometrics(activity)) {
-                    binding.root.post {
-                        inputHelper.promptBiometricUnlock {
-                            dialogSucceeded = true
-                            dialog?.dismiss()
-                            callback(requiredHash, currentType, true)
-                        }
-                    }
+                if (biometricsEnabled && autoPromptBiometrics && CryptoManager.canUnlockWithBiometrics(activity)) {
+                    scheduleAutoBiometricPrompt(alertDialog)
                 }
             }
         }
+    }
+
+    private fun scheduleAutoBiometricPrompt(alertDialog: AlertDialog) {
+        val decorView = alertDialog.window?.decorView ?: return
+        var triggered = false
+
+        fun tryTrigger() {
+            if (triggered || dialogSucceeded || cancelNotified) return
+            if (activity.isFinishing || activity.isDestroyed || !alertDialog.isShowing) return
+            if (!decorView.hasWindowFocus() || CryptoManager.isDeviceLocked(activity)) return
+            triggered = true
+            clearAutoPromptFocusListener()
+            inputHelper.promptBiometricUnlock(isAutoTrigger = true) {
+                dialogSucceeded = true
+                dialog?.dismiss()
+                callback(requiredHash, currentType, true)
+            }
+        }
+
+        if (decorView.hasWindowFocus()) {
+            decorView.post { tryTrigger() }
+            return
+        }
+
+        val vto = decorView.viewTreeObserver
+        if (!vto.isAlive) return
+        clearAutoPromptFocusListener()
+        val listener = object : ViewTreeObserver.OnWindowFocusChangeListener {
+            override fun onWindowFocusChanged(hasFocus: Boolean) {
+                if (!hasFocus || triggered) return
+                clearAutoPromptFocusListener()
+                decorView.post { tryTrigger() }
+            }
+        }
+        autoPromptDecorView = decorView
+        autoPromptFocusListener = listener
+        vto.addOnWindowFocusChangeListener(listener)
+    }
+
+    private fun clearAutoPromptFocusListener() {
+        val decorView = autoPromptDecorView
+        val listener = autoPromptFocusListener
+        if (decorView != null && listener != null && decorView.viewTreeObserver.isAlive) {
+            decorView.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
+        }
+        autoPromptDecorView = null
+        autoPromptFocusListener = null
     }
 
     private fun switchProtectionType(type: Int) {

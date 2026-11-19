@@ -1,5 +1,6 @@
 package org.fossify.gallery.helpers
 
+import android.app.KeyguardManager
 import android.content.Context
 import java.util.Base64
 import org.fossify.commons.extensions.*
@@ -18,6 +19,7 @@ import android.security.keystore.KeyInfo
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.security.keystore.UserNotAuthenticatedException
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -25,6 +27,60 @@ import javax.crypto.SecretKey
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerBiometrics.
  */
+
+sealed class BiometricCipherResult {
+    data class Ready(val cipher: Cipher) : BiometricCipherResult()
+    data object KeyInvalidated : BiometricCipherResult()
+    data object DeviceLocked : BiometricCipherResult()
+    data object TransientError : BiometricCipherResult()
+    data object Unavailable : BiometricCipherResult()
+}
+
+internal enum class BiometricHardwareBacking {
+    HARDWARE_BACKED,
+    SOFTWARE_ONLY,
+    TRANSIENT_ERROR
+}
+
+fun CryptoManager.isDeviceLocked(context: Context): Boolean {
+    return try {
+        val keyguardManager = context.getSystemService(KeyguardManager::class.java)
+        keyguardManager?.isDeviceLocked == true
+    } catch (_: Throwable) {
+        false
+    }
+}
+
+internal fun classifyBiometricCipherFailure(
+    error: Throwable,
+    deviceLocked: Boolean,
+    isKeyInvalidatedError: (Throwable) -> Boolean = { it is KeyPermanentlyInvalidatedException },
+    isUserNotAuthenticatedError: (Throwable) -> Boolean = { it is UserNotAuthenticatedException }
+): BiometricCipherResult {
+    var current: Throwable? = error
+    var depth = 0
+    while (current != null && depth < 8) {
+        if (isKeyInvalidatedError(current)) {
+            return BiometricCipherResult.KeyInvalidated
+        }
+        current = current.cause
+        depth++
+    }
+    var authCheck: Throwable? = error
+    depth = 0
+    while (authCheck != null && depth < 8) {
+        if (isUserNotAuthenticatedError(authCheck)) {
+            return BiometricCipherResult.DeviceLocked
+        }
+        authCheck = authCheck.cause
+        depth++
+    }
+    return if (deviceLocked) {
+        BiometricCipherResult.DeviceLocked
+    } else {
+        BiometricCipherResult.TransientError
+    }
+}
 
 fun CryptoManager.isBiometricHardwareAvailable(context: Context): Boolean {
     return try {
@@ -36,19 +92,30 @@ fun CryptoManager.isBiometricHardwareAvailable(context: Context): Boolean {
 }
 
 
-internal fun CryptoManager.isBiometricKeyHardwareBacked(key: SecretKey): Boolean {
+internal fun CryptoManager.checkBiometricKeyHardwareBacking(key: SecretKey): BiometricHardwareBacking {
     return try {
         val factory = SecretKeyFactory.getInstance(key.algorithm, ANDROID_KEYSTORE)
-        val keyInfo = factory.getKeySpec(key, KeyInfo::class.java) as? KeyInfo ?: return false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val keyInfo = factory.getKeySpec(key, KeyInfo::class.java) as? KeyInfo
+            ?: return BiometricHardwareBacking.TRANSIENT_ERROR
+        val hardwareBacked = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             keyInfo.securityLevel != KeyProperties.SECURITY_LEVEL_SOFTWARE
         } else {
             @Suppress("DEPRECATION")
             keyInfo.isInsideSecureHardware
         }
+        if (hardwareBacked) {
+            BiometricHardwareBacking.HARDWARE_BACKED
+        } else {
+            BiometricHardwareBacking.SOFTWARE_ONLY
+        }
     } catch (_: Throwable) {
-        false
+        BiometricHardwareBacking.TRANSIENT_ERROR
     }
+}
+
+
+internal fun CryptoManager.isBiometricKeyHardwareBacked(key: SecretKey): Boolean {
+    return checkBiometricKeyHardwareBacking(key) == BiometricHardwareBacking.HARDWARE_BACKED
 }
 
 
@@ -63,9 +130,9 @@ fun CryptoManager.canUnlockWithBiometrics(context: Context): Boolean {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)
         val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return false
-        isBiometricKeyHardwareBacked(key)
+        checkBiometricKeyHardwareBacking(key) != BiometricHardwareBacking.SOFTWARE_ONLY
     } catch (_: Throwable) {
-        false
+        true
     }
 }
 
@@ -78,11 +145,14 @@ fun CryptoManager.getOrCreateBiometricKey(): SecretKey? {
             generateBiometricKeyInternal(keyStore)
         }
         val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return null
-        if (!isBiometricKeyHardwareBacked(key)) {
-            keyStore.deleteEntry(BIOMETRIC_KEYSTORE_ALIAS)
-            return null
+        when (checkBiometricKeyHardwareBacking(key)) {
+            BiometricHardwareBacking.HARDWARE_BACKED -> key
+            BiometricHardwareBacking.SOFTWARE_ONLY -> {
+                keyStore.deleteEntry(BIOMETRIC_KEYSTORE_ALIAS)
+                null
+            }
+            BiometricHardwareBacking.TRANSIENT_ERROR -> null
         }
-        key
     } catch (_: Throwable) {
         null
     }
@@ -166,40 +236,61 @@ fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Bool
 }
 
 
-fun CryptoManager.getBiometricDecryptCipher(context: Context): Cipher? {
+fun CryptoManager.getBiometricDecryptCipherResult(context: Context): BiometricCipherResult {
+    if (!context.config.isVaultBiometricEnabled) {
+        return BiometricCipherResult.Unavailable
+    }
     val wrappedB64 = context.config.vaultBiometricWrappedBundle
-    if (wrappedB64.isEmpty()) return null
+    if (wrappedB64.isEmpty()) {
+        return BiometricCipherResult.Unavailable
+    }
     val combined = try {
         Base64.getMimeDecoder().decode(wrappedB64)
     } catch (_: Throwable) {
-        return null
+        return BiometricCipherResult.Unavailable
     }
     if (combined.size <= GCM_IV_LENGTH) {
         combined.fill(0)
-        return null
+        return BiometricCipherResult.Unavailable
     }
     val iv = combined.copyOfRange(0, GCM_IV_LENGTH)
     combined.fill(0)
 
     return try {
+        if (isDeviceLocked(context)) {
+            return BiometricCipherResult.DeviceLocked
+        }
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)
-        val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey ?: return null
-        if (!isBiometricKeyHardwareBacked(key)) {
-            clearBiometricKey(context)
-            return null
+        val key = keyStore.getKey(BIOMETRIC_KEYSTORE_ALIAS, null) as? SecretKey
+            ?: return BiometricCipherResult.Unavailable
+        when (checkBiometricKeyHardwareBacking(key)) {
+            BiometricHardwareBacking.SOFTWARE_ONLY -> {
+                clearBiometricKey(context)
+                return BiometricCipherResult.KeyInvalidated
+            }
+            BiometricHardwareBacking.TRANSIENT_ERROR -> {
+                return BiometricCipherResult.TransientError
+            }
+            BiometricHardwareBacking.HARDWARE_BACKED -> Unit
         }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
-        cipher
-    } catch (e: KeyPermanentlyInvalidatedException) {
-        clearBiometricKey(context)
-        null
-    } catch (_: Throwable) {
-        null
+        BiometricCipherResult.Ready(cipher)
+    } catch (e: Throwable) {
+        val result = classifyBiometricCipherFailure(e, isDeviceLocked(context))
+        if (result == BiometricCipherResult.KeyInvalidated) {
+            clearBiometricKey(context)
+        }
+        result
     } finally {
         iv.fill(0)
     }
+}
+
+
+fun CryptoManager.getBiometricDecryptCipher(context: Context): Cipher? {
+    return (getBiometricDecryptCipherResult(context) as? BiometricCipherResult.Ready)?.cipher
 }
 
 
