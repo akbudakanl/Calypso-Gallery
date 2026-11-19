@@ -722,6 +722,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getStringSet(EVER_SHOWN_FOLDERS, getEverShownFolders())!!
         set(everShownFolders) = prefs.edit().putStringSet(EVER_SHOWN_FOLDERS, everShownFolders).apply()
 
+    var initialStorageScanLevel: Int
+        get() = prefs.getInt(INITIAL_STORAGE_SCAN_LEVEL, InitialFolderDiscoveryPolicy.SCAN_LEVEL_NONE)
+        set(level) = prefs.edit().putInt(INITIAL_STORAGE_SCAN_LEVEL, level).apply()
+
     private fun getEverShownFolders() = hashSetOf(
         internalStoragePath,
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath,

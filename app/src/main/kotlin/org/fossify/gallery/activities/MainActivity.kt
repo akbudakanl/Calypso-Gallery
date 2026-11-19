@@ -112,6 +112,7 @@ import org.fossify.gallery.extensions.promptVaultUnlock
 import org.fossify.gallery.extensions.restoreScrollOffset
 import org.fossify.gallery.extensions.hasExcludedNormalFolders
 import org.fossify.gallery.extensions.hasHiddenNormalFolders
+import org.fossify.gallery.extensions.isCipherSystemPath
 import org.fossify.gallery.extensions.isDirectoryExcludedForBadge
 import org.fossify.gallery.extensions.isDirectoryHiddenForBadge
 import org.fossify.gallery.extensions.isDownloadsFolder
@@ -124,6 +125,7 @@ import org.fossify.gallery.extensions.launchCamera
 import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
+import org.fossify.gallery.extensions.restoreFavoritesFromBackup
 import org.fossify.gallery.extensions.movePathsInRecycleBin
 import org.fossify.gallery.extensions.movePinnedDirectoriesToFront
 import org.fossify.gallery.extensions.openRecycleBin
@@ -147,6 +149,7 @@ import org.fossify.gallery.helpers.GROUP_BY_DATE_TAKEN_MONTHLY
 import org.fossify.gallery.helpers.GROUP_BY_LAST_MODIFIED_DAILY
 import org.fossify.gallery.helpers.GROUP_BY_LAST_MODIFIED_MONTHLY
 import org.fossify.gallery.helpers.GROUP_DESCENDING
+import org.fossify.gallery.helpers.InitialFolderDiscoveryPolicy
 import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MONTH_MILLISECONDS
@@ -164,6 +167,7 @@ import org.fossify.gallery.helpers.SHOW_TEMP_HIDDEN_DURATION
 import org.fossify.gallery.helpers.SKIP_AUTHENTICATION
 import org.fossify.gallery.helpers.TYPE_GIFS
 import org.fossify.gallery.helpers.TYPE_IMAGES
+import org.fossify.gallery.helpers.TYPE_PORTRAITS
 import org.fossify.gallery.helpers.TYPE_RAWS
 import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
@@ -225,6 +229,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         // Stamp of the settings that affect folder content. A mismatch invalidates the cache.
         @Volatile
         private var cachedFolderSignaturesStamp: Int = 0
+
+        private fun invalidateFolderSignatureCache() {
+            cachedFolderSignatures = emptyMap()
+            cachedFolderSignaturesStamp = 0
+        }
     }
 
     /**
@@ -248,13 +257,17 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
-    /** Settings that change which media belong to a folder or how its aggregate is computed. */
+    /** Settings and storage-access state that change which media belong to a folder or how its aggregate is computed. */
     private fun currentFolderSignatureStamp(): Int {
-        var stamp = config.filterMedia
-        stamp = 31 * stamp + config.directorySorting
-        stamp = 31 * stamp + config.tempFolderPath.hashCode()
-        stamp = 31 * stamp + if (mIsSecretVaultView) 1 else 0
-        return stamp
+        return InitialFolderDiscoveryPolicy.computeFolderSignatureStamp(
+            filterMedia = config.filterMedia,
+            directorySorting = config.directorySorting,
+            tempFolderPath = config.tempFolderPath,
+            isSecretVaultView = mIsSecretVaultView,
+            hasAllFilesAccess = !isRPlus() || isExternalStorageManager(),
+            temporarilyShowExcluded = config.temporarilyShowExcluded,
+            temporarilyShowHiddenFolders = config.temporarilyShowHiddenFolders
+        )
     }
 
     private var mIsPickImageIntent = false
@@ -314,6 +327,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mLastOpenedDirectoryPath: String? = null
     private val mPendingPrioritizedPaths = LinkedHashSet<String>()
     private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
+    private var mLastKnownAllFilesAccess = false
+    @Volatile
+    private var mHasRestoredFavoritesBackup = false
 
     private val vaultPullGesture by lazy {
         VaultPullGestureHandler(
@@ -344,6 +360,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         appLaunched(BuildConfig.APPLICATION_ID)
+        mLastKnownAllFilesAccess = !isRPlus() || isExternalStorageManager()
 
         val preserveVaultOnSwitch = VaultSessionManager.consumePreserveVaultOnSwitch()
         if (savedInstanceState != null) {
@@ -539,6 +556,15 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.directoriesSwitchSearching.setTextColor(primaryColor)
         binding.directoriesSwitchSearching.underlineText()
         binding.directoriesEmptyPlaceholder2.bringToFront()
+
+        val hasAllFilesAccessNow = !isRPlus() || isExternalStorageManager()
+        if (InitialFolderDiscoveryPolicy.shouldForceFullReloadOnAccessChange(mLastKnownAllFilesAccess, hasAllFilesAccessNow)) {
+            mLoadedInitialPhotos = false
+            mHasRestoredFavoritesBackup = false
+            VirtualAlbumSyncManager.resetSyncThrottle()
+            invalidateFolderSignatureCache()
+        }
+        mLastKnownAllFilesAccess = hasAllFilesAccessNow
 
         val currentRandomGeneration = RandomOrderManager.getSessionGeneration()
         if (mLastRandomSessionGeneration != currentRandomGeneration) {
@@ -1782,10 +1808,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         if (!isIncremental || currentDirsHash != previousDirsHash) {
             lastDispatchedDirsHash = currentDirsHash
+            val initialDirsSnapshot = dirs.clone() as ArrayList<Directory>
             runOnUiThread {
                 if (generation != mFetchGeneration.get() || isDestroyed || isFinishing) return@runOnUiThread
-                checkPlaceholderVisibility(dirs)
-                setupAdapter(dirs.clone() as ArrayList<Directory>)
+                checkPlaceholderVisibility(initialDirsSnapshot)
+                setupAdapter(initialDirsSnapshot)
             }
         }
         updateExcludedFoldersAvailability()
@@ -1798,10 +1825,29 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val getVideos = mIsPickVideoIntent || mIsGetVideoContentIntent
         val getImagesOnly = getImages && !getVideos
         val getVideosOnly = getVideos && !getImages
-        // Repair stale references sequentially before scanning FAVORITES / virtual albums so both
-        // reflect externally moved folders immediately without racing against the cache load.
+        val hasAllFilesAccess = !isRPlus() || isExternalStorageManager()
+        val currentScanLevel = InitialFolderDiscoveryPolicy.currentStorageScanLevel(
+            isRPlus = isRPlus(),
+            hasAllFilesAccess = hasAllFilesAccess
+        )
+        val needsStorageFolderDiscovery = InitialFolderDiscoveryPolicy.shouldRunStorageFolderDiscovery(
+            completedLevel = config.initialStorageScanLevel,
+            currentLevel = currentScanLevel,
+            appRunCount = config.appRunCount,
+            isSecretVaultView = mIsSecretVaultView
+        )
+        // Restore backed-up favorites once shared storage is readable (on fresh install,
+        // SplashActivity ran before permissions were granted), and repair stale references
+        // before scanning FAVORITES / virtual albums.
+        if (!mHasRestoredFavoritesBackup && hasAllFilesAccess) {
+            restoreFavoritesFromBackup()
+            mHasRestoredFavoritesBackup = true
+        }
         if (!isIncremental) {
-            val synced = VirtualAlbumSyncManager.syncVirtualAlbums(this)
+            val synced = VirtualAlbumSyncManager.syncVirtualAlbums(
+                context = this,
+                force = forceRepair || (hasAllFilesAccess && needsStorageFolderDiscovery)
+            )
             val repaired = repairReferencesAfterExternalChange(force = forceRepair)
             if ((synced || repaired > 0) && generation == mFetchGeneration.get() && !isDestroyed && !isFinishing) {
                 dirs.removeAll { it.isVirtualAlbum() }
@@ -1851,13 +1897,31 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             dateTakens = dateTakens
         )
 
+        val discoveredDiskFolders = if (needsStorageFolderDiscovery) {
+            discoverStorageMediaFolders {
+                generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing
+            }
+        } else {
+            emptySet()
+        }
+        if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
+            return
+        }
+
+        val extraFoldersToScan = LinkedHashSet<String>(android11Files.size + discoveredDiskFolders.size).apply {
+            android11Files.values.forEach { folderMedia ->
+                folderMedia.firstOrNull()?.parentPath?.takeIf { it.isNotEmpty() }?.let { add(it) }
+            }
+            addAll(discoveredDiskFolders)
+        }
+
         val latestFolders = fetcher.getLatestFileFolders()
         val prioritySet = HashSet<String>(prioritizedPaths.size + latestFolders.size).apply {
             addAll(prioritizedPaths)
             addAll(latestFolders)
         }
 
-        val foldersToScan = fetcher.getFoldersToScan()
+        val foldersToScan = fetcher.getFoldersToScan(extraFoldersToScan)
         foldersToScan.remove(FAVORITES)
         foldersToScan.add(0, FAVORITES)
         if (config.showRecycleBinAtFolders) {
@@ -2160,9 +2224,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             checkLastMediaChanged()
         }
 
+        val finalDirsSnapshot = dirs.clone() as ArrayList<Directory>
         runOnUiThread {
+            if (isDestroyed || isFinishing) return@runOnUiThread
             binding.directoriesRefreshLayout.isRefreshing = false
-            checkPlaceholderVisibility(dirs)
+            checkPlaceholderVisibility(finalDirsSnapshot)
         }
 
         checkInvalidDirectories(dirs)
@@ -2173,23 +2239,25 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val excludedFolders = config.excludedFolders
         val everShownFolders = config.everShownFolders.toMutableSet() as HashSet<String>
         if (!mIsSecretVaultView) {
+            // do not add excluded folders, virtual albums, or encrypted folders at everShownFolders
+            dirs.filter { dir ->
+                !dir.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, dir.path) && !excludedFolders.any { dir.path.startsWith(it) }
+            }.mapTo(everShownFolders) { it.path }
 
-        // do not add excluded folders, virtual albums, or encrypted folders at everShownFolders
-        dirs.filter { dir ->
-            !dir.isVirtualAlbum() && !CryptoManager.isEncryptedFolderPath(this, dir.path) && !excludedFolders.any { dir.path.startsWith(it) }
-        }.mapTo(everShownFolders) { it.path }
+            discoveredDiskFolders.filter { path ->
+                !path.isVirtualAlbumPath() && !CryptoManager.isEncryptedFolderPath(this, path) && !excludedFolders.any { path.startsWith(it) }
+            }.forEach { everShownFolders.add(it) }
 
-        try {
-            // scan the internal storage from time to time for new folders
-            if (config.appRunCount == 1 || config.appRunCount % 30 == 0) {
-                everShownFolders.addAll(getFoldersWithMedia(config.internalStoragePath))
+            try {
+                // catch some extreme exceptions like too many everShownFolders for storing, shouldnt really happen
+                config.everShownFolders = everShownFolders
+            } catch (e: Exception) {
+                config.everShownFolders = HashSet()
             }
 
-            // catch some extreme exceptions like too many everShownFolders for storing, shouldnt really happen
-            config.everShownFolders = everShownFolders
-        } catch (e: Exception) {
-            config.everShownFolders = HashSet()
-        }
+            if (config.initialStorageScanLevel < currentScanLevel) {
+                config.initialStorageScanLevel = currentScanLevel
+            }
         }
 
         mDirs = dirs.clone() as ArrayList<Directory>
@@ -2340,6 +2408,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     }
                 }
             } else {
+                if (textToSearch == null) {
+                    mDirsIgnoringSearch = dirsCopy
+                }
                 if (query.isNotEmpty()) {
                     dirsToShow = ArrayList(dirsToShow
                         .filter { it.name.contains(query, true) }
@@ -2380,12 +2451,12 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     File(it.path).list()?.asList()
                 }
 
-                val hasMediaFile = children?.any {
-                    it != null && (
-                            it.isMediaFile()
-                                    || CryptoManager.isEncryptedFile(it)
-                                    || (it.startsWith("img_", true)
-                                    && File(it).isDirectory)
+                val hasMediaFile = children?.any { childName ->
+                    childName != null && (
+                            childName.isMediaFile()
+                                    || CryptoManager.isEncryptedFile(childName)
+                                    || (childName.startsWith("img_", true)
+                                    && File(it.path, childName).isDirectory)
                             )
                 } == true
 
@@ -2528,27 +2599,26 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
-    private fun getFoldersWithMedia(path: String): HashSet<String> {
-        val folders = HashSet<String>()
-        try {
-            val files = File(path).listFiles()
-            if (files != null) {
-                files.sortBy { !it.isDirectory }
-                for (file in files) {
-                    if (file.isDirectory && !file.startsWith("${config.internalStoragePath}/Android")) {
-                        if (!CryptoManager.isEncryptedFolder(file)) {
-                            folders.addAll(getFoldersWithMedia(file.absolutePath))
-                        }
-                    } else if (file.isFile && file.isMediaFile()) {
-                        folders.add(file.parent ?: "")
-                        break
-                    }
-                }
-            }
-        } catch (ignored: Exception) {
+    private fun discoverStorageMediaFolders(shouldStop: () -> Boolean): LinkedHashSet<String> {
+        val roots = ArrayList<File>()
+        if (config.internalStoragePath.isNotEmpty()) {
+            roots.add(File(config.internalStoragePath))
         }
-
-        return folders
+        val externalSd = sdCardPath
+        if (externalSd.isNotEmpty() && !externalSd.equals(config.internalStoragePath, ignoreCase = true)) {
+            roots.add(File(externalSd))
+        }
+        return InitialFolderDiscoveryPolicy.discoverMediaFoldersInRoots(
+            roots = roots,
+            internalStoragePath = config.internalStoragePath,
+            includeHidden = false,
+            includePortraits = config.filterMedia and TYPE_PORTRAITS != 0,
+            isExcludedSubtree = { dir ->
+                isCipherSystemPath(dir.absolutePath) || CryptoManager.isEncryptedFolder(dir)
+            },
+            isMediaFile = { file -> file.isMediaFile() },
+            shouldStop = shouldStop
+        )
     }
 
     override fun refreshItems() {

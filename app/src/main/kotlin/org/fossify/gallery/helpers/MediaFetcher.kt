@@ -88,7 +88,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         return curMedia
     }
 
-    fun getFoldersToScan(): ArrayList<String> {
+    fun getFoldersToScan(extraFolders: Collection<String> = emptyList()): ArrayList<String> {
         return try {
             val OTGPath = context.config.OTGPath
             val config = context.config
@@ -120,6 +120,11 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
                 "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera",
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
             ).filter { context.getDoesFilePathExist(it, OTGPath) })
+            extraFolders.forEach { folder ->
+                if (folder.isNotEmpty()) {
+                    folders.add(folder)
+                }
+            }
 
             val filterMedia = context.config.filterMedia
             val uri = Files.getContentUri("external")
@@ -127,7 +132,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             val selection = getSelectionQuery(filterMedia)
             val selectionArgs = getSelectionArgsQuery(filterMedia).toTypedArray()
             val cursor = context.contentResolver.query(uri, projection, selection, selectionArgs, null)
-            folders.addAll(parseCursor(cursor!!))
+            cursor?.let { folders.addAll(parseCursor(it)) }
 
             val shouldShowHidden = config.shouldShowHidden
             val excludedPaths = if (config.temporarilyShowExcluded) {
@@ -293,7 +298,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         cursor.use {
             if (cursor.moveToFirst()) {
                 do {
-                    val path = cursor.getStringValue(Images.Media.DATA)
+                    val path = cursor.getStringValue(Images.Media.DATA) ?: continue
                     val parentPath = File(path).parent ?: continue
                     if (!includedFolders.contains(parentPath) && !foldersToIgnore.contains(parentPath)) {
                         foldersToScan.add(parentPath)
@@ -571,8 +576,10 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
 
             try {
                 val mediaStoreId = cursor.getLongValue(Images.Media._ID)
+                val path = cursor.getStringValue(Images.Media.DATA) ?: return@queryCursor
                 val filename = cursor.getStringValue(Images.Media.DISPLAY_NAME)
-                val path = cursor.getStringValue(Images.Media.DATA)
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: path.getFilenameFromPath()
                 if (getFavoritePathsOnly && !favoritePaths.contains(path)) {
                     return@queryCursor
                 }
