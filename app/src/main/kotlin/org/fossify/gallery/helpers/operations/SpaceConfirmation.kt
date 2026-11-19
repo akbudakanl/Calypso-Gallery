@@ -1,10 +1,14 @@
 package org.fossify.gallery.helpers.operations
 
+import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.formatSize
+import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -27,13 +31,12 @@ object SpaceConfirmation {
             onApproved()
             return
         }
-        AlertDialog.Builder(context)
-            .setTitle(R.string.space_unverified_title)
-            .setMessage(message(context, probe, estimate))
-            .setPositiveButton(R.string.space_continue_anyway) { _, _ -> onApproved() }
-            .setNegativeButton(android.R.string.cancel) { _, _ -> onRejected() }
-            .setOnCancelListener { onRejected() }
-            .show()
+        showConfirmationDialog(
+            context = context,
+            text = message(context, probe, estimate),
+            onApproved = onApproved,
+            onRejected = onRejected
+        )
     }
 
     /**
@@ -51,19 +54,49 @@ object SpaceConfirmation {
         val latch = CountDownLatch(1)
         var approved = false
         Handler(Looper.getMainLooper()).post {
-            AlertDialog.Builder(context)
-                .setTitle(R.string.space_unverified_title)
-                .setMessage(message(context, probe, estimate))
-                .setPositiveButton(R.string.space_continue_anyway) { _, _ ->
+            showConfirmationDialog(
+                context = context,
+                text = message(context, probe, estimate),
+                onApproved = {
                     approved = true
                     latch.countDown()
-                }
-                .setNegativeButton(android.R.string.cancel) { _, _ -> latch.countDown() }
-                .setOnCancelListener { latch.countDown() }
-                .show()
+                },
+                onRejected = { latch.countDown() }
+            )
         }
         runCatching { latch.await(5, TimeUnit.MINUTES) }
         return approved
+    }
+
+    private fun showConfirmationDialog(
+        context: Context,
+        text: String,
+        onApproved: () -> Unit,
+        onRejected: () -> Unit
+    ) {
+        val activity = context as? Activity
+        if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+            val padding = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+            val messageView = MyTextView(activity).apply {
+                setPadding(padding, padding, padding, 0)
+                this.text = text
+            }
+            activity.getAlertDialogBuilder()
+                .setPositiveButton(R.string.space_continue_anyway) { _, _ -> onApproved() }
+                .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ -> onRejected() }
+                .setOnCancelListener { onRejected() }
+                .apply {
+                    activity.setupDialogStuff(messageView, this, titleId = R.string.space_unverified_title)
+                }
+        } else {
+            AlertDialog.Builder(context)
+                .setTitle(R.string.space_unverified_title)
+                .setMessage(text)
+                .setPositiveButton(R.string.space_continue_anyway) { _, _ -> onApproved() }
+                .setNegativeButton(android.R.string.cancel) { _, _ -> onRejected() }
+                .setOnCancelListener { onRejected() }
+                .show()
+        }
     }
 
     private fun message(context: Context, probe: SpaceProbe, estimate: SpaceEstimate): String =

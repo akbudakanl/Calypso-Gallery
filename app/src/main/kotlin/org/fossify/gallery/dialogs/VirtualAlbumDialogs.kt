@@ -1,26 +1,31 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.graphics.drawable.ColorDrawable
 import android.text.InputType
+import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.ListView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.views.MyEditText
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.*
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
 
-private fun Activity.buildAlbumNameField(initialText: String): Pair<FrameLayout, AppCompatEditText> {
+private fun Activity.buildAlbumNameField(initialText: String): Pair<FrameLayout, MyEditText> {
     val padding = (20 * resources.displayMetrics.density).toInt()
-    val editText = AppCompatEditText(this).apply {
+    val editText = MyEditText(this).apply {
         hint = getString(R.string.virtual_folder_name)
         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         imeOptions = EditorInfo.IME_ACTION_DONE
@@ -170,10 +175,19 @@ class PickVirtualAlbumDialog(
     }
 
     private fun show(albums: List<Pair<Long, String>>) {
+        val palette = AppearanceManager.resolve(activity, activity.config)
         val newAlbumLabel = activity.getString(R.string.new_virtual_album)
         val labels = albums.map { it.second } + newAlbumLabel
         val listView = ListView(activity).apply {
-            adapter = ArrayAdapter(activity, android.R.layout.simple_list_item_1, labels)
+            adapter = object : ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, labels) {
+                override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                    val view = super.getView(position, convertView, parent)
+                    (view as? TextView)?.setTextColor(palette.text)
+                    return view
+                }
+            }
+            divider = ColorDrawable(ColorUtils.setAlphaComponent(palette.text, 0x26))
+            dividerHeight = 1
             setOnItemClickListener { _, _, position, _ ->
                 dialog?.dismiss()
                 if (position == albums.size) {

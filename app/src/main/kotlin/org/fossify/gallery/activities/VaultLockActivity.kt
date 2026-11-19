@@ -7,6 +7,7 @@ import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivityVaultLockBinding
@@ -53,6 +54,8 @@ class VaultLockActivity : SimpleActivity() {
             ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
 
         inputHelper = VaultAuthInputHelper(this, securityBinding)
+        updateTextColors(binding.vaultLockRoot)
+        inputHelper.applyThemeColors()
         inputHelper.applyTouchFilter()
         inputHelper.setupPinInput(::handleSecretSubmission)
         inputHelper.setupPasswordInput(::handleSecretSubmission)

@@ -183,7 +183,7 @@
         android:orientation="horizontal"
         android:visibility="gone">
 
-        <com.google.android.material.textfield.TextInputLayout
+        <org.fossify.commons.views.MyTextInputLayout
             android:id="@+id/vault_password_input_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -200,7 +200,7 @@
                 android:inputType="textPassword|textNoSuggestions"
                 android:maxLines="1"
                 android:singleLine="true" />
-        </com.google.android.material.textfield.TextInputLayout>
+        </org.fossify.commons.views.MyTextInputLayout>
 
         <org.fossify.commons.views.MyButton
             android:id="@+id/vault_password_ok_btn"

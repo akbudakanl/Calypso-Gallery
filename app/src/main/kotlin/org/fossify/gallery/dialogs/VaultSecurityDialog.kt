@@ -7,9 +7,6 @@ import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getAlertDialogBuilder
-import org.fossify.commons.extensions.getProperBackgroundColor
-import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
@@ -20,6 +17,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogVaultSecurityBinding
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
@@ -80,9 +78,9 @@ class VaultSecurityDialog(
     }
 
     private fun setupDialog() {
-        val textColor = activity.getProperTextColor()
-        val primaryColor = activity.getProperPrimaryColor()
-        val backgroundColor = activity.getProperBackgroundColor()
+        val palette = AppearanceManager.resolve(activity, activity.config)
+        val primaryColor = palette.primary
+        val backgroundColor = palette.background
 
         binding.vaultPatternHolder.beGone()
 
@@ -100,7 +98,7 @@ class VaultSecurityDialog(
             binding.vaultTabs.apply {
                 beVisible()
                 setBackgroundColor(backgroundColor)
-                setTabTextColors(textColor, primaryColor)
+                setTabTextColors(palette.secondary, primaryColor)
                 setSelectedTabIndicatorColor(primaryColor)
 
                 removeAllTabs()
@@ -159,6 +157,7 @@ class VaultSecurityDialog(
                     addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
                     setDimAmount(1.0f)
                 }
+                inputHelper.applyThemeColors()
                 inputHelper.applyTouchFilter()
                 if (currentType == PROTECTION_PASSWORD) {
                     inputHelper.focusPasswordInput(alertDialog.window)
