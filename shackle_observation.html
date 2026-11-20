@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Kasa kilit ikonu — mandal gözlemi</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--accent:#d9af76;--bad:#f87171;--good:#4ade80}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:28px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:920px;font-size:14px;line-height:1.6;margin:0 0 26px}
+.grid{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;width:420px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+svg{width:100%;height:auto;display:block;background:#0a0a0c;border-radius:10px}
+.cap{font-size:12px;color:var(--sec);margin-top:12px;line-height:1.6}
+.cap b{color:var(--text)}
+.cap .r{color:var(--bad)} .cap .g{color:var(--good)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:10px}
+.tag.cur{background:rgba(248,113,113,.14);color:var(--bad)}
+.tag.old{background:rgba(161,161,170,.14);color:var(--sec)}
+.tag.proto{background:rgba(217,175,118,.14);color:var(--accent)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:12px;color:var(--sec)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+</style></head><body>
+<h1>Vault PIN ekranı — mandal (shackle) geometrisi gözlemi</h1>
+<p class="lead">Kaynak: <code>app/src/main/kotlin/org/fossify/gallery/views/VaultShutterLockView.kt</code> → <code>onDraw()</code>.
+Aşağıdaki çizimler, Kotlin kodundaki koordinatların aynısı SVG'ye birebir çevrilerek oluşturuldu (görünüm 48s × 48s, s = 5 px).
+Kırmızı kesikli kare <b>View'ın 40dp'lık sınırlarını</b> gösterir.</p>
+
+<div class="grid">
+  <!-- MEVCUT KOD -->
+  <div class="card">
+    <span class="tag cur">MEVCUT KOD (olduğu gibi)</span>
+    <h2>VaultShutterLockView.onDraw()</h2>
+    <p class="sub">Düz çizgiler + <code>arcTo(0,-20.5s, 18s,-2.5s, 180°,180°,false)</code>.</p>
+    <svg viewBox="-30 -35 300 310" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="vp"><rect x="0" y="0" width="240" height="240"/></clipPath></defs>
+      <!-- viewport (view bounds) -->
+      <rect x="0" y="0" width="240" height="240" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="6" y="16" fill="#f87171" font-size="10" font-family="monospace">view 0..240</text>
+
+      <!-- SHACKLE (clipped to view) -->
+      <g clip-path="url(#vp)">
+        <path d="M75 95 L75 82.5 L75 37.5 A45 45 0 0 1 165 37.5 L165 95"
+              fill="none" stroke="#fafafa" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <!-- apex above viewport: highlighted -->
+      <path d="M75 37.5 A45 45 0 0 1 165 37.5" fill="none" stroke="#f87171" stroke-width="12" stroke-opacity="0.55" stroke-dasharray="4 5"/>
+      <circle cx="120" cy="-7.5" r="6" fill="#f87171"/>
+      <text x="132" y="-2" fill="#f87171" font-size="11" font-family="monospace">apex y=-1.5s</text>
+      <text x="132" y="12" fill="#f87171" font-size="11" font-family="monospace">(view dışı → kırpılır)</text>
+
+      <!-- joints -->
+      <circle cx="75" cy="95" r="9" fill="#fafafa"/>
+      <circle cx="165" cy="95" r="9" fill="#fafafa"/>
+
+      <!-- BODY -->
+      <rect x="50" y="95" width="140" height="95" rx="20" fill="#161619" stroke="#fafafa" stroke-width="12"/>
+      <circle cx="120" cy="130" r="13" fill="#fafafa"/>
+      <rect x="115" y="135" width="10" height="30" rx="5" fill="#fafafa"/>
+
+      <!-- measurements -->
+      <line x1="63" y1="95" x2="63" y2="37.5" stroke="#d9af76" stroke-width="1.5"/>
+      <text x="20" y="70" fill="#d9af76" font-size="11" font-family="monospace">11.5s</text>
+      <line x1="180" y1="37.5" x2="180" y2="95" stroke="#d9af76" stroke-width="1.5"/>
+      <text x="184" y="70" fill="#d9af76" font-size="11" font-family="monospace">11.5s</text>
+      <line x1="75" y1="37.5" x2="165" y2="37.5" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="120" y="34" fill="#4ade80" font-size="10" font-family="monospace" text-anchor="middle">kubbe Ø18s</text>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#fafafa"></i>çizilen mandal</span>
+      <span><i style="background:#f87171"></i>kırpılan / hatalı bölge</span>
+      <span><i style="background:#4ade80"></i>ölçü</span>
+    </div>
+    <p class="cap">
+      <b>Gözlem 1 —</b> <span class="r">Bacaklar 11.5s</span>; gövde yüksekliği 19s. Yani mandal, kilidin neredeyse tamamı kadar uzun.
+      <br><b>Gözlem 2 —</b> Kubbenin tepesi <span class="r">y = -1.5s</span> → View'ın üst sınırının (y=0) dışında. Kırpıldığında tepede düz kesik / boşluk oluşur.
+    </p>
+  </div>
+
+  <!-- ÖNCEKİ SÜRÜM -->
+  <div class="card">
+    <span class="tag old">ÖNCEKİ SÜRÜM (43c5d151a)</span>
+    <h2>addArc(RectF(-9s,-18s, 9s,0), 180,180)</h2>
+    <p class="sub">Bacak yok, sadece kubbe + iki eklem noktası.</p>
+    <svg viewBox="-30 -35 300 310" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="vp2"><rect x="0" y="0" width="240" height="240"/></clipPath></defs>
+      <rect x="0" y="0" width="240" height="240" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <g clip-path="url(#vp2)">
+        <path d="M75 37.5 A45 45 0 0 1 165 37.5"
+              fill="none" stroke="#fafafa" stroke-width="12" stroke-linecap="round"/>
+      </g>
+      <path d="M75 37.5 A45 45 0 0 1 165 37.5" fill="none" stroke="#a1a1aa" stroke-width="1.5" stroke-dasharray="4 5"/>
+      <circle cx="75" cy="95" r="9" fill="#fafafa"/>
+      <circle cx="165" cy="95" r="9" fill="#fafafa"/>
+      <line x1="63" y1="95" x2="63" y2="37.5" stroke="#f87171" stroke-width="2" stroke-dasharray="4 3"/>
+      <line x1="180" y1="37.5" x2="180" y2="95" stroke="#f87171" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="120" y="70" fill="#f87171" font-size="11" font-family="monospace" text-anchor="middle">9s BOŞLUK (bacak yok)</text>
+      <rect x="50" y="95" width="140" height="95" rx="20" fill="#161619" stroke="#fafafa" stroke-width="12"/>
+      <circle cx="120" cy="130" r="13" fill="#fafafa"/>
+      <rect x="115" y="135" width="10" height="30" rx="5" fill="#fafafa"/>
+    </svg>
+    <p class="cap">Önceki sürümde kubbe ile eklemler arasında <span class="r">9s boşluk</span> vardı; mandal "yüzüyordu". Bu commit bacak ekleyerek düzeltmeye çalışmış ama bacakları 11.5s yapıp tepesi view dışına taşırmış.</p>
+  </div>
+
+  <!-- PROTOTİP / HEDEF -->
+  <div class="card">
+    <span class="tag proto">PROTOTİP (hedef — shackle_drop.html)</span>
+    <h2>M36 37 V28 a16 16 0 0 1 32 0 v9</h2>
+    <p class="sub">Geniş kubbe (r=16), kısa bacaklar (9), gövde 48×44.</p>
+    <svg viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" style="max-width:300px;margin:0 auto">
+      <path d="M36 37 V28 a16 16 0 0 1 32 0 v9"
+            fill="none" stroke="#fafafa" stroke-width="2.6" stroke-linecap="round"/>
+      <rect x="28" y="36" width="48" height="44" rx="10" fill="#161619" stroke="#fafafa" stroke-width="2.4"/>
+      <circle cx="52" cy="53" r="3.6" fill="#fafafa"/>
+      <rect x="50.6" y="54.5" width="2.8" height="9" rx="1.4" fill="#fafafa"/>
+    </svg>
+    <p class="cap">Prototipte oranlar farklı: kubbe çapı 32, bacaklar 9, gövde genişliği 48. Mevcut kodda ise kubbe çapı 18s, bacaklar 11.5s, gövde 28s — <span class="g">yani bacak/kubbe oranı tersine dönmüş</span>.</p>
+  </div>
+</div>
+
+<p class="cap" style="margin-top:24px">
+  <b>Özet:</b> Kod, kubbeyi <code>arcTo(..., 180°, 180°, false)</code> ile çiziyor. Bu çağrının başlangıç noktası ovalin <i>sol ortası</i> olan <code>(0, -11.5s)</code>'dir; bundan önceki <code>lineTo(0, -2.5s)</code> ile birleşen doğru parçası bacağı <code>11.5s</code>'ye çıkarıyor. Kubbenin tepesi ise toplamda <code>20.5s</code> yukarıda → görünüm alanının dışına taşıyor. Sonuç: <span class="r">uzun bacaklar + tepede kırpılan/boşluklu bir tepe</span>.
+</p>
+</body></html>

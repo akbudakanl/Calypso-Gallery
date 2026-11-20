@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Vault çıkış uyarısı — artık görünüyor</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--accent:#d9af76;--bad:#f87171;--good:#4ade80}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:27px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:900px;font-size:14px;line-height:1.6;margin:0 0 24px}
+.grid{display:flex;gap:20px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px}
+.phone{width:240px;height:420px;border:1px solid var(--border);border-radius:20px;background:#08080a;position:relative;overflow:hidden;margin:0 auto}
+.content{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px;padding-bottom:90px;opacity:.5}
+.content i{background:linear-gradient(120deg,#1c1c20,#2a2a30);border-radius:8px}
+.bar{position:absolute;left:20px;right:20px;bottom:88px;background:#E4E4E7;color:#000;border-radius:10px;padding:14px 20px;text-align:center;font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.45);animation:in .18s ease-out}
+.actions{position:absolute;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;justify-content:space-around;background:rgba(0,0,0,.75);border-top:1px solid #27272a;color:#e4e4e7;font-size:11px}
+.actions span{width:48px;text-align:center}
+.bar.dark{background:#27272A;color:#fff}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.cap{font-size:12.5px;color:var(--sec);line-height:1.65;margin:14px 0 0;max-width:400px}
+.cap b{color:var(--text)} .cap .r{color:var(--bad)} .cap .g{color:var(--good)}
+code{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+</style></head><body>
+<h1>Çıkış uyarısı: Toast → uygulama içi overlay</h1>
+<p class="lead">Aynı tasarım, artık SystemUI'nin sınırlı custom-toast kanalı yerine aktivitenin decor view'ine ekleniyor. Aşağıda görünen çubuk tam olarak yeni çizim.</p>
+<div class="grid">
+  <div class="card">
+    <h2>Açık tema</h2>
+    <p class="sub">primary #E4E4E7 · onPrimary #000</p>
+    <div class="phone"><div class="content"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="bar">Şifreli albümden çıkmak için geri tuşuna tekrar basın</div><div class="actions"><span>Paylaş</span><span>Düzenle</span><span>Şifrele</span><span>Sil</span></div></div>
+  </div>
+  <div class="card">
+    <h2>Koyu tema</h2>
+    <p class="sub">primary #27272A · onPrimary #FFF</p>
+    <div class="phone"><div class="content"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="bar dark">Şifreli albümden çıkmak için geri tuşuna tekrar basın</div><div class="actions"><span>Paylaş</span><span>Düzenle</span><span>Şifrele</span><span>Sil</span></div></div>
+  </div>
+  <div class="card" style="width:420px">
+    <h2>Neden görünmüyordu?</h2>
+    <p class="sub">Kök neden ve çözüm</p>
+    <p class="cap">
+      <span class="r">Önce:</span> <code>VaultExitToast.show()</code> bir <code>Toast</code> oluşturup <code>view = bar</code> ve <code>setGravity(BOTTOM,...)</code> kullanıyordu. Proje <code>targetSdk 36</code> olduğu için Android 11+ kuralları gereği custom toast view'lar desteklenmiyor / <code>setGravity</code> etkisiz — tasarlanan çubuk hiç çizilmiyordu.
+      <br><br><span class="g">Sonra:</span> Aynı çubuk <code>window.decorView</code>'e <code>FrameLayout.LayoutParams</code> ile ekleniyor; 20dp yan / 88dp alt boşluk (64dp alt action bar + boşluk), 10dp köşe, 14sp yazı, palet renkleri korundu. 180 ms yaylı giriş, 3500 ms sonra çıkış. İkinci geri tuşunda <code>Handle.cancel()</code> ile anında kapanıyor.
+      <br><br>Çift-basma zamanlaması (<code>VaultExitBackHelper</code>) ve mevcut birim testleri değişmedi; testler geçiyor.
+    </p>
+  </div>
+</div>
+</body></html>

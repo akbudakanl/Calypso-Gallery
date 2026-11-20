@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Üst başlık — neden sabit kalmıyordu?</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--bad:#f87171;--good:#4ade80;--accent:#d9af76}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:27px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:960px;font-size:14px;line-height:1.6;margin:0 0 24px}
+.grid{display:flex;gap:20px;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;width:430px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.phone{width:230px;height:360px;border:1px solid var(--border);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;background:#0a0a0c;margin:0 auto 12px}
+.status{height:22px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:9px;color:var(--sec);flex:0 0 auto}
+.bar{height:44px;flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 12px;background:#18181b;border-bottom:1px solid #27272a}
+.bar .pill{flex:1;height:28px;border-radius:14px;background:#18181b;border:1px solid #27272a;display:flex;align-items:center;padding:0 10px;font-size:10px;color:var(--sec)}
+.bar .ic{width:14px;height:14px;border:1.5px solid var(--sec);border-radius:3px}
+.scroll{flex:1;overflow-y:auto;padding:10px}
+.scroll::-webkit-scrollbar{width:4px}.scroll::-webkit-scrollbar-thumb{background:#3f3f46;border-radius:4px}
+.tile{height:52px;border-radius:8px;margin-bottom:8px;background:linear-gradient(110deg,#1f1f23,#27272a);border:1px solid #2e2e36;display:flex;align-items:flex-end;padding:6px;font-size:9px;color:var(--sec)}
+.note{font-size:12.5px;color:var(--sec);line-height:1.65}
+.note b{color:var(--text)}
+.note .r{color:var(--bad)} .note .g{color:var(--good)}
+code{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+.tree{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.7;color:var(--sec);background:#0a0a0c;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px}
+.tree .fix{color:var(--good)} .tree .bug{color:var(--bad)}
+</style></head><body>
+<h1>Üst başlık gerçekten sabit değildi</h1>
+<p class="lead">Son commit <code>04ffe3b25</code> başlıkları <code>enableScrollAway()</code> ile kaydırılabilir yapmıştı. <code>search_bar_container</code> ekrandan çıkıyor ama onu çevreleyen <code>MySearchMenu</code> (AppBarLayout) yerinde kalıyordu — ekranın en üstünde gördüğün o artık parça buydu. Aşağıdaki telefonları kaydırarak dene.</p>
+
+<div class="grid">
+  <div class="card">
+    <h2>ÖNCE · CoordinatorLayout + scroll-away</h2>
+    <p class="sub">Başlık kayıp gidiyor, arkasında boş bir şerit kalıyor.</p>
+    <div class="phone">
+      <div class="status"><span>13:08</span><span>▮▮▮ 18%</span></div>
+      <div class="bar" style="position:sticky;top:22px">
+        <div class="pill"><span class="ic"></span>&nbsp; Klasörleri ara</div>
+        <span class="ic"></span>
+      </div>
+      <div class="scroll" id="beforeScroll">
+        <div class="tile">Favoriler · 4</div>
+        <div class="tile">Screenshots · 663</div>
+        <div class="tile">out · 7</div>
+        <div class="tile">Redmi Note 10S</div>
+        <div class="tile">Camera</div>
+        <div class="tile">Downloads</div>
+        <div class="tile">Music</div>
+        <div class="tile">Telegram</div>
+      </div>
+    </div>
+    <div class="tree">
+CoordinatorLayout
+ ├ MySearchMenu (AppBarLayout)  <span class="bug">← boş şerit kalır</span>
+ │  └ search_bar_container  <span class="bug">← scrollFlags ile kayar</span>
+ └ content  <span class="bug">← appbar_scrolling_view_behavior</span>
+    </div>
+    <p class="note"><span class="r">Sorun:</span> arama çubuğu ve albüm başlığı kaydırılabilir içeriğin bir parçasıydı; üstteki konteyner görünür kalıp içi boşaldığı için "detaylar kalmış" gibi görünüyordu.</p>
+  </div>
+
+  <div class="card">
+    <h2>SONRA · LinearLayout + pinned header</h2>
+    <p class="sub">Başlık içerikten tamamen ayrı; kaydırma sadece listede oluyor.</p>
+    <div class="phone">
+      <div class="status"><span>13:08</span><span>▮▮▮ 18%</span></div>
+      <div class="bar">
+        <div class="pill"><span class="ic"></span>&nbsp; Klasörleri ara</div>
+        <span class="ic"></span>
+      </div>
+      <div class="scroll">
+        <div class="tile">Favoriler · 4</div>
+        <div class="tile">Screenshots · 663</div>
+        <div class="tile">out · 7</div>
+        <div class="tile">Redmi Note 10S</div>
+        <div class="tile">Camera</div>
+        <div class="tile">Downloads</div>
+        <div class="tile">Music</div>
+        <div class="tile">Telegram</div>
+      </div>
+    </div>
+    <div class="tree">
+LinearLayout (vertical)
+ ├ MySearchMenu  <span class="fix">← sabit, opak zemin, elevation 8dp</span>
+ │  └ scrollFlags = 0  <span class="fix">← keepHeaderPinned()</span>
+ └ content  <span class="fix">← height=0, weight=1 (sadece burası kayar)</span>
+    </div>
+    <p class="note"><span class="g">Çözüm:</span> <code>activity_main.xml</code> ve <code>activity_media.xml</code> artık dikey LinearLayout. Albüm başlığı zaten toolbar'ın içinde (<code>albumToolbarHeader</code>), yani o da sabit. <code>enableScrollAway()</code> kaldırıldı, yerine <code>keepHeaderPinned()</code> geldi.</p>
+  </div>
+</div>
+</body></html>
