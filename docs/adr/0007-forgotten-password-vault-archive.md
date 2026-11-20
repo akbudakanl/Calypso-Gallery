@@ -263,17 +263,20 @@ SSS maddesindeki 2. adım ("Şifreli verilerinizi dışa aktarın") tam olarak b
 
 Böylece kullanıcı "eski kasayı nereye koydum?" diye düşünmek zorunda kalmaz: **aynı cihaz → arşiv, başka cihaz → dışa aktar.**
 
-### 9.1. Dışa aktarma için "açık kasa" şartı
+### 9.1. Dışa aktarma kilidi kaldırılıyor
 
-`promptExportEncryptedVault` şu an `ensureVaultUnlocked` ile korunuyor. Yani şart **parola değil, açık kasadır**:
+`CryptoManager.exportEncryptedVault` saf bir dosya kopyalamasıdır (`copyTo`): **ne anahtar kullanır ne şifre çözer.** `.vault` dosyası zaten diskte düz bir dosya olarak durur; kullanıcı onu dosya yöneticisi veya MTP ile zaten kopyalayabilir. Dolayısıyla `promptExportEncryptedVault` içindeki `ensureVaultUnlocked` çağrısı **gerçek bir güvenlik sınırı değil, yalnızca gereksiz sürtünmedir.** Önceki "açık kasa şartı kalmalı" kararı bu gerekçeyle **tersine çevrilmiştir**.
 
-- Kasa zaten RAM'de açıksa **hiçbir şey sorulmaz**.
-- Kilitliyse `VaultSecurityDialog` açılır ve `allowBiometrics = true` olduğu için **Class 3 biyometrik de kabul edilir**; kullanıcı parolayı unutmuş olsa bile biyometrikle doğrulayabilir.
-- Biyometrik yoksa/çalışmıyorsa parola istenir.
+Dışa aktarma için parola/biyometrik/açık kasa şartı **kaldırılır**. Yerine korunan kontroller:
 
-Bu koruma **kalmalıdır**. Dışa aktarma yalnızca `.bin` dosyalarını değil, içinde sarınmış VMK'yı taşıyan **`.vault` başlığını da** kopyalar; bu yüzden bilinçli ve doğrulanmış bir işlem olmalıdır. Cihaza erişimi olan saldırgan şifreli klasörü dosya yöneticisi veya MTP ile zaten kopyalayabilir; uygulamanın doğrulamasız kolay bir dışa aktarma yolu sunması bu riski artırır.
+- hedef klasör seçimi (mevcut `pickCustomVaultDirectory`),
+- kasayı kendi içine dışa aktarma engeli (mevcut canonical-path kontrolü),
+- ilerleme dialogu,
+- açık onay metni: *"Şifreli dosyalar kopyalanır. Parola gerekmez; veriler şifreli kalır."*
 
-**Parolasız uygulama içi dışa aktarma reddedilmiştir.** Parolası ve biyometrisi olmayan kullanıcıya SSS'te şu anlatılır: şifreli klasörü dosya yöneticisi/MTP ile kopyalayabilir; uygulama içi dışa aktarma için kasanın açılması gerekir. Bu, aksiyomun (parolasız silme yasağı) bir uzantısıdır: koruma kaldırılmaz, sadece kapsamı netleştirilir.
+Kalıcı dışa aktarma, dosya yöneticisiyle kopyalamayla **aynı güvenlik seviyesindedir**; uygulama sadece bunu kolaylaştırır. Bu, aksiyomu (parolasız silme yasağı) ihlal etmez: dışa aktarma silme veya geçersiz kılma değil, **kopyalamadır**.
+
+Bu değişiklik sayesinde SSS'teki 2. adım ("Şifreli verilerinizi dışa aktarın"), parolasını unutan kullanıcı için de çalışır — kasanın açılması gerekmez. Arşivleme ile dışa aktarma ayrımı (§9) korunur: aynı cihaz → arşiv, başka cihaz → dışa aktar.
 
 ---
 
@@ -306,6 +309,7 @@ Bu koruma **kalmalıdır**. Dışa aktarma yalnızca `.bin` dosyalarını değil
 Bu ADR onaylandıktan sonra:
 
 1. Akışın HTML maketi (ayar satırı, onay dialogu, arşiv listesi, yol bildirimi) hazırlanır.
-2. Uygulama kodu ADR 0003 journal kalıbıyla yazılır.
-3. Yeni string'ler 9 dile çevrilir ve `translation-blind-tests/` raporları güncellenir.
-4. `FORK_CHANGELOG.md` altında yeni sürüm notu eklenir.
+2. `promptExportEncryptedVault` içindeki `ensureVaultUnlocked` çağrısı kaldırılır (§9.1).
+3. Uygulama kodu ADR 0003 journal kalıbıyla yazılır.
+4. Yeni string'ler 9 dile çevrilir ve `translation-blind-tests/` raporları güncellenir.
+5. `FORK_CHANGELOG.md` altında yeni sürüm notu eklenir.
