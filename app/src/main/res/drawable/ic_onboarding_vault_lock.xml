@@ -3,21 +3,23 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
+    <!-- Prototype proportions (shackle_drop.html), 104-unit art scaled to a 24-unit viewport:
+         wide dome, short legs, rounded body, pill keyhole. Stroke matched to sibling actions (1.9). -->
     <path
         android:fillColor="#00000000"
-        android:pathData="M6.5,11H17.5A2.5,2.5 0,0 1,20 13.5V18.5A2.5,2.5 0,0 1,17.5 21H6.5A2.5,2.5 0,0 1,4 18.5V13.5A2.5,2.5 0,0 1,6.5 11Z"
-        android:strokeWidth="1.85"
+        android:pathData="M8.31,8.54V6.46a3.69,3.69 0 0,1 7.38,0v2.08"
+        android:strokeWidth="1.9"
         android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:fillColor="#00000000"
-        android:pathData="M8,11V7a4,4 0,0 1,8 0v4"
-        android:strokeWidth="1.85"
+        android:pathData="M8.77,8.31H15.23A2.31,2.31 0 0,1 17.54,10.62V16.15A2.31,2.31 0 0,1 15.23,18.46H8.77A2.31,2.31 0 0,1 6.46,16.15V10.62A2.31,2.31 0 0,1 8.77,8.31Z"
+        android:strokeWidth="1.9"
         android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M12,14.8a1.2,1.2 0,1 0,0 2.4a1.2,1.2 0,1 0,0 -2.4z" />
+        android:pathData="M12,11.23a1,1 0 1,0 0,2a1,1 0 1,0 0,-2z M11.58,13.1H12.42V15A0.42,0.42 0 0,1 11.58,15Z" />
 </vector>

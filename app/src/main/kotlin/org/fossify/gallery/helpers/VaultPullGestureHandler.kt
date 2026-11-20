@@ -1,9 +1,11 @@
 package org.fossify.gallery.helpers
 
 import android.animation.Animator
-import android.animation.ArgbEvaluator
+import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -12,6 +14,7 @@ import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
@@ -21,10 +24,11 @@ import kotlin.math.abs
 /**
  * Pull-to-open gesture for the encrypted vault.
  *
- * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. After it has been held for
- * [ARM_DELAY_MS] a single bounce animation plays and the label switches to "release to open";
- * releasing then opens the credential prompt. The lock icon stays locked - no shackle opening,
- * because nothing has been decrypted at this point. Short/early releases only snap back.
+ * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. At that moment the framed
+ * badge appears and the lock icon drops in from above with a single spring settle (the approved
+ * prototype motion); the label only switches to "release to open" once the drop has completed.
+ * The lock stays locked - no shackle opening, because nothing has been decrypted at this point.
+ * Short/early releases only snap back.
  */
 class VaultPullGestureHandler(
     private val containerView: View,
@@ -48,8 +52,9 @@ class VaultPullGestureHandler(
     private var cancelDispatched = false
     private var thresholdMet = false
     private var armRunnable: Runnable? = null
-    private var enterAnimators = mutableListOf<Animator>()
+    private var dropAnimators = mutableListOf<Animator>()
     private var armAnimators = mutableListOf<Animator>()
+    private var badgeDrawable: GradientDrawable? = null
     private var armed = false
 
     fun handleTouchEvent(ev: MotionEvent): Boolean {
@@ -83,7 +88,6 @@ class VaultPullGestureHandler(
                                 if (!thresholdMet) {
                                     thresholdMet = true
                                     showIndicator()
-                                    armAfterDelay()
                                 }
                             } else if (!armed) {
                                 // Keep the pull completely silent until the vault threshold.
@@ -119,92 +123,108 @@ class VaultPullGestureHandler(
         return false
     }
 
+    /**
+     * Sizes the icon like the prototype emblem but keeps the background transparent. The circle
+     * exists only while the one-shot glow is playing; afterwards the icon sits on the bare screen.
+     */
+    private fun styleBadge() {
+        val badgeSize = (BADGE_SIZE_DP * density).toInt()
+        val inset = ((BADGE_SIZE_DP - ICON_SIZE_DP) * density / 2f).toInt()
+        iconView.layoutParams = iconView.layoutParams.apply {
+            width = badgeSize
+            height = badgeSize
+        }
+        iconView.setPadding(inset, inset, inset, inset)
+        iconView.scaleType = ImageView.ScaleType.FIT_CENTER
+        badgeDrawable = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.TRANSPARENT)
+            setStroke(0, Color.TRANSPARENT)
+        }
+        iconView.background = badgeDrawable
+    }
+
     private fun showIndicator() {
         cancelEnter()
-        val idleTextColor = textColor()
-        iconView.applyColorFilter(idleTextColor)
-        iconView.alpha = 1f
-        iconView.scaleX = 0.72f
-        iconView.scaleY = 0.72f
+        styleBadge()
+        val idleColor = textColor()
+        iconView.applyColorFilter(idleColor)
+        iconView.alpha = 0f
+        iconView.translationY = -DROP_TRAVEL_DP * density
+        iconView.scaleX = 1f
+        iconView.scaleY = 1f
 
         textView.text = textView.context.getString(R.string.keep_holding_to_open_vault)
-        textView.setTextColor(idleTextColor)
-        textView.alpha = 0.85f
+        textView.setTextColor(idleColor)
+        textView.alpha = 1f
 
         indicatorView.animate().cancel()
-        indicatorView.alpha = 0f
-        indicatorView.translationY = -10f * density
+        indicatorView.alpha = 1f
+        indicatorView.translationY = 0f
         indicatorView.beVisible()
         indicatorView.bringToFront()
 
-        enterAnimators += ObjectAnimator.ofFloat(indicatorView, View.ALPHA, 0f, 1f).apply {
-            duration = ENTER_ANIM_MS
-            interpolator = DecelerateInterpolator()
+        // One-shot drop: badge is already visible, the locked icon springs into place.
+        dropAnimators += ObjectAnimator.ofFloat(iconView, View.TRANSLATION_Y, -DROP_TRAVEL_DP * density, 0f).apply {
+            duration = DROP_DURATION_MS
+            interpolator = OvershootInterpolator(1.45f)
         }
-        enterAnimators += ObjectAnimator.ofFloat(indicatorView, View.TRANSLATION_Y, -10f * density, 0f).apply {
-            duration = ENTER_ANIM_MS
-            interpolator = DecelerateInterpolator()
+        dropAnimators += ObjectAnimator.ofFloat(iconView, View.ALPHA, 0f, 1f).apply {
+            duration = FADE_IN_MS
         }
-        enterAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 0.72f, 1f).apply {
-            duration = ICON_ENTER_MS
-            interpolator = OvershootInterpolator(1.5f)
-        }
-        enterAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 0.72f, 1f).apply {
-            duration = ICON_ENTER_MS
-            interpolator = OvershootInterpolator(1.5f)
-        }
-        enterAnimators.forEach { it.start() }
+        dropAnimators.forEach { it.start() }
+        playBadgeGlow()
+        armAfterDelay()
+    }
+
+    /** Single soft ring burst when the badge lands - no repeated or looping glow. */
+    private fun playBadgeGlow() {
+        val badge = badgeDrawable ?: return
+        val maxStroke = (14f * density).toInt()
+        armAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = GLOW_DURATION_MS
+            addUpdateListener { animator ->
+                val t = animator.animatedValue as Float
+                val alpha = (110 * (1f - t)).toInt().coerceIn(0, 255)
+                badge.setStroke(
+                    (maxStroke * t).toInt().coerceAtLeast(0),
+                    ColorUtils.setAlphaComponent(primaryColor(), alpha)
+                )
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    badge.setStroke(0, Color.TRANSPARENT)
+                }
+            })
+        }.also { it.start() }
     }
 
     private fun hideIndicator() {
         cancelEnter()
+        cancelArm()
         indicatorView.animate().cancel()
         indicatorView.beGone()
         indicatorView.alpha = 1f
         indicatorView.translationY = 0f
     }
 
+    /** The label flips only after the drop has settled - releasing earlier just snaps back. */
     private fun armAfterDelay() {
-        cancelArm()
         val runnable = Runnable {
             armRunnable = null
-            if (thresholdMet) playReadyAnimation()
-        }
-        armRunnable = runnable
-        iconView.postDelayed(runnable, ARM_DELAY_MS)
-    }
-
-    /** Smooth spring pulse and accent color transition when the vault is armed. */
-    private fun playReadyAnimation() {
-        armed = true
-        val startColor = textColor()
-        val endColor = primaryColor()
-        indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-
-        textView.text = textView.context.getString(R.string.release_to_open_vault)
-        textView.setTextColor(endColor)
-        textView.alpha = 0.4f
-        armAnimators += ObjectAnimator.ofFloat(textView, View.ALPHA, 0.4f, 1f).apply {
-            duration = ARM_ANIM_MS
-            interpolator = DecelerateInterpolator()
-        }
-
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.22f, 1.06f).apply {
-            duration = ARM_ANIM_MS
-            interpolator = OvershootInterpolator(1.8f)
-        }
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.22f, 1.06f).apply {
-            duration = ARM_ANIM_MS
-            interpolator = OvershootInterpolator(1.8f)
-        }
-        armAnimators += ValueAnimator.ofObject(ArgbEvaluator(), startColor, endColor).apply {
-            duration = ARM_ANIM_MS
-            interpolator = DecelerateInterpolator()
-            addUpdateListener { animator ->
-                iconView.applyColorFilter(animator.animatedValue as Int)
+            if (thresholdMet) {
+                armed = true
+                indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                textView.text = textView.context.getString(R.string.release_to_open_vault)
+                textView.setTextColor(primaryColor())
+                armAnimators += ObjectAnimator.ofFloat(textView, View.ALPHA, 1f, 0.45f, 1f).apply {
+                    duration = LABEL_PULSE_MS
+                    interpolator = DecelerateInterpolator()
+                }.also { it.start() }
             }
         }
-        armAnimators.forEach { it.start() }
+        armRunnable = runnable
+        iconView.postDelayed(runnable, DROP_DURATION_MS + 40L)
     }
 
     private fun resetThresholdState() {
@@ -215,6 +235,7 @@ class VaultPullGestureHandler(
         iconView.scaleX = 1f
         iconView.scaleY = 1f
         iconView.alpha = 1f
+        iconView.translationY = 0f
         textView.alpha = 1f
         indicatorView.translationY = 0f
     }
@@ -245,12 +266,13 @@ class VaultPullGestureHandler(
         iconView.scaleX = 1f
         iconView.scaleY = 1f
         iconView.alpha = 1f
+        iconView.translationY = 0f
         textView.alpha = 1f
     }
 
     private fun cancelEnter() {
-        enterAnimators.forEach { it.cancel() }
-        enterAnimators.clear()
+        dropAnimators.forEach { it.cancel() }
+        dropAnimators.clear()
     }
 
     private fun cancelArm() {
@@ -258,6 +280,7 @@ class VaultPullGestureHandler(
         armRunnable = null
         armAnimators.forEach { it.cancel() }
         armAnimators.clear()
+        badgeDrawable?.setStroke(0, Color.TRANSPARENT)
         iconView.applyColorFilter(textColor())
     }
 
@@ -265,10 +288,13 @@ class VaultPullGestureHandler(
         private const val MAX_TRANSLATION_DP = 160f
         private const val HOLD_OPEN_THRESHOLD_DP = 95f
         private const val TRANSLATION_FACTOR = 0.45f
-        private const val ARM_DELAY_MS = 420L
-        private const val ENTER_ANIM_MS = 180L
-        private const val ICON_ENTER_MS = 240L
-        private const val ARM_ANIM_MS = 340L
+        private const val BADGE_SIZE_DP = 64f
+        private const val ICON_SIZE_DP = 34f
+        private const val DROP_TRAVEL_DP = 72f
+        private const val DROP_DURATION_MS = 720L
+        private const val FADE_IN_MS = 260L
+        private const val GLOW_DURATION_MS = 700L
+        private const val LABEL_PULSE_MS = 340L
         private const val RESET_ANIM_MS = 220L
     }
 }

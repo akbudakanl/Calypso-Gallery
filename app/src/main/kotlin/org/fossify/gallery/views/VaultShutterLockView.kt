@@ -12,9 +12,11 @@ import androidx.core.graphics.ColorUtils
 /**
  * Lock glyph used by the vault "shutter" unlock motion.
  *
- * The shackle can be lifted independently of the body so the true/false feedback of a PIN
- * entry feels mechanical instead of a plain icon swap. Purely presentational - it never
- * stores or derives any secret.
+ * Geometry follows the approved lock prototype: a wide dome with short legs, a softly rounded
+ * body and a pill keyhole, all authored in the prototype's 104-unit coordinate space. The shackle
+ * can be lifted independently of the body so the true/false feedback of a PIN entry feels
+ * mechanical instead of a plain icon swap. Purely presentational - it never stores or derives
+ * any secret.
  */
 class VaultShutterLockView @JvmOverloads constructor(
     context: Context,
@@ -40,8 +42,8 @@ class VaultShutterLockView @JvmOverloads constructor(
     private val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
     }
-    private val jointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val keyholePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
@@ -52,7 +54,6 @@ class VaultShutterLockView @JvmOverloads constructor(
 
     fun setColors(strokeColor: Int, surfaceColor: Int, keyholeColor: Int) {
         outlinePaint.color = strokeColor
-        jointPaint.color = strokeColor
         bodyPaint.color = surfaceColor
         keyholePaint.color = keyholeColor
         glowPaint.color = ColorUtils.setAlphaComponent(strokeColor, 26)
@@ -63,37 +64,43 @@ class VaultShutterLockView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (width <= 0 || height <= 0) return
 
-        val s = minOf(width, height) / 48f
-        val cx = width / 2f
-        val cy = height / 2f
-        outlinePaint.strokeWidth = 2.4f * s
+        val u = minOf(width, height) / ART_SIZE
+        // Centre on the glyph's actual painted bounds (x 28..76, y 12..80 -> centre 52,46),
+        // not the prototype's artboard origin. Mapping y=58 left the lock visibly high.
+        val ox = width / 2f - 52f * u
+        val oy = height / 2f - 46f * u
 
         if (glow > 0f) {
-            canvas.drawCircle(cx, cy - 2f * s, (17f + glow * 9f) * s, glowPaint)
+            canvas.drawCircle(ox + 52f * u, oy + 46f * u, (26f + glow * 12f) * u, glowPaint)
         }
 
-        // Shackle: an inverted U centered on cx that pivots around its lower-left joint.
+        // Shackle: inverted U with a 32-unit-wide dome and 9-unit legs. It pivots around the
+        // lower-left joint when the vault unlocks. forceMoveTo=false joins the leg to the arc
+        // exactly at (0, -9u), so there is no gap and the apex stays well inside the view.
         canvas.save()
-        canvas.translate(cx - 9f * s, cy - 5f * s)
+        canvas.translate(ox + 36f * u, oy + 37f * u)
         canvas.rotate(-26f * openProgress)
+        outlinePaint.strokeWidth = 2.6f * u
         shacklePath.reset()
         shacklePath.moveTo(0f, 0f)
-        shacklePath.lineTo(0f, -2.5f * s)
-        shackleArcRect.set(0f, -20.5f * s, 18f * s, -2.5f * s)
+        shacklePath.lineTo(0f, -9f * u)
+        shackleArcRect.set(0f, -25f * u, 32f * u, 7f * u)
         shacklePath.arcTo(shackleArcRect, 180f, 180f, false)
-        shacklePath.lineTo(18f * s, 0f)
+        shacklePath.lineTo(32f * u, 0f)
         canvas.drawPath(shacklePath, outlinePaint)
-        canvas.drawCircle(0f, 0f, 1.8f * s, jointPaint)
-        canvas.drawCircle(18f * s, 0f, 1.8f * s, jointPaint)
         canvas.restore()
 
         // Body + keyhole stay fixed, so the motion reads as a real latch.
-        bodyRect.set(cx - 14f * s, cy - 5f * s, cx + 14f * s, cy + 14f * s)
-        canvas.drawRoundRect(bodyRect, 4f * s, 4f * s, bodyPaint)
-        canvas.drawRoundRect(bodyRect, 4f * s, 4f * s, outlinePaint)
-        canvas.drawCircle(cx, cy + 2f * s, 2.6f * s, keyholePaint)
-        stemRect.set(cx - 1f * s, cy + 3f * s, cx + 1f * s, cy + 9f * s)
-        canvas.drawRoundRect(stemRect, s, s, keyholePaint)
+        outlinePaint.strokeWidth = 2.4f * u
+        bodyRect.set(ox + 28f * u, oy + 36f * u, ox + 76f * u, oy + 80f * u)
+        canvas.drawRoundRect(bodyRect, 10f * u, 10f * u, bodyPaint)
+        canvas.drawRoundRect(bodyRect, 10f * u, 10f * u, outlinePaint)
+        canvas.drawCircle(ox + 52f * u, oy + 53f * u, 3.6f * u, keyholePaint)
+        stemRect.set(ox + 50.6f * u, oy + 54.5f * u, ox + 53.4f * u, oy + 63.5f * u)
+        canvas.drawRoundRect(stemRect, 1.4f * u, 1.4f * u, keyholePaint)
     }
 
+    companion object {
+        private const val ART_SIZE = 104f
+    }
 }
