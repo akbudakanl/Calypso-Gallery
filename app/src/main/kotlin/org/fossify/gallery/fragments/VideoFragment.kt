@@ -141,6 +141,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mPositionWhenInit = 0L
     private var mPositionAtPause = 0L
     var mIsPlaying = false
+    private var mSkippedToEnd = false
 
     private var mExoPlayer: ExoPlayer? = null
     private var mVideoSize = Point(1, 1)
@@ -875,8 +876,16 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         val isLooping = (mConfig.loopVideos && listener?.isSlideShowActive() != true) ||
             mExoPlayer?.repeatMode == Player.REPEAT_MODE_ONE
 
-        if (forward && isLooping && duration > 0L && curr + skipMs >= duration) {
-            setPosition(0L)
+        if (forward && duration > 0L && curr + skipMs >= duration) {
+            if (isLooping) {
+                setPosition(0L)
+            } else {
+                // ExoPlayer clamps a seek-to-end to the last frame and keeps playing. Finish the
+                // video ourselves so the play icon appears and pressing play restarts from 0.
+                mExoPlayer?.playWhenReady = false
+                mSkippedToEnd = true
+                videoCompleted()
+            }
             return
         }
 
@@ -1103,12 +1112,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun videoEnded(): Boolean {
+        if (mSkippedToEnd) return true
         val currentPos = mExoPlayer?.currentPosition ?: 0L
         val duration = mExoPlayer?.duration ?: 0L
         return currentPos > 0L && duration > 0L && currentPos >= duration
     }
 
     private fun setPosition(milliseconds: Long) {
+        mSkippedToEnd = false
         mExoPlayer?.seekTo(milliseconds)
         mSeekBar.progress = milliseconds.toInt()
         mCurrTimeView.text = milliseconds.getFormattedDuration()

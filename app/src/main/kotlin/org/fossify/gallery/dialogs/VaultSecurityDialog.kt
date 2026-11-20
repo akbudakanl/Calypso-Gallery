@@ -4,8 +4,10 @@ import android.animation.Animator
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.ClipDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -155,30 +157,44 @@ class VaultSecurityDialog(
                 BruteForceDialog.show(activity) { refreshBruteForceLabel() }
             }
 
-            // Strength guidance: local-only estimate, never blocks vault creation.
-            binding.vaultStrengthHolder.beVisible()
-            binding.vaultStrengthBar.progressDrawable = GradientDrawable().apply {
-                setColor(palette.primary)
+            // Strength guidance: local-only estimate, never blocks vault creation. The holder
+            // stays hidden until the first character, so no empty track/line is ever visible.
+            val strengthRadius = 3f * density
+            val track = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = strengthRadius
+                setColor(ColorUtils.blendARGB(palette.background, palette.text, 0.12f))
+            }
+            val fill = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = strengthRadius
+                setColor(primaryColor)
+            }
+            binding.vaultStrengthBar.progressDrawable = LayerDrawable(
+                arrayOf(track, ClipDrawable(fill, Gravity.START, ClipDrawable.HORIZONTAL))
+            ).apply {
+                setId(0, android.R.id.background)
+                setId(1, android.R.id.progress)
             }
             binding.vaultStrengthLabel.setTextColor(palette.secondary)
             fun refreshStrength(secret: CharArray, isPin: Boolean) {
+                if (secret.isEmpty()) {
+                    binding.vaultStrengthHolder.beGone()
+                    return
+                }
+                binding.vaultStrengthHolder.beVisible()
                 val result = VaultPasswordStrength.evaluate(secret, isPin)
                 binding.vaultStrengthBar.progress = result.score
-                binding.vaultStrengthLabel.text = if (secret.isEmpty()) {
-                    activity.getString(R.string.password_strength_hint)
-                } else {
-                    activity.getString(
-                        when (result.level) {
-                            VaultPasswordStrength.Level.BAD -> R.string.password_strength_bad
-                            VaultPasswordStrength.Level.POOR -> R.string.password_strength_poor
-                            VaultPasswordStrength.Level.WEAK -> R.string.password_strength_weak
-                            VaultPasswordStrength.Level.GOOD -> R.string.password_strength_good
-                            VaultPasswordStrength.Level.EXCELLENT -> R.string.password_strength_excellent
-                        }
-                    )
-                }
+                binding.vaultStrengthLabel.text = activity.getString(
+                    when (result.level) {
+                        VaultPasswordStrength.Level.BAD -> R.string.password_strength_bad
+                        VaultPasswordStrength.Level.POOR -> R.string.password_strength_poor
+                        VaultPasswordStrength.Level.WEAK -> R.string.password_strength_weak
+                        VaultPasswordStrength.Level.GOOD -> R.string.password_strength_good
+                        VaultPasswordStrength.Level.EXCELLENT -> R.string.password_strength_excellent
+                    }
+                )
             }
-            refreshStrength(CharArray(0), currentType == PROTECTION_PIN)
             inputHelper.onPinChanged = { pin -> refreshStrength(pin, true) }
             binding.vaultPasswordInput.addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

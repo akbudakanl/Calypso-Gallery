@@ -1376,22 +1376,17 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         val isInRecycleBin = currentMedium?.getIsInRecycleBin() == true || mDirectory == RECYCLE_BIN || isVaultRecycleBin
         val isRealAlbumSource = CopyMovePolicy.isRealAlbumSource(mDirectory, isInRecycleBin, isVaultRecycleBin)
 
+        // Without All Files access encryption cannot run, so the Encrypt action is not shown at
+        // all (the bar drops to three icons). Decrypt stays available for already-encrypted media.
+        val canEncrypt = !isRPlus() || isExternalStorageManager() || currentMedium?.isHidden() == true
         binding.bottomActions.bottomToggleFileVisibility.beVisibleIf(
-            visibleBottomActions and BOTTOM_ACTION_TOGGLE_VISIBILITY != 0 && isRealAlbumSource
+            visibleBottomActions and BOTTOM_ACTION_TOGGLE_VISIBILITY != 0 && isRealAlbumSource && canEncrypt
         )
         binding.bottomActions.bottomToggleFileVisibility.setOnLongClickListener {
             toast(if (currentMedium?.isHidden() == true) R.string.decrypt else R.string.encrypt); true
         }
-        // Without All Files access encryption cannot run: keep the action discoverable but muted,
-        // and explain what is missing when it is tapped (same warning as the pull-to-open gesture).
-        val needsAllFiles = isRPlus() && !isExternalStorageManager() && currentMedium?.isHidden() != true
-        binding.bottomActions.bottomToggleFileVisibility.alpha = if (needsAllFiles) 0.45f else 1f
 
         binding.bottomActions.bottomToggleFileVisibility.setOnClickListener {
-            if (isRPlus() && !isExternalStorageManager() && currentMedium?.isHidden() != true) {
-                GrantAllFilesDialog(this)
-                return@setOnClickListener
-            }
             currentMedium?.apply {
                 toggleFileVisibility(!isHidden()) {
                     updateBottomActionIcons(currentMedium)
