@@ -167,6 +167,9 @@ const val VAULT_ROOT_PATH = "vault_root_path"
 const val IS_VAULT_BIOMETRIC_ENABLED = "is_vault_biometric_enabled"
 const val AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN = "auto_biometric_prompt_on_vault_return"
 const val VAULT_BIOMETRIC_WRAPPED_BUNDLE = "vault_biometric_wrapped_bundle"
+const val VAULT_PASSWORD_REMINDER_DAYS = "vault_password_reminder_days"
+const val VAULT_LAST_PASSWORD_ENTRY_AT = "vault_last_password_entry_at"
+const val VAULT_LAST_PASSWORD_REMINDER_AT = "vault_last_password_reminder_at"
 const val VAULT_HEADER_FILE = ".vault"
 /** Longest PIN that still gets the optional per-digit dot indicator. */
 const val VAULT_PIN_DOTS_MAX_LENGTH = 16

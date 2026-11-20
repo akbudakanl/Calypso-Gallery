@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.dialogs.CreateNewFolderDialog
 import org.fossify.commons.dialogs.FilePickerDialog
@@ -68,6 +69,7 @@ import org.fossify.commons.helpers.DAY_SECONDS
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.PERMISSION_READ_STORAGE
+import org.fossify.commons.helpers.SHOW_ALL_TABS
 import org.fossify.commons.helpers.SORT_BY_DATE_MODIFIED
 import org.fossify.commons.helpers.SORT_BY_DATE_TAKEN
 import org.fossify.commons.helpers.SORT_BY_RANDOM
@@ -87,6 +89,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.adapters.DirectoryAdapter
 import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
+import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
@@ -139,6 +142,10 @@ import org.fossify.gallery.extensions.updateDBDirectory
 import org.fossify.gallery.extensions.updateWidgets
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
+import org.fossify.gallery.helpers.markPasswordReminderShown
+import org.fossify.gallery.helpers.markVaultPasswordEntered
+import org.fossify.gallery.helpers.shouldShowPasswordReminder
+import org.fossify.gallery.helpers.verifyVaultOnDisk
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
 import org.fossify.gallery.helpers.VaultSessionManager
@@ -519,6 +526,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         if (VaultSessionManager.isReauthPending()) {
             return
         }
+        maybeShowVaultPasswordReminder()
         updateMenuColors()
         config.isThirdPartyIntent = false
         mDateFormat = config.dateFormat
@@ -1246,6 +1254,55 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         handleVaultIntent(intent)
         updateVaultModeUi()
         refreshMenuItems()
+    }
+
+    /**
+     * In-app reminder (no system notification): shown once when the app is opened and the
+     * configured period has passed without a password/PIN vault unlock.
+     */
+    private fun maybeShowVaultPasswordReminder() {
+        if (isFinishing || isDestroyed) return
+        if (!config.shouldShowPasswordReminder(CryptoManager.verifyVaultOnDisk(this))) return
+        // Mark it as shown so repeated resumes in the same period do not nag the user.
+        markPasswordReminderShown(config)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.vault_password_reminder_due_title)
+            .setMessage(R.string.vault_password_reminder_due_message)
+            .setPositiveButton(R.string.vault_password_reminder_verify_action) { _, _ ->
+                showVaultPasswordVerification()
+            }
+            .setNeutralButton(R.string.vault_password_reminder_forgot_action) { _, _ ->
+                showVaultPasswordRecovery()
+            }
+            .setNegativeButton(R.string.vault_password_reminder_not_now, null)
+            .show()
+    }
+
+    private fun showVaultPasswordVerification() {
+        VaultSecurityDialog(
+            activity = this,
+            requiredHash = config.hiddenPasswordHash,
+            showTabIndex = SHOW_ALL_TABS,
+            minimalist = true,
+            allowBiometrics = false,
+        ) { _, _, success ->
+            if (success) {
+                markVaultPasswordEntered(config)
+                toast(R.string.vault_password_reminder_verified)
+            }
+        }
+    }
+
+    private fun showVaultPasswordRecovery() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.vault_password_reminder_forgot_title)
+            .setMessage(R.string.vault_password_reminder_forgot_steps)
+            .setPositiveButton(R.string.vault_password_reminder_open_settings) { _, _ ->
+                startActivity(Intent(this, SettingsActivity::class.java))
+            }
+            .setNegativeButton(org.fossify.commons.R.string.ok, null)
+            .show()
     }
 
     private fun handleVaultIntent(intent: Intent?) {

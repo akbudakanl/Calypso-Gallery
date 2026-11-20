@@ -3,6 +3,7 @@ package org.fossify.gallery
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.SharedPreferences
+import androidx.biometric.BiometricManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import org.fossify.commons.helpers.PROTECTION_PIN
@@ -15,6 +16,7 @@ import org.fossify.gallery.helpers.VaultLockPolicy
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.appendPendingWipe
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
+import org.fossify.gallery.helpers.biometricUnavailableReason
 import org.fossify.gallery.helpers.classifyBiometricCipherFailure
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.emptyVaultRecycleBin
@@ -495,6 +497,54 @@ class VaultLockPolicyTest {
             isUserNotAuthenticatedError = { it is FakeUserNotAuth }
         )
         assertEquals(BiometricCipherResult.TransientError, strongBoxBusy)
+    }
+
+    @Test
+    fun biometricUnavailableReasonDistinguishesWeakFaceHardwareAndKeyFailures() {
+        assertEquals(
+            R.string.vault_biometric_unavailable_no_hardware,
+            biometricUnavailableReason(BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE, false)
+        )
+        assertEquals(
+            R.string.vault_biometric_unavailable_none_enrolled,
+            biometricUnavailableReason(BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED, true)
+        )
+        assertEquals(
+            R.string.vault_biometric_unavailable_hw_unavailable,
+            biometricUnavailableReason(BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE, false)
+        )
+        assertEquals(
+            R.string.vault_biometric_unavailable_no_secure_key,
+            biometricUnavailableReason(BiometricManager.BIOMETRIC_SUCCESS, false)
+        )
+        assertEquals(
+            R.string.vault_biometric_unavailable_generic,
+            biometricUnavailableReason(BiometricManager.BIOMETRIC_STATUS_UNKNOWN, false)
+        )
+    }
+
+    @Test
+    fun vaultBiometricSettingStaysVisibleAndExplainsUnavailability() {
+        val settingsText = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt"
+        ).readText()
+        val rowGate = "binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)"
+        assertTrue(
+            "The biometric row must not be hidden when strong hardware is missing",
+            settingsText.contains(rowGate) &&
+                settingsText.contains("biometricUnavailableReason(biometricStatus, biometricKeyAvailable)")
+        )
+
+        assertTrue(
+            "The long explanation must be a dialog, never a truncated toast",
+            !settingsText.contains("toast(biometricUnavailableReason")
+        )
+
+        val layoutText = locateAppFile("src/main/res/layout/activity_settings.xml").readText()
+        assertTrue(
+            "The row needs a visible status label for the explanation",
+            layoutText.contains("settings_vault_biometric_status")
+        )
     }
 
     @Test

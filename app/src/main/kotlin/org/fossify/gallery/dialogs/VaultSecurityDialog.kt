@@ -41,6 +41,7 @@ import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
 import org.fossify.gallery.helpers.VaultLockEmblemHelper
 import org.fossify.gallery.helpers.VaultShutterAnimator
+import org.fossify.gallery.helpers.markVaultPasswordEntered
 import java.io.File
 import org.fossify.gallery.helpers.canUnlockWithBiometrics
 import org.fossify.gallery.helpers.getVaultProtectionType
@@ -439,6 +440,8 @@ class VaultSecurityDialog(
                 onPostExecute = { setDialogBusy(false) }
             ) { success ->
                 if (success) {
+                    // A real password/PIN entry restarts the "only biometrics" reminder window.
+                    markVaultPasswordEntered(activity.config)
                     dialogSucceeded = true
                     completeUnlockSuccess()
                 } else {

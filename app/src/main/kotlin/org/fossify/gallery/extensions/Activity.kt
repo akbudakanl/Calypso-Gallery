@@ -937,7 +937,7 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
                     VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
                     runOnUiThread {
                         toast(org.fossify.commons.R.string.protection_setup_successfully)
-                        onVaultReady()
+                        showVaultPasswordSavedDialog { onVaultReady() }
                     }
                 }
             }
@@ -3150,6 +3150,19 @@ fun BaseSimpleActivity.emptyAndDisableTheRecycleBin(callback: () -> Unit) {
             config.useRecycleBin = false
             callback()
         }
+    }
+}
+
+/** Shown right after vault creation / password change, before any biometric offer. */
+fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
+    ConfirmationDialog(
+        this,
+        getString(R.string.vault_password_saved_title),
+        R.string.vault_password_saved_message,
+        R.string.vault_password_saved_confirm,
+        R.string.vault_password_saved_later,
+    ) {
+        onDone()
     }
 }
 

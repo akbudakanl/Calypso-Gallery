@@ -370,6 +370,39 @@
     <string name="use_password_or_pin">PIN / Parola kullan</string>
     <string name="biometric_key_invalidated">Biyometrik güvenlik kimliği değişti. Lütfen PIN veya parolanızı girin.</string>
     <string name="no_biometric_hardware_or_enrolled">Bu cihazda biyometrik donanım veya kayıtlı biyometri bulunamadı</string>
+    <!-- Devre dışı kasa biyometrik anahtarının altında gösterilir. Uygulama yalnızca donanım destekli GÜÇLÜ biyometriği kabul eder. -->
+    <string name="vault_biometric_unavailable_title">Kasa biyometrik erişimi kullanılamıyor</string>
+    <string name="vault_biometric_unavailable_no_hardware">Bu cihazda güçlü biyometrik donanım (parmak izi veya Sınıf 3 yüz tanıma) yok. Kasa biyometrik erişimi kullanılamaz; PIN veya parolanızı kullanın.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">Güçlü biyometrik kaydı yok. Zayıf yüz tanıma kabul edilmiyor; sistem ayarlarından parmak izi veya Sınıf 3 yüz tanıma kaydedin.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">Biyometrik sensör geçici olarak kullanılamıyor. Lütfen daha sonra tekrar deneyin.</string>
+    <string name="vault_biometric_unavailable_security_update">Biyometrik özellikler kullanılmadan önce cihazın güvenlik güncellemesi alması gerekiyor.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">Bu cihazda donanım destekli anahtar (TEE/StrongBox) oluşturulamadı. Güvenlik nedeniyle kasa biyometrik erişimi kapalı.</string>
+    <string name="vault_biometric_unavailable_generic">Bu cihazda kasa biyometrik erişimi kullanılamaz. Sistem ayarlarından parmak izi veya güçlü yüz tanıma kaydedin ya da PIN/parolanızı kullanın.</string>
+
+    <!-- Biyometriğe güvenen kullanıcıların kasa parolasını unutmaması için düzenli hatırlatma. -->
+    <string name="vault_password_reminder">Parolayı düzenli hatırlat</string>
+    <string name="vault_password_reminder_disabled">Kapalı</string>
+    <string name="vault_password_reminder_weeks">%d hafta</string>
+    <string name="vault_password_reminder_months">%d ay</string>
+    <string name="vault_password_reminder_dialog_title">Hatırlatma aralığı</string>
+    <string name="vault_password_reminder_dialog_message">Bu süre boyunca şifreli kasaya parolan ile giriş yapmazsan parolanı hatırlatırız.</string>
+    <string name="vault_password_reminder_setup_note">Parolanızı hatırladığınızdan emin olmak için düzenli olarak bildirim göndereceğiz. İsterseniz bunu Ayarlar → Şifreli kasa → Parolayı düzenli hatırlat üzerinden kapatabilirsiniz.</string>
+    <string name="vault_biometric_setup_password_note">Biyometrik ile giriş yapmayı seçerseniz parolanızı hâlâ hatırlamanız gerektiğini unutmayın.</string>
+    <string name="vault_password_saved_title">Parolanızı kaydettiniz mi?</string>
+    <string name="vault_password_saved_message">Parolanızı unutursanız şifreli kasanıza erişiminizi kalıcı olarak kaybedersiniz. Devam etmeden önce parolanızı bir yere kaydettiğinizden emin olun. Parola yöneticisi kullanmanız önerilir.</string>
+    <string name="vault_password_saved_confirm">Evet, kaydettim</string>
+    <string name="vault_password_saved_later">Kaydedeceğim</string>
+    <string name="vault_password_reminder_due_title">Parolanızı hâlâ hatırlıyor musunuz?</string>
+    <string name="vault_password_reminder_due_message">Bu süre boyunca şifreli kasaya parolanızla giriş yapmadınız. Parolanız kasayı kurtarmanın tek yoludur.</string>
+    <string name="vault_password_reminder_verify_action">Parolamı doğrula</string>
+    <string name="vault_password_reminder_forgot_action">Hatırlamıyorum</string>
+    <string name="vault_password_reminder_open_settings">Ayarlara git</string>
+    <string name="vault_password_reminder_verify_title">Parolanızı doğrulayın</string>
+    <string name="vault_password_reminder_verify_message">Bu bir kasa açılışı değildir. Yalnızca parolanızı hâlâ bildiğinizi doğruluyoruz.</string>
+    <string name="vault_password_reminder_verified">Parola doğrulandı</string>
+    <string name="vault_password_reminder_not_now">Şimdi değil</string>
+    <string name="vault_password_reminder_forgot_title">Parolanızı hatırlamıyor musunuz?</string>
+    <string name="vault_password_reminder_forgot_steps">Biyometrik ile kasaya giriş yapın, şifreli verilerinizi dışa aktarın, ardından Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturup verilerinizi geri yükleyin. Biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir.</string>
     <string name="select_hidden_album">Şifreli Albüm Seçin</string>
     <string name="create_new_hidden_album">Yeni Şifreli Albüm Oluştur</string>
     <string name="new_hidden_album">Yeni şifreli albüm</string>
@@ -471,7 +504,7 @@
     <string name="biometric_access_to_encrypted_vault">Şifreli kasaya biyometrik ile giriş</string>
     <string name="auto_biometric_prompt_on_vault_return">Uygulamaya dönerken biyometrik doğrulamayı otomatik aç</string>
     <string name="block_vault_screenshots">Gizli kasada ekran görüntüsü almayı yasakla</string>
-    <string name="empty_encrypted_vault">Şifreli kasayı boşalt</string>
+    <string name="empty_encrypted_vault">Şifreli kasayı sıfırla</string>
     <string name="enter_new_pin">Yeni PIN\'i girin</string>
     <string name="repeat_new_pin">Yeni PIN\'i tekrarlayın</string>
     <string name="enter_new_password">Yeni parolayı girin</string>

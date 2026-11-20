@@ -5,7 +5,6 @@ import android.content.Context
 import java.util.Base64
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
-import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
@@ -83,14 +82,8 @@ internal fun classifyBiometricCipherFailure(
 }
 
 fun CryptoManager.isBiometricHardwareAvailable(context: Context): Boolean {
-    return try {
-        val biometricManager = BiometricManager.from(context)
-        biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
-    } catch (_: Throwable) {
-        false
-    }
+    return getBiometricAuthenticatorStatus(context) == BiometricManager.BIOMETRIC_SUCCESS
 }
-
 
 internal fun CryptoManager.checkBiometricKeyHardwareBacking(key: SecretKey): BiometricHardwareBacking {
     return try {
@@ -225,6 +218,8 @@ fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Bool
 
         context.config.vaultBiometricWrappedBundle = Base64.getEncoder().encodeToString(combined)
         context.config.isVaultBiometricEnabled = true
+        // The password was entered just before enrollment; start the reminder window here.
+        markVaultPasswordEntered(context.config)
         true
     } catch (_: Throwable) {
         false

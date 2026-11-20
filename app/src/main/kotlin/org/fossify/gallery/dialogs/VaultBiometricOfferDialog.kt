@@ -73,7 +73,10 @@ object VaultBiometricOfferDialog {
         val cipher = CryptoManager.getBiometricEncryptCipher() ?: return
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(activity.getString(R.string.vault_biometric_offer_title))
-            .setDescription(activity.getString(R.string.vault_biometric_offer_message))
+            .setDescription(
+                activity.getString(R.string.vault_biometric_offer_message) + "\n" +
+                    activity.getString(R.string.vault_biometric_setup_password_note)
+            )
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .setNegativeButtonText(activity.getString(android.R.string.cancel))
             .build()

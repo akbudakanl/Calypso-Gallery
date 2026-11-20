@@ -99,6 +99,9 @@ class SettingsActivity : SimpleActivity() {
     private var mRecycleBinContentSize = 0L
     private var activeSettingsSearch = ""
     private val originalSettingsVisibility = mutableMapOf<View, Int>()
+    private var biometricStatus = BiometricManager.BIOMETRIC_STATUS_UNKNOWN
+    private var biometricKeyAvailable = false
+    private var biometricUsable = false
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -813,13 +816,16 @@ class SettingsActivity : SimpleActivity() {
         // 2) Şifreli kasa şifresini değiştir
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 3) Şifreli kasaya biyometrik ile giriş — TEE/StrongBox yoksa hiç gösterilmez
-        val biometricHardware = CryptoManager.isBiometricHardwareAvailable(this) &&
-            CryptoManager.getOrCreateBiometricKey() != null
-        binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists && biometricHardware)
+        // 3) Şifreli kasaya biyometrik ile giriş — satır her zaman görünür, ancak uygun
+        // donanım/anahtar yoksa devre dışı ve nedeni açıklanır (sessizce gizlenmez).
+        biometricStatus = CryptoManager.getBiometricAuthenticatorStatus(this)
+        biometricKeyAvailable = CryptoManager.getOrCreateBiometricKey() != null
+        biometricUsable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS && biometricKeyAvailable
+        binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
         binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
-            hasStoragePermission && vaultExists && biometricHardware && config.isVaultBiometricEnabled
+            hasStoragePermission && vaultExists && biometricUsable && config.isVaultBiometricEnabled
         )
+        binding.settingsVaultPasswordReminderHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
@@ -850,6 +856,7 @@ class SettingsActivity : SimpleActivity() {
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupVaultBiometricAutoReturn()
+        setupVaultPasswordReminder()
         setupBlockVaultScreenshots()
         setupHideVaultKeyPresses()
         setupShowVaultPinDots()
@@ -1092,6 +1099,7 @@ class SettingsActivity : SimpleActivity() {
             if (changeSuccess) {
                 updateVaultBiometricSwitch()
                 toast(R.string.password_changed_successfully)
+                showVaultPasswordSavedDialog {}
             }
         }
     }
@@ -1125,8 +1133,15 @@ class SettingsActivity : SimpleActivity() {
                     updateVaultBiometricSwitch()
                 }
             } else {
-                if (!CryptoManager.isBiometricHardwareAvailable(this) || CryptoManager.getOrCreateBiometricKey() == null) {
-                    toast(R.string.no_biometric_hardware_or_enrolled)
+                if (!biometricUsable) {
+                    // A toast would cut off the explanation; show it in a readable dialog.
+                    ConfirmationDialog(
+                        this,
+                        getString(R.string.vault_biometric_unavailable_title),
+                        biometricUnavailableReason(biometricStatus, biometricKeyAvailable),
+                        org.fossify.commons.R.string.ok,
+                        0
+                    ) { }
                     return@setOnClickListener
                 }
 
@@ -1150,15 +1165,53 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupVaultPasswordReminder() {
+        fun updateValue() {
+            binding.settingsVaultPasswordReminder.text =
+                formatPasswordReminderInterval(this, config.vaultPasswordReminderDays)
+        }
+        updateValue()
+        binding.settingsVaultPasswordReminderHolder.setOnClickListener {
+            val days = Config.PASSWORD_REMINDER_DAYS_OPTIONS
+            val items = days.map { value ->
+                RadioItem(value, formatPasswordReminderInterval(this, value))
+            } as ArrayList<RadioItem>
+
+            RadioGroupDialog(
+                activity = this,
+                items = items,
+                checkedItemId = config.vaultPasswordReminderDays,
+                titleId = R.string.vault_password_reminder_dialog_title,
+            ) {
+                config.vaultPasswordReminderDays = it as Int
+                resetPasswordReminderState(config)
+                updateValue()
+            }
+        }
+    }
+
     private fun updateVaultBiometricSwitch() {
         val vaultExists = doesVaultExist()
         val hasStoragePermission = !isRPlus() || isExternalStorageManager()
         val biometricEnabled = vaultExists && config.isVaultBiometricEnabled
-        binding.settingsVaultBiometric.isEnabled = vaultExists
+        // Already-enabled users must still be able to turn biometrics OFF even if the device
+        // no longer has a usable strong biometric (e.g. fingerprint was removed).
+        binding.settingsVaultBiometric.isEnabled = vaultExists && (biometricUsable || biometricEnabled)
         binding.settingsVaultBiometricHolder.alpha = if (vaultExists) 1.0f else 0.4f
         binding.settingsVaultBiometric.isChecked = biometricEnabled
-        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(hasStoragePermission && biometricEnabled)
+        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
+            hasStoragePermission && biometricEnabled && biometricUsable
+        )
         binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
+
+        // Honest explanation for the disabled state instead of a silently missing row.
+        val showReason = vaultExists && !biometricUsable
+        binding.settingsVaultBiometricStatus.beVisibleIf(showReason)
+        if (showReason) {
+            binding.settingsVaultBiometricStatus.text = getString(
+                biometricUnavailableReason(biometricStatus, biometricKeyAvailable)
+            )
+        }
     }
 
     private fun confirmDisableBiometric(onConfirmed: () -> Unit) {
@@ -1191,7 +1244,10 @@ class SettingsActivity : SimpleActivity() {
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
-            .setSubtitle(getString(R.string.biometric_setup_prompt))
+            .setSubtitle(
+                getString(R.string.biometric_setup_prompt) + "\n" +
+                    getString(R.string.vault_biometric_setup_password_note)
+            )
             .setNegativeButtonText(getString(org.fossify.commons.R.string.cancel))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()

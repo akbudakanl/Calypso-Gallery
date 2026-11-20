@@ -26,6 +26,8 @@ class Config(context: Context) : BaseConfig(context) {
         const val SWEET_SPOT_UNLOCK_TARGET_MS = 1_000
         const val MAX_UNLOCK_TARGET_MS = 10_000
         const val DEFAULT_UNLOCK_TARGET_MS = 1_000
+        const val DEFAULT_PASSWORD_REMINDER_DAYS = 14
+        val PASSWORD_REMINDER_DAYS_OPTIONS = listOf(0, 7, 14, 21, 30, 60, 90)
         private const val KIB_PER_MIB = 1024
         private const val DEFAULT_STD_MEMORY_MIB = 64
         private const val DEFAULT_STD_ITERATIONS = 3
@@ -957,6 +959,27 @@ class Config(context: Context) : BaseConfig(context) {
     var vaultBiometricWrappedBundle: String
         get() = prefs.getString(VAULT_BIOMETRIC_WRAPPED_BUNDLE, "")!!
         set(value) = prefs.edit().putString(VAULT_BIOMETRIC_WRAPPED_BUNDLE, value).apply()
+
+    /** Days until the "do you still remember your vault password?" reminder. 0 disables it. */
+    var vaultPasswordReminderDays: Int
+        get() {
+            val raw = prefs.getInt(VAULT_PASSWORD_REMINDER_DAYS, DEFAULT_PASSWORD_REMINDER_DAYS)
+            return if (raw in PASSWORD_REMINDER_DAYS_OPTIONS) raw else DEFAULT_PASSWORD_REMINDER_DAYS
+        }
+        set(value) = prefs.edit().putInt(
+            VAULT_PASSWORD_REMINDER_DAYS,
+            if (value in PASSWORD_REMINDER_DAYS_OPTIONS) value else DEFAULT_PASSWORD_REMINDER_DAYS
+        ).apply()
+
+    /** Last successful password/PIN entry; the reminder counter starts from this timestamp. */
+    var vaultLastPasswordEntryAt: Long
+        get() = prefs.getLong(VAULT_LAST_PASSWORD_ENTRY_AT, 0L)
+        set(value) = prefs.edit().putLong(VAULT_LAST_PASSWORD_ENTRY_AT, value).apply()
+
+    /** Last reminder notification, so the same period cannot notify twice. */
+    var vaultLastPasswordReminderAt: Long
+        get() = prefs.getLong(VAULT_LAST_PASSWORD_REMINDER_AT, 0L)
+        set(value) = prefs.edit().putLong(VAULT_LAST_PASSWORD_REMINDER_AT, value).apply()
 
     var vaultRootPath: String
         get() = prefs.getString(VAULT_ROOT_PATH, "")!!

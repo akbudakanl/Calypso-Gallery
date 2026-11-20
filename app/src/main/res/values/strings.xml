@@ -425,6 +425,39 @@
     <string name="use_password_or_pin">Use PIN / Password</string>
     <string name="biometric_key_invalidated">Biometric credentials have changed. Please enter your PIN or password.</string>
     <string name="no_biometric_hardware_or_enrolled">No biometric hardware or enrolled credentials found on this device</string>
+    <!-- Shown under the (disabled) vault biometric switch. Be precise: the app only accepts STRONG biometrics with a hardware-backed key. -->
+    <string name="vault_biometric_unavailable_title">Biometric vault access unavailable</string>
+    <string name="vault_biometric_unavailable_no_hardware">This device has no strong biometric hardware (fingerprint or Class 3 face unlock). Vault biometric access is unavailable; use your PIN or password.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">No strong biometric is enrolled. Weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock in system settings.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">The biometric sensor is temporarily unavailable. Try again later.</string>
+    <string name="vault_biometric_unavailable_security_update">Biometrics require a security update before they can be used.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons.</string>
+    <string name="vault_biometric_unavailable_generic">Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password.</string>
+
+    <!-- Periodic reminder so users relying on biometrics do not forget the vault password. -->
+    <string name="vault_password_reminder">Remind me of my password</string>
+    <string name="vault_password_reminder_disabled">Off</string>
+    <string name="vault_password_reminder_weeks">%d weeks</string>
+    <string name="vault_password_reminder_months">%d months</string>
+    <string name="vault_password_reminder_dialog_title">Reminder interval</string>
+    <string name="vault_password_reminder_dialog_message">If you do not open the encrypted vault with your password for this long, we will remind you of it.</string>
+    <string name="vault_password_reminder_setup_note">We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password.</string>
+    <string name="vault_biometric_setup_password_note">If you choose to sign in with biometrics, remember that you still need to know your password.</string>
+    <string name="vault_password_saved_title">Have you saved your password?</string>
+    <string name="vault_password_saved_message">If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended.</string>
+    <string name="vault_password_saved_confirm">Yes, I saved it</string>
+    <string name="vault_password_saved_later">I will save it</string>
+    <string name="vault_password_reminder_due_title">Do you still remember your vault password?</string>
+    <string name="vault_password_reminder_due_message">You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault.</string>
+    <string name="vault_password_reminder_verify_action">Verify my password</string>
+    <string name="vault_password_reminder_forgot_action">I don\'t remember</string>
+    <string name="vault_password_reminder_open_settings">Open settings</string>
+    <string name="vault_password_reminder_verify_title">Confirm your password</string>
+    <string name="vault_password_reminder_verify_message">This is not a vault unlock. We only want to confirm that you still know your password.</string>
+    <string name="vault_password_reminder_verified">Password confirmed</string>
+    <string name="vault_password_reminder_not_now">Not now</string>
+    <string name="vault_password_reminder_forgot_title">Do not remember your password?</string>
+    <string name="vault_password_reminder_forgot_steps">Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible.</string>
     <string name="default_hidden_album" translatable="false">Default Secret Album</string>
     <string name="select_hidden_album">Select Encrypted Album</string>
     <string name="create_new_hidden_album">Create New Encrypted Album</string>
@@ -527,7 +560,7 @@
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>
     <string name="auto_biometric_prompt_on_vault_return">Automatically show biometric prompt when returning to app</string>
     <string name="block_vault_screenshots">Block screenshots in hidden vault</string>
-    <string name="empty_encrypted_vault">Empty encrypted vault</string>
+    <string name="empty_encrypted_vault">Reset encrypted vault</string>
     <string name="enter_new_pin">Enter new PIN</string>
     <string name="repeat_new_pin">Repeat new PIN</string>
     <string name="enter_new_password">Enter new password</string>
