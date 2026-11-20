@@ -66,13 +66,51 @@ class VaultLockActivity : SimpleActivity() {
         binding.vaultLockRoot.setBackgroundColor(palette.background)
         binding.vaultLockBackdrop.applyPalette(palette)
         binding.vaultLockRoot.filterTouchesWhenObscured = true
-        binding.vaultLockBackBtn.applyColorFilter(textColor)
+
+        // Apply system bar insets cleanly to scroll container and top-left back button
+        val baseScrollTop = binding.vaultLockScroll.paddingTop
+        val baseScrollBottom = binding.vaultLockScroll.paddingBottom
+        val backParams = binding.vaultLockBackBtn.layoutParams as android.widget.FrameLayout.LayoutParams
+        val baseBackTop = backParams.topMargin
+        ViewCompat.setOnApplyWindowInsetsListener(binding.vaultLockRoot) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.vaultLockScroll.setPadding(
+                binding.vaultLockScroll.paddingLeft,
+                baseScrollTop + bars.top,
+                binding.vaultLockScroll.paddingRight,
+                baseScrollBottom + bars.bottom
+            )
+            backParams.topMargin = baseBackTop + bars.top
+            binding.vaultLockBackBtn.layoutParams = backParams
+            insets
+        }
+
+        binding.vaultLockBackBtn.applyColorFilter(palette.text)
         binding.vaultLockBackBtn.filterTouchesWhenObscured = true
         binding.vaultLockBackBtn.setOnClickListener {
             exitVaultToNormalGallery()
         }
-        binding.vaultLockIcon.applyColorFilter(textColor)
-        binding.vaultLockTitle.setTextColor(textColor)
+
+        // Framed lock emblem + ambient pulse ring (matching 02-vault design)
+        val isLightBg = ColorUtils.calculateLuminance(palette.background) > 0.5
+        val strongBorder = ColorUtils.blendARGB(palette.border, palette.text, 0.14f)
+        val ringColor = ColorUtils.setAlphaComponent(palette.text, 40)
+        val emblemSurface = ColorUtils.setAlphaComponent(palette.surface, if (isLightBg) 232 else 214)
+        binding.vaultLockHalo.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(Color.TRANSPARENT)
+            setStroke(strokePx, ringColor)
+        }
+        binding.vaultLockEmblemCore.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 20f * density
+            setColor(emblemSurface)
+            setStroke(strokePx, strongBorder)
+        }
+        binding.vaultLockIcon.applyColorFilter(palette.text)
+        binding.vaultLockTitle.setTextColor(palette.text)
+
+        haloPulseAnimator = createHaloPulse(binding.vaultLockHalo)
 
         val securityBinding = binding.vaultSecurityContent
         securityBinding.vaultTabs.beGone()
@@ -84,7 +122,7 @@ class VaultLockActivity : SimpleActivity() {
 
         inputHelper = VaultAuthInputHelper(this, securityBinding)
         updateTextColors(binding.vaultLockRoot)
-        inputHelper.applyThemeColors()
+        inputHelper.applyThemeColors(translucentSurfaces = true)
         inputHelper.applyTouchFilter()
         inputHelper.setupPinInput(::handleSecretSubmission)
         inputHelper.setupPasswordInput(::handleSecretSubmission)
@@ -98,6 +136,34 @@ class VaultLockActivity : SimpleActivity() {
                 moveTaskToBack(true)
             }
         })
+    }
+
+    private fun createHaloPulse(haloView: View): Animator? {
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            haloView.alpha = 0.5f
+            haloView.scaleX = 1.05f
+            haloView.scaleY = 1.05f
+            return null
+        }
+        val scaleX = ObjectAnimator.ofFloat(haloView, View.SCALE_X, 0.88f, 1.24f).apply {
+            duration = 3800L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = DecelerateInterpolator(1.2f)
+        }
+        val scaleY = ObjectAnimator.ofFloat(haloView, View.SCALE_Y, 0.88f, 1.24f).apply {
+            duration = 3800L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = DecelerateInterpolator(1.2f)
+        }
+        val alpha = ObjectAnimator.ofFloat(haloView, View.ALPHA, 0f, 0.65f, 0f).apply {
+            duration = 3800L
+            repeatCount = ValueAnimator.INFINITE
+            interpolator = DecelerateInterpolator(1.2f)
+        }
+        return AnimatorSet().apply {
+            playTogether(scaleX, scaleY, alpha)
+            start()
+        }
     }
 
     override fun isVaultAssistProtectionActive(): Boolean = true
@@ -132,6 +198,8 @@ class VaultLockActivity : SimpleActivity() {
     }
 
     override fun onDestroy() {
+        haloPulseAnimator?.cancel()
+        haloPulseAnimator = null
         VaultSessionManager.setLockScreenOpen(false)
         super.onDestroy()
     }

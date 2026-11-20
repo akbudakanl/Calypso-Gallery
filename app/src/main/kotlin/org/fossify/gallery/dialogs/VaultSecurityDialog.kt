@@ -1,8 +1,13 @@
 package org.fossify.gallery.dialogs
 
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowManager
+import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.tabs.TabLayout
 import org.fossify.commons.activities.BaseSimpleActivity
@@ -17,6 +22,7 @@ import org.fossify.commons.helpers.SHOW_ALL_TABS
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogVaultSecurityBinding
+import org.fossify.gallery.databinding.DialogVaultSecurityHostBinding
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
@@ -50,9 +56,14 @@ class VaultSecurityDialog(
     private var autoPromptDecorView: View? = null
     private var autoPromptFocusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
     private val binding = DialogVaultSecurityBinding.inflate(activity.layoutInflater)
-    private val inputHelper = VaultAuthInputHelper(activity, binding)
     private val isSetupMode = isChangePasswordMode || customTargetDir != null ||
         (!CryptoManager.hasExistingVault(activity) && (requiredHash.isEmpty() || showTabIndex == SHOW_ALL_TABS))
+    // While defining a new PIN its length is not known yet, so dots grow until the first entry is saved.
+    private val inputHelper = VaultAuthInputHelper(
+        activity,
+        binding,
+        expectedPinLength = if (isSetupMode) 0 else null
+    )
     private val biometricsEnabled = allowBiometrics && !isSetupMode && !rewrapKdfOnUnlock
 
     private var currentType: Int = when (showTabIndex) {
@@ -93,7 +104,6 @@ class VaultSecurityDialog(
         if (isSetupMode) {
             binding.vaultNoRecoveryWarning.beVisible()
             binding.vaultBruteForceHolder.apply {
-                beVisible()
                 text = activity.getString(R.string.argon2_profile_title) + "\n" + BruteForceDialog.summary(activity)
                 setOnClickListener {
                     BruteForceDialog.show(activity) {
@@ -145,6 +155,19 @@ class VaultSecurityDialog(
             callback(requiredHash, currentType, true)
         }
 
+        // Host the security form on the same ambient frosted backdrop as the full-screen lock
+        // gate, so every credential prompt has the blurred gallery depth instead of flat black.
+        val hostBinding = DialogVaultSecurityHostBinding.inflate(activity.layoutInflater)
+        hostBinding.vaultSecurityBackdrop.applyPalette(palette)
+        hostBinding.vaultSecurityHostContent.addView(
+            binding.root,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+        )
+
         val builder = activity.getAlertDialogBuilder()
         builder.setNegativeButton(org.fossify.commons.R.string.cancel, null)
         builder.setOnCancelListener {
@@ -152,7 +175,7 @@ class VaultSecurityDialog(
         }
 
         builder.apply {
-            activity.setupDialogStuff(binding.root, this) { alertDialog ->
+            activity.setupDialogStuff(hostBinding.root, this) { alertDialog ->
                 dialog = alertDialog
                 alertDialog.setOnDismissListener {
                     clearAutoPromptFocusListener()
@@ -162,8 +185,14 @@ class VaultSecurityDialog(
                 }
                 alertDialog.window?.apply {
                     addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-                    setDimAmount(1.0f)
+                    // The host view itself draws the frosted backdrop, so suppress the opaque dim.
+                    clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+                    setDimAmount(0f)
+                    setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                    setLayout(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
                 }
                 inputHelper.applyThemeColors()
                 inputHelper.applyTouchFilter()
@@ -238,6 +267,11 @@ class VaultSecurityDialog(
             return
         }
         val hasFirstStep = firstStepSecret?.isNotEmpty() == true
+        // Reveal the KDF duration setting only once the password/PIN has been entered.
+        if (isSetupMode) {
+            if (hasFirstStep) binding.vaultBruteForceHolder.beVisible()
+            else binding.vaultBruteForceHolder.beGone()
+        }
         binding.vaultStatusLabel.beVisible()
         if (isChangePasswordMode) {
             if (currentType == PROTECTION_PASSWORD) {

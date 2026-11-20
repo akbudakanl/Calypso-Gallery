@@ -13,9 +13,7 @@ import org.fossify.gallery.R
 class VaultExitBackHelper(
     private val clock: () -> Long = { SystemClock.elapsedRealtime() },
     private val showToast: (Context) -> Toast? = { context ->
-        Toast.makeText(context, R.string.press_back_again_to_exit_vault, Toast.LENGTH_SHORT).apply {
-            show()
-        }
+        VaultExitToast.show(context, context.getString(R.string.press_back_again_to_exit_vault))
     }
 ) {
     private var lastBackPressedAt = 0L

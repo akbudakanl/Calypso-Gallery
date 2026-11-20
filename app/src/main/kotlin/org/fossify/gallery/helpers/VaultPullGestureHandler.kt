@@ -1,7 +1,5 @@
 package org.fossify.gallery.helpers
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -53,6 +51,7 @@ class VaultPullGestureHandler(
     private var thresholdMetAt = 0L
     private var holdLongEnough = false
     private var holdAnimator: ValueAnimator? = null
+    private var armRunnable: Runnable? = null
 
     /**
      * Feeds a touch event into the gesture. Returns true when the event has been
@@ -157,27 +156,24 @@ class VaultPullGestureHandler(
         cancelHoldAnimator()
         holdLongEnough = false
         holdAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = VAULT_HOLD_OPEN_MS
+            // the lock icon rotates one full turn in half the time (2x spin speed)
+            duration = VAULT_HOLD_OPEN_MS / 2
             interpolator = LinearInterpolator()
             addUpdateListener { animator ->
-                // the lock icon rotates one full turn while the pull is held
                 iconView.rotation = (animator.animatedValue as Float) * 360f
             }
-            addListener(object : AnimatorListenerAdapter() {
-                private var cancelled = false
-
-                override fun onAnimationCancel(animation: Animator) {
-                    cancelled = true
-                }
-
-                override fun onAnimationEnd(animation: Animator) {
-                    if (!cancelled && thresholdMet) {
-                        armVaultOpen()
-                    }
-                }
-            })
             start()
         }
+        // Arming stays tied to the full hold duration so the faster spin never shows
+        // "release to open" before the vault can actually be opened.
+        val runnable = Runnable {
+            armRunnable = null
+            if (thresholdMet) {
+                armVaultOpen()
+            }
+        }
+        armRunnable = runnable
+        iconView.postDelayed(runnable, VAULT_HOLD_OPEN_MS)
     }
 
     private fun armVaultOpen() {
@@ -233,6 +229,8 @@ class VaultPullGestureHandler(
     private fun cancelHoldAnimator() {
         holdAnimator?.cancel()
         holdAnimator = null
+        armRunnable?.let { iconView.removeCallbacks(it) }
+        armRunnable = null
     }
 
     companion object {

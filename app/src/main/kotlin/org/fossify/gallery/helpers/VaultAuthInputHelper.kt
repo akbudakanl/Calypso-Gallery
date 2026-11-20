@@ -212,7 +212,25 @@ class VaultAuthInputHelper(
         binding.vaultBiometricBtn.setCompoundDrawablesRelative(fpIcon, null, null, null)
 
         binding.vaultPasswordInputLayout.setColors(palette.text, palette.primary, palette.background)
-        binding.vaultPasswordInputLayout.setEndIconTintList(ColorStateList.valueOf(palette.secondary))
+        val selStart = binding.vaultPasswordInput.selectionStart
+        val selEnd = binding.vaultPasswordInput.selectionEnd
+        if (hideKeyPresses) {
+            binding.vaultPasswordInputLayout.endIconMode = TextInputLayout.END_ICON_NONE
+            binding.vaultPasswordInput.transformationMethod = ImmediateMaskTransformationMethod()
+        } else {
+            binding.vaultPasswordInputLayout.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+            binding.vaultPasswordInputLayout.setEndIconTintList(ColorStateList.valueOf(palette.secondary))
+            if (binding.vaultPasswordInput.transformationMethod !is PasswordTransformationMethod) {
+                binding.vaultPasswordInput.transformationMethod = PasswordTransformationMethod.getInstance()
+            }
+        }
+        val textLen = binding.vaultPasswordInput.text?.length ?: 0
+        if (selStart >= 0 && selEnd >= 0) {
+            binding.vaultPasswordInput.setSelection(
+                selStart.coerceIn(0, textLen),
+                selEnd.coerceIn(0, textLen)
+            )
+        }
         binding.vaultPasswordInput.setTextColor(palette.text)
         binding.vaultPasswordInput.setHintTextColor(palette.secondary)
     }
@@ -239,10 +257,11 @@ class VaultAuthInputHelper(
 
         for ((btn, digit) in digitButtons) {
             btn.setOnClickListener {
-                if (pinLength < currentPin.size) {
-                    currentPin[pinLength++] = digit
-                    updatePinDots()
+                if (pinLength == currentPin.size) {
+                    currentPin = currentPin.copyOf(currentPin.size * 2)
                 }
+                currentPin[pinLength++] = digit
+                updatePinDots()
             }
         }
 
@@ -262,7 +281,7 @@ class VaultAuthInputHelper(
         }
 
         binding.pinOk.setOnClickListener {
-            if (pinLength < 4) {
+            if (pinLength < MIN_PIN_LENGTH) {
                 activity.toast(org.fossify.commons.R.string.pin_must_be_4_digits_long)
             } else {
                 val chars = currentPin.copyOf(pinLength)
@@ -333,7 +352,16 @@ class VaultAuthInputHelper(
     }
 
     private fun updatePinDots() {
-        binding.vaultPinDots.text = "•".repeat(pinLength)
+        // Once the PIN passes the dot-indicator limit the whole view goes away, and a PIN of
+        // unknown length (setup mode) keeps growing until it reaches that limit too.
+        val trackedLength = if (fixedPinLength > 0) maxOf(fixedPinLength, pinLength) else pinLength
+        if (!showPinDots || trackedLength > VAULT_PIN_DOTS_MAX_LENGTH) {
+            binding.vaultPinDots.beGone()
+            return
+        }
+        binding.vaultPinDots.beVisible()
+        val slotCount = if (fixedPinLength > 0) fixedPinLength else maxOf(pinLength, MIN_PIN_LENGTH)
+        binding.vaultPinDots.setDots(slotCount, pinLength)
     }
 
     fun setupBiometricButton(enabled: Boolean, onAuthenticated: () -> Unit) {
@@ -555,9 +583,44 @@ class VaultAuthInputHelper(
         return false
     }
 
+    private class ImmediateMaskTransformationMethod : TransformationMethod {
+        override fun getTransformation(source: CharSequence, view: View): CharSequence {
+            return MaskedCharSequence(source)
+        }
+
+        override fun onFocusChanged(
+            view: View?,
+            sourceText: CharSequence?,
+            focused: Boolean,
+            direction: Int,
+            previouslyFocusedRect: Rect?
+        ) = Unit
+
+        private class MaskedCharSequence(private val source: CharSequence) : CharSequence, GetChars {
+            override val length: Int get() = source.length
+            override fun get(index: Int): Char = MASK_CHAR
+            override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+                return MaskedCharSequence(source.subSequence(startIndex, endIndex))
+            }
+
+            override fun getChars(start: Int, end: Int, dest: CharArray, destoff: Int) {
+                val count = (end - start).coerceAtLeast(0)
+                for (i in 0 until count) {
+                    dest[destoff + i] = MASK_CHAR
+                }
+            }
+        }
+
+        companion object {
+            private const val MASK_CHAR = '\u2022'
+        }
+    }
+
     companion object {
         private const val DISABLED_TEXT_ALPHA = 0x61
         private const val BUTTON_RIPPLE_ALPHA = 0x1F
         private const val PIN_BUTTON_RIPPLE_RADIUS_DP = 12f
+        private const val INITIAL_PIN_CAPACITY = 16
+        private const val MIN_PIN_LENGTH = 4
     }
 }
