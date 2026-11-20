@@ -40,6 +40,7 @@ object VaultPasswordStrength {
     )
 
     private val YEAR = Regex("(19|20)\\d{2}")
+    private val WORD_RUN = Regex("[a-zçğıöşü]+")
 
     fun evaluate(secret: CharArray, isPin: Boolean): Result {
         if (secret.isEmpty()) return Result(0, Level.BAD)
@@ -58,7 +59,8 @@ object VaultPasswordStrength {
         } else if (YEAR.containsMatchIn(text)) {
             bits -= 5.0
         }
-        val score = (bits * 2.5).roundToInt().coerceIn(0, 100)
+        // 12 haneli tam rastgele PIN ~40 bit; 80+ = çok güçlü eşiğine ancak uzun PIN'ler ulaşır.
+        val score = (bits * 2.0).roundToInt().coerceIn(0, 100)
         return Result(score, levelOf(score))
     }
 
@@ -87,15 +89,29 @@ object VaultPasswordStrength {
         if (YEAR.containsMatchIn(normalized)) bits -= 6.0
         if (text.length < 8) bits = bits.coerceAtMost(22.0)
 
+        // Sözlükeli dizilimleri cezalandır: zxcvbn'de bir sözlük kelimesi ~10-12 bittir.
+        // "doğru at yem" gibi 2-3 kelimelik passphrase'ler saf karakter entropisiyle
+        // "çok güçlü" görünür; gerçekte çok daha zayıftır. Kelime benzeri harf bloklarını
+        // ~12 bit + uzunluk fazlası ile sınırlayarak gerçekçi hale getiriyoruz.
+        WORD_RUN.findAll(normalized).forEach { run ->
+            val word = run.value
+            if (word.length >= 3) {
+                val raw = word.length * log2(26.0)
+                val capped = 12.0 + maxOf(0, word.length - 6) * 1.5
+                bits -= maxOf(0.0, raw - capped)
+            }
+        }
+
         val score = bits.roundToInt().coerceIn(0, 100)
         return Result(score, levelOf(score))
     }
 
+    // KeePassXC ile aynı eşik mantığı: 80 bit ve üzeri "çok güçlü".
     private fun levelOf(score: Int) = when {
         score <= 0 -> Level.BAD
         score < 40 -> Level.POOR
-        score < 75 -> Level.WEAK
-        score < 100 -> Level.GOOD
+        score < 60 -> Level.WEAK
+        score < 80 -> Level.GOOD
         else -> Level.EXCELLENT
     }
 
