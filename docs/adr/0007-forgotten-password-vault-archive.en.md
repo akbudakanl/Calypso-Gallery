@@ -261,6 +261,18 @@ FAQ step 2 ("Export your encrypted data") explains exactly this distinction. The
 
 So the user never has to wonder "where did my old vault go?": **same device → archive, other device → export.**
 
+### 9.1. The "unlocked vault" requirement for export
+
+`promptExportEncryptedVault` is currently gated by `ensureVaultUnlocked`. The requirement is therefore **an unlocked vault, not a password**:
+
+- If the vault is already unlocked in RAM, **nothing is asked**.
+- If locked, `VaultSecurityDialog` opens and, because `allowBiometrics = true`, **Class 3 biometrics are accepted** — a user who forgot the password can still export after biometric verification.
+- If biometrics are unavailable, the password is asked.
+
+This protection **should stay**. Export copies not only `.bin` files but also the **`.vault` header**, which carries the wrapped VMK; it must be a deliberate, verified action. Someone with device access can already copy the encrypted folder with a file manager or MTP; offering an unverified one-tap export inside the app would increase that risk.
+
+**Passwordless in-app export is rejected.** A user with neither password nor biometrics is told in the FAQ that they may copy the encrypted folder with a file manager/MTP, but in-app export requires the vault to be unlocked. This is an extension of the axiom (no passwordless deletion): the guard is kept, only its scope is clarified.
+
 ---
 
 ## 10. Rejected alternatives

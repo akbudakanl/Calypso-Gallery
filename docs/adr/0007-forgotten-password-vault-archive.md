@@ -263,6 +263,18 @@ SSS maddesindeki 2. adım ("Şifreli verilerinizi dışa aktarın") tam olarak b
 
 Böylece kullanıcı "eski kasayı nereye koydum?" diye düşünmek zorunda kalmaz: **aynı cihaz → arşiv, başka cihaz → dışa aktar.**
 
+### 9.1. Dışa aktarma için "açık kasa" şartı
+
+`promptExportEncryptedVault` şu an `ensureVaultUnlocked` ile korunuyor. Yani şart **parola değil, açık kasadır**:
+
+- Kasa zaten RAM'de açıksa **hiçbir şey sorulmaz**.
+- Kilitliyse `VaultSecurityDialog` açılır ve `allowBiometrics = true` olduğu için **Class 3 biyometrik de kabul edilir**; kullanıcı parolayı unutmuş olsa bile biyometrikle doğrulayabilir.
+- Biyometrik yoksa/çalışmıyorsa parola istenir.
+
+Bu koruma **kalmalıdır**. Dışa aktarma yalnızca `.bin` dosyalarını değil, içinde sarınmış VMK'yı taşıyan **`.vault` başlığını da** kopyalar; bu yüzden bilinçli ve doğrulanmış bir işlem olmalıdır. Cihaza erişimi olan saldırgan şifreli klasörü dosya yöneticisi veya MTP ile zaten kopyalayabilir; uygulamanın doğrulamasız kolay bir dışa aktarma yolu sunması bu riski artırır.
+
+**Parolasız uygulama içi dışa aktarma reddedilmiştir.** Parolası ve biyometrisi olmayan kullanıcıya SSS'te şu anlatılır: şifreli klasörü dosya yöneticisi/MTP ile kopyalayabilir; uygulama içi dışa aktarma için kasanın açılması gerekir. Bu, aksiyomun (parolasız silme yasağı) bir uzantısıdır: koruma kaldırılmaz, sadece kapsamı netleştirilir.
+
 ---
 
 ## 10. Reddedilen alternatifler
