@@ -407,6 +407,13 @@
     <string name="use_password_or_pin">Bruk PIN / Passord</string>
     <string name="biometric_key_invalidated">Biometriske data er endra. Ver venleg og skriv inn PIN eller passord.</string>
     <string name="no_biometric_hardware_or_enrolled">Fann inga biometrisk maskinvare eller registrerte biometriske data på denne eininga</string>
+    <string name="vault_biometric_unavailable_title">Biometrisk tilgang til kvelvet er ikkje tilgjengeleg</string>
+    <string name="vault_biometric_unavailable_no_hardware">Denne eininga har ikkje sterk biometrisk maskinvare (fingeravtrykk eller andletsgjenkjenning i klasse 3). Biometrisk tilgang til kvelvet er ikkje tilgjengeleg; bruk PIN-koden eller passordet ditt.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">Det er ikkje registrert sterk biometri. Svak andletsgjenkjenning blir ikkje godteken; registrer eit fingeravtrykk eller andletsgjenkjenning i klasse 3 i systeminnstillingane.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">Den biometriske sensoren er mellombels utilgjengeleg. Prøv igjen seinare.</string>
+    <string name="vault_biometric_unavailable_security_update">Biometri krev ei tryggleiksoppdatering før ho kan brukast.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">Det kunne ikkje opprettast ein maskinvarebeskytta nøkkel (TEE/StrongBox) på denne eininga. Biometrisk tilgang til kvelvet er deaktivert av tryggleiksgrunnar.</string>
+    <string name="vault_biometric_unavailable_generic">Biometrisk tilgang til kvelvet er ikkje tilgjengeleg på denne eininga. Registrer eit fingeravtrykk eller sterk andletsgjenkjenning i systeminnstillingane, eller bruk PIN-koden eller passordet ditt.</string>
     <string name="select_hidden_album">Vel kryptert album</string>
     <string name="create_new_hidden_album">Opprett nytt kryptert album</string>
     <string name="new_hidden_album">Nytt kryptert album</string>

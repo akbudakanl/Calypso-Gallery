@@ -406,6 +406,13 @@
     <string name="use_password_or_pin">PIN / Paroldan istifadə et</string>
     <string name="biometric_key_invalidated">Biometrik məlumatlar dəyişdirilib. Zəhmət olmasa, PIN və ya parolunuzu daxil edin.</string>
     <string name="no_biometric_hardware_or_enrolled">Bu cihazda biometrik avadanlıq və ya qeydiyyatdan keçmiş məlumat tapılmadı</string>
+    <string name="vault_biometric_unavailable_title">Şifrəli seyfə biometrik giriş mövcud deyil</string>
+    <string name="vault_biometric_unavailable_no_hardware">Bu cihazda güclü biometrik avadanlıq (barmaq izi və ya 3-cü sinif üz tanıma) yoxdur. Seyfə biometrik giriş mövcud deyil; PIN və ya parolunuzdan istifadə edin.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">Güclü biometrik məlumat qeydiyyata alınmayıb. Zəif üz tanıma qəbul edilmir; sistem parametrlərində barmaq izi və ya 3-cü sinif üz tanıma qeydiyyata alın.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">Biometrik sensor müvəqqəti olaraq mövcud deyil. Daha sonra yenidən cəhd edin.</string>
+    <string name="vault_biometric_unavailable_security_update">Biometrik funksiyalardan istifadə etmək üçün cihazın təhlükəsizlik yeniləməsi quraşdırılmalıdır.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">Bu cihazda aparat dəstəkli açar (TEE/StrongBox) yaradıla bilmədi. Təhlükəsizlik səbəbindən seyfə biometrik giriş deaktiv edilib.</string>
+    <string name="vault_biometric_unavailable_generic">Bu cihazda seyfə biometrik giriş mövcud deyil. Sistem parametrlərində barmaq izi və ya güclü üz tanıma qeydiyyata alın, yaxud PIN/parolunuzdan istifadə edin.</string>
     <string name="select_hidden_album">Şifrəli Albom Seçin</string>
     <string name="create_new_hidden_album">Yeni Şifrəli Albom Yarat</string>
     <string name="new_hidden_album">Yeni şifrəli albom</string>

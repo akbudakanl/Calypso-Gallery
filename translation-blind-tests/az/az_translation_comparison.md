@@ -908,6 +908,20 @@ Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values
 | 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir. | Explanation shown in the target vault unlock time dialog |
 | 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Alt hədd bu cihazın təhlükəsiz standart vaxtıdır. | Appended only when minSec > 1.0 |
 
+## Biometric Unavailability Explanation (this revision)
+
+Added to `values-az/strings.xml`. The Settings row now stays visible when a vault exists; if the device only has weak (Class 2) biometrics or cannot create a hardware-backed key, the row is disabled and these strings explain why in a dialog and under the row. They replace the short `no_biometric_hardware_or_enrolled` toast. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_biometric_unavailable_title` | Biometric vault access unavailable | Şifrəli seyfə biometrik giriş mövcud deyil | Dialog title |
+| 2 | `vault_biometric_unavailable_no_hardware` | This device has no strong biometric hardware (fingerprint or Class 3 face unlock). Vault biometric access is unavailable; use your PIN or password. | Bu cihazda güclü biometrik avadanlıq (barmaq izi və ya 3-cü sinif üz tanıma) yoxdur. Seyfə biometrik giriş mövcud deyil; PIN və ya parolunuzdan istifadə edin. | `BIOMETRIC_ERROR_NO_HARDWARE` |
+| 3 | `vault_biometric_unavailable_none_enrolled` | No strong biometric is enrolled. Weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock in system settings. | Güclü biometrik məlumat qeydiyyata alınmayıb. Zəif üz tanıma qəbul edilmir; sistem parametrlərində barmaq izi və ya 3-cü sinif üz tanıma qeydiyyata alın. | `BIOMETRIC_ERROR_NONE_ENROLLED`; weak face unlock rejected |
+| 4 | `vault_biometric_unavailable_hw_unavailable` | The biometric sensor is temporarily unavailable. Try again later. | Biometrik sensor müvəqqəti olaraq mövcud deyil. Daha sonra yenidən cəhd edin. | `BIOMETRIC_ERROR_HW_UNAVAILABLE` |
+| 5 | `vault_biometric_unavailable_security_update` | Biometrics require a security update before they can be used. | Biometrik funksiyalardan istifadə etmək üçün cihazın təhlükəsizlik yeniləməsi quraşdırılmalıdır. | `BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED` |
+| 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | Bu cihazda aparat dəstəkli açar (TEE/StrongBox) yaradıla bilmədi. Təhlükəsizlik səbəbindən seyfə biometrik giriş deaktiv edilib. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
+| 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | Bu cihazda seyfə biometrik giriş mövcud deyil. Sistem parametrlərində barmaq izi və ya güclü üz tanıma qeydiyyata alın, yaxud PIN/parolunuzdan istifadə edin. | Fallback explanation |
+
 ## Existing Vault Time Recalculation (this revision)
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-az/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.

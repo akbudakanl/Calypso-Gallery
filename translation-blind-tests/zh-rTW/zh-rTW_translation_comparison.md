@@ -919,6 +919,20 @@ Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values
 | 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。 | Explanation shown in the target vault unlock time dialog |
 | 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限為此裝置的安全標準時間。 | Appended only when minSec > 1.0 |
 
+## Biometric Unavailability Explanation (this revision)
+
+Added to `values-zh-rTW/strings.xml`. The Settings row now stays visible when a vault exists; if the device only has weak (Class 2) biometrics or cannot create a hardware-backed key, the row is disabled and these strings explain why in a dialog and under the row. They replace the short `no_biometric_hardware_or_enrolled` toast. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_biometric_unavailable_title` | Biometric vault access unavailable | 無法使用保險箱生物辨識存取 | Dialog title |
+| 2 | `vault_biometric_unavailable_no_hardware` | This device has no strong biometric hardware (fingerprint or Class 3 face unlock). Vault biometric access is unavailable; use your PIN or password. | 此裝置沒有強式生物辨識硬體（指紋或第 3 類臉部解鎖）。無法使用保險箱生物辨識存取，請改用 PIN 碼或密碼。 | `BIOMETRIC_ERROR_NO_HARDWARE` |
+| 3 | `vault_biometric_unavailable_none_enrolled` | No strong biometric is enrolled. Weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock in system settings. | 未註冊強式生物辨識。系統不接受弱式臉部解鎖；請在系統設定中註冊指紋或第 3 類臉部解鎖。 | `BIOMETRIC_ERROR_NONE_ENROLLED`; weak face unlock rejected |
+| 4 | `vault_biometric_unavailable_hw_unavailable` | The biometric sensor is temporarily unavailable. Try again later. | 生物辨識感測器暫時無法使用。請稍後再試。 | `BIOMETRIC_ERROR_HW_UNAVAILABLE` |
+| 5 | `vault_biometric_unavailable_security_update` | Biometrics require a security update before they can be used. | 使用生物辨識前，需要先安裝安全性更新。 | `BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED` |
+| 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | 無法在此裝置上建立硬體支援的金鑰（TEE/StrongBox）。基於安全考量，已停用保險箱生物辨識存取。 | `canAuthenticate()` succeeded but no TEE/StrongBox key |
+| 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | 此裝置無法使用保險箱生物辨識存取。請在系統設定中註冊指紋或強式臉部解鎖，或使用 PIN 碼或密碼。 | Fallback explanation |
+
 ## Existing Vault Time Recalculation (this revision)
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-zh-rTW/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.

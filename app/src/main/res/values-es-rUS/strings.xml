@@ -375,6 +375,13 @@
     <string name="use_password_or_pin">Usar PIN / Contraseña</string>
     <string name="biometric_key_invalidated">Las credenciales biométricas han cambiado. Por favor, ingresa tu PIN o contraseña.</string>
     <string name="no_biometric_hardware_or_enrolled">No se encontró hardware biométrico ni credenciales registradas en este dispositivo</string>
+    <string name="vault_biometric_unavailable_title">Acceso biométrico a la bóveda no disponible</string>
+    <string name="vault_biometric_unavailable_no_hardware">Este dispositivo no tiene hardware biométrico fuerte (huella o reconocimiento facial de clase 3). El acceso biométrico a la bóveda no está disponible; usa tu PIN o contraseña.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">No hay ninguna biometría fuerte registrada. No se acepta el desbloqueo facial débil; registra una huella o un reconocimiento facial de clase 3 en los Ajustes del sistema.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">El sensor biométrico no está disponible temporalmente. Inténtalo de nuevo más tarde.</string>
+    <string name="vault_biometric_unavailable_security_update">La biometría requiere una actualización de seguridad antes de poder usarse.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">No se pudo crear una clave con respaldo de hardware (TEE/StrongBox) en este dispositivo. El acceso biométrico a la bóveda está desactivado por seguridad.</string>
+    <string name="vault_biometric_unavailable_generic">El acceso biométrico a la bóveda no está disponible en este dispositivo. Registra una huella o un reconocimiento facial fuerte en los Ajustes del sistema, o usa tu PIN o contraseña.</string>
     <string name="select_hidden_album">Seleccionar álbum cifrado</string>
     <string name="create_new_hidden_album">Crear nuevo álbum cifrado</string>
     <string name="new_hidden_album">Nuevo álbum cifrado</string>

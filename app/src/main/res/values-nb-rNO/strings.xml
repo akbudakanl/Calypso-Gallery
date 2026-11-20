@@ -353,6 +353,13 @@
     <string name="use_password_or_pin">Bruk PIN / Passord</string>
     <string name="biometric_key_invalidated">Biometriske data er endret. Vennligst skriv inn PIN eller passord.</string>
     <string name="no_biometric_hardware_or_enrolled">Ingen biometrisk maskinvare eller registrerte biometriske data funnet på denne enheten</string>
+    <string name="vault_biometric_unavailable_title">Biometrisk tilgang til hvelvet er ikke tilgjengelig</string>
+    <string name="vault_biometric_unavailable_no_hardware">Denne enheten har ikke sterk biometrisk maskinvare (fingeravtrykk eller ansiktsgjenkjenning i klasse 3). Biometrisk tilgang til hvelvet er ikke tilgjengelig; bruk PIN-koden eller passordet ditt.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">Det er ikke registrert sterk biometri. Svak ansiktsgjenkjenning godtas ikke; registrer et fingeravtrykk eller ansiktsgjenkjenning i klasse 3 i systeminnstillingene.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">Den biometriske sensoren er midlertidig utilgjengelig. Prøv igjen senere.</string>
+    <string name="vault_biometric_unavailable_security_update">Biometri krever en sikkerhetsoppdatering før den kan brukes.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">Det kunne ikke opprettes en maskinvarebeskyttet nøkkel (TEE/StrongBox) på denne enheten. Biometrisk tilgang til hvelvet er deaktivert av sikkerhetsgrunner.</string>
+    <string name="vault_biometric_unavailable_generic">Biometrisk tilgang til hvelvet er ikke tilgjengelig på denne enheten. Registrer et fingeravtrykk eller sterk ansiktsgjenkjenning i systeminnstillingene, eller bruk PIN-koden eller passordet ditt.</string>
     <string name="select_hidden_album">Velg kryptert album</string>
     <string name="create_new_hidden_album">Opprett nytt kryptert album</string>
     <string name="new_hidden_album">Nytt kryptert album</string>

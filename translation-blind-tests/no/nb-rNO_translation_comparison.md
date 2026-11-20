@@ -934,6 +934,20 @@ Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values
 | 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Velg tiden som brukes på å åpne det krypterte hvelvet. Å holde denne verdien høy gir ekstra sikkerhet ved å gjøre brute force-angrep vanskeligere. | Explanation shown in the target vault unlock time dialog |
 | 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Nedre grense er denne enhetens sikre standardtid. | Appended only when minSec > 1.0 |
 
+## Biometric Unavailability Explanation (this revision)
+
+Added to `values-nb-rNO/strings.xml`. The Settings row now stays visible when a vault exists; if the device only has weak (Class 2) biometrics or cannot create a hardware-backed key, the row is disabled and these strings explain why in a dialog and under the row. They replace the short `no_biometric_hardware_or_enrolled` toast. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_biometric_unavailable_title` | Biometric vault access unavailable | Biometrisk tilgang til hvelvet er ikke tilgjengelig | Dialog title |
+| 2 | `vault_biometric_unavailable_no_hardware` | This device has no strong biometric hardware (fingerprint or Class 3 face unlock). Vault biometric access is unavailable; use your PIN or password. | Denne enheten har ikke sterk biometrisk maskinvare (fingeravtrykk eller ansiktsgjenkjenning i klasse 3). Biometrisk tilgang til hvelvet er ikke tilgjengelig; bruk PIN-koden eller passordet ditt. | `BIOMETRIC_ERROR_NO_HARDWARE` |
+| 3 | `vault_biometric_unavailable_none_enrolled` | No strong biometric is enrolled. Weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock in system settings. | Det er ikke registrert sterk biometri. Svak ansiktsgjenkjenning godtas ikke; registrer et fingeravtrykk eller ansiktsgjenkjenning i klasse 3 i systeminnstillingene. | `BIOMETRIC_ERROR_NONE_ENROLLED`; weak face unlock rejected |
+| 4 | `vault_biometric_unavailable_hw_unavailable` | The biometric sensor is temporarily unavailable. Try again later. | Den biometriske sensoren er midlertidig utilgjengelig. Prøv igjen senere. | `BIOMETRIC_ERROR_HW_UNAVAILABLE` |
+| 5 | `vault_biometric_unavailable_security_update` | Biometrics require a security update before they can be used. | Biometri krever en sikkerhetsoppdatering før den kan brukes. | `BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED` |
+| 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | Det kunne ikke opprettes en maskinvarebeskyttet nøkkel (TEE/StrongBox) på denne enheten. Biometrisk tilgang til hvelvet er deaktivert av sikkerhetsgrunner. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
+| 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | Biometrisk tilgang til hvelvet er ikke tilgjengelig på denne enheten. Registrer et fingeravtrykk eller sterk ansiktsgjenkjenning i systeminnstillingene, eller bruk PIN-koden eller passordet ditt. | Fallback explanation |
+
 ## Existing Vault Time Recalculation (this revision)
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-nb-rNO/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.

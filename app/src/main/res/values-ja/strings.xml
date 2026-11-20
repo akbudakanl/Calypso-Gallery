@@ -338,6 +338,13 @@
     <string name="use_password_or_pin">PIN / パスワードを使用</string>
     <string name="biometric_key_invalidated">生体認証情報が変更されました。PIN またはパスワードを入力してください。</string>
     <string name="no_biometric_hardware_or_enrolled">このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません</string>
+    <string name="vault_biometric_unavailable_title">保管庫の生体認証アクセスは利用できません</string>
+    <string name="vault_biometric_unavailable_no_hardware">このデバイスには強力な生体認証ハードウェア（指紋またはクラス 3 の顔認証）がありません。保管庫の生体認証アクセスは利用できません。PIN またはパスワードを使用してください。</string>
+    <string name="vault_biometric_unavailable_none_enrolled">強力な生体認証が登録されていません。弱い顔認証は使用できません。システム設定で指紋またはクラス 3 の顔認証を登録してください。</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">生体認証センサーは一時的に利用できません。しばらくしてからもう一度お試しください。</string>
+    <string name="vault_biometric_unavailable_security_update">生体認証を使用するには、先にセキュリティ更新プログラムを適用する必要があります。</string>
+    <string name="vault_biometric_unavailable_no_secure_key">このデバイスではハードウェア保護キー（TEE/StrongBox）を作成できませんでした。セキュリティ上の理由により、保管庫の生体認証アクセスは無効です。</string>
+    <string name="vault_biometric_unavailable_generic">このデバイスでは保管庫の生体認証アクセスは利用できません。システム設定で指紋または強力な顔認証を登録するか、PIN またはパスワードを使用してください。</string>
     <string name="select_hidden_album">暗号化アルバムを選択</string>
     <string name="create_new_hidden_album">新しい暗号化アルバムを作成</string>
     <string name="new_hidden_album">新しい暗号化アルバム</string>

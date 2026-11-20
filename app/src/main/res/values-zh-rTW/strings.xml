@@ -338,6 +338,13 @@
     <string name="use_password_or_pin">使用 PIN 碼 / 密碼</string>
     <string name="biometric_key_invalidated">生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。</string>
     <string name="no_biometric_hardware_or_enrolled">此裝置上找不到生物辨識硬體或已註冊的憑證</string>
+    <string name="vault_biometric_unavailable_title">無法使用保險箱生物辨識存取</string>
+    <string name="vault_biometric_unavailable_no_hardware">此裝置沒有強式生物辨識硬體（指紋或第 3 類臉部解鎖）。無法使用保險箱生物辨識存取，請改用 PIN 碼或密碼。</string>
+    <string name="vault_biometric_unavailable_none_enrolled">未註冊強式生物辨識。系統不接受弱式臉部解鎖；請在系統設定中註冊指紋或第 3 類臉部解鎖。</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">生物辨識感測器暫時無法使用。請稍後再試。</string>
+    <string name="vault_biometric_unavailable_security_update">使用生物辨識前，需要先安裝安全性更新。</string>
+    <string name="vault_biometric_unavailable_no_secure_key">無法在此裝置上建立硬體支援的金鑰（TEE/StrongBox）。基於安全考量，已停用保險箱生物辨識存取。</string>
+    <string name="vault_biometric_unavailable_generic">此裝置無法使用保險箱生物辨識存取。請在系統設定中註冊指紋或強式臉部解鎖，或使用 PIN 碼或密碼。</string>
     <string name="select_hidden_album">選擇加密相簿</string>
     <string name="create_new_hidden_album">建立新加密相簿</string>
     <string name="new_hidden_album">新加密相簿</string>

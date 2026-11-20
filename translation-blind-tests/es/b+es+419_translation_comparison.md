@@ -908,6 +908,20 @@ Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values
 | 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta. | Explanation shown in the target vault unlock time dialog |
 | 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | El límite inferior es el tiempo estándar seguro de este dispositivo. | Appended only when minSec > 1.0 |
 
+## Biometric Unavailability Explanation (this revision)
+
+Added to `values-b+es+419/strings.xml`. The Settings row now stays visible when a vault exists; if the device only has weak (Class 2) biometrics or cannot create a hardware-backed key, the row is disabled and these strings explain why in a dialog and under the row. They replace the short `no_biometric_hardware_or_enrolled` toast. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish — Latin America (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_biometric_unavailable_title` | Biometric vault access unavailable | Acceso biométrico a la bóveda no disponible | Dialog title |
+| 2 | `vault_biometric_unavailable_no_hardware` | This device has no strong biometric hardware (fingerprint or Class 3 face unlock). Vault biometric access is unavailable; use your PIN or password. | Este dispositivo no tiene hardware biométrico fuerte (huella o reconocimiento facial de clase 3). El acceso biométrico a la bóveda no está disponible; usa tu PIN o contraseña. | `BIOMETRIC_ERROR_NO_HARDWARE` |
+| 3 | `vault_biometric_unavailable_none_enrolled` | No strong biometric is enrolled. Weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock in system settings. | No hay ninguna biometría fuerte registrada. No se acepta el desbloqueo facial débil; registra una huella o un reconocimiento facial de clase 3 en la configuración del sistema. | `BIOMETRIC_ERROR_NONE_ENROLLED`; weak face unlock rejected |
+| 4 | `vault_biometric_unavailable_hw_unavailable` | The biometric sensor is temporarily unavailable. Try again later. | El sensor biométrico no está disponible temporalmente. Inténtalo de nuevo más tarde. | `BIOMETRIC_ERROR_HW_UNAVAILABLE` |
+| 5 | `vault_biometric_unavailable_security_update` | Biometrics require a security update before they can be used. | La biometría requiere una actualización de seguridad antes de poder usarse. | `BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED` |
+| 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | No se pudo crear una clave con respaldo de hardware (TEE/StrongBox) en este dispositivo. El acceso biométrico a la bóveda está desactivado por seguridad. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
+| 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | El acceso biométrico a la bóveda no está disponible en este dispositivo. Registra una huella o un reconocimiento facial fuerte en la configuración del sistema, o usa tu PIN o contraseña. | Fallback explanation |
+
 ## Existing Vault Time Recalculation (this revision)
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-b+es+419/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.

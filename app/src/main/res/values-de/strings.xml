@@ -340,6 +340,13 @@
     <string name="use_password_or_pin">PIN / Passwort verwenden</string>
     <string name="biometric_key_invalidated">Biometrische Anmeldedaten wurden geändert. Bitte gib deine PIN oder dein Passwort ein.</string>
     <string name="no_biometric_hardware_or_enrolled">Keine biometrische Hardware oder hinterlegte Anmeldedaten auf diesem Gerät gefunden</string>
+    <string name="vault_biometric_unavailable_title">Biometrischer Tresorzugriff nicht verfügbar</string>
+    <string name="vault_biometric_unavailable_no_hardware">Dieses Gerät hat keine starke biometrische Hardware (Fingerabdruck oder Gesichtserkennung der Klasse 3). Der biometrische Tresorzugriff ist nicht verfügbar; verwende deine PIN oder dein Passwort.</string>
+    <string name="vault_biometric_unavailable_none_enrolled">Es ist keine starke Biometrie hinterlegt. Schwache Gesichtserkennung wird nicht akzeptiert; hinterlege einen Fingerabdruck oder eine Gesichtserkennung der Klasse 3 in den Systemeinstellungen.</string>
+    <string name="vault_biometric_unavailable_hw_unavailable">Der biometrische Sensor ist vorübergehend nicht verfügbar. Versuche es später erneut.</string>
+    <string name="vault_biometric_unavailable_security_update">Für die Biometrie ist zuerst ein Sicherheitsupdate erforderlich.</string>
+    <string name="vault_biometric_unavailable_no_secure_key">Auf diesem Gerät konnte kein hardwaregestützter Schlüssel (TEE/StrongBox) erstellt werden. Der biometrische Tresorzugriff ist aus Sicherheitsgründen deaktiviert.</string>
+    <string name="vault_biometric_unavailable_generic">Der biometrische Tresorzugriff ist auf diesem Gerät nicht verfügbar. Hinterlege einen Fingerabdruck oder eine starke Gesichtserkennung in den Systemeinstellungen, oder verwende deine PIN bzw. dein Passwort.</string>
     <string name="select_hidden_album">Verschlüsseltes Album auswählen</string>
     <string name="create_new_hidden_album">Neues verschlüsseltes Album erstellen</string>
     <string name="new_hidden_album">Neues verschlüsseltes Album</string>
