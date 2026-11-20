@@ -316,6 +316,7 @@
     <string name="decrypting_files">ファイルを復号しています…</string>
     <string name="place_finger_prompt">指紋センサーに指を置いてください</string>
     <string name="connect_at_least_4_dots_prompt">4つ以上の点をつなげてください</string>
+    <string name="password_must_be_at_least_4_characters">パスワードは4文字以上で入力してください</string>
     <string name="access_existing_secrets_prompt">既存の Secrets フォルダーにアクセスしますか？</string>
     <string name="delete_and_recreate_secrets_prompt">既存の Secrets フォルダーは削除され、新しく作成されます。よろしいですか？</string>
     <string name="confirm_checkbox_label">確認しました</string>
@@ -333,6 +334,7 @@
     <string name="biometric_unlock_vault">暗号化された保管庫をロック解除</string>
     <string name="biometric_unlock_prompt">非表示項目にアクセスするには生体認証で本人確認を行ってください</string>
     <string name="biometric_setup_prompt">保管庫への生体認証アクセスを有効にするには生体認証で本人確認を行ってください</string>
+    <string name="biometric_disable_confirmation">保管庫への生体認証アクセスを無効にするには生体認証で本人確認を行ってください</string>
     <string name="use_password_or_pin">PIN / パスワードを使用</string>
     <string name="biometric_key_invalidated">生体認証情報が変更されました。PIN またはパスワードを入力してください。</string>
     <string name="no_biometric_hardware_or_enrolled">このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません</string>

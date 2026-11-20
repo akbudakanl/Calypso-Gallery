@@ -1,6 +1,6 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (16 keys)
 
 Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 
@@ -20,6 +20,8 @@ Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Uzun və müxtəlif simvollardan ibarət parolanı sındırmaq daha çətindir. | Shown before typing |
 | 13 | `vault_unlock_time_unit` | s | s | Localized seconds unit |
 | 14 | `search_in_storage` | Search in storage | Yaddaşda axtar | Second option in unencrypted copy destination picker |
+| 15 | `password_must_be_at_least_4_characters` | Password must be at least 4 characters long | Parol ən azı 4 simvoldan ibarət olmalıdır | Alphanumeric minimum length |
+| 16 | `biometric_disable_confirmation` | Confirm your biometric identity to disable biometric vault access | Seyfə biometrik girişini söndürmək üçün biometrik kimliyinizi təsdiqləyin | Shown in biometric confirmation prompt |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

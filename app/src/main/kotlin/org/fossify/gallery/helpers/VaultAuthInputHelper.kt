@@ -177,6 +177,8 @@ class VaultAuthInputHelper(
                 }
                 btn.background = RippleDrawable(primaryRipple, content, mask)
             }
+            // The ✓ glyph sits low in the font box; 2px bottom padding lifts it ~1px to centre it.
+            btn.setPadding(btn.paddingLeft, btn.paddingTop, btn.paddingRight, btn.paddingBottom + 2)
         }
 
         // Legacy bullet dots inherit the fullscreen dialog's white text color; tie it to the theme.
@@ -322,7 +324,10 @@ class VaultAuthInputHelper(
     private fun submitPassword(onPasswordSubmit: (CharArray) -> Unit) {
         val editable = binding.vaultPasswordInput.text ?: return
         val len = editable.length
-        if (len <= 0) return
+        if (len < MIN_PASSWORD_LENGTH) {
+            activity.toast(R.string.password_must_be_at_least_4_characters)
+            return
+        }
         val chars = CharArray(len)
         editable.getChars(0, len, chars, 0)
         try {
@@ -644,5 +649,6 @@ class VaultAuthInputHelper(
         private const val PIN_BUTTON_RIPPLE_RADIUS_DP = 12f
         private const val INITIAL_PIN_CAPACITY = 16
         private const val MIN_PIN_LENGTH = 4
+        private const val MIN_PASSWORD_LENGTH = 4
     }
 }

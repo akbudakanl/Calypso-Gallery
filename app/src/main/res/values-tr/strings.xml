@@ -346,6 +346,7 @@
     <string name="encrypt_decrypt_notifications">Şifreleme / Şifre Çözme</string>
     <string name="place_finger_prompt">Lütfen parmağınızı parmak izi sensörüne yerleştirin</string>
     <string name="connect_at_least_4_dots_prompt">En az 4 noktayı birleştirin</string>
+    <string name="password_must_be_at_least_4_characters">Parola en az 4 karakter olmalıdır</string>
     <string name="access_existing_secrets_prompt">Mevcut Secrets klasörünüze erişmek istiyor musunuz?</string>
     <string name="delete_and_recreate_secrets_prompt">Mevcut Secrets klasörü silinecek ve yenisi oluşturulacak, emin misiniz?</string>
     <string name="confirm_checkbox_label">Onaylıyorum</string>
@@ -365,6 +366,7 @@
     <string name="biometric_unlock_vault">Şifreli kasayı aç</string>
     <string name="biometric_unlock_prompt">Gizli ögelere erişmek için biyometrik kimliğinizi doğrulayın</string>
     <string name="biometric_setup_prompt">Biyometrik kasa erişimini etkinleştirmek için biyometrik kimliğinizi doğrulayın</string>
+    <string name="biometric_disable_confirmation">Biyometrik kasa erişimini kapatmak için biyometrik kimliğinizi doğrulayın</string>
     <string name="use_password_or_pin">PIN / Parola kullan</string>
     <string name="biometric_key_invalidated">Biyometrik güvenlik kimliği değişti. Lütfen PIN veya parolanızı girin.</string>
     <string name="no_biometric_hardware_or_enrolled">Bu cihazda biyometrik donanım veya kayıtlı biyometri bulunamadı</string>

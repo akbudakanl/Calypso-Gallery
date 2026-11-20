@@ -1,6 +1,6 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (16 keys)
 
 Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 
@@ -20,6 +20,8 @@ Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 長く様々な文字を含むパスワードほど解読が困難です。 | Shown before typing |
 | 13 | `vault_unlock_time_unit` | s | 秒 | Localized seconds unit |
 | 14 | `search_in_storage` | Search in storage | ストレージを検索 | Second option in unencrypted copy destination picker |
+| 15 | `password_must_be_at_least_4_characters` | Password must be at least 4 characters long | パスワードは4文字以上で入力してください | Alphanumeric minimum length |
+| 16 | `biometric_disable_confirmation` | Confirm your biometric identity to disable biometric vault access | 保管庫への生体認証アクセスを無効にするには生体認証で本人確認を行ってください | Shown in biometric confirmation prompt |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

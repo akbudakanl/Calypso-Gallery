@@ -775,8 +775,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         binding.mediaMenu.applyCalypsoSearchBarStyle()
         field.beVisible()
         icon.beVisible()
-        field.requestFocus()
-        showKeyboard(field)
+        // Post the focus/keyboard request so the IME sees the finished visibility change.
+        field.post {
+            field.requestFocus()
+            showKeyboard(field)
+        }
     }
 
     private fun applyToolbarMode() {

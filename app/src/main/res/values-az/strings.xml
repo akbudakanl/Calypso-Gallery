@@ -352,6 +352,7 @@
     <string name="decrypting_files">Faylların şifrəsi açılır…</string>
     <string name="place_finger_prompt">Zəhmət olmasa, barmağınızı barmaq izi sensoruna qoyun</string>
     <string name="connect_at_least_4_dots_prompt">Ən azı 4 nöqtəni birləşdirin</string>
+    <string name="password_must_be_at_least_4_characters">Parol ən azı 4 simvoldan ibarət olmalıdır</string>
     <string name="access_existing_secrets_prompt">Mövcud Secrets qovluğunuza daxil olmaq istəyirsiniz?</string>
     <string name="delete_and_recreate_secrets_prompt">Mövcud Secrets qovluğu silinəcək və yenisi yaradılacaq. Əminsiniz?</string>
     <string name="confirm_checkbox_label">Təsdiqləyirəm</string>
@@ -401,6 +402,7 @@
     <string name="biometric_unlock_vault">Şifrəli seyfin kilidini aç</string>
     <string name="biometric_unlock_prompt">Gizli elementlərə daxil olmaq üçün biometrik kimliyinizi təsdiqləyin</string>
     <string name="biometric_setup_prompt">Seyfə biometrik girişi aktivləşdirmək üçün biometrik kimliyinizi təsdiqləyin</string>
+    <string name="biometric_disable_confirmation">Seyfə biometrik girişini söndürmək üçün biometrik kimliyinizi təsdiqləyin</string>
     <string name="use_password_or_pin">PIN / Paroldan istifadə et</string>
     <string name="biometric_key_invalidated">Biometrik məlumatlar dəyişdirilib. Zəhmət olmasa, PIN və ya parolunuzu daxil edin.</string>
     <string name="no_biometric_hardware_or_enrolled">Bu cihazda biometrik avadanlıq və ya qeydiyyatdan keçmiş məlumat tapılmadı</string>

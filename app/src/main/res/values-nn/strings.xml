@@ -352,6 +352,7 @@
     <string name="decrypting_files">Dekrypterer filer…</string>
     <string name="place_finger_prompt">Plasser fingeren på fingeravtrykkssensoren</string>
     <string name="connect_at_least_4_dots_prompt">Kopla saman minst 4 punkt</string>
+    <string name="password_must_be_at_least_4_characters">Passordet må vere minst 4 teikn</string>
     <string name="access_existing_secrets_prompt">Vil du få tilgang til den eksisterande Secrets-mappa di?</string>
     <string name="delete_and_recreate_secrets_prompt">Eksisterande Secrets-mappe vert sletta og ei ny vert laga. Er du sikker?</string>
     <string name="confirm_checkbox_label">Eg stadfestar</string>
@@ -402,6 +403,7 @@
     <string name="biometric_unlock_vault">Lås opp kryptert kvelv</string>
     <string name="biometric_unlock_prompt">Stadfest den biometriske identiteten din for å få tilgang til skjulte element</string>
     <string name="biometric_setup_prompt">Stadfest den biometriske identiteten din for å aktivera biometrisk tilgang til kvelvet</string>
+    <string name="biometric_disable_confirmation">Stadfest den biometriske identiteten din for å deaktivera biometrisk tilgang til kvelvet</string>
     <string name="use_password_or_pin">Bruk PIN / Passord</string>
     <string name="biometric_key_invalidated">Biometriske data er endra. Ver venleg og skriv inn PIN eller passord.</string>
     <string name="no_biometric_hardware_or_enrolled">Fann inga biometrisk maskinvare eller registrerte biometriske data på denne eininga</string>

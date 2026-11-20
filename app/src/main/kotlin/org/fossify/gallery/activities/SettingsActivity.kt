@@ -1112,14 +1112,18 @@ class SettingsActivity : SimpleActivity() {
             }
 
             if (config.isVaultBiometricEnabled) {
-                CryptoManager.clearBiometricKey(this)
-                config.temporarilyShowHidden = false
-                config.temporarilyShowVaultExcluded = false
-                CryptoManager.lockVault()
-                CryptoManager.clearAppImageCaches(this)
-                VaultSessionManager.onVaultExited()
-                applyVaultScreenProtection(false)
-                updateVaultBiometricSwitch()
+                // Turning biometrics off must be confirmed by biometrics (or device credential):
+                // the person may rely on it because they forgot the vault password.
+                confirmDisableBiometric {
+                    CryptoManager.clearBiometricKey(this)
+                    config.temporarilyShowHidden = false
+                    config.temporarilyShowVaultExcluded = false
+                    CryptoManager.lockVault()
+                    CryptoManager.clearAppImageCaches(this)
+                    VaultSessionManager.onVaultExited()
+                    applyVaultScreenProtection(false)
+                    updateVaultBiometricSwitch()
+                }
             } else {
                 if (!CryptoManager.isBiometricHardwareAvailable(this) || CryptoManager.getOrCreateBiometricKey() == null) {
                     toast(R.string.no_biometric_hardware_or_enrolled)
@@ -1155,6 +1159,23 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsVaultBiometric.isChecked = biometricEnabled
         binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(hasStoragePermission && biometricEnabled)
         binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
+    }
+
+    private fun confirmDisableBiometric(onConfirmed: () -> Unit) {
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
+            .setSubtitle(getString(R.string.biometric_disable_confirmation))
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+            .build()
+        BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onConfirmed()
+            }
+        ).authenticate(promptInfo)
     }
 
     private fun showBiometricEnrollmentPrompt(lockVaultAfter: Boolean) {

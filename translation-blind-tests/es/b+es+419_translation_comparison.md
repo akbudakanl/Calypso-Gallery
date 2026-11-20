@@ -1,6 +1,6 @@
 # Spanish (Latin America, values-b+es+419) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (16 keys)
 
 Added to `values-b+es+419/strings.xml`. English source: `values/strings.xml`.
 
@@ -20,6 +20,8 @@ Added to `values-b+es+419/strings.xml`. English source: `values/strings.xml`.
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Una contraseña larga con caracteres variados es más difícil de descifrar. | Shown before typing |
 | 13 | `vault_unlock_time_unit` | s | s | Localized seconds unit |
 | 14 | `search_in_storage` | Search in storage | Buscar en el almacenamiento | Second option in unencrypted copy destination picker |
+| 15 | `password_must_be_at_least_4_characters` | Password must be at least 4 characters long | La contraseña debe tener al menos 4 caracteres | Alphanumeric minimum length |
+| 16 | `biometric_disable_confirmation` | Confirm your biometric identity to disable biometric vault access | Confirma tu identidad biométrica para desactivar el acceso biométrico a la bóveda | Shown in biometric confirmation prompt |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

@@ -401,6 +401,7 @@
     <string name="encrypt_decrypt_notifications">Encrypt / Decrypt</string>
     <string name="place_finger_prompt">Please place your finger on the fingerprint sensor</string>
     <string name="connect_at_least_4_dots_prompt">Connect at least 4 dots</string>
+    <string name="password_must_be_at_least_4_characters">Password must be at least 4 characters long</string>
     <string name="access_existing_secrets_prompt">Do you want to access your existing Secrets folder?</string>
     <string name="delete_and_recreate_secrets_prompt">Existing Secrets folder will be deleted and a new one will be created. Are you sure?</string>
     <string name="confirm_checkbox_label">I confirm</string>
@@ -420,6 +421,7 @@
     <string name="biometric_unlock_vault">Unlock encrypted vault</string>
     <string name="biometric_unlock_prompt">Verify your biometric identity to access hidden items</string>
     <string name="biometric_setup_prompt">Confirm your biometric identity to enable biometric vault access</string>
+    <string name="biometric_disable_confirmation">Confirm your biometric identity to disable biometric vault access</string>
     <string name="use_password_or_pin">Use PIN / Password</string>
     <string name="biometric_key_invalidated">Biometric credentials have changed. Please enter your PIN or password.</string>
     <string name="no_biometric_hardware_or_enrolled">No biometric hardware or enrolled credentials found on this device</string>

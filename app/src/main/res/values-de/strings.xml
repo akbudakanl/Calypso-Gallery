@@ -318,6 +318,7 @@
     <string name="decrypting_files">Dateien werden entschlüsselt…</string>
     <string name="place_finger_prompt">Bitte den Finger auf den Fingerabdrucksensor legen</string>
     <string name="connect_at_least_4_dots_prompt">Mindestens 4 Punkte verbinden</string>
+    <string name="password_must_be_at_least_4_characters">Das Passwort muss mindestens 4 Zeichen lang sein</string>
     <string name="access_existing_secrets_prompt">Möchtest du auf deinen vorhandenen Secrets-Ordner zugreifen?</string>
     <string name="delete_and_recreate_secrets_prompt">Der vorhandene Secrets-Ordner wird gelöscht und ein neuer erstellt. Bist du sicher?</string>
     <string name="confirm_checkbox_label">Ich bestätige</string>
@@ -335,6 +336,7 @@
     <string name="biometric_unlock_vault">Verschlüsselten Tresor entsperren</string>
     <string name="biometric_unlock_prompt">Bestätige deine biometrische Identität, um auf versteckte Elemente zuzugreifen</string>
     <string name="biometric_setup_prompt">Bestätige deine biometrische Identität, um den biometrischen Tresorzugriff zu aktivieren</string>
+    <string name="biometric_disable_confirmation">Bestätige deine biometrische Identität, um den biometrischen Tresorzugriff zu deaktivieren</string>
     <string name="use_password_or_pin">PIN / Passwort verwenden</string>
     <string name="biometric_key_invalidated">Biometrische Anmeldedaten wurden geändert. Bitte gib deine PIN oder dein Passwort ein.</string>
     <string name="no_biometric_hardware_or_enrolled">Keine biometrische Hardware oder hinterlegte Anmeldedaten auf diesem Gerät gefunden</string>

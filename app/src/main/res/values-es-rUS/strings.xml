@@ -320,6 +320,7 @@
     <string name="decrypting_files">Descifrando archivos…</string>
     <string name="place_finger_prompt">Por favor, coloca tu dedo sobre el sensor de huellas</string>
     <string name="connect_at_least_4_dots_prompt">Conecta al menos 4 puntos</string>
+    <string name="password_must_be_at_least_4_characters">La contraseña debe tener al menos 4 caracteres</string>
     <string name="access_existing_secrets_prompt">¿Deseas acceder a tu carpeta Secrets existente?</string>
     <string name="delete_and_recreate_secrets_prompt">Se eliminará la carpeta Secrets existente y se creará una nueva. ¿Estás seguro?</string>
     <string name="confirm_checkbox_label">Confirmo</string>
@@ -370,6 +371,7 @@
     <string name="biometric_unlock_vault">Desbloquear bóveda cifrada</string>
     <string name="biometric_unlock_prompt">Verifica tu identidad biométrica para acceder a los elementos ocultos</string>
     <string name="biometric_setup_prompt">Confirma tu identidad biométrica para activar el acceso biométrico a la bóveda</string>
+    <string name="biometric_disable_confirmation">Confirma tu identidad biométrica para desactivar el acceso biométrico a la bóveda</string>
     <string name="use_password_or_pin">Usar PIN / Contraseña</string>
     <string name="biometric_key_invalidated">Las credenciales biométricas han cambiado. Por favor, ingresa tu PIN o contraseña.</string>
     <string name="no_biometric_hardware_or_enrolled">No se encontró hardware biométrico ni credenciales registradas en este dispositivo</string>

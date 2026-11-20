@@ -316,6 +316,7 @@
     <string name="decrypting_files">正在解密檔案…</string>
     <string name="place_finger_prompt">請將手指放在指紋感應器上</string>
     <string name="connect_at_least_4_dots_prompt">請至少連接 4 個點</string>
+    <string name="password_must_be_at_least_4_characters">密碼至少需要 4 個字元</string>
     <string name="access_existing_secrets_prompt">您要存取現有的 Secrets 資料夾嗎？</string>
     <string name="delete_and_recreate_secrets_prompt">現有的 Secrets 資料夾將會被刪除並建立新的資料夾。確定要繼續嗎？</string>
     <string name="confirm_checkbox_label">我確認</string>
@@ -333,6 +334,7 @@
     <string name="biometric_unlock_vault">解鎖加密保險箱</string>
     <string name="biometric_unlock_prompt">驗證您的生物辨識身分以存取隱藏項目</string>
     <string name="biometric_setup_prompt">確認您的生物辨識身分以啟用保險箱的生物辨識存取</string>
+    <string name="biometric_disable_confirmation">確認您的生物辨識身分以停用保險箱的生物辨識存取</string>
     <string name="use_password_or_pin">使用 PIN 碼 / 密碼</string>
     <string name="biometric_key_invalidated">生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。</string>
     <string name="no_biometric_hardware_or_enrolled">此裝置上找不到生物辨識硬體或已註冊的憑證</string>
