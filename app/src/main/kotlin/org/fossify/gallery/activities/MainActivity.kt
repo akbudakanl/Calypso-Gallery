@@ -91,7 +91,6 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
-import org.fossify.gallery.extensions.keepPinnedAtTop
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.createDirectoryFromMedia
@@ -891,7 +890,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun refreshMenuItems() {
         if (!mIsThirdPartyIntent) {
             binding.mainMenu.requireToolbar().menu.apply {
-                findItem(R.id.column_count)?.isVisible = config.viewTypeFolders == VIEW_TYPE_GRID
                 findItem(R.id.set_as_default_folder)?.isVisible = !mIsSecretVaultView && !config.defaultFolder.isEmpty()
                 findItem(R.id.open_recycle_bin)?.isVisible =
                     !mIsSecretVaultView && config.useRecycleBin && !config.showRecycleBinAtFolders
@@ -955,7 +953,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
                 R.id.create_new_folder -> createNewFolder()
                 R.id.open_recycle_bin -> openRecycleBin()
-                R.id.column_count -> changeColumnCount()
                 R.id.set_as_default_folder -> setAsDefaultFolder()
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
@@ -968,7 +965,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun updateMenuColors() {
         binding.mainMenu.updateColors()
         binding.mainMenu.applyCalypsoSearchBarStyle()
-        binding.mainMenu.keepPinnedAtTop()
     }
 
     private fun getRecyclerAdapter() = binding.directoriesGrid.adapter as? DirectoryAdapter

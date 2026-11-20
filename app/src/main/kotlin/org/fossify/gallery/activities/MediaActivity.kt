@@ -22,7 +22,6 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import org.fossify.commons.dialogs.CreateNewFolderDialog
-import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.appLockManager
 import org.fossify.commons.extensions.areSystemAnimationsEnabled
 import org.fossify.commons.extensions.beGone
@@ -58,7 +57,6 @@ import org.fossify.commons.helpers.VIEW_TYPE_LIST
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.FileDirItem
-import org.fossify.commons.models.RadioItem
 import org.fossify.commons.views.MyGridLayoutManager
 import org.fossify.commons.views.MyRecyclerView
 import org.fossify.gallery.R
@@ -72,7 +70,6 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
-import org.fossify.gallery.extensions.keepPinnedAtTop
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
@@ -644,7 +641,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 isDefaultFolder && !isVaultRecycleBin && !mIsVaultFilesView
 
             val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
-            findItem(R.id.column_count).isVisible = viewType == VIEW_TYPE_GRID
             findItem(R.id.toggle_filename).isVisible = viewType == VIEW_TYPE_GRID
         }
     }
@@ -682,7 +678,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 R.id.open_recycle_bin -> openRecycleBin()
                 R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
                 R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.column_count -> changeColumnCount()
                 R.id.set_as_default_folder -> setAsDefaultFolder()
                 R.id.unset_as_default_folder -> unsetAsDefaultFolder()
                 R.id.slideshow -> startSlideshow()
@@ -719,7 +714,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
-        binding.mediaMenu.keepPinnedAtTop()
         applyToolbarMode()
         updateAlbumHeader()
     }
@@ -1401,29 +1395,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             }
         } else {
             mZoomListener = null
-        }
-    }
-
-    private fun changeColumnCount() {
-        val items = ArrayList<RadioItem>()
-        for (i in 1..MAX_COLUMN_COUNT) {
-            items.add(
-                RadioItem(
-                    id = i,
-                    title = resources.getQuantityString(
-                        org.fossify.commons.R.plurals.column_counts, i, i
-                    )
-                )
-            )
-        }
-
-        val currentColumnCount = (binding.mediaGrid.layoutManager as MyGridLayoutManager).spanCount
-        RadioGroupDialog(this, items, currentColumnCount) {
-            val newColumnCount = it as Int
-            if (currentColumnCount != newColumnCount) {
-                config.mediaColumnCnt = newColumnCount
-                columnCountChanged()
-            }
         }
     }
 
