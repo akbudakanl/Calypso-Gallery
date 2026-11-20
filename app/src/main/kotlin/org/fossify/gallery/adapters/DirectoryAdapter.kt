@@ -1116,22 +1116,46 @@ class DirectoryAdapter(
     }
 
     private fun unlockFolder() {
-        val paths = getSelectedPaths()
-        val firstPath = paths.first()
-        val tabToShow = config.getFolderProtectionType(firstPath)
-        val hashToCheck = config.getFolderProtectionHash(firstPath)
-        SecurityDialog(activity, hashToCheck, tabToShow) { hash, type, success ->
-            if (success) {
-                paths.filter { config.isFolderProtected(it) && config.getFolderProtectionType(it) == tabToShow && config.getFolderProtectionHash(it) == hashToCheck }
-                    .forEach {
+        val protectedPaths = getSelectedPaths().filter { config.isFolderProtected(it) }
+        if (protectedPaths.isEmpty()) return
+
+        // Albums may have been locked with different credentials. Group them by (type, hash) and
+        // ask for each distinct credential in turn, so a mixed multi-selection unlocks in one go.
+        val credentialGroups = protectedPaths
+            .groupBy { config.getFolderProtectionType(it) to config.getFolderProtectionHash(it) }
+            .entries
+            .iterator()
+
+        var unlockedAny = false
+
+        fun unlockNextGroup() {
+            if (!credentialGroups.hasNext()) {
+                listener?.refreshItems()
+                finishActMode()
+                return
+            }
+
+            val (credential, paths) = credentialGroups.next()
+            val (tabToShow, hashToCheck) = credential
+            SecurityDialog(activity, hashToCheck, tabToShow) { _, _, success ->
+                if (success) {
+                    unlockedAny = true
+                    paths.forEach {
                         config.removeFolderProtection(it)
                         lockedFolderPaths.remove(it)
                     }
-
-                listener?.refreshItems()
-                finishActMode()
+                    unlockNextGroup()
+                } else if (unlockedAny) {
+                    // A later prompt was cancelled: keep the groups already unlocked, leave the
+                    // remaining ones locked and show the partial result.
+                    listener?.refreshItems()
+                    finishActMode()
+                }
+                // Cancelling the first prompt leaves the selection intact so the user can retry.
             }
         }
+
+        unlockNextGroup()
     }
 
     private fun pinFolders(pin: Boolean) {
