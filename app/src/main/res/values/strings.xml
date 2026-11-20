@@ -649,7 +649,7 @@
     <string name="onboarding_vault_title">Encrypted Vault</string>
     <string name="onboarding_vault_desc">Encrypt your photos and videos. No one else can access them.</string>
     <string name="onboarding_albums_title">Playlists for your photos</string>
-    <string name="onboarding_albums_desc">Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies.</string>
+    <string name="onboarding_albums_desc">Virtual albums let you bring the files you want to see together in a single album, without moving them between folders or creating copies on disk. Unlike a regular copy, they use no extra storage because only the original file is kept on disk. You can add the same file to as many albums as you like, while your folder structure stays exactly as it is.</string>
     <string name="onboarding_media_permission_note">Media access permission is required to display your photos and videos.</string>
     <string name="onboarding_continue">Continue</string>
     <string name="onboarding_media_required_title">Full media access required</string>

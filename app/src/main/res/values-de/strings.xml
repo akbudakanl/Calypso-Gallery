@@ -586,7 +586,7 @@
     <string name="onboarding_vault_title">Verschlüsselter Tresor</string>
     <string name="onboarding_vault_desc">Verschlüssle deine Fotos und Videos. Niemand sonst hat Zugriff.</string>
     <string name="onboarding_albums_title">Playlists für deine Fotos</string>
-    <string name="onboarding_albums_desc">Virtuelle Ordner bündeln deine gewünschten Fotos und Videos in beliebig vielen Alben, ohne sie aus ihren Ordnern zu verschieben oder durch Kopien zusätzlichen Speicherplatz zu verbrauchen.</string>
+    <string name="onboarding_albums_desc">Virtuelle Alben fassen die Dateien, die du gemeinsam ansehen möchtest, in einem einzigen Album zusammen – ohne sie zwischen Ordnern zu verschieben oder Kopien auf der Festplatte zu erstellen. Anders als beim normalen Kopieren verbrauchen sie keinen zusätzlichen Speicher, da nur die Originaldatei auf dem Datenträger liegt. Dieselbe Datei kannst du beliebig vielen Alben hinzufügen, während deine Ordnerstruktur unverändert bleibt.</string>
     <string name="onboarding_media_permission_note">Für die Anzeige deiner Fotos und Videos ist die Medienzugriffsberechtigung erforderlich.</string>
     <string name="onboarding_continue">Weiter</string>
     <string name="onboarding_media_required_title">Voller Medienzugriff erforderlich</string>

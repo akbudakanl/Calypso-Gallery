@@ -587,7 +587,7 @@
     <string name="onboarding_vault_title">暗号化された保管庫</string>
     <string name="onboarding_vault_desc">写真や動画を暗号化します。あなた以外の誰もアクセスできません。</string>
     <string name="onboarding_albums_title">写真のためのプレイリスト</string>
-    <string name="onboarding_albums_desc">仮想フォルダーを使えば、元のフォルダーから移動したりコピーで容量を消費したりすることなく、見たい写真や動画を好きなだけアルバムにまとめられます。</string>
+    <string name="onboarding_albums_desc">仮想アルバムを使えば、一緒に見たいファイルをフォルダー間で移動させたり、ディスクにコピーを作ったりせずに、1つのアルバムにまとめられます。通常のコピーとは異なり、ディスクには元のファイルだけが存在するため、ストレージを消費しません。同じファイルを好きな数のアルバムに追加でき、フォルダー構成はそのまま保たれます。</string>
     <string name="onboarding_media_permission_note">写真や動画を表示するには、メディアへのアクセス権限が必要です。</string>
     <string name="onboarding_continue">続行</string>
     <string name="onboarding_media_required_title">メディアへの完全なアクセスが必要</string>

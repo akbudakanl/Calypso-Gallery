@@ -588,7 +588,7 @@
     <string name="onboarding_vault_title">Bóveda cifrada</string>
     <string name="onboarding_vault_desc">Cifra tus fotos y vídeos. Nadie más podrá acceder a ellos.</string>
     <string name="onboarding_albums_title">Listas de reproducción para tus fotos</string>
-    <string name="onboarding_albums_desc">Las carpetas virtuales te permiten reunir las fotos y vídeos que quieras en tantos álbumes como desees, sin moverlos de sus carpetas ni ocupar espacio extra con copias.</string>
+    <string name="onboarding_albums_desc">Los álbumes virtuales te permiten reunir los archivos que quieres ver juntos en un único álbum, sin moverlos entre carpetas ni crear copias en el disco. A diferencia de una copia normal, no consumen espacio de almacenamiento porque en el disco solo existe el archivo original. Puedes añadir el mismo archivo a todos los álbumes que quieras, mientras tu estructura de carpetas se mantiene intacta.</string>
     <string name="onboarding_media_permission_note">Se necesita permiso de acceso multimedia para mostrar tus fotos y vídeos.</string>
     <string name="onboarding_continue">Continuar</string>
     <string name="onboarding_media_required_title">Se requiere acceso multimedia completo</string>

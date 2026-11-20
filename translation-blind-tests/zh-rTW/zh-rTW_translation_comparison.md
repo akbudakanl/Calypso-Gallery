@@ -847,7 +847,7 @@ Added to `values-zh-rTW/strings.xml` for the 3-screen first-launch welcome and f
 | 4 | `onboarding_vault_title` | Encrypted Vault | 加密保險箱 | Welcome card 2 title |
 | 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | 加密您的相片與影片。除了您以外無人能存取。 | Welcome card 2 description |
 | 6 | `onboarding_albums_title` | Playlists for your photos | 相片專屬的播放清單 | Welcome card 3 title |
-| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | 虛擬資料夾讓您無需將相片和影片移出原有資料夾，也不必複製檔案佔用額外空間，就能自由整理到任意數量的相簿中。 | Welcome card 3 description |
+| 7 | `onboarding_albums_desc` | Virtual albums let you bring the files you want to see together in a single album, without moving them between folders or creating copies on disk. Unlike a regular copy, they use no extra storage because only the original file is kept on disk. You can add the same file to as many albums as you like, while your folder structure stays exactly as it is. | 虛擬相簿可讓您將想一起查看的檔案集中在單一相簿中，不必在資料夾之間移動，也不會在磁碟上建立副本。與一般複製不同，它不會耗用儲存空間，因為磁碟上只保留原始檔案。您可以將同一個檔案加入任意數量的相簿，而資料夾結構維持不變。 | Welcome card 3 description |
 | 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | 顯示您的相片與影片需要媒體存取權限。 | Welcome footer media permission note |
 | 9 | `onboarding_continue` | Continue | 繼續 | Welcome primary button |
 | 10 | `onboarding_media_required_title` | Full media access required | 需要完整的媒體存取權限 | Media permission screen title |

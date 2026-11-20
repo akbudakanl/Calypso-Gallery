@@ -584,7 +584,7 @@
     <string name="onboarding_vault_title">加密保險箱</string>
     <string name="onboarding_vault_desc">加密您的相片與影片。除了您以外無人能存取。</string>
     <string name="onboarding_albums_title">相片專屬的播放清單</string>
-    <string name="onboarding_albums_desc">虛擬資料夾讓您無需將相片和影片移出原有資料夾，也不必複製檔案佔用額外空間，就能自由整理到任意數量的相簿中。</string>
+    <string name="onboarding_albums_desc">虛擬相簿可讓您將想一起查看的檔案集中在單一相簿中，不必在資料夾之間移動，也不會在磁碟上建立副本。與一般複製不同，它不會耗用儲存空間，因為磁碟上只保留原始檔案。您可以將同一個檔案加入任意數量的相簿，而資料夾結構維持不變。</string>
     <string name="onboarding_media_permission_note">顯示您的相片與影片需要媒體存取權限。</string>
     <string name="onboarding_continue">繼續</string>
     <string name="onboarding_media_required_title">需要完整的媒體存取權限</string>

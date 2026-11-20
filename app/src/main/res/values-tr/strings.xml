@@ -599,7 +599,7 @@
     <string name="onboarding_vault_title">Şifreli Kasa</string>
     <string name="onboarding_vault_desc">Fotoğraf ve videolarınızı şifreleyin. Sizden başkası erişemez.</string>
     <string name="onboarding_albums_title">Fotoğraflarınız için çalma listeleri</string>
-    <string name="onboarding_albums_desc">Sanal klasörler, bir arada görmek istediğiniz fotoğraf ve videolarınızı ait oldukları klasörlerden ayırmadan veya kopyalarıyla ek yer kaplamadan istediğiniz kadar albümde birleştirmenizi sağlar.</string>
+    <string name="onboarding_albums_desc">Sanal albümler, bir arada görmek istediğiniz dosyalarınızı klasörler arasında taşımadan veya diskte kopyalarını oluşturmadan tek bir albümde birleştirmenizi sağlar. Standart kopyalamanın aksine depolama alanınızı tüketmez, çünkü diskte yalnızca orijinal dosya bulunur. Aynı dosyayı istediğiniz kadar albüme ekleyebilirsiniz, klasör düzeniniz ise olduğu gibi korunur.</string>
     <string name="onboarding_media_permission_note">Fotoğraf ve videolarınızı görüntüleyebilmek için medya ögelerine erişim izni gerekir.</string>
     <string name="onboarding_continue">Devam et</string>
     <string name="onboarding_media_required_title">Tam medya erişimi gerekli</string>

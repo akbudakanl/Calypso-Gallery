@@ -839,7 +839,7 @@ Added to `values-ja/strings.xml` for the 3-screen first-launch welcome and full-
 | 4 | `onboarding_vault_title` | Encrypted Vault | 暗号化された保管庫 | Welcome card 2 title |
 | 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | 写真や動画を暗号化します。あなた以外の誰もアクセスできません。 | Welcome card 2 description |
 | 6 | `onboarding_albums_title` | Playlists for your photos | 写真のためのプレイリスト | Welcome card 3 title |
-| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | 仮想フォルダーを使えば、元のフォルダーから移動したりコピーで容量を消費したりすることなく、見たい写真や動画を好きなだけアルバムにまとめられます。 | Welcome card 3 description |
+| 7 | `onboarding_albums_desc` | Virtual albums let you bring the files you want to see together in a single album, without moving them between folders or creating copies on disk. Unlike a regular copy, they use no extra storage because only the original file is kept on disk. You can add the same file to as many albums as you like, while your folder structure stays exactly as it is. | 仮想アルバムを使えば、一緒に見たいファイルをフォルダー間で移動させたり、ディスクにコピーを作ったりせずに、1つのアルバムにまとめられます。通常のコピーとは異なり、ディスクには元のファイルだけが存在するため、ストレージを消費しません。同じファイルを好きな数のアルバムに追加でき、フォルダー構成はそのまま保たれます。 | Welcome card 3 description |
 | 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | 写真や動画を表示するには、メディアへのアクセス権限が必要です。 | Welcome footer media permission note |
 | 9 | `onboarding_continue` | Continue | 続行 | Welcome primary button |
 | 10 | `onboarding_media_required_title` | Full media access required | メディアへの完全なアクセスが必要 | Media permission screen title |

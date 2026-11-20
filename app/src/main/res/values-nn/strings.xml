@@ -660,7 +660,7 @@
     <string name="onboarding_vault_title">Kryptert kvelv</string>
     <string name="onboarding_vault_desc">Krypter bileta og videoane dine. Ingen andre kan få tilgang.</string>
     <string name="onboarding_albums_title">Spelelister for bileta dine</string>
-    <string name="onboarding_albums_desc">Virtuelle mapper lèt deg samla bileta og videoane du vil sjå saman i så mange album du ønskjer, utan å flytta dei frå mappene sine eller bruka ekstra lagringsplass med kopiar.</string>
+    <string name="onboarding_albums_desc">Virtuelle album lèt deg samle filene du vil sjå saman i eitt enkelt album, utan å flytte dei mellom mapper eller lage kopiar på disken. I motsetnad til vanleg kopiering brukar dei ikkje ekstra lagringsplass, sidan berre originalfila finst på disken. Du kan leggje same fil til så mange album du vil, medan mappe-strukturen din blir verande uendra.</string>
     <string name="onboarding_media_permission_note">Tilgang til media er nødvendig for å syna bileta og videoane dine.</string>
     <string name="onboarding_continue">Hald fram</string>
     <string name="onboarding_media_required_title">Full medietilgang krevst</string>

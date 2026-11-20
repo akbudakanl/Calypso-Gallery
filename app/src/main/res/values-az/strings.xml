@@ -657,7 +657,7 @@
     <string name="onboarding_vault_title">Şifrəli Seyf</string>
     <string name="onboarding_vault_desc">Foto və videolarınızı şifrələyin. Sizdən başqa heç kim daxil ola bilməz.</string>
     <string name="onboarding_albums_title">Fotolarınız üçün pleylistlər</string>
-    <string name="onboarding_albums_desc">Virtual qovluqlar birlikdə görmək istədiyiniz foto və videoları aid olduqları qovluqlardan ayırmadan və ya nüsxələrlə əlavə yer tutmadan istədiyiniz qədər albomda birləşdirməyə imkan verir.</string>
+    <string name="onboarding_albums_desc">Virtual albomlər birlikdə görmək istədiyiniz faylları qovluqlar arasında daşımadan və ya diskdə nüsxələrini yaratmadan tək bir albomda birləşdirməyə imkan verir. Adi kopyalamadan fərqli olaraq, diskdə yalnız original fayl olduğu üçün əlavə yer tutmur. Eyni faylı istədiyiniz qədər alboma əlavə edə bilərsiniz, qovluq quruluşunuz isə dəyişməz qalır.</string>
     <string name="onboarding_media_permission_note">Foto və videolarınızı göstərmək üçün media elementlərinə giriş icazəsi tələb olunur.</string>
     <string name="onboarding_continue">Davam et</string>
     <string name="onboarding_media_required_title">Tam media girişi tələb olunur</string>

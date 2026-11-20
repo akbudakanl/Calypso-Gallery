@@ -603,7 +603,7 @@
     <string name="onboarding_vault_title">Kryptert hvelv</string>
     <string name="onboarding_vault_desc">Krypter bildene og videoene dine. Ingen andre kan få tilgang.</string>
     <string name="onboarding_albums_title">Spillelister for bildene dine</string>
-    <string name="onboarding_albums_desc">Virtuelle mapper lar deg samle bildene og videoene du vil se sammen i så mange album du ønsker, uten å flytte dem fra mappene sine eller bruke ekstra lagringsplass med kopier.</string>
+    <string name="onboarding_albums_desc">Virtuelle album lar deg samle filene du vil se sammen i ett enkelt album, uten å flytte dem mellom mapper eller lage kopier på disken. I motsetning til vanlig kopiering bruker de ikke ekstra lagringsplass, siden bare originalfilen finnes på disken. Du kan legge samme fil til så mange album du vil, mens mappestrukturen din forblir uendret.</string>
     <string name="onboarding_media_permission_note">Tilgang til medier er nødvendig for å vise bildene og videoene dine.</string>
     <string name="onboarding_continue">Fortsett</string>
     <string name="onboarding_media_required_title">Full medietilgang kreves</string>
