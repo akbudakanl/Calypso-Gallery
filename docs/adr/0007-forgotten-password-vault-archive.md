@@ -36,13 +36,21 @@ Basit bir kullanıcı, varsayılan konumdaki (`Calypso Gallery/Secrets`) kasası
 
 ## 3. Karar
 
-### 3.1. Ayar yeri
+### 3.1. Ayar yeri ve yönlendirme
 
 "Şifreli kasa" bölümünün en altına, parola gerektiren "Şifreli kasayı sıfırla"nın altına ayrı bir satır eklenir:
 
-> **Parolamı unuttum** — *Eski kasayı arşivler, varsayılan konumda yeni kasa oluşturur*
+> **Kasayı arşivle** — *Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur*
 
-Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki "Parolamı unuttum" bağlantısı da doğrudan bu akışa götürür; kullanıcı ayarlarda aramak zorunda kalmaz.
+Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki **"Hatırlamıyorum"** butonu **ayarlara değil**, Hakkında → SSS içindeki **"Şifreli kasanın parolasını unuttum, ne yapabilirim?"** maddesine götürür (§3.4). SSS metnindeki *arşivleyerek* ifadesi ise bu ayara yönlendirir.
+
+**"Kasa konumu"** menüsü üç seçenek gösterir:
+
+1. **Yeni kasa oluştur**,
+2. **Mevcut kasayı kullan**,
+3. **Arşivlenmiş kasalardan seç** — yalnızca en az bir arşiv kasa varsa görünür; hiç yokken menüde yer almaz.
+
+Arşiv listesi arşivlenme zamanına göre sıralanır ve UI'da **"1. arşivlenen kasa"**, **"2. arşivlenen kasa"** etiketleriyle gösterilir (§4.4). Bu sıralama uygulama yeniden kurulsa da korunur.
 
 ### 3.2. Kullanıcıya sorulan soru
 
@@ -59,7 +67,7 @@ Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki "Par
 
 Ön koşullar: kasa kilitli olmalı, aktif foreground dosya işlemi bulunmamalı, cihaz açık olmalı.
 
-1. Kullanıcı onayı alınır; arşivin diskte yer kapladığı ve geri yüklenebileceği açıkça anlatılır.
+1. Kullanıcı onayı, mevcut "Şifreli kasayı sıfırla" ile aynı `DeleteSecretsDialog` üzerinden alınır: **10 saniyelik geri sayım + onay kutusu + Evet/Hayır**. **Fark: parola sorulmaz** — aksiyom parolasız silmeyi yasaklar, arşivleme ise silme değil taşımadır (§6). Dialog ayrıca "Başka bir cihazda kullanmak istiyorsanız Şifreli kasayı dışa aktar seçeneğini kullanın" hatırlatmasını içerir (§9).
 2. `Calypso Gallery/Archive/` klasörü **yoksa** oluşturulur ve içine jenerik `readme.txt` yazılır. Klasör uygulama kurulumunda **var olmaz**; ilk arşivlemeye kadar oluşturulmaz.
 3. Rastgele hedef ad üretilir (§5); çakışma kontrolü yapılır.
 4. Hedef yol özel tercihlere (`archivedVaults`) kaydedilir; eski kasa klasörü bu yola **taşınır**.
@@ -69,7 +77,21 @@ Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki "Par
 8. Yeni kasa oluşturulamazsa `config.vaultRootPath` arşiv yoluna geri yazılır; eski kasa erişilebilir kalır.
 9. Başarıda `config.vaultRootPath` yeni kasayı gösterir; arşiv kaydı özel tercihlerde durur.
 
-Adımların tamamı [ADR 0003](#) mantığıyla bir **journal** üzerinden yürür; uygulama herhangi bir adımda ölürse ya eski kasa yerinde kalır ya da arşiv yolundan erişilebilir. **Hiçbir durumda veri kaybı olmaz.**
+Adımların tamamı [ADR 0003](0003-resumable-file-operations.md) mantığıyla bir **journal** üzerinden yürür; uygulama herhangi bir adımda ölürse ya eski kasa yerinde kalır ya da arşiv yolundan erişilebilir. **Hiçbir durumda veri kaybı olmaz.**
+
+### 3.4. SSS maddesi ve yönlendirme
+
+Hatırlatma dialogundaki "Hatırlamıyorum", `FaqActivity`'yi ilgili maddeyi öne çıkaracak bir extra ile doğrudan açar. Yeni SSS maddesi:
+
+> **Soru:** "Şifreli kasanın parolasını unuttum, ne yapabilirim?"
+>
+> 1. Biyometrik ile kasaya giriş yapın.
+> 2. Şifreli verilerinizi dışa aktarın.
+> 3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola ve geri yükleme.
+>
+> **Uyarı:** Biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı **arşivleyerek** yeni bir kasa oluşturabilirsiniz veya bir dosya yöneticisi ile *(ait olduğu konum)* konumundaki şifreli kasa klasörünü silerek kasayı kalıcı olarak ortadan kaldırabilirsiniz.
+
+*arşivleyerek* ifadesi tıklanabilir bir bağlantıdır (FaqActivity içinde `SpannableString`/`ClickableSpan` ya da SettingsActivity'ye hedef extra ile) ve **Kasayı arşivle** ayarına götürür. *(ait olduğu konum)* ifadesi §8'deki dinamik yolla değiştirilir; sabit yol yazılmaz.
 
 ---
 
@@ -93,6 +115,8 @@ Calypso Gallery/                      (varsayılan: /storage/emulated/0/Calypso 
 Dosya Türkçe ve İngilizce olarak yazılır. **Tarih, yol, kullanıcı adı veya "parola unutuldu" ifadesi bulunmaz:**
 
 ```text
+Warning: Do not delete this file
+
 Calypso Gallery — Arşiv / Archive
 
 Bu klasördeki alt klasörler daha önce kullanılmış şifreli kasalardır.
@@ -132,6 +156,24 @@ Vault location → Open from archive.
 - Orijinal kasa yolu, arşiv tarihi ve isteğe bağlı kullanıcı etiketi yalnızca **uygulamanın özel `SharedPreferences` alanında**, rastgele id ile eşleştirilerek tutulur. Dosya yöneticisi bunu göremez.
 - Klasör adında **tarih yoktur**, çünkü bu bir meta veri ihlali olarak algılanabilir: "kullanıcı şu tarihte parolasını unuttu" bilgisi doğrudan okunur. Dosya sistemi `mtime` zaten vardır; klasör adına eklemek gereksizdir.
 - `.cache` gibi **yanıltıcı/sahte adlar reddedilmiştir**: kullanıcıyı kandırmak olur ve arşivin varlığını gizleme amacına hizmet etmez.
+
+### 4.3. `readme.txt` silinirse
+
+`readme.txt` **yalnızca bilgilendirmedir; uygulama mantığı için gerekli değildir.** Silinirse:
+
+- Arşiv kasaları yine `Archive/*` taranıp `.vault` başlığı doğrulanarak bulunur; **hiçbir kasa kaybolmaz**.
+- "Kasa konumu → Arşivlenmiş kasalardan seç" listesi **aynı şekilde görünür**; hata mesajı çıkmaz.
+- Yalnızca isteğe bağlı bir bilgi notu gösterilir: *"Arşiv klasöründeki readme.txt eksik. Bu dosya sadece bilgilendirme içindir; kasalarınız güvende."*
+
+"Warning: Do not delete this file" uyarısı bu yüzden vardır: kullanıcı talimatı kaybeder, **veriyi kaybetmez**.
+
+### 4.4. Arşiv sıralaması ve kalıcılık
+
+- Sıralama anahtarı **`info.txt.lastModified()`** değeridir; arşivleme anında oluşturulur, klasör adına tarih yazılmaz.
+- `Calypso Gallery` harici depolamanın kökündedir (`Android/data` altında **değil**); uygulama kaldırılıp yeniden kurulsa da klasörler ve `mtime` değerleri korunur. Yani **"1. arşivlenen kasa", "2. arşivlenen kasa" sıralaması yeniden kurulumdan sonra da hatırlanır.**
+- Etiketler yalnızca UI'da üretilir; diskte karşılığı yoktur. Aynı saniyede oluşan arşivler rastgele id ile tie-break edilir.
+- Bir arşiv dosya yöneticisiyle silinirse kalanlar yeniden numaralanır.
+- `info.txt` silinirse fallback olarak klasörün kendi `mtime` değeri kullanılır.
 
 ---
 
@@ -203,7 +245,27 @@ Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
 
 ---
 
-## 9. Reddedilen alternatifler
+## 9. Arşivleme vs. dışa aktarma (başka cihaz)
+
+İki işlem birbirine karıştırılmamalıdır:
+
+| | **Arşivleme** | **Şifreli kasayı dışa aktar** |
+|---|---|---|
+| Amaç | Bu cihazda eski kasayı saklamak | Kasayı başka cihaza / masaüstü CLI'a taşımak |
+| Yer | `Calypso Gallery/Archive/<rastgele-id>` | Kullanıcının seçtiği klasör veya harici disk |
+| Şifreleme | Korunur | Korunur |
+| Açılış | Bu cihazda "Arşivlenmiş kasalardan seç" | Hedef cihazda "Mevcut kasayı kullan" |
+| Parola | Gerekir | Gerekir |
+
+Kullanıcının amacı **"kasayı başka cihazda kullanmaksa"** izlenmesi gereken yol **dışa aktarmadır**; arşivleme bu amaca hizmet etmez. Arşiv yalnızca "ileride bu cihazda parolamı hatırlarsam geri döneyim" içindir.
+
+SSS maddesindeki 2. adım ("Şifreli verilerinizi dışa aktarın") tam olarak bu ayrımı anlatır. Arşivleme onay dialogunda da şu hatırlatma yer alır: *"Başka bir cihazda kullanmak istiyorsanız Ayarlar → Şifreli kasayı dışa aktar seçeneğini kullanın."*
+
+Böylece kullanıcı "eski kasayı nereye koydum?" diye düşünmek zorunda kalmaz: **aynı cihaz → arşiv, başka cihaz → dışa aktar.**
+
+---
+
+## 10. Reddedilen alternatifler
 
 1. **Parolasız "Şifreli kasayı sıfırla":** aksiyomu ihlal eder; hizmet reddi riski. Reddedildi.
 2. **Uygulama içinde arşiv kasasını silme:** aksiyomu ihlal eder. Reddedildi; silme dosya yöneticisine bırakılır.
@@ -214,7 +276,7 @@ Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
 
 ---
 
-## 10. Doğrulama kriterleri
+## 11. Doğrulama kriterleri
 
 - Varsayılan konumda bir kasa varken "Parolamı unuttum" akışı **parola istemeden** arşivleme yapabilir; ancak **hiçbir kod yolu parolasız `delete()`/`wipe()` çağıramaz** (statik test).
 - `Archive` klasörü uygulama kurulumunda yoktur; ilk arşivlemeden önce `exists() == false`.
@@ -227,7 +289,7 @@ Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
 
 ---
 
-## 11. Sıradaki adımlar
+## 12. Sıradaki adımlar
 
 Bu ADR onaylandıktan sonra:
 

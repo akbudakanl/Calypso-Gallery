@@ -36,13 +36,21 @@ When a simple user forgets the password of the vault at the default location (`C
 
 ## 3. Decision
 
-### 3.1. Settings location
+### 3.1. Settings location and routing
 
 A separate row is added at the bottom of the **Encrypted vault** section, below the password-gated "Reset encrypted vault":
 
-> **I forgot my password** — *Archives the old vault and creates a new one in the default location*
+> **Archive vault** — *Moves the old vault to the archive and creates a new one in the default location*
 
-The row is visible **only when a vault exists**. The "I don't remember" link in the password reminder dialog leads directly into this flow, so users do not have to search in Settings.
+The row is visible **only when a vault exists**. The **"I don't remember"** button in the password reminder dialog does **not** open Settings; it opens the **About → FAQ** entry *"I forgot my encrypted vault password, what can I do?"* (§3.4). The word *archiving* in that FAQ text links back to this setting.
+
+**"Vault location"** shows three options:
+
+1. **Create new vault**,
+2. **Use existing vault**,
+3. **Select from archived vaults** — visible **only when at least one archived vault exists**.
+
+The archive list is ordered by archival time and labelled in the UI as **"1st archived vault"**, **"2nd archived vault"**, etc. (§4.4). This order survives an app reinstall.
 
 ### 3.2. Question asked to the user
 
@@ -57,7 +65,7 @@ The first dialog offers two options:
 
 Preconditions: the vault must be locked, no foreground file operation active, and the device unlocked.
 
-1. User confirmation is obtained; the dialog explains that the archive consumes disk space and can be restored later.
+1. User confirmation uses the same `DeleteSecretsDialog` as "Reset encrypted vault": **10-second countdown + confirmation checkbox + Yes/No**. **Difference: no password is asked** — the axiom forbids passwordless deletion, while archiving is a move, not a deletion (§6). The dialog also reminds: *"If you want to use the vault on another device, use Export encrypted vault"* (§9).
 2. `Calypso Gallery/Archive/` is created **if missing**, with a generic `readme.txt`. The folder **does not exist at app installation**; it is created on first archival only.
 3. A random destination name is generated (§5) and checked for collisions.
 4. The destination path is stored in private preferences (`archivedVaults`), and the old vault folder is **moved** there.
@@ -68,6 +76,20 @@ Preconditions: the vault must be locked, no foreground file operation active, an
 9. On success, `config.vaultRootPath` points to the new vault; the archive entry remains in private preferences.
 
 All steps run through a **journal** following ADR 0003. If the process dies at any step, the vault is either at its source or reachable from the archive path — **never lost**.
+
+### 3.4. FAQ entry and routing
+
+The "I don't remember" button in the reminder dialog opens `FaqActivity` directly with an extra that highlights the relevant entry. New FAQ entry:
+
+> **Question:** "I forgot my encrypted vault password, what can I do?"
+>
+> 1. Unlock the vault with biometrics.
+> 2. Export your encrypted data.
+> 3. Use Settings → Reset encrypted vault to set a new password and restore.
+>
+> **Warning:** If biometrics cannot unlock it either, the vault is inaccessible. You can create a new vault by **archiving** the current one, or permanently remove it by deleting the vault folder at *(its location)* with a file manager.
+
+*archiving* is a clickable link (`SpannableString`/`ClickableSpan` in FaqActivity or a target extra for SettingsActivity) leading to the **Archive vault** setting. *(its location)* is replaced with the dynamic path from §8; no hardcoded path is printed.
 
 ---
 
@@ -91,6 +113,8 @@ Calypso Gallery/                      (default: /storage/emulated/0/Calypso Gall
 The file is written in Turkish and English. **No date, path, username or "password forgotten" phrase:**
 
 ```text
+Warning: Do not delete this file
+
 Calypso Gallery — Arşiv / Archive
 
 Bu klasördeki alt klasörler daha önce kullanılmış şifreli kasalardır.
@@ -130,6 +154,24 @@ Vault location → Open from archive.
 - The original vault path, archive timestamp and optional user label are stored **only in the app's private `SharedPreferences`**, keyed by the random id. A file manager cannot see them.
 - **No date in the folder name**: it would be a metadata leak — "the user forgot their password on this date" is readable at a glance. The filesystem already has `mtime`; adding it to the name is unnecessary.
 - **Fake names such as `.cache` are rejected**: they are deceptive and do not actually hide the existence of an archive.
+
+### 4.3. If `readme.txt` is deleted
+
+`readme.txt` is **informational only; it is not required by app logic.** If deleted:
+
+- Archived vaults are still found by scanning `Archive/*` and validating the `.vault` header; **no vault is lost**.
+- "Vault location → Select from archived vaults" shows the **same list**; no error is displayed.
+- An optional informational note may appear: *"The readme.txt in the Archive folder is missing. It is only informational; your vaults are safe."*
+
+The "Warning: Do not delete this file" line exists for this reason: the user loses instructions, **not data**.
+
+### 4.4. Archive ordering and persistence
+
+- The ordering key is **`info.txt.lastModified()`**, created at archival time; no date is written into the folder name.
+- `Calypso Gallery` lives at the root of external storage (**not** under `Android/data`); uninstalling and reinstalling the app preserves both folders and `mtime` values. Therefore **"1st archived vault", "2nd archived vault" ordering survives reinstall.**
+- Labels are generated in the UI only; no on-disk counterpart. Same-second archives are tie-broken by random id.
+- If an archive is deleted with a file manager, the remaining ones are renumbered.
+- If `info.txt` is missing, the folder's own `mtime` is used as fallback.
 
 ---
 
@@ -201,7 +243,27 @@ There is **no in-app archive deletion** (axiom). The user is told:
 
 ---
 
-## 9. Rejected alternatives
+## 9. Archiving vs. export (other devices)
+
+These two operations must not be confused:
+
+| | **Archiving** | **Export encrypted vault** |
+|---|---|---|
+| Purpose | Keep the old vault on this device | Move the vault to another device / desktop CLI |
+| Location | `Calypso Gallery/Archive/<random-id>` | User-selected folder or external disk |
+| Encryption | Preserved | Preserved |
+| Opened from | "Select from archived vaults" on this device | "Use existing vault" on the target device |
+| Password | Required | Required |
+
+If the user's goal is **"use the vault on another device"**, the correct path is **export**; archiving does not serve that purpose. Archiving is only for "if I remember the password later on this device, I want to go back".
+
+FAQ step 2 ("Export your encrypted data") explains exactly this distinction. The archival confirmation dialog also reminds: *"If you want to use the vault on another device, use Settings → Export encrypted vault."*
+
+So the user never has to wonder "where did my old vault go?": **same device → archive, other device → export.**
+
+---
+
+## 10. Rejected alternatives
 
 1. **Passwordless "Reset encrypted vault":** violates the axiom; denial-of-service risk. Rejected.
 2. **In-app deletion of an archived vault:** violates the axiom. Rejected; deletion is left to the file manager.
@@ -212,7 +274,7 @@ There is **no in-app archive deletion** (axiom). The user is told:
 
 ---
 
-## 10. Verification criteria
+## 11. Verification criteria
 
 - With a vault at the default location, "I forgot my password" can archive it **without asking for the vault password**, but **no code path may call `delete()`/`wipe()` without a password** (static test).
 - The `Archive` folder does not exist at installation; `exists() == false` before the first archival.
@@ -225,7 +287,7 @@ There is **no in-app archive deletion** (axiom). The user is told:
 
 ---
 
-## 11. Next steps
+## 12. Next steps
 
 After this ADR is accepted:
 
