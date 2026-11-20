@@ -18,11 +18,12 @@
         android:icon="@drawable/ic_sort_view_calypso_vector"
         android:title="@string/sort_by"
         app:showAsAction="always" />
+    <!-- Filter media lives in the overflow ("more options") menu. Album headers only show
+         the sort view and overflow actions, matching the virtual-albums store screenshot. -->
     <item
         android:id="@+id/filter"
-        android:icon="@drawable/ic_filter_vector"
         android:title="@string/filter_media"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/change_view_type"
         android:showAsAction="never"

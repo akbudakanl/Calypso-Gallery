@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import org.fossify.commons.views.MySearchMenu
 import org.fossify.gallery.R
@@ -36,6 +37,21 @@ fun resolveCalypsoSearchBarFillColor(context: Context): Int {
 fun resolveCalypsoSearchIconColor(context: Context, isSearchOpen: Boolean = true): Int {
     val palette = AppearanceManager.resolve(context, context.config)
     return if (isSearchOpen) palette.text else palette.secondary
+}
+
+/**
+ * Keeps the search bar (and the status-bar area above it) anchored at the top of the
+ * CoordinatorLayout. MySearchMenu extends AppBarLayout; when its default Behavior is left
+ * attached, scrolling the grid can drag the bar along with the content. Removing that
+ * behavior pins it while the scrolling view's own appbar behavior still lays content out
+ * below it.
+ */
+fun MySearchMenu.keepPinnedAtTop() {
+    val params = layoutParams
+    if (params is CoordinatorLayout.LayoutParams && params.behavior != null) {
+        params.behavior = null
+        layoutParams = params
+    }
 }
 
 /**

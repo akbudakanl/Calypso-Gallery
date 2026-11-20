@@ -90,6 +90,7 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
+import org.fossify.gallery.extensions.keepPinnedAtTop
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.createDirectoryFromMedia
@@ -980,6 +981,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun updateMenuColors() {
         binding.mainMenu.updateColors()
         binding.mainMenu.applyCalypsoSearchBarStyle()
+        binding.mainMenu.keepPinnedAtTop()
     }
 
     private fun getRecyclerAdapter() = binding.directoriesGrid.adapter as? DirectoryAdapter

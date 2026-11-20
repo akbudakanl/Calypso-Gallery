@@ -15,6 +15,23 @@
         <item name="android:textColor">@android:color/white</item>
     </style>
 
+    <!-- Album header typography used by MediaActivity's two-line toolbar. Mirrors the
+         in-phone header of 03-virtual-albums.png: bold title with tight tracking and a
+         small, quiet count line underneath. -->
+    <style name="MediaAlbumToolbarTitle">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="MediaAlbumToolbarSubtitle">
+        <item name="android:textSize">12.5sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
     <style name="SettingsSubHeadingStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

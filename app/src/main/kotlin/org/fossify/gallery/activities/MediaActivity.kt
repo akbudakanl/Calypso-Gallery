@@ -2,13 +2,18 @@ package org.fossify.gallery.activities
 
 import android.app.WallpaperManager
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
+import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.RelativeLayout
+import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.net.toUri
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -67,6 +72,7 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
+import org.fossify.gallery.extensions.keepPinnedAtTop
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
@@ -174,6 +180,15 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mWasFullscreenViewOpen = false
     private var mLastSearchedText = ""
     private var mCurrentAlbumDisplayName = ""
+
+    // MySearchMenu's frame has a fixed single-row height; album headers need room for a title
+    // plus the item-count line or the second row gets clipped ("half visible" count).
+    private var albumToolbarHeader: View? = null
+    private var defaultTopBarHeight = -1
+    private var defaultTopBarPaddingStart = -1
+    private var defaultTopBarPaddingEnd = -1
+    private var defaultContentInsetStart = -1
+    private var defaultContentInsetEnd = -1
     private var mLatestMediaId = 0L
     private var mLatestMediaDateId = 0L
     private var mLastMediaHandler = Handler()
@@ -229,6 +244,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private val binding by viewBinding(ActivityMediaBinding::inflate)
 
     companion object {
+        private const val ALBUM_HEADER_HEIGHT_DP = 76
         var mMedia = ArrayList<ThumbnailItem>()
     }
 
@@ -710,6 +726,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
+        binding.mediaMenu.keepPinnedAtTop()
         applyToolbarMode()
         updateAlbumHeader()
     }
@@ -725,22 +742,69 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         val searchField = findViewById<View>(org.fossify.commons.R.id.top_toolbar_search)
         val searchIcon = findViewById<View>(org.fossify.commons.R.id.top_toolbar_search_icon)
         val toolbarContainer = findViewById<View>(org.fossify.commons.R.id.toolbar_container)
+        val topBar = findViewById<View>(org.fossify.commons.R.id.search_bar_container)
 
-        if (mShowAll) {
-            searchField?.beVisible()
-            searchIcon?.beVisible()
-            toolbar.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
-            toolbar.title = null
-            toolbar.subtitle = null
-        } else {
-            searchField?.beGone()
-            searchIcon?.beGone()
-            toolbar.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-            toolbar.setTitleTextColor(palette.text)
-            toolbar.setSubtitleTextColor(palette.secondary)
+        if (defaultTopBarHeight < 0) {
+            defaultTopBarHeight = topBar?.layoutParams?.height ?: -1
+            defaultTopBarPaddingStart = topBar?.paddingStart ?: -1
+            defaultTopBarPaddingEnd = topBar?.paddingEnd ?: -1
+            defaultContentInsetStart = toolbar.contentInsetStart
+            defaultContentInsetEnd = toolbar.contentInsetEnd
+        }
+
+        topBar?.let { bar ->
+            if (mShowAll) {
+                bar.layoutParams.height = defaultTopBarHeight
+                bar.setPadding(defaultTopBarPaddingStart, bar.paddingTop, defaultTopBarPaddingEnd, bar.paddingBottom)
+                toolbar.setContentInsetsAbsolute(defaultContentInsetStart, defaultContentInsetEnd)
+            } else {
+                // MySearchMenu reserves exactly one actionBar row. Give the two-line album
+                // header enough room so the item-count line isn't cut in half.
+                bar.layoutParams.height = (ALBUM_HEADER_HEIGHT_DP * resources.displayMetrics.density).toInt()
+                bar.setPadding(0, bar.paddingTop, 0, bar.paddingBottom)
+                toolbar.setContentInsetsAbsolute(0, (8f * resources.displayMetrics.density).toInt())
+            }
+            bar.requestLayout()
+        }
+
+        val header = albumToolbarHeader()
+        searchField?.beVisibleIf(mShowAll)
+        searchIcon?.beVisibleIf(mShowAll)
+        header.beVisibleIf(!mShowAll)
+
+        // The custom header provides its own back button. Suppress MySearchMenu's navigation
+        // icon so we never end up with two arrows, and clear the stock title/subtitle so the
+        // custom (properly aligned) text is the only one drawn.
+        toolbar.navigationIcon = null
+        toolbar.layoutParams.width = if (mShowAll) ViewGroup.LayoutParams.WRAP_CONTENT else ViewGroup.LayoutParams.MATCH_PARENT
+        toolbar.title = null
+        toolbar.subtitle = null
+
+        if (!mShowAll) {
+            header.findViewById<TextView>(R.id.album_toolbar_title).setTextColor(palette.text)
+            header.findViewById<TextView>(R.id.album_toolbar_subtitle).setTextColor(palette.secondary)
+            header.findViewById<ImageButton>(R.id.album_toolbar_back).imageTintList =
+                ColorStateList.valueOf(palette.text)
             toolbarContainer?.background = null
         }
+
         toolbar.requestLayout()
+    }
+
+    /** Inflates and attaches the two-line album header once, reusing it on later refreshes. */
+    private fun albumToolbarHeader(): View {
+        albumToolbarHeader?.let { return it }
+        val toolbar = binding.mediaMenu.requireToolbar()
+        val header = layoutInflater.inflate(R.layout.album_toolbar_header, toolbar, false)
+        val params = Toolbar.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ).apply { gravity = Gravity.START }
+
+        toolbar.addView(header, params)
+        header.findViewById<View>(R.id.album_toolbar_back).setOnClickListener { performDefaultBack() }
+        albumToolbarHeader = header
+        return header
     }
 
     private fun storeStateVariables() {
@@ -861,15 +925,19 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         // The album title now lives in the fixed toolbar, so the in-grid header is no longer used.
         binding.mediaAlbumHeader.beGone()
         val shouldShow = !mShowAll && mCurrentAlbumDisplayName.isNotEmpty() && mLastSearchedText.isEmpty()
-        val toolbar = binding.mediaMenu.requireToolbar()
+        val header = albumToolbarHeader()
+        val titleView = header.findViewById<TextView>(R.id.album_toolbar_title)
+        val subtitleView = header.findViewById<TextView>(R.id.album_toolbar_subtitle)
+
         if (!shouldShow) {
-            toolbar.subtitle = null
+            titleView.text = null
+            subtitleView.text = null
             return
         }
 
-        toolbar.title = mCurrentAlbumDisplayName
         val itemCount = mMedia.count { it is Medium }
-        toolbar.subtitle = when {
+        titleView.text = mCurrentAlbumDisplayName
+        subtitleView.text = when {
             mPath.isVirtualAlbumPath() -> getString(R.string.media_header_virtual_album, itemCount)
             CryptoManager.isEncryptedFolderPath(this, mPath) && !CryptoManager.isVaultRecycleBinPath(this, mPath) ->
                 getString(R.string.media_header_encrypted_album, itemCount)
