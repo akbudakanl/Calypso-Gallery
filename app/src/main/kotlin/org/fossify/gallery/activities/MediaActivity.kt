@@ -242,7 +242,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        pinHeaderOverlay()
         mVaultResumeBlob = savedInstanceState?.getString(VAULT_RESUME_STATE)
 
         intent.apply {
@@ -794,22 +793,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         header.findViewById<View>(R.id.album_toolbar_back).setOnClickListener { performDefaultBack() }
         albumToolbarHeader = header
         return header
-    }
-
-    /** Keeps the scrolling view below the overlay header, including its status-bar inset. */
-    private fun pinHeaderOverlay() {
-        binding.mediaMenu.viewTreeObserver.addOnGlobalLayoutListener(object :
-            android.view.ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                val menuHeight = binding.mediaMenu.height
-                if (menuHeight <= 0) return
-                val params = binding.mediaHolder.layoutParams as FrameLayout.LayoutParams
-                if (params.topMargin != menuHeight) {
-                    params.topMargin = menuHeight
-                    binding.mediaHolder.layoutParams = params
-                }
-            }
-        })
     }
 
     private fun storeStateVariables() {

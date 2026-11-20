@@ -1,27 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/media_coordinator"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/loading_indicator"
-        android:layout_width="wrap_content"
+    <!-- Fixed top header (search bar in All-Files view, album title/count in album view). -->
+    <org.fossify.commons.views.MySearchMenu
+        android:id="@+id/media_menu"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:visibility="gone"
-        app:hideAnimationBehavior="inward"
-        app:showAnimationBehavior="outward"
-        app:showDelay="500"
-        tools:visibility="visible" />
+        android:elevation="8dp" />
 
     <RelativeLayout
         android:id="@+id/media_holder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loading_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"
+            android:visibility="gone"
+            app:hideAnimationBehavior="inward"
+            app:showAnimationBehavior="outward"
+            app:showDelay="500"
+            tools:visibility="visible" />
 
         <LinearLayout
             android:id="@+id/media_album_header"
@@ -112,7 +121,7 @@
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/media_refresh_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_below="@+id/media_album_header">
 
             <com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
@@ -134,12 +143,4 @@
             </com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller>
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </RelativeLayout>
-
-    <!-- Overlay header: lives outside the scrolling content and is therefore always pinned. -->
-    <org.fossify.commons.views.MySearchMenu
-        android:id="@+id/media_menu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:elevation="8dp" />
-</FrameLayout>
+</LinearLayout>

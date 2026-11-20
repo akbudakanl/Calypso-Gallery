@@ -41,11 +41,18 @@ class VaultShutterLockView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
     }
+    private val jointPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val keyholePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
+    private val shacklePath = Path()
+    private val shackleArcRect = RectF()
+    private val bodyRect = RectF()
+    private val stemRect = RectF()
+
     fun setColors(strokeColor: Int, surfaceColor: Int, keyholeColor: Int) {
         outlinePaint.color = strokeColor
+        jointPaint.color = strokeColor
         bodyPaint.color = surfaceColor
         keyholePaint.color = keyholeColor
         glowPaint.color = ColorUtils.setAlphaComponent(strokeColor, 26)
@@ -65,26 +72,28 @@ class VaultShutterLockView @JvmOverloads constructor(
             canvas.drawCircle(cx, cy - 2f * s, (17f + glow * 9f) * s, glowPaint)
         }
 
-        // Shackle: an inverted U that pivots around its lower-left joint when opening.
+        // Shackle: an inverted U centered on cx that pivots around its lower-left joint.
         canvas.save()
         canvas.translate(cx - 9f * s, cy - 5f * s)
         canvas.rotate(-26f * openProgress)
-        val shackle = Path().apply {
-            addArc(RectF(-9f * s, -18f * s, 9f * s, 0f), 180f, 180f)
-        }
-        canvas.drawPath(shackle, outlinePaint)
-        val jointPaint = Paint(outlinePaint).apply { style = Paint.Style.FILL }
-        canvas.drawCircle(-9f * s, 0f, 1.8f * s, jointPaint)
-        canvas.drawCircle(9f * s, 0f, 1.8f * s, jointPaint)
+        shacklePath.reset()
+        shacklePath.moveTo(0f, 0f)
+        shacklePath.lineTo(0f, -2.5f * s)
+        shackleArcRect.set(0f, -20.5f * s, 18f * s, -2.5f * s)
+        shacklePath.arcTo(shackleArcRect, 180f, 180f, false)
+        shacklePath.lineTo(18f * s, 0f)
+        canvas.drawPath(shacklePath, outlinePaint)
+        canvas.drawCircle(0f, 0f, 1.8f * s, jointPaint)
+        canvas.drawCircle(18f * s, 0f, 1.8f * s, jointPaint)
         canvas.restore()
 
         // Body + keyhole stay fixed, so the motion reads as a real latch.
-        val body = RectF(cx - 14f * s, cy - 5f * s, cx + 14f * s, cy + 14f * s)
-        canvas.drawRoundRect(body, 4f * s, 4f * s, bodyPaint)
-        canvas.drawRoundRect(body, 4f * s, 4f * s, outlinePaint)
+        bodyRect.set(cx - 14f * s, cy - 5f * s, cx + 14f * s, cy + 14f * s)
+        canvas.drawRoundRect(bodyRect, 4f * s, 4f * s, bodyPaint)
+        canvas.drawRoundRect(bodyRect, 4f * s, 4f * s, outlinePaint)
         canvas.drawCircle(cx, cy + 2f * s, 2.6f * s, keyholePaint)
-        val stem = RectF(cx - 1f * s, cy + 3f * s, cx + 1f * s, cy + 9f * s)
-        canvas.drawRoundRect(stem, s, s, keyholePaint)
+        stemRect.set(cx - 1f * s, cy + 3f * s, cx + 1f * s, cy + 9f * s)
+        canvas.drawRoundRect(stemRect, s, s, keyholePaint)
     }
 
 }

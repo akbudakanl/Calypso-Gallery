@@ -1,7 +1,9 @@
 package org.fossify.gallery.helpers
 
 import android.animation.Animator
+import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
@@ -46,6 +48,7 @@ class VaultPullGestureHandler(
     private var cancelDispatched = false
     private var thresholdMet = false
     private var armRunnable: Runnable? = null
+    private var enterAnimators = mutableListOf<Animator>()
     private var armAnimators = mutableListOf<Animator>()
     private var armed = false
 
@@ -117,18 +120,48 @@ class VaultPullGestureHandler(
     }
 
     private fun showIndicator() {
-        iconView.applyColorFilter(textColor())
-        iconView.scaleX = 1f
-        iconView.scaleY = 1f
+        cancelEnter()
+        val idleTextColor = textColor()
+        iconView.applyColorFilter(idleTextColor)
+        iconView.alpha = 1f
+        iconView.scaleX = 0.72f
+        iconView.scaleY = 0.72f
+
+        textView.text = textView.context.getString(R.string.keep_holding_to_open_vault)
+        textView.setTextColor(idleTextColor)
+        textView.alpha = 0.85f
+
+        indicatorView.animate().cancel()
+        indicatorView.alpha = 0f
+        indicatorView.translationY = -10f * density
         indicatorView.beVisible()
         indicatorView.bringToFront()
-        indicatorView.alpha = 1f
-        textView.text = textView.context.getString(R.string.keep_holding_to_open_vault)
+
+        enterAnimators += ObjectAnimator.ofFloat(indicatorView, View.ALPHA, 0f, 1f).apply {
+            duration = ENTER_ANIM_MS
+            interpolator = DecelerateInterpolator()
+        }
+        enterAnimators += ObjectAnimator.ofFloat(indicatorView, View.TRANSLATION_Y, -10f * density, 0f).apply {
+            duration = ENTER_ANIM_MS
+            interpolator = DecelerateInterpolator()
+        }
+        enterAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 0.72f, 1f).apply {
+            duration = ICON_ENTER_MS
+            interpolator = OvershootInterpolator(1.5f)
+        }
+        enterAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 0.72f, 1f).apply {
+            duration = ICON_ENTER_MS
+            interpolator = OvershootInterpolator(1.5f)
+        }
+        enterAnimators.forEach { it.start() }
     }
 
     private fun hideIndicator() {
+        cancelEnter()
+        indicatorView.animate().cancel()
         indicatorView.beGone()
         indicatorView.alpha = 1f
+        indicatorView.translationY = 0f
     }
 
     private fun armAfterDelay() {
@@ -141,35 +174,49 @@ class VaultPullGestureHandler(
         iconView.postDelayed(runnable, ARM_DELAY_MS)
     }
 
-    /** One-shot bounce + tint flash. The lock itself never opens. */
+    /** Smooth spring pulse and accent color transition when the vault is armed. */
     private fun playReadyAnimation() {
         armed = true
-        textView.text = textView.context.getString(R.string.release_to_open_vault)
+        val startColor = textColor()
+        val endColor = primaryColor()
         indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.18f, 1f).apply {
-            duration = 440L
-            interpolator = OvershootInterpolator(1.4f)
-        }
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.18f, 1f).apply {
-            duration = 440L
-            interpolator = OvershootInterpolator(1.4f)
-        }
-        armAnimators += ObjectAnimator.ofFloat(iconView, "alpha", 1f, 0.45f, 1f).apply {
-            duration = 440L
+        textView.text = textView.context.getString(R.string.release_to_open_vault)
+        textView.setTextColor(endColor)
+        textView.alpha = 0.4f
+        armAnimators += ObjectAnimator.ofFloat(textView, View.ALPHA, 0.4f, 1f).apply {
+            duration = ARM_ANIM_MS
             interpolator = DecelerateInterpolator()
         }
-        iconView.applyColorFilter(primaryColor())
+
+        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.22f, 1.06f).apply {
+            duration = ARM_ANIM_MS
+            interpolator = OvershootInterpolator(1.8f)
+        }
+        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.22f, 1.06f).apply {
+            duration = ARM_ANIM_MS
+            interpolator = OvershootInterpolator(1.8f)
+        }
+        armAnimators += ValueAnimator.ofObject(ArgbEvaluator(), startColor, endColor).apply {
+            duration = ARM_ANIM_MS
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animator ->
+                iconView.applyColorFilter(animator.animatedValue as Int)
+            }
+        }
         armAnimators.forEach { it.start() }
     }
 
     private fun resetThresholdState() {
         thresholdMet = false
         armed = false
+        cancelEnter()
         cancelArm()
         iconView.scaleX = 1f
         iconView.scaleY = 1f
         iconView.alpha = 1f
+        textView.alpha = 1f
+        indicatorView.translationY = 0f
     }
 
     private fun resetGesture() {
@@ -179,16 +226,31 @@ class VaultPullGestureHandler(
             .setInterpolator(DecelerateInterpolator())
             .start()
 
+        cancelEnter()
+        cancelArm()
         indicatorView.animate()
             .alpha(0f)
+            .translationY(-8f * density)
             .setDuration(RESET_ANIM_MS)
+            .setInterpolator(DecelerateInterpolator())
             .withEndAction {
                 indicatorView.beGone()
                 indicatorView.alpha = 1f
+                indicatorView.translationY = 0f
             }
             .start()
 
-        resetThresholdState()
+        thresholdMet = false
+        armed = false
+        iconView.scaleX = 1f
+        iconView.scaleY = 1f
+        iconView.alpha = 1f
+        textView.alpha = 1f
+    }
+
+    private fun cancelEnter() {
+        enterAnimators.forEach { it.cancel() }
+        enterAnimators.clear()
     }
 
     private fun cancelArm() {
@@ -204,6 +266,9 @@ class VaultPullGestureHandler(
         private const val HOLD_OPEN_THRESHOLD_DP = 95f
         private const val TRANSLATION_FACTOR = 0.45f
         private const val ARM_DELAY_MS = 420L
+        private const val ENTER_ANIM_MS = 180L
+        private const val ICON_ENTER_MS = 240L
+        private const val ARM_ANIM_MS = 340L
         private const val RESET_ANIM_MS = 220L
     }
 }

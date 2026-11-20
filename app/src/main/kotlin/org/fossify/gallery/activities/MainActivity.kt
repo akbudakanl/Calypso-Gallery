@@ -384,7 +384,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        pinHeaderOverlay()
         appLaunched(BuildConfig.APPLICATION_ID)
         mLastKnownAllFilesAccess = !isRPlus() || isExternalStorageManager()
 
@@ -427,6 +426,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         handleVaultIntent(intent)
         setupEdgeToEdge(
+            padTopSystem = listOf(binding.mainMenu),
             padBottomImeAndSystem = listOf(binding.directoriesGrid)
         )
 
@@ -479,22 +479,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             // 3rd-party intent on fresh install: skip welcome and request permission directly
             handleMediaPermissions()
         }
-    }
-
-    /** Keeps the scrolling view below the overlay header, including its status-bar inset. */
-    private fun pinHeaderOverlay() {
-        binding.mainMenu.viewTreeObserver.addOnGlobalLayoutListener(object :
-            android.view.ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                val menuHeight = binding.mainMenu.height
-                if (menuHeight <= 0) return
-                val params = binding.directoriesHolder.layoutParams as FrameLayout.LayoutParams
-                if (params.topMargin != menuHeight) {
-                    params.topMargin = menuHeight
-                    binding.directoriesHolder.layoutParams = params
-                }
-            }
-        })
     }
 
     private fun launchOnboardingIfNeeded(): Boolean {
