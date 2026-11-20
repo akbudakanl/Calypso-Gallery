@@ -11,7 +11,7 @@
 
 ## 1. Aksiyom
 
-**Uygulama içinde hiçbir kasa, kasa parolası/PIN'i olmadan silinemez veya geçersiz kılınamaz.**
+**Uygulama içinde hiçbir kasa, parola olmadan silinemez veya geçersiz kılınamaz.**
 
 Bu kural bir tercih değil, tasarım aksiyomudur:
 
@@ -81,12 +81,54 @@ Calypso Gallery/                      (varsayılan: /storage/emulated/0/Calypso 
 └── Archive/                          ← yalnızca ilk arşivlemede oluşur
     ├── readme.txt                    ← jenerik: amaç, geri yükleme, silme uyarısı
     └── a3f1c7d9e2b4/                  ← rastgele ad, tarih/sayaç YOK
+        ├── info.txt                  ← jenerik tanıtıcı not
         ├── .vault
         └── *.bin
 ```
 
 - `Archive` klasörü **`Calypso Gallery` kökünde** oluşturulur; üst klasördeki `.nomedia` dosyası alt dizinleri de kapsar, böylece arşiv galerilerde görünmez.
-- `readme.txt` ve varsa `info.txt` **jeneriktir**: tarih, orijinal yol, kullanıcı adı veya "parola unutuldu" gibi davranışsal bilgi içermez.
+
+### 4.1. `Archive/readme.txt` — tam içerik
+
+Dosya Türkçe ve İngilizce olarak yazılır. **Tarih, yol, kullanıcı adı veya "parola unutuldu" ifadesi bulunmaz:**
+
+```text
+Calypso Gallery — Arşiv / Archive
+
+Bu klasördeki alt klasörler daha önce kullanılmış şifreli kasalardır.
+Kasalar silinmemiştir. Uygulama içinden
+  Ayarlar → Şifreli kasa → Kasa konumu → Arşivden kasa aç
+yoluyla her kasa kendi parolasıyla tekrar açılabilir.
+
+Dosyaları değiştirmeyin veya yeniden adlandırmayın. Kasa şifreli olduğu
+için başka bir uygulamayla açılamaz.
+
+Disk alanı kazanmak için bir kasayı kalıcı olarak silmek isterseniz,
+ilgili alt klasörü bir dosya yöneticisiyle silebilirsiniz. Bu işlem
+geri alınamaz.
+
+The subfolders here are encrypted vaults archived earlier. They were not
+deleted. In the app, use Settings → Encrypted vault → Vault location →
+Open from archive to reopen any of them with its own password.
+
+Do not modify or rename the files; other apps cannot open them.
+To free disk space, delete a vault subfolder with a file manager.
+This cannot be undone.
+```
+
+### 4.2. `info.txt` — tam içerik
+
+Her arşivlenen kasanın içine, yalnızca klasörün ne olduğunu anlatan jenerik bir not konur. Klasör başka bir yere kopyalanırsa da bağlam kaybolmaz. **Tarih, orijinal yol veya etiket içermez** — bunlar yalnızca uygulamanın özel tercihlerindedir:
+
+```text
+Bu klasör Calypso Gallery tarafından arşivlenmiş bir şifreli kasadır.
+İçeriğini değiştirmeyin. Uygulama içinden Ayarlar → Şifreli kasa →
+Kasa konumu → Arşivden kasa aç ile açılabilir.
+
+This folder is an encrypted vault archived by Calypso Gallery.
+Do not modify its contents. Open it from Settings → Encrypted vault →
+Vault location → Open from archive.
+```
 - Orijinal kasa yolu, arşiv tarihi ve isteğe bağlı kullanıcı etiketi yalnızca **uygulamanın özel `SharedPreferences` alanında**, rastgele id ile eşleştirilerek tutulur. Dosya yöneticisi bunu göremez.
 - Klasör adında **tarih yoktur**, çünkü bu bir meta veri ihlali olarak algılanabilir: "kullanıcı şu tarihte parolasını unuttu" bilgisi doğrudan okunur. Dosya sistemi `mtime` zaten vardır; klasör adına eklemek gereksizdir.
 - `.cache` gibi **yanıltıcı/sahte adlar reddedilmiştir**: kullanıcıyı kandırmak olur ve arşivin varlığını gizleme amacına hizmet etmez.
@@ -118,14 +160,34 @@ Kullanıcıya gösterilen dostane ad ("Arşiv 1", "Arşiv 2") yalnızca UI'da ü
 
 ---
 
-## 7. Geri yükleme
+## 7. Geri yükleme — basit kullanıcı için "kasalar yer değiştirir" modeli
 
-"Kasa konumu" ayarına **"Arşivden kasa aç"** seçeneği eklenir:
+Kullanıcıya şu cümle söylenir:
 
-- Özel tercihlerdeki `archivedVaults` listesi gösterilir (dostane ad + `mtime`).
-- Tercihler sıfırlanmışsa `Archive/*` dizini taranır ve `CryptoManager.resolveExistingVaultInDirectory(dir)` ile geçerli `.vault` başlığı aranır; rastgele ad fallback olarak gösterilir.
-- Seçilen arşiv **yerinde aktif kasa yapılır** (`config.vaultRootPath` = arşiv yolu); kullanıcı kasa parolasıyla açar.
-- Varsayılan konuma geri taşıma otomatik yapılmaz: orada zaten yeni kasa vardır ve bu, parolasız silme anlamına gelirdi (aksiyom).
+> "Arşivdeki bir kasayı tekrar kullanmak isterseniz **Ayarlar → Şifreli kasa → Kasa konumu → Arşivden kasa aç** seçeneğini kullanın. Listeden kasayı seçin. Seçtiğiniz kasa varsayılan konuma geri döner, o anki kasa arşive alınır. **Hiçbir şey silinmez.**"
+
+Bu modelde kullanıcı "aktif kasa" ve "arşiv" kavramlarını bilmek zorunda değildir; zihinsel modeli **"iki kasa yer değiştirir"**dir.
+
+Akış:
+
+1. "Kasa konumu" ayarında **"Arşivden kasa aç"** seçeneği gösterilir.
+2. Özel tercihlerdeki `archivedVaults` listesi dostane ad + `mtime` ile gösterilir. Tercihler sıfırlanmışsa `Archive/*` taranır ve `CryptoManager.resolveExistingVaultInDirectory(dir)` ile geçerli `.vault` başlığı aranır; rastgele ad fallback etiketidir.
+3. Kullanıcı bir kasa seçer; onay dialogunda sadece şu yazılır: *"Bu kasa varsayılan konuma taşınacak. Şu anki kasa arşive alınacak. Hiçbir veri silinmez. Devam edilsin mi?"*
+4. Onaylanırsa ADR 0003 journal'ı ile, **aynı filesystem içinde atomik** iki rename yapılır:
+   - `Secrets` → `Archive/<yeni-rastgele-id>` (mevcut kasa arşive gider),
+   - `Archive/<secilen-id>` → `Secrets` (seçilen kasa varsayılan konuma döner).
+5. `config.vaultRootPath` = `Secrets` olarak güncellenir; biyometrik durum temizlenir.
+6. `VaultSecurityDialog` ile **seçilen kasanın parolası** istenir. Parola yanlışsa kullanıcı tekrar deneyebilir; kasa `Secrets` konumunda ve erişilebilir kalır, uygulama kilitli kalmaz.
+7. Başarı bildirimi: *"Seçtiğiniz kasa varsayılan konuma döndü. Önceki kasanız arşivde korundu."*
+
+Bu yaklaşımın avantajları:
+
+- Kullanıcı "geri yükle" için klasör adı, rastgele id veya dosya yöneticisi bilmek zorunda değildir.
+- Varsayılan konum her zaman **bir** kasa içerir; uygulamanın keşif mantığı (`findVaultRoot`) değişmez.
+- Aksiyom korunur: iki rename de veri kopyalamaz/silmez; işlem geri alınabilir.
+- Arşivden gelen kasa varsayılan konumda olduğu için biyometrik yeniden kurulum ve kasa kilidi akışları aynen çalışır.
+
+Kullanıcı parolayı hatırlamıyorsa zaten bu akışı tamamlayamaz; böyle bir durumda "Parolamı unuttum" akışı yeniden kullanılabilir — o da mevcut kasayı arşivleyip yenisini oluşturur.
 
 ---
 

@@ -79,12 +79,54 @@ Calypso Gallery/                      (default: /storage/emulated/0/Calypso Gall
 └── Archive/                          ← created only on first archival
     ├── readme.txt                    ← generic: purpose, restore, deletion warning
     └── a3f1c7d9e2b4/                  ← random name, no date/counter
+        ├── info.txt                  ← generic marker note
         ├── .vault
         └── *.bin
 ```
 
 - `Archive` is created under the **`Calypso Gallery` root**. The `.nomedia` file in the parent covers subdirectories, so the archive is hidden from galleries.
-- `readme.txt` and any `info.txt` are **generic**: no date, original path, username or behavioural information such as "password forgotten".
+
+### 4.1. `Archive/readme.txt` — exact content
+
+The file is written in Turkish and English. **No date, path, username or "password forgotten" phrase:**
+
+```text
+Calypso Gallery — Arşiv / Archive
+
+Bu klasördeki alt klasörler daha önce kullanılmış şifreli kasalardır.
+Kasalar silinmemiştir. Uygulama içinden
+  Ayarlar → Şifreli kasa → Kasa konumu → Arşivden kasa aç
+yoluyla her kasa kendi parolasıyla tekrar açılabilir.
+
+Dosyaları değiştirmeyin veya yeniden adlandırmayın. Kasa şifreli olduğu
+için başka bir uygulamayla açılamaz.
+
+Disk alanı kazanmak için bir kasayı kalıcı olarak silmek isterseniz,
+ilgili alt klasörü bir dosya yöneticisiyle silebilirsiniz. Bu işlem
+geri alınamaz.
+
+The subfolders here are encrypted vaults archived earlier. They were not
+deleted. In the app, use Settings → Encrypted vault → Vault location →
+Open from archive to reopen any of them with its own password.
+
+Do not modify or rename the files; other apps cannot open them.
+To free disk space, delete a vault subfolder with a file manager.
+This cannot be undone.
+```
+
+### 4.2. `info.txt` — exact content
+
+Each archived vault contains a generic note explaining what the folder is, so context is not lost if the folder is copied elsewhere. **No date, original path or label** — those live only in private preferences:
+
+```text
+Bu klasör Calypso Gallery tarafından arşivlenmiş bir şifreli kasadır.
+İçeriğini değiştirmeyin. Uygulama içinden Ayarlar → Şifreli kasa →
+Kasa konumu → Arşivden kasa aç ile açılabilir.
+
+This folder is an encrypted vault archived by Calypso Gallery.
+Do not modify its contents. Open it from Settings → Encrypted vault →
+Vault location → Open from archive.
+```
 - The original vault path, archive timestamp and optional user label are stored **only in the app's private `SharedPreferences`**, keyed by the random id. A file manager cannot see them.
 - **No date in the folder name**: it would be a metadata leak — "the user forgot their password on this date" is readable at a glance. The filesystem already has `mtime`; adding it to the name is unnecessary.
 - **Fake names such as `.cache` are rejected**: they are deceptive and do not actually hide the existence of an archive.
@@ -116,14 +158,34 @@ Friendly names shown to the user ("Archive 1", "Archive 2") exist **only in the 
 
 ---
 
-## 7. Restore
+## 7. Restore — the "vaults swap places" model for simple users
 
-An **"Open from archive"** entry is added to the "Vault location" setting:
+The user is told exactly this:
 
-- Shows the `archivedVaults` entries from private preferences (friendly name + `mtime`).
-- If preferences were wiped, `Archive/*` is scanned and `CryptoManager.resolveExistingVaultInDirectory(dir)` is used to find a valid `.vault` header; the random name is shown as a fallback label.
-- The selected archive is activated **in place** (`config.vaultRootPath` = archive path); the user unlocks it with the vault password.
-- Moving it back to the default location is not automatic: a new vault already lives there, and doing so would mean passwordless deletion (axiom).
+> "To use an archived vault again, go to **Settings → Encrypted vault → Vault location → Open from archive**. Pick the vault from the list. The chosen vault returns to the default location and the current vault is moved to the archive. **Nothing is deleted.**"
+
+The user does not need to understand "active vault" or "archive" as separate concepts; their mental model is simply **"two vaults swap places"**.
+
+Flow:
+
+1. An **"Open from archive"** entry appears in "Vault location".
+2. `archivedVaults` entries from private preferences are shown with a friendly name + `mtime`. If preferences were wiped, `Archive/*` is scanned and `CryptoManager.resolveExistingVaultInDirectory(dir)` finds a valid `.vault` header; the random name is a fallback label.
+3. The user picks a vault; the confirmation dialog says only: *"This vault will move to the default location. The current vault will be moved to the archive. No data will be deleted. Continue?"*
+4. On confirmation, the ADR 0003 journal performs two **atomic renames on the same filesystem**:
+   - `Secrets` → `Archive/<new-random-id>` (current vault goes to the archive),
+   - `Archive/<chosen-id>` → `Secrets` (chosen vault returns to the default location).
+5. `config.vaultRootPath` is set to `Secrets`; biometric state is cleared.
+6. `VaultSecurityDialog` asks for the **chosen vault's password**. If it is wrong, the user can retry: the vault stays at `Secrets` and remains accessible, the app does not get stuck.
+7. Success message: *"The chosen vault has returned to the default location. Your previous vault is preserved in the archive."*
+
+Why this approach:
+
+- The user needs no folder name, random id or file manager knowledge.
+- The default location always contains exactly **one** vault; `findVaultRoot` discovery stays unchanged.
+- The axiom is preserved: both renames copy/delete nothing, and the operation is reversible.
+- Because the restored vault lives at the default location, biometric setup and lock flows work exactly as before.
+
+If the user does not remember the restored vault's password either, they cannot complete step 6; the "I forgot my password" flow can then be used again — it archives the current vault and creates a new one.
 
 ---
 
