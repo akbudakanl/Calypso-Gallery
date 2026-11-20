@@ -1,12 +1,12 @@
 # Spanish (Latin America, values-b+es+419) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-b+es+419/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Spanish (LatAm) (`values-b+es+419/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Mostrar los nombres de las acciones en la barra de acciones inferior | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Mostrar los nombres de las acciones en la barra de acciones inferior | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | Mostrar álbumes | Files-view overflow item that returns to the album view |
 
 ## ADR 0003 — resumable file operations (7 new keys)
@@ -616,7 +616,7 @@ Following the previous audit, 22 additional keys were localized in `values-b+es+
 | 398 | `create_new_vault_option` | Create new vault | Crear bóveda nueva |
 | 399 | `use_existing_vault_option` | Use existing vault | Usar bóveda existente |
 | 400 | `where_to_create_vault_title` | Where should the vault be created? | ¿Dónde debería crearse la bóveda? |
-| 401 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Ubicación predeterminada (Interno > Calypso Gallery > Secrets) |
+| 401 | `vault_location_default_short` | Default location | Ubicación predeterminada |
 | 402 | `vault_location_custom_short` | Custom Location | Ubicación personalizada |
 | 403 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada. |
 | 404 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta. |
@@ -755,7 +755,7 @@ Following the previous audit, 22 additional keys were localized in `values-b+es+
 | 537 | `brute_force_mode_title` | Calibration mode | Modo de calibración |
 | 538 | `brute_force_mode_time` | Via vault unlock time | Según el tiempo de desbloqueo de la bóveda |
 | 539 | `brute_force_mode_presets` | Via ready-made modes | Según modos predefinidos |
-| 540 | `brute_force_time_title` | Target vault unlock time | Tiempo objetivo de desbloqueo de la bóveda |
+| 540 | `brute_force_time_title` | Targeted vault unlock time | Tiempo de desbloqueo previsto de la bóveda |
 | 541 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta. |
 | 542 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | El límite inferior es el tiempo estándar seguro de este dispositivo. |
 | 543 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (en este dispositivo) |

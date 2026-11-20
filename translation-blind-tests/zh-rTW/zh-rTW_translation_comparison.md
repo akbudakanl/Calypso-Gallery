@@ -1,13 +1,17 @@
 # Traditional Chinese (Taiwan, values-zh-rTW) Translation Audit, Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 在底部動作列顯示動作名稱 | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 在底部動作列顯示動作名稱 | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | 顯示相簿 | Files-view overflow item that returns to the album view |
+| 3 | `vault_biometric_offer_title` | Biometric access to the vault | 保險箱生物辨識存取 | One-time offer after first vault creation |
+| 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | 使用指紋或臉部取代密碼開啟保險箱。您不需要再次輸入密碼。 | Same |
+| 5 | `vault_biometric_offer_accept` | Set up biometric access | 設定生物辨識存取 | Positive button |
+| 6 | `vault_biometric_offer_decline` | Not now | 稍後再說 | Negative button |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 
@@ -627,7 +631,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 396 | `create_new_vault_option` | Create new vault | 建立新保險箱 |
 | 397 | `use_existing_vault_option` | Use existing vault | 使用現有保險箱 |
 | 398 | `where_to_create_vault_title` | Where should the vault be created? | 要在哪裡建立保險箱？ |
-| 399 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 預設位置（內部 > Calypso Gallery > Secrets） |
+| 399 | `vault_location_default_short` | Default location | 預設位置 |
 | 400 | `vault_location_custom_short` | Custom Location | 自訂位置 |
 | 401 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 在所選資料夾中找不到現有的加密保險箱 (.vault)。 |
 | 402 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | 在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。 |
@@ -766,7 +770,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 535 | `brute_force_mode_title` | Calibration mode | 校正模式 |
 | 536 | `brute_force_mode_time` | Via vault unlock time | 透過保險箱解鎖時間 |
 | 537 | `brute_force_mode_presets` | Via ready-made modes | 透過現成模式 |
-| 538 | `brute_force_time_title` | Target vault unlock time | 目標保險箱解鎖時間 |
+| 538 | `brute_force_time_title` | Targeted vault unlock time | 設定的保險箱解鎖時間 |
 | 539 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。 |
 | 540 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限為此裝置的安全標準時間。 |
 | 541 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（此裝置） |

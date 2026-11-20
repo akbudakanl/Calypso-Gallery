@@ -1,13 +1,17 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 下部アクションバーにアクション名を表示 | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 下部アクションバーにアクション名を表示 | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | アルバムを表示 | Files-view overflow item that returns to the album view |
+| 3 | `vault_biometric_offer_title` | Biometric access to the vault | 保管庫の生体認証アクセス | One-time offer after first vault creation |
+| 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | パスワードの代わりに指紋や顔で保管庫を開けます。パスワードの再入力は不要です。 | Same |
+| 5 | `vault_biometric_offer_accept` | Set up biometric access | 生体認証を設定 | Positive button |
+| 6 | `vault_biometric_offer_decline` | Not now | 今はしない | Negative button |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 
@@ -619,7 +623,7 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 396 | `create_new_vault_option` | Create new vault | 新しい保管庫を作成 |
 | 397 | `use_existing_vault_option` | Use existing vault | 既存の保管庫を使用 |
 | 398 | `where_to_create_vault_title` | Where should the vault be created? | 保管庫をどこに作成しますか？ |
-| 399 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 既定の場所 (内部 > Calypso Gallery > Secrets) |
+| 399 | `vault_location_default_short` | Default location | 既定の場所 |
 | 400 | `vault_location_custom_short` | Custom Location | カスタムの場所 |
 | 401 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。 |
 | 402 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。 |
@@ -758,7 +762,7 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 535 | `brute_force_mode_title` | Calibration mode | 調整モード |
 | 536 | `brute_force_mode_time` | Via vault unlock time | 保管庫のロック解除時間を使用 |
 | 537 | `brute_force_mode_presets` | Via ready-made modes | 用意されたモードを使用 |
-| 538 | `brute_force_time_title` | Target vault unlock time | 目標とする保管庫のロック解除時間 |
+| 538 | `brute_force_time_title` | Targeted vault unlock time | 設定する保管庫のロック解除時間 |
 | 539 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。 |
 | 540 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限はこの端末の安全な標準時間です。 |
 | 541 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（この端末） |

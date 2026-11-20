@@ -411,7 +411,7 @@
     <string name="create_new_vault_option">新しい保管庫を作成</string>
     <string name="use_existing_vault_option">既存の保管庫を使用</string>
     <string name="where_to_create_vault_title">保管庫をどこに作成しますか？</string>
-    <string name="vault_location_default_short">既定の場所 (内部 &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">既定の場所</string>
     <string name="vault_location_custom_short">カスタムの場所</string>
     <string name="no_existing_vault_at_location">選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。</string>
     <string name="unlock_existing_vault_at_location_prompt">%s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。</string>
@@ -534,7 +534,11 @@
     <string name="about_third_party_licenses">サードパーティのライセンス</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">総当たり攻撃への耐性</string>
-    <string name="brute_force_time_title">目標とする保管庫のロック解除時間</string>
+    <string name="brute_force_time_title">設定する保管庫のロック解除時間</string>
+    <string name="vault_biometric_offer_title">保管庫の生体認証アクセス</string>
+    <string name="vault_biometric_offer_message">パスワードの代わりに指紋や顔で保管庫を開けます。パスワードの再入力は不要です。</string>
+    <string name="vault_biometric_offer_accept">生体認証を設定</string>
+    <string name="vault_biometric_offer_decline">今はしない</string>
     <string name="brute_force_time_hint">暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。</string>
     <string name="brute_force_time_min_hint">下限はこの端末の安全な標準時間です。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（この端末）</string>

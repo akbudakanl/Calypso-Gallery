@@ -478,7 +478,7 @@
     <string name="create_new_vault_option">Opprett nytt kvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterande kvelv</string>
     <string name="where_to_create_vault_title">Kvar skal kvelvet opprettast?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering</string>
     <string name="vault_location_custom_short">Eigendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa.</string>
     <string name="unlock_existing_vault_at_location_prompt">Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe.</string>
@@ -601,7 +601,11 @@
     <string name="about_third_party_licenses">Lisensar frå tredjepart</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Motstand mot brute-force</string>
-    <string name="brute_force_time_title">Ønskt opplåsingstid for kvelvet</string>
+    <string name="brute_force_time_title">Målsetnad for opplåsingstid for kvelvet</string>
+    <string name="vault_biometric_offer_title">Biometrisk tilgang til kvelvet</string>
+    <string name="vault_biometric_offer_message">Opne kvelvet med fingeravtrykk eller andlet i staden for eit passord. Du treng ikkje skrive inn passordet på nytt.</string>
+    <string name="vault_biometric_offer_accept">Set opp biometrisk tilgang</string>
+    <string name="vault_biometric_offer_decline">Ikkje no</string>
     <string name="brute_force_time_hint">Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare.</string>
     <string name="brute_force_time_min_hint">Nedre grense er den trygge standardtida til denne eininga.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne eininga)</string>

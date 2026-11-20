@@ -120,14 +120,13 @@ class VaultSecurityDialog(
 
         if (isSetupMode) {
             binding.vaultNoRecoveryWarning.beVisible()
-            binding.vaultBruteForceHolder.apply {
-                text = activity.getString(R.string.argon2_profile_title) + "\n" + BruteForceDialog.summary(activity)
-                setOnClickListener {
-                    BruteForceDialog.show(activity) {
-                        text = activity.getString(R.string.argon2_profile_title) + "\n" +
-                            BruteForceDialog.summary(activity)
-                    }
-                }
+            fun refreshBruteForceLabel() {
+                binding.vaultBruteForceHolder.text =
+                    activity.getString(R.string.brute_force_time_title) + "\n" + BruteForceDialog.summary(activity)
+            }
+            refreshBruteForceLabel()
+            binding.vaultBruteForceHolder.setOnClickListener {
+                BruteForceDialog.show(activity) { refreshBruteForceLabel() }
             }
             binding.vaultTabs.apply {
                 beVisible()
@@ -414,6 +413,7 @@ class VaultSecurityDialog(
                     clearFirstStepSecret()
                     dialogSucceeded = true
                     dialog?.dismiss()
+                    VaultBiometricOfferDialog.showIfNeeded(activity)
                     callback(hash, currentType, true)
                 } else {
                     clearFirstStepSecret()

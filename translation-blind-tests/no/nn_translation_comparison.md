@@ -1,13 +1,17 @@
 # Norwegian Nynorsk (values-nn) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-nn/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Vis namn på handlingane i handlingslinja nedst | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Vis namn på handlingane i handlingslinja nedst | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | Vis album | Files-view overflow item that returns to the album view |
+| 3 | `vault_biometric_offer_title` | Biometric access to the vault | Biometrisk tilgang til kvelvet | One-time offer after first vault creation |
+| 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Opne kvelvet med fingeravtrykk eller andlet i staden for eit passord. Du treng ikkje skrive inn passordet på nytt. | Same |
+| 5 | `vault_biometric_offer_accept` | Set up biometric access | Set opp biometrisk tilgang | Positive button |
+| 6 | `vault_biometric_offer_decline` | Not now | Ikkje no | Negative button |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 
@@ -628,7 +632,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 399 | `create_new_vault_option` | Create new vault | Opprett nytt kvelv |
 | 400 | `use_existing_vault_option` | Use existing vault | Bruk eksisterande kvelv |
 | 401 | `where_to_create_vault_title` | Where should the vault be created? | Kvar skal kvelvet opprettast? |
-| 402 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Standardplassering (Intern > Calypso Gallery > Secrets) |
+| 402 | `vault_location_default_short` | Default location | Standardplassering |
 | 403 | `vault_location_custom_short` | Custom Location | Eigendefinert plassering |
 | 404 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa. |
 | 405 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe. |
@@ -767,7 +771,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 538 | `brute_force_mode_title` | Calibration mode | Kalibreringsmodus |
 | 539 | `brute_force_mode_time` | Via vault unlock time | Via opplåsingstid for kvelvet |
 | 540 | `brute_force_mode_presets` | Via ready-made modes | Via ferdige modusar |
-| 541 | `brute_force_time_title` | Target vault unlock time | Ønskt opplåsingstid for kvelvet |
+| 541 | `brute_force_time_title` | Targeted vault unlock time | Målsetnad for opplåsingstid for kvelvet |
 | 542 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare. |
 | 543 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Nedre grense er den trygge standardtida til denne eininga. |
 | 544 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (på denne eininga) |

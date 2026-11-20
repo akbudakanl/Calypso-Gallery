@@ -1,13 +1,17 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Alt əməliyyat çubuğunda ikonların adını göstər | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Alt əməliyyat çubuğunda ikonların adını göstər | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | Albomları göstər | Files-view overflow item that returns to the album view |
+| 3 | `vault_biometric_offer_title` | Biometric access to the vault | Seyfə biometrik giriş | One-time offer after first vault creation |
+| 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Seyfi parol əvəzinə barmaq izi və ya üz tanıma ilə aça bilərsiniz. Parolanızı yenidən daxil etməyinizə ehtiyac yoxdur. | Same |
+| 5 | `vault_biometric_offer_accept` | Set up biometric access | Biometrik girişi qur | Positive button |
+| 6 | `vault_biometric_offer_decline` | Not now | İndi deyil | Negative button |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 
@@ -612,7 +616,7 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 398 | `create_new_vault_option` | Create new vault | Yeni seyf yarat |
 | 399 | `use_existing_vault_option` | Use existing vault | Mövcud seyfdən istifadə et |
 | 400 | `where_to_create_vault_title` | Where should the vault be created? | Seyf harada yaradılsın? |
-| 401 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Susmaya görə yer (Daxili > Calypso Gallery > Secrets) |
+| 401 | `vault_location_default_short` | Default location | Susmaya görə yer |
 | 402 | `vault_location_custom_short` | Custom Location | Fərdi yer |
 | 403 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı. |
 | 404 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun. |
@@ -751,7 +755,7 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 537 | `brute_force_mode_title` | Calibration mode | Kalibrasiya rejimi |
 | 538 | `brute_force_mode_time` | Via vault unlock time | Seyfin kilidini açma vaxtı ilə |
 | 539 | `brute_force_mode_presets` | Via ready-made modes | Hazır rejimlərlə |
-| 540 | `brute_force_time_title` | Target vault unlock time | Seyfin kilidini açmaq üçün hədəf vaxt |
+| 540 | `brute_force_time_title` | Targeted vault unlock time | Hədəflənən seyf açılış vaxtı |
 | 541 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir. |
 | 542 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Alt hədd bu cihazın təhlükəsiz standart vaxtıdır. |
 | 543 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (bu cihazda) |

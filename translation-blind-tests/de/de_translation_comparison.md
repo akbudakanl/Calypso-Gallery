@@ -1,13 +1,17 @@
 # German (values-de) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar and view switch (2 keys)
+## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
 
 Added to `values-de/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Namen der Aktionen in der unteren Aktionsleiste anzeigen | Fullscreen media setting, default ON |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Namen der Aktionen in der unteren Aktionsleiste anzeigen | Fullscreen media setting, default OFF |
 | 2 | `show_albums` | Show albums | Alben anzeigen | Files-view overflow item that returns to the album view |
+| 3 | `vault_biometric_offer_title` | Biometric access to the vault | Biometrischer Zugriff auf den Tresor | One-time offer after first vault creation |
+| 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Öffne den Tresor mit Fingerabdruck oder Gesicht statt mit einem Passwort. Du musst dein Passwort nicht erneut eingeben. | Same |
+| 5 | `vault_biometric_offer_accept` | Set up biometric access | Biometrischen Zugriff einrichten | Positive button |
+| 6 | `vault_biometric_offer_decline` | Not now | Jetzt nicht | Negative button |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 
@@ -578,7 +582,7 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 383 | `create_new_vault_option` | Create new vault | Neuen Tresor erstellen |
 | 384 | `use_existing_vault_option` | Use existing vault | Vorhandenen Tresor verwenden |
 | 385 | `where_to_create_vault_title` | Where should the vault be created? | Wo soll der Tresor erstellt werden? |
-| 386 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Standard-Speicherort (Intern > Calypso Gallery > Secrets) |
+| 386 | `vault_location_default_short` | Default location | Standard-Speicherort |
 | 387 | `vault_location_custom_short` | Custom Location | Benutzerdefinierter Speicherort |
 | 388 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Im ausgewählten Ordner wurde kein vorhandener verschlüsselter Tresor (.vault) gefunden. |
 | 389 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Unter %s wurde ein vorhandener verschlüsselter Tresor gefunden. Möchtest du ihn entsperren und verwenden? Tippe auf Nein, um einen anderen Ordner zu wählen. |
@@ -717,7 +721,7 @@ Following the previous audit, 22 additional keys were localized in `values-de/st
 | 522 | `brute_force_mode_title` | Calibration mode | Kalibrierungsmodus |
 | 523 | `brute_force_mode_time` | Via vault unlock time | Über die Entsperrzeit des Tresors |
 | 524 | `brute_force_mode_presets` | Via ready-made modes | Über vorgefertigte Modi |
-| 525 | `brute_force_time_title` | Target vault unlock time | Zielwert für die Entsperrzeit des Tresors |
+| 525 | `brute_force_time_title` | Targeted vault unlock time | Anvisierte Entsperrzeit des Tresors |
 | 526 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden. |
 | 527 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts. |
 | 528 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (auf diesem Gerät) |

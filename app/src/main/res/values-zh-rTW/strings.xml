@@ -408,7 +408,7 @@
     <string name="create_new_vault_option">建立新保險箱</string>
     <string name="use_existing_vault_option">使用現有保險箱</string>
     <string name="where_to_create_vault_title">要在哪裡建立保險箱？</string>
-    <string name="vault_location_default_short">預設位置（內部 &gt; Calypso Gallery &gt; Secrets）</string>
+    <string name="vault_location_default_short">預設位置</string>
     <string name="vault_location_custom_short">自訂位置</string>
     <string name="no_existing_vault_at_location">在所選資料夾中找不到現有的加密保險箱 (.vault)。</string>
     <string name="unlock_existing_vault_at_location_prompt">在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。</string>
@@ -531,7 +531,11 @@
     <string name="about_third_party_licenses">第三方授權條款</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">暴力破解防護</string>
-    <string name="brute_force_time_title">目標保險箱解鎖時間</string>
+    <string name="brute_force_time_title">設定的保險箱解鎖時間</string>
+    <string name="vault_biometric_offer_title">保險箱生物辨識存取</string>
+    <string name="vault_biometric_offer_message">使用指紋或臉部取代密碼開啟保險箱。您不需要再次輸入密碼。</string>
+    <string name="vault_biometric_offer_accept">設定生物辨識存取</string>
+    <string name="vault_biometric_offer_decline">稍後再說</string>
     <string name="brute_force_time_hint">選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。</string>
     <string name="brute_force_time_min_hint">下限為此裝置的安全標準時間。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（此裝置）</string>

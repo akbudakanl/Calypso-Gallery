@@ -410,7 +410,7 @@
     <string name="create_new_vault_option">Neuen Tresor erstellen</string>
     <string name="use_existing_vault_option">Vorhandenen Tresor verwenden</string>
     <string name="where_to_create_vault_title">Wo soll der Tresor erstellt werden?</string>
-    <string name="vault_location_default_short">Standard-Speicherort (Intern &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Standard-Speicherort</string>
     <string name="vault_location_custom_short">Benutzerdefinierter Speicherort</string>
     <string name="no_existing_vault_at_location">Im ausgewählten Ordner wurde kein vorhandener verschlüsselter Tresor (.vault) gefunden.</string>
     <string name="unlock_existing_vault_at_location_prompt">Unter %s wurde ein vorhandener verschlüsselter Tresor gefunden. Möchtest du ihn entsperren und verwenden? Tippe auf Nein, um einen anderen Ordner zu wählen.</string>
@@ -533,7 +533,11 @@
     <string name="about_third_party_licenses">Lizenzen von Drittanbietern</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-Force-Widerstand</string>
-    <string name="brute_force_time_title">Zielwert für die Entsperrzeit des Tresors</string>
+    <string name="brute_force_time_title">Anvisierte Entsperrzeit des Tresors</string>
+    <string name="vault_biometric_offer_title">Biometrischer Zugriff auf den Tresor</string>
+    <string name="vault_biometric_offer_message">Öffne den Tresor mit Fingerabdruck oder Gesicht statt mit einem Passwort. Du musst dein Passwort nicht erneut eingeben.</string>
+    <string name="vault_biometric_offer_accept">Biometrischen Zugriff einrichten</string>
+    <string name="vault_biometric_offer_decline">Jetzt nicht</string>
     <string name="brute_force_time_hint">Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden.</string>
     <string name="brute_force_time_min_hint">Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts.</string>
     <string name="brute_force_time_value_device">%1$.1f s (auf diesem Gerät)</string>

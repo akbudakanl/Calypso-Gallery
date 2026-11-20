@@ -813,15 +813,22 @@ class SettingsActivity : SimpleActivity() {
         // 2) Şifreli kasa şifresini değiştir
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 3) Şifreli kasaya biyometrik ile giriş (sadece bu kaydırılabilir)
-        binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
-        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(hasStoragePermission && vaultExists && config.isVaultBiometricEnabled)
+        // 3) Şifreli kasaya biyometrik ile giriş — TEE/StrongBox yoksa hiç gösterilmez
+        val biometricHardware = CryptoManager.isBiometricHardwareAvailable(this) &&
+            CryptoManager.getOrCreateBiometricKey() != null
+        binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists && biometricHardware)
+        binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
+            hasStoragePermission && vaultExists && biometricHardware && config.isVaultBiometricEnabled
+        )
 
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 4b) Kasa parolası girerken tuş basımlarını gizle
-        binding.settingsHideVaultKeyPressesHolder.beVisibleIf(hasStoragePermission && vaultExists)
+        // 4b) Tuş basımlarını gizleme yalnızca PIN kullanan kasalarda anlamlı
+        binding.settingsHideVaultKeyPressesHolder.beVisibleIf(
+            hasStoragePermission && vaultExists &&
+                CryptoManager.getVaultProtectionType(this) == PROTECTION_PIN
+        )
 
         // 4c) Nokta göstergesi: sadece kısa PIN kullanan kasalarda mantıklı
         val pinDotsApplicable = vaultExists &&
@@ -894,6 +901,8 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupArgon2Profile() {
+        // Bu ayar yalnızca kasa mevcutsa ve bu cihaz için bir süre kaydedilmişse görünür.
+        binding.settingsArgon2ProfileHolder.beVisibleIf(doesVaultExist())
         fun refreshSummary() {
             binding.settingsArgon2ProfileValue.text =
                 org.fossify.gallery.dialogs.BruteForceDialog.summary(this)

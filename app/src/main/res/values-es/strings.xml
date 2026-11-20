@@ -412,7 +412,7 @@
     <string name="create_new_vault_option">Crear bóveda nueva</string>
     <string name="use_existing_vault_option">Usar bóveda existente</string>
     <string name="where_to_create_vault_title">¿Dónde debe crearse la bóveda?</string>
-    <string name="vault_location_default_short">Ubicación predeterminada (Interno &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Ubicación predeterminada</string>
     <string name="vault_location_custom_short">Ubicación personalizada</string>
     <string name="no_existing_vault_at_location">No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada.</string>
     <string name="unlock_existing_vault_at_location_prompt">Se encontró una bóveda cifrada existente en %s. ¿Desea desbloquearla y usarla? Pulse No para elegir otra carpeta.</string>
@@ -535,7 +535,11 @@
     <string name="about_third_party_licenses">Licencias de terceros</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Resistencia a la fuerza bruta</string>
-    <string name="brute_force_time_title">Tiempo objetivo de desbloqueo de la bóveda</string>
+    <string name="brute_force_time_title">Tiempo de desbloqueo previsto de la bóveda</string>
+    <string name="vault_biometric_offer_title">Acceso biométrico a la bóveda</string>
+    <string name="vault_biometric_offer_message">Abre la bóveda con tu huella o rostro en lugar de una contraseña. No necesitas volver a introducirla.</string>
+    <string name="vault_biometric_offer_accept">Configurar acceso biométrico</string>
+    <string name="vault_biometric_offer_decline">Ahora no</string>
     <string name="brute_force_time_hint">Selecciona el tiempo dedicado a abrir la bóveda cifrada. Mantener este valor alto proporciona seguridad adicional al dificultar los ataques de fuerza bruta.</string>
     <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
     <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>

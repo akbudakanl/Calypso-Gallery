@@ -477,7 +477,7 @@
     <string name="create_new_vault_option">Yeni seyf yarat</string>
     <string name="use_existing_vault_option">Mövcud seyfdən istifadə et</string>
     <string name="where_to_create_vault_title">Seyf harada yaradılsın?</string>
-    <string name="vault_location_default_short">Susmaya görə yer (Daxili &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Susmaya görə yer</string>
     <string name="vault_location_custom_short">Fərdi yer</string>
     <string name="no_existing_vault_at_location">Seçilmiş qovluqda mövcud şifrəli seyf (.vault) tapılmadı.</string>
     <string name="unlock_existing_vault_at_location_prompt">%s ünvanında mövcud şifrəli seyf tapıldı. Kilidini açıb ondan istifadə etmək istəyirsiniz? Başqa qovluq seçmək üçün Xeyr üzərinə toxunun.</string>
@@ -600,7 +600,11 @@
     <string name="about_third_party_licenses">Üçüncü tərəf lisenziyaları</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-Force direnci</string>
-    <string name="brute_force_time_title">Seyfin kilidini açmaq üçün hədəf vaxt</string>
+    <string name="brute_force_time_title">Hədəflənən seyf açılış vaxtı</string>
+    <string name="vault_biometric_offer_title">Seyfə biometrik giriş</string>
+    <string name="vault_biometric_offer_message">Seyfi parol əvəzinə barmaq izi və ya üz tanıma ilə aça bilərsiniz. Parolanızı yenidən daxil etməyinizə ehtiyac yoxdur.</string>
+    <string name="vault_biometric_offer_accept">Biometrik girişi qur</string>
+    <string name="vault_biometric_offer_decline">İndi deyil</string>
     <string name="brute_force_time_hint">Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir.</string>
     <string name="brute_force_time_min_hint">Alt hədd bu cihazın təhlükəsiz standart vaxtıdır.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>

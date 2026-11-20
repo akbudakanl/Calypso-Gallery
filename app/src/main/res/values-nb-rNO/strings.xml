@@ -424,7 +424,7 @@
     <string name="create_new_vault_option">Opprett nytt hvelv</string>
     <string name="use_existing_vault_option">Bruk eksisterende hvelv</string>
     <string name="where_to_create_vault_title">Hvor skal hvelvet opprettes?</string>
-    <string name="vault_location_default_short">Standardplassering (Intern &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Standardplassering</string>
     <string name="vault_location_custom_short">Egendefinert plassering</string>
     <string name="no_existing_vault_at_location">Ingen eksisterende kryptert hvelv (.vault) ble funnet i den valgte mappen.</string>
     <string name="unlock_existing_vault_at_location_prompt">Et eksisterende kryptert hvelv ble funnet på %s. Vil du låse det opp og bruke det? Trykk på Nei for å velge en annen mappe.</string>
@@ -547,7 +547,11 @@
     <string name="about_third_party_licenses">Lisenser fra tredjeparter</string>
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-force-motstand</string>
-    <string name="brute_force_time_title">Ønsket opplåsingstid for hvelvet</string>
+    <string name="brute_force_time_title">Målsetting for opplåsingstid for hvelvet</string>
+    <string name="vault_biometric_offer_title">Biometrisk tilgang til hvelvet</string>
+    <string name="vault_biometric_offer_message">Åpne hvelvet med fingeravtrykk eller ansikt i stedet for et passord. Du trenger ikke å skrive inn passordet på nytt.</string>
+    <string name="vault_biometric_offer_accept">Sett opp biometrisk tilgang</string>
+    <string name="vault_biometric_offer_decline">Ikke nå</string>
     <string name="brute_force_time_hint">Velg tiden som brukes på å åpne det krypterte hvelvet. Å holde denne verdien høy gir ekstra sikkerhet ved å gjøre brute force-angrep vanskeligere.</string>
     <string name="brute_force_time_min_hint">Nedre grense er denne enhetens sikre standardtid.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne enheten)</string>

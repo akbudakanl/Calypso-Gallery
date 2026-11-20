@@ -441,7 +441,7 @@
     <string name="create_new_vault_option">Create new vault</string>
     <string name="use_existing_vault_option">Use existing vault</string>
     <string name="where_to_create_vault_title">Where should the vault be created?</string>
-    <string name="vault_location_default_short">Default Location (Internal &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Default location</string>
     <string name="vault_location_custom_short">Custom Location</string>
     <string name="no_existing_vault_at_location">No existing encrypted vault (.vault) was found in the selected folder.</string>
     <string name="unlock_existing_vault_at_location_prompt">An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder.</string>
@@ -616,7 +616,11 @@
     <string name="license_material_icons_text" translatable="false">Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
 
     <string name="argon2_profile_title">Brute-Force resistance</string>
-    <string name="brute_force_time_title">Target vault unlock time</string>
+    <string name="brute_force_time_title">Targeted vault unlock time</string>
+    <string name="vault_biometric_offer_title">Biometric access to the vault</string>
+    <string name="vault_biometric_offer_message">Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again.</string>
+    <string name="vault_biometric_offer_accept">Set up biometric access</string>
+    <string name="vault_biometric_offer_decline">Not now</string>
     <string name="brute_force_time_hint">Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder.</string>
     <string name="brute_force_time_min_hint">The lower bound is this device\'s safe standard time.</string>
     <string name="brute_force_time_value_device">%1$.1f s (on this device)</string>

@@ -244,6 +244,21 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(ARGON2_CALIBRATION_CLAMPED, false)
         set(value) = prefs.edit().putBoolean(ARGON2_CALIBRATION_CLAMPED, value).apply()
 
+    /** User explicitly saved a target (vault creation or the settings dialog). */
+    var vaultTargetSaved: Boolean
+        get() = prefs.getBoolean(VAULT_TARGET_SAVED, false)
+        set(value) = prefs.edit().putBoolean(VAULT_TARGET_SAVED, value).apply()
+
+    /** Device the saved target was calibrated for; a mismatch forces a fresh measurement. */
+    var vaultTargetDevice: String
+        get() = prefs.getString(VAULT_TARGET_DEVICE, "") ?: ""
+        set(value) = prefs.edit().putString(VAULT_TARGET_DEVICE, value).apply()
+
+    /** The one-time biometric offer was shown; never ask again. */
+    var vaultBiometricOfferShown: Boolean
+        get() = prefs.getBoolean(VAULT_BIOMETRIC_OFFER_SHOWN, false)
+        set(value) = prefs.edit().putBoolean(VAULT_BIOMETRIC_OFFER_SHOWN, value).apply()
+
     /** Hedef kasa acilis suresi, milisaniye. */
     var unlockTargetMs: Int
         get() {
@@ -743,7 +758,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(visibleBottomActions) = prefs.edit().putInt(VISIBLE_BOTTOM_ACTIONS, visibleBottomActions).apply()
 
     var showBottomActionNames: Boolean
-        get() = prefs.getBoolean(SHOW_BOTTOM_ACTION_NAMES, true)
+        get() = prefs.getBoolean(SHOW_BOTTOM_ACTION_NAMES, false)
         set(showBottomActionNames) = prefs.edit().putBoolean(SHOW_BOTTOM_ACTION_NAMES, showBottomActionNames).apply()
 
     // if a user hides a folder, then enables temporary hidden folder displaying, make sure we show it properly

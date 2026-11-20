@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Kasa oluşturma — sadeleştirme planı</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--accent:#d9af76;--bad:#f87171;--good:#4ade80}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:27px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:980px;font-size:14px;line-height:1.6;margin:0 0 24px}
+.grid{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;width:330px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.phone{width:280px;height:430px;border:1px solid var(--border);border-radius:20px;background:#0a0a0c;margin:0 auto;overflow:hidden;display:flex;flex-direction:column;padding:14px}
+.dlg{background:#18181b;border:1px solid #2e2e36;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.dlg .title{font-size:15px;font-weight:700;text-align:center}
+.dlg .hint{font-size:11.5px;color:var(--sec);text-align:center;line-height:1.5}
+.opt{border:1px solid #3f3f46;border-radius:10px;padding:11px 12px;font-size:13px;display:flex;align-items:center;gap:10px}
+.opt.sel{border-color:var(--accent);background:rgba(217,175,118,.08)}
+.radio{width:14px;height:14px;border-radius:50%;border:2px solid var(--sec)}
+.opt.sel .radio{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 0 40%,transparent 45%)}
+.tabs{display:flex;border-bottom:1px solid #2e2e36}
+.tabs div{flex:1;text-align:center;font-size:12px;padding:8px 0;color:var(--sec)}
+.tabs div.on{color:var(--text);border-bottom:2px solid var(--accent)}
+.dots{display:flex;justify-content:center;gap:10px;margin:12px 0}
+.dots i{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--sec)}
+.dots i.f{border-color:var(--text);background:var(--text)}
+.field{border:1px solid #3f3f46;border-radius:10px;height:42px;display:flex;align-items:center;padding:0 12px;font-size:13px;color:var(--sec)}
+.row{border:1px solid #3f3f46;border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;font-size:12.5px}
+.row .v{color:var(--accent);font-weight:700}
+.btn{text-align:center;font-size:12.5px;font-weight:700;padding:10px;border-radius:10px;background:var(--accent);color:#18181b}
+.old{opacity:.72}
+.old .row{border-color:#3f3f46}
+.old .complex{font-size:10.5px;color:var(--bad);line-height:1.5;text-align:center}
+.kdf{width:330px}
+.bigval{font-size:44px;font-weight:700;text-align:center;letter-spacing:-.04em;color:var(--accent);border-bottom:1px dashed transparent;padding:6px 12px;border-radius:8px;cursor:text}
+.bigval.editing{border-bottom-color:var(--accent);background:rgba(217,175,118,.07)}
+.bigval small{font-size:18px;color:var(--sec);font-weight:500}
+.sliderwrap{padding:14px 4px 0}
+input[type=range]{width:100%;accent-color:var(--accent);height:22px}
+.scale{display:flex;justify-content:space-between;font-size:10.5px;color:var(--sec)}
+.note{font-size:11.5px;color:var(--sec);text-align:center;line-height:1.6}
+.actions{display:flex;gap:8px;margin-top:14px}
+.actions div{flex:1;text-align:center;padding:10px;border-radius:9px;font-size:12px;font-weight:700}
+.actions .cancel{background:#232329;color:var(--text)}
+.actions .ok{background:var(--accent);color:#18181b}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:10px}
+.tag.new{background:rgba(74,222,128,.14);color:var(--good)}
+.tag.oldtag{background:rgba(248,113,113,.14);color:var(--bad)}
+.cap{font-size:12.5px;color:var(--sec);line-height:1.7;margin:14px 0 0}
+.cap b{color:var(--text)} .cap .g{color:var(--good)} .cap .r{color:var(--bad)}
+code{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+</style></head><body>
+<h1>Şifreli kasa kurulumu — sadeleştirme planı</h1>
+<p class="lead">Akış: üst-scroll → "Yeni kasa oluştur" → konum sorusu → PIN/parola oluştur → tekrar giriş → <b>kasa oluştuktan sonra tek seferlik biyometrik teklifi</b>. Aşağıda değişen noktalar: konum seçeneğinin kısa adı, tekrar ekranındaki KDF satırı, minimalist KDF penceresi ve biyometrik teklif penceresi.</p>
+
+<div class="grid">
+  <div class="card">
+    <span class="tag new">1 · KONUM SORUSU</span>
+    <h2>Kasa nerede oluşturulsun?</h2>
+    <p class="sub">Uzun yol ifadesi kaldırılıyor.</p>
+    <div class="phone"><div class="dlg">
+      <div class="title">Kasa nerede oluşturulsun?</div>
+      <div class="opt sel"><span class="radio"></span>Varsayılan konum</div>
+      <div class="opt"><span class="radio"></span>Özel konum</div>
+      <div class="hint">Kasa, uygulamanın özel alanında oluşturulur.</div>
+      <div style="flex:1"></div>
+      <div class="actions"><div class="cancel">İptal</div><div class="ok">Devam</div></div>
+    </div></div>
+    <p class="cap"><span class="r">Önce:</span> <code>Default Location (Internal &gt; Calypso Gallery &gt; Secrets)</code><br><span class="g">Sonra:</span> <code>Default location</code> / <code>Varsayılan konum</code></p>
+  </div>
+
+  <div class="card">
+    <span class="tag new">2 · TEKRAR EKRANI</span>
+    <h2>Parola doğrulama + KDF satırı</h2>
+    <p class="sub">İlk girişten sonra görünür.</p>
+    <div class="phone"><div class="dlg">
+      <div class="tabs"><div class="on">PIN</div><div>Alfanumerik</div></div>
+      <div class="hint" style="color:var(--text);font-weight:600">PIN'i tekrar girin</div>
+      <div class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></div>
+      <div class="row"><span>Hedef kasa açılış süresi</span><span class="v">1.0 s</span></div>
+      <div class="hint">Süreye dokunarak değiştirebilirsiniz.</div>
+      <div style="flex:1"></div>
+      <div class="btn">Kasayı oluştur</div>
+    </div></div>
+    <p class="cap"><span class="r">Önce:</span> "Brute-Force direnci" başlığı + <code>2.7 s (bu cihazda) · Saklanan: 64 MiB / 3 tur</code><br><span class="g">Sonra:</span> tek satır: <b>Hedef kasa açılış süresi — 1.0 s</b>. MiB/tur bilgisi tamamen kaldırıldı.</p>
+  </div>
+
+  <div class="card kdf">
+    <span class="tag oldtag">ESKİ KDF PENCERESİ</span>
+    <h2>Şu anki hâl</h2>
+    <p class="sub">Ayrı kaydırıcı + ayrı sayı kutusu + teknik parametreler.</p>
+    <div class="dlg">
+      <div class="title">Hedef kasa açılış süresi</div>
+      <div class="hint">Kasayı açarken harcanan süre… Alt sınır bu cihazın güvenli standart süresidir.</div>
+      <div class="row"><span>2.7 s (64 MiB / 3 rounds)</span></div>
+      <input type="range" value="60" disabled>
+      <div class="field">2.7 &nbsp; <span style="font-size:10px">sayı alanı ayrı</span></div>
+      <div class="complex">64 MiB / 3 rounds · clamped · 10 s üst sınır uyarısı</div>
+    </div>
+  </div>
+
+  <div class="card kdf">
+    <span class="tag new">YENİ KDF PENCERESİ</span>
+    <h2>Minimalist tek kontrol</h2>
+    <p class="sub">Sayı ve kaydırıcı tek öğe; değer saniye cinsinden.</p>
+    <div class="dlg" id="kdfDlg">
+      <div class="title">Hedef kasa açılış süresi</div>
+      <div class="bigval" id="bigval" title="Değeri düzenlemek için dokun">1.0 <small>s</small></div>
+      <div class="sliderwrap">
+        <input type="range" id="slider" min="1" max="100" value="10">
+        <div class="scale"><span id="minLbl">0.1 s (cihaz alt sınırı)</span><span>10 s</span></div>
+      </div>
+      <div class="note">Bu değeri yüksek tutmak, deneme-yanılma saldırılarını zorlaştırarak ekstra güvenlik sağlar.</div>
+      <div class="actions" style="margin-top:auto"><div class="cancel">İptal</div><div class="ok">Tamam</div></div>
+    </div>
+    <p class="cap">Sayıya dokununca placeholder kapanır, klavye açılır ve <code>1.0</code> düzenlenebilir; kaydırıcı ile aynı değer güncellenir. Ayrı sayı kutusu yok.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag new">5 · İLK KASA SONRASI</span>
+    <h2>Tek seferlik biyometrik teklifi</h2>
+    <p class="sub">Kasa başarıyla oluştuktan hemen sonra, sadece ilk kurulumda.</p>
+    <div class="phone"><div class="dlg">
+      <div style="text-align:center;margin:6px 0"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#d9af76" stroke-width="1.6" stroke-linecap="round"><path d="M5 11a7 7 0 0 1 14 0"/><path d="M8 11a4 4 0 0 1 8 0"/><path d="M11 11a1 1 0 0 1 2 0v5"/><path d="M8 14a4 4 0 0 0 1 2.6M16 14a4 4 0 0 1-1 2.6M5 14a7 7 0 0 0 2 4.9M19 14a7 7 0 0 1-2 4.9"/></svg></div>
+      <div class="title">Kasaya biyometrik erişim</div>
+      <div class="hint">Kasayı parola yerine parmak izi veya yüz tanıma ile açabilirsiniz. Parolanızı tekrar girmenize gerek yok.</div>
+      <div style="flex:1"></div>
+      <div class="btn" id="bioAccept">Biyometrik erişimi kur</div>
+      <div class="actions" style="margin-top:0"><div class="cancel" id="bioDecline">Şimdi değil</div></div>
+    </div></div>
+    <p class="cap" id="bioState">
+      <b>Karar:</b> bekleniyor…<br>
+      <span class="g">Kur</span> → sistem BiometricPrompt ile tek doğrulama → ayar <b>açık</b>.<br>
+      <span class="r">Şimdi değil / back / dışarı dokunma / uygulamadan çıkma</span> → ayar <b>kapalı</b>, bir daha sorulmaz.
+    </p>
+  </div>
+</div>
+
+<script>
+const big=document.getElementById('bigval'), slider=document.getElementById('slider'), minLbl=document.getElementById('minLbl');
+const minTenths=1, fmt=t=>(t/10).toFixed(1);
+function render(t){ big.innerHTML = fmt(t)+' <small>s</small>'; slider.value=t; }
+slider.addEventListener('input',()=>render(+slider.value));
+big.addEventListener('click',()=>{
+  big.classList.toggle('editing');
+  if(big.classList.contains('editing')){
+    const cur=parseFloat(big.textContent);
+    big.innerHTML='<input id="inline" type="number" step="0.1" min="0.1" max="10" value="'+cur+'" style="width:86px;background:transparent;border:0;color:#d9af76;font-size:44px;font-weight:700;text-align:center;outline:none"> <small>s</small>';
+    const inp=document.getElementById('inline'); inp.focus(); inp.select();
+    inp.addEventListener('change',()=>{
+      const t=Math.round(Math.min(10,Math.max(minTenths/10,parseFloat(inp.value)||1))*10);
+      big.classList.remove('editing'); render(t);
+    });
+  }
+});
+minLbl.textContent='0.1 s (cihaz alt sınırı)';
+const state=document.getElementById('bioState');
+document.getElementById('bioAccept').onclick=()=>{state.innerHTML='<b>Karar:</b> <span class="g">Onaylandı</span> → biyometrik ayarı <b>açık</b>. Sistem parmak izi/yüz doğrulaması bir kez sorulur; master key bellekte olduğu için parola tekrar girilmez.';};
+document.getElementById('bioDecline').onclick=()=>{state.innerHTML='<b>Karar:</b> <span class="r">Reddedildi</span> → biyometrik ayarı <b>kapalı</b>, bu soru bir daha gösterilmez.';};
+</script>
+</body></html>

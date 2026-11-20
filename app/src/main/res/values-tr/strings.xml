@@ -385,7 +385,7 @@
     <string name="create_new_vault_option">Yeni kasa oluştur</string>
     <string name="use_existing_vault_option">Mevcut kasayı kullan</string>
     <string name="where_to_create_vault_title">Kasa nerede oluşturulsun?</string>
-    <string name="vault_location_default_short">Varsayılan Konum (Dahili &gt; Calypso Gallery &gt; Secrets)</string>
+    <string name="vault_location_default_short">Varsayılan konum</string>
     <string name="vault_location_custom_short">Özel Konum</string>
     <string name="no_existing_vault_at_location">Seçilen klasörde mevcut bir şifreli kasa (.vault) bulunamadı.</string>
     <string name="unlock_existing_vault_at_location_prompt">%s konumunda mevcut bir şifreli kasa bulundu. Kilidini açıp kullanmak istiyor musunuz? Farklı bir klasör seçmek için Hayır\'a dokunun.</string>
@@ -536,7 +536,11 @@
     <!-- Fork uyarısı, ilk açılışta izin isteklerinden önce bir kez gösterilir -->
 
     <string name="argon2_profile_title">Brute-Force direnci</string>
-    <string name="brute_force_time_title">Hedef kasa açılış süresi</string>
+    <string name="brute_force_time_title">Hedeflenen kasa açılış süresi</string>
+    <string name="vault_biometric_offer_title">Kasaya biyometrik erişim</string>
+    <string name="vault_biometric_offer_message">Kasayı parola yerine parmak izi veya yüz tanıma ile açabilirsiniz. Parolanızı tekrar girmenize gerek yok.</string>
+    <string name="vault_biometric_offer_accept">Biyometrik erişimi kur</string>
+    <string name="vault_biometric_offer_decline">Şimdi değil</string>
     <string name="brute_force_time_hint">Şifreli kasayı açma işlemi sırasında harcanan süreyi seçiniz. Bu değeri yüksek tutmak, deneme-yanılma saldırılarını zorlaştırarak ekstra güvenlik sağlar.</string>
     <string name="brute_force_time_min_hint">Alt sınır, bu cihazın güvenli standart süresidir.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>
