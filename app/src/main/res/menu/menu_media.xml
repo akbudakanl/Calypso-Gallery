@@ -5,9 +5,9 @@
     tools:ignore="AppCompatResource">
     <item
         android:id="@+id/toggle_filename"
-        android:icon="@drawable/ic_label_vector"
+        android:showAsAction="never"
         android:title="@string/toggle_filename"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/folder_view"
         android:icon="@drawable/ic_folders_vector"
@@ -15,9 +15,9 @@
         app:showAsAction="always" />
     <item
         android:id="@+id/sort"
-        android:icon="@drawable/ic_sort_vector"
+        android:icon="@drawable/ic_sort_view_calypso_vector"
         android:title="@string/sort_by"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
     <item
         android:id="@+id/filter"
         android:icon="@drawable/ic_filter_vector"

@@ -85,11 +85,7 @@ class CreateVirtualAlbumDialog(
 
                             activity.runOnUiThread {
                                 alertDialog.dismiss()
-                                if (!isHidden) {
-                                    activity.promptAutoBackupIfNeeded(proceedCreate)
-                                } else {
-                                    proceedCreate()
-                                }
+                                proceedCreate()
                             }
                         }
                     }

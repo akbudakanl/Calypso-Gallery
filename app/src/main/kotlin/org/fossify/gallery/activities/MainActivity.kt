@@ -692,7 +692,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mVaultBackHelper.reset()
         mIsSecretVaultView = true
             mHiddenDisplayMode = DISPLAY_SECRET_VAULT
-            toast(R.string.secret_vault)
             ensureBackgroundThread {
                 CryptoManager.getOrCreateDefaultHiddenAlbum(this)
                 runOnUiThread {
@@ -940,7 +939,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
 
         binding.mainMenu.requireToolbar().inflateMenu(menuId)
-        binding.mainMenu.toggleHideOnScroll(!config.scrollHorizontally)
+        binding.mainMenu.toggleHideOnScroll(false)
         binding.mainMenu.setupMenu()
 
         binding.mainMenu.onSearchTextChangedListener = { text ->
@@ -958,7 +957,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
                 R.id.sort -> showSortingDialog()
                 R.id.filter -> showFilterMediaDialog()
-                R.id.open_camera -> launchCamera()
                 R.id.show_all -> showAllMedia()
                 R.id.change_view_type -> changeViewType()
                 R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
@@ -1332,7 +1330,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mVaultBackHelper.reset()
         mIsSecretVaultView = true
         mHiddenDisplayMode = DISPLAY_SECRET_VAULT
-        toast(R.string.secret_vault)
         OperationRecovery.maybePromptResume(this)
         if (alreadyUnlocked) {
             updateVaultModeUi()

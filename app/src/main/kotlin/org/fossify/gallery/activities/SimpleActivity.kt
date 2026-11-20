@@ -1,5 +1,6 @@
 package org.fossify.gallery.activities
 
+import android.app.Dialog
 import android.app.assist.AssistContent
 import android.content.Intent
 import android.database.ContentObserver
@@ -10,7 +11,6 @@ import android.os.Looper
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
 import android.view.WindowManager
-import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
@@ -29,7 +29,7 @@ import org.fossify.gallery.helpers.getPermissionsToRequest
 
 open class SimpleActivity : BaseSimpleActivity() {
 
-    private var dialog: AlertDialog? = null
+    private var dialog: Dialog? = null
     private val mediaObserverHandler = Handler(Looper.getMainLooper())
     private val pendingObserverFolders = LinkedHashSet<String>()
     private var hasPendingWildcardObserverChange = false
@@ -84,6 +84,8 @@ open class SimpleActivity : BaseSimpleActivity() {
     }
 
     override fun onDestroy() {
+        dialog?.dismiss()
+        dialog = null
         mediaObserverHandler.removeCallbacks(dispatchObserverChangeRunnable)
         super.onDestroy()
     }

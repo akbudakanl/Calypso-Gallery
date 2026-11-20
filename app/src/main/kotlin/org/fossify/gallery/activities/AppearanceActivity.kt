@@ -2,6 +2,7 @@ package org.fossify.gallery.activities
 
 import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -30,6 +31,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivityAppearanceBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.AppearancePalette
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.SavedTheme
 import org.fossify.gallery.helpers.SavedThemes
@@ -159,9 +161,19 @@ class AppearanceActivity : SimpleActivity() {
             binding.appearanceSavedThemesRow,
         ).forEach { it.isVisible = isCustom }
 
-        binding.appearanceTextColorSwatch.setBackgroundColor(config.customTextColor)
-        binding.appearanceBackgroundColorSwatch.setBackgroundColor(config.customBackgroundColor)
-        binding.appearancePrimaryColorSwatch.setBackgroundColor(config.customPrimaryColor)
+        val density = resources.displayMetrics.density
+        val strokePx = (1f * density).toInt().coerceAtLeast(1)
+        fun styleSwatch(view: View, color: Int) {
+            view.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 7f * density
+                setColor(color)
+                setStroke(strokePx, palette.border)
+            }
+        }
+        styleSwatch(binding.appearanceTextColorSwatch, config.customTextColor)
+        styleSwatch(binding.appearanceBackgroundColorSwatch, config.customBackgroundColor)
+        styleSwatch(binding.appearancePrimaryColorSwatch, config.customPrimaryColor)
 
         val tint = ColorStateList.valueOf(palette.primary)
         listOf(
@@ -184,9 +196,35 @@ class AppearanceActivity : SimpleActivity() {
         listOf(
             binding.appearanceThemeSectionLabel,
             binding.appearanceCustomColorsSectionLabel,
+            binding.appearancePreviewSectionLabel,
             binding.appearanceFontSectionLabel,
             binding.appearanceAlbumIconsSectionLabel,
         ).forEach { it.setTextColor(palette.primary) }
+
+        // Live theme preview card ("Your memories, your colors" + "Sample button" + contrast warning)
+        binding.appearancePreviewCard.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 14f * density
+            setColor(palette.surface)
+            setStroke(strokePx, palette.border)
+        }
+        binding.appearancePreviewText.setTextColor(palette.text)
+        binding.appearancePreviewButton.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 10f * density
+            setColor(palette.primary)
+        }
+        binding.appearancePreviewButton.setTextColor(palette.onPrimary)
+
+        val textContrast = AppearancePalette.contrastRatio(palette.text, palette.background)
+        val buttonContrast = AppearancePalette.contrastRatio(palette.onPrimary, palette.primary)
+        val lowContrast = textContrast < 4.5 || buttonContrast < 4.5
+        binding.appearanceContrastWarning.isVisible = lowContrast
+        if (lowContrast) {
+            binding.appearanceContrastWarning.text =
+                getString(R.string.appearance_contrast_warning, textContrast, buttonContrast)
+            binding.appearanceContrastWarning.setTextColor(palette.secondary)
+        }
         isRefreshing = false
     }
 

@@ -1207,11 +1207,7 @@ class MediaAdapter(
                 }
             }
         }
-        if (add) {
-            activity.promptAutoBackupIfNeeded(applyToggle)
-        } else {
-            applyToggle()
-        }
+        applyToggle()
     }
 
     private fun removeFromVirtualAlbum() {

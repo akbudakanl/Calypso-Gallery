@@ -5,12 +5,16 @@ import android.util.TypedValue
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogCryptoConfirmationBinding
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.AppearancePalette
 
 /**
  * Asks for confirmation before encrypting or decrypting an album or file(s),
@@ -29,6 +33,7 @@ class EncryptConfirmationDialog(
     val callback: () -> Unit
 ) {
     init {
+        val palette = AppearanceManager.resolve(activity, activity.config)
         val binding = DialogCryptoConfirmationBinding.inflate(activity.layoutInflater)
         binding.confirmationMessage.apply {
             text = message
@@ -38,7 +43,7 @@ class EncryptConfirmationDialog(
             applyColorFilter(activity.getProperTextColor())
             contentDescription = activity.getString(infoTitleResId)
             setOnClickListener {
-                showInfoDialog()
+                showInfoDialog(palette)
             }
         }
 
@@ -53,10 +58,17 @@ class EncryptConfirmationDialog(
                 .setNegativeButton(org.fossify.commons.R.string.no) { _, _ -> onCancel?.invoke() }
                 .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ -> callback() }
         }
-        builder.create().show()
+
+        // Commons' AlertDialog theme still uses the pre-fork green colorPrimary for its
+        // buttons. Override them with the active palette so both answers match the app.
+        activity.setupDialogStuff(binding.root, builder) { alertDialog ->
+            listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE).forEach { which ->
+                alertDialog.getButton(which)?.setTextColor(palette.primary)
+            }
+        }
     }
 
-    private fun showInfoDialog() {
+    private fun showInfoDialog(palette: AppearancePalette) {
         val paddingPx = activity.resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
         val scrollView = ScrollView(activity)
         val messageView = TextView(activity).apply {
@@ -71,7 +83,9 @@ class EncryptConfirmationDialog(
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
             .apply {
-                activity.setupDialogStuff(scrollView, this, infoTitleResId)
+                activity.setupDialogStuff(scrollView, this, infoTitleResId) { alertDialog ->
+                    alertDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setTextColor(palette.primary)
+                }
             }
     }
 }

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.core.net.toUri
@@ -132,6 +133,7 @@ import org.fossify.gallery.helpers.SKIP_AUTHENTICATION
 import org.fossify.gallery.helpers.SLIDESHOW_START_ON_ENTER
 import org.fossify.gallery.helpers.VIDEO_PLAYER_APP
 import org.fossify.gallery.helpers.VIDEO_PLAYER_SYSTEM
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.VaultPullGestureHandler
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.VaultViewPolicy
@@ -171,6 +173,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mShowLoadingIndicator = true
     private var mWasFullscreenViewOpen = false
     private var mLastSearchedText = ""
+    private var mCurrentAlbumDisplayName = ""
     private var mLatestMediaId = 0L
     private var mLatestMediaDateId = 0L
     private var mLastMediaHandler = Handler()
@@ -352,6 +355,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         binding.mediaEmptyTextPlaceholder.setTextColor(getProperTextColor())
         binding.mediaEmptyTextPlaceholder2.setTextColor(getProperPrimaryColor())
         binding.mediaEmptyTextPlaceholder2.bringToFront()
+        applyMediaGridPadding()
+        updateAlbumHeader()
 
         val wasFullscreenViewOpen = mWasFullscreenViewOpen
         mWasFullscreenViewOpen = false
@@ -637,12 +642,13 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun setupOptionsMenu() {
         binding.mediaMenu.requireToolbar().inflateMenu(R.menu.menu_media)
-        binding.mediaMenu.toggleHideOnScroll(!config.scrollHorizontally)
+        binding.mediaMenu.toggleHideOnScroll(false)
         binding.mediaMenu.setupMenu()
 
         binding.mediaMenu.onSearchTextChangedListener = { text ->
             mLastSearchedText = text
             searchQueryChanged(text)
+            updateAlbumHeader()
             binding.mediaRefreshLayout.isEnabled = (!mShowAll || mIsVaultFilesView) && text.isEmpty() && config.enablePullToRefresh
         }
 
@@ -704,6 +710,37 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
+        applyToolbarMode()
+        updateAlbumHeader()
+    }
+
+    /**
+     * Album views use a clean, fixed header (back arrow + title + count + sort/more actions)
+     * like the store screenshot. All-files views keep the regular search bar, which is also
+     * pinned to the top instead of scrolling away.
+     */
+    private fun applyToolbarMode() {
+        val palette = AppearanceManager.resolve(this, config)
+        val toolbar = binding.mediaMenu.requireToolbar()
+        val searchField = findViewById<View>(org.fossify.commons.R.id.top_toolbar_search)
+        val searchIcon = findViewById<View>(org.fossify.commons.R.id.top_toolbar_search_icon)
+        val toolbarContainer = findViewById<View>(org.fossify.commons.R.id.toolbar_container)
+
+        if (mShowAll) {
+            searchField?.beVisible()
+            searchIcon?.beVisible()
+            toolbar.layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT
+            toolbar.title = null
+            toolbar.subtitle = null
+        } else {
+            searchField?.beGone()
+            searchIcon?.beGone()
+            toolbar.layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+            toolbar.setTitleTextColor(palette.text)
+            toolbar.setSubtitleTextColor(palette.secondary)
+            toolbarContainer?.background = null
+        }
+        toolbar.requestLayout()
     }
 
     private fun storeStateVariables() {
@@ -764,9 +801,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     val albumName = getVirtualAlbumName(mPath) ?: ""
                     runOnUiThread {
                         if (!isDestroyed && !isFinishing) {
+                            mCurrentAlbumDisplayName = albumName
                             binding.mediaMenu.updateHintText(
                                 getString(org.fossify.commons.R.string.search_in_placeholder, albumName)
                             )
+                            updateAlbumHeader()
                         }
                     }
                 }
@@ -779,6 +818,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     else -> getHumanizedFilename(mPath)
                 }
 
+                mCurrentAlbumDisplayName = if (mShowAll) "" else dirName
                 val searchHint = if (mShowAll) {
                     getString(org.fossify.commons.R.string.search_files)
                 } else {
@@ -786,6 +826,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 }
 
                 binding.mediaMenu.updateHintText(searchHint)
+                updateAlbumHeader()
             }
 
             if (!mShowAll) {
@@ -802,6 +843,37 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
             getMedia()
             setupLayoutManager()
+        }
+    }
+
+    private fun applyMediaGridPadding() {
+        val useSidePadding = config.fileRoundedCorners && config.viewTypeFiles != VIEW_TYPE_LIST
+        val sidePx = if (useSidePadding) (6f * resources.displayMetrics.density).toInt() else 0
+        binding.mediaGrid.setPadding(
+            sidePx,
+            binding.mediaGrid.paddingTop,
+            sidePx,
+            binding.mediaGrid.paddingBottom
+        )
+    }
+
+    private fun updateAlbumHeader() {
+        // The album title now lives in the fixed toolbar, so the in-grid header is no longer used.
+        binding.mediaAlbumHeader.beGone()
+        val shouldShow = !mShowAll && mCurrentAlbumDisplayName.isNotEmpty() && mLastSearchedText.isEmpty()
+        val toolbar = binding.mediaMenu.requireToolbar()
+        if (!shouldShow) {
+            toolbar.subtitle = null
+            return
+        }
+
+        toolbar.title = mCurrentAlbumDisplayName
+        val itemCount = mMedia.count { it is Medium }
+        toolbar.subtitle = when {
+            mPath.isVirtualAlbumPath() -> getString(R.string.media_header_virtual_album, itemCount)
+            CryptoManager.isEncryptedFolderPath(this, mPath) && !CryptoManager.isVaultRecycleBinPath(this, mPath) ->
+                getString(R.string.media_header_encrypted_album, itemCount)
+            else -> getString(R.string.media_header_items_count, itemCount)
         }
     }
 
@@ -1436,6 +1508,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 binding.mediaEmptyTextPlaceholder.text = getString(R.string.no_media_with_filters)
             }
             binding.mediaFastscroller.beVisibleIf(binding.mediaEmptyTextPlaceholder.isGone())
+            updateAlbumHeader()
             setupAdapter()
             applyPendingScroll()
 
@@ -1739,7 +1812,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun openVaultFilesView() {
-        toast(R.string.secret_vault)
         ensureBackgroundThread {
             CryptoManager.getOrCreateDefaultHiddenAlbum(this)
             runOnUiThread {

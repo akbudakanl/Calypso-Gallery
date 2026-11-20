@@ -44,14 +44,14 @@ data class AppearancePalette(
 
         val DARK = AppearancePalette(
             text = Color.parseColor("#FAFAFA"),
-            background = Color.parseColor("#09090B"),
+            background = Color.BLACK,
             primary = Color.parseColor("#E4E4E7"),
             secondary = Color.parseColor("#A1A1AA"),
-            appIcon = Color.parseColor("#09090B"),
+            appIcon = Color.BLACK,
             surface = Color.parseColor("#18181B"),
             border = Color.parseColor("#27272A"),
-            onPrimary = Color.parseColor("#09090B"),
-            onSecondary = Color.parseColor("#09090B"),
+            onPrimary = Color.BLACK,
+            onSecondary = Color.BLACK,
         )
 
         /** Build a coherent palette from the four user-editable Custom colors. */

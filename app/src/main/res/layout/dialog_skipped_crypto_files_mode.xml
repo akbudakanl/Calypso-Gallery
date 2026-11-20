@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -11,6 +12,35 @@
         android:paddingTop="@dimen/medium_margin"
         android:paddingEnd="@dimen/activity_margin"
         android:paddingBottom="@dimen/medium_margin">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/small_margin"
+            android:gravity="top"
+            android:orientation="horizontal">
+
+            <org.fossify.commons.views.MyTextView
+                android:id="@+id/dialog_skipped_files_mode_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-light"
+                android:paddingTop="@dimen/tiny_margin"
+                android:paddingEnd="@dimen/small_margin"
+                android:textSize="@dimen/actionbar_text_size"
+                android:textStyle="bold"
+                tools:text="@string/skipped_encrypt_files_mode_label" />
+
+            <ImageView
+                android:id="@+id/dialog_skipped_files_mode_info"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/skipped_encrypt_files_mode_label"
+                android:padding="8dp"
+                android:src="@drawable/ic_info_vector" />
+        </LinearLayout>
 
         <RadioGroup
             android:id="@+id/skipped_crypto_files_mode_group"

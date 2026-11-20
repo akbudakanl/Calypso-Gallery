@@ -164,6 +164,8 @@ const val IS_VAULT_BIOMETRIC_ENABLED = "is_vault_biometric_enabled"
 const val AUTO_BIOMETRIC_PROMPT_ON_VAULT_RETURN = "auto_biometric_prompt_on_vault_return"
 const val VAULT_BIOMETRIC_WRAPPED_BUNDLE = "vault_biometric_wrapped_bundle"
 const val VAULT_HEADER_FILE = ".vault"
+/** Longest PIN that still gets the optional per-digit dot indicator. */
+const val VAULT_PIN_DOTS_MAX_LENGTH = 16
 const val VAULT_SUBFOLDER_META_FILE = ".meta"
 const val VAULT_DEFAULT_ALBUM_NAME = "__VAULT_DEFAULT_ALBUM__"
 const val DEFAULT_SECRET_ALBUM_NAME = "Default Secret Album"
@@ -315,7 +317,7 @@ const val BOTTOM_ACTION_COPY = 4096
 const val BOTTOM_ACTION_MOVE = 8192
 const val BOTTOM_ACTION_RESIZE = 16384
 
-const val DEFAULT_BOTTOM_ACTIONS = BOTTOM_ACTION_TOGGLE_FAVORITE or BOTTOM_ACTION_EDIT or BOTTOM_ACTION_SHARE or BOTTOM_ACTION_DELETE
+const val DEFAULT_BOTTOM_ACTIONS = BOTTOM_ACTION_SHARE or BOTTOM_ACTION_EDIT or BOTTOM_ACTION_TOGGLE_VISIBILITY or BOTTOM_ACTION_DELETE
 
 // aspect ratios used at the editor for cropping
 const val ASPECT_RATIO_FREE = 0

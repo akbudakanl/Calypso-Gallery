@@ -214,7 +214,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         binding.videoToolbar.apply {
             setTitleTextColor(Color.WHITE)
             overflowIcon = resources.getColoredDrawableWithColor(
-                org.fossify.commons.R.drawable.ic_three_dots_vector,
+                R.drawable.ic_more_vertical_calypso_vector,
                 Color.WHITE
             )
             navigationIcon = resources.getColoredDrawableWithColor(

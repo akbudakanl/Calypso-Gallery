@@ -19,7 +19,6 @@ import androidx.core.os.LocaleListCompat
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
-import org.fossify.commons.extensions.toast
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSelectLanguageBinding
 import org.fossify.gallery.extensions.config
@@ -285,14 +284,6 @@ class ChangeLanguageDialog(
         }
 
         val builder = activity.getAlertDialogBuilder()
-            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
-            .setNeutralButton(R.string.open_system_language_settings) { _, _ ->
-                try {
-                    activity.launchChangeAppLanguageIntent()
-                } catch (_: Throwable) {
-                    activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
-                }
-            }
 
         activity.setupDialogStuff(binding.root, builder, R.string.language) { alertDialog ->
             dialog = alertDialog

@@ -29,10 +29,43 @@
         android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <LinearLayout
+            android:id="@+id/media_album_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="18dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/media_album_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:letterSpacing="-0.02"
+                android:maxLines="1"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Golden Hour" />
+
+            <TextView
+                android:id="@+id/media_album_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="1"
+                android:textSize="12.5sp"
+                tools:text="Virtual album · 12 items" />
+        </LinearLayout>
+
         <org.fossify.commons.views.MyTextView
             android:id="@+id/media_empty_text_placeholder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/media_album_header"
             android:alpha="0.8"
             android:gravity="center_horizontal"
             android:paddingStart="@dimen/activity_margin"
@@ -59,6 +92,7 @@
             android:id="@+id/vault_pull_indicator"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/media_album_header"
             android:gravity="center"
             android:orientation="vertical"
             android:elevation="8dp"
@@ -84,7 +118,8 @@
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/media_refresh_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/media_album_header">
 
             <com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
                 android:id="@+id/media_fastscroller"
@@ -96,6 +131,7 @@
                     android:id="@+id/media_grid"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:clipToPadding="false"
                     android:layoutAnimation="@anim/layout_animation"
                     android:scrollbars="none"
                     app:layoutManager="org.fossify.commons.views.MyGridLayoutManager"

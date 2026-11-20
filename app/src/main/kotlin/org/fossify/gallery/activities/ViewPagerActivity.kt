@@ -1447,7 +1447,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         binding.bottomActions.bottomRotate.beVisibleIf(
             getVisibleBottomActions() and BOTTOM_ACTION_ROTATE != 0 && getCurrentMedium()?.isImage() == true
         )
-        binding.bottomActions.bottomChangeOrientation.setImageResource(getChangeOrientationIcon())
+        setBottomActionIcon(binding.bottomActions.bottomChangeOrientation, getChangeOrientationIcon())
     }
 
     private fun removeCurrentFromVirtualAlbum() {
@@ -1501,11 +1501,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 }
             }
         }
-        if (newFavoriteState) {
-            promptAutoBackupIfNeeded(applyToggle)
-        } else {
-            applyToggle()
-        }
+        applyToggle()
     }
 
     private fun printFile() {

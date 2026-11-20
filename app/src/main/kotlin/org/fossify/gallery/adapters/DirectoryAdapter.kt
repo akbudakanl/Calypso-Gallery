@@ -121,6 +121,7 @@ import org.fossify.gallery.extensions.updateFavoritePaths
 import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import org.fossify.gallery.helpers.AlbumTypeIcon
 import org.fossify.gallery.helpers.AlbumTypeIconPolicy
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.VaultSessionManager
@@ -1617,19 +1618,9 @@ class DirectoryAdapter(
             if (scrollHorizontally && !isListViewType && folderStyle == FOLDER_STYLE_ROUNDED_CORNERS) {
                 (dirThumbnail.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.ABOVE, dirName.id)
 
-                val photoCntParams = (photoCnt.layoutParams as RelativeLayout.LayoutParams)
                 val nameParams = (dirName.layoutParams as RelativeLayout.LayoutParams)
                 nameParams.removeRule(RelativeLayout.BELOW)
-
-                if (config.showFolderMediaCount == FOLDER_MEDIA_CNT_LINE) {
-                    nameParams.addRule(RelativeLayout.ABOVE, photoCnt.id)
-                    nameParams.removeRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-
-                    photoCntParams.removeRule(RelativeLayout.BELOW)
-                    photoCntParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-                } else {
-                    nameParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-                }
+                nameParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
             }
 
             if (lockedFolderPaths.contains(directory.path)) {
@@ -1730,9 +1721,10 @@ class DirectoryAdapter(
             dirName.text = nameCount
 
             if (isListViewType || folderStyle == FOLDER_STYLE_ROUNDED_CORNERS) {
-                photoCnt.setTextColor(textColor)
+                val palette = AppearanceManager.resolve(activity, config)
+                photoCnt.setTextColor(palette.secondary)
                 dirName.setTextColor(textColor)
-                dirLocation.applyColorFilter(textColor)
+                dirLocation.applyColorFilter(palette.secondary)
             }
 
             if (isListViewType) {

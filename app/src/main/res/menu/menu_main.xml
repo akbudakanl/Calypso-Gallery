@@ -4,25 +4,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AppCompatResource">
     <item
-        android:id="@+id/open_camera"
-        android:icon="@drawable/ic_camera_vector"
-        android:title="@string/open_camera"
+        android:id="@+id/sort"
+        android:icon="@drawable/ic_sort_view_calypso_vector"
+        android:title="@string/sort_by"
         app:showAsAction="always" />
     <item
         android:id="@+id/show_all"
         android:icon="@drawable/ic_files_vector"
+        android:showAsAction="never"
         android:title="@string/show_all"
-        app:showAsAction="always" />
-    <item
-        android:id="@+id/sort"
-        android:icon="@drawable/ic_sort_vector"
-        android:title="@string/sort_by"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/filter"
         android:icon="@drawable/ic_filter_vector"
+        android:showAsAction="never"
         android:title="@string/filter_media"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/change_view_type"
         android:showAsAction="never"
@@ -71,7 +68,8 @@
     <item
         android:id="@+id/refresh_menu"
         android:showAsAction="never"
-        android:title="@string/refresh" />
+        android:title="@string/refresh"
+        app:showAsAction="never" />
     <item
         android:id="@+id/open_recycle_bin"
         android:showAsAction="never"
@@ -80,16 +78,19 @@
     <item
         android:id="@+id/column_count"
         android:icon="@drawable/ic_column_count_vector"
+        android:showAsAction="never"
         android:title="@string/column_count"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/settings"
         android:icon="@drawable/ic_settings_cog_vector"
+        android:showAsAction="never"
         android:title="@string/settings"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/about"
         android:icon="@drawable/ic_info_vector"
+        android:showAsAction="never"
         android:title="@string/about"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 </menu>

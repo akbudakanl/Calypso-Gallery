@@ -10,20 +10,36 @@
         android:visible="false"
         app:showAsAction="always" />
     <item
-        android:id="@+id/menu_share"
-        android:icon="@drawable/ic_share_vector"
-        android:title="@string/share"
+        android:id="@+id/menu_add_to_favorites"
+        android:icon="@drawable/ic_star_outline_calypso_vector"
+        android:title="@string/add_to_favorites"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/menu_remove_from_favorites"
+        android:icon="@drawable/ic_star_calypso_vector"
+        android:title="@string/remove_from_favorites"
+        app:showAsAction="always" />
+    <!-- First item in overflow ("More options") for all file types -->
     <item
         android:id="@+id/menu_properties"
         android:icon="@drawable/ic_info_vector"
         android:title="@string/properties"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_share"
+        android:icon="@drawable/ic_share_calypso_vector"
+        android:title="@string/share"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_edit"
+        android:icon="@drawable/ic_edit_calypso_vector"
+        android:title="@string/edit"
+        app:showAsAction="never" />
     <item
         android:id="@+id/menu_delete"
-        android:icon="@drawable/ic_delete_vector"
+        android:icon="@drawable/ic_delete_calypso_vector"
         android:title="@string/delete"
-        app:showAsAction="always" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/menu_shuffle"
         android:title="@string/shuffle"
@@ -90,21 +106,6 @@
         android:icon="@drawable/ic_set_as_vector"
         android:title="@string/set_as"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_edit"
-        android:icon="@drawable/ic_edit_vector"
-        android:title="@string/edit"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/menu_add_to_favorites"
-        android:icon="@drawable/ic_star_outline_vector"
-        android:title="@string/add_to_favorites"
-        app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/menu_remove_from_favorites"
-        android:icon="@drawable/ic_star_vector"
-        android:title="@string/remove_from_favorites"
-        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_remove_from_virtual_album"
         android:showAsAction="never"
