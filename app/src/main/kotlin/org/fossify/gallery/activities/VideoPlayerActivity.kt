@@ -118,6 +118,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     private var mHasAudio = true
     private var mScreenWidth = 0
     private var mCurrTime = 0L
+    private var mSkippedToEnd = false
     private var mDuration = 0L
     private var mDragThreshold = 0f
     private var mTouchDownX = 0f
@@ -576,6 +577,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun setPosition(milliseconds: Long) {
+        mSkippedToEnd = false
         mCurrTime = milliseconds
         mExoPlayer?.seekTo(milliseconds)
         binding.bottomVideoTimeHolder.videoSeekbar.progress = milliseconds.toInt()
@@ -603,6 +605,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun didVideoEnd(): Boolean {
+        if (mSkippedToEnd) return true
         val currentPos = mExoPlayer?.currentPosition ?: 0
         val duration = mExoPlayer?.duration ?: 0
         return currentPos != 0L && currentPos >= duration
@@ -774,8 +777,17 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         val skipMs = config.videoDoubleTapFastForward * 1000L
         val isLooping = config.loopVideos || mExoPlayer?.repeatMode == Player.REPEAT_MODE_ONE
 
-        if (forward && isLooping && duration > 0L && curr + skipMs >= duration) {
-            setPosition(0L)
+        if (forward && duration > 0L && curr + skipMs >= duration) {
+            if (isLooping) {
+                setPosition(0L)
+            } else {
+                // ExoPlayer clamps a seek-to-end to the last frame and keeps playing, so drive the
+                // completed state ourselves: pause, show the play icon, and treat it as ended so
+                // pressing play restarts from 0.
+                mExoPlayer?.playWhenReady = false
+                mSkippedToEnd = true
+                videoCompleted()
+            }
             return
         }
 
