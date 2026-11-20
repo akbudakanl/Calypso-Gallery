@@ -2,24 +2,23 @@ package org.fossify.gallery.helpers
 
 import android.content.Context
 import android.os.SystemClock
-import android.widget.Toast
 import org.fossify.gallery.R
 
 /**
- * Coordinates double-back vault exit so the prompt toast is cancelled immediately on the
+ * Coordinates double-back vault exit so the prompt bar is dismissed immediately on the
  * second back press and accidental extra back presses during/right after the transition
  * do not exit the app.
  */
 class VaultExitBackHelper(
     private val clock: () -> Long = { SystemClock.elapsedRealtime() },
-    private val showToast: (Context) -> Toast? = { context ->
+    private val showToast: (Context) -> VaultExitToast.Handle? = { context ->
         VaultExitToast.show(context, context.getString(R.string.press_back_again_to_exit_vault))
     }
 ) {
     private var lastBackPressedAt = 0L
     private var exitedAt = 0L
     private var isExiting = false
-    private var promptToast: Toast? = null
+    private var promptToast: VaultExitToast.Handle? = null
 
     fun handleBackPress(context: Context, onExit: () -> Unit) {
         if (isExiting) return
