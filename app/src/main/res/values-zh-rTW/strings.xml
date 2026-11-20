@@ -542,6 +542,8 @@
     <string name="password_strength_good">強</string>
     <string name="password_strength_excellent">非常強</string>
     <string name="password_strength_hint">較長且混合各种字元的密碼較難破解。</string>
+    <string name="vault_unlock_time_unit">秒</string>
+    <string name="search_in_storage">在儲存空間中搜尋</string>
     <string name="brute_force_time_hint">選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。</string>
     <string name="brute_force_time_min_hint">下限為此裝置的安全標準時間。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（此裝置）</string>

@@ -545,6 +545,8 @@
     <string name="password_strength_good">強い</string>
     <string name="password_strength_excellent">非常に強い</string>
     <string name="password_strength_hint">長く様々な文字を含むパスワードほど解読が困難です。</string>
+    <string name="vault_unlock_time_unit">秒</string>
+    <string name="search_in_storage">ストレージを検索</string>
     <string name="brute_force_time_hint">暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。</string>
     <string name="brute_force_time_min_hint">下限はこの端末の安全な標準時間です。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（この端末）</string>

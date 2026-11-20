@@ -1,12 +1,12 @@
 # Norwegian Bokmål (values-nb-rNO) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
 
 Added to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Vis navn på handlingene i handlingslinjen nederst | Fullscreen media setting, default OFF |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Vis navn på handlingene i handlingslinjen nederst | Fullscreen media setting, default ON |
 | 2 | `show_albums` | Show albums | Vis album | Files-view overflow item that returns to the album view |
 | 3 | `vault_biometric_offer_title` | Biometric access to the vault | Biometrisk tilgang til hvelvet | One-time offer after first vault creation |
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Åpne hvelvet med fingeravtrykk eller ansikt i stedet for et passord. Du trenger ikke å skrive inn passordet på nytt. | Same |
@@ -18,6 +18,8 @@ Added to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
 | 10 | `password_strength_good` | Strong | Sterk | Vault password strength |
 | 11 | `password_strength_excellent` | Very strong | Svært sterk | Vault password strength |
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Et langt passord med varierte tegn er vanskeligere å knekke. | Shown before typing |
+| 13 | `vault_unlock_time_unit` | s | s | Localized seconds unit |
+| 14 | `search_in_storage` | Search in storage | Søk i lagring | Second option in unencrypted copy destination picker |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

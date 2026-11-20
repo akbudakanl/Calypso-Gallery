@@ -1,12 +1,12 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
 
 Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 下部アクションバーにアクション名を表示 | Fullscreen media setting, default OFF |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 下部アクションバーにアクション名を表示 | Fullscreen media setting, default ON |
 | 2 | `show_albums` | Show albums | アルバムを表示 | Files-view overflow item that returns to the album view |
 | 3 | `vault_biometric_offer_title` | Biometric access to the vault | 保管庫の生体認証アクセス | One-time offer after first vault creation |
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | パスワードの代わりに指紋や顔で保管庫を開けます。パスワードの再入力は不要です。 | Same |
@@ -18,6 +18,8 @@ Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 | 10 | `password_strength_good` | Strong | 強い | Vault password strength |
 | 11 | `password_strength_excellent` | Very strong | 非常に強い | Vault password strength |
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 長く様々な文字を含むパスワードほど解読が困難です。 | Shown before typing |
+| 13 | `vault_unlock_time_unit` | s | 秒 | Localized seconds unit |
+| 14 | `search_in_storage` | Search in storage | ストレージを検索 | Second option in unencrypted copy destination picker |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

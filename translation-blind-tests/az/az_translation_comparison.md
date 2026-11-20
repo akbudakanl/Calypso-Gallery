@@ -1,12 +1,12 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
 
 Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Alt əməliyyat çubuğunda ikonların adını göstər | Fullscreen media setting, default OFF |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Alt əməliyyat çubuğunda ikonların adını göstər | Fullscreen media setting, default ON |
 | 2 | `show_albums` | Show albums | Albomları göstər | Files-view overflow item that returns to the album view |
 | 3 | `vault_biometric_offer_title` | Biometric access to the vault | Seyfə biometrik giriş | One-time offer after first vault creation |
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Seyfi parol əvəzinə barmaq izi və ya üz tanıma ilə aça bilərsiniz. Parolanızı yenidən daxil etməyinizə ehtiyac yoxdur. | Same |
@@ -18,6 +18,8 @@ Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 | 10 | `password_strength_good` | Strong | Güclü | Vault password strength |
 | 11 | `password_strength_excellent` | Very strong | Çox güclü | Vault password strength |
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Uzun və müxtəlif simvollardan ibarət parolanı sındırmaq daha çətindir. | Shown before typing |
+| 13 | `vault_unlock_time_unit` | s | s | Localized seconds unit |
+| 14 | `search_in_storage` | Search in storage | Yaddaşda axtar | Second option in unencrypted copy destination picker |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

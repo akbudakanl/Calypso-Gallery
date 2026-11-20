@@ -549,6 +549,8 @@
     <string name="password_strength_good">Fuerte</string>
     <string name="password_strength_excellent">Muy fuerte</string>
     <string name="password_strength_hint">Una contraseña larga con caracteres variados es más difícil de descifrar.</string>
+    <string name="vault_unlock_time_unit">s</string>
+    <string name="search_in_storage">Buscar en el almacenamiento</string>
     <string name="brute_force_time_hint">Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta.</string>
     <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
     <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>

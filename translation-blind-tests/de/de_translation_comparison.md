@@ -1,12 +1,12 @@
 # German (values-de) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
+## New fork strings - bottom actions, view switch, biometrics and vault UI (14 keys)
 
 Added to `values-de/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Namen der Aktionen in der unteren Aktionsleiste anzeigen | Fullscreen media setting, default OFF |
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Namen der Aktionen in der unteren Aktionsleiste anzeigen | Fullscreen media setting, default ON |
 | 2 | `show_albums` | Show albums | Alben anzeigen | Files-view overflow item that returns to the album view |
 | 3 | `vault_biometric_offer_title` | Biometric access to the vault | Biometrischer Zugriff auf den Tresor | One-time offer after first vault creation |
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Öffne den Tresor mit Fingerabdruck oder Gesicht statt mit einem Passwort. Du musst dein Passwort nicht erneut eingeben. | Same |
@@ -18,6 +18,8 @@ Added to `values-de/strings.xml`. English source: `values/strings.xml`.
 | 10 | `password_strength_good` | Strong | Stark | Vault password strength |
 | 11 | `password_strength_excellent` | Very strong | Sehr stark | Vault password strength |
 | 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Ein langes Passwort mit gemischten Zeichen ist schwerer zu knacken. | Shown before typing |
+| 13 | `vault_unlock_time_unit` | s | s | Localized seconds unit (ja/zh use their own character) |
+| 14 | `search_in_storage` | Search in storage | Im Speicher suchen | Second option in unencrypted copy destination picker |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

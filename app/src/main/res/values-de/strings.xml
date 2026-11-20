@@ -544,6 +544,8 @@
     <string name="password_strength_good">Stark</string>
     <string name="password_strength_excellent">Sehr stark</string>
     <string name="password_strength_hint">Ein langes Passwort mit gemischten Zeichen ist schwerer zu knacken.</string>
+    <string name="vault_unlock_time_unit">s</string>
+    <string name="search_in_storage">Im Speicher suchen</string>
     <string name="brute_force_time_hint">Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden.</string>
     <string name="brute_force_time_min_hint">Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts.</string>
     <string name="brute_force_time_value_device">%1$.1f s (auf diesem Gerät)</string>

@@ -547,6 +547,8 @@
     <string name="password_strength_good">Güçlü</string>
     <string name="password_strength_excellent">Çok güçlü</string>
     <string name="password_strength_hint">Uzun ve farklı karakter türleri içeren bir parolanın kırılması daha zordur.</string>
+    <string name="vault_unlock_time_unit">s</string>
+    <string name="search_in_storage">Depolama alanında ara</string>
     <string name="brute_force_time_hint">Şifreli kasayı açma işlemi sırasında harcanan süreyi seçiniz. Bu değeri yüksek tutmak, deneme-yanılma saldırılarını zorlaştırarak ekstra güvenlik sağlar.</string>
     <string name="brute_force_time_min_hint">Alt sınır, bu cihazın güvenli standart süresidir.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>

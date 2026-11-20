@@ -758,7 +758,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(visibleBottomActions) = prefs.edit().putInt(VISIBLE_BOTTOM_ACTIONS, visibleBottomActions).apply()
 
     var showBottomActionNames: Boolean
-        get() = prefs.getBoolean(SHOW_BOTTOM_ACTION_NAMES, false)
+        get() = prefs.getBoolean(SHOW_BOTTOM_ACTION_NAMES, true)
         set(showBottomActionNames) = prefs.edit().putBoolean(SHOW_BOTTOM_ACTION_NAMES, showBottomActionNames).apply()
 
     // if a user hides a folder, then enables temporary hidden folder displaying, make sure we show it properly

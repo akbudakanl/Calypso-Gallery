@@ -558,6 +558,8 @@
     <string name="password_strength_good">Sterk</string>
     <string name="password_strength_excellent">Svært sterk</string>
     <string name="password_strength_hint">Et langt passord med varierte tegn er vanskeligere å knekke.</string>
+    <string name="vault_unlock_time_unit">s</string>
+    <string name="search_in_storage">Søk i lagring</string>
     <string name="brute_force_time_hint">Velg tiden som brukes på å åpne det krypterte hvelvet. Å holde denne verdien høy gir ekstra sikkerhet ved å gjøre brute force-angrep vanskeligere.</string>
     <string name="brute_force_time_min_hint">Nedre grense er denne enhetens sikre standardtid.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne enheten)</string>

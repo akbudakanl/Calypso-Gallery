@@ -61,7 +61,8 @@ object BruteForceDialog {
         if (CryptoManager.readVaultKdfParams(activity) == null) return ""
         ensureFreshBaseline(activity)
         if (!config.vaultTargetSaved || config.vaultTargetDevice != deviceId()) return ""
-        return String.format(Locale.US, "%.1f s", config.unlockTargetMs / MS_PER_SECOND)
+        val unit = activity.getString(R.string.vault_unlock_time_unit)
+        return String.format(Locale.US, "%.1f %s", config.unlockTargetMs / MS_PER_SECOND, unit)
     }
 
     fun show(activity: Activity, onChanged: () -> Unit) {
@@ -118,12 +119,14 @@ object BruteForceDialog {
             }
         }
         // The value and the slider are one control: the number is editable in place, with no box.
+        val unit = activity.getString(R.string.vault_unlock_time_unit)
+        fun formatted(tenths: Int) = String.format(Locale.US, "%.1f %s", tenths / TENTHS_PER_SECOND, unit)
         val valueInput = MyEditText(activity).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
             textSize = VALUE_TEXT_SP
             gravity = Gravity.CENTER
             background = null
-            setText(String.format(Locale.US, "%.1f", initialTenths / TENTHS_PER_SECOND))
+            setText(formatted(initialTenths))
             applyThemedCursor(activity.config.let { AppearanceManager.resolve(activity, it) }.primary)
         }
         val seek = MySeekBar(activity).apply {
@@ -135,7 +138,7 @@ object BruteForceDialog {
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
                 if (!fromUser) return
-                valueInput.setText(String.format(Locale.US, "%.1f", (minTenths + p) / TENTHS_PER_SECOND))
+                valueInput.setText(formatted(minTenths + p))
             }
 
             override fun onStartTrackingTouch(s: SeekBar?) {}
@@ -150,8 +153,8 @@ object BruteForceDialog {
         activity.getAlertDialogBuilder()
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .setPositiveButton(org.fossify.commons.R.string.ok) { dialog, _ ->
-                val parsed = valueInput.text.toString().replace(',', '.').toFloatOrNull()
-                    ?: (initialTenths / TENTHS_PER_SECOND)
+                val parsed = valueInput.text.toString().replace(',', '.').replace(unit, "").trim()
+                    .toFloatOrNull() ?: (initialTenths / TENTHS_PER_SECOND)
                 val clampedSec = parsed.coerceIn(minSec, MAX_SECONDS)
                 val targetMs = Math.round(clampedSec * MS_PER_SECOND)
                 val maxHeapKb = (Runtime.getRuntime().maxMemory() / 1024L).coerceAtLeast(1L)

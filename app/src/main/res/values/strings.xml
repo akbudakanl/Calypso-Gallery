@@ -627,6 +627,8 @@
     <string name="password_strength_good">Strong</string>
     <string name="password_strength_excellent">Very strong</string>
     <string name="password_strength_hint">A longer password with mixed characters is harder to crack.</string>
+    <string name="vault_unlock_time_unit">s</string>
+    <string name="search_in_storage">Search in storage</string>
     <string name="brute_force_time_hint">Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder.</string>
     <string name="brute_force_time_min_hint">The lower bound is this device\'s safe standard time.</string>
     <string name="brute_force_time_value_device">%1$.1f s (on this device)</string>

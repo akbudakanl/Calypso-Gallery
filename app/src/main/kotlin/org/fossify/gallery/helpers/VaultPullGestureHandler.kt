@@ -224,7 +224,8 @@ class VaultPullGestureHandler(
             }
         }
         armRunnable = runnable
-        iconView.postDelayed(runnable, DROP_DURATION_MS + 40L)
+        // Arm exactly when the drop and glow finish - no extra hold window after the settle.
+        iconView.postDelayed(runnable, maxOf(DROP_DURATION_MS, GLOW_DURATION_MS))
     }
 
     private fun resetThresholdState() {

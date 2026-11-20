@@ -411,7 +411,7 @@ class PickDirectoryDialog(
                     activity.runOnUiThread {
                         val items = arrayListOf(
                             RadioItem(1, activity.getString(R.string.create_virtual_album)),
-                            RadioItem(2, activity.getString(R.string.other_folder))
+                            RadioItem(2, activity.getString(R.string.search_in_storage))
                         )
                         RadioGroupDialog(activity, items) { selected ->
                             if (selected == 1) {
