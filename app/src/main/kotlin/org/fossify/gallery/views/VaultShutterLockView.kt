@@ -74,8 +74,8 @@ class VaultShutterLockView @JvmOverloads constructor(
         }
         canvas.drawPath(shackle, outlinePaint)
         val jointPaint = Paint(outlinePaint).apply { style = Paint.Style.FILL }
-        canvas.drawCircle(-9f * s, 0f, 2.4f * s, jointPaint)
-        canvas.drawCircle(9f * s, 0f, 2.4f * s, jointPaint)
+        canvas.drawCircle(-9f * s, 0f, 1.8f * s, jointPaint)
+        canvas.drawCircle(9f * s, 0f, 1.8f * s, jointPaint)
         canvas.restore()
 
         // Body + keyhole stay fixed, so the motion reads as a real latch.

@@ -101,7 +101,7 @@
             android:paddingBottom="@dimen/medium_margin"
             android:visibility="gone">
 
-            <org.fossify.gallery.views.VaultPullOrbitalView
+            <org.fossify.gallery.views.VaultShutterLockView
                 android:id="@+id/vault_pull_icon"
                 android:layout_width="56dp"
                 android:layout_height="56dp" />
