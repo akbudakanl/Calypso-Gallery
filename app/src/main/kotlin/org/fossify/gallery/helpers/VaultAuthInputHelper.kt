@@ -152,8 +152,8 @@ class VaultAuthInputHelper(
             )
         }
 
-        // Confirm buttons: high-contrast primary pill/circle with a crisp vector checkmark.
-        listOf(binding.pinOk to cornerRadiusPx, binding.vaultPasswordOkBtn to 26f * density).forEach { (btn, radius) ->
+        // Confirm buttons: high-contrast primary rounded squares with a centred text checkmark.
+        listOf(binding.pinOk to cornerRadiusPx, binding.vaultPasswordOkBtn to cornerRadiusPx).forEach { (btn, radius) ->
             btn.setTextColor(primaryButtonTextColors)
             val content = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
@@ -171,14 +171,6 @@ class VaultAuthInputHelper(
                 }
                 btn.background = RippleDrawable(primaryRipple, content, mask)
             }
-            val checkMark = ContextCompat.getDrawable(activity, org.fossify.commons.R.drawable.ic_check_vector)
-                ?.mutate()?.apply {
-                    val size = (22f * density).toInt()
-                    setBounds(0, 0, size, size)
-                    setTint(palette.onPrimary)
-                }
-            btn.text = null
-            btn.setCompoundDrawablesRelative(checkMark, null, null, null)
         }
 
         // Legacy bullet dots inherit the fullscreen dialog's white text color; tie it to the theme.
