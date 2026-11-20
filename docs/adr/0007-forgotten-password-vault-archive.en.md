@@ -245,6 +245,22 @@ There is **no in-app archive deletion** (axiom). The user is told:
 - A "Copy path" button may be offered; the app **does not perform the deletion**.
 - `Calypso Gallery` lives at the root of external storage, not under `Android/data`; it survives app uninstall. The user should therefore be told explicitly that cleanup is their responsibility.
 
+### 8.1. Where the archived vault's location is shown
+
+To delete an archived vault with a file manager, the user must see **that vault's folder** (`Archive/<random-id>`), not just the `Archive/` root. The path is shown in four places:
+
+1. **Archival success dialog:** short confirmation + full path (selectable `TextView`) + **Copy path** + Done.
+2. **Vault location → Select from archived vaults** list: each row shows a friendly name (*"1st archived vault"*), archive date (`info.txt` mtime) and a shortened path (`humanizePath`) on a second line. Tapping the path shows the full path or copies it.
+3. **FAQ warning paragraph:** *(its location)* is replaced with the dynamic path from §8.
+4. `readme.txt` / `info.txt` contain **no path** (metadata leak); they only contain in-app guidance.
+
+There is **no in-app deletion**; at most:
+
+- **Copy path** (`ClipboardManager`) — the reliable primary mechanism,
+- optional **Show folder** button — SAF `ACTION_OPEN_DOCUMENT_TREE` + `EXTRA_INITIAL_URI` (or `ACTION_VIEW` with a FileProvider URI); if no app handles it, fall back silently to "Copy path". This button **does not delete**, it only reveals the location.
+
+The path always comes from the archive entry / real folder, never from a hardcoded default. After a reinstall with lost preferences, `Archive/*` is scanned and the path is reconstructed (§4.4).
+
 ---
 
 ## 9. Archiving vs. export (other devices)

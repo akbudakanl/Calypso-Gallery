@@ -247,6 +247,22 @@ Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
 - "Yolu kopyala" butonu olabilir; uygulama silme fiilini **gerçekleştirmez**.
 - `Calypso Gallery` harici depolamanın kökündedir ve `Android/data` altında değildir; uygulama kaldırılsa da kalır. Bu yüzden kullanıcıya temizlik sorumluluğu açıkça anlatılır.
 
+### 8.1. Arşiv kasasının konumu nerede görünür
+
+Kullanıcı arşivlediği kasayı dosya yöneticisiyle silebilmek için **o kasanın klasörünü** (`Archive/<rastgele-id>`, sadece `Archive/` kökünü değil) görebilmelidir. Yol şu yerlerde gösterilir:
+
+1. **Arşivleme başarı dialogu:** kısa onay + tam yol (seçilebilir `TextView`) + **Yolu kopyala** + Tamam.
+2. **Kasa konumu → Arşivlenmiş kasalardan seç** listesi: her satırda dostane ad (*"1. arşivlenen kasa"*), arşiv tarihi (`info.txt` mtime) ve alt satırda `humanizePath` ile kısaltılmış yol. Yola dokununca tam yol gösterilir veya panoya kopyalanır.
+3. **SSS uyarı paragrafı:** *(ait olduğu konum)* ifadesi §8'deki dinamik yolla değiştirilir.
+4. `readme.txt` / `info.txt` içine **yol yazılmaz** (meta veri ihlali); oralarda yalnızca uygulama içi yönlendirme vardır.
+
+Uygulama içinde silme **yoktur**; en fazla:
+
+- **Yolu kopyala** (`ClipboardManager`) — güvenilir ana mekanizma,
+- isteğe bağlı **Klasörü göster** butonu — SAF `ACTION_OPEN_DOCUMENT_TREE` + `EXTRA_INITIAL_URI` (veya FileProvider URI ile `ACTION_VIEW`); hiçbir uygulama işlemezse sessizce "Yolu kopyala"ya düşülür. Bu buton **silme yapmaz**, yalnızca konumu açar/gösterir.
+
+Yol her zaman arşiv kaydından / gerçek klasörden alınır; sabit varsayılan yol yazılmaz. Uygulama yeniden kurulup özel tercihler silinse bile `Archive/*` taranarak yol yeniden üretilir (§4.4).
+
 ---
 
 ## 9. Arşivleme vs. dışa aktarma (başka cihaz)
