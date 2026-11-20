@@ -669,4 +669,13 @@
     <string name="copy_path">複製路徑</string>
     <string name="faq_forgot_password_title">我忘記加密保險箱的密碼了，該怎麼辦？</string>
     <string name="faq_forgot_password_text">1. 使用生物辨識解鎖。\n2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。\n3. 設定 → 重設加密保險箱以設定新密碼。\n\n警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。</string>
+
+    <string name="unarchive_vault">從封存區還原</string>
+    <string name="unarchive_vault_summary">將保險箱移回封存前的位置</string>
+    <string name="unarchive_vault_confirm">保險箱將移回原位置，不需要密碼。是否繼續？</string>
+    <string name="unarchive_vault_success">保險箱已移回原位置。</string>
+    <string name="unarchive_vault_blocked">此保險箱的原位置有另一個保險箱。請先封存那個保險箱，再還原此保險箱。</string>
+    <string name="unarchive_vault_merge">將資料合併到單一保險箱</string>
+    <string name="unarchive_vault_merge_steps">用密碼解鎖封存的保險箱，匯出解密後的檔案，再匯入另一個保險箱。</string>
+    <string name="archived_vault_activated">保險箱已從封存區開啟。請使用 設定 → 從封存區還原 移回原位置。</string>
 </resources>

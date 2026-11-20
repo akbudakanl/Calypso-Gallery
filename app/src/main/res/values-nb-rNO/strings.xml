@@ -689,4 +689,13 @@
     <string name="copy_path">Kopier sti</string>
     <string name="faq_forgot_password_title">Jeg har glemt passordet til det krypterte hvelvet, hva kan jeg gjøre?</string>
     <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) de krypterte dataene — kopiering er ikke flytting.\n3. Innstillinger → Nullstill kryptert hvelv for nytt passord.\n\nAdvarsel: hvis biometri heller ikke virker, er hvelvet utilgjengelig. Du kan arkivere, kopiere eller slette mappen på %1$s med en filbehandler.</string>
+
+    <string name="unarchive_vault">Ta ut av arkivet</string>
+    <string name="unarchive_vault_summary">Flytter hvelvet tilbake til plasseringen før arkivering</string>
+    <string name="unarchive_vault_confirm">Hvelvet flyttes tilbake til originalplasseringen. Ingen passord kreves. Fortsette?</string>
+    <string name="unarchive_vault_success">Hvelvet er flyttet tilbake.</string>
+    <string name="unarchive_vault_blocked">På hvelvets tidligere plassering ligger et annet hvelv. Arkiver det først, og ta deretter dette ut av arkivet.</string>
+    <string name="unarchive_vault_merge">Slå sammen data i ett hvelv</string>
+    <string name="unarchive_vault_merge_steps">Lås opp det arkiverte hvelvet med passord, eksporter filene dekryptert og importer dem i det andre hvelvet.</string>
+    <string name="archived_vault_activated">Hvelvet er åpnet fra arkivet. Bruk Innstillinger → Ta ut av arkivet.</string>
 </resources>

@@ -672,4 +672,13 @@
     <string name="copy_path">Pfad kopieren</string>
     <string name="faq_forgot_password_title">Ich habe das Tresor-Passwort vergessen, was kann ich tun?</string>
     <string name="faq_forgot_password_text">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren (exportieren) — kopieren ist nicht verschieben.\n3. Einstellungen → Tresor zurücksetzen für ein neues Passwort.\n\nWarnung: Wenn auch Biometrie nicht funktioniert, ist der Tresor nicht erreichbar. Sie können ihn archivieren, kopieren oder den Ordner unter %1$s mit einem Dateimanager löschen.</string>
+
+    <string name="unarchive_vault">Aus Archiv wiederherstellen</string>
+    <string name="unarchive_vault_summary">Verschiebt den Tresor zurück an den Ort vor dem Archivieren</string>
+    <string name="unarchive_vault_confirm">Der Tresor wird an seinen ursprünglichen Ort zurückverschoben. Kein Passwort nötig. Fortfahren?</string>
+    <string name="unarchive_vault_success">Tresor wurde zurückverschoben.</string>
+    <string name="unarchive_vault_blocked">Am früheren Ort dieses Tresors liegt ein anderer Tresor. Archivieren Sie zuerst diesen, dann stellen Sie diesen Tresor wieder her.</string>
+    <string name="unarchive_vault_merge">Daten in einem Tresor zusammenführen</string>
+    <string name="unarchive_vault_merge_steps">Archivierten Tresor mit Passwort öffnen, Dateien entschlüsselt exportieren und in den anderen Tresor importieren.</string>
+    <string name="archived_vault_activated">Tresor aus dem Archiv geöffnet. Nutzen Sie Einstellungen → Aus Archiv wiederherstellen.</string>
 </resources>

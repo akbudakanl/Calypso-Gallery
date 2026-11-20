@@ -363,6 +363,8 @@ fun BaseSimpleActivity.removeNoMedia(path: String, callback: (() -> Unit)? = nul
 
 private const val VAULT_ACTION_CREATE_NEW = 1
 private const val VAULT_ACTION_USE_EXISTING = 2
+private const val ARCHIVED_ITEM_ID_BASE = 1000
+private const val INVALID_ARCHIVE_ITEM_ID_BASE = 2000
 private const val VAULT_LOCATION_OPTION_STANDARD = 1
 private const val VAULT_LOCATION_OPTION_CUSTOM = 2
 
@@ -593,10 +595,10 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
         } else {
             getString(R.string.archived_vault_unknown_date)
         }
-        items.add(RadioItem(1000 + index, label))
+        items.add(RadioItem(ARCHIVED_ITEM_ID_BASE + index, label))
     }
     invalid.forEachIndexed { index, entry ->
-        items.add(RadioItem(2000 + index, getString(R.string.archived_vault_invalid)))
+        items.add(RadioItem(INVALID_ARCHIVE_ITEM_ID_BASE + index, getString(R.string.archived_vault_invalid)))
     }
     if (items.isEmpty()) {
         onBack()
@@ -611,8 +613,8 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
         cancelCallback = onBack,
     ) { selected ->
         val id = selected as Int
-        if (id >= 2000) {
-            val entry = invalid[id - 2000]
+        if (id >= INVALID_ARCHIVE_ITEM_ID_BASE) {
+            val entry = invalid[id - INVALID_ARCHIVE_ITEM_ID_BASE]
             androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle(R.string.archived_vault_invalid)
                 .setMessage(getString(R.string.archived_vault_invalid_message, humanizePath(entry.path)))
@@ -628,8 +630,8 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
         }
 
         val entry = valid[id - 1000].vault
-        val restored = VaultArchiveManager.restoreArchivedVault(this, entry)
-        if (restored == null) {
+        // Activation happens in place; moving back is a separate, explicit "Unarchive vault" action.
+        if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
             toast(R.string.archive_vault_failed)
             onBack()
             return@RadioGroupDialog
@@ -640,7 +642,12 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
             showTabIndex = SHOW_ALL_TABS,
             minimalist = false,
         ) { _, _, success ->
-            if (success) onVaultReady() else showArchivedVaultPicker(onVaultReady, onBack)
+            if (success) {
+                toast(R.string.archived_vault_activated)
+                onVaultReady()
+            } else {
+                showArchivedVaultPicker(onVaultReady, onBack)
+            }
         }
     }
 }

@@ -416,6 +416,14 @@
     <string name="archived_vault_invalid">Geçersiz arşiv kaydı</string>
     <string name="archived_vault_invalid_message">%1$s konumunda kasa başlığı bulunamadı. Bu klasörü dosya yöneticisiyle silebilirsiniz.</string>
     <string name="copy_path">Yolu kopyala</string>
+    <string name="unarchive_vault">Arşivden çıkar</string>
+    <string name="unarchive_vault_summary">Kasayı arşivlenmeden önceki konumuna geri taşır</string>
+    <string name="unarchive_vault_confirm">Kasa eski konumuna geri taşınacak. Parola gerekmez. Devam edilsin mi?</string>
+    <string name="unarchive_vault_success">Kasa eski konumuna geri taşındı.</string>
+    <string name="unarchive_vault_blocked">Bu kasanın eski konumunda başka bir kasa var. Önce o kasayı arşivleyin, ardından bu kasayı arşivden çıkarın.</string>
+    <string name="unarchive_vault_merge">Verileri tek bir kasada birleştir</string>
+    <string name="unarchive_vault_merge_steps">Arşiv kasasını parolasıyla açın, dosyaları çözülmüş olarak dışa aktarın, ardından diğer kasaya içe aktarın. Mevcut çatışma modları uygulanır.</string>
+    <string name="archived_vault_activated">Kasa arşivden açıldı. Eski konumuna taşımak için Ayarlar → Arşivden çıkar seçeneğini kullanın.</string>
     <string name="faq_forgot_password_title">Şifreli kasanın parolasını unuttum, ne yapabilirim?</string>
     <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama, taşıma değildir; orijinal yerinde kalır.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturup geri yükleyin.\n\nUyarı: biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz. Silme geri alınamaz.</string>
     <string name="select_hidden_album">Şifreli Albüm Seçin</string>

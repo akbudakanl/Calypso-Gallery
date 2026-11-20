@@ -830,8 +830,12 @@ class SettingsActivity : SimpleActivity() {
         )
         binding.settingsVaultPasswordReminderHolder.beVisibleIf(hasStoragePermission && vaultExists)
         // An already archived vault cannot be archived again (ADR 0007).
+        val activeArchived = VaultArchiveManager.isActiveVaultArchived(this)
         binding.settingsArchiveVaultHolder.beVisibleIf(
-            hasStoragePermission && vaultExists && !VaultArchiveManager.isActiveVaultArchived(this)
+            hasStoragePermission && vaultExists && !activeArchived
+        )
+        binding.settingsUnarchiveVaultHolder.beVisibleIf(
+            hasStoragePermission && vaultExists && activeArchived
         )
 
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
@@ -865,6 +869,7 @@ class SettingsActivity : SimpleActivity() {
         setupVaultBiometricAutoReturn()
         setupVaultPasswordReminder()
         setupArchiveVault()
+        setupUnarchiveVault()
         setupBlockVaultScreenshots()
         setupHideVaultKeyPresses()
         setupShowVaultPinDots()
@@ -1199,6 +1204,37 @@ class SettingsActivity : SimpleActivity() {
                     onVaultReady = { setupVaultSettings() },
                     onBack = { setupVaultSettings() },
                 )
+            }
+        }
+    }
+
+    private fun setupUnarchiveVault() {
+        binding.settingsUnarchiveVaultHolder.setOnClickListener {
+            val entry = VaultArchiveManager.activeArchivedEntry(this) ?: return@setOnClickListener
+            if (!VaultArchiveManager.canUnarchive(entry)) {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.unarchive_vault)
+                    .setMessage(R.string.unarchive_vault_blocked)
+                    .setPositiveButton(R.string.unarchive_vault_merge) { _, _ ->
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.unarchive_vault_merge)
+                            .setMessage(R.string.unarchive_vault_merge_steps)
+                            .setPositiveButton(org.fossify.commons.R.string.ok, null)
+                            .show()
+                    }
+                    .setNegativeButton(org.fossify.commons.R.string.ok, null)
+                    .show()
+                return@setOnClickListener
+            }
+
+            DeleteSecretsDialog(this, getString(R.string.unarchive_vault_confirm)) {
+                val result = VaultArchiveManager.restoreArchivedVault(this, entry)
+                if (result == VaultArchiveManager.UnarchiveResult.OK) {
+                    toast(R.string.unarchive_vault_success)
+                } else {
+                    toast(R.string.archive_vault_failed)
+                }
+                setupVaultSettings()
             }
         }
     }

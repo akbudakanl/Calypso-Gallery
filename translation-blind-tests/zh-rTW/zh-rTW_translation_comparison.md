@@ -985,7 +985,23 @@ Added/updated in `values-zh-rTW/strings.xml`. Archive moves the old vault; expor
 | 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. 使用生物辨識解鎖。 2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。 3. 設定 → 重設加密保險箱以設定新密碼。  警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
 | 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 使用生物辨識解鎖。 2. 複製加密資料。 3. 設定 → 重設加密保險箱。  若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
 
+## Unarchive Strings (this revision)
+
+Added to `values-zh-rTW/strings.xml`. Unarchive moves the vault back to its recorded original location; no swap, no password.
+
+| # | Key | English | Traditional Chinese |
+|--:|---|---|---|
+| 1 | `unarchive_vault` | Unarchive vault | 從封存區還原 |
+| 2 | `unarchive_vault_summary` | Moves the vault back to its location before archiving | 將保險箱移回封存前的位置 |
+| 3 | `unarchive_vault_confirm` | The vault will be moved back to its original location. No password is required. Continue? | 保險箱將移回原位置，不需要密碼。是否繼續？ |
+| 4 | `unarchive_vault_success` | The vault was moved back to its original location. | 保險箱已移回原位置。 |
+| 5 | `unarchive_vault_blocked` | Another vault is located where this vault used to be. Archive that vault first, then unarchive this one. | 此保險箱的原位置有另一個保險箱。請先封存那個保險箱，再還原此保險箱。 |
+| 6 | `unarchive_vault_merge` | Combine data into one vault | 將資料合併到單一保險箱 |
+| 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | 用密碼解鎖封存的保險箱，匯出解密後的檔案，再匯入另一個保險箱。 |
+| 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | 保險箱已從封存區開啟。請使用 設定 → 從封存區還原 移回原位置。 |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

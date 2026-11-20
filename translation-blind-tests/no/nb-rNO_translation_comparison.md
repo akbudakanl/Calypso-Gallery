@@ -1000,7 +1000,23 @@ Added/updated in `values-nb-rNO/strings.xml`. Archive moves the old vault; expor
 | 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. Lås opp med biometri. 2. Kopier (eksporter) de krypterte dataene — kopiering er ikke flytting. 3. Innstillinger → Nullstill kryptert hvelv for nytt passord.  Advarsel: hvis biometri heller ikke virker, er hvelvet utilgjengelig. Du kan arkivere, kopiere eller slette mappen på %1$s med en filbehandler. |
 | 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. Lås opp med biometri. 2. Kopier de krypterte dataene. 3. Innstillinger → Nullstill kryptert hvelv.  Hvis biometri ikke virker: arkiver, kopier eller slett mappen %1$s med en filbehandler. |
 
+## Unarchive Strings (this revision)
+
+Added to `values-nb-rNO/strings.xml`. Unarchive moves the vault back to its recorded original location; no swap, no password.
+
+| # | Key | English | Norwegian Bokmål |
+|--:|---|---|---|
+| 1 | `unarchive_vault` | Unarchive vault | Ta ut av arkivet |
+| 2 | `unarchive_vault_summary` | Moves the vault back to its location before archiving | Flytter hvelvet tilbake til plasseringen før arkivering |
+| 3 | `unarchive_vault_confirm` | The vault will be moved back to its original location. No password is required. Continue? | Hvelvet flyttes tilbake til originalplasseringen. Ingen passord kreves. Fortsette? |
+| 4 | `unarchive_vault_success` | The vault was moved back to its original location. | Hvelvet er flyttet tilbake. |
+| 5 | `unarchive_vault_blocked` | Another vault is located where this vault used to be. Archive that vault first, then unarchive this one. | På hvelvets tidligere plassering ligger et annet hvelv. Arkiver det først, og ta deretter dette ut av arkivet. |
+| 6 | `unarchive_vault_merge` | Combine data into one vault | Slå sammen data i ett hvelv |
+| 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Lås opp det arkiverte hvelvet med passord, eksporter filene dekryptert og importer dem i det andre hvelvet. |
+| 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Hvelvet er åpnet fra arkivet. Bruk Innstillinger → Ta ut av arkivet. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

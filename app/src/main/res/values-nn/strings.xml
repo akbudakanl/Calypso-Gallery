@@ -746,4 +746,13 @@
     <string name="copy_path">Kopier sti</string>
     <string name="faq_forgot_password_title">Eg har gløymd passordet til det krypterte kvelvet, kva kan eg gjere?</string>
     <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) dei krypterte dataene — kopiering er ikkje flytting.\n3. Innstillingar → Nullstill kryptert kvelv for nytt passord.\n\nÅtvaring: om biometri heller ikkje verkar, er kvelvet utilgjengeleg. Du kan arkivere, kopiere eller slette mappa på %1$s med ein filbehandlar.</string>
+
+    <string name="unarchive_vault">Ta ut av arkivet</string>
+    <string name="unarchive_vault_summary">Flyttar kvelvet tilbake til plasseringa før arkivering</string>
+    <string name="unarchive_vault_confirm">Kvelvet blir flytta tilbake til originalplasseringa. Ingen passord krevst. Halde fram?</string>
+    <string name="unarchive_vault_success">Kvelvet er flytta tilbake.</string>
+    <string name="unarchive_vault_blocked">På den tidlegare plasseringa ligg eit anna kvelv. Arkiver det først, og ta deretter dette ut av arkivet.</string>
+    <string name="unarchive_vault_merge">Slå saman data i eitt kvelv</string>
+    <string name="unarchive_vault_merge_steps">Lås opp det arkiverte kvelvet med passord, eksporter filene dekryptert og importer dei i det andre kvelvet.</string>
+    <string name="archived_vault_activated">Kvelvet er opna frå arkivet. Bruk Innstillingar → Ta ut av arkivet.</string>
 </resources>

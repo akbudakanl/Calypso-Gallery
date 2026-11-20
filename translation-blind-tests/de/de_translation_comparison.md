@@ -936,7 +936,23 @@ Added/updated in `values-de/strings.xml`. Archive moves the old vault; export co
 | 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. Mit Biometrie anmelden. 2. Verschlüsselte Daten kopieren (exportieren) — kopieren ist nicht verschieben. 3. Einstellungen → Tresor zurücksetzen für ein neues Passwort.  Warnung: Wenn auch Biometrie nicht funktioniert, ist der Tresor nicht erreichbar. Sie können ihn archivieren, kopieren oder den Ordner unter %1$s mit einem Dateimanager löschen. |
 | 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. Mit Biometrie anmelden. 2. Verschlüsselte Daten kopieren. 3. Einstellungen → Tresor zurücksetzen.  Wenn auch Biometrie nicht geht: archivieren, kopieren oder Ordner %1$s mit einem Dateimanager löschen. |
 
+## Unarchive Strings (this revision)
+
+Added to `values-de/strings.xml`. Unarchive moves the vault back to its recorded original location; no swap, no password.
+
+| # | Key | English | German |
+|--:|---|---|---|
+| 1 | `unarchive_vault` | Unarchive vault | Aus Archiv wiederherstellen |
+| 2 | `unarchive_vault_summary` | Moves the vault back to its location before archiving | Verschiebt den Tresor zurück an den Ort vor dem Archivieren |
+| 3 | `unarchive_vault_confirm` | The vault will be moved back to its original location. No password is required. Continue? | Der Tresor wird an seinen ursprünglichen Ort zurückverschoben. Kein Passwort nötig. Fortfahren? |
+| 4 | `unarchive_vault_success` | The vault was moved back to its original location. | Tresor wurde zurückverschoben. |
+| 5 | `unarchive_vault_blocked` | Another vault is located where this vault used to be. Archive that vault first, then unarchive this one. | Am früheren Ort dieses Tresors liegt ein anderer Tresor. Archivieren Sie zuerst diesen, dann stellen Sie diesen Tresor wieder her. |
+| 6 | `unarchive_vault_merge` | Combine data into one vault | Daten in einem Tresor zusammenführen |
+| 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Archivierten Tresor mit Passwort öffnen, Dateien entschlüsselt exportieren und in den anderen Tresor importieren. |
+| 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Tresor aus dem Archiv geöffnet. Nutzen Sie Einstellungen → Aus Archiv wiederherstellen. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

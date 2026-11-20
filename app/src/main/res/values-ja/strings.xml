@@ -672,4 +672,13 @@
     <string name="copy_path">パスをコピー</string>
     <string name="faq_forgot_password_title">暗号化保管庫のパスワードを忘れました。どうすればいいですか？</string>
     <string name="faq_forgot_password_text">1. 生体認証で開けます。\n2. 暗号化データをコピー（エクスポート）します。コピーであり移動ではありません。\n3. 設定 → 暗号化保管庫をリセット で新しいパスワードを設定します。\n\n警告: 生体認証も使えない場合、保管庫にはアクセスできません。アーカイブ、コピー、または %1$s のフォルダーをファイルマネージャーで削除できます。</string>
+
+    <string name="unarchive_vault">アーカイブから戻す</string>
+    <string name="unarchive_vault_summary">保管庫をアーカイブ前の場所に戻します</string>
+    <string name="unarchive_vault_confirm">保管庫を元の場所に戻します。パスワードは不要です。続けますか？</string>
+    <string name="unarchive_vault_success">保管庫を元の場所に戻しました。</string>
+    <string name="unarchive_vault_blocked">この保管庫の元の場所には別の保管庫があります。先にその保管庫をアーカイブしてから、この保管庫を戻してください。</string>
+    <string name="unarchive_vault_merge">データを一つの保管庫にまとめる</string>
+    <string name="unarchive_vault_merge_steps">アーカイブした保管庫をパスワードで開き、復号したファイルをエクスポートして別の保管庫にインポートします。</string>
+    <string name="archived_vault_activated">アーカイブから開きました。設定 → アーカイブから戻す で元の場所に戻せます。</string>
 </resources>

@@ -982,7 +982,23 @@ Added/updated in `values-es-rUS/strings.xml`. Archive moves the old vault; expor
 | 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. Acceda con biometría. 2. Copie (exporte) sus datos cifrados; copiar no es mover. 3. Ajustes → Restablecer bóveda cifrada para crear una contraseña nueva.  Advertencia: si la biometría tampoco funciona, la bóveda es inaccesible. Puede archivarla, copiar los datos o eliminar la carpeta en %1$s con un gestor de archivos. |
 | 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. Acceda con biometría. 2. Copie los datos cifrados. 3. Ajustes → Restablecer bóveda cifrada.  Si la biometría tampoco funciona: archive, copie o elimine la carpeta %1$s con un gestor de archivos. |
 
+## Unarchive Strings (this revision)
+
+Added to `values-es-rUS/strings.xml`. Unarchive moves the vault back to its recorded original location; no swap, no password.
+
+| # | Key | English | Spanish (US) |
+|--:|---|---|---|
+| 1 | `unarchive_vault` | Unarchive vault | Sacar del archivo |
+| 2 | `unarchive_vault_summary` | Moves the vault back to its location before archiving | Devuelve la bóveda a su ubicación anterior al archivado |
+| 3 | `unarchive_vault_confirm` | The vault will be moved back to its original location. No password is required. Continue? | La bóveda volverá a su ubicación original. No se necesita contraseña. ¿Continuar? |
+| 4 | `unarchive_vault_success` | The vault was moved back to its original location. | La bóveda volvió a su ubicación original. |
+| 5 | `unarchive_vault_blocked` | Another vault is located where this vault used to be. Archive that vault first, then unarchive this one. | En la ubicación anterior de esta bóveda hay otra. Archive primero esa bóveda y luego saque esta del archivo. |
+| 6 | `unarchive_vault_merge` | Combine data into one vault | Unir los datos en una sola bóveda |
+| 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Abra la bóveda archivada con su contraseña, exporte los archivos descifrados e impórtelos en la otra bóveda. |
+| 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Bóveda abierta desde el archivo. Use Ajustes → Sacar del archivo para devolverla. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

@@ -675,4 +675,13 @@
     <string name="copy_path">Copiar ruta</string>
     <string name="faq_forgot_password_title">Olvidé la contraseña de la bóveda cifrada, ¿qué puedo hacer?</string>
     <string name="faq_forgot_password_text">1. Acceda con biometría.\n2. Copie (exporte) sus datos cifrados; copiar no es mover.\n3. Ajustes → Restablecer bóveda cifrada para crear una contraseña nueva.\n\nAdvertencia: si la biometría tampoco funciona, la bóveda es inaccesible. Puede archivarla, copiar los datos o eliminar la carpeta en %1$s con un gestor de archivos.</string>
+
+    <string name="unarchive_vault">Sacar del archivo</string>
+    <string name="unarchive_vault_summary">Devuelve la bóveda a su ubicación anterior al archivado</string>
+    <string name="unarchive_vault_confirm">La bóveda volverá a su ubicación original. No se necesita contraseña. ¿Continuar?</string>
+    <string name="unarchive_vault_success">La bóveda volvió a su ubicación original.</string>
+    <string name="unarchive_vault_blocked">En la ubicación anterior de esta bóveda hay otra. Archive primero esa bóveda y luego saque esta del archivo.</string>
+    <string name="unarchive_vault_merge">Unir los datos en una sola bóveda</string>
+    <string name="unarchive_vault_merge_steps">Abra la bóveda archivada con su contraseña, exporte los archivos descifrados e impórtelos en la otra bóveda.</string>
+    <string name="archived_vault_activated">Bóveda abierta desde el archivo. Use Ajustes → Sacar del archivo para devolverla.</string>
 </resources>

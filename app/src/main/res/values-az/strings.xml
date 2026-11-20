@@ -743,4 +743,13 @@
     <string name="copy_path">Yolu kopyala</string>
     <string name="faq_forgot_password_title">Şifreli kasanın parolasını unuttum, ne yapabilirim?</string>
     <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama taşıma değildir.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturun.\n\nUyarı: biyometrik de çalışmıyorsa kasaya erişim yoktur. Kasayı arşivleyip yeni kasa oluşturabilir, verileri kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
+
+    <string name="unarchive_vault">Arşivden çıkar</string>
+    <string name="unarchive_vault_summary">Kasayı arşivlenmeden önceki konumuna geri taşır</string>
+    <string name="unarchive_vault_confirm">Kasa eski konumuna geri taşınacak. Parola gerekmez. Devam edilsin mi?</string>
+    <string name="unarchive_vault_success">Kasa eski konumuna geri taşındı.</string>
+    <string name="unarchive_vault_blocked">Bu kasanın eski konumunda başka bir kasa var. Önce o kasayı arşivleyin, ardından bu kasayı arşivden çıkarın.</string>
+    <string name="unarchive_vault_merge">Verileri tek bir kasada birleştir</string>
+    <string name="unarchive_vault_merge_steps">Arşiv kasasını parolasıyla açın, dosyaları çözülmüş olarak dışa aktarın, ardından diğer kasaya içe aktarın.</string>
+    <string name="archived_vault_activated">Kasa arşivden açıldı. Eski konumuna taşımak için Ayarlar → Arşivden çıkar seçeneğini kullanın.</string>
 </resources>

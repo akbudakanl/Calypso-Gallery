@@ -9,6 +9,7 @@ import java.security.SecureRandom
  * Local vault archival: a move into `Calypso Gallery/Archive/<random-id>`.
  * Nothing is ever deleted here — see ADR 0007.
  */
+@Suppress("TooManyFunctions")
 object VaultArchiveManager {
 
     private const val MAX_ID_ATTEMPTS = 10
@@ -141,47 +142,61 @@ object VaultArchiveManager {
         return if (info.isFile) info.lastModified() else 0L
     }
 
-    /** Swaps the active vault with the chosen archive, then returns the new active path. */
-    @Suppress("ReturnCount")
-    fun restoreArchivedVault(context: Context, entry: ArchivedVault): String? {
-        val chosen = File(entry.path)
-        if (!chosen.exists() || !CryptoManager.hasValidVaultHeader(chosen)) return null
+    enum class UnarchiveResult { OK, BLOCKED, FAILED }
 
-        val current = CryptoManager.findVaultRoot(context)
-        val archiveDir = archiveRoot()
-        if (!archiveDir.exists() && !archiveDir.mkdirs()) return null
+    /** Original location recorded at archive time, or the default location after a reinstall. */
+    fun restoreTarget(entry: ArchivedVault): File {
+        return if (entry.originalPath.isNotEmpty()) File(entry.originalPath) else CryptoManager.getDefaultVaultRoot()
+    }
+
+    fun activeArchivedEntry(context: Context): ArchivedVault? {
+        val path = context.config.vaultRootPath
+        if (path.isEmpty()) return null
+        return context.config.archivedVaults.firstOrNull { it.path.equals(path, ignoreCase = true) }
+    }
+
+    /**
+     * Unarchive is a move back to the recorded original location. It is blocked when that
+     * location already holds another vault — no swap, no overwrite (ADR 0007).
+     */
+    fun canUnarchive(entry: ArchivedVault): Boolean {
+        val source = File(entry.path)
+        if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return false
+        val target = restoreTarget(entry)
+        if (source.absolutePath.equals(target.absolutePath, ignoreCase = true)) return true
+        return !target.exists() || !CryptoManager.hasValidVaultHeader(target)
+    }
+
+    @Suppress("ReturnCount")
+    fun restoreArchivedVault(context: Context, entry: ArchivedVault): UnarchiveResult {
+        val source = File(entry.path)
+        if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return UnarchiveResult.FAILED
+
+        val target = restoreTarget(entry)
+        val alreadyThere = source.absolutePath.equals(target.absolutePath, ignoreCase = true)
+        if (!alreadyThere && target.exists() && CryptoManager.hasValidVaultHeader(target)) {
+            return UnarchiveResult.BLOCKED
+        }
+        if (!alreadyThere && !source.renameTo(target)) return UnarchiveResult.FAILED
 
         val entries = ArrayList(context.config.archivedVaults)
-        var parked: ArchivedVault? = null
-        if (current != null && current.absolutePath != chosen.absolutePath) {
-            val id = unusedId(archiveDir) ?: return null
-            val parkedDir = File(archiveDir, id)
-            if (!current.renameTo(parkedDir)) return null
-            val info = File(parkedDir, ARCHIVE_INFO_FILE)
-            runCatching { info.writeText(infoText) }
-            parked = ArchivedVault(
-                id,
-                parkedDir.absolutePath,
-                System.currentTimeMillis(),
-                context.config.vaultRootPath,
-            )
-            entries.removeAll { it.id == id }
-            entries.add(parked)
-        }
-
-        val targetPath = current?.absolutePath ?: CryptoManager.getDefaultVaultRoot().absolutePath
-        val target = File(targetPath)
-        if (!chosen.renameTo(target)) {
-            parked?.let { File(it.path).renameTo(File(context.config.vaultRootPath)) }
-            return null
-        }
-
         entries.removeAll { it.id == entry.id }
         context.config.archivedVaults = entries
         context.config.vaultRootPath = target.absolutePath
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""
         CryptoManager.clearBiometricKey(context)
-        return target.absolutePath
+        return UnarchiveResult.OK
+    }
+
+    /** Activates an archived vault in place, without moving it. */
+    fun activateArchivedVault(context: Context, entry: ArchivedVault): Boolean {
+        val source = File(entry.path)
+        if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return false
+        context.config.vaultRootPath = source.absolutePath
+        context.config.isVaultBiometricEnabled = false
+        context.config.vaultBiometricWrappedBundle = ""
+        CryptoManager.clearBiometricKey(context)
+        return true
     }
 }
