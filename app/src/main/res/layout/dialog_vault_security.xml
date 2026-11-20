@@ -256,6 +256,7 @@
                 android:id="@+id/vault_password_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textCursorDrawable="@drawable/vault_text_cursor"
                 android:imeOptions="actionDone|flagNoPersonalizedLearning"
                 android:importantForAutofill="no"
                 android:inputType="textPassword|textNoSuggestions"

@@ -245,6 +245,9 @@ class VaultAuthInputHelper(
         }
         binding.vaultPasswordInput.setTextColor(palette.text)
         binding.vaultPasswordInput.setHintTextColor(palette.secondary)
+        // Material's TextInputLayout repaints the caret with colorControlActivated on focus, which
+        // was overriding our runtime cursor drawable with the library's green accent.
+        binding.vaultPasswordInputLayout.setCursorColor(ColorStateList.valueOf(palette.primary))
         binding.vaultPasswordInput.applyThemedCursor(palette.primary)
     }
 
@@ -353,7 +356,9 @@ class VaultAuthInputHelper(
 
     fun focusPasswordInput(window: Window?) {
         window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
-        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE)
+        // Do not force the IME on every window resume (background / screen-off return): it would
+        // cover the biometric button. The initial entry below still shows it explicitly.
+        window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         binding.vaultPasswordInput.postDelayed({
             binding.vaultPasswordInput.requestFocus()
             activity.showKeyboard(binding.vaultPasswordInput)

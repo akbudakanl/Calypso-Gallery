@@ -2,6 +2,11 @@
 
     <style name="AppTheme" parent="AppTheme.Base" />
 
+    <!-- Applied to password fields so the caret uses the theme text colour instead of the library's green accent. -->
+    <style name="VaultCursorTheme">
+        <item name="android:textCursorDrawable">@drawable/vault_text_cursor</item>
+    </style>
+
     <!-- Only org.fossify.commons' tab_biometric_id.xml uses this style. Its default background is
          tied to the green fallback primary color, which clashes with this fork's neutral palette. -->
     <style name="ColoredButtonStyle" parent="@android:style/Widget.TextView">

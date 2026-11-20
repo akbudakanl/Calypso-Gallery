@@ -3,6 +3,7 @@ package org.fossify.gallery.dialogs
 import android.app.Activity
 import android.os.Build
 import android.text.InputType
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.SeekBar
@@ -121,7 +122,7 @@ object BruteForceDialog {
         // The value and the slider are one control: the number is editable in place, with no box.
         val unit = activity.getString(R.string.vault_unlock_time_unit)
         fun formatted(tenths: Int) = String.format(Locale.US, "%.1f %s", tenths / TENTHS_PER_SECOND, unit)
-        val valueInput = MyEditText(activity).apply {
+        val valueInput = MyEditText(ContextThemeWrapper(activity, R.style.VaultCursorTheme)).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
             textSize = VALUE_TEXT_SP
             gravity = Gravity.CENTER

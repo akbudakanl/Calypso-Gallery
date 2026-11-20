@@ -29,9 +29,9 @@
             <org.fossify.gallery.views.OnboardingHeroLogoView
                 android:id="@+id/onboarding_hero_logo"
                 android:layout_width="210dp"
-                android:layout_height="122dp"
+                android:layout_height="100dp"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:importantForAccessibility="no" />
 
             <TextView
@@ -49,7 +49,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="14dp"
                 android:breakStrategy="balanced"
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.25"
@@ -61,13 +61,13 @@
                 android:id="@+id/onboarding_card_offline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:gravity="top"
                 android:orientation="horizontal"
                 android:paddingStart="16dp"
-                android:paddingTop="15dp"
+                android:paddingTop="10dp"
                 android:paddingEnd="16dp"
-                android:paddingBottom="15dp">
+                android:paddingBottom="10dp">
 
                 <FrameLayout
                     android:id="@+id/onboarding_icon_box_offline"
@@ -108,9 +108,9 @@
                         android:layout_marginTop="3dp"
                         android:breakStrategy="balanced"
                         android:hyphenationFrequency="normal"
-                        android:lineSpacingMultiplier="1.28"
+                        android:lineSpacingMultiplier="1.15"
                         android:text="@string/onboarding_offline_desc"
-                        android:textSize="13sp" />
+                        android:textSize="12.5sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -119,13 +119,13 @@
                 android:id="@+id/onboarding_card_vault"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:gravity="top"
                 android:orientation="horizontal"
                 android:paddingStart="16dp"
-                android:paddingTop="15dp"
+                android:paddingTop="10dp"
                 android:paddingEnd="16dp"
-                android:paddingBottom="15dp">
+                android:paddingBottom="10dp">
 
                 <FrameLayout
                     android:id="@+id/onboarding_icon_box_vault"
@@ -166,9 +166,9 @@
                         android:layout_marginTop="3dp"
                         android:breakStrategy="balanced"
                         android:hyphenationFrequency="normal"
-                        android:lineSpacingMultiplier="1.28"
+                        android:lineSpacingMultiplier="1.15"
                         android:text="@string/onboarding_vault_desc"
-                        android:textSize="13sp" />
+                        android:textSize="12.5sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -180,9 +180,9 @@
                 android:gravity="top"
                 android:orientation="horizontal"
                 android:paddingStart="16dp"
-                android:paddingTop="15dp"
+                android:paddingTop="10dp"
                 android:paddingEnd="16dp"
-                android:paddingBottom="15dp">
+                android:paddingBottom="10dp">
 
                 <FrameLayout
                     android:id="@+id/onboarding_icon_box_albums"
@@ -223,9 +223,9 @@
                         android:layout_marginTop="3dp"
                         android:breakStrategy="balanced"
                         android:hyphenationFrequency="normal"
-                        android:lineSpacingMultiplier="1.28"
+                        android:lineSpacingMultiplier="1.15"
                         android:text="@string/onboarding_albums_desc"
-                        android:textSize="13sp" />
+                        android:textSize="12.5sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
