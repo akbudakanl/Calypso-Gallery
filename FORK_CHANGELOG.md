@@ -2,6 +2,12 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yayınlanmadığı için bu dosya yalnızca ilk genel sürümü (1.0.0) kapsar. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
+## [Unreleased]
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- Class 2 (zayıf) biyometriğin şifreli kasa erişimi için desteklenmediğine dair açık not eklendi; güçlü biyometrik olmayan cihazlarda ayar sessizce gizlenmek yerine devre dışı görünür ve nedeni yerelleştirilmiş bir pencerede anlatılır (bkz. [ADR 0006](docs/adr/0006-strong-biometrics-only.md)).
+
 ## [1.0.0] - 2026-11-19
 
 İlk genel sürüm. Fossify Gallery 1.14.2 temelinden bağımsız geliştirilen, çevrimdışı çalışan ve kanonik Tink şifreleme biçimini kullanan bir galeri uygulamasıdır.
