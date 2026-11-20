@@ -605,6 +605,12 @@
     <string name="vault_biometric_offer_message">Seyfi parol əvəzinə barmaq izi və ya üz tanıma ilə aça bilərsiniz. Parolanızı yenidən daxil etməyinizə ehtiyac yoxdur.</string>
     <string name="vault_biometric_offer_accept">Biometrik girişi qur</string>
     <string name="vault_biometric_offer_decline">İndi deyil</string>
+    <string name="password_strength_bad">Çox zəif</string>
+    <string name="password_strength_poor">Zəif</string>
+    <string name="password_strength_weak">Orta</string>
+    <string name="password_strength_good">Güclü</string>
+    <string name="password_strength_excellent">Çox güclü</string>
+    <string name="password_strength_hint">Uzun və müxtəlif simvollardan ibarət parolanı sındırmaq daha çətindir.</string>
     <string name="brute_force_time_hint">Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir.</string>
     <string name="brute_force_time_min_hint">Alt hədd bu cihazın təhlükəsiz standart vaxtıdır.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>

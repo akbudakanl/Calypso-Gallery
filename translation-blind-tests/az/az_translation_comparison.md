@@ -1,6 +1,6 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
+## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
 
 Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 
@@ -12,6 +12,12 @@ Added to `values-az/strings.xml`. English source: `values/strings.xml`.
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Seyfi parol əvəzinə barmaq izi və ya üz tanıma ilə aça bilərsiniz. Parolanızı yenidən daxil etməyinizə ehtiyac yoxdur. | Same |
 | 5 | `vault_biometric_offer_accept` | Set up biometric access | Biometrik girişi qur | Positive button |
 | 6 | `vault_biometric_offer_decline` | Not now | İndi deyil | Negative button |
+| 7 | `password_strength_bad` | Very weak | Çox zəif | Vault password strength |
+| 8 | `password_strength_poor` | Weak | Zəif | Vault password strength |
+| 9 | `password_strength_weak` | Fair | Orta | Vault password strength |
+| 10 | `password_strength_good` | Strong | Güclü | Vault password strength |
+| 11 | `password_strength_excellent` | Very strong | Çox güclü | Vault password strength |
+| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Uzun və müxtəlif simvollardan ibarət parolanı sındırmaq daha çətindir. | Shown before typing |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

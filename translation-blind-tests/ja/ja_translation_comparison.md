@@ -1,6 +1,6 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
+## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
 
 Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 
@@ -12,6 +12,12 @@ Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | パスワードの代わりに指紋や顔で保管庫を開けます。パスワードの再入力は不要です。 | Same |
 | 5 | `vault_biometric_offer_accept` | Set up biometric access | 生体認証を設定 | Positive button |
 | 6 | `vault_biometric_offer_decline` | Not now | 今はしない | Negative button |
+| 7 | `password_strength_bad` | Very weak | 非常に弱い | Vault password strength |
+| 8 | `password_strength_poor` | Weak | 弱い | Vault password strength |
+| 9 | `password_strength_weak` | Fair | 普通 | Vault password strength |
+| 10 | `password_strength_good` | Strong | 強い | Vault password strength |
+| 11 | `password_strength_excellent` | Very strong | 非常に強い | Vault password strength |
+| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 長く様々な文字を含むパスワードほど解読が困難です。 | Shown before typing |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

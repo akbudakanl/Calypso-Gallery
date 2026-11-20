@@ -55,6 +55,9 @@ class VaultAuthInputHelper(
     private var biometricKeyInvalidated = false
     private var biometricPromptInFlight = false
 
+    /** Notified whenever the entered PIN changes (used by the strength meter in setup mode). */
+    var onPinChanged: ((CharArray) -> Unit)? = null
+
     fun setInputsEnabled(enabled: Boolean) {
         val pinButtons = listOf(
             binding.pin0, binding.pin1, binding.pin2, binding.pin3, binding.pin4,
@@ -360,6 +363,7 @@ class VaultAuthInputHelper(
     }
 
     private fun updatePinDots() {
+        onPinChanged?.invoke(currentPin.copyOf(pinLength))
         // The per-digit slot indicator is opt-in. With the setting off, preserve the original
         // presentation: one bullet per entered digit, still occupying the box above the keypad.
         if (!showPinDots) {

@@ -42,6 +42,7 @@ import org.fossify.gallery.helpers.canUnlockWithBiometrics
 import org.fossify.gallery.helpers.getVaultProtectionType
 import org.fossify.gallery.helpers.hasExistingVault
 import org.fossify.gallery.helpers.isDeviceLocked
+import org.fossify.gallery.helpers.VaultPasswordStrength
 import org.fossify.gallery.helpers.setupOrUpdateCredentials
 
 class VaultSecurityDialog(
@@ -153,6 +154,40 @@ class VaultSecurityDialog(
             binding.vaultBruteForceHolder.setOnClickListener {
                 BruteForceDialog.show(activity) { refreshBruteForceLabel() }
             }
+
+            // Strength guidance: local-only estimate, never blocks vault creation.
+            binding.vaultStrengthHolder.beVisible()
+            binding.vaultStrengthBar.progressDrawable = GradientDrawable().apply {
+                setColor(palette.primary)
+            }
+            binding.vaultStrengthLabel.setTextColor(palette.secondary)
+            fun refreshStrength(secret: CharArray, isPin: Boolean) {
+                val result = VaultPasswordStrength.evaluate(secret, isPin)
+                binding.vaultStrengthBar.progress = result.score
+                binding.vaultStrengthLabel.text = if (secret.isEmpty()) {
+                    activity.getString(R.string.password_strength_hint)
+                } else {
+                    activity.getString(
+                        when (result.level) {
+                            VaultPasswordStrength.Level.BAD -> R.string.password_strength_bad
+                            VaultPasswordStrength.Level.POOR -> R.string.password_strength_poor
+                            VaultPasswordStrength.Level.WEAK -> R.string.password_strength_weak
+                            VaultPasswordStrength.Level.GOOD -> R.string.password_strength_good
+                            VaultPasswordStrength.Level.EXCELLENT -> R.string.password_strength_excellent
+                        }
+                    )
+                }
+            }
+            refreshStrength(CharArray(0), currentType == PROTECTION_PIN)
+            inputHelper.onPinChanged = { pin -> refreshStrength(pin, true) }
+            binding.vaultPasswordInput.addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    val chars = CharArray(s?.length ?: 0).also { s?.getChars(0, it.size, it, 0) }
+                    refreshStrength(chars, false)
+                }
+            })
             binding.vaultTabs.apply {
                 beVisible()
                 setBackgroundColor(backgroundColor)

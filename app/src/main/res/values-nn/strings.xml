@@ -606,6 +606,12 @@
     <string name="vault_biometric_offer_message">Opne kvelvet med fingeravtrykk eller andlet i staden for eit passord. Du treng ikkje skrive inn passordet på nytt.</string>
     <string name="vault_biometric_offer_accept">Set opp biometrisk tilgang</string>
     <string name="vault_biometric_offer_decline">Ikkje no</string>
+    <string name="password_strength_bad">Svært svak</string>
+    <string name="password_strength_poor">Svak</string>
+    <string name="password_strength_weak">Middels</string>
+    <string name="password_strength_good">Sterk</string>
+    <string name="password_strength_excellent">Svært sterk</string>
+    <string name="password_strength_hint">Eit langt passord med varierte teikn er vanskelegare å knekkje.</string>
     <string name="brute_force_time_hint">Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare.</string>
     <string name="brute_force_time_min_hint">Nedre grense er den trygge standardtida til denne eininga.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne eininga)</string>

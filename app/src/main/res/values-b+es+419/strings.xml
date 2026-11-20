@@ -543,6 +543,12 @@
     <string name="vault_biometric_offer_message">Abre la bóveda con tu huella o rostro en lugar de una contraseña. No necesitas volver a introducirla.</string>
     <string name="vault_biometric_offer_accept">Configurar acceso biométrico</string>
     <string name="vault_biometric_offer_decline">Ahora no</string>
+    <string name="password_strength_bad">Muy débil</string>
+    <string name="password_strength_poor">Débil</string>
+    <string name="password_strength_weak">Aceptable</string>
+    <string name="password_strength_good">Fuerte</string>
+    <string name="password_strength_excellent">Muy fuerte</string>
+    <string name="password_strength_hint">Una contraseña larga con caracteres variados es más difícil de descifrar.</string>
     <string name="brute_force_time_hint">Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta.</string>
     <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
     <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>

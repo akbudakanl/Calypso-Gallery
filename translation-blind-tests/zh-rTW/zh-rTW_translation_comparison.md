@@ -1,6 +1,6 @@
 # Traditional Chinese (Taiwan, values-zh-rTW) Translation Audit, Revision & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
+## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
 
 Added to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`.
 
@@ -12,6 +12,12 @@ Added to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`.
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | 使用指紋或臉部取代密碼開啟保險箱。您不需要再次輸入密碼。 | Same |
 | 5 | `vault_biometric_offer_accept` | Set up biometric access | 設定生物辨識存取 | Positive button |
 | 6 | `vault_biometric_offer_decline` | Not now | 稍後再說 | Negative button |
+| 7 | `password_strength_bad` | Very weak | 非常弱 | Vault password strength |
+| 8 | `password_strength_poor` | Weak | 弱 | Vault password strength |
+| 9 | `password_strength_weak` | Fair | 普通 | Vault password strength |
+| 10 | `password_strength_good` | Strong | 強 | Vault password strength |
+| 11 | `password_strength_excellent` | Very strong | 非常強 | Vault password strength |
+| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 較長且混合各种字元的密碼較難破解。 | Shown before typing |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

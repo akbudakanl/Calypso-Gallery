@@ -1,6 +1,6 @@
 # Norwegian Bokmål (values-nb-rNO) Translation Completion & English 1-to-1 Comparison
 
-## New fork strings - bottom action bar, view switch and biometric offer (6 keys)
+## New fork strings - bottom action bar, view switch, biometrics and strength meter (12 keys)
 
 Added to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
 
@@ -12,6 +12,12 @@ Added to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
 | 4 | `vault_biometric_offer_message` | Open the vault with your fingerprint or face instead of a password. You don\'t need to enter your password again. | Åpne hvelvet med fingeravtrykk eller ansikt i stedet for et passord. Du trenger ikke å skrive inn passordet på nytt. | Same |
 | 5 | `vault_biometric_offer_accept` | Set up biometric access | Sett opp biometrisk tilgang | Positive button |
 | 6 | `vault_biometric_offer_decline` | Not now | Ikke nå | Negative button |
+| 7 | `password_strength_bad` | Very weak | Svært svak | Vault password strength |
+| 8 | `password_strength_poor` | Weak | Svak | Vault password strength |
+| 9 | `password_strength_weak` | Fair | Middels | Vault password strength |
+| 10 | `password_strength_good` | Strong | Sterk | Vault password strength |
+| 11 | `password_strength_excellent` | Very strong | Svært sterk | Vault password strength |
+| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | Et langt passord med varierte tegn er vanskeligere å knekke. | Shown before typing |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

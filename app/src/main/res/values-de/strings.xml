@@ -538,6 +538,12 @@
     <string name="vault_biometric_offer_message">Öffne den Tresor mit Fingerabdruck oder Gesicht statt mit einem Passwort. Du musst dein Passwort nicht erneut eingeben.</string>
     <string name="vault_biometric_offer_accept">Biometrischen Zugriff einrichten</string>
     <string name="vault_biometric_offer_decline">Jetzt nicht</string>
+    <string name="password_strength_bad">Sehr schwach</string>
+    <string name="password_strength_poor">Schwach</string>
+    <string name="password_strength_weak">Mittel</string>
+    <string name="password_strength_good">Stark</string>
+    <string name="password_strength_excellent">Sehr stark</string>
+    <string name="password_strength_hint">Ein langes Passwort mit gemischten Zeichen ist schwerer zu knacken.</string>
     <string name="brute_force_time_hint">Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden.</string>
     <string name="brute_force_time_min_hint">Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts.</string>
     <string name="brute_force_time_value_device">%1$.1f s (auf diesem Gerät)</string>

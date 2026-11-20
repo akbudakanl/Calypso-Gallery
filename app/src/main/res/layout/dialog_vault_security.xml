@@ -273,6 +273,32 @@
             android:textSize="20sp" />
     </LinearLayout>
 
+    <!-- Guidance only: shown while creating a vault so the chosen secret can be assessed. -->
+    <LinearLayout
+        android:id="@+id/vault_strength_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/small_margin"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/vault_strength_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:max="100"
+            android:progress="0" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/vault_strength_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:textSize="12sp" />
+    </LinearLayout>
+
     <org.fossify.commons.views.MyTextView
         android:id="@+id/vault_brute_force_holder"
         android:layout_width="match_parent"
