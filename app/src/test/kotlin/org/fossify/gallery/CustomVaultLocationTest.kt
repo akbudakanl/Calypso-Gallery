@@ -1498,14 +1498,12 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun config_conflictAndSkippedModes_haveExpectedDefaultsAndIndependentSettings() {
+    fun config_conflictAndSkippedEncryptMode_haveExpectedDefaultsAndIndependentSettings() {
         assertEquals(CONFLICT_HANDLING_STANDARD_DIALOG, testContext.config.conflictHandlingMode)
         assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedEncryptFilesMode)
-        assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedDecryptFilesMode)
 
         testContext.config.skippedEncryptFilesMode = CRYPTO_SKIPPED_FILES_KEEP
         assertEquals(CRYPTO_SKIPPED_FILES_KEEP, testContext.config.skippedEncryptFilesMode)
-        assertEquals(CRYPTO_SKIPPED_FILES_ASK, testContext.config.skippedDecryptFilesMode)
 
         testContext.config.albumCryptoConflictMode = ALBUM_CRYPTO_CONFLICT_MERGE
         assertEquals(ALBUM_CRYPTO_CONFLICT_MERGE, testContext.config.albumCryptoConflictMode)

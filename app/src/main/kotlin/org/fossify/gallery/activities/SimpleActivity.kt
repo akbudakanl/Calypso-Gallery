@@ -192,7 +192,11 @@ open class SimpleActivity : BaseSimpleActivity() {
 
     protected fun requestMediaPermissions(enableRationale: Boolean = false, onGranted: () -> Unit) {
         when {
-            hasAllPermissions(getPermissionsToRequest()) -> onGranted()
+            hasAllPermissions(getPermissionsToRequest()) -> {
+                dialog?.dismiss()
+                dialog = null
+                onGranted()
+            }
             isAskingPermissions -> return
             config.showPermissionRationale -> {
                 if (enableRationale) {

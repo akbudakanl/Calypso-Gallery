@@ -16,7 +16,6 @@ import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSkippedCryptoFilesBinding
 import org.fossify.gallery.databinding.DialogSkippedCryptoFilesModeBinding
-import org.fossify.gallery.databinding.DialogTitleWithInfoBinding
 import org.fossify.gallery.extensions.bindSettingInfoIcon
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
@@ -113,9 +112,7 @@ fun showDeleteSkippedFilesConfirmation(
         }
 }
 
-internal fun Context.getSkippedCryptoFilesMode(isEncrypt: Boolean): Int {
-    return if (isEncrypt) config.skippedEncryptFilesMode else config.skippedDecryptFilesMode
-}
+internal fun Context.getSkippedEncryptFilesMode(): Int = config.skippedEncryptFilesMode
 
 internal fun deleteSkippedCryptoSourcesBlocking(
     context: Context,
@@ -195,22 +192,17 @@ internal fun deleteSkippedCryptoSourcesBlocking(
     return deletedCount
 }
 
-private fun Activity.setSkippedCryptoFilesMode(isEncrypt: Boolean, mode: Int) {
-    if (isEncrypt) {
-        config.skippedEncryptFilesMode = mode
-    } else {
-        config.skippedDecryptFilesMode = mode
-    }
+private fun Activity.setSkippedEncryptFilesMode(mode: Int) {
+    config.skippedEncryptFilesMode = mode
 }
 
 fun showSkippedCryptoFilesSettingsDialog(
     activity: Activity,
-    isEncrypt: Boolean,
     onUpdated: (Int) -> Unit
 ) {
     val binding = DialogSkippedCryptoFilesModeBinding.inflate(activity.layoutInflater)
     val checkCurrentSelection = {
-        when (activity.getSkippedCryptoFilesMode(isEncrypt)) {
+        when (activity.getSkippedEncryptFilesMode()) {
             CRYPTO_SKIPPED_FILES_KEEP -> binding.skippedCryptoFilesModeKeep.isChecked = true
             CRYPTO_SKIPPED_FILES_DELETE -> binding.skippedCryptoFilesModeDelete.isChecked = true
             else -> binding.skippedCryptoFilesModeAsk.isChecked = true
@@ -218,30 +210,23 @@ fun showSkippedCryptoFilesSettingsDialog(
     }
     checkCurrentSelection()
 
-    val titleResId = if (isEncrypt) {
-        R.string.skipped_encrypt_files_mode_label
-    } else {
-        R.string.skipped_decrypt_files_mode_label
-    }
-    val infoMessageResId = if (isEncrypt) {
-        R.string.skipped_encrypt_files_info_message
-    } else {
-        R.string.skipped_decrypt_files_info_message
-    }
+    val titleResId = R.string.skipped_encrypt_files_mode_label
+    val infoMessageResId = R.string.skipped_encrypt_files_info_message
 
-    val titleBinding = DialogTitleWithInfoBinding.inflate(activity.layoutInflater)
-    titleBinding.dialogTitleTextview.apply {
+    // Keep the title and info icon inside the dialog content: setupDialogStuff() replaces the
+    // AlertDialog custom title (with null when titleId is 0), which would hide a header set via
+    // setCustomTitle(). Rendering it in the content view works in both themed and plain dialogs.
+    binding.dialogSkippedFilesModeTitle.apply {
         text = activity.getString(titleResId)
         setTextColor(activity.getProperTextColor())
     }
     activity.bindSettingInfoIcon(
-        iconView = titleBinding.dialogTitleInfo,
+        iconView = binding.dialogSkippedFilesModeInfo,
         titleResId = titleResId,
         messageResId = infoMessageResId
     )
 
     activity.getAlertDialogBuilder()
-        .setCustomTitle(titleBinding.root)
         .setNegativeButton(org.fossify.commons.R.string.cancel, null)
         .apply {
             activity.setupDialogStuff(
@@ -254,12 +239,12 @@ fun showSkippedCryptoFilesSettingsDialog(
                 deleteRadio.setTextColor(redColor)
 
                 binding.skippedCryptoFilesModeAsk.setOnClickListener {
-                    activity.setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_ASK)
+                    activity.setSkippedEncryptFilesMode(CRYPTO_SKIPPED_FILES_ASK)
                     onUpdated(CRYPTO_SKIPPED_FILES_ASK)
                     alertDialog.dismiss()
                 }
                 binding.skippedCryptoFilesModeKeep.setOnClickListener {
-                    activity.setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_KEEP)
+                    activity.setSkippedEncryptFilesMode(CRYPTO_SKIPPED_FILES_KEEP)
                     onUpdated(CRYPTO_SKIPPED_FILES_KEEP)
                     alertDialog.dismiss()
                 }
@@ -267,7 +252,7 @@ fun showSkippedCryptoFilesSettingsDialog(
                     showDeleteSkippedFilesConfirmation(
                         activity = activity,
                         onConfirm = {
-                            activity.setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_DELETE)
+                            activity.setSkippedEncryptFilesMode(CRYPTO_SKIPPED_FILES_DELETE)
                             onUpdated(CRYPTO_SKIPPED_FILES_DELETE)
                             alertDialog.dismiss()
                         },
@@ -290,6 +275,15 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
     onComplete: (deletedCount: Int) -> Unit
 ) {
     val existingSkipped = skippedFiles.filter { it.exists() && it.isFile }
+
+    // Decryption never wipes or asks about skipped files - they are simply left in place, just
+    // like a plain copy/move. The skipped-files policy (and secure wipe) is encryption-only.
+    if (!isEncrypt) {
+        existingSkipOpId?.takeIf { it.isNotEmpty() }?.let { OperationJournal.clear(it) }
+        onComplete(0)
+        return
+    }
+
     if (existingSkipped.isEmpty()) {
         existingSkipOpId?.takeIf { it.isNotEmpty() }?.let { OperationJournal.clear(it) }
         onComplete(0)
@@ -298,7 +292,7 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
     val hasIdenticalSkipped = existingSkipped.any { it.absolutePath in identicalSkippedPaths }
     val hasUserSkipped = existingSkipped.any { it.absolutePath !in identicalSkippedPaths }
 
-    val mode = getSkippedCryptoFilesMode(isEncrypt)
+    val mode = getSkippedEncryptFilesMode()
     if (mode == CRYPTO_SKIPPED_FILES_KEEP) {
         existingSkipOpId?.takeIf { it.isNotEmpty() }?.let { OperationJournal.clear(it) }
         onComplete(0)
@@ -367,7 +361,7 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
         .setPositiveButton(R.string.skipped_crypto_files_keep) { _, _ ->
             handled = true
             if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
-                setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_KEEP)
+                setSkippedEncryptFilesMode(CRYPTO_SKIPPED_FILES_KEEP)
             }
             if (skipOpId.isNotEmpty()) {
                 ensureBackgroundThread { OperationJournal.clear(skipOpId) }
@@ -393,7 +387,7 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
                         onConfirm = {
                             handled = true
                             if (!binding.skippedCryptoFilesAlwaysAsk.isChecked) {
-                                setSkippedCryptoFilesMode(isEncrypt, CRYPTO_SKIPPED_FILES_DELETE)
+                                setSkippedEncryptFilesMode(CRYPTO_SKIPPED_FILES_DELETE)
                             }
                             alertDialog.dismiss()
                             performDelete()

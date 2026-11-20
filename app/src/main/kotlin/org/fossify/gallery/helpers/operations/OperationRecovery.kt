@@ -16,7 +16,7 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.deleteSkippedCryptoSourcesBlocking
-import org.fossify.gallery.dialogs.getSkippedCryptoFilesMode
+import org.fossify.gallery.dialogs.getSkippedEncryptFilesMode
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
@@ -627,6 +627,7 @@ object OperationRecovery {
 
     /**
      * Handles persisted post-transfer skipped crypto file decisions:
+     * - decrypt batches are cleared silently: skipped files are left in place, never wiped or asked about;
      * - approved deletes or setting == DELETE run silently in background without prompting;
      * - setting == KEEP clears silently;
      * - unanswered ASK batches are returned so UI can re-show [resolveSkippedCryptoFiles].
@@ -655,8 +656,13 @@ object OperationRecovery {
             }
 
             val allApproved = rows.all { it.state == OperationJournal.STATE_DELETE_SKIPPED_APPROVED }
-            val mode = runCatching { context.getSkippedCryptoFilesMode(isEncrypt) }.getOrDefault(-1)
+            val mode = if (isEncrypt) {
+                runCatching { context.getSkippedEncryptFilesMode() }.getOrDefault(-1)
+            } else {
+                -1
+            }
             when {
+                !isEncrypt -> OperationJournal.clear(opId)
                 allApproved || mode == CRYPTO_SKIPPED_FILES_DELETE -> {
                     ForegroundOperationRegistry.withOperation(context, "skipped-crypto-wipe") {
                         deleteSkippedCryptoSourcesBlocking(
