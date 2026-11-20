@@ -925,7 +925,39 @@ Added to `values-ja/strings.xml`. The Settings row now stays visible when a vaul
 | 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | このデバイスではハードウェア保護キー（TEE/StrongBox）を作成できませんでした。セキュリティ上の理由により、保管庫の生体認証アクセスは無効です。 | `canAuthenticate()` succeeded but no TEE/StrongBox key |
 | 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | このデバイスでは保管庫の生体認証アクセスは利用できません。システム設定で指紋または強力な顔認証を登録するか、PIN またはパスワードを使用してください。 | Fallback explanation |
 
+## Password Reminder Strings (this revision)
+
+Added/updated in `values-ja/strings.xml`. The reminder is shown in-app when the vault is opened and no password/PIN unlock happened during the configured interval. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_password_reminder` | Remind me of my password | パスワードを定期的に通知する |  |
+| 2 | `vault_password_reminder_disabled` | Off | オフ |  |
+| 3 | `vault_password_reminder_weeks` | %d weeks | %d 週間 |  |
+| 4 | `vault_password_reminder_months` | %d months | %d か月 |  |
+| 5 | `vault_password_reminder_dialog_title` | Reminder interval | 通知間隔 |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | この期間中にパスワードで暗号化保管庫を開けなかった場合、パスワードを通知します。 |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | パスワードを忘れないために定期的に通知します。設定 → 暗号化された保管庫 → パスワードを定期的に通知する から無効にできます。 |  |
+| 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | 生体認証でログインする場合でも、パスワードを覚えている必要があることに注意してください。 |  |
+| 9 | `vault_password_saved_title` | Have you saved your password? | パスワードを保存しましたか？ |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | パスワードを忘れると、暗号化保管庫へのアクセスを完全に失います。継絊する前にパスワードをどこかに保存したことを確認してください。パスワードマネージャーの使用をお勧めします。 |  |
+| 11 | `vault_password_saved_confirm` | Yes, I saved it | はい、保存しました |  |
+| 12 | `vault_password_saved_later` | I will save it | 保存します |  |
+| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | 保管庫のパスワードをまだ覚えていますか？ |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | この期間中にパスワードで暗号化保管庫を開けていません。パスワードは保管庫を復旧する唯一の方法です。 |  |
+| 15 | `vault_password_reminder_verify_title` | Confirm your password | パスワードを確認 |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | これは保管庫の開锡8ではありません。パスワードをまだ知っているかどうかを確認するだけです。 |  |
+| 17 | `vault_password_reminder_verified` | Password confirmed | パスワードを確認しました |  |
+| 18 | `vault_password_reminder_not_now` | Not now | 今はしない |  |
+| 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | パスワードを覚えていませんか？ |  |
+| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | 生体認証で保管庫を開け、暗号化データをエクスポートし、設定 → 暗号化保管庫をリセット で新しいパスワードを設定してデータを復元してください。生体認証でも開けない場合、保管庫にはアクセスできません。 |  |
+| 21 | `vault_password_reminder_verify_action` | Verify my password | パスワードを確認する |  |
+| 22 | `vault_password_reminder_forgot_action` | I don't remember | 覚えていない |  |
+| 23 | `vault_password_reminder_open_settings` | Open settings | 設定を開く |  |
+| 24 | `empty_encrypted_vault` | Reset encrypted vault | 暗号化保管庫をリセット | Renamed label |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-ja/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
 

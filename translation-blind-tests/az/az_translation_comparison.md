@@ -922,7 +922,39 @@ Added to `values-az/strings.xml`. The Settings row now stays visible when a vaul
 | 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | Bu cihazda aparat dəstəkli açar (TEE/StrongBox) yaradıla bilmədi. Təhlükəsizlik səbəbindən seyfə biometrik giriş deaktiv edilib. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
 | 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | Bu cihazda seyfə biometrik giriş mövcud deyil. Sistem parametrlərində barmaq izi və ya güclü üz tanıma qeydiyyata alın, yaxud PIN/parolunuzdan istifadə edin. | Fallback explanation |
 
+## Password Reminder Strings (this revision)
+
+Added/updated in `values-az/strings.xml`. The reminder is shown in-app when the vault is opened and no password/PIN unlock happened during the configured interval. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_password_reminder` | Remind me of my password | Parolamı müntǙǙm xatırlat |  |
+| 2 | `vault_password_reminder_disabled` | Off | Bağlı |  |
+| 3 | `vault_password_reminder_weeks` | %d weeks | %d həftə |  |
+| 4 | `vault_password_reminder_months` | %d months | %d ay |  |
+| 5 | `vault_password_reminder_dialog_title` | Reminder interval | Xatırlatma intervalı |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | Bu mýddət ərzində şifrəli seyfə parolunuzla daxil olmasanız, parolanızı xatırladacağıq. |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | Parolanızı unutmamanız üçün müntǙǙm xatırlatmalar göndərəcəyik. Bunu Parametrlər → Şifrəli seyf → Parolamı müntǙǙm xatırlat bölməsindən bağlaya bilərsiniz. |  |
+| 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | Biyometrik ilə daxil olmağı seçsəniz, parolanızı hələ də bilməli olduğunuzu unutmayın. |  |
+| 9 | `vault_password_saved_title` | Have you saved your password? | Parolanızı qeyd etdinizmi? |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | Parolanızı unutsanız, şifrəli seyfə girişi daimi olaraq itirəcəksiniz. Davam etməzdən əvvəl parolanızı bir yerə qeyd etdiyinizdən əmin olun. Parola menecerindən istifadə etmək tövsiyə olunur. |  |
+| 11 | `vault_password_saved_confirm` | Yes, I saved it | Bəli, qeyd etdim |  |
+| 12 | `vault_password_saved_later` | I will save it | Qeyd edəcəyəm |  |
+| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | Seyf parolanızı hələ də xatırlayırsınız? |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | Bu mýddət ərzində şifrəli seyfə parolanızla daxil olmadınız. Parolanız seyfi bərpa etməyin yeganə yoludur. |  |
+| 15 | `vault_password_reminder_verify_title` | Confirm your password | Parolanızı təsdiqləyin |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | Bu, seyfin açılması deyildir. Yalnızca parolanızı hələ də bildiyinizi təsdiqləyirik. |  |
+| 17 | `vault_password_reminder_verified` | Password confirmed | Parola təsdiqləndi |  |
+| 18 | `vault_password_reminder_not_now` | Not now | İndi deyil |  |
+| 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | Parolanızı xatırlamırsınız? |  |
+| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | Biyometrik ilə seyfə daxil olun, şifrəli məlumatlarınızı ixrac edin, sonra Parametrlər → Şifrəli seyfi sıfırla ilə yeni parola təyin edib məlumatları geri yükləyin. Biyometrik də açamırsa, seyf əlçatan deyildir. |  |
+| 21 | `vault_password_reminder_verify_action` | Verify my password | Parolamı təsdiqlə |  |
+| 22 | `vault_password_reminder_forgot_action` | I don't remember | Xatırlamıram |  |
+| 23 | `vault_password_reminder_open_settings` | Open settings | Parametrlərə get |  |
+| 24 | `empty_encrypted_vault` | Reset encrypted vault | Şifrəli seyfi sıfırla | Renamed label |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-az/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
 

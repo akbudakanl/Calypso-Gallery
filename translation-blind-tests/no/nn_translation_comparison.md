@@ -940,7 +940,39 @@ Added to `values-nn/strings.xml`. The Settings row now stays visible when a vaul
 | 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | Det kunne ikkje opprettast ein maskinvarebeskytta nøkkel (TEE/StrongBox) på denne eininga. Biometrisk tilgang til kvelvet er deaktivert av tryggleiksgrunnar. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
 | 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | Biometrisk tilgang til kvelvet er ikkje tilgjengeleg på denne eininga. Registrer eit fingeravtrykk eller sterk andletsgjenkjenning i systeminnstillingane, eller bruk PIN-koden eller passordet ditt. | Fallback explanation |
 
+## Password Reminder Strings (this revision)
+
+Added/updated in `values-nn/strings.xml`. The reminder is shown in-app when the vault is opened and no password/PIN unlock happened during the configured interval. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_password_reminder` | Remind me of my password | Minn meg på passordet mitt |  |
+| 2 | `vault_password_reminder_disabled` | Off | Av |  |
+| 3 | `vault_password_reminder_weeks` | %d weeks | %d veker |  |
+| 4 | `vault_password_reminder_months` | %d months | %d månader |  |
+| 5 | `vault_password_reminder_dialog_title` | Reminder interval | Påminningsintervall |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | Om du ikkje opnar det krypterte kvelvet med passordet ditt på så lang tid, minner vi deg om det. |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | Vi sender deg jamlege påminningar slik at du ikkje gløymer passordet ditt. Du kan slå dette av under Innstillingar → Kryptert kvelv → Minn meg på passordet mitt. |  |
+| 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | Om du vel å logge inn med biometri, må du hugse at du framleis må kjenne passordet ditt. |  |
+| 9 | `vault_password_saved_title` | Have you saved your password? | Har du lagra passordet ditt? |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | Om du gløymer passordet ditt, mister du permanent tilgang til det krypterte kvelvet ditt. Sørg for at du har lagra det ein stad før du held fram. Bruk av ein passordbehandlar blir tilrådd. |  |
+| 11 | `vault_password_saved_confirm` | Yes, I saved it | Ja, eg har lagra det |  |
+| 12 | `vault_password_saved_later` | I will save it | Eg skal lagre det |  |
+| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | Hugsar du framleis kvelvpassordet ditt? |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | Du har ikkje opna det krypterte kvelvet med passordet ditt på så lang tid. Passordet ditt er den einaste måten å gjenopprette kvelvet på. |  |
+| 15 | `vault_password_reminder_verify_title` | Confirm your password | Stadfest passordet ditt |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | Dette er ikkje ei kvelvopplåsing. Vi vil berre stadfeste at du framleis kjenner passordet ditt. |  |
+| 17 | `vault_password_reminder_verified` | Password confirmed | Passord stadfesta |  |
+| 18 | `vault_password_reminder_not_now` | Not now | Ikkje no |  |
+| 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | Hugsar du ikkje passordet ditt? |  |
+| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | Lås opp kvelvet med biometri, eksporter dei krypterte dataene dine, og bruk deretter Innstillingar → Nullstill kryptert kvelv for å setje eit nytt passord og gjenopprette dataene. Om biometri heller ikkje kan låse opp kvelvet, er det utilgjengeleg. |  |
+| 21 | `vault_password_reminder_verify_action` | Verify my password | Stadfest passordet mitt |  |
+| 22 | `vault_password_reminder_forgot_action` | I don't remember | Eg hugsar ikkje |  |
+| 23 | `vault_password_reminder_open_settings` | Open settings | Opne innstillingar |  |
+| 24 | `empty_encrypted_vault` | Reset encrypted vault | Nullstill kryptert kvelv | Renamed label |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-nn/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
 

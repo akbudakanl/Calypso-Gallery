@@ -922,7 +922,39 @@ Added to `values-es/strings.xml`. The Settings row now stays visible when a vaul
 | 6 | `vault_biometric_unavailable_no_secure_key` | A hardware-backed key (TEE/StrongBox) could not be created on this device. Vault biometric access is disabled for security reasons. | No se pudo crear una clave compatible con hardware (TEE/StrongBox) en este dispositivo. El acceso biométrico a la bóveda está desactivado por motivos de seguridad. | `canAuthenticate()` succeeded but no TEE/StrongBox key |
 | 7 | `vault_biometric_unavailable_generic` | Vault biometric access is unavailable on this device. Enrol a fingerprint or a strong face unlock in system settings, or use your PIN or password. | El acceso biométrico a la bóveda no está disponible en este dispositivo. Registre una huella dactilar o un desbloqueo facial fuerte en los ajustes del sistema, o utilice su PIN o contraseña. | Fallback explanation |
 
+## Password Reminder Strings (this revision)
+
+Added/updated in `values-es/strings.xml`. The reminder is shown in-app when the vault is opened and no password/PIN unlock happened during the configured interval. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Standard) (`values-es/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_password_reminder` | Remind me of my password | Recordarme mi contraseña |  |
+| 2 | `vault_password_reminder_disabled` | Off | Desactivado |  |
+| 3 | `vault_password_reminder_weeks` | %d weeks | %d semanas |  |
+| 4 | `vault_password_reminder_months` | %d months | %d meses |  |
+| 5 | `vault_password_reminder_dialog_title` | Reminder interval | Intervalo de recordatorio |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | Si no abre la bóveda cifrada con su contraseña durante este tiempo, se lo recordaremos. |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | Le enviaremos recordatorios periódicos para que no olvide su contraseña. Puede desactivarlos en Ajustes → Bóveda cifrada → Recordarme mi contraseña. |  |
+| 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | Si elige iniciar sesión con biometría, recuerde que debe seguir conociendo su contraseña. |  |
+| 9 | `vault_password_saved_title` | Have you saved your password? | ¿Ha guardado su contraseña? |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | Si olvida su contraseña, perderá permanentemente el acceso a su bóveda cifrada. Asegúrese de guardarla en algún lugar antes de continuar. Se recomienda usar un gestor de contraseñas. |  |
+| 11 | `vault_password_saved_confirm` | Yes, I saved it | Sí, la he guardado |  |
+| 12 | `vault_password_saved_later` | I will save it | La guardaré |  |
+| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | ¿Recuerda aún la contraseña de su bóveda? |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | No ha abierto la bóveda cifrada con su contraseña durante este tiempo. Su contraseña es la única forma de recuperar la bóveda. |  |
+| 15 | `vault_password_reminder_verify_title` | Confirm your password | Confirme su contraseña |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | Esto no es una apertura de la bóveda. Solo queremos confirmar que aún conoce su contraseña. |  |
+| 17 | `vault_password_reminder_verified` | Password confirmed | Contraseña confirmada |  |
+| 18 | `vault_password_reminder_not_now` | Not now | Ahora no |  |
+| 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | ¿No recuerda su contraseña? |  |
+| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | Abra la bóveda con biometría, exporte sus datos cifrados y luego use Ajustes → Restablecer bóveda cifrada para establecer una nueva contraseña y restaurar sus datos. Si la biometría tampoco puede abrirla, la bóveda es inaccesible. |  |
+| 21 | `vault_password_reminder_verify_action` | Verify my password | Verificar mi contraseña |  |
+| 22 | `vault_password_reminder_forgot_action` | I don't remember | No la recuerdo |  |
+| 23 | `vault_password_reminder_open_settings` | Open settings | Abrir ajustes |  |
+| 24 | `empty_encrypted_vault` | Reset encrypted vault | Restablecer bóveda cifrada | Renamed label |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-es/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
 
