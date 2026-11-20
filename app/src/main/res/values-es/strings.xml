@@ -205,7 +205,7 @@
     <string name="open_videos_on_separate_screen">Reproducir vídeos en una pantalla separada con gestos horizontales</string>
     <string name="on_video_tap">Al tocar el vídeo</string>
     <string name="open_in_app_player">Abrir el reproductor de la aplicación</string>
-    <string name="open_system_default_player">Abrir la aplicación de reproducción predeterminada</string>
+    <string name="open_system_default_player">Abrir en otra aplicación</string>
     <string name="show_notch">Mostrar una muesca si está disponible</string>
     <string name="show_bottom_action_names">Mostrar los nombres de las acciones en la barra de acciones inferior</string>
     <string name="allow_rotating_gestures">Permitir girar con gestos</string>

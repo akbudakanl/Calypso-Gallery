@@ -416,7 +416,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 177 | `open_videos_on_separate_screen` | Play videos on a separate screen with horizontal gestures | Spel videoar på ein eigen skjerm med vassrette rørsler |
 | 178 | `on_video_tap` | On video tap | Ved videotrykk |
 | 179 | `open_in_app_player` | Open in-app player | Opna spelar i appen |
-| 180 | `open_system_default_player` | Open default player app | Opna standardspelarapp |
+| 180 | `open_system_default_player` | Open in another app | Opne i ein annan app |
 | 181 | `show_notch` | Show a notch if available | Syn skjermhakk viss tilgjengeleg |
 | 182 | `allow_rotating_gestures` | Allow rotating images with gestures | Tillat rotering av bilete med fingerrørsler |
 | 183 | `file_loading_priority` | File loading priority | Prioritet for fillasting |

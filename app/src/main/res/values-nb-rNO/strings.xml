@@ -237,7 +237,7 @@
     <string name="force_landscape_reverse">Framtving landskap (omvendt)</string>
     <string name="overwrite_original">Overskriv original</string>
     <string name="video_no_sound">Denne videoen har ingen lyd</string>
-    <string name="open_system_default_player">Åpne standardspilleren</string>
+    <string name="open_system_default_player">Åpne i en annen app</string>
     <string name="open_in_app_player">Åpne spilleren i appen</string>
     <string name="on_video_tap">Ved videotrykk</string>
     <string name="language">Språk</string>

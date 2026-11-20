@@ -276,7 +276,7 @@
     <string name="playback_speed">再生速度</string>
     <string name="on_video_tap">動画をタップしたとき</string>
     <string name="open_in_app_player">アプリ内プレーヤーを開く</string>
-    <string name="open_system_default_player">デフォルトのプレーヤーアプリを開く</string>
+    <string name="open_system_default_player">別のアプリで開く</string>
     <string name="file_is_malformed_or_corrupted">ファイルが不正または破損しています。</string>
     <string name="media_exceeds_device_capabilities">メディアが端末の性能を超えています。</string>
     <string name="unsupported_format">サポートされていない形式です。</string>

@@ -418,7 +418,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 177 | `open_videos_on_separate_screen` | Play videos on a separate screen with horizontal gestures | 透過橫向手勢在獨立螢幕上播放影片 |
 | 178 | `on_video_tap` | On video tap | 輕觸影片 |
 | 179 | `open_in_app_player` | Open in-app player | 開啟應用程式內播放器 |
-| 180 | `open_system_default_player` | Open default player app | 開啟預設播放器應用程式 |
+| 180 | `open_system_default_player` | Open in another app | 在其他應用程式中開啟 |
 | 181 | `show_notch` | Show a notch if available | 允許螢幕凹口遮擋畫面 |
 | 182 | `allow_rotating_gestures` | Allow rotating images with gestures | 使用手勢來旋轉圖片 |
 | 183 | `file_loading_priority` | File loading priority | 檔案讀取優先權 |

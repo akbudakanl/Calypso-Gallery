@@ -418,7 +418,7 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 177 | `open_videos_on_separate_screen` | Play videos on a separate screen with horizontal gestures | Reproducir vídeos en una pantalla separada con gestos horizontales |
 | 178 | `on_video_tap` | On video tap | Al tocar el vídeo |
 | 179 | `open_in_app_player` | Open in-app player | Abrir el reproductor de la aplicación |
-| 180 | `open_system_default_player` | Open default player app | Abrir la aplicación de reproducción predeterminada |
+| 180 | `open_system_default_player` | Open in another app | Abrir en otra aplicación |
 | 181 | `show_notch` | Show a notch if available | Mostrar una muesca si está disponible |
 | 182 | `allow_rotating_gestures` | Allow rotating images with gestures | Permitir girar con gestos |
 | 183 | `file_loading_priority` | File loading priority | Prioridad de carga de archivos |

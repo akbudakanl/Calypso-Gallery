@@ -281,7 +281,7 @@
     <string name="render_ultra_hdr_photos">以 HDR 模式顯示 Ultra HDR 照片</string>
     <string name="on_video_tap">輕觸影片</string>
     <string name="open_in_app_player">開啟應用程式內播放器</string>
-    <string name="open_system_default_player">開啟預設播放器應用程式</string>
+    <string name="open_system_default_player">在其他應用程式中開啟</string>
     <string name="video_double_tap_duration">點兩下跳轉時間</string>
     <string name="video_seek_duration_seconds">%d 秒</string>
     <string name="create_virtual_album">建立虛擬相簿</string>

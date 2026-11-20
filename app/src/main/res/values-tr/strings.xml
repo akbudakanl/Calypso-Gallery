@@ -311,7 +311,7 @@
     <string name="render_ultra_hdr_photos">HDR içinde Ultra HDR fotoğrafları göster</string>
     <string name="on_video_tap">Videoya dokunulduğunda</string>
     <string name="open_in_app_player">Dahili oynatıcıyı aç</string>
-    <string name="open_system_default_player">Varsayılan oynatma uygulamasını aç</string>
+    <string name="open_system_default_player">Diğer uygulamada aç</string>
     <!-- Virtual albums -->
     <string name="create_virtual_album">Sanal albüm oluştur</string>
     <string name="create_new_encrypted_virtual_album">Yeni şifreli sanal albüm oluştur</string>

@@ -225,7 +225,7 @@
     <string name="open_videos_on_separate_screen">Spel videoar på ein eigen skjerm med vassrette rørsler</string>
     <string name="on_video_tap">Ved videotrykk</string>
     <string name="open_in_app_player">Opna spelar i appen</string>
-    <string name="open_system_default_player">Opna standardspelarapp</string>
+    <string name="open_system_default_player">Opne i ein annan app</string>
     <string name="show_notch">Syn skjermhakk viss tilgjengeleg</string>
     <string name="show_bottom_action_names">Vis namn på handlingane i handlingslinja nedst</string>
     <string name="allow_rotating_gestures">Tillat rotering av bilete med fingerrørsler</string>

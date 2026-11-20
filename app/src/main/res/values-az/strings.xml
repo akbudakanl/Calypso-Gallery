@@ -225,7 +225,7 @@
     <string name="open_videos_on_separate_screen">Videoları üfüqi jestlərlə ayrı ekranda oxut</string>
     <string name="on_video_tap">Videoya toxunduqda</string>
     <string name="open_in_app_player">Tətbiqdaxili pleyerdə aç</string>
-    <string name="open_system_default_player">Susmaya görə pleyer tətbiqində aç</string>
+    <string name="open_system_default_player">Digər tətbiqdə aç</string>
     <string name="show_notch">Varsa ekran kəsiyini göstər</string>
     <string name="show_bottom_action_names">Alt əməliyyat çubuğunda ikonların adını göstər</string>
     <string name="allow_rotating_gestures">Şəkilləri jestlərlə döndərməyə icazə ver</string>
