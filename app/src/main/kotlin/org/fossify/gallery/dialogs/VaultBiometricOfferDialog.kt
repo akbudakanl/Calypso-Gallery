@@ -24,6 +24,9 @@ import org.fossify.gallery.helpers.readVaultKdfParams
  * leaving the app without answering leaves biometrics off; the question is never repeated.
  */
 object VaultBiometricOfferDialog {
+    /** Set by Settings so the toggle reflects enrolment immediately. */
+    var onBiometricChanged: (() -> Unit)? = null
+
     fun showIfNeeded(activity: Activity) {
         val config = activity.config
         if (config.vaultBiometricOfferShown) return
@@ -80,7 +83,9 @@ object VaultBiometricOfferDialog {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     val authCipher = result.cryptoObject?.cipher ?: return
-                    CryptoManager.completeBiometricSetup(activity, authCipher)
+                    if (CryptoManager.completeBiometricSetup(activity, authCipher)) {
+                        onBiometricChanged?.invoke()
+                    }
                 }
             }
         )

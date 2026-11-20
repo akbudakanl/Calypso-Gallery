@@ -801,8 +801,8 @@ class SettingsActivity : SimpleActivity() {
         val hasStoragePermission = !(isRPlus() && !isExternalStorageManager())
 
 
-        // 0) Kasa konumu (depolama izni varsa her zaman gösterilir)
-        binding.settingsVaultLocationHolder.beVisibleIf(hasStoragePermission)
+        // 0) Kasa konumu yalnızca kasa varsa görünür (birden fazla kasa arasında geçiş için).
+        binding.settingsVaultLocationHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 1) Şifreli kasa oluştur (bu sadece şifreli kasa oluşturulmamış ise gösterilir)
         binding.settingsCreateVaultHolder.beVisibleIf(hasStoragePermission && !vaultExists)
@@ -854,6 +854,8 @@ class SettingsActivity : SimpleActivity() {
         setupHideVaultKeyPresses()
         setupShowVaultPinDots()
         setupEmptyVault()
+        // Teklif penceresinden biyometrik kurulduysa anahtar hemen yansısın.
+        updateVaultBiometricSwitch()
     }
 
     /**
@@ -1095,7 +1097,13 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupVaultBiometric() {
-        binding.settingsVaultBiometricHolder.beGoneIf(isRPlus() && !isExternalStorageManager())
+        org.fossify.gallery.dialogs.VaultBiometricOfferDialog.onBiometricChanged = {
+            runOnUiThread { setupVaultSettings() }
+        }
+        binding.settingsVaultBiometricHolder.beVisibleIf(
+            doesVaultExist() && (!isRPlus() || isExternalStorageManager()) &&
+                CryptoManager.isBiometricHardwareAvailable(this) && CryptoManager.getOrCreateBiometricKey() != null
+        )
         updateVaultBiometricSwitch()
         binding.settingsVaultBiometricHolder.setOnClickListener {
             if (!doesVaultExist()) {
