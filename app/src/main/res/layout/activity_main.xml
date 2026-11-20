@@ -1,21 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/directories_coordinator"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <org.fossify.commons.views.MySearchMenu
-        android:id="@+id/main_menu"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/directories_holder"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent">
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/directories_switch_searching"
@@ -110,4 +103,12 @@
                 android:textSize="@dimen/normal_text_size" />
         </LinearLayout>
     </RelativeLayout>
-</LinearLayout>
+
+    <!-- Overlay header: lives outside the scrolling content and is therefore always pinned. -->
+    <org.fossify.commons.views.MySearchMenu
+        android:id="@+id/main_menu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:elevation="8dp" />
+</FrameLayout>

@@ -165,6 +165,25 @@ class VaultSecurityDialog(
         // gate, so every credential prompt has the blurred gallery depth instead of flat black.
         val hostBinding = DialogVaultSecurityHostBinding.inflate(activity.layoutInflater)
         hostBinding.vaultSecurityBackdrop.applyPalette(palette)
+
+        if (isSetupMode) {
+            // Pin the tabs to the very top of the screen instead of carrying them inside the
+            // vertically centred form. The exit button then sits just below the left (PIN) tab.
+            (binding.vaultTabs.parent as? ViewGroup)?.removeView(binding.vaultTabs)
+            hostBinding.vaultSecurityTabsHolder.addView(
+                binding.vaultTabs,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+            )
+            (hostBinding.vaultSecurityBack.layoutParams as ViewGroup.MarginLayoutParams).apply {
+                topMargin = activity.resources.getDimensionPixelSize(
+                    org.fossify.commons.R.dimen.smaller_margin
+                )
+            }
+        }
+
         hostBinding.vaultSecurityHostContent.addView(
             binding.root,
             FrameLayout.LayoutParams(
