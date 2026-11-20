@@ -87,29 +87,29 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ | Confirmation prompt for decrypting hidden file(s) |
 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 | Security notice using `剪貼簿` matching `fossify-commons` |
-| 44 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 | Neutral dialog button in language picker |
-| 45 | `file_encrypted_successfully` | File encrypted successfully | 檔案加密成功  | Success toast after encrypting a single file |
-| 46 | `files_encrypted_successfully` | Files encrypted successfully | 檔案加密成功  | Success toast after encrypting multiple files |
-| 47 | `file_decrypted_successfully` | File decrypted successfully | 檔案解密成功    | Success toast after decrypting a single file |
-| 48 | `files_decrypted_successfully` | Files decrypted successfully | 檔案解密成功    | Success toast after decrypting multiple files |
-| 49 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 使用生物辨識存取隱藏項目 | Settings switch, setup prompt title, and vault security dialog button |
-| 50 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 請先啟用隱藏項目的密碼保護 | Toast shown when enabling biometrics before hidden-item password protection |
-| 51 | `biometric_unlock_vault` | Unlock encrypted vault | 解鎖加密保險箱 | BiometricPrompt title when unlocking the encrypted vault |
-| 52 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 驗證您的生物辨識身分以存取隱藏項目 | BiometricPrompt subtitle when unlocking hidden items |
-| 53 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 確認您的生物辨識身分以啟用保險箱的生物辨識存取 | BiometricPrompt subtitle when enabling biometric vault access |
-| 54 | `use_password_or_pin` | Use PIN / Password | 使用 PIN 碼 / 密碼 | BiometricPrompt negative button to fall back to PIN/password |
-| 55 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。 | Toast shown when biometric credentials changed and Keystore key invalidated |
-| 56 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | 此裝置上找不到生物辨識硬體或已註冊的憑證 | Toast shown when no biometric hardware or enrolled credentials exist |
-| 57 | `default_hidden_album` | Default Hidden Album | 預設隱藏相簿 | Settings / picker label for default hidden album |
-| 58 | `select_hidden_album` | Select Encrypted Album | 選擇加密相簿 | Dialog title for choosing the target encrypted album |
-| 59 | `create_new_hidden_album` | Create New Encrypted Album | 建立新加密相簿 | Action label to create a new encrypted album |
-| 60 | `new_hidden_album` | New encrypted album | 新加密相簿 | Input hint / default label for a new encrypted album |
-| 61 | `hidden_album_name_empty` | Album name cannot be empty | 相簿名稱不能為空 | Validation error when hidden album name is blank |
-| 62 | `file_hidden_to_album` | File encrypted to \"%s\" | 檔案已加密至「%s」 | Success toast after encrypting a single file into album `%s` |
-| 63 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個檔案已加密至「%2$s」 | Success toast after encrypting `%1$d` files into album `%2$s` |
-| 64 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 繼續向下拉以開啟加密保險箱 | Vault pull gesture hint shown while the pull is below the open threshold |
-| 65 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 按住不放以開啟加密保險箱 | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
-| 66 | `release_to_open_vault` | Release to open Encrypted Vault | 放開以開啟加密保險箱 | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
+| 36 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 | Neutral dialog button in language picker |
+| 37 | `file_encrypted_successfully` | File encrypted successfully | 檔案加密成功  | Success toast after encrypting a single file |
+| 38 | `files_encrypted_successfully` | Files encrypted successfully | 檔案加密成功  | Success toast after encrypting multiple files |
+| 39 | `file_decrypted_successfully` | File decrypted successfully | 檔案解密成功    | Success toast after decrypting a single file |
+| 40 | `files_decrypted_successfully` | Files decrypted successfully | 檔案解密成功    | Success toast after decrypting multiple files |
+| 41 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 使用生物辨識存取隱藏項目 | Settings switch, setup prompt title, and vault security dialog button |
+| 42 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 請先啟用隱藏項目的密碼保護 | Toast shown when enabling biometrics before hidden-item password protection |
+| 43 | `biometric_unlock_vault` | Unlock encrypted vault | 解鎖加密保險箱 | BiometricPrompt title when unlocking the encrypted vault |
+| 44 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 驗證您的生物辨識身分以存取隱藏項目 | BiometricPrompt subtitle when unlocking hidden items |
+| 45 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 確認您的生物辨識身分以啟用保險箱的生物辨識存取 | BiometricPrompt subtitle when enabling biometric vault access |
+| 46 | `use_password_or_pin` | Use PIN / Password | 使用 PIN 碼 / 密碼 | BiometricPrompt negative button to fall back to PIN/password |
+| 47 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。 | Toast shown when biometric credentials changed and Keystore key invalidated |
+| 48 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | 此裝置上找不到生物辨識硬體或已註冊的憑證 | Toast shown when no biometric hardware or enrolled credentials exist |
+| 49 | `default_hidden_album` | Default Hidden Album | 預設隱藏相簿 | Settings / picker label for default hidden album |
+| 50 | `select_hidden_album` | Select Encrypted Album | 選擇加密相簿 | Dialog title for choosing the target encrypted album |
+| 51 | `create_new_hidden_album` | Create New Encrypted Album | 建立新加密相簿 | Action label to create a new encrypted album |
+| 52 | `new_hidden_album` | New encrypted album | 新加密相簿 | Input hint / default label for a new encrypted album |
+| 53 | `hidden_album_name_empty` | Album name cannot be empty | 相簿名稱不能為空 | Validation error when hidden album name is blank |
+| 54 | `file_hidden_to_album` | File encrypted to \"%s\" | 檔案已加密至「%s」 | Success toast after encrypting a single file into album `%s` |
+| 55 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個檔案已加密至「%2$s」 | Success toast after encrypting `%1$d` files into album `%2$s` |
+| 56 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 繼續向下拉以開啟加密保險箱 | Vault pull gesture hint shown while the pull is below the open threshold |
+| 57 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 按住不放以開啟加密保險箱 | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
+| 58 | `release_to_open_vault` | Release to open Encrypted Vault | 放開以開啟加密保險箱 | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
 
 ### 1.3 Newly Added Translations for Strings Already Present in the Original Fossify Gallery (3 Keys)
 
@@ -518,257 +518,259 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 |
-| 307 | `stop_showing_hidden` | Stop showing encrypted media | 停止顯示已加密媒體 |
-| 308 | `system_default` | System default | 系統預設 |
-| 309 | `language` | Language | 語言 |
-| 310 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 |
-| 311 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 使用生物辨識存取隱藏項目 |
-| 312 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 請先啟用隱藏項目的密碼保護 |
-| 313 | `biometric_unlock_vault` | Unlock encrypted vault | 解鎖加密保險箱 |
-| 314 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 驗證您的生物辨識身分以存取隱藏項目 |
-| 315 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 確認您的生物辨識身分以啟用保險箱的生物辨識存取 |
-| 316 | `use_password_or_pin` | Use PIN / Password | 使用 PIN 碼 / 密碼 |
-| 317 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。 |
-| 318 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | 此裝置上找不到生物辨識硬體或已註冊的憑證 |
-| 319 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
-| 320 | `select_hidden_album` | Select Encrypted Album | 選擇加密相簿 |
-| 321 | `create_new_hidden_album` | Create New Encrypted Album | 建立新加密相簿 |
-| 322 | `new_hidden_album` | New encrypted album | 新加密相簿 |
-| 323 | `hidden_album_name_empty` | Album name cannot be empty | 相簿名稱不能為空 |
-| 324 | `file_hidden_to_album` | File encrypted to \"%s\" | 檔案已加密至「%s」 |
-| 325 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個檔案已加密至「%2$s」 |
-| 326 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | 您確定要還原 %d 個檔案嗎？ *(CLDR `other`)* |
-| 327 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | 您確定要還原 %d 個檔案嗎？ |
-| 328 | `failed_to_resize_images` (`one`) | Failed to resize %d image | %d 張圖片尺寸調整失敗 *(CLDR `other`)* |
-| 329 | `failed_to_resize_images` (`other`) | Failed to resize %d images | %d 張圖片尺寸調整失敗 |
-| 330 | `search` *(fossify-commons)* | *(inherited from commons)* | 搜尋 |
-| 331 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | 更改日期和時間格式 |
-| 332 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | 保護檔案刪除和移動 |
-| 333 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | 變更檔案後仍保留原有的最後修改日期 |
-| 334 | `clear_cache` *(fossify-commons)* | Clear cache | 清除快取 |
-| 335 | `export_settings` *(fossify-commons)* | Export settings | 匯出設定 |
-| 336 | `import_settings` *(fossify-commons)* | Import settings | 匯入設定 |
-| 337 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | 暫停排除項目 |
-| 338 | `change_view_type` *(fossify-commons)* | Change view type | 顯示方式 |
-| 339 | `contributors` *(fossify-commons)* | Contributors | 貢獻者 |
-| 340 | `known_issues` *(fossify-commons)* | Known issues | 已知問題 |
-| 341 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | 贊助 Fossify |
-| 342 | `privacy_policy` *(fossify-commons)* | Privacy policy | 隱私政策 |
-| 343 | `create_shortcut` *(fossify-commons)* | Create shortcut | 建立捷徑 |
-| 344 | `print` *(fossify-commons)* | Print | 列印 |
-| 345 | `search_files` *(fossify-commons)* | Search files | 搜尋檔案 |
-| 346 | `search_folders` *(fossify-commons)* | Search folders | 搜尋資料夾 |
-| 347 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 繼續向下拉以開啟加密保險箱 |
-| 348 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 按住不放以開啟加密保險箱 |
-| 349 | `release_to_open_vault` | Release to open Encrypted Vault | 放開以開啟加密保險箱 |
-| 350 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | 管理排除的資料夾 |
-| 351 | `exclude` *(fossify-commons)* | Exclude | 排除 |
-| 352 | `exclude_folder` *(fossify-commons)* | Exclude folder | 排除資料夾 |
-| 353 | `lock_folder` *(fossify-commons)* | Lock folder | 上鎖資料夾 |
-| 354 | `change_cover_image` *(fossify-commons)* | Change cover image | 更換封面圖片 |
-| 355 | `select_photo` *(fossify-commons)* | Select photo | 選擇相片 |
-| 356 | `use_default` *(fossify-commons)* | Use default | 使用預設 |
-| 357 | `column_count` *(fossify-commons)* | Column count | 欄數 |
-| 358 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | 開啟回收桶 |
-| 359 | `grid` *(fossify-commons)* | Grid | 格狀 |
-| 360 | `list` *(fossify-commons)* | List | 列表 |
-| 361 | `resize` *(fossify-commons)* | Resize | 調整尺寸 |
-| 362 | `version_placeholder` *(fossify-commons)* | Version %s | 版本 %s |
-| 363 | `number_of_items` *(fossify-commons)* | Number of items | 項目數 |
-| 364 | `random` *(fossify-commons)* | Random | 隨機 |
-| 365 | `shuffle` | Shuffle | 隨機排列 |
-| 366 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | 停止顯示已排除的項目 |
-| 367 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | 複製到剪貼簿 |
-| 368 | `encrypt` | Encrypt | 加密 |
-| 369 | `decrypt` | Decrypt | 解密 |
-| 370 | `encrypt_album` | Encrypt album | 加密相簿 |
-| 371 | `decrypt_album` | Decrypt album | 解密相簿 |
-| 372 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | 建立新的加密虛擬相簿 |
-| 373 | `new_album` | New album | 新增相簿 |
-| 374 | `filename_without_zip` | Filename (without .zip) | 檔案名稱（不含 .zip） |
-| 375 | `favorites_already_exist` | You already have a favorites list | 您已經有一個我的最愛清單 |
-| 376 | `delete_existing_list` | Delete existing list | 刪除現有清單 |
-| 377 | `merge_lists` | Merge lists | 合併清單 |
-| 378 | `confirm` | Confirm | 確認 |
-| 379 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密此相簿嗎？其中的所有媒體檔案都會被加密並移至加密保險箱，原始檔案將會被刪除。 |
-| 380 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密所選相簿嗎？其中的所有媒體檔案都會被加密並移至加密保險箱，原始檔案將會被刪除。 |
-| 381 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | 確定要加密此檔案嗎？它將會被加密並移至加密保險箱，原始檔案將會被刪除。 |
-| 382 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密所選檔案嗎？它們將會被加密並移至加密保險箱，原始檔案將會被刪除。 |
-| 383 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | 所選檔案複製到加密保險箱時將會被加密。是否要繼續？ |
-| 384 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | 加密 / 解密 |
-| 385 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | 選取多個檔案時允許批次重新命名 |
-| 386 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | 保留原始檔案，僅從此虛擬相簿中移除 |
-| 387 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | 保留原始檔案，僅從我的最愛中移除 |
-| 388 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | 從我的最愛和虛擬相簿刪除檔案時，一併刪除原始檔案 |
-| 389 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | 加密相簿無法作為此操作的目標 |
-| 390 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | 此操作無法同時結合已加密與未加密的項目 |
-| 391 | `lock_album` | Lock album | 鎖定相簿 |
-| 392 | `unlock_album` | Unlock album | 解鎖相簿 |
-| 393 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | 是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。 |
-| 394 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | 將我的最愛和虛擬相簿備份至裝置儲存空間 |
-| 394 | `encrypt_info_title` | How Encryption Works | 加密運作方式 |
-| 395 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 |
-| 396 | `decrypt_info_title` | How Decryption Works | 解密運作方式 |
-| 397 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將加密相簿或檔案解密時，會以原始名稱與格式還原至所選的目的地資料夾，並從加密保險箱中移除。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 |
-| 398 | `vault_location` | Vault location | 保險箱位置 |
-| 399 | `vault_location_standard_summary` | Standard (Internal Storage) | 標準（內部儲存空間） |
-| 400 | `vault_location_unavailable_summary` | External drive disconnected (%s) | 外接磁碟機已中斷連線 (%s) |
-| 401 | `select_vault_location` | Select vault location | 選擇保險箱位置 |
-| 402 | `vault_setup_action_title` | Encrypted vault | 加密保險箱 |
-| 403 | `create_new_vault_option` | Create new vault | 建立新保險箱 |
-| 404 | `use_existing_vault_option` | Use existing vault | 使用現有保險箱 |
-| 405 | `where_to_create_vault_title` | Where should the vault be created? | 要在哪裡建立保險箱？ |
-| 406 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 預設位置（內部 > Calypso Gallery > Secrets） |
-| 407 | `vault_location_custom_short` | Custom Location | 自訂位置 |
-| 408 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 在所選資料夾中找不到現有的加密保險箱 (.vault)。 |
-| 409 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | 在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。 |
-| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | 標準位置（內部儲存空間 > Calypso Gallery > Secrets） |
-| 411 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | 自訂 / 外部位置（USB 磁碟機、SD 卡或自訂資料夾） |
-| 412 | `external_vault_unavailable_title` | External vault unavailable | 無法存取外部保險箱 |
-| 413 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 您設定的保險箱位置 (%s) 目前已中斷連線或無法使用。請接上磁碟機並輕觸「重試」，或選擇其他保險箱位置。 |
-| 414 | `retry` | Retry | 重試 |
-| 415 | `change_vault_location` | Change location | 變更位置 |
-| 416 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | 在 %s 找到現有保險箱。請輸入密碼或 PIN 以解鎖。 |
-| 417 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | %s 尚無保險箱。是否要在此位置建立新的加密保險箱？ |
-| 418 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | 此 USB 路徑僅透過 Android 虛擬 OTG 提供者公開，無法直接作為檔案系統路徑存取。請選擇已掛載的儲存目錄，或內部儲存空間 / SD 卡上的資料夾。 |
-| 419 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | 所選資料夾不存在，或無法在此裝置上寫入。 |
-| 420 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | 所選資料夾不存在，或無法在此裝置上讀取。 |
-| 421 | `sync_vault_from_external` | Import encrypted media files to encrypted section | 將加密的媒體檔案匯入至加密區域 |
-| 422 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | 加密媒體匯入運作方式：\n\n1. 統一的 Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。 |
-| 423 | `conflict_handling_mode_label` | File conflict & duplicate resolution | 檔案衝突與重複處理方式 |
-| 424 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | 全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)） |
-| 425 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | 智慧對話方塊（自動略過相同檔案，僅在內容不同時詢問） |
-| 426 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | 相簿衝突（加密 / 解密） |
-| 427 | `album_crypto_conflict_ask` | Always ask (Default) | 一律詢問（預設） |
-| 428 | `album_crypto_conflict_merge` | Merge into existing album | 合併至現有相簿 |
-| 429 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | 合併至現有相簿並自動刪除相同來源 |
-| 430 | `album_crypto_conflict_rename` | Create new album as (1) | 建立新相簿為 (1) |
-| 431 | `album_crypto_conflict_title` | Album Already Exists | 相簿已存在 |
-| 432 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | 目的地已存在名為「%s」的相簿。您要如何處理？ |
-| 433 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | 所選的 %1$d 個相簿已存在於目的地。您要如何處理？\n\n您的選擇將套用至所有衝突的相簿。若要為每個相簿分別選擇，請逐一選取並處理。 |
-| 434 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | 建立新相簿為「%s」 |
-| 435 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | 建立新相簿為 (1)、(2)、… |
-| 436 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | 合併至現有的「%s」 |
-| 437 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | 合併至現有相簿 |
-| 438 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | 刪除相同的來源檔案（已 100% 逐位元驗證） |
-| 439 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | 記住相簿衝突選擇（合併或重新命名） |
-| 440 | `album_crypto_merge_identical_title` | Identical Files During Merge | 合併期間的相同檔案 |
-| 441 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 合併至「%1$s」時，若目的地已有 100%% 位元完全相同的檔案，要刪除或保留其來源複本？ |
-| 442 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 合併 %1$d 個衝突相簿時，若目的地已有 100%% 位元完全相同的檔案，要刪除或保留其來源複本？ |
-| 443 | `delete_identical_sources` | Delete identical | 刪除相同檔案 |
-| 444 | `keep_identical_sources` | Keep in source | 保留於來源 |
-| 445 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | 大型檔案快速重複檢查 (>8 MB) |
-| 446 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 對包含大型檔案的傳輸至關重要：每個檔案僅檢查 5 個區塊（共 1.25 MB）而不必讀取整個檔案，可將重複檢查加速數十倍。 |
-| 447 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 快速重複檢查 (>8 MB) |
-| 449 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | 檔案衝突與重複解決 |
-| 450 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | 複製、移動、加密或解密檔案與相簿時，若目的地已存在同名檔案：\n\n1. 逐位元重複檢查 (RAM)：\n應用程式會先檢查檔案大小，若大小相符，則在 RAM 中逐位元比對檔案內容（加密檔案會在記憶體中檢查，不會將明文寫入磁碟）。複製/移動期間，相同檔案會被略過，原始檔案在來源資料夾中保持不變。在加密/解密期間合併相簿時，您可選擇要刪除或保留 100% 位元完全相同的來源檔案。\n\n2. 同名但內容不同（例如兩個不同的 download.jpg 檔案）：\n• 全自動（預設）：將新檔案命名為 download(1).jpg、download(2).jpg，不中斷您的操作並保留兩個檔案。\n• 智慧對話方塊：仍會靜默略過位元完全相同的檔案，僅在兩個檔案同名但內容不同時詢問（略過 / 覆寫 / 兩者皆保留）。 |
-| 451 | `syncing_vault_progress` | Syncing vault from external drive… | 正在從外接磁碟機同步保險箱… |
-| 452 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保險箱同步完成：\n• 已複製：%1$d\n• 已重新命名（名稱衝突）：%2$d\n• 已略過（相同）：%3$d\n• 失敗：%4$d |
-| 453 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。 |
-| 454 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 所選的來源資料夾與您使用中的保險箱相同。 |
-| 455 | `use_for_this_album` | Use for this album only | 僅套用於此相簿 |
-| 456 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 加密或解密時若目標資料夾已存在相同檔案 |
-| 457 | `crypto_duplicate_source_ask` | Always ask (Default) | 每次詢問（預設） |
-| 458 | `crypto_duplicate_source_keep` | Keep file in source folder | 保留來源資料夾中的檔案 |
-| 459 | `crypto_duplicate_source_delete` | Delete file from source folder | 刪除來源資料夾中的檔案 |
-| 460 | `crypto_duplicate_source_title` | File Already Exists in Destination | 目標資料夾已存在相同檔案 |
-| 461 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要加密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
-| 462 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要解密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
-| 463 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：若對未加密的檔案選擇「保留」，來源檔案將以未加密狀態繼續留在儲存裝置上。 |
-| 464 | `crypto_duplicate_source_always_ask` | Always ask | 每次詢問 |
-| 465 | `export_encrypted_vault` | Export encrypted vault | 匯出加密保險箱 |
-| 466 | `export_vault_only_header` | Export folder containing only .vault file | 僅匯出包含 .vault 檔案的資料夾 |
-| 467 | `export_vault_entire_folder` | Export entire folder | 匯出整個資料夾 |
-| 468 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Secrets 且包含 .vault 檔案的資料夾即可。 |
-| 469 | `exporting_vault_progress` | Exporting encrypted vault… | 正在匯出加密保險箱… |
-| 470 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | 匯出目的地不可為使用中的保險箱資料夾或其子資料夾。 |
-| 471 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準對話方塊 |
-| 472 | `conflict_handling_smart_dialog_summary` | Smart dialog | 智慧對話方塊 |
-| 473 | `conflict_handling_auto_summary` | Automatic (Experimental) | 全自動（實驗性） |
-| 474 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準對話方塊（預設 — 僅檢查檔名，與原始 Fossify Gallery 相同） |
-| 475 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 管理加密期間略過的檔案 |
-| 476 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | 管理解密期間略過的檔案 |
-| 477 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 選擇加密期間在來源資料夾中略過的檔案要保留還是刪除，以確保安全性。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿加密期間的相簿衝突（請參閱下方設定）。 |
-| 478 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | 選擇解密期間在來源資料夾中略過的檔案要保留還是刪除。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿解密期間的相簿衝突（請參閱下方設定）。 |
-| 479 | `skipped_crypto_files_ask` | Always ask (Default) | 一律詢問（預設） |
-| 480 | `skipped_crypto_files_keep` | Keep | 保留 |
-| 481 | `skipped_crypto_files_delete` | Delete | 刪除 |
-| 482 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | 您略過的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
-| 483 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | 您略過的檔案未被轉移。您可以刪除這些檔案。 |
-| 484 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
-| 485 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
-| 486 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
-| 487 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
-| 488 | `skipped_crypto_files_always_ask` | Always ask | 一律詢問 |
-| 489 | `delete_skipped_files_confirm_title` | Are you sure? | 確定要繼續嗎？ |
-| 490 | `delete_skipped_files_confirm_message` | Your files will be deleted! | 您的檔案將會被刪除！ |
-| 491 | `date_tie_break_label` | When content is identical but dates differ | 當內容相同但日期不同時 |
-| 492 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 保留現有檔案的日期（預設） |
-| 493 | `date_tie_break_use_source` | Use the source file\'s date | 使用來源檔案的日期 |
-| 494 | `date_tie_break_ask` | Always ask | 一律詢問 |
-| 495 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | 僅適用於智慧對話方塊與全自動模式。標準對話方塊不受影響。 |
-| 496 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | 為何「一律詢問」會停用智慧對話方塊與全自動模式 |
-| 497 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異。在全自動模式中，相同的檔案會再次寫入為 name(1)，讓資料夾塞滿毫無意義的副本。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 |
-| 498 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
-| 499 | `smart_conflict_incoming_label` | Incoming (New) | 傳入（新） |
-| 500 | `smart_conflict_existing_label` | Existing (Target) | 現有（目標） |
-| 501 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 已損毀或無法讀取 |
-| 502 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 完整性檢查失敗（位元腐壞／損毀） |
-| 503 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | 輕觸任一縮圖以檢視全尺寸預覽 |
-| 504 | `smart_conflict_comparing` | Comparing file contents and dates… | 正在比較檔案內容與日期… |
-| 505 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | 檔案內容不同。\n若這兩個檔案原本應該相同，可能發生了資料損毀。建議保留兩者並加以檢視。 |
-| 506 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | 檔案內容相同，但建立（拍攝日期）時間戳記不同。 |
-| 507 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | 檔案內容相同，但修改日期不同。 |
-| 508 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | 檔案內容相同，但建立與修改日期不同。 |
-| 509 | `smart_conflict_meta_date_taken` | Taken: %s | 拍攝日期：%s |
-| 510 | `smart_conflict_meta_date_modified` | Modified: %s | 修改日期：%s |
-| 511 | `album_type_icons` | Album type icons | 相簿類型圖示 |
-| 512 | `virtual_folders` | Virtual folders | 虛擬資料夾 |
-| 513 | `favorites_album` | Favorites | 我的最愛 |
-| 514 | `excluded_folders_album` | Excluded folders | 已排除的資料夾 |
-| 515 | `hidden_folders_album` | Hidden folders | 隱藏資料夾 |
-| 516 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 暫時顯示隱藏資料夾 |
-| 517 | `stop_showing_hidden_folders` | Stop showing hidden folders | 停止顯示隱藏資料夾 |
-| 518 | `unexclude` | Stop excluding | 停止排除 |
-| 519 | `hide_folder` | Hide | 隱藏 |
-| 520 | `unhide_folder` | Unhide | 取消隱藏 |
-| 521 | `about_title` | About Calypso Gallery | 關於 Calypso Gallery |
-| 522 | `about_version` | Version %1$s (%2$s) | 版本 %1$s (%2$s) |
-| 523 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。 |
-| 524 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | 此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。 |
-| 525 | `about_license_heading` | License | 授權條款 |
-| 526 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。 |
-| 527 | `about_read_gpl_license` | Read the GNU GPL v3 license | 閱讀 GNU GPL v3 授權條款 |
-| 528 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | 閱讀 Tink Apache 2.0 授權條款與歸屬聲明 |
-| 529 | `about_source_heading` | Source code | 原始碼 |
-| 530 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | 本分支完整的對應原始碼保存在分支儲存庫中。已標記的發行版本也提供相對應的原始碼封存檔。該儲存庫包含檢視與重新建置專案所需的建置指令碼、相依性宣告及完整的分支歷史。 |
-| 531 | `about_fork_source` | Fork source code and corresponding source | 分支原始碼與對應原始碼 |
-| 532 | `about_release_sources` | Release source archives | 發行版本原始碼封存檔 |
-| 533 | `about_fork_issues` | Fork issue tracker | 分支問題追蹤器 |
-| 534 | `about_upstream_source` | Upstream Fossify Gallery source code | 上游 Fossify Gallery 原始碼 |
-| 535 | `about_upstream_project` | Upstream Fossify project | 上游 Fossify 專案 |
-| 536 | `about_help_heading` | Help and legal information | 說明與法律資訊 |
-| 537 | `about_faq` | Frequently asked questions | 常見問題 |
-| 538 | `about_third_party_licenses` | Third-party licenses | 第三方授權條款 |
-| 539 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
-| 540 | `tink_license_title` | Tink license and attribution | Tink 授權與歸屬聲明 |
-| 541 | `fork_disclaimer_title` | Fork notice | 分支聲明 |
-| 542 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | 本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。 |
-| 543 | `fork_disclaimer_acknowledge` | I understand | 我瞭解 |
-| 560 | `argon2_profile_title` | Brute-Force resistance | 暴力破解防護 |
-| 561 | `brute_force_mode_title` | Calibration mode | 校正模式 |
-| 562 | `brute_force_mode_time` | Via vault unlock time | 透過保險箱解鎖時間 |
-| 563 | `brute_force_mode_presets` | Via ready-made modes | 透過現成模式 |
-| 564 | `brute_force_time_title` | Target vault unlock time | 目標保險箱解鎖時間 |
-| 565 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | 秒數（2.0–7.0）。應用程式會對此裝置進行一次測量，並將產生的 KDF 參數儲存在保險箱中；實際解鎖時間在其他裝置上會有所不同。 |
-| 566 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
-| 567 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 已儲存：%1$d MiB / %2$d 回合 |
-| 568 | `brute_force_clamped` |  (clamped) |  （已限制） |
-| 569 | `argon2_profile_low` | Low-end device (not recommended) | 低階裝置（不建議） |
-| 570 | `argon2_profile_default` | Default | 預設 |
-| 571 | `argon2_profile_high` | High security | 高安全性 |
-| 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。 |
-| 573 | `argon2_profile_current` | Current: %s | 目前：%s |
+| 299 | `stop_showing_hidden` | Stop showing encrypted media | 停止顯示已加密媒體 |
+| 300 | `system_default` | System default | 系統預設 |
+| 301 | `language` | Language | 語言 |
+| 302 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 |
+| 303 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 使用生物辨識存取隱藏項目 |
+| 304 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 請先啟用隱藏項目的密碼保護 |
+| 305 | `biometric_unlock_vault` | Unlock encrypted vault | 解鎖加密保險箱 |
+| 306 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 驗證您的生物辨識身分以存取隱藏項目 |
+| 307 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 確認您的生物辨識身分以啟用保險箱的生物辨識存取 |
+| 308 | `use_password_or_pin` | Use PIN / Password | 使用 PIN 碼 / 密碼 |
+| 309 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。 |
+| 310 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | 此裝置上找不到生物辨識硬體或已註冊的憑證 |
+| 311 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
+| 312 | `select_hidden_album` | Select Encrypted Album | 選擇加密相簿 |
+| 313 | `create_new_hidden_album` | Create New Encrypted Album | 建立新加密相簿 |
+| 314 | `new_hidden_album` | New encrypted album | 新加密相簿 |
+| 315 | `hidden_album_name_empty` | Album name cannot be empty | 相簿名稱不能為空 |
+| 316 | `file_hidden_to_album` | File encrypted to \"%s\" | 檔案已加密至「%s」 |
+| 317 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個檔案已加密至「%2$s」 |
+| 318 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | 您確定要還原 %d 個檔案嗎？ *(CLDR `other`)* |
+| 319 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | 您確定要還原 %d 個檔案嗎？ |
+| 320 | `failed_to_resize_images` (`one`) | Failed to resize %d image | %d 張圖片尺寸調整失敗 *(CLDR `other`)* |
+| 321 | `failed_to_resize_images` (`other`) | Failed to resize %d images | %d 張圖片尺寸調整失敗 |
+| 322 | `search` *(fossify-commons)* | *(inherited from commons)* | 搜尋 |
+| 323 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | 更改日期和時間格式 |
+| 324 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | 保護檔案刪除和移動 |
+| 325 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | 變更檔案後仍保留原有的最後修改日期 |
+| 326 | `clear_cache` *(fossify-commons)* | Clear cache | 清除快取 |
+| 327 | `export_settings` *(fossify-commons)* | Export settings | 匯出設定 |
+| 328 | `import_settings` *(fossify-commons)* | Import settings | 匯入設定 |
+| 329 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | 暫停排除項目 |
+| 330 | `change_view_type` *(fossify-commons)* | Change view type | 顯示方式 |
+| 331 | `contributors` *(fossify-commons)* | Contributors | 貢獻者 |
+| 332 | `known_issues` *(fossify-commons)* | Known issues | 已知問題 |
+| 333 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | 贊助 Fossify |
+| 334 | `privacy_policy` *(fossify-commons)* | Privacy policy | 隱私政策 |
+| 335 | `create_shortcut` *(fossify-commons)* | Create shortcut | 建立捷徑 |
+| 336 | `print` *(fossify-commons)* | Print | 列印 |
+| 337 | `search_files` *(fossify-commons)* | Search files | 搜尋檔案 |
+| 338 | `search_folders` *(fossify-commons)* | Search folders | 搜尋資料夾 |
+| 339 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 繼續向下拉以開啟加密保險箱 |
+| 340 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 按住不放以開啟加密保險箱 |
+| 341 | `release_to_open_vault` | Release to open Encrypted Vault | 放開以開啟加密保險箱 |
+| 342 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | 管理排除的資料夾 |
+| 343 | `exclude` *(fossify-commons)* | Exclude | 排除 |
+| 344 | `exclude_folder` *(fossify-commons)* | Exclude folder | 排除資料夾 |
+| 345 | `lock_folder` *(fossify-commons)* | Lock folder | 上鎖資料夾 |
+| 346 | `change_cover_image` *(fossify-commons)* | Change cover image | 更換封面圖片 |
+| 347 | `select_photo` *(fossify-commons)* | Select photo | 選擇相片 |
+| 348 | `use_default` *(fossify-commons)* | Use default | 使用預設 |
+| 349 | `column_count` *(fossify-commons)* | Column count | 欄數 |
+| 350 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | 開啟回收桶 |
+| 351 | `grid` *(fossify-commons)* | Grid | 格狀 |
+| 352 | `list` *(fossify-commons)* | List | 列表 |
+| 353 | `resize` *(fossify-commons)* | Resize | 調整尺寸 |
+| 354 | `version_placeholder` *(fossify-commons)* | Version %s | 版本 %s |
+| 355 | `number_of_items` *(fossify-commons)* | Number of items | 項目數 |
+| 356 | `random` *(fossify-commons)* | Random | 隨機 |
+| 357 | `shuffle` | Shuffle | 隨機排列 |
+| 358 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | 停止顯示已排除的項目 |
+| 359 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | 複製到剪貼簿 |
+| 360 | `encrypt` | Encrypt | 加密 |
+| 361 | `decrypt` | Decrypt | 解密 |
+| 362 | `encrypt_album` | Encrypt album | 加密相簿 |
+| 363 | `decrypt_album` | Decrypt album | 解密相簿 |
+| 364 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | 建立新的加密虛擬相簿 |
+| 365 | `new_album` | New album | 新增相簿 |
+| 366 | `filename_without_zip` | Filename (without .zip) | 檔案名稱（不含 .zip） |
+| 367 | `favorites_already_exist` | You already have a favorites list | 您已經有一個我的最愛清單 |
+| 368 | `delete_existing_list` | Delete existing list | 刪除現有清單 |
+| 369 | `merge_lists` | Merge lists | 合併清單 |
+| 370 | `confirm` | Confirm | 確認 |
+| 371 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密此相簿嗎？其中的所有媒體檔案都會被加密並移至加密保險箱，原始檔案將會被刪除。 |
+| 372 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密所選相簿嗎？其中的所有媒體檔案都會被加密並移至加密保險箱，原始檔案將會被刪除。 |
+| 373 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | 確定要加密此檔案嗎？它將會被加密並移至加密保險箱，原始檔案將會被刪除。 |
+| 374 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | 確定要加密所選檔案嗎？它們將會被加密並移至加密保險箱，原始檔案將會被刪除。 |
+| 375 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | 所選檔案複製到加密保險箱時將會被加密。是否要繼續？ |
+| 376 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | 加密 / 解密 |
+| 377 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | 選取多個檔案時允許批次重新命名 |
+| 378 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | 保留原始檔案，僅從此虛擬相簿中移除 |
+| 379 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | 保留原始檔案，僅從我的最愛中移除 |
+| 380 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | 從我的最愛和虛擬相簿刪除檔案時，一併刪除原始檔案 |
+| 381 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | 加密相簿無法作為此操作的目標 |
+| 382 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | 此操作無法同時結合已加密與未加密的項目 |
+| 383 | `lock_album` | Lock album | 鎖定相簿 |
+| 384 | `unlock_album` | Unlock album | 解鎖相簿 |
+| 385 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | 是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。 |
+| 386 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | 將我的最愛和虛擬相簿備份至裝置儲存空間 |
+| 387 | `encrypt_info_title` | How Encryption Works | 加密運作方式 |
+| 388 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 |
+| 389 | `decrypt_info_title` | How Decryption Works | 解密運作方式 |
+| 390 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將加密相簿或檔案解密時，會以原始名稱與格式還原至所選的目的地資料夾，並從加密保險箱中移除。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 |
+| 391 | `vault_location` | Vault location | 保險箱位置 |
+| 392 | `vault_location_standard_summary` | Standard (Internal Storage) | 標準（內部儲存空間） |
+| 393 | `vault_location_unavailable_summary` | External drive disconnected (%s) | 外接磁碟機已中斷連線 (%s) |
+| 394 | `select_vault_location` | Select vault location | 選擇保險箱位置 |
+| 395 | `vault_setup_action_title` | Encrypted vault | 加密保險箱 |
+| 396 | `create_new_vault_option` | Create new vault | 建立新保險箱 |
+| 397 | `use_existing_vault_option` | Use existing vault | 使用現有保險箱 |
+| 398 | `where_to_create_vault_title` | Where should the vault be created? | 要在哪裡建立保險箱？ |
+| 399 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 預設位置（內部 > Calypso Gallery > Secrets） |
+| 400 | `vault_location_custom_short` | Custom Location | 自訂位置 |
+| 401 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 在所選資料夾中找不到現有的加密保險箱 (.vault)。 |
+| 402 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | 在 %s 找到現有的加密保險箱。是否要解鎖並使用？輕觸「否」可選擇其他資料夾。 |
+| 403 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | 標準位置（內部儲存空間 > Calypso Gallery > Secrets） |
+| 404 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | 自訂 / 外部位置（USB 磁碟機、SD 卡或自訂資料夾） |
+| 405 | `external_vault_unavailable_title` | External vault unavailable | 無法存取外部保險箱 |
+| 406 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 您設定的保險箱位置 (%s) 目前已中斷連線或無法使用。請接上磁碟機並輕觸「重試」，或選擇其他保險箱位置。 |
+| 407 | `retry` | Retry | 重試 |
+| 408 | `change_vault_location` | Change location | 變更位置 |
+| 409 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | 在 %s 找到現有保險箱。請輸入密碼或 PIN 以解鎖。 |
+| 410 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | %s 尚無保險箱。是否要在此位置建立新的加密保險箱？ |
+| 411 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | 此 USB 路徑僅透過 Android 虛擬 OTG 提供者公開，無法直接作為檔案系統路徑存取。請選擇已掛載的儲存目錄，或內部儲存空間 / SD 卡上的資料夾。 |
+| 412 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | 所選資料夾不存在，或無法在此裝置上寫入。 |
+| 413 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | 所選資料夾不存在，或無法在此裝置上讀取。 |
+| 414 | `sync_vault_from_external` | Import encrypted media files to encrypted section | 將加密的媒體檔案匯入至加密區域 |
+| 415 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | 加密媒體匯入運作方式：\n\n1. 統一的 Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。 |
+| 416 | `conflict_handling_mode_label` | File conflict & duplicate resolution | 檔案衝突與重複處理方式 |
+| 417 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | 全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)） |
+| 418 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | 智慧對話方塊（自動略過相同檔案，僅在內容不同時詢問） |
+| 419 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | 相簿衝突（加密 / 解密） |
+| 420 | `album_crypto_conflict_ask` | Always ask (Default) | 一律詢問（預設） |
+| 421 | `album_crypto_conflict_merge` | Merge into existing album | 合併至現有相簿 |
+| 422 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | 合併至現有相簿並自動刪除相同來源 |
+| 423 | `album_crypto_conflict_rename` | Create new album as (1) | 建立新相簿為 (1) |
+| 424 | `album_crypto_conflict_title` | Album Already Exists | 相簿已存在 |
+| 425 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | 目的地已存在名為「%s」的相簿。您要如何處理？ |
+| 426 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | 所選的 %1$d 個相簿已存在於目的地。您要如何處理？\n\n您的選擇將套用至所有衝突的相簿。若要為每個相簿分別選擇，請逐一選取並處理。 |
+| 427 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | 建立新相簿為「%s」 |
+| 428 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | 建立新相簿為 (1)、(2)、… |
+| 429 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | 合併至現有的「%s」 |
+| 430 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | 合併至現有相簿 |
+| 431 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | 刪除相同的來源檔案（已 100% 逐位元驗證） |
+| 432 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | 記住相簿衝突選擇（合併或重新命名） |
+| 433 | `album_crypto_merge_identical_title` | Identical Files During Merge | 合併期間的相同檔案 |
+| 434 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 合併至「%1$s」時，若目的地已有 100%% 位元完全相同的檔案，要刪除或保留其來源複本？ |
+| 435 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 合併 %1$d 個衝突相簿時，若目的地已有 100%% 位元完全相同的檔案，要刪除或保留其來源複本？ |
+| 436 | `delete_identical_sources` | Delete identical | 刪除相同檔案 |
+| 437 | `keep_identical_sources` | Keep in source | 保留於來源 |
+| 438 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | 大型檔案快速重複檢查 (>8 MB) |
+| 439 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 對包含大型檔案的傳輸至關重要：每個檔案僅檢查 5 個區塊（共 1.25 MB）而不必讀取整個檔案，可將重複檢查加速數十倍。 |
+| 440 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 快速重複檢查 (>8 MB) |
+| 441 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | 檔案衝突與重複解決 |
+| 442 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | 複製、移動、加密或解密檔案與相簿時，若目的地已存在同名檔案：\n\n1. 逐位元重複檢查 (RAM)：\n應用程式會先檢查檔案大小，若大小相符，則在 RAM 中逐位元比對檔案內容（加密檔案會在記憶體中檢查，不會將明文寫入磁碟）。複製/移動期間，相同檔案會被略過，原始檔案在來源資料夾中保持不變。在加密/解密期間合併相簿時，您可選擇要刪除或保留 100% 位元完全相同的來源檔案。\n\n2. 同名但內容不同（例如兩個不同的 download.jpg 檔案）：\n• 全自動（預設）：將新檔案命名為 download(1).jpg、download(2).jpg，不中斷您的操作並保留兩個檔案。\n• 智慧對話方塊：仍會靜默略過位元完全相同的檔案，僅在兩個檔案同名但內容不同時詢問（略過 / 覆寫 / 兩者皆保留）。 |
+| 443 | `syncing_vault_progress` | Syncing vault from external drive… | 正在從外接磁碟機同步保險箱… |
+| 444 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保險箱同步完成：\n• 已複製：%1$d\n• 已重新命名（名稱衝突）：%2$d\n• 已略過（相同）：%3$d\n• 失敗：%4$d |
+| 445 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。 |
+| 446 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 所選的來源資料夾與您使用中的保險箱相同。 |
+| 447 | `use_for_this_album` | Use for this album only | 僅套用於此相簿 |
+| 448 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 加密或解密時若目標資料夾已存在相同檔案 |
+| 449 | `crypto_duplicate_source_ask` | Always ask (Default) | 每次詢問（預設） |
+| 450 | `crypto_duplicate_source_keep` | Keep file in source folder | 保留來源資料夾中的檔案 |
+| 451 | `crypto_duplicate_source_delete` | Delete file from source folder | 刪除來源資料夾中的檔案 |
+| 452 | `crypto_duplicate_source_title` | File Already Exists in Destination | 目標資料夾已存在相同檔案 |
+| 453 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要加密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
+| 454 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 您要解密的部分檔案已存在於目標資料夾中。要如何處理來源資料夾中的檔案？ |
+| 455 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：若對未加密的檔案選擇「保留」，來源檔案將以未加密狀態繼續留在儲存裝置上。 |
+| 456 | `crypto_duplicate_source_always_ask` | Always ask | 每次詢問 |
+| 457 | `export_encrypted_vault` | Export encrypted vault | 匯出加密保險箱 |
+| 458 | `export_vault_only_header` | Export folder containing only .vault file | 僅匯出包含 .vault 檔案的資料夾 |
+| 459 | `export_vault_entire_folder` | Export entire folder | 匯出整個資料夾 |
+| 460 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 若要將使用支援的 CLI 工具在其他裝置上加密的媒體項目新增至手機上的加密保險箱，您只需使用一個名為 Secrets 且包含 .vault 檔案的資料夾即可。 |
+| 461 | `exporting_vault_progress` | Exporting encrypted vault… | 正在匯出加密保險箱… |
+| 462 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | 匯出目的地不可為使用中的保險箱資料夾或其子資料夾。 |
+| 463 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準對話方塊 |
+| 464 | `conflict_handling_smart_dialog_summary` | Smart dialog | 智慧對話方塊 |
+| 465 | `conflict_handling_auto_summary` | Automatic (Experimental) | 全自動（實驗性） |
+| 466 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準對話方塊（預設 — 僅檢查檔名，與原始 Fossify Gallery 相同） |
+| 467 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 管理加密期間略過的檔案 |
+| 468 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 選擇加密期間在來源資料夾中略過的檔案要保留還是刪除，以確保安全性。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿加密期間的相簿衝突（請參閱下方設定）。 |
+| 469 | `skipped_crypto_files_ask` | Always ask (Default) | 一律詢問（預設） |
+| 470 | `skipped_crypto_files_keep` | Keep | 保留 |
+| 471 | `skipped_crypto_files_delete` | Delete | 刪除 |
+| 472 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | 您略過的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 473 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | 您略過的檔案未被轉移。您可以刪除這些檔案。 |
+| 474 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 475 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
+| 476 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。為了您的隱私，可以刪除這些檔案。 |
+| 477 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | 您略過的檔案以及目的地資料夾中已存在的檔案未被轉移。您可以刪除這些檔案。 |
+| 478 | `skipped_crypto_files_always_ask` | Always ask | 一律詢問 |
+| 479 | `delete_skipped_files_confirm_title` | Are you sure? | 確定要繼續嗎？ |
+| 480 | `delete_skipped_files_confirm_message` | Your files will be deleted! | 您的檔案將會被刪除！ |
+| 481 | `date_tie_break_label` | When content is identical but dates differ | 當內容相同但日期不同時 |
+| 482 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 保留現有檔案的日期（預設） |
+| 483 | `date_tie_break_use_source` | Use the source file\'s date | 使用來源檔案的日期 |
+| 484 | `date_tie_break_ask` | Always ask | 一律詢問 |
+| 485 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | 僅適用於智慧對話方塊與全自動模式。標準對話方塊不受影響。 |
+| 486 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | 為何「一律詢問」會停用智慧對話方塊與全自動模式 |
+| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異。在全自動模式中，相同的檔案會再次寫入為 name(1)，讓資料夾塞滿毫無意義的副本。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 |
+| 488 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 489 | `smart_conflict_incoming_label` | Incoming (New) | 傳入（新） |
+| 490 | `smart_conflict_existing_label` | Existing (Target) | 現有（目標） |
+| 491 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 已損毀或無法讀取 |
+| 492 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 完整性檢查失敗（位元腐壞／損毀） |
+| 493 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | 輕觸任一縮圖以檢視全尺寸預覽 |
+| 494 | `smart_conflict_comparing` | Comparing file contents and dates… | 正在比較檔案內容與日期… |
+| 495 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | 檔案內容不同。\n若這兩個檔案原本應該相同，可能發生了資料損毀。建議保留兩者並加以檢視。 |
+| 496 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | 檔案內容相同，但建立（拍攝日期）時間戳記不同。 |
+| 497 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | 檔案內容相同，但修改日期不同。 |
+| 498 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | 檔案內容相同，但建立與修改日期不同。 |
+| 499 | `smart_conflict_meta_date_taken` | Taken: %s | 拍攝日期：%s |
+| 500 | `smart_conflict_meta_date_modified` | Modified: %s | 修改日期：%s |
+| 501 | `album_type_icons` | Album type icons | 相簿類型圖示 |
+| 502 | `virtual_folders` | Virtual folders | 虛擬資料夾 |
+| 503 | `favorites_album` | Favorites | 我的最愛 |
+| 504 | `excluded_folders_album` | Excluded folders | 已排除的資料夾 |
+| 505 | `hidden_folders_album` | Hidden folders | 隱藏資料夾 |
+| 506 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 暫時顯示隱藏資料夾 |
+| 507 | `stop_showing_hidden_folders` | Stop showing hidden folders | 停止顯示隱藏資料夾 |
+| 508 | `unexclude` | Stop excluding | 停止排除 |
+| 509 | `hide_folder` | Hide | 隱藏 |
+| 510 | `unhide_folder` | Unhide | 取消隱藏 |
+| 511 | `about_title` | About Calypso Gallery | 關於 Calypso Gallery |
+| 512 | `about_version` | Version %1$s (%2$s) | 版本 %1$s (%2$s) |
+| 513 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。 |
+| 514 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | 此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。 |
+| 515 | `about_license_heading` | License | 授權條款 |
+| 516 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。 |
+| 517 | `about_read_gpl_license` | Read the GNU GPL v3 license | 閱讀 GNU GPL v3 授權條款 |
+| 518 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | 閱讀 Tink Apache 2.0 授權條款與歸屬聲明 |
+| 519 | `about_source_heading` | Source code | 原始碼 |
+| 520 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | 本分支完整的對應原始碼保存在分支儲存庫中。已標記的發行版本也提供相對應的原始碼封存檔。該儲存庫包含檢視與重新建置專案所需的建置指令碼、相依性宣告及完整的分支歷史。 |
+| 521 | `about_fork_source` | Fork source code and corresponding source | 分支原始碼與對應原始碼 |
+| 522 | `about_release_sources` | Release source archives | 發行版本原始碼封存檔 |
+| 523 | `about_fork_issues` | Fork issue tracker | 分支問題追蹤器 |
+| 524 | `about_upstream_source` | Upstream Fossify Gallery source code | 上游 Fossify Gallery 原始碼 |
+| 525 | `about_upstream_project` | Upstream Fossify project | 上游 Fossify 專案 |
+| 526 | `about_help_heading` | Help and legal information | 說明與法律資訊 |
+| 527 | `about_faq` | Frequently asked questions | 常見問題 |
+| 528 | `about_third_party_licenses` | Third-party licenses | 第三方授權條款 |
+| 529 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 530 | `tink_license_title` | Tink license and attribution | Tink 授權與歸屬聲明 |
+| 531 | `fork_disclaimer_title` | Fork notice | 分支聲明 |
+| 532 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | 本應用程式並非由 Fossify 團隊開發。Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支；提及原始開發者僅供歸屬之用。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可或支援。\n\n繼續使用即表示您知悉此聲明。分支專屬的變更皆記錄於 FORK_CHANGELOG.md。 |
+| 533 | `fork_disclaimer_acknowledge` | I understand | 我瞭解 |
+| 534 | `argon2_profile_title` | Brute-Force resistance | 暴力破解防護 |
+| 535 | `brute_force_mode_title` | Calibration mode | 校正模式 |
+| 536 | `brute_force_mode_time` | Via vault unlock time | 透過保險箱解鎖時間 |
+| 537 | `brute_force_mode_presets` | Via ready-made modes | 透過現成模式 |
+| 538 | `brute_force_time_title` | Target vault unlock time | 目標保險箱解鎖時間 |
+| 539 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。 |
+| 540 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限為此裝置的安全標準時間。 |
+| 541 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（此裝置） |
+| 542 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | 此時間超過可選上限（10 秒）。點按即可變更。 |
+| 543 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
+| 544 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 已儲存：%1$d MiB / %2$d 回合 |
+| 545 | `brute_force_clamped` |  (clamped) |  （已限制） |
+| 546 | `argon2_profile_low` | Low-end device (not recommended) | 低階裝置（不建議） |
+| 547 | `argon2_profile_default` | Default | 預設 |
+| 548 | `argon2_profile_high` | High security | 高安全性 |
+| 549 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 若您不清楚自己在做什麼，建議維持預設設定。這只會影響新建立的保險箱與密碼變更。 |
+| 550 | `argon2_profile_current` | Current: %s | 目前：%s |
+| 551 | `show_pin_dots` | Show a dot for each PIN digit | 輸入 PIN 時，每位數字顯示一個圓點 |
 
 ## Settings Headers, Font Options & File Encryption Info
 
@@ -811,3 +813,94 @@ Added to `values-zh-rTW/strings.xml` for the Appearance settings **Custom colors
 | 7 | `custom_theme_name` | Custom theme | 自訂主題 | Base name for newly saved custom themes (suffixed with index) |
 | 8 | `discard_changes_question` | Do you want to save your changes? | 要儲存您的變更嗎？ | Prompt shown when switching themes with unsaved custom color changes |
 | 9 | `continue_without_saving` | Continue without saving | 不儲存並繼續 | Negative dialog button to discard unsaved custom color changes |
+
+## Onboarding & Full-Screen Permission Flow (29 keys)
+
+Added to `values-zh-rTW/strings.xml` for the 3-screen first-launch welcome and full-screen permission flow (unsupported system locales fall back cleanly to English in `values/strings.xml`). Also removed the retired `auto_backup_prompt_message` key since auto-backup is now enabled by default and always shown in Settings.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `onboarding_motto` | No sign-up, no cloud, just your gallery. | 免註冊、無雲端，專屬於您的圖庫。 | Welcome screen tagline |
+| 2 | `onboarding_offline_title` | Completely Offline | 完全離線 | Welcome card 1 title |
+| 3 | `onboarding_offline_desc` | Never connects to the internet. Your data belongs only to you. | 不連線至網際網路。您的資料只屬於您自己。 | Welcome card 1 description |
+| 4 | `onboarding_vault_title` | Encrypted Vault | 加密保險箱 | Welcome card 2 title |
+| 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | 加密您的相片與影片。除了您以外無人能存取。 | Welcome card 2 description |
+| 6 | `onboarding_albums_title` | Playlists for your photos | 相片專屬的播放清單 | Welcome card 3 title |
+| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | 虛擬資料夾讓您無需將相片和影片移出原有資料夾，也不必複製檔案佔用額外空間，就能自由整理到任意數量的相簿中。 | Welcome card 3 description |
+| 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | 顯示您的相片與影片需要媒體存取權限。 | Welcome footer media permission note |
+| 9 | `onboarding_continue` | Continue | 繼續 | Welcome primary button |
+| 10 | `onboarding_media_required_title` | Full media access required | 需要完整的媒體存取權限 | Media permission screen title |
+| 11 | `onboarding_media_required_desc` | Calypso Gallery needs full access to display all your photos and videos. | Calypso 圖庫需要完整存取權限才能顯示您所有的相片與影片。 | Media permission screen description |
+| 12 | `onboarding_media_steps_header` | How to enable permission | 如何開啟權限 | Settings steps card header |
+| 13 | `onboarding_media_step_1` | Settings | 設定 | Settings guide step 1 |
+| 14 | `onboarding_media_step_2` | Permissions | 權限 | Settings guide step 2 |
+| 15 | `onboarding_media_step_3` | Photos and videos | 相片和影片 | Settings guide step 3 |
+| 16 | `onboarding_media_step_4` | Allow all | 一律全部允許 | Settings guide step 4 (final) |
+| 17 | `onboarding_media_required_hint` | Once access is granted, your gallery will open automatically when you return to the app. | 授予權限後返回應用程式，圖庫將會自動開啟。 | Media permission screen return hint |
+| 18 | `onboarding_go_to_settings` | Go to settings | 前往設定 | Media permission primary button |
+| 19 | `onboarding_close` | Close | 關閉 | Media permission secondary button |
+| 20 | `onboarding_all_files_title` | All files access | 所有檔案存取權 | All files access screen title |
+| 21 | `onboarding_all_files_desc` | All files access is recommended for the Encrypted Vault and seamless file management. | 建議開啟所有檔案存取權，以順暢使用加密保險箱與檔案管理功能。 | All files access screen subtitle |
+| 22 | `onboarding_all_files_vault_title` | Encrypted Vault and hidden folders | 加密保險箱與隱藏資料夾 | All files card 1 title |
+| 23 | `onboarding_all_files_vault_desc` | Manage your encrypted files and hidden folders without system restrictions. | 不受系統限制地管理加密檔案與隱藏資料夾。 | All files card 1 description |
+| 24 | `onboarding_all_files_backup_title` | Don\'t lose your Favorites and Virtual Albums | 別遺失我的最愛與虛擬相簿 | All files card 2 title |
+| 25 | `onboarding_all_files_backup_desc` | Keep your favorites and virtual albums automatically backed up on your device even if you accidentally uninstall the app. You can turn off automatic backup anytime in app settings. | 即使不小心解除安裝應用程式，我的最愛與虛擬相簿仍會自動備份在您的裝置上。您隨時可以在應用程式設定中關閉自動備份。 | All files card 2 description |
+| 26 | `onboarding_all_files_offline_title` | Still completely on your device | 依然完全保留在您的裝置上 | All files card 3 title |
+| 27 | `onboarding_all_files_offline_desc` | The app stays completely offline, this permission is used only for local file operations. | 應用程式仍會保持離線運作，此權限僅用於本機檔案操作。 | All files card 3 description |
+| 28 | `onboarding_grant_access` | Grant access | 授予權限 | All files primary button |
+| 29 | `onboarding_not_now` | Not now | 稍後再說 | All files secondary button |
+
+## Vault Lock & Album Header Polish (4 keys)
+
+Added to `values-zh-rTW/strings.xml` for the redesigned Vault Lock screen biometric button and album interior header.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `use_biometrics` | Use biometrics | 使用生物辨識 | Vault lock screen biometric button label |
+| 2 | `media_header_items_count` | %d items | %d 個項目 | MediaActivity album header item count |
+| 3 | `media_header_virtual_album` | Virtual album · %d items | 虛擬相簿 · %d 個項目 | MediaActivity virtual album header subtitle |
+| 4 | `media_header_encrypted_album` | Encrypted album · %d items | 加密相簿 · %d 個項目 | MediaActivity encrypted album header subtitle |
+## Appearance Live Preview (4 keys)
+
+Added to `values-zh-rTW/strings.xml` for the live Appearance preview card and WCAG contrast warning.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `appearance_preview` | Preview | 預覽 | Appearance live preview section header |
+| 2 | `appearance_preview_text` | Your memories, your colors | 您的回憶，您的色彩 | Appearance preview sample headline |
+| 3 | `appearance_preview_button` | Sample button | 範例按鈕 | Appearance preview sample button |
+| 4 | `appearance_contrast_warning` | Low contrast: text %1$.1f:1, button %2$.1f:1. Increase it for readability. | 對比度過低：文字 %1$.1f:1、按鈕 %2$.1f:1。請提高對比以利閱讀。 | WCAG contrast warning in Appearance preview |
+
+## Vault Privacy Input Toggle (1 key)
+
+Added to `values-zh-rTW/strings.xml` for the optional shoulder-surfing protection switch (default off).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `hide_vault_key_presses` | Hide key presses when entering vault password | 輸入保險庫密碼時隱藏按鍵回饋 | Settings switch to hide PIN/password key press feedback |
+
+## PIN Dot Indicator Setting (1 key)
+
+Added to `values-zh-rTW/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 16 digits).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_pin_dots` | Show a dot for each PIN digit | 輸入 PIN 時，每位數字顯示一個圓點 | Settings switch; hidden for alphanumeric vaults and PINs longer than 16 digits |
+
+## KDF Unlock-Time Hint Revision (this revision)
+
+Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values-zh-rTW/strings.xml`. The lower-bound sentence is appended only when the device's measured safe floor is above 1.0 s.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。 | Explanation shown in the target vault unlock time dialog |
+| 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限為此裝置的安全標準時間。 | Appended only when minSec > 1.0 |
+
+## Existing Vault Time Recalculation (this revision)
+
+Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-zh-rTW/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（此裝置） | Value shown for an existing vault |
+| 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | 此時間超過可選上限（10 秒）。點按即可變更。 | Shown when the real time exceeds 10 s |

@@ -407,7 +407,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">Kan ikke kombinere krypterte og ukrypterte elementer i denne handlingen</string>
     <string name="lock_album">Lås album</string>
     <string name="unlock_album">Lås opp album</string>
-    <string name="auto_backup_prompt_message">Vil du at favorittene og de virtuelle albumene dine skal lagres regelmessig i systemlagringen utenfor appminnet? Dette sikrer at du ikke mister favorittlisten og de virtuelle albumene dine hvis du avinstallerer appen. Du kan når som helst opprette en sikkerhetskopi manuelt fra appinnstillingene.</string>
     <string name="auto_backup_favorites_and_virtual_albums">Sikkerhetskopier favoritter og virtuelle album til enhetslagringen</string>
     <string name="access_storage_prompt">Vennligst gi appen vår tilgang til alle filene dine, den fungerer kanskje ikke så bra uten dette.</string>
     <string name="encrypt_info_title">Slik fungerer kryptering</string>
@@ -484,9 +483,7 @@
     <string name="conflict_handling_auto_summary">Automatisk (eksperimentelt)</string>
     <string name="conflict_handling_standard_dialog_short">Standard dialog (standard — sjekker bare filnavnet, som i det originale Fossify Gallery)</string>
     <string name="skipped_encrypt_files_mode_label">Håndter filer som hoppes over under kryptering</string>
-    <string name="skipped_decrypt_files_mode_label">Håndter filer som hoppes over under dekryptering</string>
     <string name="skipped_encrypt_files_info_message">Velg om filer som hoppes over i kildemappen under kryptering skal beholdes eller slettes av sikkerhetshensyn. Dette valget gjelder også ved albumkonflikter under albumkryptering (se innstillingen nedenfor), når kildealbumet slås sammen med et eksisterende album på målet.</string>
-    <string name="skipped_decrypt_files_info_message">Velg om filer som hoppes over i kildemappen under dekryptering skal beholdes eller slettes. Dette valget gjelder også ved albumkonflikter under albumdekryptering (se innstillingen nedenfor), når kildealbumet slås sammen med et eksisterende album på målet.</string>
     <string name="skipped_crypto_files_ask">Alltid spørre (standard)</string>
     <string name="skipped_crypto_files_keep">Behold</string>
     <string name="skipped_crypto_files_delete">Slett</string>
@@ -549,7 +546,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-force-motstand</string>
     <string name="brute_force_time_title">Ønsket opplåsingstid for hvelvet</string>
-    <string name="brute_force_time_hint">Sekunder (2,0–7,0). Appen måler denne enheten én gang og lagrer de resulterende KDF-parameterne i hvelvet; faktisk opplåsingstid varierer på andre enheter.</string>
+    <string name="brute_force_time_hint">Velg tiden som brukes på å åpne det krypterte hvelvet. Å holde denne verdien høy gir ekstra sikkerhet ved å gjøre brute force-angrep vanskeligere.</string>
+    <string name="brute_force_time_min_hint">Nedre grense er denne enhetens sikre standardtid.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (på denne enheten)</string>
+    <string name="brute_force_time_out_of_range">Denne tiden er over det valgbare maksimumet (10 s). Trykk for å endre den.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Lagret: %1$d MiB / %2$d runder</string>
     <string name="brute_force_clamped"> (begrenset)</string>
@@ -581,4 +581,49 @@
     <string name="continue_without_saving">Fortsett uten å lagre</string>
     <string name="vault_no_recovery_warning">Frakoblet kryptering brukes. Hvis du glemmer passordet eller PIN-koden, finnes det ingen måte å gjenopprette hvelvet på.</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">Ingen registrering, ingen sky, bare galleriet ditt.</string>
+    <string name="onboarding_offline_title">Helt frakoblet</string>
+    <string name="onboarding_offline_desc">Kobler seg aldri til internett. Dataene dine tilhører bare deg.</string>
+    <string name="onboarding_vault_title">Kryptert hvelv</string>
+    <string name="onboarding_vault_desc">Krypter bildene og videoene dine. Ingen andre kan få tilgang.</string>
+    <string name="onboarding_albums_title">Spillelister for bildene dine</string>
+    <string name="onboarding_albums_desc">Virtuelle mapper lar deg samle bildene og videoene du vil se sammen i så mange album du ønsker, uten å flytte dem fra mappene sine eller bruke ekstra lagringsplass med kopier.</string>
+    <string name="onboarding_media_permission_note">Tilgang til medier er nødvendig for å vise bildene og videoene dine.</string>
+    <string name="onboarding_continue">Fortsett</string>
+    <string name="onboarding_media_required_title">Full medietilgang kreves</string>
+    <string name="onboarding_media_required_desc">Calypso Gallery trenger full tilgang for å vise alle dine bilder og videoer.</string>
+    <string name="onboarding_media_steps_header">Slik gir du tilgang</string>
+    <string name="onboarding_media_step_1">Innstillinger</string>
+    <string name="onboarding_media_step_2">Tillatelser</string>
+    <string name="onboarding_media_step_3">Bilder og videoer</string>
+    <string name="onboarding_media_step_4">Tillat alle</string>
+    <string name="onboarding_media_required_hint">Når tilgang er gitt, åpnes galleriet automatisk når du går tilbake til appen.</string>
+    <string name="onboarding_go_to_settings">Gå til innstillinger</string>
+    <string name="onboarding_close">Lukk</string>
+    <string name="onboarding_all_files_title">Tilgang til alle filer</string>
+    <string name="onboarding_all_files_desc">Tilgang til alle filer anbefales for kryptert hvelv og sømløs filbehandling.</string>
+    <string name="onboarding_all_files_vault_title">Kryptert hvelv og skjulte mapper</string>
+    <string name="onboarding_all_files_vault_desc">Administrer krypterte filer og skjulte mapper uten systembegrensninger.</string>
+    <string name="onboarding_all_files_backup_title">Ikke mist favorittene og de virtuelle albumene dine</string>
+    <string name="onboarding_all_files_backup_desc">Selv om du ved et uhell sletter appen, sikkerhetskopieres favorittene og de virtuelle albumene dine automatisk på enheten. Du kan når som helst slå av automatisk sikkerhetskopiering i appinnstillingene.</string>
+    <string name="onboarding_all_files_offline_title">Fortsatt helt på enheten din</string>
+    <string name="onboarding_all_files_offline_desc">Appen fortsetter å fungere frakoblet, denne tillatelsen brukes kun til lokale filoperasjoner.</string>
+    <string name="onboarding_grant_access">Gi tilgang</string>
+    <string name="onboarding_not_now">Ikke nå</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d elementer</string>
+    <string name="media_header_virtual_album">Virtuelt album · %d elementer</string>
+    <string name="media_header_encrypted_album">Kryptert album · %d elementer</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">Forhåndsvisning</string>
+    <string name="appearance_preview_text">Dine minner, dine farger</string>
+    <string name="appearance_preview_button">Eksempelknapp</string>
+    <string name="appearance_contrast_warning">Lav kontrast: tekst %1$.1f:1, knapp %2$.1f:1. Øk kontrasten for bedre lesbarhet.</string>
+    <string name="use_biometrics">Bruk biometri</string>
+    <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av hvelvpassord</string>
+    <string name="show_pin_dots">Vis én prikk for hvert siffer når PIN-koden tastes inn</string>
 </resources>

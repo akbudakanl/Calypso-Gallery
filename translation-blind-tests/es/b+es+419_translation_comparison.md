@@ -119,29 +119,29 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
 |  34 | 34           | `confirm_decrypt_hidden_file`               | Are you sure you want to decrypt the hidden file(s)?                                        |                                                                             |
 |  35 | 35           | `copy_to_clipboard_disabled_in_vault`       | Copying to clipboard is disabled while vault is unlocked for security.                      |                                                                             |
-|  44 | 44           | `open_system_language_settings`             | Open system language settings                                                               |                                                                             |
-|  45 | 45           | `file_encrypted_successfully`               | File encrypted successfully                                                                 | Archivo cifrado correctamente                                        |
-|  46 | 46           | `files_encrypted_successfully`              | Files encrypted successfully                                                                | Archivos cifrados correctamente                                      |
-|  47 | 47           | `file_decrypted_successfully`               | File decrypted successfully                                                                 | Archivo descifrado correctamente                                   |
-|  48 | 48           | `files_decrypted_successfully`              | Files decrypted successfully                                                                | Archivos descifrados correctamente                                 |
-|  49 | 49           | `access_hidden_items_with_biometrics`       | Access hidden items with biometrics                                                         | Settings switch, setup prompt title, and vault security dialog button       |
-|  50 | 50           | `enable_hidden_protection_first_prompt`     | Please enable hidden item password protection first                                         | Toast shown when enabling biometrics before hidden-item password protection |
-|  51 | 51           | `biometric_unlock_vault`                    | Unlock encrypted vault                                                                         | BiometricPrompt title when unlocking the encrypted vault                       |
-|  52 | 52           | `biometric_unlock_prompt`                   | Verify your biometric identity to access hidden items                                       | BiometricPrompt subtitle when unlocking hidden items                        |
-|  53 | 53           | `biometric_setup_prompt`                    | Confirm your biometric identity to enable biometric vault access                            | BiometricPrompt subtitle when enabling biometric vault access               |
-|  54 | 54           | `use_password_or_pin`                       | Use PIN / Password                                                                          | BiometricPrompt negative button to fall back to PIN/password                |
-|  55 | 55           | `biometric_key_invalidated`                 | Biometric credentials have changed. Please enter your PIN or password.                      | Toast shown when biometric credentials changed and Keystore key invalidated |
-|  56 | 56           | `no_biometric_hardware_or_enrolled`         | No biometric hardware or enrolled credentials found on this device                          | Toast shown when no biometric hardware or enrolled credentials exist        |
-|  57 | 57           | `default_hidden_album`                      | Default Hidden Album                                                                        | Settings / picker label for default hidden album                            |
-|  58 | 58           | `select_hidden_album`                       | Select Encrypted Album                                                                      | Seleccionar álbum cifrado                                                          |
-|  59 | 59           | `create_new_hidden_album`                   | Create New Encrypted Album                                                                  | Crear nuevo álbum cifrado                                                      |
-|  60 | 60           | `new_hidden_album`                          | New encrypted album                                                                         | Nuevo álbum cifrado                                                              |
-|  61 | 61           | `hidden_album_name_empty`                   | Album name cannot be empty                                                                  | Validation error when hidden album name is blank                            |
-|  62 | 62           | `file_hidden_to_album`                      | File encrypted to \"%s\"                                                                    | Archivo cifrado en \"%s\"                                                       |
-|  63 | 63           | `files_hidden_to_album`                     | %1$d files encrypted to \"%2$s\"                                                            | %1$d archivos cifrados en \"%2$s\"                                              |
-| 64 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Sigue deslizando hacia abajo para la bóveda | Vault pull gesture hint shown while the pull is below the open threshold |
-| 65 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Sigue manteniendo pulsado para abrir la bóveda cifrada | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
-| 66 | `release_to_open_vault` | Release to open Encrypted Vault | Suelta para abrir la bóveda cifrada | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
+|  36 | 44           | `open_system_language_settings`             | Open system language settings                                                               |                                                                             |
+|  37 | 45           | `file_encrypted_successfully`               | File encrypted successfully                                                                 | Archivo cifrado correctamente                                        |
+|  38 | 46           | `files_encrypted_successfully`              | Files encrypted successfully                                                                | Archivos cifrados correctamente                                      |
+|  39 | 47           | `file_decrypted_successfully`               | File decrypted successfully                                                                 | Archivo descifrado correctamente                                   |
+|  40 | 48           | `files_decrypted_successfully`              | Files decrypted successfully                                                                | Archivos descifrados correctamente                                 |
+|  41 | 49           | `access_hidden_items_with_biometrics`       | Access hidden items with biometrics                                                         | Settings switch, setup prompt title, and vault security dialog button       |
+|  42 | 50           | `enable_hidden_protection_first_prompt`     | Please enable hidden item password protection first                                         | Toast shown when enabling biometrics before hidden-item password protection |
+|  43 | 51           | `biometric_unlock_vault`                    | Unlock encrypted vault                                                                         | BiometricPrompt title when unlocking the encrypted vault                       |
+|  44 | 52           | `biometric_unlock_prompt`                   | Verify your biometric identity to access hidden items                                       | BiometricPrompt subtitle when unlocking hidden items                        |
+|  45 | 53           | `biometric_setup_prompt`                    | Confirm your biometric identity to enable biometric vault access                            | BiometricPrompt subtitle when enabling biometric vault access               |
+|  46 | 54           | `use_password_or_pin`                       | Use PIN / Password                                                                          | BiometricPrompt negative button to fall back to PIN/password                |
+|  47 | 55           | `biometric_key_invalidated`                 | Biometric credentials have changed. Please enter your PIN or password.                      | Toast shown when biometric credentials changed and Keystore key invalidated |
+|  48 | 56           | `no_biometric_hardware_or_enrolled`         | No biometric hardware or enrolled credentials found on this device                          | Toast shown when no biometric hardware or enrolled credentials exist        |
+|  49 | 57           | `default_hidden_album`                      | Default Hidden Album                                                                        | Settings / picker label for default hidden album                            |
+|  50 | 58           | `select_hidden_album`                       | Select Encrypted Album                                                                      | Seleccionar álbum cifrado                                                          |
+|  51 | 59           | `create_new_hidden_album`                   | Create New Encrypted Album                                                                  | Crear nuevo álbum cifrado                                                      |
+|  52 | 60           | `new_hidden_album`                          | New encrypted album                                                                         | Nuevo álbum cifrado                                                              |
+|  53 | 61           | `hidden_album_name_empty`                   | Album name cannot be empty                                                                  | Validation error when hidden album name is blank                            |
+|  54 | 62           | `file_hidden_to_album`                      | File encrypted to \"%s\"                                                                    | Archivo cifrado en \"%s\"                                                       |
+|  55 | 63           | `files_hidden_to_album`                     | %1$d files encrypted to \"%2$s\"                                                            | %1$d archivos cifrados en \"%2$s\"                                              |
+| 56 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Sigue deslizando hacia abajo para la bóveda | Vault pull gesture hint shown while the pull is below the open threshold |
+| 57 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Sigue manteniendo pulsado para abrir la bóveda cifrada | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
+| 58 | `release_to_open_vault` | Release to open Encrypted Vault | Suelta para abrir la bóveda cifrada | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
 
 
 ### Newly Added Missing Translations (9 Keys) & Revised Entries (11 Keys)
@@ -505,259 +505,261 @@ Following the previous audit, 22 additional keys were localized in `values-b+es+
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | Bloquear capturas de pantalla en la bóveda oculta |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | ¿Seguro que quieres descifrar los archivos ocultos? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada. |
-| 307 | `stop_showing_hidden` | Stop showing encrypted media | Dejar de mostrar medios cifrados |
-| 308 | `system_default` | System default | Predeterminado del sistema |
-| 309 | `language` | Language | Idioma |
-| 310 | `open_system_language_settings` | Open system language settings | Abrir configuración de idioma del sistema |
-| 311 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Acceder a elementos ocultos con biometría |
-| 312 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Por favor, activa primero la protección con contraseña para elementos ocultos |
-| 313 | `biometric_unlock_vault` | Unlock encrypted vault | Desbloquear bóveda cifrada |
-| 314 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | Verifica tu identidad biométrica para acceder a los elementos ocultos |
-| 315 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | Confirma tu identidad biométrica para activar el acceso biométrico a la bóveda |
-| 316 | `use_password_or_pin` | Use PIN / Password | Usar PIN / Contraseña |
-| 317 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Las credenciales biométricas han cambiado. Por favor, ingresa tu PIN o contraseña. |
-| 318 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | No se encontró hardware biométrico ni credenciales registradas en este dispositivo |
-| 319 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
-| 320 | `select_hidden_album` | Select Encrypted Album | Seleccionar álbum cifrado |
-| 321 | `create_new_hidden_album` | Create New Encrypted Album | Crear nuevo álbum cifrado |
-| 322 | `new_hidden_album` | New encrypted album | Nuevo álbum cifrado |
-| 323 | `hidden_album_name_empty` | Album name cannot be empty | El nombre del álbum no puede estar vacío |
-| 324 | `file_hidden_to_album` | File encrypted to \"%s\" | Archivo cifrado en \"%s\"  |
-| 325 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d archivos cifrados en \"%2$s\"  |
-| 326 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | ¿Confirmas que quieres restaurar %d archivo? |
-| 327 | `restore_confirmation` (`many`) | *(CLDR `many` — falls back to English `other`)* | ¿Confirmas que quieres restaurar %d archivos? |
-| 328 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | ¿Confirmas que quieres restaurar %d archivos? |
-| 329 | `failed_to_resize_images` (`one`) | Failed to resize %d image | Error al cambiar el tamaño de %d imagen |
-| 330 | `failed_to_resize_images` (`many`) | *(CLDR `many` — falls back to English `other`)* | Error al cambiar el tamaño de %d imágenes |
-| 331 | `failed_to_resize_images` (`other`) | Failed to resize %d images | Error al cambiar el tamaño de %d imágenes |
-| 332 | `search` *(fossify-commons)* | *(inherited from commons)* | Buscar |
-| 333 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | Cambiar formato de hora y fecha |
-| 334 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | Proteger con contraseña la eliminación y movimiento de archivos |
-| 335 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | Mantener el último valor modificado viejo en las operaciones de archivo |
-| 336 | `clear_cache` *(fossify-commons)* | Clear cache | Limpiar la caché |
-| 337 | `export_settings` *(fossify-commons)* | Export settings | Exportar configuraciones |
-| 338 | `import_settings` *(fossify-commons)* | Import settings | Importar configuraciones |
-| 339 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | Temporalmente mostrar excluidas |
-| 340 | `change_view_type` *(fossify-commons)* | Change view type | Cambiar tipo de vista |
-| 341 | `contributors` *(fossify-commons)* | Contributors | Colaboradores |
-| 342 | `known_issues` *(fossify-commons)* | Known issues | Errores conocidos |
-| 343 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Donar a Fossify |
-| 344 | `privacy_policy` *(fossify-commons)* | Privacy policy | Política de privacidad |
-| 345 | `create_shortcut` *(fossify-commons)* | Create shortcut | Crear atajo |
-| 346 | `print` *(fossify-commons)* | Print | Imprimir |
-| 347 | `search_files` *(fossify-commons)* | Search files | Buscar archivos |
-| 348 | `search_folders` *(fossify-commons)* | Search folders | Buscar carpetas |
-| 349 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Sigue deslizando hacia abajo para la bóveda |
-| 350 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Sigue manteniendo pulsado para abrir la bóveda cifrada |
-| 351 | `release_to_open_vault` | Release to open Encrypted Vault | Suelta para abrir la bóveda cifrada |
-| 352 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | Administrar carpetas excluidas |
-| 353 | `exclude` *(fossify-commons)* | Exclude | Excluir |
-| 354 | `exclude_folder` *(fossify-commons)* | Exclude folder | Excluir carpeta |
-| 355 | `lock_folder` *(fossify-commons)* | Lock folder | Bloquear carpeta |
-| 356 | `change_cover_image` *(fossify-commons)* | Change cover image | Cambiar imagen de portada |
-| 357 | `select_photo` *(fossify-commons)* | Select photo | Seleccionar foto |
-| 358 | `use_default` *(fossify-commons)* | Use default | Usar predeterminado |
-| 359 | `column_count` *(fossify-commons)* | Column count | Cantidad de columnas |
-| 360 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | Abrir la papelera |
-| 361 | `grid` *(fossify-commons)* | Grid | Cuadrículas |
-| 362 | `list` *(fossify-commons)* | List | Lista |
-| 363 | `resize` *(fossify-commons)* | Resize | Cambiar tamaño |
-| 364 | `version_placeholder` *(fossify-commons)* | Version %s | Versión %s |
-| 365 | `number_of_items` *(fossify-commons)* | Number of items | Número de elementos |
-| 366 | `random` *(fossify-commons)* | Random | Aleatorio |
-| 367 | `shuffle` | Shuffle | Mezclar |
-| 368 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | Dejar de mostrar los excluidos |
-| 369 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | Copiar al portapapeles |
-| 370 | `encrypt` | Encrypt | Cifrar |
-| 371 | `decrypt` | Decrypt | Descifrar |
-| 372 | `encrypt_album` | Encrypt album | Cifrar el álbum |
-| 373 | `decrypt_album` | Decrypt album | Descifrar el álbum |
-| 374 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | Crear nuevo álbum virtual cifrado |
-| 375 | `new_album` | New album | Nuevo álbum |
-| 376 | `filename_without_zip` | Filename (without .zip) | Nombre de archivo (sin .zip) |
-| 377 | `favorites_already_exist` | You already have a favorites list | Ya tienes una lista de favoritos |
-| 378 | `delete_existing_list` | Delete existing list | Eliminar lista existente |
-| 379 | `merge_lists` | Merge lists | Combinar listas |
-| 380 | `confirm` | Confirm | Confirmar |
-| 381 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar este álbum? Todos sus archivos multimedia se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
-| 382 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar los álbumes seleccionados? Todos sus archivos multimedia se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
-| 383 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | ¿Seguro que quieres cifrar este archivo? Se cifrará y se moverá a la bóveda cifrada. El archivo original se eliminará. |
-| 384 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar los archivos seleccionados? Se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
-| 385 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | Los archivos seleccionados se cifrarán al copiarse en la bóveda cifrada. ¿Deseas continuar? |
-| 386 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | Cifrar / Descifrar |
-| 387 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | Permitir cambiar el nombre por lotes cuando se seleccionen varios archivos |
-| 388 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | Conservar el archivo original, quitarlo solo de este álbum virtual |
-| 389 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | Conservar el archivo original, quitarlo solo de favoritos |
-| 390 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | Eliminar la versión original de un archivo al eliminarlo de favoritos y álbumes virtuales |
-| 391 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | No se pueden seleccionar álbumes cifrados como destino para esta operación |
-| 392 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | No se pueden combinar elementos cifrados y sin cifrar en esta operación |
-| 393 | `lock_album` | Lock album | Bloquear álbum |
-| 394 | `unlock_album` | Unlock album | Desbloquear álbum |
-| 395 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | ¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto garantizará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento. |
-| 396 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | Respaldar favoritos y álbumes virtuales en el almacenamiento del dispositivo |
-| 396 | `encrypt_info_title` | How Encryption Works | Cómo funciona el cifrado |
-| 397 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos. |
-| 398 | `decrypt_info_title` | How Decryption Works | Cómo funciona el descifrado |
-| 399 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Estructura de carpetas y archivos:\n• Cuando se descifra un álbum o archivo cifrado, se restaura con su nombre y formato originales en la carpeta de destino seleccionada y se elimina de la bóveda cifrada.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear una carpeta nueva como Álbum(1) o fusionarla con la carpeta de destino existente (configurable en Configuración).\n• Al fusionar, puedes elegir si las copias cifradas verificadas como 100% idénticas bit a bit al destino se eliminan de la bóveda o se conservan.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos. |
-| 400 | `vault_location` | Vault location | Ubicación de la bóveda |
-| 401 | `vault_location_standard_summary` | Standard (Internal Storage) | Estándar (Almacenamiento interno) |
-| 402 | `vault_location_unavailable_summary` | External drive disconnected (%s) | Unidad externa desconectada (%s) |
-| 403 | `select_vault_location` | Select vault location | Seleccionar ubicación de la bóveda |
-| 404 | `vault_setup_action_title` | Encrypted vault | Bóveda cifrada |
-| 405 | `create_new_vault_option` | Create new vault | Crear bóveda nueva |
-| 406 | `use_existing_vault_option` | Use existing vault | Usar bóveda existente |
-| 407 | `where_to_create_vault_title` | Where should the vault be created? | ¿Dónde debería crearse la bóveda? |
-| 408 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Ubicación predeterminada (Interno > Calypso Gallery > Secrets) |
-| 409 | `vault_location_custom_short` | Custom Location | Ubicación personalizada |
-| 410 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada. |
-| 411 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta. |
-| 412 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | Ubicación estándar (Almacenamiento interno > Calypso Gallery > Secrets) |
-| 413 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada) |
-| 414 | `external_vault_unavailable_title` | External vault unavailable | Bóveda externa no disponible |
-| 415 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda. |
-| 416 | `retry` | Retry | Reintentar |
-| 417 | `change_vault_location` | Change location | Cambiar ubicación |
-| 418 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | Se encontró una bóveda existente en %s. Ingresa tu contraseña o PIN para desbloquearla. |
-| 419 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | No existe ninguna bóveda en %s. ¿Quieres crear una nueva bóveda cifrada en esta ubicación? |
-| 420 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | Esta ruta USB solo se expone a través del proveedor OTG virtual de Android y no se puede acceder directamente como ruta del sistema de archivos. Por favor, elige un directorio de almacenamiento montado o una carpeta en el almacenamiento interno o tarjeta SD. |
-| 421 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | La carpeta seleccionada no existe o no se puede escribir en ella en este dispositivo. |
-| 422 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | La carpeta seleccionada no existe o no se puede leer en este dispositivo. |
-| 423 | `sync_vault_from_external` | Import encrypted media files to encrypted section | Importar archivos multimedia cifrados a la sección cifrada |
-| 424 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Carpeta unificada Secrets:\nMantén una carpeta llamada Secrets en tu unidad externa (USB / SD). Puedes guardar allí una copia de seguridad completa de tu bóveda o colocar únicamente el archivo de encabezado .vault de tu bóveda.\n\n2. Cifrado de nuevos archivos multimedia (PC / CLI de Tails):\nLa herramienta CLI sin conexión guarda automáticamente los nuevos archivos cifrados directamente en Secrets. Los archivos en la raíz van al Álbum secreto predeterminado; los archivos en subcarpetas van a los álbumes cifrados correspondientes (o crean otros nuevos).\n\n3. Sincronización inteligente bit a bit:\nSelecciona a continuación tu unidad externa o carpeta Secrets. La aplicación compara la unidad externa con la bóveda de tu teléfono en la memoria RAM:\n• Solo se importan los archivos y álbumes nuevos.\n• Los archivos idénticos bit a bit que ya están en tu bóveda se omiten.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se importan de forma segura como download(1).jpg. |
-| 425 | `conflict_handling_mode_label` | File conflict & duplicate resolution | Resolución de conflictos y duplicados de archivos |
-| 426 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | Totalmente automático (Predeterminado: omitir idénticos, renombrar distintos como (1)) |
-| 427 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | Diálogo inteligente (Omitir idénticos automáticamente, preguntar si el contenido difiere) |
-| 428 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | Conflicto de álbum (Cifrar / Descifrar) |
-| 429 | `album_crypto_conflict_ask` | Always ask (Default) | Preguntar siempre (Predeterminado) |
-| 430 | `album_crypto_conflict_merge` | Merge into existing album | Fusionar con el álbum existente |
-| 431 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | Fusionar con el álbum existente y eliminar orígenes idénticos automáticamente |
-| 432 | `album_crypto_conflict_rename` | Create new album as (1) | Crear álbum nuevo como (1) |
-| 433 | `album_crypto_conflict_title` | Album Already Exists | El álbum ya existe |
-| 434 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | Ya existe un álbum llamado \"%s\" en el destino. ¿Cómo deseas continuar? |
-| 435 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | %1$d álbumes seleccionados ya existen en el destino. ¿Cómo deseas continuar?\n\nTu elección se aplicará a todos los álbumes en conflicto. Para elegir por separado para cada álbum, selecciónalos y procésalos uno por uno. |
-| 436 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | Crear álbum nuevo como \"%s\" |
-| 437 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | Crear álbumes nuevos como (1), (2), … |
-| 438 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | Fusionar en el \"%s\" existente |
-| 439 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | Fusionar en los álbumes existentes |
-| 440 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | Eliminar archivos de origen idénticos (100% verificados bit a bit) |
-| 441 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | Recordar elección de conflicto de álbum (fusionar o renombrar) |
-| 442 | `album_crypto_merge_identical_title` | Identical Files During Merge | Archivos idénticos durante la fusión |
-| 443 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Al fusionar en \"%1$s\", si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen? |
-| 444 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Al fusionar los %1$d álbumes en conflicto, si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen? |
-| 445 | `delete_identical_sources` | Delete identical | Eliminar idénticos |
-| 446 | `keep_identical_sources` | Keep in source | Conservar en origen |
-| 447 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | Comprobación rápida de duplicados para archivos grandes (>8 MB) |
-| 448 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | Crucial para transferencias con archivos grandes: comprueba 5 bloques (1,25 MB en total) por archivo en lugar de leer archivos completos, acelerando decenas de veces la comprobación de duplicados. |
-| 449 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | Comprobación rápida de duplicados (>8 MB) |
-| 451 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | Resolución de conflictos y duplicados de archivos |
-| 452 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | Al copiar, mover, cifrar o descifrar archivos y álbumes, si ya existe un archivo con el mismo nombre en el destino:\n\n1. Comprobación de duplicados bit a bit (RAM):\nLa aplicación comprueba primero los tamaños de archivo y, si coinciden, compara el contenido bit a bit en la RAM (los archivos cifrados se comprueban en memoria sin escribir texto sin cifrar en el disco). Al copiar o mover, los archivos idénticos se omiten y el original permanece intacto en la carpeta de origen. Al fusionar un álbum durante el cifrado o descifrado, puedes elegir si los archivos de origen 100% idénticos bit a bit se eliminan o se conservan.\n\n2. Mismo nombre, distinto contenido (p. ej., dos archivos download.jpg diferentes):\n• Totalmente automático (Predeterminado): Conserva ambos archivos sin interrumpirte nombrando al nuevo download(1).jpg, download(2).jpg.\n• Diálogo inteligente: Sigue omitiendo en silencio los archivos idénticos bit a bit y solo pregunta (Omitir / Sobrescribir / Conservar ambos) cuando dos archivos tienen el mismo nombre pero distinto contenido. |
-| 453 | `syncing_vault_progress` | Syncing vault from external drive… | Sincronizando bóveda desde unidad externa… |
-| 454 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Sincronización de bóveda completada:\n• Copiados: %1$d\n• Renombrados (conflicto de nombre): %2$d\n• Omitidos (idénticos): %3$d\n• Fallidos: %4$d |
-| 455 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada. |
-| 456 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | La carpeta de origen seleccionada es la misma que tu bóveda activa. |
-| 457 | `use_for_this_album` | Use for this album only | Usar solo para este álbum |
-| 458 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Cuando un archivo ya existe en el destino al cifrar o descifrar |
-| 459 | `crypto_duplicate_source_ask` | Always ask (Default) | Preguntar siempre (Predeterminado) |
-| 460 | `crypto_duplicate_source_keep` | Keep file in source folder | Conservar el archivo en la carpeta de origen |
-| 461 | `crypto_duplicate_source_delete` | Delete file from source folder | Eliminar el archivo de la carpeta de origen |
-| 462 | `crypto_duplicate_source_title` | File Already Exists in Destination | El archivo ya existe en el destino |
-| 463 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás cifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen? |
-| 464 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás descifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen? |
-| 465 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Advertencia: Si eliges \"Conservar\" para archivos sin cifrar, el archivo de origen permanecerá sin cifrar en el almacenamiento. |
-| 466 | `crypto_duplicate_source_always_ask` | Always ask | Preguntar siempre |
-| 467 | `export_encrypted_vault` | Export encrypted vault | Exportar bóveda cifrada |
-| 468 | `export_vault_only_header` | Export folder containing only .vault file | Exportar carpeta que contiene solo el archivo .vault |
-| 469 | `export_vault_entire_folder` | Export entire folder | Exportar toda la carpeta |
-| 470 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | Para agregar a la bóveda cifrada de tu teléfono elementos multimedia cifrados en otros dispositivos con la herramienta CLI compatible, solo necesitas usar una carpeta llamada Secrets que contenga el archivo .vault. |
-| 471 | `exporting_vault_progress` | Exporting encrypted vault… | Exportando bóveda cifrada… |
-| 472 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | El destino de exportación no puede ser la carpeta de la bóveda activa ni estar dentro de ella. |
-| 473 | `conflict_handling_standard_dialog_summary` | Standard dialog | Diálogo estándar |
-| 474 | `conflict_handling_smart_dialog_summary` | Smart dialog | Diálogo inteligente |
-| 475 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automático (experimental) |
-| 476 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Diálogo estándar (predeterminado — comprueba solo el nombre del archivo, como la Galería Fossify original) |
-| 477 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Administrar archivos omitidos durante el cifrado |
-| 478 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | Administrar archivos omitidos durante el descifrado |
-| 479 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Elige si los archivos omitidos en la carpeta de origen durante el cifrado se deben conservar o eliminar por seguridad. Esta elección también se aplica a los conflictos de álbumes durante el cifrado de álbumes (consulta la configuración a continuación) cuando el álbum de origen se fusiona con un álbum existente en el destino. |
-| 480 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | Elige si los archivos omitidos en la carpeta de origen durante el descifrado se deben conservar o eliminar. Esta elección también se aplica a los conflictos de álbumes durante el descifrado de álbumes (consulta la configuración a continuación) cuando el álbum de origen se fusiona con un álbum existente en el destino. |
-| 481 | `skipped_crypto_files_ask` | Always ask (Default) | Preguntar siempre (predeterminado) |
-| 482 | `skipped_crypto_files_keep` | Keep | Conservar |
-| 483 | `skipped_crypto_files_delete` | Delete | Eliminar |
-| 484 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Los archivos que omitiste no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
-| 485 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Los archivos que omitiste no se transfirieron. Puedes eliminar estos archivos. |
-| 486 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Los archivos que ya existen en la carpeta de destino no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
-| 487 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Los archivos que ya existen en la carpeta de destino no se transfirieron. Puedes eliminar estos archivos. |
-| 488 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Los archivos que omitiste y los archivos que ya existen en la carpeta de destino no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
-| 489 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Los archivos que omitiste y los archivos que ya existen en la carpeta de destino no se transfirieron. Puedes eliminar estos archivos. |
-| 490 | `skipped_crypto_files_always_ask` | Always ask | Preguntar siempre |
-| 491 | `delete_skipped_files_confirm_title` | Are you sure? | ¿Estás seguro? |
-| 492 | `delete_skipped_files_confirm_message` | Your files will be deleted! | ¡Tus archivos se eliminarán! |
-| 493 | `date_tie_break_label` | When content is identical but dates differ | Cuando el contenido es idéntico pero las fechas difieren |
-| 494 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Conservar la fecha del archivo existente (predeterminado) |
-| 495 | `date_tie_break_use_source` | Use the source file\'s date | Usar la fecha del archivo de origen |
-| 496 | `date_tie_break_ask` | Always ask | Preguntar siempre |
-| 497 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Se aplica solo al diálogo inteligente y al modo automático. El diálogo estándar no se ve afectado. |
-| 498 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Por qué \"Preguntar siempre\" deshabilita el diálogo inteligente y el modo automático |
-| 499 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | El diálogo inteligente y el modo automático existen por una razón: omitir los archivos cuyo contenido ya está presente, para que solo veas los archivos que realmente necesitan tu atención — mismo nombre, contenido distinto. Ese es justamente el caso en el que comparar las miniaturas puede revelar degeneración de datos (bit-rot).\n\nSi eliges \"Preguntar siempre\" aquí, todos los archivos idénticos con una fecha distinta vuelven a presentarse como conflictos. En el diálogo inteligente verás dos miniaturas de la misma imagen, sin nada que verificar. En el modo automático, el archivo idéntico se vuelve a escribir como nombre(1), llenando tus carpetas de copias innecesarias.\n\nUsa esta opción solo si quieres revisar deliberadamente cada diferencia de fecha, por ejemplo para corregir a mano una fecha incorrecta.\n\nNota: cuando el contenido es idéntico bit a bit, la fecha de captura EXIF también es idéntica. Una diferencia de fecha significa que un lado perdió sus datos EXIF y recurrió a la fecha de modificación del archivo (la fecha de copia). |
-| 500 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
-| 501 | `smart_conflict_incoming_label` | Incoming (New) | Entrante (nuevo) |
-| 502 | `smart_conflict_existing_label` | Existing (Target) | Existente (destino) |
-| 503 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Dañado o ilegible |
-| 504 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Error en la comprobación de integridad (degeneración de datos / corrupción) |
-| 505 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Toca cualquiera de las miniaturas para ver la vista previa a tamaño completo |
-| 506 | `smart_conflict_comparing` | Comparing file contents and dates… | Comparando el contenido y las fechas de los archivos… |
-| 507 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | El contenido de los archivos difiere.\nSi estos dos archivos debían ser iguales, puede haber ocurrido una corrupción de datos. Se recomienda conservar ambos y examinarlos. |
-| 508 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | El contenido de los archivos es idéntico, pero las marcas de tiempo de creación (fecha de la toma) difieren. |
-| 509 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | El contenido de los archivos es idéntico, pero las fechas de modificación difieren. |
-| 510 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | El contenido de los archivos es idéntico, pero las fechas de creación y modificación difieren. |
-| 511 | `smart_conflict_meta_date_taken` | Taken: %s | Fecha de la toma: %s |
-| 512 | `smart_conflict_meta_date_modified` | Modified: %s | Modificado: %s |
-| 513 | `album_type_icons` | Album type icons | Íconos de tipo de álbum |
-| 514 | `virtual_folders` | Virtual folders | Carpetas virtuales |
-| 515 | `favorites_album` | Favorites | Favoritos |
-| 516 | `excluded_folders_album` | Excluded folders | Carpetas excluidas |
-| 517 | `hidden_folders_album` | Hidden folders | Carpetas ocultas |
-| 518 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Temporalmente mostrar carpetas ocultas |
-| 519 | `stop_showing_hidden_folders` | Stop showing hidden folders | Dejar de mostrar carpetas ocultas |
-| 520 | `unexclude` | Stop excluding | Dejar de excluir |
-| 521 | `hide_folder` | Hide | Ocultar |
-| 522 | `unhide_folder` | Unhide | Mostrar |
-| 523 | `about_title` | About Calypso Gallery | Acerca de Calypso Gallery |
-| 524 | `about_version` | Version %1$s (%2$s) | Versión %1$s (%2$s) |
-| 525 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery es un fork personal no oficial, mantenido de forma independiente, de Fossify Gallery. No está afiliado a Fossify ni cuenta con su respaldo. |
-| 526 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Esta distribución es una versión modificada de Fossify Gallery. El fork se creó a partir del commit original 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), y todas las modificaciones propias del fork están documentadas en FORK_CHANGELOG.md. |
-| 527 | `about_license_heading` | License | Licencia |
-| 528 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Este programa es software libre: puedes redistribuirlo y/o modificarlo según los términos de la GNU General Public License, tal como la publica la Free Software Foundation, versión 3 de la licencia.\n\nEste programa se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA; incluso sin la garantía implícita de COMERCIALIZACIÓN o de APTITUD PARA UN PROPÓSITO PARTICULAR. Consulta la GNU General Public License para obtener más detalles.\n\nDeberías haber recibido una copia de la GNU General Public License junto con este programa. Si no es así, usa la acción de licencia a continuación o visita https://www.gnu.org/licenses/. |
-| 529 | `about_read_gpl_license` | Read the GNU GPL v3 license | Leer la licencia GNU GPL v3 |
-| 530 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Leer la licencia Tink Apache 2.0 y sus atribuciones |
-| 531 | `about_source_heading` | Source code | Código fuente |
-| 532 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | El código fuente completo y correspondiente de este fork se mantiene en el repositorio del fork. Las versiones etiquetadas también cuentan con un archivo de código fuente correspondiente. El repositorio contiene los scripts de compilación, las declaraciones de dependencias y el historial completo del fork necesarios para inspeccionar y recompilar el proyecto. |
-| 533 | `about_fork_source` | Fork source code and corresponding source | Código fuente del fork y código fuente correspondiente |
-| 534 | `about_release_sources` | Release source archives | Archivos de código fuente de las versiones |
-| 535 | `about_fork_issues` | Fork issue tracker | Rastreador de incidencias del fork |
-| 536 | `about_upstream_source` | Upstream Fossify Gallery source code | Código fuente del proyecto original de Fossify Gallery |
-| 537 | `about_upstream_project` | Upstream Fossify project | Proyecto original de Fossify |
-| 538 | `about_help_heading` | Help and legal information | Ayuda e información legal |
-| 539 | `about_faq` | Frequently asked questions | Preguntas frecuentes |
-| 540 | `about_third_party_licenses` | Third-party licenses | Licencias de terceros |
-| 541 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
-| 542 | `tink_license_title` | Tink license and attribution | Licencia y atribuciones de Tink |
-| 543 | `fork_disclaimer_title` | Fork notice | Aviso sobre el fork |
-| 544 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Esta aplicación no está desarrollada por el equipo de Fossify. Calypso Gallery es un fork no oficial, mantenido de forma independiente, de Fossify Gallery; el desarrollador original se menciona únicamente para fines de atribución. No está afiliado a Fossify, ni cuenta con su respaldo ni su soporte.\n\nAl continuar, reconoces haber leído este aviso. Los cambios propios del fork están documentados en FORK_CHANGELOG.md. |
-| 545 | `fork_disclaimer_acknowledge` | I understand | Entiendo |
-| 562 | `argon2_profile_title` | Brute-Force resistance | Resistencia a la fuerza bruta |
-| 563 | `brute_force_mode_title` | Calibration mode | Modo de calibración |
-| 564 | `brute_force_mode_time` | Via vault unlock time | Según el tiempo de desbloqueo de la bóveda |
-| 565 | `brute_force_mode_presets` | Via ready-made modes | Según modos predefinidos |
-| 566 | `brute_force_time_title` | Target vault unlock time | Tiempo objetivo de desbloqueo de la bóveda |
-| 567 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | Segundos (2,0–7,0). La aplicación mide este dispositivo una sola vez y guarda los parámetros KDF resultantes en la bóveda; el tiempo real de desbloqueo varía en otros dispositivos. |
-| 568 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
-| 569 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Guardado: %1$d MiB / %2$d rondas |
-| 570 | `brute_force_clamped` |  (clamped) |  (limitado) |
-| 571 | `argon2_profile_low` | Low-end device (not recommended) | Dispositivo de gama baja (no recomendado) |
-| 572 | `argon2_profile_default` | Default | Predeterminado |
-| 573 | `argon2_profile_high` | High security | Alta seguridad |
-| 574 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Si no sabes lo que estás haciendo, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña. |
-| 575 | `argon2_profile_current` | Current: %s | Actual: %s |
+| 299 | `stop_showing_hidden` | Stop showing encrypted media | Dejar de mostrar medios cifrados |
+| 300 | `system_default` | System default | Predeterminado del sistema |
+| 301 | `language` | Language | Idioma |
+| 302 | `open_system_language_settings` | Open system language settings | Abrir configuración de idioma del sistema |
+| 303 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Acceder a elementos ocultos con biometría |
+| 304 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Por favor, activa primero la protección con contraseña para elementos ocultos |
+| 305 | `biometric_unlock_vault` | Unlock encrypted vault | Desbloquear bóveda cifrada |
+| 306 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | Verifica tu identidad biométrica para acceder a los elementos ocultos |
+| 307 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | Confirma tu identidad biométrica para activar el acceso biométrico a la bóveda |
+| 308 | `use_password_or_pin` | Use PIN / Password | Usar PIN / Contraseña |
+| 309 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Las credenciales biométricas han cambiado. Por favor, ingresa tu PIN o contraseña. |
+| 310 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | No se encontró hardware biométrico ni credenciales registradas en este dispositivo |
+| 311 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
+| 312 | `select_hidden_album` | Select Encrypted Album | Seleccionar álbum cifrado |
+| 313 | `create_new_hidden_album` | Create New Encrypted Album | Crear nuevo álbum cifrado |
+| 314 | `new_hidden_album` | New encrypted album | Nuevo álbum cifrado |
+| 315 | `hidden_album_name_empty` | Album name cannot be empty | El nombre del álbum no puede estar vacío |
+| 316 | `file_hidden_to_album` | File encrypted to \"%s\" | Archivo cifrado en \"%s\"  |
+| 317 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d archivos cifrados en \"%2$s\"  |
+| 318 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | ¿Confirmas que quieres restaurar %d archivo? |
+| 319 | `restore_confirmation` (`many`) | *(CLDR `many` — falls back to English `other`)* | ¿Confirmas que quieres restaurar %d archivos? |
+| 320 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | ¿Confirmas que quieres restaurar %d archivos? |
+| 321 | `failed_to_resize_images` (`one`) | Failed to resize %d image | Error al cambiar el tamaño de %d imagen |
+| 322 | `failed_to_resize_images` (`many`) | *(CLDR `many` — falls back to English `other`)* | Error al cambiar el tamaño de %d imágenes |
+| 323 | `failed_to_resize_images` (`other`) | Failed to resize %d images | Error al cambiar el tamaño de %d imágenes |
+| 324 | `search` *(fossify-commons)* | *(inherited from commons)* | Buscar |
+| 325 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | Cambiar formato de hora y fecha |
+| 326 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | Proteger con contraseña la eliminación y movimiento de archivos |
+| 327 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | Mantener el último valor modificado viejo en las operaciones de archivo |
+| 328 | `clear_cache` *(fossify-commons)* | Clear cache | Limpiar la caché |
+| 329 | `export_settings` *(fossify-commons)* | Export settings | Exportar configuraciones |
+| 330 | `import_settings` *(fossify-commons)* | Import settings | Importar configuraciones |
+| 331 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | Temporalmente mostrar excluidas |
+| 332 | `change_view_type` *(fossify-commons)* | Change view type | Cambiar tipo de vista |
+| 333 | `contributors` *(fossify-commons)* | Contributors | Colaboradores |
+| 334 | `known_issues` *(fossify-commons)* | Known issues | Errores conocidos |
+| 335 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Donar a Fossify |
+| 336 | `privacy_policy` *(fossify-commons)* | Privacy policy | Política de privacidad |
+| 337 | `create_shortcut` *(fossify-commons)* | Create shortcut | Crear atajo |
+| 338 | `print` *(fossify-commons)* | Print | Imprimir |
+| 339 | `search_files` *(fossify-commons)* | Search files | Buscar archivos |
+| 340 | `search_folders` *(fossify-commons)* | Search folders | Buscar carpetas |
+| 341 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Sigue deslizando hacia abajo para la bóveda |
+| 342 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Sigue manteniendo pulsado para abrir la bóveda cifrada |
+| 343 | `release_to_open_vault` | Release to open Encrypted Vault | Suelta para abrir la bóveda cifrada |
+| 344 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | Administrar carpetas excluidas |
+| 345 | `exclude` *(fossify-commons)* | Exclude | Excluir |
+| 346 | `exclude_folder` *(fossify-commons)* | Exclude folder | Excluir carpeta |
+| 347 | `lock_folder` *(fossify-commons)* | Lock folder | Bloquear carpeta |
+| 348 | `change_cover_image` *(fossify-commons)* | Change cover image | Cambiar imagen de portada |
+| 349 | `select_photo` *(fossify-commons)* | Select photo | Seleccionar foto |
+| 350 | `use_default` *(fossify-commons)* | Use default | Usar predeterminado |
+| 351 | `column_count` *(fossify-commons)* | Column count | Cantidad de columnas |
+| 352 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | Abrir la papelera |
+| 353 | `grid` *(fossify-commons)* | Grid | Cuadrículas |
+| 354 | `list` *(fossify-commons)* | List | Lista |
+| 355 | `resize` *(fossify-commons)* | Resize | Cambiar tamaño |
+| 356 | `version_placeholder` *(fossify-commons)* | Version %s | Versión %s |
+| 357 | `number_of_items` *(fossify-commons)* | Number of items | Número de elementos |
+| 358 | `random` *(fossify-commons)* | Random | Aleatorio |
+| 359 | `shuffle` | Shuffle | Mezclar |
+| 360 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | Dejar de mostrar los excluidos |
+| 361 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | Copiar al portapapeles |
+| 362 | `encrypt` | Encrypt | Cifrar |
+| 363 | `decrypt` | Decrypt | Descifrar |
+| 364 | `encrypt_album` | Encrypt album | Cifrar el álbum |
+| 365 | `decrypt_album` | Decrypt album | Descifrar el álbum |
+| 366 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | Crear nuevo álbum virtual cifrado |
+| 367 | `new_album` | New album | Nuevo álbum |
+| 368 | `filename_without_zip` | Filename (without .zip) | Nombre de archivo (sin .zip) |
+| 369 | `favorites_already_exist` | You already have a favorites list | Ya tienes una lista de favoritos |
+| 370 | `delete_existing_list` | Delete existing list | Eliminar lista existente |
+| 371 | `merge_lists` | Merge lists | Combinar listas |
+| 372 | `confirm` | Confirm | Confirmar |
+| 373 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar este álbum? Todos sus archivos multimedia se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
+| 374 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar los álbumes seleccionados? Todos sus archivos multimedia se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
+| 375 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | ¿Seguro que quieres cifrar este archivo? Se cifrará y se moverá a la bóveda cifrada. El archivo original se eliminará. |
+| 376 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | ¿Seguro que quieres cifrar los archivos seleccionados? Se cifrarán y se moverán a la bóveda cifrada. Los archivos originales se eliminarán. |
+| 377 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | Los archivos seleccionados se cifrarán al copiarse en la bóveda cifrada. ¿Deseas continuar? |
+| 378 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | Cifrar / Descifrar |
+| 379 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | Permitir cambiar el nombre por lotes cuando se seleccionen varios archivos |
+| 380 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | Conservar el archivo original, quitarlo solo de este álbum virtual |
+| 381 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | Conservar el archivo original, quitarlo solo de favoritos |
+| 382 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | Eliminar la versión original de un archivo al eliminarlo de favoritos y álbumes virtuales |
+| 383 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | No se pueden seleccionar álbumes cifrados como destino para esta operación |
+| 384 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | No se pueden combinar elementos cifrados y sin cifrar en esta operación |
+| 385 | `lock_album` | Lock album | Bloquear álbum |
+| 386 | `unlock_album` | Unlock album | Desbloquear álbum |
+| 387 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | ¿Quieres que tus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto garantizará que no pierdas tu lista de favoritos ni tus álbumes virtuales si desinstalas la aplicación. Puedes crear una copia de seguridad manualmente desde la configuración de la aplicación en cualquier momento. |
+| 388 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | Respaldar favoritos y álbumes virtuales en el almacenamiento del dispositivo |
+| 389 | `encrypt_info_title` | How Encryption Works | Cómo funciona el cifrado |
+| 390 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Configuración).\n• Al fusionar, puedes elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos. |
+| 391 | `decrypt_info_title` | How Decryption Works | Cómo funciona el descifrado |
+| 392 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Estructura de carpetas y archivos:\n• Cuando se descifra un álbum o archivo cifrado, se restaura con su nombre y formato originales en la carpeta de destino seleccionada y se elimina de la bóveda cifrada.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear una carpeta nueva como Álbum(1) o fusionarla con la carpeta de destino existente (configurable en Configuración).\n• Al fusionar, puedes elegir si las copias cifradas verificadas como 100% idénticas bit a bit al destino se eliminan de la bóveda o se conservan.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según tu configuración de resolución de conflictos. |
+| 393 | `vault_location` | Vault location | Ubicación de la bóveda |
+| 394 | `vault_location_standard_summary` | Standard (Internal Storage) | Estándar (Almacenamiento interno) |
+| 395 | `vault_location_unavailable_summary` | External drive disconnected (%s) | Unidad externa desconectada (%s) |
+| 396 | `select_vault_location` | Select vault location | Seleccionar ubicación de la bóveda |
+| 397 | `vault_setup_action_title` | Encrypted vault | Bóveda cifrada |
+| 398 | `create_new_vault_option` | Create new vault | Crear bóveda nueva |
+| 399 | `use_existing_vault_option` | Use existing vault | Usar bóveda existente |
+| 400 | `where_to_create_vault_title` | Where should the vault be created? | ¿Dónde debería crearse la bóveda? |
+| 401 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Ubicación predeterminada (Interno > Calypso Gallery > Secrets) |
+| 402 | `vault_location_custom_short` | Custom Location | Ubicación personalizada |
+| 403 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | No se encontró ninguna bóveda cifrada (.vault) en la carpeta seleccionada. |
+| 404 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Se encontró una bóveda cifrada existente en %s. ¿Quieres desbloquearla y usarla? Toca No para elegir otra carpeta. |
+| 405 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | Ubicación estándar (Almacenamiento interno > Calypso Gallery > Secrets) |
+| 406 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Ubicación personalizada / externa (unidad USB, tarjeta SD o carpeta personalizada) |
+| 407 | `external_vault_unavailable_title` | External vault unavailable | Bóveda externa no disponible |
+| 408 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Tu ubicación de bóveda configurada (%s) está desconectada o no disponible en este momento. Conecta la unidad y toca Reintentar, o elige otra ubicación para la bóveda. |
+| 409 | `retry` | Retry | Reintentar |
+| 410 | `change_vault_location` | Change location | Cambiar ubicación |
+| 411 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | Se encontró una bóveda existente en %s. Ingresa tu contraseña o PIN para desbloquearla. |
+| 412 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | No existe ninguna bóveda en %s. ¿Quieres crear una nueva bóveda cifrada en esta ubicación? |
+| 413 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | Esta ruta USB solo se expone a través del proveedor OTG virtual de Android y no se puede acceder directamente como ruta del sistema de archivos. Por favor, elige un directorio de almacenamiento montado o una carpeta en el almacenamiento interno o tarjeta SD. |
+| 414 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | La carpeta seleccionada no existe o no se puede escribir en ella en este dispositivo. |
+| 415 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | La carpeta seleccionada no existe o no se puede leer en este dispositivo. |
+| 416 | `sync_vault_from_external` | Import encrypted media files to encrypted section | Importar archivos multimedia cifrados a la sección cifrada |
+| 417 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Carpeta unificada Secrets:\nMantén una carpeta llamada Secrets en tu unidad externa (USB / SD). Puedes guardar allí una copia de seguridad completa de tu bóveda o colocar únicamente el archivo de encabezado .vault de tu bóveda.\n\n2. Cifrado de nuevos archivos multimedia (PC / CLI de Tails):\nLa herramienta CLI sin conexión guarda automáticamente los nuevos archivos cifrados directamente en Secrets. Los archivos en la raíz van al Álbum secreto predeterminado; los archivos en subcarpetas van a los álbumes cifrados correspondientes (o crean otros nuevos).\n\n3. Sincronización inteligente bit a bit:\nSelecciona a continuación tu unidad externa o carpeta Secrets. La aplicación compara la unidad externa con la bóveda de tu teléfono en la memoria RAM:\n• Solo se importan los archivos y álbumes nuevos.\n• Los archivos idénticos bit a bit que ya están en tu bóveda se omiten.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se importan de forma segura como download(1).jpg. |
+| 418 | `conflict_handling_mode_label` | File conflict & duplicate resolution | Resolución de conflictos y duplicados de archivos |
+| 419 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | Totalmente automático (Predeterminado: omitir idénticos, renombrar distintos como (1)) |
+| 420 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | Diálogo inteligente (Omitir idénticos automáticamente, preguntar si el contenido difiere) |
+| 421 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | Conflicto de álbum (Cifrar / Descifrar) |
+| 422 | `album_crypto_conflict_ask` | Always ask (Default) | Preguntar siempre (Predeterminado) |
+| 423 | `album_crypto_conflict_merge` | Merge into existing album | Fusionar con el álbum existente |
+| 424 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | Fusionar con el álbum existente y eliminar orígenes idénticos automáticamente |
+| 425 | `album_crypto_conflict_rename` | Create new album as (1) | Crear álbum nuevo como (1) |
+| 426 | `album_crypto_conflict_title` | Album Already Exists | El álbum ya existe |
+| 427 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | Ya existe un álbum llamado \"%s\" en el destino. ¿Cómo deseas continuar? |
+| 428 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | %1$d álbumes seleccionados ya existen en el destino. ¿Cómo deseas continuar?\n\nTu elección se aplicará a todos los álbumes en conflicto. Para elegir por separado para cada álbum, selecciónalos y procésalos uno por uno. |
+| 429 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | Crear álbum nuevo como \"%s\" |
+| 430 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | Crear álbumes nuevos como (1), (2), … |
+| 431 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | Fusionar en el \"%s\" existente |
+| 432 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | Fusionar en los álbumes existentes |
+| 433 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | Eliminar archivos de origen idénticos (100% verificados bit a bit) |
+| 434 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | Recordar elección de conflicto de álbum (fusionar o renombrar) |
+| 435 | `album_crypto_merge_identical_title` | Identical Files During Merge | Archivos idénticos durante la fusión |
+| 436 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Al fusionar en \"%1$s\", si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen? |
+| 437 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Al fusionar los %1$d álbumes en conflicto, si algún archivo ya es 100%% idéntico bit a bit en el destino, ¿se deben eliminar o conservar sus copias de origen? |
+| 438 | `delete_identical_sources` | Delete identical | Eliminar idénticos |
+| 439 | `keep_identical_sources` | Keep in source | Conservar en origen |
+| 440 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | Comprobación rápida de duplicados para archivos grandes (>8 MB) |
+| 441 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | Crucial para transferencias con archivos grandes: comprueba 5 bloques (1,25 MB en total) por archivo en lugar de leer archivos completos, acelerando decenas de veces la comprobación de duplicados. |
+| 442 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | Comprobación rápida de duplicados (>8 MB) |
+| 443 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | Resolución de conflictos y duplicados de archivos |
+| 444 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | Al copiar, mover, cifrar o descifrar archivos y álbumes, si ya existe un archivo con el mismo nombre en el destino:\n\n1. Comprobación de duplicados bit a bit (RAM):\nLa aplicación comprueba primero los tamaños de archivo y, si coinciden, compara el contenido bit a bit en la RAM (los archivos cifrados se comprueban en memoria sin escribir texto sin cifrar en el disco). Al copiar o mover, los archivos idénticos se omiten y el original permanece intacto en la carpeta de origen. Al fusionar un álbum durante el cifrado o descifrado, puedes elegir si los archivos de origen 100% idénticos bit a bit se eliminan o se conservan.\n\n2. Mismo nombre, distinto contenido (p. ej., dos archivos download.jpg diferentes):\n• Totalmente automático (Predeterminado): Conserva ambos archivos sin interrumpirte nombrando al nuevo download(1).jpg, download(2).jpg.\n• Diálogo inteligente: Sigue omitiendo en silencio los archivos idénticos bit a bit y solo pregunta (Omitir / Sobrescribir / Conservar ambos) cuando dos archivos tienen el mismo nombre pero distinto contenido. |
+| 445 | `syncing_vault_progress` | Syncing vault from external drive… | Sincronizando bóveda desde unidad externa… |
+| 446 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Sincronización de bóveda completada:\n• Copiados: %1$d\n• Renombrados (conflicto de nombre): %2$d\n• Omitidos (idénticos): %3$d\n• Fallidos: %4$d |
+| 447 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | No se encontraron archivos multimedia cifrados por CLI pendientes (.pending_sync) en la carpeta seleccionada. |
+| 448 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | La carpeta de origen seleccionada es la misma que tu bóveda activa. |
+| 449 | `use_for_this_album` | Use for this album only | Usar solo para este álbum |
+| 450 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Cuando un archivo ya existe en el destino al cifrar o descifrar |
+| 451 | `crypto_duplicate_source_ask` | Always ask (Default) | Preguntar siempre (Predeterminado) |
+| 452 | `crypto_duplicate_source_keep` | Keep file in source folder | Conservar el archivo en la carpeta de origen |
+| 453 | `crypto_duplicate_source_delete` | Delete file from source folder | Eliminar el archivo de la carpeta de origen |
+| 454 | `crypto_duplicate_source_title` | File Already Exists in Destination | El archivo ya existe en el destino |
+| 455 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás cifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen? |
+| 456 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Algunos de los archivos que estás descifrando ya existen en la carpeta de destino. ¿Qué deseas hacer con los archivos en la carpeta de origen? |
+| 457 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Advertencia: Si eliges \"Conservar\" para archivos sin cifrar, el archivo de origen permanecerá sin cifrar en el almacenamiento. |
+| 458 | `crypto_duplicate_source_always_ask` | Always ask | Preguntar siempre |
+| 459 | `export_encrypted_vault` | Export encrypted vault | Exportar bóveda cifrada |
+| 460 | `export_vault_only_header` | Export folder containing only .vault file | Exportar carpeta que contiene solo el archivo .vault |
+| 461 | `export_vault_entire_folder` | Export entire folder | Exportar toda la carpeta |
+| 462 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | Para agregar a la bóveda cifrada de tu teléfono elementos multimedia cifrados en otros dispositivos con la herramienta CLI compatible, solo necesitas usar una carpeta llamada Secrets que contenga el archivo .vault. |
+| 463 | `exporting_vault_progress` | Exporting encrypted vault… | Exportando bóveda cifrada… |
+| 464 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | El destino de exportación no puede ser la carpeta de la bóveda activa ni estar dentro de ella. |
+| 465 | `conflict_handling_standard_dialog_summary` | Standard dialog | Diálogo estándar |
+| 466 | `conflict_handling_smart_dialog_summary` | Smart dialog | Diálogo inteligente |
+| 467 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automático (experimental) |
+| 468 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Diálogo estándar (predeterminado — comprueba solo el nombre del archivo, como la Galería Fossify original) |
+| 469 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Administrar archivos omitidos durante el cifrado |
+| 470 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Elige si los archivos omitidos en la carpeta de origen durante el cifrado se deben conservar o eliminar por seguridad. Esta elección también se aplica a los conflictos de álbumes durante el cifrado de álbumes (consulta la configuración a continuación) cuando el álbum de origen se fusiona con un álbum existente en el destino. |
+| 471 | `skipped_crypto_files_ask` | Always ask (Default) | Preguntar siempre (predeterminado) |
+| 472 | `skipped_crypto_files_keep` | Keep | Conservar |
+| 473 | `skipped_crypto_files_delete` | Delete | Eliminar |
+| 474 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Los archivos que omitiste no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
+| 475 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Los archivos que omitiste no se transfirieron. Puedes eliminar estos archivos. |
+| 476 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Los archivos que ya existen en la carpeta de destino no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
+| 477 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Los archivos que ya existen en la carpeta de destino no se transfirieron. Puedes eliminar estos archivos. |
+| 478 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Los archivos que omitiste y los archivos que ya existen en la carpeta de destino no se transfirieron. Para proteger tu privacidad, puedes eliminar estos archivos. |
+| 479 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Los archivos que omitiste y los archivos que ya existen en la carpeta de destino no se transfirieron. Puedes eliminar estos archivos. |
+| 480 | `skipped_crypto_files_always_ask` | Always ask | Preguntar siempre |
+| 481 | `delete_skipped_files_confirm_title` | Are you sure? | ¿Estás seguro? |
+| 482 | `delete_skipped_files_confirm_message` | Your files will be deleted! | ¡Tus archivos se eliminarán! |
+| 483 | `date_tie_break_label` | When content is identical but dates differ | Cuando el contenido es idéntico pero las fechas difieren |
+| 484 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Conservar la fecha del archivo existente (predeterminado) |
+| 485 | `date_tie_break_use_source` | Use the source file\'s date | Usar la fecha del archivo de origen |
+| 486 | `date_tie_break_ask` | Always ask | Preguntar siempre |
+| 487 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Se aplica solo al diálogo inteligente y al modo automático. El diálogo estándar no se ve afectado. |
+| 488 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Por qué \"Preguntar siempre\" deshabilita el diálogo inteligente y el modo automático |
+| 489 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | El diálogo inteligente y el modo automático existen por una razón: omitir los archivos cuyo contenido ya está presente, para que solo veas los archivos que realmente necesitan tu atención — mismo nombre, contenido distinto. Ese es justamente el caso en el que comparar las miniaturas puede revelar degeneración de datos (bit-rot).\n\nSi eliges \"Preguntar siempre\" aquí, todos los archivos idénticos con una fecha distinta vuelven a presentarse como conflictos. En el diálogo inteligente verás dos miniaturas de la misma imagen, sin nada que verificar. En el modo automático, el archivo idéntico se vuelve a escribir como nombre(1), llenando tus carpetas de copias innecesarias.\n\nUsa esta opción solo si quieres revisar deliberadamente cada diferencia de fecha, por ejemplo para corregir a mano una fecha incorrecta.\n\nNota: cuando el contenido es idéntico bit a bit, la fecha de captura EXIF también es idéntica. Una diferencia de fecha significa que un lado perdió sus datos EXIF y recurrió a la fecha de modificación del archivo (la fecha de copia). |
+| 490 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 491 | `smart_conflict_incoming_label` | Incoming (New) | Entrante (nuevo) |
+| 492 | `smart_conflict_existing_label` | Existing (Target) | Existente (destino) |
+| 493 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Dañado o ilegible |
+| 494 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Error en la comprobación de integridad (degeneración de datos / corrupción) |
+| 495 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Toca cualquiera de las miniaturas para ver la vista previa a tamaño completo |
+| 496 | `smart_conflict_comparing` | Comparing file contents and dates… | Comparando el contenido y las fechas de los archivos… |
+| 497 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | El contenido de los archivos difiere.\nSi estos dos archivos debían ser iguales, puede haber ocurrido una corrupción de datos. Se recomienda conservar ambos y examinarlos. |
+| 498 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | El contenido de los archivos es idéntico, pero las marcas de tiempo de creación (fecha de la toma) difieren. |
+| 499 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | El contenido de los archivos es idéntico, pero las fechas de modificación difieren. |
+| 500 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | El contenido de los archivos es idéntico, pero las fechas de creación y modificación difieren. |
+| 501 | `smart_conflict_meta_date_taken` | Taken: %s | Fecha de la toma: %s |
+| 502 | `smart_conflict_meta_date_modified` | Modified: %s | Modificado: %s |
+| 503 | `album_type_icons` | Album type icons | Íconos de tipo de álbum |
+| 504 | `virtual_folders` | Virtual folders | Carpetas virtuales |
+| 505 | `favorites_album` | Favorites | Favoritos |
+| 506 | `excluded_folders_album` | Excluded folders | Carpetas excluidas |
+| 507 | `hidden_folders_album` | Hidden folders | Carpetas ocultas |
+| 508 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Temporalmente mostrar carpetas ocultas |
+| 509 | `stop_showing_hidden_folders` | Stop showing hidden folders | Dejar de mostrar carpetas ocultas |
+| 510 | `unexclude` | Stop excluding | Dejar de excluir |
+| 511 | `hide_folder` | Hide | Ocultar |
+| 512 | `unhide_folder` | Unhide | Mostrar |
+| 513 | `about_title` | About Calypso Gallery | Acerca de Calypso Gallery |
+| 514 | `about_version` | Version %1$s (%2$s) | Versión %1$s (%2$s) |
+| 515 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery es un fork personal no oficial, mantenido de forma independiente, de Fossify Gallery. No está afiliado a Fossify ni cuenta con su respaldo. |
+| 516 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Esta distribución es una versión modificada de Fossify Gallery. El fork se creó a partir del commit original 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), y todas las modificaciones propias del fork están documentadas en FORK_CHANGELOG.md. |
+| 517 | `about_license_heading` | License | Licencia |
+| 518 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Este programa es software libre: puedes redistribuirlo y/o modificarlo según los términos de la GNU General Public License, tal como la publica la Free Software Foundation, versión 3 de la licencia.\n\nEste programa se distribuye con la esperanza de que sea útil, pero SIN NINGUNA GARANTÍA; incluso sin la garantía implícita de COMERCIALIZACIÓN o de APTITUD PARA UN PROPÓSITO PARTICULAR. Consulta la GNU General Public License para obtener más detalles.\n\nDeberías haber recibido una copia de la GNU General Public License junto con este programa. Si no es así, usa la acción de licencia a continuación o visita https://www.gnu.org/licenses/. |
+| 519 | `about_read_gpl_license` | Read the GNU GPL v3 license | Leer la licencia GNU GPL v3 |
+| 520 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Leer la licencia Tink Apache 2.0 y sus atribuciones |
+| 521 | `about_source_heading` | Source code | Código fuente |
+| 522 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | El código fuente completo y correspondiente de este fork se mantiene en el repositorio del fork. Las versiones etiquetadas también cuentan con un archivo de código fuente correspondiente. El repositorio contiene los scripts de compilación, las declaraciones de dependencias y el historial completo del fork necesarios para inspeccionar y recompilar el proyecto. |
+| 523 | `about_fork_source` | Fork source code and corresponding source | Código fuente del fork y código fuente correspondiente |
+| 524 | `about_release_sources` | Release source archives | Archivos de código fuente de las versiones |
+| 525 | `about_fork_issues` | Fork issue tracker | Rastreador de incidencias del fork |
+| 526 | `about_upstream_source` | Upstream Fossify Gallery source code | Código fuente del proyecto original de Fossify Gallery |
+| 527 | `about_upstream_project` | Upstream Fossify project | Proyecto original de Fossify |
+| 528 | `about_help_heading` | Help and legal information | Ayuda e información legal |
+| 529 | `about_faq` | Frequently asked questions | Preguntas frecuentes |
+| 530 | `about_third_party_licenses` | Third-party licenses | Licencias de terceros |
+| 531 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 532 | `tink_license_title` | Tink license and attribution | Licencia y atribuciones de Tink |
+| 533 | `fork_disclaimer_title` | Fork notice | Aviso sobre el fork |
+| 534 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Esta aplicación no está desarrollada por el equipo de Fossify. Calypso Gallery es un fork no oficial, mantenido de forma independiente, de Fossify Gallery; el desarrollador original se menciona únicamente para fines de atribución. No está afiliado a Fossify, ni cuenta con su respaldo ni su soporte.\n\nAl continuar, reconoces haber leído este aviso. Los cambios propios del fork están documentados en FORK_CHANGELOG.md. |
+| 535 | `fork_disclaimer_acknowledge` | I understand | Entiendo |
+| 536 | `argon2_profile_title` | Brute-Force resistance | Resistencia a la fuerza bruta |
+| 537 | `brute_force_mode_title` | Calibration mode | Modo de calibración |
+| 538 | `brute_force_mode_time` | Via vault unlock time | Según el tiempo de desbloqueo de la bóveda |
+| 539 | `brute_force_mode_presets` | Via ready-made modes | Según modos predefinidos |
+| 540 | `brute_force_time_title` | Target vault unlock time | Tiempo objetivo de desbloqueo de la bóveda |
+| 541 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta. |
+| 542 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | El límite inferior es el tiempo estándar seguro de este dispositivo. |
+| 543 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (en este dispositivo) |
+| 544 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | Este tiempo supera el máximo seleccionable (10 s). Toca para cambiarlo. |
+| 545 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
+| 546 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Guardado: %1$d MiB / %2$d rondas |
+| 547 | `brute_force_clamped` |  (clamped) |  (limitado) |
+| 548 | `argon2_profile_low` | Low-end device (not recommended) | Dispositivo de gama baja (no recomendado) |
+| 549 | `argon2_profile_default` | Default | Predeterminado |
+| 550 | `argon2_profile_high` | High security | Alta seguridad |
+| 551 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Si no sabes lo que estás haciendo, se recomienda mantener la configuración predeterminada. Esto solo afecta a las bóvedas recién creadas y a los cambios de contraseña. |
+| 552 | `argon2_profile_current` | Current: %s | Actual: %s |
+| 553 | `show_pin_dots` | Show a dot for each PIN digit | Mostrar un punto por cada dígito al ingresar el PIN |
 
 ## Settings Headers, Font Options & File Encryption Info
 
@@ -800,3 +802,94 @@ Added to `values-b+es+419/strings.xml` for the Appearance settings **Custom colo
 | 7 | `custom_theme_name` | Custom theme | Tema personalizado | Base name for newly saved custom themes (suffixed with index) |
 | 8 | `discard_changes_question` | Do you want to save your changes? | ¿Quieres guardar tus cambios? | Prompt shown when switching themes with unsaved custom color changes |
 | 9 | `continue_without_saving` | Continue without saving | Continuar sin guardar | Negative dialog button to discard unsaved custom color changes |
+
+## Onboarding & Full-Screen Permission Flow (29 keys)
+
+Added to `values-b+es+419/strings.xml` for the 3-screen first-launch welcome and full-screen permission flow (unsupported system locales fall back cleanly to English in `values/strings.xml`). Also removed the retired `auto_backup_prompt_message` key since auto-backup is now enabled by default and always shown in Settings.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `onboarding_motto` | No sign-up, no cloud, just your gallery. | Sin registro, sin nube, solo tu galería. | Welcome screen tagline |
+| 2 | `onboarding_offline_title` | Completely Offline | Totalmente sin conexión | Welcome card 1 title |
+| 3 | `onboarding_offline_desc` | Never connects to the internet. Your data belongs only to you. | No se conecta a internet. Tus datos solo te pertenecen a ti. | Welcome card 1 description |
+| 4 | `onboarding_vault_title` | Encrypted Vault | Bóveda cifrada | Welcome card 2 title |
+| 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | Cifra tus fotos y videos. Nadie más podrá acceder a ellos. | Welcome card 2 description |
+| 6 | `onboarding_albums_title` | Playlists for your photos | Listas de reproducción para tus fotos | Welcome card 3 title |
+| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | Las carpetas virtuales te permiten reunir las fotos y videos que quieras en tantos álbumes como desees, sin moverlos de sus carpetas ni ocupar espacio extra con copias. | Welcome card 3 description |
+| 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | Se requiere permiso de acceso a archivos multimedia para mostrar tus fotos y videos. | Welcome footer media permission note |
+| 9 | `onboarding_continue` | Continue | Continuar | Welcome primary button |
+| 10 | `onboarding_media_required_title` | Full media access required | Se requiere acceso multimedia completo | Media permission screen title |
+| 11 | `onboarding_media_required_desc` | Calypso Gallery needs full access to display all your photos and videos. | La Galería Calypso necesita acceso total para mostrar todas tus fotos y videos. | Media permission screen description |
+| 12 | `onboarding_media_steps_header` | How to enable permission | Cómo activar el permiso | Settings steps card header |
+| 13 | `onboarding_media_step_1` | Settings | Configuración | Settings guide step 1 |
+| 14 | `onboarding_media_step_2` | Permissions | Permisos | Settings guide step 2 |
+| 15 | `onboarding_media_step_3` | Photos and videos | Fotos y videos | Settings guide step 3 |
+| 16 | `onboarding_media_step_4` | Allow all | Permitir todo | Settings guide step 4 (final) |
+| 17 | `onboarding_media_required_hint` | Once access is granted, your gallery will open automatically when you return to the app. | Una vez otorgado el acceso, tu galería se abrirá automáticamente al volver a la aplicación. | Media permission screen return hint |
+| 18 | `onboarding_go_to_settings` | Go to settings | Ir a configuración | Media permission primary button |
+| 19 | `onboarding_close` | Close | Cerrar | Media permission secondary button |
+| 20 | `onboarding_all_files_title` | All files access | Acceso a todos los archivos | All files access screen title |
+| 21 | `onboarding_all_files_desc` | All files access is recommended for the Encrypted Vault and seamless file management. | Se recomienda el acceso a todos los archivos para la bóveda cifrada y una gestión de archivos sin interrupciones. | All files access screen subtitle |
+| 22 | `onboarding_all_files_vault_title` | Encrypted Vault and hidden folders | Bóveda cifrada y carpetas ocultas | All files card 1 title |
+| 23 | `onboarding_all_files_vault_desc` | Manage your encrypted files and hidden folders without system restrictions. | Administra tus archivos cifrados y carpetas ocultas sin restricciones del sistema. | All files card 1 description |
+| 24 | `onboarding_all_files_backup_title` | Don\'t lose your Favorites and Virtual Albums | No pierdas tus favoritos ni álbumes virtuales | All files card 2 title |
+| 25 | `onboarding_all_files_backup_desc` | Keep your favorites and virtual albums automatically backed up on your device even if you accidentally uninstall the app. You can turn off automatic backup anytime in app settings. | Aunque desinstales la aplicación por accidente, tus favoritos y álbumes virtuales se respaldarán automáticamente en tu dispositivo. Puedes desactivar el respaldo automático en la configuración de la aplicación. | All files card 2 description |
+| 26 | `onboarding_all_files_offline_title` | Still completely on your device | Sigue completamente en tu dispositivo | All files card 3 title |
+| 27 | `onboarding_all_files_offline_desc` | The app stays completely offline, this permission is used only for local file operations. | La aplicación continúa funcionando sin conexión, este permiso solo se usa para operaciones locales de archivos. | All files card 3 description |
+| 28 | `onboarding_grant_access` | Grant access | Otorgar acceso | All files primary button |
+| 29 | `onboarding_not_now` | Not now | Ahora no | All files secondary button |
+
+## Vault Lock & Album Header Polish (4 keys)
+
+Added to `values-b+es+419/strings.xml` for the redesigned Vault Lock screen biometric button and album interior header.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `use_biometrics` | Use biometrics | Usar biometría | Vault lock screen biometric button label |
+| 2 | `media_header_items_count` | %d items | %d elementos | MediaActivity album header item count |
+| 3 | `media_header_virtual_album` | Virtual album · %d items | Álbum virtual · %d elementos | MediaActivity virtual album header subtitle |
+| 4 | `media_header_encrypted_album` | Encrypted album · %d items | Álbum cifrado · %d elementos | MediaActivity encrypted album header subtitle |
+## Appearance Live Preview (4 keys)
+
+Added to `values-b+es+419/strings.xml` for the live Appearance preview card and WCAG contrast warning.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `appearance_preview` | Preview | Vista previa | Appearance live preview section header |
+| 2 | `appearance_preview_text` | Your memories, your colors | Tus recuerdos, tus colores | Appearance preview sample headline |
+| 3 | `appearance_preview_button` | Sample button | Botón de ejemplo | Appearance preview sample button |
+| 4 | `appearance_contrast_warning` | Low contrast: text %1$.1f:1, button %2$.1f:1. Increase it for readability. | Bajo contraste: texto %1$.1f:1, botón %2$.1f:1. Auméntalo para mejorar la legibilidad. | WCAG contrast warning in Appearance preview |
+
+## Vault Privacy Input Toggle (1 key)
+
+Added to `values-b+es+419/strings.xml` for the optional shoulder-surfing protection switch (default off).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `hide_vault_key_presses` | Hide key presses when entering vault password | Ocultar las pulsaciones al ingresar la contraseña de la bóveda | Settings switch to hide PIN/password key press feedback |
+
+## PIN Dot Indicator Setting (1 key)
+
+Added to `values-b+es+419/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 16 digits).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_pin_dots` | Show a dot for each PIN digit | Mostrar un punto por cada dígito al ingresar el PIN | Settings switch; hidden for alphanumeric vaults and PINs longer than 16 digits |
+
+## KDF Unlock-Time Hint Revision (this revision)
+
+Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values-b+es+419/strings.xml`. The lower-bound sentence is appended only when the device's measured safe floor is above 1.0 s.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta. | Explanation shown in the target vault unlock time dialog |
+| 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | El límite inferior es el tiempo estándar seguro de este dispositivo. | Appended only when minSec > 1.0 |
+
+## Existing Vault Time Recalculation (this revision)
+
+Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-b+es+419/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (en este dispositivo) | Value shown for an existing vault |
+| 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | Este tiempo supera el máximo seleccionable (10 s). Toca para cambiarlo. | Shown when the real time exceeds 10 s |

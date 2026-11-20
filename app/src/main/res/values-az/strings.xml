@@ -460,7 +460,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">Bu əməliyyatda şifrəli və şifrəsiz elementləri birləşdirmək olmaz</string>
     <string name="lock_album">Albomu kilidlə</string>
     <string name="unlock_album">Albomun kilidini aç</string>
-    <string name="auto_backup_prompt_message">Sevimlilərinizin və virtual albomlarınızın tətbiq yaddaşından kənarda sistem yaddaşına müntəzəm olaraq yazılmasını istəyirsiniz? Bu, tətbiqi sildiyiniz halda sevimlilər siyahınızı və virtual albomlarınızı itirməməyinizi təmin edəcək. İstənilən vaxt tətbiq parametrlərindən əl ilə ehtiyat nüsxə yarada bilərsiniz.</string>
     <string name="auto_backup_favorites_and_virtual_albums">Sevimlilərin və virtual albomların cihaz yaddaşında ehtiyat nüsxəsini yarat</string>
     <string name="access_storage_prompt">Zəhmət olmasa, tətbiqimizə bütün fayllarınıza giriş icazəsi verin, bu olmadan düzgün işləməyə bilər.</string>
     <string name="encrypt_info_title">Şifrləmə necə işləyir</string>
@@ -537,9 +536,7 @@
     <string name="conflict_handling_auto_summary">Avtomatik (Eksperimental)</string>
     <string name="conflict_handling_standard_dialog_short">Standart dialoq (Susmaya görə — yalnız fayl adını yoxlayır, orijinal Fossify Gallery kimi)</string>
     <string name="skipped_encrypt_files_mode_label">Şifrələmə zamanı atlanan faylları idarə et</string>
-    <string name="skipped_decrypt_files_mode_label">Şifrə açma zamanı atlanan faylları idarə et</string>
     <string name="skipped_encrypt_files_info_message">Şifrələmə zamanı mənbə qovluqda atlanan faylların təhlükəsizlik məqsədilə saxlanılacağını və ya silinəcəyini seçin. Bu seçim, həmçinin mənbə albomu təyinat yerində mövcud albomla birləşdirildikdə, albom şifrələməsi zamanı yaranan albom ziddiyyətlərinə də tətbiq olunur (aşağıdakı parametra baxın).</string>
-    <string name="skipped_decrypt_files_info_message">Şifrə açma zamanı mənbə qovluqda atlanan faylların saxlanılacağını və ya silinəcəyini seçin. Bu seçim, həmçinin mənbə albomu təyinat yerində mövcud albomla birləşdirildikdə, albomun şifrəsi açılarkən yaranan albom ziddiyyətlərinə də tətbiq olunur (aşağıdakı parametra baxın).</string>
     <string name="skipped_crypto_files_ask">Həmişə soruş (Susmaya görə)</string>
     <string name="skipped_crypto_files_keep">Saxla</string>
     <string name="skipped_crypto_files_delete">Sil</string>
@@ -602,7 +599,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_time_title">Seyfin kilidini açmaq üçün hədəf vaxt</string>
-    <string name="brute_force_time_hint">Saniyələr (2.0–7.0). Tətbiq bu cihazı bir dəfə ölçür və əldə edilən KDF parametrlərini seyfdə saxlayır; real açılma vaxtı digər cihazlarda fərqli ola bilər.</string>
+    <string name="brute_force_time_hint">Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir.</string>
+    <string name="brute_force_time_min_hint">Alt hədd bu cihazın təhlükəsiz standart vaxtıdır.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>
+    <string name="brute_force_time_out_of_range">Bu vaxt seçilə bilən yuxarı həddin (10 s) üzərindədir. Dəyişdirmək üçün toxunun.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Saxlanılıb: %1$d MiB / %2$d dövr</string>
     <string name="brute_force_clamped"> (məhdudlaşdırılıb)</string>
@@ -635,4 +635,49 @@
     <string name="continue_without_saving">Saxlamadan davam et</string>
     <string name="vault_no_recovery_warning">Oflayn şifrələmə istifadə olunur. Parolunuzu və ya PIN kodunuzu unutsanız, kassanızı bərpa etməyin heç bir yolu yoxdur.</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">Qeydiyyat yoxdur, bulud yoxdur, yalnız qalereyanız.</string>
+    <string name="onboarding_offline_title">Tamamilə Oflayn</string>
+    <string name="onboarding_offline_desc">İnternetə qoşulmur. Məlumatlarınız yalnız sizə məxsusdur.</string>
+    <string name="onboarding_vault_title">Şifrəli Seyf</string>
+    <string name="onboarding_vault_desc">Foto və videolarınızı şifrələyin. Sizdən başqa heç kim daxil ola bilməz.</string>
+    <string name="onboarding_albums_title">Fotolarınız üçün pleylistlər</string>
+    <string name="onboarding_albums_desc">Virtual qovluqlar birlikdə görmək istədiyiniz foto və videoları aid olduqları qovluqlardan ayırmadan və ya nüsxələrlə əlavə yer tutmadan istədiyiniz qədər albomda birləşdirməyə imkan verir.</string>
+    <string name="onboarding_media_permission_note">Foto və videolarınızı göstərmək üçün media elementlərinə giriş icazəsi tələb olunur.</string>
+    <string name="onboarding_continue">Davam et</string>
+    <string name="onboarding_media_required_title">Tam media girişi tələb olunur</string>
+    <string name="onboarding_media_required_desc">Calypso Qalereya bütün foto və videolarınızı göstərmək üçün tam giriş icazəsinə ehtiyac duyur.</string>
+    <string name="onboarding_media_steps_header">İcazəni necə açmaq olar?</string>
+    <string name="onboarding_media_step_1">Parametrlər</string>
+    <string name="onboarding_media_step_2">İcazələr</string>
+    <string name="onboarding_media_step_3">Foto və videolar</string>
+    <string name="onboarding_media_step_4">Hamısına icazə ver</string>
+    <string name="onboarding_media_required_hint">Giriş icazəsi verildikdən sonra tətbiqə qayıtdıqda qalereyanız avtomatik açılacaq.</string>
+    <string name="onboarding_go_to_settings">Parametrlərə keç</string>
+    <string name="onboarding_close">Bağla</string>
+    <string name="onboarding_all_files_title">Bütün fayllara giriş</string>
+    <string name="onboarding_all_files_desc">Şifrəli Seyf və fasiləsiz fayl idarəetməsi üçün bütün fayllara giriş icazəsi tövsiyə olunur.</string>
+    <string name="onboarding_all_files_vault_title">Şifrəli Seyf və gizli qovluqlar</string>
+    <string name="onboarding_all_files_vault_desc">Şifrələnmiş fayllarınızı və gizli qovluqları sistem məhdudiyyəti olmadan idarə edin.</string>
+    <string name="onboarding_all_files_backup_title">Sevimlilərinizi və Virtual Albomlarınızı itirməyin</string>
+    <string name="onboarding_all_files_backup_desc">Tətbiqi təsadüfən silsəniz belə sevimliləriniz və virtual albomlarınız cihazınızda avtomatik ehtiyat nüsxələnir. İstəsəniz tətbiq parametrlərindən avtomatik ehtiyat nüsxələməni söndürə bilərsiniz.</string>
+    <string name="onboarding_all_files_offline_title">Yenə tamamilə cihazınızda</string>
+    <string name="onboarding_all_files_offline_desc">Tətbiq oflayn işləməyə davam edir, bu icazə yalnız yerli fayl əməliyyatları üçün istifadə olunur.</string>
+    <string name="onboarding_grant_access">İcazə ver</string>
+    <string name="onboarding_not_now">İndi deyil</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d element</string>
+    <string name="media_header_virtual_album">Virtual albom · %d element</string>
+    <string name="media_header_encrypted_album">Şifrəli albom · %d element</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">Önizləmə</string>
+    <string name="appearance_preview_text">Xatirələriniz, sizin rəngləriniz</string>
+    <string name="appearance_preview_button">Nümunə düymə</string>
+    <string name="appearance_contrast_warning">Aşağı kontrast: mətn %1$.1f:1, düymə %2$.1f:1. Oxunaqlılıq üçün artırın.</string>
+    <string name="use_biometrics">Biometriyadan istifadə et</string>
+    <string name="hide_vault_key_presses">Kassa parolunu daxil edərkən düymə basışlarını gizlət</string>
+    <string name="show_pin_dots">PIN daxil edərkən hər rəqəm üçün bir nöqtə göstər</string>
 </resources>

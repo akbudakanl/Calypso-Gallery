@@ -32,6 +32,8 @@ class Config(context: Context) : BaseConfig(context) {
 
         private const val APPEARANCE_MODE = "appearance_mode"
         private const val SAVED_APPEARANCE_THEMES = "saved_appearance_themes"
+        private const val VAULT_PIN_LENGTH = "vault_pin_length"
+        private const val SHOW_VAULT_PIN_DOTS = "show_vault_pin_dots"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -39,6 +41,20 @@ class Config(context: Context) : BaseConfig(context) {
     var savedThemesJson: String
         get() = prefs.getString(SAVED_APPEARANCE_THEMES, "[]") ?: "[]"
         set(value) = prefs.edit().putString(SAVED_APPEARANCE_THEMES, value).apply()
+
+    /**
+     * Digit count of the vault PIN, written when credentials are created or changed. The lock
+     * screen uses it to render one fixed dot slot per digit. 0 means no fixed length is known
+     * (e.g. alphanumeric password protection), in which case the dots grow while typing.
+     */
+    var vaultPinLength: Int
+        get() = prefs.getInt(VAULT_PIN_LENGTH, 0)
+        set(value) = prefs.edit().putInt(VAULT_PIN_LENGTH, value).apply()
+
+    /** Optional per-digit dot feedback while typing a short vault PIN. Off by default. */
+    var showVaultPinDots: Boolean
+        get() = prefs.getBoolean(SHOW_VAULT_PIN_DOTS, false)
+        set(value) = prefs.edit().putBoolean(SHOW_VAULT_PIN_DOTS, value).apply()
 
     /**
      * Appearance mode for the fork's own Appearance screen. On first run after the upgrade,
@@ -183,6 +199,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(BLOCK_VAULT_SCREENSHOTS, true)
         set(blockVaultScreenshots) = prefs.edit().putBoolean(BLOCK_VAULT_SCREENSHOTS, blockVaultScreenshots).apply()
 
+    var hideVaultKeyPresses: Boolean
+        get() = prefs.getBoolean(HIDE_VAULT_KEY_PRESSES, false)
+        set(hideVaultKeyPresses) = prefs.edit().putBoolean(HIDE_VAULT_KEY_PRESSES, hideVaultKeyPresses).apply()
+
     /** Son kalibrasyonun urettigi gercek parametreler (arayuzde gosterim icin). */
     var lastCalibratedMemoryKb: Int
         get() = prefs.getInt(LAST_CALIBRATED_MEMORY_KB, DEFAULT_STD_MEMORY_MIB * KIB_PER_MIB)
@@ -196,6 +216,15 @@ class Config(context: Context) : BaseConfig(context) {
     var cachedStdArgon2Ms: Int
         get() = prefs.getInt(CACHED_STD_ARGON2_MS, 0)
         set(value) = prefs.edit().putInt(CACHED_STD_ARGON2_MS, value.coerceAtLeast(0)).apply()
+
+    /**
+     * Mevcut kasanin BU cihazda gercek unlock sirasinda olculen KDF suresi (ms).
+     * Cihaza/oturuma ozgudur; ayar disa aktarimina dahil edilmez, yeniden yukleme veya
+     * kasa tasimada sifirlanir ve kasa basligindaki parametrelerden tahmin edilir.
+     */
+    var vaultUnlockMeasuredMs: Int
+        get() = prefs.getInt(VAULT_UNLOCK_MEASURED_MS, 0)
+        set(value) = prefs.edit().putInt(VAULT_UNLOCK_MEASURED_MS, value.coerceAtLeast(0)).apply()
 
     /** Cihazin standart KDF tabanina gore izin verilen en dusuk acilis suresi (ms). */
     val minUnlockTargetMs: Int
@@ -549,10 +578,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(SKIPPED_ENCRYPT_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
         set(mode) = prefs.edit().putInt(SKIPPED_ENCRYPT_FILES_MODE, mode).apply()
 
-    var skippedDecryptFilesMode: Int
-        get() = prefs.getInt(SKIPPED_DECRYPT_FILES_MODE, CRYPTO_SKIPPED_FILES_ASK)
-        set(mode) = prefs.edit().putInt(SKIPPED_DECRYPT_FILES_MODE, mode).apply()
-
     var keepScreenOn: Boolean
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()
@@ -829,7 +854,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(showFolderMediaCount) = prefs.edit().putInt(FOLDER_MEDIA_COUNT, showFolderMediaCount).apply()
 
     var folderStyle: Int
-        get() = prefs.getInt(FOLDER_THUMBNAIL_STYLE, FOLDER_STYLE_SQUARE)
+        get() = prefs.getInt(FOLDER_THUMBNAIL_STYLE, FOLDER_STYLE_ROUNDED_CORNERS)
         set(folderStyle) = prefs.edit().putInt(FOLDER_THUMBNAIL_STYLE, folderStyle).apply()
 
     var limitFolderTitle: Boolean
@@ -837,11 +862,11 @@ class Config(context: Context) : BaseConfig(context) {
         set(limitFolderTitle) = prefs.edit().putBoolean(LIMIT_FOLDER_TITLE, limitFolderTitle).apply()
 
     var thumbnailSpacing: Int
-        get() = prefs.getInt(THUMBNAIL_SPACING, 1)
+        get() = prefs.getInt(THUMBNAIL_SPACING, 3)
         set(thumbnailSpacing) = prefs.edit().putInt(THUMBNAIL_SPACING, thumbnailSpacing).apply()
 
     var fileRoundedCorners: Boolean
-        get() = prefs.getBoolean(FILE_ROUNDED_CORNERS, false)
+        get() = prefs.getBoolean(FILE_ROUNDED_CORNERS, true)
         set(fileRoundedCorners) = prefs.edit().putBoolean(FILE_ROUNDED_CORNERS, fileRoundedCorners).apply()
 
     var customFoldersOrder: String
@@ -852,9 +877,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(AVOID_SHOWING_ALL_FILES_PROMPT, false)
         set(avoidShowingAllFilesPrompt) = prefs.edit().putBoolean(AVOID_SHOWING_ALL_FILES_PROMPT, avoidShowingAllFilesPrompt).apply()
 
-    var wasAutoBackupPromptShown: Boolean
-        get() = prefs.getBoolean(WAS_AUTO_BACKUP_PROMPT_SHOWN, false)
-        set(wasAutoBackupPromptShown) = prefs.edit().putBoolean(WAS_AUTO_BACKUP_PROMPT_SHOWN, wasAutoBackupPromptShown).apply()
+    var hasSeenOnboarding: Boolean
+        get() = prefs.getBoolean(HAS_SEEN_ONBOARDING, false)
+        set(hasSeenOnboarding) = prefs.edit().putBoolean(HAS_SEEN_ONBOARDING, hasSeenOnboarding).apply()
 
     var autoBackupFavoritesAndVirtualAlbums: Boolean
         get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, false)

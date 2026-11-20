@@ -87,6 +87,12 @@
             android:theme="@style/SplashTheme" />
 
         <activity
+            android:name=".activities.OnboardingActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+
+        <activity
             android:name=".activities.VaultLockActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="false"

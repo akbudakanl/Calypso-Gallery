@@ -117,7 +117,6 @@ import org.fossify.gallery.extensions.isPathHiddenOrEncrypted
 import org.fossify.gallery.extensions.isVirtualAlbumPath
 import org.fossify.gallery.extensions.removeFavoritePaths
 import org.fossify.gallery.extensions.removePathsFromVirtualAlbum
-import org.fossify.gallery.dialogs.promptAutoBackupIfNeeded
 import org.fossify.gallery.extensions.getShortcutImage
 import org.fossify.gallery.extensions.handleMediaManagementPrompt
 import org.fossify.gallery.extensions.hideSystemUI
@@ -499,7 +498,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     private fun setupOptionsMenu() {
         binding.mediumViewerToolbar.apply {
             setTitleTextColor(Color.WHITE)
-            overflowIcon = resources.getColoredDrawableWithColor(org.fossify.commons.R.drawable.ic_three_dots_vector, Color.WHITE)
+            overflowIcon = resources.getColoredDrawableWithColor(R.drawable.ic_more_vertical_calypso_vector, Color.WHITE)
             navigationIcon = resources.getColoredDrawableWithColor(org.fossify.commons.R.drawable.ic_arrow_left_vector, Color.WHITE)
         }
 
@@ -1337,7 +1336,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             rotateImage(90)
         }
 
-        binding.bottomActions.bottomProperties.applyColorFilter(Color.WHITE)
+        setBottomActionIcon(binding.bottomActions.bottomProperties, org.fossify.commons.R.drawable.ic_info_vector)
         binding.bottomActions.bottomProperties.beVisibleIf(visibleBottomActions and BOTTOM_ACTION_PROPERTIES != 0)
         binding.bottomActions.bottomProperties.setOnLongClickListener { toast(org.fossify.commons.R.string.properties); true }
         binding.bottomActions.bottomProperties.setOnClickListener {
@@ -1423,18 +1422,27 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
+    private fun setBottomActionIcon(view: android.widget.TextView, iconRes: Int) {
+        val drawable = androidx.core.content.ContextCompat.getDrawable(this, iconRes)?.mutate()
+        drawable?.setTint(Color.WHITE)
+        val sizePx = (24f * resources.displayMetrics.density).toInt()
+        drawable?.setBounds(0, 0, sizePx, sizePx)
+        view.setCompoundDrawablesRelative(null, drawable, null, null)
+    }
+
     private fun updateBottomActionIcons(medium: Medium?) {
         if (medium == null) {
             return
         }
 
         val favoriteIcon =
-            if (medium.isFavorite) org.fossify.commons.R.drawable.ic_star_vector else org.fossify.commons.R.drawable.ic_star_outline_vector
-        binding.bottomActions.bottomFavorite.setImageResource(favoriteIcon)
+            if (medium.isFavorite) R.drawable.ic_star_calypso_vector else R.drawable.ic_star_outline_calypso_vector
+        setBottomActionIcon(binding.bottomActions.bottomFavorite, favoriteIcon)
 
-        val hideIcon =
-            if (medium.isHidden()) org.fossify.commons.R.drawable.ic_unhide_vector else org.fossify.commons.R.drawable.ic_hide_vector
-        binding.bottomActions.bottomToggleFileVisibility.setImageResource(hideIcon)
+        val isHidden = medium.isHidden()
+        val hideIcon = if (isHidden) org.fossify.commons.R.drawable.ic_unhide_vector else R.drawable.ic_onboarding_vault_lock
+        setBottomActionIcon(binding.bottomActions.bottomToggleFileVisibility, hideIcon)
+        binding.bottomActions.bottomToggleFileVisibility.setText(if (isHidden) R.string.decrypt else R.string.encrypt)
 
         binding.bottomActions.bottomRotate.beVisibleIf(
             getVisibleBottomActions() and BOTTOM_ACTION_ROTATE != 0 && getCurrentMedium()?.isImage() == true

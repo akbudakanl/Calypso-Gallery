@@ -394,7 +394,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">Verschlüsselte und unverschlüsselte Elemente können bei diesem Vorgang nicht kombiniert werden</string>
     <string name="lock_album">Album sperren</string>
     <string name="unlock_album">Album entsperren</string>
-    <string name="auto_backup_prompt_message">Möchtest du, dass deine Favoriten und virtuellen Alben regelmäßig außerhalb des App-Speichers im Systemspeicher gesichert werden? So gehen deine Favoritenliste und virtuellen Alben nicht verloren, wenn du die App deinstallierst. Du kannst jederzeit in den App-Einstellungen manuell eine Sicherung erstellen.</string>
     <string name="auto_backup_favorites_and_virtual_albums">Favoriten und virtuelle Alben im Gerätespeicher sichern</string>
     <string name="encrypt_info_title">So funktioniert die Verschlüsselung</string>
     <string name="encrypt_info_message" formatted="false">Ordner- &amp; Dateistruktur:\n• Wenn ein unverschlüsseltes Album verschlüsselt wird, wird es in einen verschlüsselten Unterordner im Tresor (Secrets) umgewandelt.\n• Sowohl der Ordnername als auch alle Dateinamen und -inhalte darin werden verschlüsselt, sodass außerhalb der App nichts lesbar ist.\n\nWenn bereits ein Album mit demselben Namen existiert:\n• Standardmäßig fragt die App, ob ein neues Album wie Album(1) erstellt oder in das vorhandene verschlüsselte Album zusammengeführt werden soll (in den Einstellungen konfigurierbar).\n• Beim Zusammenführen kannst du wählen, ob Quelldateien, die zu 100% bit-identisch mit dem Ziel sind, gelöscht oder im Quellordner behalten werden sollen.\n• Unterschiedliche Dateien mit demselben Namen (z. B. download.jpg) werden als download(1).jpg behalten oder gemäß deiner Konfliktlösungseinstellung behandelt.</string>
@@ -470,9 +469,7 @@
     <string name="conflict_handling_auto_summary">Automatisch (Experimentell)</string>
     <string name="conflict_handling_standard_dialog_short">Standarddialog (Standard — prüft nur den Dateinamen, wie die ursprüngliche Fossify Gallery)</string>
     <string name="skipped_encrypt_files_mode_label">Übersprungene Dateien bei der Verschlüsselung verwalten</string>
-    <string name="skipped_decrypt_files_mode_label">Übersprungene Dateien bei der Entschlüsselung verwalten</string>
     <string name="skipped_encrypt_files_info_message">Lege fest, ob Dateien, die bei der Verschlüsselung im Quellordner übersprungen wurden, aus Sicherheitsgründen behalten oder gelöscht werden sollen. Diese Auswahl gilt auch für Albumkonflikte bei der Verschlüsselung eines Albums (siehe Einstellung unten), wenn das Quellalbum am Ziel in ein vorhandenes Album zusammengeführt wird.</string>
-    <string name="skipped_decrypt_files_info_message">Lege fest, ob Dateien, die bei der Entschlüsselung im Quellordner übersprungen wurden, behalten oder gelöscht werden sollen. Diese Auswahl gilt auch für Albumkonflikte bei der Entschlüsselung eines Albums (siehe Einstellung unten), wenn das Quellalbum am Ziel in ein vorhandenes Album zusammengeführt wird.</string>
     <string name="skipped_crypto_files_ask">Immer fragen (Standard)</string>
     <string name="skipped_crypto_files_keep">Behalten</string>
     <string name="skipped_crypto_files_delete">Löschen</string>
@@ -535,7 +532,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Brute-Force-Widerstand</string>
     <string name="brute_force_time_title">Zielwert für die Entsperrzeit des Tresors</string>
-    <string name="brute_force_time_hint">Sekunden (2,0–7,0). Die App misst dieses Gerät einmal und speichert die daraus resultierenden KDF-Parameter im Tresor; die tatsächliche Entsperrzeit kann auf anderen Geräten abweichen.</string>
+    <string name="brute_force_time_hint">Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden.</string>
+    <string name="brute_force_time_min_hint">Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (auf diesem Gerät)</string>
+    <string name="brute_force_time_out_of_range">Diese Zeit liegt über dem einstellbaren Maximum (10 s). Zum Ändern tippen.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Gespeichert: %1$d MiB / %2$d Runden</string>
     <string name="brute_force_clamped"> (begrenzt)</string>
@@ -564,4 +564,49 @@
     <string name="continue_without_saving">Ohne Speichern fortfahren</string>
     <string name="vault_no_recovery_warning">Es wird Offline-Verschlüsselung verwendet. Wenn Sie Ihr Passwort oder Ihre PIN vergessen, gibt es keine Möglichkeit, Ihren Tresor wiederherzustellen.</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">Keine Anmeldung, keine Cloud, nur deine Galerie.</string>
+    <string name="onboarding_offline_title">Vollständig offline</string>
+    <string name="onboarding_offline_desc">Keine Internetverbindung. Deine Daten gehören nur dir.</string>
+    <string name="onboarding_vault_title">Verschlüsselter Tresor</string>
+    <string name="onboarding_vault_desc">Verschlüssle deine Fotos und Videos. Niemand sonst hat Zugriff.</string>
+    <string name="onboarding_albums_title">Playlists für deine Fotos</string>
+    <string name="onboarding_albums_desc">Virtuelle Ordner bündeln deine gewünschten Fotos und Videos in beliebig vielen Alben, ohne sie aus ihren Ordnern zu verschieben oder durch Kopien zusätzlichen Speicherplatz zu verbrauchen.</string>
+    <string name="onboarding_media_permission_note">Für die Anzeige deiner Fotos und Videos ist die Medienzugriffsberechtigung erforderlich.</string>
+    <string name="onboarding_continue">Weiter</string>
+    <string name="onboarding_media_required_title">Voller Medienzugriff erforderlich</string>
+    <string name="onboarding_media_required_desc">Calypso Gallery benötigt vollen Zugriff, um alle Fotos und Videos anzuzeigen.</string>
+    <string name="onboarding_media_steps_header">So aktivierst du die Berechtigung</string>
+    <string name="onboarding_media_step_1">Einstellungen</string>
+    <string name="onboarding_media_step_2">Berechtigungen</string>
+    <string name="onboarding_media_step_3">Fotos und Videos</string>
+    <string name="onboarding_media_step_4">Immer alle zulassen</string>
+    <string name="onboarding_media_required_hint">Sobald der Zugriff erteilt wurde, öffnet sich deine Galerie automatisch bei der Rückkehr in die App.</string>
+    <string name="onboarding_go_to_settings">Zu den Einstellungen</string>
+    <string name="onboarding_close">Schließen</string>
+    <string name="onboarding_all_files_title">Zugriff auf alle Dateien</string>
+    <string name="onboarding_all_files_desc">Für den verschlüsselten Tresor und eine reibungslose Dateiverwaltung wird der Zugriff auf alle Dateien empfohlen.</string>
+    <string name="onboarding_all_files_vault_title">Verschlüsselter Tresor und versteckte Ordner</string>
+    <string name="onboarding_all_files_vault_desc">Verwalte verschlüsselte Dateien und versteckte Ordner ohne Systemeinschränkungen.</string>
+    <string name="onboarding_all_files_backup_title">Verliere keine Favoriten und virtuellen Alben</string>
+    <string name="onboarding_all_files_backup_desc">Selbst wenn du die App versehentlich löschst, werden Favoriten und virtuelle Alben automatisch auf deinem Gerät gesichert. Du kannst die automatische Sicherung jederzeit in den App-Einstellungen deaktivieren.</string>
+    <string name="onboarding_all_files_offline_title">Weiterhin vollständig auf deinem Gerät</string>
+    <string name="onboarding_all_files_offline_desc">Die App bleibt vollständig offline, diese Berechtigung dient ausschließlich lokalen Dateioperationen.</string>
+    <string name="onboarding_grant_access">Zugriff erlauben</string>
+    <string name="onboarding_not_now">Nicht jetzt</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d Elemente</string>
+    <string name="media_header_virtual_album">Virtuelles Album · %d Elemente</string>
+    <string name="media_header_encrypted_album">Verschlüsseltes Album · %d Elemente</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">Vorschau</string>
+    <string name="appearance_preview_text">Deine Erinnerungen, deine Farben</string>
+    <string name="appearance_preview_button">Beispielschaltfläche</string>
+    <string name="appearance_contrast_warning">Geringer Kontrast: Text %1$.1f:1, Schaltfläche %2$.1f:1. Für bessere Lesbarkeit erhöhen.</string>
+    <string name="use_biometrics">Biometrie verwenden</string>
+    <string name="hide_vault_key_presses">Tastendrücke bei der Tresor-Passworteingabe ausblenden</string>
+    <string name="show_pin_dots">Bei der PIN-Eingabe für jede Ziffer einen Punkt anzeigen</string>
 </resources>

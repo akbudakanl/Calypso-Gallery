@@ -392,7 +392,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">此操作無法同時結合已加密與未加密的項目</string>
     <string name="lock_album">鎖定相簿</string>
     <string name="unlock_album">解鎖相簿</string>
-    <string name="auto_backup_prompt_message">是否要定期將您的我的最愛和虛擬相簿寫入應用程式記憶體以外的系統儲存空間？這可確保您在解除安裝應用程式時不會遺失我的最愛清單和虛擬相簿。您隨時可以從應用程式設定手動建立備份。</string>
     <string name="auto_backup_favorites_and_virtual_albums">將我的最愛和虛擬相簿備份至裝置儲存空間</string>
     <string name="encrypt_info_title">加密運作方式</string>
     <string name="encrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
@@ -468,9 +467,7 @@
     <string name="conflict_handling_auto_summary">全自動（實驗性）</string>
     <string name="conflict_handling_standard_dialog_short">標準對話方塊（預設 — 僅檢查檔名，與原始 Fossify Gallery 相同）</string>
     <string name="skipped_encrypt_files_mode_label">管理加密期間略過的檔案</string>
-    <string name="skipped_decrypt_files_mode_label">管理解密期間略過的檔案</string>
     <string name="skipped_encrypt_files_info_message">選擇加密期間在來源資料夾中略過的檔案要保留還是刪除，以確保安全性。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿加密期間的相簿衝突（請參閱下方設定）。</string>
-    <string name="skipped_decrypt_files_info_message">選擇解密期間在來源資料夾中略過的檔案要保留還是刪除。當來源相簿在目的地合併至現有相簿時，此選擇也適用於相簿解密期間的相簿衝突（請參閱下方設定）。</string>
     <string name="skipped_crypto_files_ask">一律詢問（預設）</string>
     <string name="skipped_crypto_files_keep">保留</string>
     <string name="skipped_crypto_files_delete">刪除</string>
@@ -533,7 +530,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">暴力破解防護</string>
     <string name="brute_force_time_title">目標保險箱解鎖時間</string>
-    <string name="brute_force_time_hint">秒數（2.0–7.0）。應用程式會對此裝置進行一次測量，並將產生的 KDF 參數儲存在保險箱中；實際解鎖時間在其他裝置上會有所不同。</string>
+    <string name="brute_force_time_hint">選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。</string>
+    <string name="brute_force_time_min_hint">下限為此裝置的安全標準時間。</string>
+    <string name="brute_force_time_value_device">%1$.1f 秒（此裝置）</string>
+    <string name="brute_force_time_out_of_range">此時間超過可選上限（10 秒）。點按即可變更。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
     <string name="brute_force_actual_params">已儲存：%1$d MiB / %2$d 回合</string>
     <string name="brute_force_clamped"> （已限制）</string>
@@ -562,4 +562,49 @@
     <string name="continue_without_saving">不儲存並繼續</string>
     <string name="vault_no_recovery_warning">本系統採用離線加密。如果您忘記密碼或 PIN 碼，將無法復原您的保險箱。</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">免註冊、無雲端，專屬於您的圖庫。</string>
+    <string name="onboarding_offline_title">完全離線</string>
+    <string name="onboarding_offline_desc">不連線至網際網路。您的資料只屬於您自己。</string>
+    <string name="onboarding_vault_title">加密保險箱</string>
+    <string name="onboarding_vault_desc">加密您的相片與影片。除了您以外無人能存取。</string>
+    <string name="onboarding_albums_title">相片專屬的播放清單</string>
+    <string name="onboarding_albums_desc">虛擬資料夾讓您無需將相片和影片移出原有資料夾，也不必複製檔案佔用額外空間，就能自由整理到任意數量的相簿中。</string>
+    <string name="onboarding_media_permission_note">顯示您的相片與影片需要媒體存取權限。</string>
+    <string name="onboarding_continue">繼續</string>
+    <string name="onboarding_media_required_title">需要完整的媒體存取權限</string>
+    <string name="onboarding_media_required_desc">Calypso 圖庫需要完整存取權限才能顯示您所有的相片與影片。</string>
+    <string name="onboarding_media_steps_header">如何開啟權限</string>
+    <string name="onboarding_media_step_1">設定</string>
+    <string name="onboarding_media_step_2">權限</string>
+    <string name="onboarding_media_step_3">相片和影片</string>
+    <string name="onboarding_media_step_4">一律全部允許</string>
+    <string name="onboarding_media_required_hint">授予權限後返回應用程式，圖庫將會自動開啟。</string>
+    <string name="onboarding_go_to_settings">前往設定</string>
+    <string name="onboarding_close">關閉</string>
+    <string name="onboarding_all_files_title">所有檔案存取權</string>
+    <string name="onboarding_all_files_desc">建議開啟所有檔案存取權，以順暢使用加密保險箱與檔案管理功能。</string>
+    <string name="onboarding_all_files_vault_title">加密保險箱與隱藏資料夾</string>
+    <string name="onboarding_all_files_vault_desc">不受系統限制地管理加密檔案與隱藏資料夾。</string>
+    <string name="onboarding_all_files_backup_title">別遺失我的最愛與虛擬相簿</string>
+    <string name="onboarding_all_files_backup_desc">即使不小心解除安裝應用程式，我的最愛與虛擬相簿仍會自動備份在您的裝置上。您隨時可以在應用程式設定中關閉自動備份。</string>
+    <string name="onboarding_all_files_offline_title">依然完全保留在您的裝置上</string>
+    <string name="onboarding_all_files_offline_desc">應用程式仍會保持離線運作，此權限僅用於本機檔案操作。</string>
+    <string name="onboarding_grant_access">授予權限</string>
+    <string name="onboarding_not_now">稍後再說</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d 個項目</string>
+    <string name="media_header_virtual_album">虛擬相簿 · %d 個項目</string>
+    <string name="media_header_encrypted_album">加密相簿 · %d 個項目</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">預覽</string>
+    <string name="appearance_preview_text">您的回憶，您的色彩</string>
+    <string name="appearance_preview_button">範例按鈕</string>
+    <string name="appearance_contrast_warning">對比度過低：文字 %1$.1f:1、按鈕 %2$.1f:1。請提高對比以利閱讀。</string>
+    <string name="use_biometrics">使用生物辨識</string>
+    <string name="hide_vault_key_presses">輸入保險庫密碼時隱藏按鍵回饋</string>
+    <string name="show_pin_dots">輸入 PIN 時，每位數字顯示一個圓點</string>
 </resources>

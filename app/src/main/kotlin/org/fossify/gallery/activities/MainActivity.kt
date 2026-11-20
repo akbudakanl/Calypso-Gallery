@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.dialogs.CreateNewFolderDialog
 import org.fossify.commons.dialogs.FilePickerDialog
@@ -285,7 +286,19 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mShouldStopFetching = false
     private var mWasDefaultFolderChecked = false
     private var mWasMediaManagementPromptShown = false
+    private var mAwaitingOnboardingResult = false
     private var mLatestMediaId = 0L
+
+    private val onboardingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        mAwaitingOnboardingResult = false
+        if (result.resultCode == RESULT_OK) {
+            if (result.data?.getBooleanExtra(OnboardingActivity.EXTRA_ALL_FILES_HANDLED, false) == true) {
+                mWasMediaManagementPromptShown = true
+            }
+        } else if (!hasAllPermissions(getPermissionsToRequest())) {
+            finish()
+        }
+    }
     private var mLatestMediaDateId = 0L
 
     // used at "Group direct subfolders" for navigation
@@ -467,11 +480,36 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             launchSearchActivity()
         }
 
-        // just request the permission, tryLoadGallery will then trigger in onResume
-        handleMediaPermissions()
+        if (hasAllPermissions(getPermissionsToRequest())) {
+            if (!config.hasSeenOnboarding) {
+                config.hasSeenOnboarding = true
+            }
+            // just request the permission, tryLoadGallery will then trigger in onResume
+            handleMediaPermissions()
+        } else if (!launchOnboardingIfNeeded()) {
+            // 3rd-party intent on fresh install: skip welcome and request permission directly
+            handleMediaPermissions()
+        }
+    }
+
+    private fun launchOnboardingIfNeeded(): Boolean {
+        if (mAwaitingOnboardingResult) {
+            return true
+        }
+        val startMode = when {
+            config.showPermissionRationale -> OnboardingActivity.MODE_MEDIA_PERMISSION_REQUIRED
+            !mIsThirdPartyIntent && !config.hasSeenOnboarding -> OnboardingActivity.MODE_WELCOME
+            else -> return false
+        }
+        mAwaitingOnboardingResult = true
+        onboardingLauncher.launch(OnboardingActivity.createIntent(this, startMode))
+        return true
     }
 
     private fun handleMediaPermissions(callback: (() -> Unit)? = null) {
+        if (!hasAllPermissions(getPermissionsToRequest()) && launchOnboardingIfNeeded()) {
+            return
+        }
         requestMediaPermissions(enableRationale = true) {
             callback?.invoke()
             if (isRPlus() && !mWasMediaManagementPromptShown) {
@@ -598,6 +636,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             if (config.directorySorting and SORT_BY_RANDOM != 0) {
                 mLoadedInitialPhotos = false
             }
+        }
+
+        if (isFinishing || mAwaitingOnboardingResult) {
+            return
         }
 
         if (!binding.mainMenu.isSearchOpen) {

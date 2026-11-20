@@ -1,0 +1,2006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calypso Gallery — Store Screenshots & GitHub Banner Studio</title>
+<style>
+  :root {
+    --zinc-950: #09090B;
+    --zinc-900: #141417;
+    --zinc-850: #18181B;
+    --zinc-800: #27272A;
+    --zinc-700: #3F3F46;
+    --zinc-500: #71717A;
+    --zinc-400: #A1A1AA;
+    --zinc-200: #E4E4E7;
+    --zinc-100: #F4F4F5;
+    --zinc-50:  #FAFAFA;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0d0d10;
+    color: var(--zinc-50);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* =========================================================
+     STUDIO SHELL (Hidden during ?export=... headless render)
+     ========================================================= */
+  .studio-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13, 13, 16, 0.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid #222228;
+    padding: 16px 28px;
+  }
+
+  .studio-header-inner {
+    max-width: 1480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .studio-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .studio-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .studio-brand h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .studio-brand p {
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    color: var(--zinc-400);
+  }
+
+  .studio-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .studio-btn {
+    border: 1px solid var(--zinc-800);
+    background: var(--zinc-850);
+    color: var(--zinc-50);
+    padding: 8px 14px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+  }
+
+  .studio-btn:hover { background: var(--zinc-800); border-color: var(--zinc-700); }
+  .studio-btn.active { background: var(--zinc-50); color: var(--zinc-950); border-color: var(--zinc-50); }
+
+  /* Photo Swapper Bar */
+  .swapper-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px solid #1e1e24;
+  }
+
+  .swapper-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--zinc-400);
+    margin-right: 4px;
+  }
+
+  .photo-slot {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 5px;
+    border-radius: 10px;
+    background: #16161a;
+    border: 1px solid #27272e;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+
+  .photo-slot:hover { border-color: var(--zinc-500); background: #1e1e24; }
+
+  .photo-slot img {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    object-fit: cover;
+    display: block;
+    background: #27272A;
+  }
+
+  .photo-slot span {
+    font-size: 11.5px;
+    color: var(--zinc-200);
+    font-weight: 500;
+  }
+
+  .photo-slot input { display: none; }
+
+  /* Preview Grid */
+  .studio-stage {
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 32px 28px 64px;
+  }
+
+  .studio-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--zinc-400);
+    margin: 0 0 18px;
+  }
+
+  .slides-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px;
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 1180px) { .slides-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) { .slides-grid { grid-template-columns: 1fr; } }
+
+  .slide-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .slide-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--zinc-400);
+  }
+
+  .slide-card-meta strong { color: var(--zinc-200); font-weight: 600; }
+
+  .slide-scaler {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #26262d;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    background: var(--zinc-950);
+  }
+
+  .banner-scaler {
+    position: relative;
+    width: 100%;
+    max-width: 1120px;
+    aspect-ratio: 16 / 9;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid #26262d;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    background: var(--zinc-950);
+  }
+
+  .slide-scaler > .artboard,
+  .banner-scaler > .artboard {
+    transform-origin: top left;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  /* =========================================================
+     EXPORT MODE: Exact 1080x1920 or 1600x900 native render
+     ========================================================= */
+  body.export-mode {
+    overflow: hidden;
+    background: var(--zinc-950);
+  }
+
+  body.export-mode .studio-header,
+  body.export-mode .studio-stage {
+    display: none !important;
+  }
+
+  #exportMount {
+    display: none;
+  }
+
+  body.export-mode #exportMount {
+    display: block;
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* =========================================================
+     ARTBOARD BASE (1080 x 1920 Native Google Play Resolution)
+     ========================================================= */
+  .artboard {
+    position: relative;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: #09090B;
+    color: #FAFAFA;
+    user-select: none;
+  }
+
+  .artboard.banner {
+    width: 1600px;
+    height: 900px;
+  }
+
+  /* Subtle editorial architectural background textures */
+  .bg-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.028) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.028) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 42%, black 20%, transparent 80%);
+    pointer-events: none;
+  }
+
+  .bg-glow {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* Editorial Header Typography */
+  .art-header {
+    position: relative;
+    z-index: 4;
+    padding: 108px 88px 0;
+    text-align: center;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #D4D4D8;
+    margin-bottom: 34px;
+  }
+
+  .eyebrow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FAFAFA;
+  }
+
+  .art-headline {
+    margin: 0;
+    font-size: 80px;
+    font-weight: 700;
+    line-height: 1.07;
+    letter-spacing: -0.035em;
+    color: #FAFAFA;
+  }
+
+  .art-headline .muted-line {
+    color: #A1A1AA;
+    font-weight: 600;
+  }
+
+  .art-sub {
+    margin: 26px auto 0;
+    max-width: 820px;
+    font-size: 31px;
+    line-height: 1.4;
+    color: #8E8E98;
+    font-weight: 400;
+  }
+
+  /* =========================================================
+     FLAGSHIP ANDROID DEVICE MOCKUP (High-DPI Scaled)
+     ========================================================= */
+  .device-wrap {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: -74px;
+    z-index: 5;
+  }
+
+  .device-frame {
+    position: relative;
+    width: 744px;
+    height: 1516px;
+    border-radius: 78px;
+    padding: 18px;
+    background: linear-gradient(145deg, #32323a 0%, #16161a 38%, #0d0d10 72%, #2a2a31 100%);
+    box-shadow:
+      0 60px 140px rgba(0, 0, 0, 0.85),
+      0 12px 32px rgba(0, 0, 0, 0.6),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.14);
+  }
+
+  .device-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 62px;
+    background: #000000;
+    color: #FAFAFA;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .device-screen.light {
+    background: #FAFAFA;
+    color: #18181B;
+  }
+
+  /* Camera punch-hole & Android status bar */
+  .punch-hole {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #050507;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.06);
+    z-index: 20;
+  }
+
+  .and-status {
+    height: 68px;
+    padding: 20px 44px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 22px;
+    font-weight: 600;
+    opacity: 0.86;
+    flex-shrink: 0;
+    z-index: 15;
+  }
+
+  .and-status-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .and-status-icons svg { width: 24px; height: 24px; fill: currentColor; }
+
+  /* Floating Callout Badges outside phone */
+  .float-pill {
+    position: absolute;
+    z-index: 12;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 28px;
+    border-radius: 999px;
+    background: rgba(24, 24, 28, 0.88);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    font-size: 24px;
+    font-weight: 600;
+    color: #FAFAFA;
+    white-space: nowrap;
+  }
+
+  .float-pill svg {
+    width: 26px;
+    height: 26px;
+    stroke: #FAFAFA;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* =========================================================
+     SLIDE 1: MAIN GALLERY UI (Authentic Calypso Dark Grid)
+     ========================================================= */
+  .cal-search-bar {
+    margin: 12px 26px 22px;
+    height: 82px;
+    border-radius: 41px;
+    background: #18181B;
+    border: 1px solid #27272A;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    color: #A1A1AA;
+    font-size: 27px;
+  }
+
+  .device-screen.light .cal-search-bar {
+    background: #FFFFFF;
+    border-color: #E4E4E7;
+    color: #71717A;
+  }
+
+  .cal-search-bar .spacer { flex: 1; }
+  .cal-search-bar svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .folder-grid {
+    padding: 0 26px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 20px;
+  }
+
+  .folder-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .folder-thumb-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 26px;
+    overflow: hidden;
+    background: #18181B;
+  }
+
+  .folder-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .folder-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(9, 9, 11, 0.72);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FAFAFA;
+  }
+
+  .folder-badge svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .folder-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0 6px;
+  }
+
+  .folder-name {
+    font-size: 26px;
+    font-weight: 600;
+    color: inherit;
+    letter-spacing: -0.01em;
+  }
+
+  .folder-count {
+    font-size: 22px;
+    color: #71717A;
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     SLIDE 2: ENCRYPTED VAULT (VaultLockActivity Authentic UI)
+     ========================================================= */
+  .vault-bg-blur {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 130px 28px 0;
+    opacity: 0.22;
+    filter: blur(26px) saturate(0.5);
+    transform: scale(1.06);
+    pointer-events: none;
+  }
+
+  .vault-bg-blur img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 24px;
+    object-fit: cover;
+  }
+
+  .vault-lock-body {
+    position: relative;
+    z-index: 3;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 56px 140px;
+    text-align: center;
+  }
+
+  .vault-emblem-ring {
+    width: 144px;
+    height: 144px;
+    border-radius: 40px;
+    background: #141418;
+    border: 1.5px solid #2E2E36;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 16px rgba(255,255,255,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 38px;
+  }
+
+  .vault-emblem-ring svg {
+    width: 62px;
+    height: 62px;
+    stroke: #FAFAFA;
+    fill: none;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .vault-lock-title {
+    margin: 0 0 12px;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .vault-lock-sub {
+    margin: 0 0 46px;
+    font-size: 24px;
+    color: #A1A1AA;
+    line-height: 1.4;
+  }
+
+  .vault-pin-box {
+    width: 100%;
+    height: 92px;
+    border-radius: 24px;
+    background: rgba(24, 24, 28, 0.92);
+    border: 1.5px solid #3F3F46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .pin-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #FAFAFA;
+  }
+
+  .pin-dot.empty {
+    background: transparent;
+    border: 2px solid #52525B;
+  }
+
+  .vault-unlock-btn {
+    width: 100%;
+    height: 88px;
+    border-radius: 44px;
+    background: #FAFAFA;
+    color: #09090B;
+    font-size: 27px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .vault-bio-btn {
+    width: 100%;
+    height: 84px;
+    border-radius: 42px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid #2E2E36;
+    color: #E4E4E7;
+    font-size: 25px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .vault-bio-btn svg {
+    width: 30px;
+    height: 30px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .vault-footer-chip {
+    margin-top: 42px;
+    padding: 14px 24px;
+    border-radius: 16px;
+    background: rgba(24,24,28,0.8);
+    border: 1px solid #27272A;
+    font-size: 20px;
+    color: #A1A1AA;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* =========================================================
+     SLIDE 3: VIRTUAL ALBUMS (Playlists for Your Photos)
+     ========================================================= */
+  .album-topbar {
+    padding: 16px 32px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .album-topbar svg { width: 34px; height: 34px; stroke: #FAFAFA; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+
+  .album-topbar-text h3 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .album-topbar-text p {
+    margin: 4px 0 0;
+    font-size: 21px;
+    color: #A1A1AA;
+  }
+
+  .media-grid-3 {
+    padding: 0 18px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .media-cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #18181B;
+  }
+
+  .media-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .media-cell.highlight {
+    box-shadow: inset 0 0 0 4px #FAFAFA;
+  }
+
+  .floating-virtual-card {
+    position: absolute;
+    right: 54px;
+    top: 660px;
+    z-index: 15;
+    width: 390px;
+    border-radius: 30px;
+    background: rgba(20, 20, 24, 0.94);
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.16);
+    padding: 24px;
+    box-shadow: 0 36px 90px rgba(0, 0, 0, 0.72);
+  }
+
+  .fvc-top {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .fvc-top img {
+    width: 82px;
+    height: 82px;
+    border-radius: 18px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .fvc-top strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .fvc-top span {
+    display: inline-block;
+    font-size: 19px;
+    font-weight: 600;
+    color: #09090B;
+    background: #FAFAFA;
+    padding: 5px 14px;
+    border-radius: 999px;
+  }
+
+  .fvc-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid #27272A;
+  }
+
+  .fvc-link-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 21px;
+    color: #D4D4D8;
+  }
+
+  .fvc-link-row em {
+    font-style: normal;
+    font-size: 18px;
+    color: #71717A;
+  }
+
+  /* =========================================================
+     SLIDE 4: FULL-SCREEN VIEWER & EXIF PRIVACY
+     ========================================================= */
+  .viewer-full-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .viewer-top-grad {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 240px;
+    background: linear-gradient(to bottom, rgba(9,9,11,0.82), transparent);
+    z-index: 4;
+  }
+
+  .viewer-bot-grad {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 440px;
+    background: linear-gradient(to top, rgba(9,9,11,0.94) 30%, transparent);
+    z-index: 4;
+  }
+
+  .viewer-bar {
+    position: relative;
+    z-index: 6;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .viewer-bar svg { width: 32px; height: 32px; stroke: #FAFAFA; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .viewer-filename { flex: 1; font-size: 25px; font-weight: 600; color: #FAFAFA; }
+
+  .viewer-exif-card {
+    position: absolute;
+    left: 34px;
+    right: 34px;
+    bottom: 224px;
+    z-index: 8;
+    border-radius: 26px;
+    background: rgba(16, 16, 20, 0.84);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 24px 28px;
+  }
+
+  .exif-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .exif-head strong { font-size: 24px; font-weight: 700; }
+  .exif-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #FAFAFA;
+    color: #09090B;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .exif-rows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+    font-size: 20px;
+    color: #A1A1AA;
+  }
+
+  .exif-rows b { color: #FAFAFA; font-weight: 600; }
+
+  .viewer-bottom-actions {
+    position: absolute;
+    left: 0; right: 0; bottom: 112px;
+    z-index: 8;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 36px;
+  }
+
+  .v-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #E4E4E7;
+    font-size: 19px;
+    font-weight: 500;
+  }
+
+  .v-action svg {
+    width: 34px;
+    height: 34px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* =========================================================
+     SLIDE 5: DUAL-PHONE DARK & LIGHT APPEARANCE SHOWCASE
+     ========================================================= */
+  .dual-stage {
+    position: absolute;
+    inset: 430px 0 0;
+    z-index: 5;
+  }
+
+  .dual-phone-left {
+    position: absolute;
+    left: -20px;
+    top: 40px;
+    transform: scale(0.76) rotate(-5deg);
+    transform-origin: top left;
+  }
+
+  .dual-phone-right {
+    position: absolute;
+    right: -12px;
+    top: 120px;
+    transform: scale(0.80) rotate(3deg);
+    transform-origin: top right;
+  }
+
+  .app-bar-light {
+    padding: 20px 32px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 1px solid #E4E4E7;
+    font-size: 32px;
+    font-weight: 700;
+    color: #18181B;
+  }
+
+  .app-bar-light svg { width: 32px; height: 32px; stroke: #18181B; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+
+  .app-sec {
+    padding: 26px 32px 10px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #52525B;
+  }
+
+  .app-radio-row {
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 26px;
+    color: #18181B;
+    font-weight: 500;
+  }
+
+  .app-radio {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid #27272A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .app-radio.on::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #27272A;
+  }
+
+  .app-swatch-row {
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 25px;
+    color: #18181B;
+    border-bottom: 1px solid #F0F0F3;
+  }
+
+  .app-swatch {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1.5px solid #D4D4D8;
+  }
+
+  .app-preview-box {
+    margin: 24px 32px;
+    padding: 28px;
+    border-radius: 22px;
+    background: #FFFFFF;
+    border: 1.5px solid #E4E4E7;
+  }
+
+  .app-preview-box strong {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 18px;
+    color: #18181B;
+  }
+
+  .app-preview-btn {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 14px;
+    background: #27272A;
+    color: #FFFFFF;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  /* =========================================================
+     SLIDE 6: AUTHENTIC NEW ONBOARDING SCREEN INSIDE PHONE
+     ========================================================= */
+  .ob-body {
+    flex: 1;
+    padding: 28px 42px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ob-emblem-stage {
+    position: relative;
+    width: 320px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .ob-ring {
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.12);
+  }
+
+  .ob-ring.outer {
+    width: 248px;
+    height: 248px;
+    border-style: dashed;
+    border-color: rgba(255,255,255,0.09);
+  }
+
+  .ob-mini-card {
+    position: absolute;
+    width: 88px;
+    height: 106px;
+    border-radius: 22px;
+    background: #141417;
+    border: 1.5px solid #3F3F46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #A1A1AA;
+  }
+
+  .ob-mini-card svg { width: 34px; height: 34px; stroke: currentColor; fill: none; stroke-width: 1.85; stroke-linecap: round; stroke-linejoin: round; }
+  .ob-mini-card.l { transform: translate(-88px, 6px) rotate(-12deg); }
+  .ob-mini-card.r { transform: translate(88px, 6px) rotate(12deg); }
+
+  .ob-logo-box {
+    position: relative;
+    z-index: 2;
+    width: 132px;
+    height: 132px;
+    border-radius: 36px;
+    background: #161619;
+    border: 1.5px solid #2E2E35;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 12px rgba(255,255,255,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ob-logo-box svg { width: 100%; height: 100%; }
+
+  .ob-title {
+    margin: 0 0 8px;
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .ob-motto {
+    margin: 0 0 34px;
+    font-size: 24px;
+    color: #A1A1AA;
+  }
+
+  .ob-cards {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .ob-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 22px;
+    padding: 24px 26px;
+    border-radius: 26px;
+    background: #141417;
+    border: 1.5px solid #27272A;
+    text-align: left;
+  }
+
+  .ob-ic {
+    width: 66px;
+    height: 66px;
+    border-radius: 18px;
+    background: #1F1F23;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #FAFAFA;
+  }
+
+  .ob-ic svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 1.85; stroke-linecap: round; stroke-linejoin: round; }
+
+  .ob-card h4 { margin: 0 0 6px; font-size: 25px; font-weight: 700; }
+  .ob-card p { margin: 0; font-size: 21px; color: #A1A1AA; line-height: 1.4; }
+
+  .ob-cta {
+    width: 100%;
+    height: 86px;
+    border-radius: 43px;
+    background: #FAFAFA;
+    color: #09090B;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 32px;
+  }
+
+  /* =========================================================
+     SLIDE 7: GITHUB README HERO BANNER (1600 x 900)
+     ========================================================= */
+  .banner-layout {
+    position: relative;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 700px 1fr;
+    align-items: center;
+    padding: 0 0 0 96px;
+  }
+
+  .banner-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .banner-logo-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 34px;
+  }
+
+  .banner-logo-badge {
+    width: 76px;
+    height: 76px;
+    border-radius: 21px;
+    background: #161619;
+    border: 1.5px solid #2E2E35;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .banner-logo-badge svg { width: 100%; height: 100%; }
+
+  .banner-tag {
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #D4D4D8;
+  }
+
+  .banner-h1 {
+    margin: 0 0 20px;
+    font-size: 74px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  .banner-sub {
+    margin: 0 0 38px;
+    font-size: 28px;
+    color: #A1A1AA;
+    line-height: 1.42;
+    max-width: 560px;
+  }
+
+  .banner-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .banner-chip {
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: #141417;
+    border: 1px solid #27272A;
+    font-size: 19px;
+    font-weight: 600;
+    color: #E4E4E7;
+  }
+
+  .banner-phones {
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }
+
+  .bp-slot {
+    position: absolute;
+    transform-origin: top left;
+  }
+
+  .bp-left {
+    left: 2px;
+    top: 155px;
+    transform: scale(0.44) rotate(-7deg);
+    opacity: 0.92;
+    z-index: 2;
+  }
+
+  .bp-center {
+    left: 204px;
+    top: 66px;
+    transform: scale(0.54);
+    z-index: 4;
+  }
+
+  .bp-right {
+    left: 492px;
+    top: 155px;
+    transform: scale(0.44) rotate(7deg);
+    opacity: 0.96;
+    z-index: 3;
+  }
+
+  [contenteditable="true"] {
+    outline: 2px dashed rgba(250, 250, 250, 0.35);
+    outline-offset: 6px;
+    border-radius: 8px;
+    cursor: text;
+  }
+</style>
+</head>
+<body>
+
+<header class="studio-header">
+  <div class="studio-header-inner">
+    <div class="studio-top-row">
+      <div class="studio-brand">
+        <div style="width:36px;height:36px;border-radius:10px;background:#09090B;border:1px solid #2E2E35;overflow:hidden;flex-shrink:0;">
+          <svg viewBox="0 0 512 512" style="width:100%;height:100%;">
+            <g transform="translate(256 256) scale(1.42) translate(-256 -256)">
+              <path fill="#ffffff" fill-rule="evenodd" d="M200,160 H312 A40,40 0,0,1 352,200 V312 A40,40 0,0,1 312,352 H200 A40,40 0,0,1 160,312 V200 A40,40 0,0,1 200,160 Z M200,182 H312 A18,18 0,0,1 330,200 V312 A18,18 0,0,1 312,330 H200 A18,18 0,0,1 182,312 V200 A18,18 0,0,1 200,182 Z M320,138 A54,54 0 1,1 320,246 A54,54 0 1,1 320,138 Z"/>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <h1>Calypso Gallery — Store Screenshots Studio</h1>
+          <p>Swap any reference photo below (or replace files in <code>docs/store-screenshots/photos/</code> and run <code>export-pngs.ps1</code> to render 1080×1920 PNGs).</p>
+        </div>
+      </div>
+
+      <div class="studio-actions">
+        <button class="studio-btn" id="btnEditText" onclick="toggleEditText()">Edit headlines</button>
+        <button class="studio-btn" onclick="resetPhotos()">Reset reference photos</button>
+      </div>
+    </div>
+
+    <div class="swapper-bar">
+      <span class="swapper-label">Replace photos live:</span>
+      <label class="photo-slot"><img data-slot-thumb="1" src="photos/photo-1.jpg" alt=""><span>1 · Architecture</span><input type="file" accept="image/*" onchange="swapPhoto(1, this)"></label>
+      <label class="photo-slot"><img data-slot-thumb="2" src="photos/photo-2.jpg" alt=""><span>2 · Nordic Coast</span><input type="file" accept="image/*" onchange="swapPhoto(2, this)"></label>
+      <label class="photo-slot"><img data-slot-thumb="3" src="photos/photo-3.jpg" alt=""><span>3 · Golden Dunes</span><input type="file" accept="image/*" onchange="swapPhoto(3, this)"></label>
+      <label class="photo-slot"><img data-slot-thumb="4" src="photos/photo-4.jpg" alt=""><span>4 · Botanical</span><input type="file" accept="image/*" onchange="swapPhoto(4, this)"></label>
+      <label class="photo-slot"><img data-slot-thumb="5" src="photos/photo-5.jpg" alt=""><span>5 · Kyoto Nights</span><input type="file" accept="image/*" onchange="swapPhoto(5, this)"></label>
+      <label class="photo-slot"><img data-slot-thumb="6" src="photos/photo-6.jpg" alt=""><span>6 · Alpine Peak</span><input type="file" accept="image/*" onchange="swapPhoto(6, this)"></label>
+    </div>
+  </div>
+</header>
+
+<main class="studio-stage">
+  <h2 class="studio-section-title">Google Play Phone Screenshots — 1080 × 1920 (English)</h2>
+
+  <div class="slides-grid">
+    <!-- =======================================================
+         SLIDE 1: HERO / MAIN GALLERY
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>01 · Main Gallery</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-1">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:920px;height:920px;left:80px;top:360px;background:radial-gradient(circle, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.02) 45%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>CALYPSO GALLERY</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">No sign-up. No cloud.</span><br>Just your gallery.</h2>
+          </div>
+
+          <div class="float-pill" style="right:56px;top:452px;">
+            <svg viewBox="0 0 24 24"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            100% Offline · Zero Trackers
+          </div>
+
+          <div class="device-wrap">
+            <div class="device-frame">
+              <div class="device-screen">
+                <div class="punch-hole"></div>
+                <div class="and-status">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                  </div>
+                </div>
+
+                <div class="cal-search-bar">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span>Search folders</span>
+                  <span class="spacer"></span>
+                  <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
+                </div>
+
+                <div class="folder-grid">
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="3" src="photos/photo-3.jpg" alt="">
+                      <div class="folder-badge"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Favorites</span><span class="folder-count">24</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="2" src="photos/photo-2.jpg" alt="">
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                      <div class="folder-badge"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="14" rx="2.5"/><path d="M7 7V5.5A2.5 2.5 0 0 1 9.5 3h9A2.5 2.5 0 0 1 21 5.5v9a2.5 2.5 0 0 1-2.5 2.5H17"/></svg></div>
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="4" src="photos/photo-4.jpg" alt="">
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Botanical</span><span class="folder-count">31</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="5" src="photos/photo-5.jpg" alt="">
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap">
+                      <img data-photo="6" src="photos/photo-6.jpg" alt="">
+                    </div>
+                    <div class="folder-meta"><span class="folder-name">Alpine</span><span class="folder-count">27</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         SLIDE 2: ENCRYPTED VAULT
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>02 · Encrypted Vault</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-2">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:940px;height:940px;left:70px;top:400px;background:radial-gradient(circle, rgba(161,161,170,0.12) 0%, rgba(161,161,170,0.03) 44%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>ENCRYPTED VAULT</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">Private photos,</span><br>truly encrypted.</h2>
+          </div>
+
+          <div class="float-pill" style="left:58px;top:526px;">
+            <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#FAFAFA"/></svg>
+            AES-256-GCM
+          </div>
+          <div class="float-pill" style="right:58px;top:636px;">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Argon2id · Screen Shield
+          </div>
+
+          <div class="device-wrap">
+            <div class="device-frame">
+              <div class="device-screen">
+                <div class="punch-hole"></div>
+                <div class="and-status">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                  </div>
+                </div>
+
+                <div class="vault-bg-blur">
+                  <img data-photo="5" src="photos/photo-5.jpg" alt="">
+                  <img data-photo="2" src="photos/photo-2.jpg" alt="">
+                  <img data-photo="6" src="photos/photo-6.jpg" alt="">
+                  <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                </div>
+
+                <div class="vault-lock-body">
+                  <div class="vault-emblem-ring">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="4" y="11" width="16" height="10" rx="2.5"/>
+                      <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                      <circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/>
+                    </svg>
+                  </div>
+                  <h3 class="vault-lock-title" style="margin-bottom:44px;">Unlock encrypted vault</h3>
+
+                  <div class="vault-pin-box">
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot empty"></span>
+                  </div>
+
+                  <div class="vault-unlock-btn">Unlock Vault</div>
+                  <div class="vault-bio-btn">
+                    <svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
+                    Use biometrics
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         SLIDE 3: VIRTUAL ALBUMS
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>03 · Virtual Albums</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-3">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:920px;height:920px;left:120px;top:400px;background:radial-gradient(circle, rgba(217,175,118,0.11) 0%, rgba(217,175,118,0.025) 45%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>VIRTUAL ALBUMS</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">Playlists for</span><br>your photos.</h2>
+          </div>
+
+          <div class="floating-virtual-card">
+            <div class="fvc-top">
+              <img data-photo="3" src="photos/photo-3.jpg" alt="">
+              <div>
+                <strong>1 Original File</strong>
+                <span>0 MB extra storage</span>
+              </div>
+            </div>
+            <div class="fvc-links">
+              <div class="fvc-link-row"><span>Golden Hour</span><em>Virtual album</em></div>
+              <div class="fvc-link-row"><span>Editorial Picks</span><em>Virtual album</em></div>
+            </div>
+          </div>
+
+          <div class="device-wrap" style="left:44%;">
+            <div class="device-frame">
+              <div class="device-screen">
+                <div class="punch-hole"></div>
+                <div class="and-status">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                  </div>
+                </div>
+
+                <div class="album-topbar">
+                  <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                  <div class="album-topbar-text">
+                    <h3>Golden Hour</h3>
+                    <p>Virtual album · 12 items</p>
+                  </div>
+                </div>
+
+                <div class="media-grid-3">
+                  <div class="media-cell highlight"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                  <div class="media-cell"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         SLIDE 4: PURE VIEWER & EXIF PRIVACY
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>04 · Pure Viewer & EXIF</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-4">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:940px;height:940px;left:70px;top:380px;background:radial-gradient(circle, rgba(139,156,196,0.13) 0%, rgba(139,156,196,0.03) 45%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>PURE MEDIA VIEWER</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">Every frame,</span><br>pure &amp; fast.</h2>
+          </div>
+
+          <div class="float-pill" style="right:56px;top:452px;">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            RAW · JXL · AVIF · Video
+          </div>
+
+          <div class="device-wrap">
+            <div class="device-frame">
+              <div class="device-screen">
+                <img class="viewer-full-photo" data-photo="6" src="photos/photo-6.jpg" alt="">
+                <div class="viewer-top-grad"></div>
+                <div class="viewer-bot-grad" style="height:310px;"></div>
+                <div class="punch-hole"></div>
+
+                <div class="and-status" style="color:#FAFAFA;">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                  </div>
+                </div>
+
+                <div class="viewer-bar">
+                  <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                  <span class="viewer-filename">IMG_4821.DNG</span>
+                  <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="#FAFAFA" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="#FAFAFA" stroke="none"/><circle cx="12" cy="19" r="1.5" fill="#FAFAFA" stroke="none"/></svg>
+                </div>
+
+                <div class="viewer-bottom-actions">
+                  <div class="v-action"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</div>
+                  <div class="v-action"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit</div>
+                  <div class="v-action"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>Encrypt</div>
+                  <div class="v-action"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         SLIDE 5: LIGHT, DARK & CUSTOM PALETTES
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>05 · Light, Dark &amp; Custom</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-5">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:860px;height:860px;right:-160px;top:520px;background:radial-gradient(circle, rgba(250,250,250,0.12) 0%, rgba(250,250,250,0.03) 45%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>APPEARANCE &amp; THEMES</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">Dark, light, or</span><br>entirely yours.</h2>
+          </div>
+
+          <div class="dual-stage">
+            <!-- Left Dark Phone -->
+            <div class="dual-phone-left">
+              <div class="device-frame">
+                <div class="device-screen">
+                  <div class="punch-hole"></div>
+                  <div class="and-status"><span>9:41</span></div>
+                  <div class="cal-search-bar">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Search folders</span>
+                  </div>
+                  <div class="folder-grid">
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Botanical</span><span class="folder-count">31</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Light Appearance Phone -->
+            <div class="dual-phone-right">
+              <div class="device-frame">
+                <div class="device-screen light">
+                  <div class="punch-hole"></div>
+                  <div class="and-status" style="color:#18181B;">
+                    <span>9:41</span>
+                    <div class="and-status-icons">
+                      <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                    </div>
+                  </div>
+
+                  <div class="app-bar-light">
+                    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                    Appearance
+                  </div>
+
+                  <div class="app-sec">App theme</div>
+                  <div class="app-radio-row"><span class="app-radio"></span>Auto light / dark</div>
+                  <div class="app-radio-row"><span class="app-radio"></span>Light</div>
+                  <div class="app-radio-row"><span class="app-radio"></span>Dark</div>
+                  <div class="app-radio-row"><span class="app-radio on"></span>Custom</div>
+
+                  <div class="app-sec">Custom colors</div>
+                  <div class="app-swatch-row"><span>Text color</span><span class="app-swatch" style="background:#18181B;"></span></div>
+                  <div class="app-swatch-row"><span>Background</span><span class="app-swatch" style="background:#FAFAFA;"></span></div>
+                  <div class="app-swatch-row"><span>Primary color</span><span class="app-swatch" style="background:#27272A;"></span></div>
+
+                  <div class="app-preview-box">
+                    <strong>Your memories, your colors</strong>
+                    <span class="app-preview-btn">Sample button</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================
+         SLIDE 6: OFFLINE & OPEN SOURCE (NEW ONBOARDING UI)
+         ======================================================= -->
+    <div class="slide-card">
+      <div class="slide-card-meta"><strong>06 · Offline &amp; Open Source</strong><span>1080 × 1920</span></div>
+      <div class="slide-scaler" data-scale-target="1080">
+        <div class="artboard" id="slide-6">
+          <div class="bg-grid"></div>
+          <div class="bg-glow" style="width:940px;height:940px;left:70px;top:380px;background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 46%, transparent 72%);"></div>
+
+          <div class="art-header">
+            <div class="eyebrow"><span class="eyebrow-dot"></span>OFFLINE · AD-FREE · GPLv3</div>
+            <h2 class="art-headline js-editable"><span class="muted-line">Your data never</span><br>leaves your phone.</h2>
+          </div>
+
+          <div class="device-wrap">
+            <div class="device-frame">
+              <div class="device-screen">
+                <div class="punch-hole"></div>
+                <div class="and-status">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                  </div>
+                </div>
+
+                <div class="ob-body">
+                  <div class="ob-emblem-stage">
+                    <div class="ob-ring"></div>
+                    <div class="ob-ring outer"></div>
+                    <div class="ob-mini-card l">
+                      <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg>
+                    </div>
+                    <div class="ob-mini-card r">
+                      <svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="14" rx="2.5"/><path d="M7 7V5.5A2.5 2.5 0 0 1 9.5 3h9A2.5 2.5 0 0 1 21 5.5v9a2.5 2.5 0 0 1-2.5 2.5H17"/></svg>
+                    </div>
+                    <div class="ob-logo-box">
+                      <svg viewBox="0 0 512 512">
+                        <g transform="translate(256 256) scale(1.42) translate(-256 -256)">
+                          <rect x="171" y="171" width="170" height="170" rx="29" fill="none" stroke="#FAFAFA" stroke-width="22"/>
+                          <circle cx="320" cy="192" r="54" fill="#FAFAFA"/>
+                        </g>
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h3 class="ob-title">Calypso Gallery</h3>
+                  <p class="ob-motto">No sign-up, no cloud, just your gallery.</p>
+
+                  <div class="ob-cards">
+                    <div class="ob-card">
+                      <div class="ob-ic"><svg viewBox="0 0 24 24"><path d="M22.61 16.95A5 5 0 0 0 18 10h-1.26a8 8 0 0 0-7.05-6M5 5a8 8 0 0 0 4 15h9a5 5 0 0 0 1.7-.3"/><line x1="2" y1="2" x2="22" y2="22"/></svg></div>
+                      <div>
+                        <h4>Completely Offline</h4>
+                        <p>Never connects to the internet. Your data belongs only to you.</p>
+                      </div>
+                    </div>
+                    <div class="ob-card">
+                      <div class="ob-ic"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="currentColor"/></svg></div>
+                      <div>
+                        <h4>Encrypted Vault</h4>
+                        <p>Encrypt your photos and videos. No one else can access them.</p>
+                      </div>
+                    </div>
+                    <div class="ob-card">
+                      <div class="ob-ic"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="14" rx="2.5"/><path d="M7 7V5.5A2.5 2.5 0 0 1 9.5 3h9A2.5 2.5 0 0 1 21 5.5v9a2.5 2.5 0 0 1-2.5 2.5H17"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/><path d="M3 17.5 7.5 14l3.5 3 2.5-2 3.5 3.5"/></svg></div>
+                      <div>
+                        <h4>Playlists for your photos</h4>
+                        <p>Virtual folders let you bring together photos and videos in as many albums as you like without moving or copying files.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p style="margin:auto 0 18px;padding-top:26px;font-size:20px;color:#71717A;text-align:center;line-height:1.4;">Media access permission is required to display your photos and videos.</p>
+                  <div class="ob-cta" style="margin-top:0;margin-bottom:110px;">Continue</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =======================================================
+       BONUS: GITHUB README HERO BANNER (1600 x 900)
+       ======================================================= -->
+  <h2 class="studio-section-title">GitHub README Hero Banner — 1600 × 900 (English)</h2>
+  <div class="slide-card">
+    <div class="slide-card-meta"><strong>GitHub Banner · Triptych Showcase</strong><span>1600 × 900</span></div>
+    <div class="banner-scaler" data-scale-target="1600">
+      <div class="artboard banner" id="github-banner">
+        <div class="bg-grid"></div>
+        <div class="bg-glow" style="width:980px;height:980px;right:-60px;top:-40px;background:radial-gradient(circle, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.02) 48%, transparent 72%);"></div>
+
+        <div class="banner-layout">
+          <div class="banner-copy">
+            <div class="banner-logo-row">
+              <div class="banner-logo-badge">
+                <svg viewBox="0 0 512 512">
+                  <g transform="translate(256 256) scale(1.42) translate(-256 -256)">
+                    <rect x="171" y="171" width="170" height="170" rx="29" fill="none" stroke="#FAFAFA" stroke-width="22"/>
+                    <circle cx="320" cy="192" r="54" fill="#FAFAFA"/>
+                  </g>
+                </svg>
+              </div>
+              <span class="banner-tag">ANDROID · GPLv3</span>
+            </div>
+
+            <h1 class="banner-h1 js-editable">Calypso Gallery</h1>
+            <p class="banner-sub js-editable">No sign-up, no cloud, just your gallery. Offline-first photo management with a Tink-encrypted vault and zero-footprint virtual albums.</p>
+
+            <div class="banner-chips">
+              <span class="banner-chip">100% Offline</span>
+              <span class="banner-chip">AES-256-GCM Vault</span>
+              <span class="banner-chip">Virtual Albums</span>
+              <span class="banner-chip">No Ads</span>
+            </div>
+          </div>
+
+          <div class="banner-phones">
+            <!-- Left: Encrypted Vault -->
+            <div class="bp-slot bp-left">
+              <div class="device-frame">
+                <div class="device-screen">
+                  <div class="punch-hole"></div>
+                  <div class="and-status"><span>9:41</span></div>
+                  <div class="vault-bg-blur">
+                    <img data-photo="5" src="photos/photo-5.jpg" alt="">
+                    <img data-photo="2" src="photos/photo-2.jpg" alt="">
+                    <img data-photo="6" src="photos/photo-6.jpg" alt="">
+                    <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                  </div>
+                  <div class="vault-lock-body">
+                    <div class="vault-emblem-ring">
+                      <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/></svg>
+                    </div>
+                    <h3 class="vault-lock-title">Encrypted Vault</h3>
+                    <p class="vault-lock-sub">AES-256-GCM · Argon2id</p>
+                    <div class="vault-pin-box">
+                      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot empty"></span>
+                    </div>
+                    <div class="vault-unlock-btn">Unlock Vault</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Center Hero: Main Gallery Dark -->
+            <div class="bp-slot bp-center">
+              <div class="device-frame">
+                <div class="device-screen">
+                  <div class="punch-hole"></div>
+                  <div class="and-status"><span>9:41</span></div>
+                  <div class="cal-search-bar">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Search folders</span>
+                  </div>
+                  <div class="folder-grid">
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Favorites</span><span class="folder-count">24</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Botanical</span><span class="folder-count">31</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Alpine</span><span class="folder-count">27</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Light Theme Gallery -->
+            <div class="bp-slot bp-right">
+              <div class="device-frame">
+                <div class="device-screen light">
+                  <div class="punch-hole"></div>
+                  <div class="and-status" style="color:#18181B;"><span>9:41</span></div>
+                  <div class="cal-search-bar">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>Search folders</span>
+                  </div>
+                  <div class="folder-grid">
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Alpine</span><span class="folder-count">27</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Botanical</span><span class="folder-count">31</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Favorites</span><span class="folder-count">24</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="exportMount"></div>
+
+<script>
+const DEFAULT_PHOTOS = {
+  1: 'photos/photo-1.jpg',
+  2: 'photos/photo-2.jpg',
+  3: 'photos/photo-3.jpg',
+  4: 'photos/photo-4.jpg',
+  5: 'photos/photo-5.jpg',
+  6: 'photos/photo-6.jpg'
+};
+
+function updateScales() {
+  document.querySelectorAll('[data-scale-target]').forEach(container => {
+    const baseW = Number(container.dataset.scaleTarget);
+    const scale = container.clientWidth / baseW;
+    const board = container.querySelector('.artboard');
+    if (board) {
+      board.style.transform = `scale(${scale})`;
+    }
+  });
+}
+
+function swapPhoto(slot, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    document.querySelectorAll(`img[data-photo="${slot}"]`).forEach(img => { img.src = url; });
+    const thumb = document.querySelector(`img[data-slot-thumb="${slot}"]`);
+    if (thumb) thumb.src = url;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetPhotos() {
+  Object.entries(DEFAULT_PHOTOS).forEach(([slot, src]) => {
+    document.querySelectorAll(`img[data-photo="${slot}"]`).forEach(img => { img.src = src; });
+    const thumb = document.querySelector(`img[data-slot-thumb="${slot}"]`);
+    if (thumb) thumb.src = src;
+  });
+  document.querySelectorAll('.photo-slot input').forEach(i => { i.value = ''; });
+}
+
+let isEditing = false;
+function toggleEditText() {
+  isEditing = !isEditing;
+  document.getElementById('btnEditText').classList.toggle('active', isEditing);
+  document.querySelectorAll('.js-editable').forEach(el => {
+    el.contentEditable = isEditing ? 'true' : 'false';
+  });
+}
+
+// Check for ?export=slide-1 ... ?export=github-banner (headless exact-resolution render)
+const params = new URLSearchParams(window.location.search);
+const exportTarget = params.get('export');
+if (exportTarget) {
+  const board = document.getElementById(exportTarget);
+  if (board) {
+    document.body.classList.add('export-mode');
+    board.style.transform = 'none';
+    document.getElementById('exportMount').appendChild(board);
+  }
+} else {
+  window.addEventListener('resize', updateScales);
+  window.addEventListener('load', updateScales);
+  updateScales();
+}
+</script>
+</body>
+</html>

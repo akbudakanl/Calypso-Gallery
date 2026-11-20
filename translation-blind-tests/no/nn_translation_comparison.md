@@ -130,29 +130,29 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? |  |
 | 35 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. |  |
-| 44 | 44 | `open_system_language_settings` | Open system language settings |  |
-| 45 | 45 | `file_encrypted_successfully` | File encrypted successfully | Fila vart kryptert                           |
-| 46 | 46 | `files_encrypted_successfully` | Files encrypted successfully | Filene vart krypterte                         |
-| 47 | 47 | `file_decrypted_successfully` | File decrypted successfully | Fila vart dekryptert                         |
-| 48 | 48 | `files_decrypted_successfully` | Files decrypted successfully | Filene vart dekrypterte                       |
-| 49 | 49 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Settings switch, setup prompt title, and vault security dialog button |
-| 50 | 50 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Toast shown when enabling biometrics before hidden-item password protection |
-| 51 | 51 | `biometric_unlock_vault` | Unlock encrypted vault | BiometricPrompt title when unlocking the encrypted vault |
-| 52 | 52 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | BiometricPrompt subtitle when unlocking hidden items |
-| 53 | 53 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | BiometricPrompt subtitle when enabling biometric vault access |
-| 54 | 54 | `use_password_or_pin` | Use PIN / Password | BiometricPrompt negative button to fall back to PIN/password |
-| 55 | 55 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Toast shown when biometric credentials changed and Keystore key invalidated |
-| 56 | 56 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | Toast shown when no biometric hardware or enrolled credentials exist |
-| 57 | 57 | `default_hidden_album` | Default Hidden Album | Settings / picker label for default hidden album |
-| 58 | 58 | `select_hidden_album` | Select Encrypted Album | Vel kryptert album                                   |
-| 59 | 59 | `create_new_hidden_album` | Create New Encrypted Album | Opprett nytt kryptert album                  |
-| 60 | 60 | `new_hidden_album` | New encrypted album | Nytt kryptert album                                  |
-| 61 | 61 | `hidden_album_name_empty` | Album name cannot be empty | Validation error when hidden album name is blank |
-| 62 | 62 | `file_hidden_to_album` | File encrypted to \"%s\" | Fil kryptert i «%s»                                          |
-| 63 | 63 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d filer krypterte i «%2$s»                                 |
-| 64 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Hald fram med å dra ned for kryptert kvelv | Vault pull gesture hint shown while the pull is below the open threshold |
-| 65 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Hald fram med å halde for å opne kryptert kvelv | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
-| 66 | `release_to_open_vault` | Release to open Encrypted Vault | Slepp for å opne kryptert kvelv | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
+| 36 | 44 | `open_system_language_settings` | Open system language settings |  |
+| 37 | 45 | `file_encrypted_successfully` | File encrypted successfully | Fila vart kryptert                           |
+| 38 | 46 | `files_encrypted_successfully` | Files encrypted successfully | Filene vart krypterte                         |
+| 39 | 47 | `file_decrypted_successfully` | File decrypted successfully | Fila vart dekryptert                         |
+| 40 | 48 | `files_decrypted_successfully` | Files decrypted successfully | Filene vart dekrypterte                       |
+| 41 | 49 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Settings switch, setup prompt title, and vault security dialog button |
+| 42 | 50 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Toast shown when enabling biometrics before hidden-item password protection |
+| 43 | 51 | `biometric_unlock_vault` | Unlock encrypted vault | BiometricPrompt title when unlocking the encrypted vault |
+| 44 | 52 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | BiometricPrompt subtitle when unlocking hidden items |
+| 45 | 53 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | BiometricPrompt subtitle when enabling biometric vault access |
+| 46 | 54 | `use_password_or_pin` | Use PIN / Password | BiometricPrompt negative button to fall back to PIN/password |
+| 47 | 55 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Toast shown when biometric credentials changed and Keystore key invalidated |
+| 48 | 56 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | Toast shown when no biometric hardware or enrolled credentials exist |
+| 49 | 57 | `default_hidden_album` | Default Hidden Album | Settings / picker label for default hidden album |
+| 50 | 58 | `select_hidden_album` | Select Encrypted Album | Vel kryptert album                                   |
+| 51 | 59 | `create_new_hidden_album` | Create New Encrypted Album | Opprett nytt kryptert album                  |
+| 52 | 60 | `new_hidden_album` | New encrypted album | Nytt kryptert album                                  |
+| 53 | 61 | `hidden_album_name_empty` | Album name cannot be empty | Validation error when hidden album name is blank |
+| 54 | 62 | `file_hidden_to_album` | File encrypted to \"%s\" | Fil kryptert i «%s»                                          |
+| 55 | 63 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d filer krypterte i «%2$s»                                 |
+| 56 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Hald fram med å dra ned for kryptert kvelv | Vault pull gesture hint shown while the pull is below the open threshold |
+| 57 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Hald fram med å halde for å opne kryptert kvelv | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
+| 58 | `release_to_open_vault` | Release to open Encrypted Vault | Slepp for å opne kryptert kvelv | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
 
 
 ### Newly Added Missing Translations (9 Keys) & Revised Entries (11 Keys)
@@ -516,260 +516,262 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | Blokker skjermbilete i det skjulte kvelvet |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Er du sikker på at du vil dekryptera den/dei skjulte fila/filene? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Kopiering til utklippstavla er deaktivert av tryggleiksomsyn medan kvelvet er låst opp. |
-| 307 | `stop_showing_hidden` | Stop showing encrypted media | Slutt å syna krypterte medium |
-| 308 | `system_default` | System default | Systemstandard |
-| 309 | `language` | Language | Språk |
-| 310 | `open_system_language_settings` | Open system language settings | Opna språkinnstillingane i systemet |
-| 311 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Få tilgang til skjulte element med biometri |
-| 312 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Ver venleg og aktiver passordvern for skjulte element fyrst |
-| 313 | `biometric_unlock_vault` | Unlock encrypted vault | Lås opp kryptert kvelv |
-| 314 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | Stadfest den biometriske identiteten din for å få tilgang til skjulte element |
-| 315 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | Stadfest den biometriske identiteten din for å aktivera biometrisk tilgang til kvelvet |
-| 316 | `use_password_or_pin` | Use PIN / Password | Bruk PIN / Passord |
-| 317 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Biometriske data er endra. Ver venleg og skriv inn PIN eller passord. |
-| 318 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | Fann inga biometrisk maskinvare eller registrerte biometriske data på denne eininga |
-| 319 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
-| 320 | `select_hidden_album` | Select Encrypted Album | Vel kryptert album |
-| 321 | `create_new_hidden_album` | Create New Encrypted Album | Opprett nytt kryptert album |
-| 322 | `new_hidden_album` | New encrypted album | Nytt kryptert album |
-| 323 | `hidden_album_name_empty` | Album name cannot be empty | Albumnamn kan ikkje vera tomt |
-| 324 | `file_hidden_to_album` | File encrypted to \"%s\" | Fil kryptert i «%s» |
-| 325 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d filer krypterte i «%2$s» |
-| 326 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | Er du sikker på at du vil gjenoppretta %d fil? |
-| 327 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | Er du sikker på at du vil gjenoppretta %d filer? |
-| 328 | `failed_to_resize_images` (`one`) | Failed to resize %d image | Klarte ikkje å endra storleik på %d bilete |
-| 329 | `failed_to_resize_images` (`other`) | Failed to resize %d images | Klarte ikkje å endra storleik på %d bilete |
-| 330 | `search` *(fossify-commons)* | *(inherited from commons)* | Søk |
-| 331 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | Endra format for dato og klokkeslett |
-| 332 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | Passordvern for sletting og flytting av filer |
-| 333 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | Behald gammal sist-endra-verdi ved filoperasjonar |
-| 334 | `clear_cache` *(fossify-commons)* | Clear cache | Tøm mellomlager |
-| 335 | `export_settings` *(fossify-commons)* | Export settings | Eksporter innstillingar |
-| 336 | `import_settings` *(fossify-commons)* | Import settings | Importer innstillingar |
-| 337 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | Syn ekskluderte mellombels |
-| 338 | `change_view_type` *(fossify-commons)* | Change view type | Endra syningstype |
-| 339 | `contributors` *(fossify-commons)* | Contributors | Bidragsytarar |
-| 340 | `known_issues` *(fossify-commons)* | Known issues | Kjende problem |
-| 341 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Doner til Fossify |
-| 342 | `privacy_policy` *(fossify-commons)* | Privacy policy | Personvernerklæring |
-| 343 | `create_shortcut` *(fossify-commons)* | Create shortcut | Lag snarveg |
-| 344 | `print` *(fossify-commons)* | Print | Skriv ut |
-| 345 | `search_files` *(fossify-commons)* | Search files | Søk i filer |
-| 346 | `search_folders` *(fossify-commons)* | Search folders | Søk i mapper |
-| 347 | `skip_the_recycle_bin` *(fossify-commons)* | Skip the recycle bin, delete files directly | Hopp over papirkorga og slett filene direkte |
-| 348 | `skip_delete_confirmation` *(fossify-commons)* | Always skip delete confirmation dialog | Hopp alltid over dialogen for stadfesting av sletting |
-| 349 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Hald fram med å dra ned for kryptert kvelv |
-| 350 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Hald fram med å halde for å opne kryptert kvelv |
-| 351 | `release_to_open_vault` | Release to open Encrypted Vault | Slepp for å opne kryptert kvelv |
-| 352 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | Handter ekskluderte mapper |
-| 353 | `exclude` *(fossify-commons)* | Exclude | Ekskluder |
-| 354 | `exclude_folder` *(fossify-commons)* | Exclude folder | Ekskluder mappe |
-| 355 | `lock_folder` *(fossify-commons)* | Lock folder | Lås mappe |
-| 356 | `change_cover_image` *(fossify-commons)* | Change cover image | Endra omslagsbilete |
-| 357 | `select_photo` *(fossify-commons)* | Select photo | Vel bilete |
-| 358 | `use_default` *(fossify-commons)* | Use default | Bruk standard |
-| 359 | `column_count` *(fossify-commons)* | Column count | Tal på kolonnar |
-| 360 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | Opna papirkorga |
-| 361 | `grid` *(fossify-commons)* | Grid | Rutenett |
-| 362 | `list` *(fossify-commons)* | List | Liste |
-| 363 | `resize` *(fossify-commons)* | Resize | Endra storleik |
-| 364 | `version_placeholder` *(fossify-commons)* | Version %s | Versjon %s |
-| 365 | `number_of_items` *(fossify-commons)* | Number of items | Tal på element |
-| 366 | `random` *(fossify-commons)* | Random | Tilfeldig |
-| 367 | `shuffle` | Shuffle | Bland |
-| 368 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | Slutt å vise ekskluderte |
-| 369 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | Kopier til utklippstavla |
-| 370 | `encrypt` | Encrypt | Krypter |
-| 371 | `decrypt` | Decrypt | Dekrypter |
-| 372 | `encrypt_album` | Encrypt album | Krypter album |
-| 373 | `decrypt_album` | Decrypt album | Dekrypter album |
-| 374 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | Opprett nytt kryptert virtuelt album |
-| 375 | `new_album` | New album | Nytt album |
-| 376 | `filename_without_zip` | Filename (without .zip) | Filnamn (utan .zip) |
-| 377 | `favorites_already_exist` | You already have a favorites list | Du har allereie ei favorittliste |
-| 378 | `delete_existing_list` | Delete existing list | Slett eksisterande liste |
-| 379 | `merge_lists` | Merge lists | Slå saman lister |
-| 380 | `confirm` | Confirm | Stadfest |
-| 381 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dette albumet? Alle mediefilene i det vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
-| 382 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dei valde albuma? Alle mediefilene i dei vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
-| 383 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | Er du sikker på at du vil kryptera denne fila? Ho vert kryptert og flytt til det krypterte kvelvet. Originalfila vert sletta. |
-| 384 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dei valde filene? Dei vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
-| 385 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | Dei valde filene vert krypterte når dei vert kopierte til det krypterte kvelvet. Vil du halda fram? |
-| 386 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | Krypter / Dekrypter |
-| 387 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | Tillat masseendring av namn når fleire filer er valde |
-| 388 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | Behald originalfila, fjern henne berre frå dette virtuelle albumet |
-| 389 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | Behald originalfila, fjern henne berre frå favorittar |
-| 390 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | Slett originalversjonen av ei fil når ho vert sletta frå favorittar og virtuelle album |
-| 391 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | Krypterte album kan ikkje veljast som mål for denne handlinga |
-| 392 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | Kan ikkje kombinera krypterte og ukrypterte element i denne handlinga |
-| 393 | `lock_album` | Lock album | Lås album |
-| 394 | `unlock_album` | Unlock album | Lås opp album |
-| 395 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | Vil du at favorittane og dei virtuelle albuma dine skal lagrast regelmessig i systemlagringa utanfor appminnet? Dette sikrar at du ikkje mistar favorittlista og dei virtuelle albuma dine om du avinstallerer appen. Du kan når som helst laga ei tryggingskopi manuelt frå appinnstillingane. |
-| 396 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | Tryggingskopier favorittar og virtuelle album til einingslagringa |
-| 396 | `access_storage_prompt` *(fossify-commons)* | Please grant our app access to all your files, it might not work well without it. | Ver venleg og gje appen vår tilgang til alle filene dine, han fungerer kanskje ikkje så godt utan dette. |
-| 397 | `encrypt_info_title` | How Encryption Works | Korleis kryptering fungerer |
-| 398 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing. |
-| 399 | `decrypt_info_title` | How Decryption Works | Korleis dekryptering fungerer |
-| 400 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Mappe- og filstruktur:\n• Når eit kryptert album eller ei kryptert fil blir dekryptert, blir det/ho gjenoppretta med opphavleg namn og format til den valde målmappa og fjerna frå det krypterte kvelvet.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta ei ny mappe som Album(1) eller slå saman med den eksisterande målmappa (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om krypterte kopiar som er stadfesta 100% bit-for-bit identiske med målet skal fjernast frå kvelvet eller behaldast.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing. |
-| 401 | `vault_location` | Vault location | Kvelvplassering |
-| 402 | `vault_location_standard_summary` | Standard (Internal Storage) | Standard (Intern lagring) |
-| 403 | `vault_location_unavailable_summary` | External drive disconnected (%s) | Ekstern stasjon fråkopla (%s) |
-| 404 | `select_vault_location` | Select vault location | Vel kvelvplassering |
-| 405 | `vault_setup_action_title` | Encrypted vault | Kryptert kvelv |
-| 406 | `create_new_vault_option` | Create new vault | Opprett nytt kvelv |
-| 407 | `use_existing_vault_option` | Use existing vault | Bruk eksisterande kvelv |
-| 408 | `where_to_create_vault_title` | Where should the vault be created? | Kvar skal kvelvet opprettast? |
-| 409 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Standardplassering (Intern > Calypso Gallery > Secrets) |
-| 410 | `vault_location_custom_short` | Custom Location | Eigendefinert plassering |
-| 411 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa. |
-| 412 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe. |
-| 413 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | Standardplassering (Intern lagring > Calypso Gallery > Secrets) |
-| 414 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Eigendefinert / Ekstern plassering (USB-stasjon, SD-kort eller eigendefinert mappe) |
-| 415 | `external_vault_unavailable_title` | External vault unavailable | Eksternt kvelv utilgjengeleg |
-| 416 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Den konfigurerte kvelvplasseringa di (%s) er for tida fråkopla eller utilgjengeleg. Kopla til stasjonen og trykk på Prøv på nytt, eller vel ei anna kvelvplassering. |
-| 417 | `retry` | Retry | Prøv på nytt |
-| 418 | `change_vault_location` | Change location | Endra plassering |
-| 419 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | Eksisterande kvelv funne på %s. Skriv inn passordet eller PIN-koden for å låsa det opp. |
-| 420 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | Det finst ikkje noko kvelv på %s. Vil du oppretta eit nytt kryptert kvelv på denne plasseringa? |
-| 421 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | Denne USB-stien er berre eksponert gjennom Android sin virtuelle OTG-leverandør og kan ikkje opnast direkte som ein filsystemsti. Ver venleg og vel ein montert lagringskatalog eller ei mappe på intern lagring / SD-kort. |
-| 422 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | Den valde mappa finst ikkje eller kan ikkje skrivast til på denne eininga. |
-| 423 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | Den valde mappa finst ikkje eller kan ikkje lesast på denne eininga. |
-| 424 | `sync_vault_from_external` | Import encrypted media files to encrypted section | Importer krypterte mediefiler til kryptert seksjon |
-| 425 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | Slik fungerer import av krypterte medium:\n\n1. Einskapleg Secrets-mappe:\nHa ei mappe med namnet Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg. |
-| 426 | `conflict_handling_mode_label` | File conflict & duplicate resolution | Løysing av filkonfliktar og duplikat |
-| 427 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | Heilautomatisk (Standard — Hopp over identiske, gje ulike nytt namn som (1)) |
-| 428 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | Smart dialog (Hopp over identiske automatisk, spør når innhaldet er ulikt) |
-| 429 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | Albumkonflikt (Kryptera / Dekryptera) |
-| 430 | `album_crypto_conflict_ask` | Always ask (Default) | Spør alltid (Standard) |
-| 431 | `album_crypto_conflict_merge` | Merge into existing album | Slå saman med eksisterande album |
-| 432 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | Slå saman med eksisterande album og slett identiske kjelder automatisk |
-| 433 | `album_crypto_conflict_rename` | Create new album as (1) | Opprett nytt album som (1) |
-| 434 | `album_crypto_conflict_title` | Album Already Exists | Albumet finst alt |
-| 435 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | Eit album med namnet \"%s\" finst alt på målet. Korleis vil du halda fram? |
-| 436 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | %1$d valde album finst alt på målet. Korleis vil du halda fram?\n\nValet ditt vil gjelda for alle album med konflikt. For å velja separat per album, vel og handsam dei eitt og eitt. |
-| 437 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | Opprett nytt album som \"%s\" |
-| 438 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | Opprett nye album som (1), (2), … |
-| 439 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | Slå saman inn i eksisterande \"%s\" |
-| 440 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | Slå saman inn i eksisterande album |
-| 441 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | Slett identiske kjeldefiler (100% bit-for-bit stadfesta) |
-| 442 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | Hugs val for albumkonflikt (slå saman eller gje nytt namn) |
-| 443 | `album_crypto_merge_identical_title` | Identical Files During Merge | Identiske filer ved samanslåing |
-| 444 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Når du slår saman inn i \"%1$s\", viss nokre filer alt er 100%% bit-identiske på målet, skal kjeldekopiane slettast eller behaldast? |
-| 445 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Når du slår saman dei %1$d albuma med konflikt, viss nokre filer alt er 100%% bit-identiske på målet, skal kjeldekopiane slettast eller behaldast? |
-| 446 | `delete_identical_sources` | Delete identical | Slett identiske |
-| 447 | `keep_identical_sources` | Keep in source | Behald i kjelde |
-| 448 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | Rask duplikatsjekk for store filer (>8 MB) |
-| 449 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | Avgjerande for overføringar med store filer: sjekkar 5 blokker (1,25 MB totalt) per fil i staden for å lesa heile filer, noko som gjer duplikatsjekken titals gonger raskare. |
-| 450 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | Rask duplikatsjekk (>8 MB) |
-| 452 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | Løysing av filkonfliktar og duplikat |
-| 453 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | Når du kopierer, flyttar, krypterer eller dekrypterer filer og album, og ei fil med same namn alt finst på målet:\n\n1. Bit-for-bit duplikatsjekk (RAM):\nAppen sjekkar filstorleikane først, og viss storleikane samsvarar, blir filinnhaldet samanlikna bit-for-bit i RAM (krypterte filer blir sjekka i minnet utan å skriva klartekst til disk). Under kopiering/flytting blir identiske filer hoppa over og originalen blir verande urørt i kjeldemappa. Når du slår saman eit album under kryptering/dekryptering, kan du velja om 100% bit-identiske kjeldefiler skal slettast eller behaldast.\n\n2. Same namn, ulikt innhald (t.d. to ulike download.jpg-filer):\n• Heilautomatisk (Standard): Behaldar begge filene utan å avbryta deg ved å gje den nye fila namnet download(1).jpg, download(2).jpg.\n• Smart dialog: Hoppar framleis stille over bit-identiske filer, og spør berre (Hopp over / Skriv over / Behald begge) når to filer har same namn, men ulikt innhald. |
-| 454 | `syncing_vault_progress` | Syncing vault from external drive… | Synkroniserer kvelv frå ekstern stasjon… |
-| 455 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Kvelvsynkronisering fullført:\n• Kopiert: %1$d\n• Gjeve nytt namn (namnekonflikt): %2$d\n• Hoppa over (identisk): %3$d\n• Mislykkast: %4$d |
-| 456 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Ingen ventande CLI-krypterte medium (.pending_sync) vart funne i den valde mappa. |
-| 457 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Den valde kjeldemappa er den same som det aktive kvelvet ditt. |
-| 458 | `use_for_this_album` | Use for this album only | Bruk berre for dette albumet |
-| 459 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Når ei fil alt finst i målmappa under kryptering/dekryptering |
-| 460 | `crypto_duplicate_source_ask` | Always ask (Default) | Spør alltid (Standard) |
-| 461 | `crypto_duplicate_source_keep` | Keep file in source folder | Behald fila i kjeldemappa |
-| 462 | `crypto_duplicate_source_delete` | Delete file from source folder | Slett fila frå kjeldemappa |
-| 463 | `crypto_duplicate_source_title` | File Already Exists in Destination | Fila finst alt i målmappa |
-| 464 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du krypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
-| 465 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du dekrypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
-| 466 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Åtvaring: Om du vel «Behald» for ukrypterte filer, vil kjeldefila bli liggjande ukryptert på disken. |
-| 467 | `crypto_duplicate_source_always_ask` | Always ask | Spør alltid |
-| 468 | `export_encrypted_vault` | Export encrypted vault | Eksporter kryptert kvelv |
-| 469 | `export_vault_only_header` | Export folder containing only .vault file | Eksporter mappe som berre inneheld .vault-fil |
-| 470 | `export_vault_entire_folder` | Export entire folder | Eksporter heile mappa |
-| 471 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Secrets som inneheld .vault-fila. |
-| 472 | `exporting_vault_progress` | Exporting encrypted vault… | Eksporterer kryptert kvelv… |
-| 473 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | Eksportmålet kan ikkje vera den aktive kvelvmappa eller liggja inne i ho. |
-| 474 | `conflict_handling_standard_dialog_summary` | Standard dialog | Standard dialog |
-| 475 | `conflict_handling_smart_dialog_summary` | Smart dialog | Smart dialog |
-| 476 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automatisk (eksperimentelt) |
-| 477 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Standard dialog (Standard — Sjekkar berre filnamnet, som den opphavlege Fossify Gallery) |
-| 478 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Handsama filer som vart hoppa over under kryptering |
-| 479 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | Handsama filer som vart hoppa over under dekryptering |
-| 480 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Vel om filer som vart hoppa over i kjeldemappa under kryptering skal behaldast eller slettast av tryggleiksomsyn. Dette valet gjeld òg for albumkonfliktar under albumkryptering (sjå innstillinga under) når kjeldealbumet vert slått saman med eit eksisterande album på målet. |
-| 481 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | Vel om filer som vart hoppa over i kjeldemappa under dekryptering skal behaldast eller slettast. Dette valet gjeld òg for albumkonfliktar under albumdekryptering (sjå innstillinga under) når kjeldealbumet vert slått saman med eit eksisterande album på målet. |
-| 482 | `skipped_crypto_files_ask` | Always ask (Default) | Spør alltid (Standard) |
-| 483 | `skipped_crypto_files_keep` | Keep | Behald |
-| 484 | `skipped_crypto_files_delete` | Delete | Slett |
-| 485 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Filene du hoppa over vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
-| 486 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Filene du hoppa over vart ikkje overførte. Du kan sletta desse filene. |
-| 487 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
-| 488 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
-| 489 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
-| 490 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
-| 491 | `skipped_crypto_files_always_ask` | Always ask | Spør alltid |
-| 492 | `delete_skipped_files_confirm_title` | Are you sure? | Er du sikker? |
-| 493 | `delete_skipped_files_confirm_message` | Your files will be deleted! | Filene dine vert sletta! |
-| 494 | `date_tie_break_label` | When content is identical but dates differ | Når innhaldet er identisk, men datoen er ulik |
-| 495 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Behald datoen til den eksisterande fila (standard) |
-| 496 | `date_tie_break_use_source` | Use the source file\'s date | Bruk datoen til kjeldefila |
-| 497 | `date_tie_break_ask` | Always ask | Spør alltid |
-| 498 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Gjeld berre for Smart dialog og automatisk modus. Standard dialog vert ikkje påverka. |
-| 499 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Kvifor \"Spør alltid\" slår av Smart dialog og automatisk modus |
-| 500 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | Smart dialog og automatisk modus finst av éin grunn: å hoppa over filer som alt er til stades, slik at du berre ser filene som verkeleg treng merksemda di — same namn, ulikt innhald. Det er nettopp i dette tilfellet at samanlikning av minibilete kan avdekkja bit-rot.\n\nViss du vel \"Spør alltid\" her, kjem kvar identisk fil med ein annan dato tilbake til deg som ein konflikt. I Smart dialog ser du to minibilete av det same biletet, utan noko å stadfesta. I automatisk modus vert den identiske fila skriven på nytt som namn(1), og fyller mappene dine med meiningslause kopiar.\n\nBruk dette valet berre viss du med vilje vil gå gjennom kvar einaste datoskilnad, til dømes for å retta ein feil dato for hand.\n\nMerk: når innhaldet er bit-identisk, er EXIF-opptaksdatoen òg identisk. Ein datoskilnad tyder at den eine sida mista EXIF-dataa sine og fall tilbake til endringsdatoen til fila (kopieringsdatoen). |
-| 501 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
-| 502 | `smart_conflict_incoming_label` | Incoming (New) | Innkommande (ny) |
-| 503 | `smart_conflict_existing_label` | Existing (Target) | Eksisterande (mål) |
-| 504 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Øydelagd eller uleseleg |
-| 505 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Integritetssjekk feila (bit-rot / øydelagd) |
-| 506 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Trykk på eit av minibileta for å sjå førehandsvisinga i full storleik |
-| 507 | `smart_conflict_comparing` | Comparing file contents and dates… | Samanliknar filinnhald og datoar… |
-| 508 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | Filinnhaldet er ulikt.\nViss desse to filene skulle vore like, kan det ha oppstått dataskade. Det tilrår å behalda begge og granska dei. |
-| 509 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | Filinnhaldet er identisk, men tidsstempla for oppretting (dato teken) er ulike. |
-| 510 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | Filinnhaldet er identisk, men endringsdatoane er ulike. |
-| 511 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | Filinnhaldet er identisk, men opprettings- og endringsdatoane er ulike. |
-| 512 | `smart_conflict_meta_date_taken` | Taken: %s | Teke: %s |
-| 513 | `smart_conflict_meta_date_modified` | Modified: %s | Endra: %s |
-| 514 | `album_type_icons` | Album type icons | Ikon for albumtype |
-| 515 | `virtual_folders` | Virtual folders | Virtuelle mapper |
-| 516 | `favorites_album` | Favorites | Favorittar |
-| 517 | `excluded_folders_album` | Excluded folders | Ekskluderte mapper |
-| 518 | `hidden_folders_album` | Hidden folders | Skjulte mapper |
-| 519 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Syn skjulte mapper mellombels |
-| 520 | `stop_showing_hidden_folders` | Stop showing hidden folders | Slutt å syna skjulte mapper |
-| 521 | `unexclude` | Stop excluding | Slutt å ekskludera |
-| 522 | `hide_folder` | Hide | Skjul |
-| 523 | `unhide_folder` | Unhide | Syn att |
-| 524 | `about_title` | About Calypso Gallery | Om Calypso Gallery |
-| 525 | `about_version` | Version %1$s (%2$s) | Versjon %1$s (%2$s) |
-| 526 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell personleg fork av Fossify Gallery. Han er ikkje tilknytt eller støtta av Fossify. |
-| 527 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Denne distribusjonen er ein endra versjon av Fossify Gallery. Forken vart laga frå oppstraums-commiten 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), og alle forksspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
-| 528 | `about_license_heading` | License | Lisens |
-| 529 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Dette programmet er fri programvare: du kan distribuera det og/eller endra det i samsvar med vilkåra i GNU General Public License som publisert av Free Software Foundation, versjon 3 av lisensen.\n\nDette programmet vert distribuert i håp om at det skal vera nyttig, men UTAN NOKON GARANTI; utan ein gitt garanti for SALJGBARHEIT eller EIGNA FOR EIT FØREMÅL. Sjå GNU General Public License for fleire detaljar.\n\nDu skulle ha motteke ein kopi av GNU General Public License saman med dette programmet. Viss ikkje, bruk lisenshandlinga under eller besøk https://www.gnu.org/licenses/. |
-| 530 | `about_read_gpl_license` | Read the GNU GPL v3 license | Les GNU GPL v3-lisensen |
-| 531 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Les Tink Apache 2.0-lisensen og tilskrivinga |
-| 532 | `about_source_heading` | Source code | Kjeldekode |
-| 533 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | Den fullstendige tilhøyrande kjeldekoden for denne forken finst i fork-repositoriet. Merkelagde utgåver har òg eit tilhøyrande kjeldearkiv. Repositoriet inneheld byggjeskripta, avhengighetserklæringane og den fullstendige fork-historikken som trengst for å granska og byggja prosjektet på nytt. |
-| 534 | `about_fork_source` | Fork source code and corresponding source | Kjeldekode for forken og tilhøyrande kjelde |
-| 535 | `about_release_sources` | Release source archives | Kjeldearkiv for utgåver |
-| 536 | `about_fork_issues` | Fork issue tracker | Feilsporar for forken |
-| 537 | `about_upstream_source` | Upstream Fossify Gallery source code | Kjeldekode for oppstraums Fossify Gallery |
-| 538 | `about_upstream_project` | Upstream Fossify project | Oppstraums Fossify-prosjektet |
-| 539 | `about_help_heading` | Help and legal information | Hjelp og juridisk informasjon |
-| 540 | `about_faq` | Frequently asked questions | Ofte stilte spørsmål |
-| 541 | `about_third_party_licenses` | Third-party licenses | Lisensar frå tredjepart |
-| 542 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
-| 543 | `tink_license_title` | Tink license and attribution | Tink-lisens og tilskriving |
-| 544 | `fork_disclaimer_title` | Fork notice | Fork-merknad |
-| 545 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Dette programmet er ikkje utvikla av Fossify-teamet. Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell fork av Fossify Gallery; den opphavlege utviklaren er berre nemnd for tilskriving. Det er ikkje tilknytt, støtta eller vedlikehalde av Fossify.\n\nVed å halda fram stadfestar du denne merknaden. Forkspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
-| 546 | `fork_disclaimer_acknowledge` | I understand | Eg forstår |
-| 563 | `argon2_profile_title` | Brute-Force resistance | Motstand mot brute-force |
-| 564 | `brute_force_mode_title` | Calibration mode | Kalibreringsmodus |
-| 565 | `brute_force_mode_time` | Via vault unlock time | Via opplåsingstid for kvelvet |
-| 566 | `brute_force_mode_presets` | Via ready-made modes | Via ferdige modusar |
-| 567 | `brute_force_time_title` | Target vault unlock time | Ønskt opplåsingstid for kvelvet |
-| 568 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | Sekund (2.0–7.0). Appen måler denne eininga éin gong og lagrar dei resulterande KDF-parametrane i kvelvet; faktisk opplåsingstid varierer på andre einingar. |
-| 569 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
-| 570 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Lagra: %1$d MiB / %2$d rundar |
-| 571 | `brute_force_clamped` |  (clamped) |  (avgrensa) |
-| 572 | `argon2_profile_low` | Low-end device (not recommended) | Eining med låg yting (ikkje tilrådd) |
-| 573 | `argon2_profile_default` | Default | Standard |
-| 574 | `argon2_profile_high` | High security | Høg tryggleik |
-| 575 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Viss du ikkje veit kva du gjer, tilrår vi å behalda standardinnstillinga. Dette påverkar berre nye kvelv og passordendringar. |
-| 576 | `argon2_profile_current` | Current: %s | Gjeldande: %s |
+| 299 | `stop_showing_hidden` | Stop showing encrypted media | Slutt å syna krypterte medium |
+| 300 | `system_default` | System default | Systemstandard |
+| 301 | `language` | Language | Språk |
+| 302 | `open_system_language_settings` | Open system language settings | Opna språkinnstillingane i systemet |
+| 303 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | Få tilgang til skjulte element med biometri |
+| 304 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | Ver venleg og aktiver passordvern for skjulte element fyrst |
+| 305 | `biometric_unlock_vault` | Unlock encrypted vault | Lås opp kryptert kvelv |
+| 306 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | Stadfest den biometriske identiteten din for å få tilgang til skjulte element |
+| 307 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | Stadfest den biometriske identiteten din for å aktivera biometrisk tilgang til kvelvet |
+| 308 | `use_password_or_pin` | Use PIN / Password | Bruk PIN / Passord |
+| 309 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | Biometriske data er endra. Ver venleg og skriv inn PIN eller passord. |
+| 310 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | Fann inga biometrisk maskinvare eller registrerte biometriske data på denne eininga |
+| 311 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
+| 312 | `select_hidden_album` | Select Encrypted Album | Vel kryptert album |
+| 313 | `create_new_hidden_album` | Create New Encrypted Album | Opprett nytt kryptert album |
+| 314 | `new_hidden_album` | New encrypted album | Nytt kryptert album |
+| 315 | `hidden_album_name_empty` | Album name cannot be empty | Albumnamn kan ikkje vera tomt |
+| 316 | `file_hidden_to_album` | File encrypted to \"%s\" | Fil kryptert i «%s» |
+| 317 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d filer krypterte i «%2$s» |
+| 318 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | Er du sikker på at du vil gjenoppretta %d fil? |
+| 319 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | Er du sikker på at du vil gjenoppretta %d filer? |
+| 320 | `failed_to_resize_images` (`one`) | Failed to resize %d image | Klarte ikkje å endra storleik på %d bilete |
+| 321 | `failed_to_resize_images` (`other`) | Failed to resize %d images | Klarte ikkje å endra storleik på %d bilete |
+| 322 | `search` *(fossify-commons)* | *(inherited from commons)* | Søk |
+| 323 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | Endra format for dato og klokkeslett |
+| 324 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | Passordvern for sletting og flytting av filer |
+| 325 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | Behald gammal sist-endra-verdi ved filoperasjonar |
+| 326 | `clear_cache` *(fossify-commons)* | Clear cache | Tøm mellomlager |
+| 327 | `export_settings` *(fossify-commons)* | Export settings | Eksporter innstillingar |
+| 328 | `import_settings` *(fossify-commons)* | Import settings | Importer innstillingar |
+| 329 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | Syn ekskluderte mellombels |
+| 330 | `change_view_type` *(fossify-commons)* | Change view type | Endra syningstype |
+| 331 | `contributors` *(fossify-commons)* | Contributors | Bidragsytarar |
+| 332 | `known_issues` *(fossify-commons)* | Known issues | Kjende problem |
+| 333 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Doner til Fossify |
+| 334 | `privacy_policy` *(fossify-commons)* | Privacy policy | Personvernerklæring |
+| 335 | `create_shortcut` *(fossify-commons)* | Create shortcut | Lag snarveg |
+| 336 | `print` *(fossify-commons)* | Print | Skriv ut |
+| 337 | `search_files` *(fossify-commons)* | Search files | Søk i filer |
+| 338 | `search_folders` *(fossify-commons)* | Search folders | Søk i mapper |
+| 339 | `skip_the_recycle_bin` *(fossify-commons)* | Skip the recycle bin, delete files directly | Hopp over papirkorga og slett filene direkte |
+| 340 | `skip_delete_confirmation` *(fossify-commons)* | Always skip delete confirmation dialog | Hopp alltid over dialogen for stadfesting av sletting |
+| 341 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | Hald fram med å dra ned for kryptert kvelv |
+| 342 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | Hald fram med å halde for å opne kryptert kvelv |
+| 343 | `release_to_open_vault` | Release to open Encrypted Vault | Slepp for å opne kryptert kvelv |
+| 344 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | Handter ekskluderte mapper |
+| 345 | `exclude` *(fossify-commons)* | Exclude | Ekskluder |
+| 346 | `exclude_folder` *(fossify-commons)* | Exclude folder | Ekskluder mappe |
+| 347 | `lock_folder` *(fossify-commons)* | Lock folder | Lås mappe |
+| 348 | `change_cover_image` *(fossify-commons)* | Change cover image | Endra omslagsbilete |
+| 349 | `select_photo` *(fossify-commons)* | Select photo | Vel bilete |
+| 350 | `use_default` *(fossify-commons)* | Use default | Bruk standard |
+| 351 | `column_count` *(fossify-commons)* | Column count | Tal på kolonnar |
+| 352 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | Opna papirkorga |
+| 353 | `grid` *(fossify-commons)* | Grid | Rutenett |
+| 354 | `list` *(fossify-commons)* | List | Liste |
+| 355 | `resize` *(fossify-commons)* | Resize | Endra storleik |
+| 356 | `version_placeholder` *(fossify-commons)* | Version %s | Versjon %s |
+| 357 | `number_of_items` *(fossify-commons)* | Number of items | Tal på element |
+| 358 | `random` *(fossify-commons)* | Random | Tilfeldig |
+| 359 | `shuffle` | Shuffle | Bland |
+| 360 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | Slutt å vise ekskluderte |
+| 361 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | Kopier til utklippstavla |
+| 362 | `encrypt` | Encrypt | Krypter |
+| 363 | `decrypt` | Decrypt | Dekrypter |
+| 364 | `encrypt_album` | Encrypt album | Krypter album |
+| 365 | `decrypt_album` | Decrypt album | Dekrypter album |
+| 366 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | Opprett nytt kryptert virtuelt album |
+| 367 | `new_album` | New album | Nytt album |
+| 368 | `filename_without_zip` | Filename (without .zip) | Filnamn (utan .zip) |
+| 369 | `favorites_already_exist` | You already have a favorites list | Du har allereie ei favorittliste |
+| 370 | `delete_existing_list` | Delete existing list | Slett eksisterande liste |
+| 371 | `merge_lists` | Merge lists | Slå saman lister |
+| 372 | `confirm` | Confirm | Stadfest |
+| 373 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dette albumet? Alle mediefilene i det vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
+| 374 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dei valde albuma? Alle mediefilene i dei vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
+| 375 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | Er du sikker på at du vil kryptera denne fila? Ho vert kryptert og flytt til det krypterte kvelvet. Originalfila vert sletta. |
+| 376 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | Er du sikker på at du vil kryptera dei valde filene? Dei vert krypterte og flytte til det krypterte kvelvet. Originalfilene vert sletta. |
+| 377 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | Dei valde filene vert krypterte når dei vert kopierte til det krypterte kvelvet. Vil du halda fram? |
+| 378 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | Krypter / Dekrypter |
+| 379 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | Tillat masseendring av namn når fleire filer er valde |
+| 380 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | Behald originalfila, fjern henne berre frå dette virtuelle albumet |
+| 381 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | Behald originalfila, fjern henne berre frå favorittar |
+| 382 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | Slett originalversjonen av ei fil når ho vert sletta frå favorittar og virtuelle album |
+| 383 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | Krypterte album kan ikkje veljast som mål for denne handlinga |
+| 384 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | Kan ikkje kombinera krypterte og ukrypterte element i denne handlinga |
+| 385 | `lock_album` | Lock album | Lås album |
+| 386 | `unlock_album` | Unlock album | Lås opp album |
+| 387 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | Vil du at favorittane og dei virtuelle albuma dine skal lagrast regelmessig i systemlagringa utanfor appminnet? Dette sikrar at du ikkje mistar favorittlista og dei virtuelle albuma dine om du avinstallerer appen. Du kan når som helst laga ei tryggingskopi manuelt frå appinnstillingane. |
+| 388 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | Tryggingskopier favorittar og virtuelle album til einingslagringa |
+| 389 | `access_storage_prompt` *(fossify-commons)* | Please grant our app access to all your files, it might not work well without it. | Ver venleg og gje appen vår tilgang til alle filene dine, han fungerer kanskje ikkje så godt utan dette. |
+| 390 | `encrypt_info_title` | How Encryption Works | Korleis kryptering fungerer |
+| 391 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Mappe- og filstruktur:\n• Når eit ukryptert album blir kryptert, blir det gjort om til ei kryptert undermappe inne i kvelvet (Secrets).\n• Både mappenamnet og alle filnamn og filinnhald inni det blir krypterte, slik at ingenting er leseleg utanfor appen.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta eit nytt album som Album(1) eller slå saman med det eksisterande krypterte albumet (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om kjeldefiler som er stadfesta 100% bit-for-bit identiske med målet skal slettast eller behaldast i kjeldemappa.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing. |
+| 392 | `decrypt_info_title` | How Decryption Works | Korleis dekryptering fungerer |
+| 393 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | Mappe- og filstruktur:\n• Når eit kryptert album eller ei kryptert fil blir dekryptert, blir det/ho gjenoppretta med opphavleg namn og format til den valde målmappa og fjerna frå det krypterte kvelvet.\n\nViss eit album med same namn alt finst:\n• Som standard spør appen om du vil oppretta ei ny mappe som Album(1) eller slå saman med den eksisterande målmappa (kan konfigurerast i Innstillingar).\n• Når du slår saman, kan du velja om krypterte kopiar som er stadfesta 100% bit-for-bit identiske med målet skal fjernast frå kvelvet eller behaldast.\n• Ulike filer med same namn (t.d. download.jpg) blir behaldne som download(1).jpg eller handterte i samsvar med innstillinga di for konfliktløysing. |
+| 394 | `vault_location` | Vault location | Kvelvplassering |
+| 395 | `vault_location_standard_summary` | Standard (Internal Storage) | Standard (Intern lagring) |
+| 396 | `vault_location_unavailable_summary` | External drive disconnected (%s) | Ekstern stasjon fråkopla (%s) |
+| 397 | `select_vault_location` | Select vault location | Vel kvelvplassering |
+| 398 | `vault_setup_action_title` | Encrypted vault | Kryptert kvelv |
+| 399 | `create_new_vault_option` | Create new vault | Opprett nytt kvelv |
+| 400 | `use_existing_vault_option` | Use existing vault | Bruk eksisterande kvelv |
+| 401 | `where_to_create_vault_title` | Where should the vault be created? | Kvar skal kvelvet opprettast? |
+| 402 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | Standardplassering (Intern > Calypso Gallery > Secrets) |
+| 403 | `vault_location_custom_short` | Custom Location | Eigendefinert plassering |
+| 404 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | Ingen eksisterande kryptert kvelv (.vault) vart funnen i den valde mappa. |
+| 405 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | Eit eksisterande kryptert kvelv vart funne på %s. Vil du låsa det opp og bruka det? Trykk på Nei for å velja ei anna mappe. |
+| 406 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | Standardplassering (Intern lagring > Calypso Gallery > Secrets) |
+| 407 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | Eigendefinert / Ekstern plassering (USB-stasjon, SD-kort eller eigendefinert mappe) |
+| 408 | `external_vault_unavailable_title` | External vault unavailable | Eksternt kvelv utilgjengeleg |
+| 409 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | Den konfigurerte kvelvplasseringa di (%s) er for tida fråkopla eller utilgjengeleg. Kopla til stasjonen og trykk på Prøv på nytt, eller vel ei anna kvelvplassering. |
+| 410 | `retry` | Retry | Prøv på nytt |
+| 411 | `change_vault_location` | Change location | Endra plassering |
+| 412 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | Eksisterande kvelv funne på %s. Skriv inn passordet eller PIN-koden for å låsa det opp. |
+| 413 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | Det finst ikkje noko kvelv på %s. Vil du oppretta eit nytt kryptert kvelv på denne plasseringa? |
+| 414 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | Denne USB-stien er berre eksponert gjennom Android sin virtuelle OTG-leverandør og kan ikkje opnast direkte som ein filsystemsti. Ver venleg og vel ein montert lagringskatalog eller ei mappe på intern lagring / SD-kort. |
+| 415 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | Den valde mappa finst ikkje eller kan ikkje skrivast til på denne eininga. |
+| 416 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | Den valde mappa finst ikkje eller kan ikkje lesast på denne eininga. |
+| 417 | `sync_vault_from_external` | Import encrypted media files to encrypted section | Importer krypterte mediefiler til kryptert seksjon |
+| 418 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | Slik fungerer import av krypterte medium:\n\n1. Einskapleg Secrets-mappe:\nHa ei mappe med namnet Secrets på den eksterne stasjonen din (USB / SD). Der kan du anten ha ei fullstendig tryggingskopi av kvelvet ditt, eller berre leggja inn kvelvet si .vault-headerfil.\n\n2. Kryptering av nye medium (PC / Tails CLI):\nDet fråkopla CLI-verktøyet lagrar automatisk nye krypterte filer direkte i Secrets. Filer i rotmappa hamnar i Default Secret Album; filer i undermapper hamnar i tilsvarande krypterte album (eller opprettar nye).\n\n3. Bit-for-bit smart synkronisering:\nVel den eksterne stasjonen eller Secrets-mappa nedanfor. Appen samanliknar den eksterne stasjonen med telefonen sitt kvelv i RAM:\n• Berre nye filer og album blir importerte.\n• Bit-identiske filer som alt finst i kvelvet blir hoppa over.\n• Ulike filer med same namn (t.d. download.jpg) blir importerte trygt som download(1).jpg. |
+| 419 | `conflict_handling_mode_label` | File conflict & duplicate resolution | Løysing av filkonfliktar og duplikat |
+| 420 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | Heilautomatisk (Standard — Hopp over identiske, gje ulike nytt namn som (1)) |
+| 421 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | Smart dialog (Hopp over identiske automatisk, spør når innhaldet er ulikt) |
+| 422 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | Albumkonflikt (Kryptera / Dekryptera) |
+| 423 | `album_crypto_conflict_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 424 | `album_crypto_conflict_merge` | Merge into existing album | Slå saman med eksisterande album |
+| 425 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | Slå saman med eksisterande album og slett identiske kjelder automatisk |
+| 426 | `album_crypto_conflict_rename` | Create new album as (1) | Opprett nytt album som (1) |
+| 427 | `album_crypto_conflict_title` | Album Already Exists | Albumet finst alt |
+| 428 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | Eit album med namnet \"%s\" finst alt på målet. Korleis vil du halda fram? |
+| 429 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | %1$d valde album finst alt på målet. Korleis vil du halda fram?\n\nValet ditt vil gjelda for alle album med konflikt. For å velja separat per album, vel og handsam dei eitt og eitt. |
+| 430 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | Opprett nytt album som \"%s\" |
+| 431 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | Opprett nye album som (1), (2), … |
+| 432 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | Slå saman inn i eksisterande \"%s\" |
+| 433 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | Slå saman inn i eksisterande album |
+| 434 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | Slett identiske kjeldefiler (100% bit-for-bit stadfesta) |
+| 435 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | Hugs val for albumkonflikt (slå saman eller gje nytt namn) |
+| 436 | `album_crypto_merge_identical_title` | Identical Files During Merge | Identiske filer ved samanslåing |
+| 437 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Når du slår saman inn i \"%1$s\", viss nokre filer alt er 100%% bit-identiske på målet, skal kjeldekopiane slettast eller behaldast? |
+| 438 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | Når du slår saman dei %1$d albuma med konflikt, viss nokre filer alt er 100%% bit-identiske på målet, skal kjeldekopiane slettast eller behaldast? |
+| 439 | `delete_identical_sources` | Delete identical | Slett identiske |
+| 440 | `keep_identical_sources` | Keep in source | Behald i kjelde |
+| 441 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | Rask duplikatsjekk for store filer (>8 MB) |
+| 442 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | Avgjerande for overføringar med store filer: sjekkar 5 blokker (1,25 MB totalt) per fil i staden for å lesa heile filer, noko som gjer duplikatsjekken titals gonger raskare. |
+| 443 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | Rask duplikatsjekk (>8 MB) |
+| 444 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | Løysing av filkonfliktar og duplikat |
+| 445 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | Når du kopierer, flyttar, krypterer eller dekrypterer filer og album, og ei fil med same namn alt finst på målet:\n\n1. Bit-for-bit duplikatsjekk (RAM):\nAppen sjekkar filstorleikane først, og viss storleikane samsvarar, blir filinnhaldet samanlikna bit-for-bit i RAM (krypterte filer blir sjekka i minnet utan å skriva klartekst til disk). Under kopiering/flytting blir identiske filer hoppa over og originalen blir verande urørt i kjeldemappa. Når du slår saman eit album under kryptering/dekryptering, kan du velja om 100% bit-identiske kjeldefiler skal slettast eller behaldast.\n\n2. Same namn, ulikt innhald (t.d. to ulike download.jpg-filer):\n• Heilautomatisk (Standard): Behaldar begge filene utan å avbryta deg ved å gje den nye fila namnet download(1).jpg, download(2).jpg.\n• Smart dialog: Hoppar framleis stille over bit-identiske filer, og spør berre (Hopp over / Skriv over / Behald begge) når to filer har same namn, men ulikt innhald. |
+| 446 | `syncing_vault_progress` | Syncing vault from external drive… | Synkroniserer kvelv frå ekstern stasjon… |
+| 447 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | Kvelvsynkronisering fullført:\n• Kopiert: %1$d\n• Gjeve nytt namn (namnekonflikt): %2$d\n• Hoppa over (identisk): %3$d\n• Mislykkast: %4$d |
+| 448 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | Ingen ventande CLI-krypterte medium (.pending_sync) vart funne i den valde mappa. |
+| 449 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | Den valde kjeldemappa er den same som det aktive kvelvet ditt. |
+| 450 | `use_for_this_album` | Use for this album only | Bruk berre for dette albumet |
+| 451 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | Når ei fil alt finst i målmappa under kryptering/dekryptering |
+| 452 | `crypto_duplicate_source_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 453 | `crypto_duplicate_source_keep` | Keep file in source folder | Behald fila i kjeldemappa |
+| 454 | `crypto_duplicate_source_delete` | Delete file from source folder | Slett fila frå kjeldemappa |
+| 455 | `crypto_duplicate_source_title` | File Already Exists in Destination | Fila finst alt i målmappa |
+| 456 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du krypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
+| 457 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | Nokre av filene du dekrypterer finst alt i målmappa. Kva skal skje med filene i kjeldemappa? |
+| 458 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | Åtvaring: Om du vel «Behald» for ukrypterte filer, vil kjeldefila bli liggjande ukryptert på disken. |
+| 459 | `crypto_duplicate_source_always_ask` | Always ask | Spør alltid |
+| 460 | `export_encrypted_vault` | Export encrypted vault | Eksporter kryptert kvelv |
+| 461 | `export_vault_only_header` | Export folder containing only .vault file | Eksporter mappe som berre inneheld .vault-fil |
+| 462 | `export_vault_entire_folder` | Export entire folder | Eksporter heile mappa |
+| 463 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | For å leggja til medieelement som er krypterte på andre einingar med det støtta CLI-verktøyet i det krypterte kvelvet på telefonen din, treng du berre å bruka ei mappe kalla Secrets som inneheld .vault-fila. |
+| 464 | `exporting_vault_progress` | Exporting encrypted vault… | Eksporterer kryptert kvelv… |
+| 465 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | Eksportmålet kan ikkje vera den aktive kvelvmappa eller liggja inne i ho. |
+| 466 | `conflict_handling_standard_dialog_summary` | Standard dialog | Standard dialog |
+| 467 | `conflict_handling_smart_dialog_summary` | Smart dialog | Smart dialog |
+| 468 | `conflict_handling_auto_summary` | Automatic (Experimental) | Automatisk (eksperimentelt) |
+| 469 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | Standard dialog (Standard — Sjekkar berre filnamnet, som den opphavlege Fossify Gallery) |
+| 470 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | Handsama filer som vart hoppa over under kryptering |
+| 471 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | Vel om filer som vart hoppa over i kjeldemappa under kryptering skal behaldast eller slettast av tryggleiksomsyn. Dette valet gjeld òg for albumkonfliktar under albumkryptering (sjå innstillinga under) når kjeldealbumet vert slått saman med eit eksisterande album på målet. |
+| 472 | `skipped_crypto_files_ask` | Always ask (Default) | Spør alltid (Standard) |
+| 473 | `skipped_crypto_files_keep` | Keep | Behald |
+| 474 | `skipped_crypto_files_delete` | Delete | Slett |
+| 475 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | Filene du hoppa over vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 476 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | Filene du hoppa over vart ikkje overførte. Du kan sletta desse filene. |
+| 477 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 478 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | Filer som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
+| 479 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. For personvernet ditt kan du sletta desse filene. |
+| 480 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | Filene du hoppa over og filene som alt finst i målmappa vart ikkje overførte. Du kan sletta desse filene. |
+| 481 | `skipped_crypto_files_always_ask` | Always ask | Spør alltid |
+| 482 | `delete_skipped_files_confirm_title` | Are you sure? | Er du sikker? |
+| 483 | `delete_skipped_files_confirm_message` | Your files will be deleted! | Filene dine vert sletta! |
+| 484 | `date_tie_break_label` | When content is identical but dates differ | Når innhaldet er identisk, men datoen er ulik |
+| 485 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | Behald datoen til den eksisterande fila (standard) |
+| 486 | `date_tie_break_use_source` | Use the source file\'s date | Bruk datoen til kjeldefila |
+| 487 | `date_tie_break_ask` | Always ask | Spør alltid |
+| 488 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | Gjeld berre for Smart dialog og automatisk modus. Standard dialog vert ikkje påverka. |
+| 489 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | Kvifor \"Spør alltid\" slår av Smart dialog og automatisk modus |
+| 490 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | Smart dialog og automatisk modus finst av éin grunn: å hoppa over filer som alt er til stades, slik at du berre ser filene som verkeleg treng merksemda di — same namn, ulikt innhald. Det er nettopp i dette tilfellet at samanlikning av minibilete kan avdekkja bit-rot.\n\nViss du vel \"Spør alltid\" her, kjem kvar identisk fil med ein annan dato tilbake til deg som ein konflikt. I Smart dialog ser du to minibilete av det same biletet, utan noko å stadfesta. I automatisk modus vert den identiske fila skriven på nytt som namn(1), og fyller mappene dine med meiningslause kopiar.\n\nBruk dette valet berre viss du med vilje vil gå gjennom kvar einaste datoskilnad, til dømes for å retta ein feil dato for hand.\n\nMerk: når innhaldet er bit-identisk, er EXIF-opptaksdatoen òg identisk. Ein datoskilnad tyder at den eine sida mista EXIF-dataa sine og fall tilbake til endringsdatoen til fila (kopieringsdatoen). |
+| 491 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 492 | `smart_conflict_incoming_label` | Incoming (New) | Innkommande (ny) |
+| 493 | `smart_conflict_existing_label` | Existing (Target) | Eksisterande (mål) |
+| 494 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | Øydelagd eller uleseleg |
+| 495 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | Integritetssjekk feila (bit-rot / øydelagd) |
+| 496 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | Trykk på eit av minibileta for å sjå førehandsvisinga i full storleik |
+| 497 | `smart_conflict_comparing` | Comparing file contents and dates… | Samanliknar filinnhald og datoar… |
+| 498 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | Filinnhaldet er ulikt.\nViss desse to filene skulle vore like, kan det ha oppstått dataskade. Det tilrår å behalda begge og granska dei. |
+| 499 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | Filinnhaldet er identisk, men tidsstempla for oppretting (dato teken) er ulike. |
+| 500 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | Filinnhaldet er identisk, men endringsdatoane er ulike. |
+| 501 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | Filinnhaldet er identisk, men opprettings- og endringsdatoane er ulike. |
+| 502 | `smart_conflict_meta_date_taken` | Taken: %s | Teke: %s |
+| 503 | `smart_conflict_meta_date_modified` | Modified: %s | Endra: %s |
+| 504 | `album_type_icons` | Album type icons | Ikon for albumtype |
+| 505 | `virtual_folders` | Virtual folders | Virtuelle mapper |
+| 506 | `favorites_album` | Favorites | Favorittar |
+| 507 | `excluded_folders_album` | Excluded folders | Ekskluderte mapper |
+| 508 | `hidden_folders_album` | Hidden folders | Skjulte mapper |
+| 509 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | Syn skjulte mapper mellombels |
+| 510 | `stop_showing_hidden_folders` | Stop showing hidden folders | Slutt å syna skjulte mapper |
+| 511 | `unexclude` | Stop excluding | Slutt å ekskludera |
+| 512 | `hide_folder` | Hide | Skjul |
+| 513 | `unhide_folder` | Unhide | Syn att |
+| 514 | `about_title` | About Calypso Gallery | Om Calypso Gallery |
+| 515 | `about_version` | Version %1$s (%2$s) | Versjon %1$s (%2$s) |
+| 516 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell personleg fork av Fossify Gallery. Han er ikkje tilknytt eller støtta av Fossify. |
+| 517 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | Denne distribusjonen er ein endra versjon av Fossify Gallery. Forken vart laga frå oppstraums-commiten 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), og alle forksspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
+| 518 | `about_license_heading` | License | Lisens |
+| 519 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | Dette programmet er fri programvare: du kan distribuera det og/eller endra det i samsvar med vilkåra i GNU General Public License som publisert av Free Software Foundation, versjon 3 av lisensen.\n\nDette programmet vert distribuert i håp om at det skal vera nyttig, men UTAN NOKON GARANTI; utan ein gitt garanti for SALJGBARHEIT eller EIGNA FOR EIT FØREMÅL. Sjå GNU General Public License for fleire detaljar.\n\nDu skulle ha motteke ein kopi av GNU General Public License saman med dette programmet. Viss ikkje, bruk lisenshandlinga under eller besøk https://www.gnu.org/licenses/. |
+| 520 | `about_read_gpl_license` | Read the GNU GPL v3 license | Les GNU GPL v3-lisensen |
+| 521 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Les Tink Apache 2.0-lisensen og tilskrivinga |
+| 522 | `about_source_heading` | Source code | Kjeldekode |
+| 523 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | Den fullstendige tilhøyrande kjeldekoden for denne forken finst i fork-repositoriet. Merkelagde utgåver har òg eit tilhøyrande kjeldearkiv. Repositoriet inneheld byggjeskripta, avhengighetserklæringane og den fullstendige fork-historikken som trengst for å granska og byggja prosjektet på nytt. |
+| 524 | `about_fork_source` | Fork source code and corresponding source | Kjeldekode for forken og tilhøyrande kjelde |
+| 525 | `about_release_sources` | Release source archives | Kjeldearkiv for utgåver |
+| 526 | `about_fork_issues` | Fork issue tracker | Feilsporar for forken |
+| 527 | `about_upstream_source` | Upstream Fossify Gallery source code | Kjeldekode for oppstraums Fossify Gallery |
+| 528 | `about_upstream_project` | Upstream Fossify project | Oppstraums Fossify-prosjektet |
+| 529 | `about_help_heading` | Help and legal information | Hjelp og juridisk informasjon |
+| 530 | `about_faq` | Frequently asked questions | Ofte stilte spørsmål |
+| 531 | `about_third_party_licenses` | Third-party licenses | Lisensar frå tredjepart |
+| 532 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 533 | `tink_license_title` | Tink license and attribution | Tink-lisens og tilskriving |
+| 534 | `fork_disclaimer_title` | Fork notice | Fork-merknad |
+| 535 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | Dette programmet er ikkje utvikla av Fossify-teamet. Calypso Gallery er ein uavhengig vedlikehalden, uoffisiell fork av Fossify Gallery; den opphavlege utviklaren er berre nemnd for tilskriving. Det er ikkje tilknytt, støtta eller vedlikehalde av Fossify.\n\nVed å halda fram stadfestar du denne merknaden. Forkspesifikke endringar er dokumenterte i FORK_CHANGELOG.md. |
+| 536 | `fork_disclaimer_acknowledge` | I understand | Eg forstår |
+| 537 | `argon2_profile_title` | Brute-Force resistance | Motstand mot brute-force |
+| 538 | `brute_force_mode_title` | Calibration mode | Kalibreringsmodus |
+| 539 | `brute_force_mode_time` | Via vault unlock time | Via opplåsingstid for kvelvet |
+| 540 | `brute_force_mode_presets` | Via ready-made modes | Via ferdige modusar |
+| 541 | `brute_force_time_title` | Target vault unlock time | Ønskt opplåsingstid for kvelvet |
+| 542 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare. |
+| 543 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Nedre grense er den trygge standardtida til denne eininga. |
+| 544 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (på denne eininga) |
+| 545 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | Denne tida er over det valbare maksimumnivået (10 s). Trykk for å endre ho. |
+| 546 | `brute_force_time_value` | %1$.1f s | %1$.1f s |
+| 547 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | Lagra: %1$d MiB / %2$d rundar |
+| 548 | `brute_force_clamped` |  (clamped) |  (avgrensa) |
+| 549 | `argon2_profile_low` | Low-end device (not recommended) | Eining med låg yting (ikkje tilrådd) |
+| 550 | `argon2_profile_default` | Default | Standard |
+| 551 | `argon2_profile_high` | High security | Høg tryggleik |
+| 552 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | Viss du ikkje veit kva du gjer, tilrår vi å behalda standardinnstillinga. Dette påverkar berre nye kvelv og passordendringar. |
+| 553 | `argon2_profile_current` | Current: %s | Gjeldande: %s |
+| 554 | `show_pin_dots` | Show a dot for each PIN digit | Vis ein prikk for kvart siffer når PIN-koden blir skriven inn |
 
 ## Settings Headers, Font Options & File Encryption Info
 
@@ -818,3 +820,94 @@ Added to `values-nn/strings.xml` for the Appearance settings **Custom colors** s
 | 7 | `custom_theme_name` | Custom theme | Eigendefinert tema | Base name for newly saved custom themes (suffixed with index) |
 | 8 | `discard_changes_question` | Do you want to save your changes? | Vil du lagra endringane dine? | Prompt shown when switching themes with unsaved custom color changes |
 | 9 | `continue_without_saving` | Continue without saving | Hald fram utan å lagra | Negative dialog button to discard unsaved custom color changes |
+
+## Onboarding & Full-Screen Permission Flow (29 keys)
+
+Added to `values-nn/strings.xml` for the 3-screen first-launch welcome and full-screen permission flow (unsupported system locales fall back cleanly to English in `values/strings.xml`). Also removed the retired `auto_backup_prompt_message` key since auto-backup is now enabled by default and always shown in Settings.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `onboarding_motto` | No sign-up, no cloud, just your gallery. | Inga registrering, inga sky, berre galleriet ditt. | Welcome screen tagline |
+| 2 | `onboarding_offline_title` | Completely Offline | Heilt fråkopla | Welcome card 1 title |
+| 3 | `onboarding_offline_desc` | Never connects to the internet. Your data belongs only to you. | Koplar seg aldri til internett. Dataa dine høyrer berre til deg. | Welcome card 1 description |
+| 4 | `onboarding_vault_title` | Encrypted Vault | Kryptert kvelv | Welcome card 2 title |
+| 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | Krypter bileta og videoane dine. Ingen andre kan få tilgang. | Welcome card 2 description |
+| 6 | `onboarding_albums_title` | Playlists for your photos | Spelelister for bileta dine | Welcome card 3 title |
+| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | Virtuelle mapper lèt deg samla bileta og videoane du vil sjå saman i så mange album du ønskjer, utan å flytta dei frå mappene sine eller bruka ekstra lagringsplass med kopiar. | Welcome card 3 description |
+| 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | Tilgang til media er nødvendig for å syna bileta og videoane dine. | Welcome footer media permission note |
+| 9 | `onboarding_continue` | Continue | Hald fram | Welcome primary button |
+| 10 | `onboarding_media_required_title` | Full media access required | Full medietilgang krevst | Media permission screen title |
+| 11 | `onboarding_media_required_desc` | Calypso Gallery needs full access to display all your photos and videos. | Calypso Gallery treng full tilgang for å syna alle bileta og videoane dine. | Media permission screen description |
+| 12 | `onboarding_media_steps_header` | How to enable permission | Slik gjev du tilgang | Settings steps card header |
+| 13 | `onboarding_media_step_1` | Settings | Innstillingar | Settings guide step 1 |
+| 14 | `onboarding_media_step_2` | Permissions | Løyve | Settings guide step 2 |
+| 15 | `onboarding_media_step_3` | Photos and videos | Bilete og videoar | Settings guide step 3 |
+| 16 | `onboarding_media_step_4` | Allow all | Tillat alle | Settings guide step 4 (final) |
+| 17 | `onboarding_media_required_hint` | Once access is granted, your gallery will open automatically when you return to the app. | Når tilgang er gjeven, opnar galleriet automatisk når du går attende til appen. | Media permission screen return hint |
+| 18 | `onboarding_go_to_settings` | Go to settings | Gå til innstillingar | Media permission primary button |
+| 19 | `onboarding_close` | Close | Lukk | Media permission secondary button |
+| 20 | `onboarding_all_files_title` | All files access | Tilgang til alle filer | All files access screen title |
+| 21 | `onboarding_all_files_desc` | All files access is recommended for the Encrypted Vault and seamless file management. | Tilgang til alle filer er tilrådd for kryptert kvelv og saumlaus filhandtering. | All files access screen subtitle |
+| 22 | `onboarding_all_files_vault_title` | Encrypted Vault and hidden folders | Kryptert kvelv og skjulte mapper | All files card 1 title |
+| 23 | `onboarding_all_files_vault_desc` | Manage your encrypted files and hidden folders without system restrictions. | Handter krypterte filer og skjulte mapper utan systemavgrensingar. | All files card 1 description |
+| 24 | `onboarding_all_files_backup_title` | Don\'t lose your Favorites and Virtual Albums | Ikkje mist favorittane og dei virtuelle albuma dine | All files card 2 title |
+| 25 | `onboarding_all_files_backup_desc` | Keep your favorites and virtual albums automatically backed up on your device even if you accidentally uninstall the app. You can turn off automatic backup anytime in app settings. | Sjølv om du ved eit uhell slettar appen, vert favorittane og dei virtuelle albuma dine automatisk tryggingskopierte på eininga. Du kan når som helst slå av automatisk tryggingskopiering i appinnstillingane. | All files card 2 description |
+| 26 | `onboarding_all_files_offline_title` | Still completely on your device | Framleis heilt på eininga di | All files card 3 title |
+| 27 | `onboarding_all_files_offline_desc` | The app stays completely offline, this permission is used only for local file operations. | Appen held fram med å verka fråkopla, dette løyvet vert berre nytta til lokale filoperasjonar. | All files card 3 description |
+| 28 | `onboarding_grant_access` | Grant access | Gjev tilgang | All files primary button |
+| 29 | `onboarding_not_now` | Not now | Ikkje no | All files secondary button |
+
+## Vault Lock & Album Header Polish (4 keys)
+
+Added to `values-nn/strings.xml` for the redesigned Vault Lock screen biometric button and album interior header.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `use_biometrics` | Use biometrics | Bruk biometri | Vault lock screen biometric button label |
+| 2 | `media_header_items_count` | %d items | %d element | MediaActivity album header item count |
+| 3 | `media_header_virtual_album` | Virtual album · %d items | Virtuelt album · %d element | MediaActivity virtual album header subtitle |
+| 4 | `media_header_encrypted_album` | Encrypted album · %d items | Kryptert album · %d element | MediaActivity encrypted album header subtitle |
+## Appearance Live Preview (4 keys)
+
+Added to `values-nn/strings.xml` for the live Appearance preview card and WCAG contrast warning.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `appearance_preview` | Preview | Førehandsvising | Appearance live preview section header |
+| 2 | `appearance_preview_text` | Your memories, your colors | Minna dine, fargane dine | Appearance preview sample headline |
+| 3 | `appearance_preview_button` | Sample button | Dømeknapp | Appearance preview sample button |
+| 4 | `appearance_contrast_warning` | Low contrast: text %1$.1f:1, button %2$.1f:1. Increase it for readability. | Låg kontrast: tekst %1$.1f:1, knapp %2$.1f:1. Auk kontrasten for betre lesbarheit. | WCAG contrast warning in Appearance preview |
+
+## Vault Privacy Input Toggle (1 key)
+
+Added to `values-nn/strings.xml` for the optional shoulder-surfing protection switch (default off).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `hide_vault_key_presses` | Hide key presses when entering vault password | Skjul tastetrykk ved inntasting av kvelvpassord | Settings switch to hide PIN/password key press feedback |
+
+## PIN Dot Indicator Setting (1 key)
+
+Added to `values-nn/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 16 digits).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_pin_dots` | Show a dot for each PIN digit | Vis ein prikk for kvart siffer når PIN-koden blir skriven inn | Settings switch; hidden for alphanumeric vaults and PINs longer than 16 digits |
+
+## KDF Unlock-Time Hint Revision (this revision)
+
+Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values-nn/strings.xml`. The lower-bound sentence is appended only when the device's measured safe floor is above 1.0 s.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare. | Explanation shown in the target vault unlock time dialog |
+| 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | Nedre grense er den trygge standardtida til denne eininga. | Appended only when minSec > 1.0 |
+
+## Existing Vault Time Recalculation (this revision)
+
+Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-nn/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f s (på denne eininga) | Value shown for an existing vault |
+| 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | Denne tida er over det valbare maksimumnivået (10 s). Trykk for å endre ho. | Shown when the real time exceeds 10 s |

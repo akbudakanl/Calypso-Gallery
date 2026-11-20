@@ -395,7 +395,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">この操作では暗号化された項目と暗号化されていない項目を混在させることはできません</string>
     <string name="lock_album">アルバムをロック</string>
     <string name="unlock_album">アルバムのロックを解除</string>
-    <string name="auto_backup_prompt_message">お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。</string>
     <string name="auto_backup_favorites_and_virtual_albums">お気に入りと仮想アルバムを端末のストレージにバックアップする</string>
     <string name="encrypt_info_title">暗号化の仕組み</string>
     <string name="encrypt_info_message" formatted="false">フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。</string>
@@ -471,9 +470,7 @@
     <string name="conflict_handling_auto_summary">自動（実験的）</string>
     <string name="conflict_handling_standard_dialog_short">標準ダイアログ（既定 — 元の Fossify Gallery と同様、ファイル名のみを確認）</string>
     <string name="skipped_encrypt_files_mode_label">暗号化時にスキップされたファイルを管理</string>
-    <string name="skipped_decrypt_files_mode_label">復号時にスキップされたファイルを管理</string>
     <string name="skipped_encrypt_files_info_message">暗号化時に送信元フォルダーでスキップされたファイルを保持するか、セキュリティのため削除するかを選択します。この選択は、アルバムの暗号化時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。</string>
-    <string name="skipped_decrypt_files_info_message">復号時に送信元フォルダーでスキップされたファイルを保持するか削除するかを選択します。この選択は、アルバムの復号時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。</string>
     <string name="skipped_crypto_files_ask">毎回確認（既定）</string>
     <string name="skipped_crypto_files_keep">保持</string>
     <string name="skipped_crypto_files_delete">削除</string>
@@ -536,7 +533,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">総当たり攻撃への耐性</string>
     <string name="brute_force_time_title">目標とする保管庫のロック解除時間</string>
-    <string name="brute_force_time_hint">秒数（2.0–7.0）。アプリはこの端末を一度測定し、結果の KDF パラメーターを保管庫に保存します。実際のロック解除時間は他の端末では異なります。</string>
+    <string name="brute_force_time_hint">暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。</string>
+    <string name="brute_force_time_min_hint">下限はこの端末の安全な標準時間です。</string>
+    <string name="brute_force_time_value_device">%1$.1f 秒（この端末）</string>
+    <string name="brute_force_time_out_of_range">この時間は選択可能な上限（10 秒）を超えています。変更するにはタップしてください。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
     <string name="brute_force_actual_params">保存済み: %1$d MiB / %2$d ラウンド</string>
     <string name="brute_force_clamped"> (範囲内に制限されました)</string>
@@ -565,4 +565,49 @@
     <string name="continue_without_saving">保存せずに続行</string>
     <string name="vault_no_recovery_warning">オフライン暗号化が使用されます。パスワードやPINを忘れた場合、保管庫を復元する方法はありません。</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">登録不要、クラウドなし、あなただけのギャラリー。</string>
+    <string name="onboarding_offline_title">完全オフライン</string>
+    <string name="onboarding_offline_desc">インターネットに接続しません。データはあなただけのものです。</string>
+    <string name="onboarding_vault_title">暗号化された保管庫</string>
+    <string name="onboarding_vault_desc">写真や動画を暗号化します。あなた以外の誰もアクセスできません。</string>
+    <string name="onboarding_albums_title">写真のためのプレイリスト</string>
+    <string name="onboarding_albums_desc">仮想フォルダーを使えば、元のフォルダーから移動したりコピーで容量を消費したりすることなく、見たい写真や動画を好きなだけアルバムにまとめられます。</string>
+    <string name="onboarding_media_permission_note">写真や動画を表示するには、メディアへのアクセス権限が必要です。</string>
+    <string name="onboarding_continue">続行</string>
+    <string name="onboarding_media_required_title">メディアへの完全なアクセスが必要</string>
+    <string name="onboarding_media_required_desc">Calypsoギャラリーは、すべての写真と動画を表示するために完全なアクセスを必要とします。</string>
+    <string name="onboarding_media_steps_header">権限を有効にする手順</string>
+    <string name="onboarding_media_step_1">設定</string>
+    <string name="onboarding_media_step_2">権限</string>
+    <string name="onboarding_media_step_3">写真と動画</string>
+    <string name="onboarding_media_step_4">すべて許可</string>
+    <string name="onboarding_media_required_hint">アクセスを許可してアプリに戻ると、ギャラリーが自動的に開きます。</string>
+    <string name="onboarding_go_to_settings">設定を開く</string>
+    <string name="onboarding_close">閉じる</string>
+    <string name="onboarding_all_files_title">すべてのファイルへのアクセス</string>
+    <string name="onboarding_all_files_desc">暗号化された保管庫やスムーズなファイル管理のために、すべてのファイルへのアクセス権限をおすすめします。</string>
+    <string name="onboarding_all_files_vault_title">暗号化された保管庫と非表示フォルダー</string>
+    <string name="onboarding_all_files_vault_desc">暗号化されたファイルや非表示フォルダーをシステム制限なしで管理できます。</string>
+    <string name="onboarding_all_files_backup_title">お気に入りと仮想アルバムを失わないために</string>
+    <string name="onboarding_all_files_backup_desc">アプリを誤ってアンインストールしても、お気に入りと仮想アルバムが端末内に自動でバックアップされます。自動バックアップはアプリ設定からいつでもオフにできます。</string>
+    <string name="onboarding_all_files_offline_title">これまで通り完全に端末内で完結</string>
+    <string name="onboarding_all_files_offline_desc">アプリはオフラインのまま動作し、この権限は端末内のファイル操作のみに使用されます。</string>
+    <string name="onboarding_grant_access">許可する</string>
+    <string name="onboarding_not_now">後で</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d件</string>
+    <string name="media_header_virtual_album">仮想アルバム · %d件</string>
+    <string name="media_header_encrypted_album">暗号化アルバム · %d件</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">プレビュー</string>
+    <string name="appearance_preview_text">あなたの思い出、あなたの色</string>
+    <string name="appearance_preview_button">サンプルボタン</string>
+    <string name="appearance_contrast_warning">コントラストが低すぎます：テキスト %1$.1f:1、ボタン %2$.1f:1。読みやすくするためコントラストを上げてください。</string>
+    <string name="use_biometrics">生体認証を使用</string>
+    <string name="hide_vault_key_presses">保管庫のパスワード入力時にキー押下を非表示にする</string>
+    <string name="show_pin_dots">PIN入力時に各桁をドットで表示する</string>
 </resources>

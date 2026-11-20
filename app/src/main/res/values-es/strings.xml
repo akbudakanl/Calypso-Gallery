@@ -396,7 +396,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">No se pueden combinar elementos cifrados y sin cifrar en esta operación</string>
     <string name="lock_album">Bloquear álbum</string>
     <string name="unlock_album">Desbloquear álbum</string>
-    <string name="auto_backup_prompt_message">¿Desea que sus favoritos y álbumes virtuales se guarden periódicamente en el almacenamiento del sistema fuera de la memoria de la aplicación? Esto garantizará que no pierda su lista de favoritos ni sus álbumes virtuales si desinstala la aplicación. Puede crear una copia de seguridad manualmente desde los ajustes de la aplicación en cualquier momento.</string>
     <string name="auto_backup_favorites_and_virtual_albums">Hacer copia de seguridad de favoritos y álbumes virtuales en el almacenamiento del dispositivo</string>
     <string name="encrypt_info_title">Cómo funciona el cifrado</string>
     <string name="encrypt_info_message" formatted="false">Estructura de carpetas y archivos:\n• Cuando se cifra un álbum sin cifrar, se convierte en una subcarpeta cifrada dentro de la bóveda (Secrets).\n• Tanto el nombre de la carpeta como todos los nombres y contenidos de los archivos en su interior se cifran, por lo que nada es legible fuera de la aplicación.\n\nSi ya existe un álbum con el mismo nombre:\n• De forma predeterminada, la aplicación pregunta si crear un álbum nuevo como Álbum(1) o fusionarlo con el álbum cifrado existente (configurable en Ajustes).\n• Al fusionar, puede elegir si los archivos de origen verificados como 100% idénticos bit a bit al destino se eliminan o se conservan en la carpeta de origen.\n• Los archivos distintos con el mismo nombre (p. ej., download.jpg) se conservan como download(1).jpg o se gestionan según su ajuste de resolución de conflictos.</string>
@@ -472,9 +471,7 @@
     <string name="conflict_handling_auto_summary">Automático (experimental)</string>
     <string name="conflict_handling_standard_dialog_short">Diálogo estándar (Predeterminado — comprueba solo el nombre del archivo, como el Fossify Gallery original)</string>
     <string name="skipped_encrypt_files_mode_label">Gestionar los archivos omitidos durante el cifrado</string>
-    <string name="skipped_decrypt_files_mode_label">Gestionar los archivos omitidos durante el descifrado</string>
     <string name="skipped_encrypt_files_info_message">Elige si los archivos omitidos en la carpeta de origen durante el cifrado deben conservarse o eliminarse por seguridad. Esta elección también se aplica a los conflictos de álbum durante el cifrado de álbumes (véase el ajuste siguiente) cuando el álbum de origen se fusiona con un álbum existente en el destino.</string>
-    <string name="skipped_decrypt_files_info_message">Elige si los archivos omitidos en la carpeta de origen durante el descifrado deben conservarse o eliminarse. Esta elección también se aplica a los conflictos de álbum durante el descifrado de álbumes (véase el ajuste siguiente) cuando el álbum de origen se fusiona con un álbum existente en el destino.</string>
     <string name="skipped_crypto_files_ask">Preguntar siempre (Predeterminado)</string>
     <string name="skipped_crypto_files_keep">Conservar</string>
     <string name="skipped_crypto_files_delete">Eliminar</string>
@@ -537,7 +534,10 @@
     <string name="gpl_license_title">GNU General Public License v3</string>
     <string name="argon2_profile_title">Resistencia a la fuerza bruta</string>
     <string name="brute_force_time_title">Tiempo objetivo de desbloqueo de la bóveda</string>
-    <string name="brute_force_time_hint">Segundos (2.0–7.0). La aplicación mide este dispositivo una vez y guarda los parámetros KDF resultantes en la bóveda; el tiempo real de desbloqueo varía en otros dispositivos.</string>
+    <string name="brute_force_time_hint">Selecciona el tiempo dedicado a abrir la bóveda cifrada. Mantener este valor alto proporciona seguridad adicional al dificultar los ataques de fuerza bruta.</string>
+    <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>
+    <string name="brute_force_time_out_of_range">Este tiempo supera el máximo seleccionable (10 s). Toca para cambiarlo.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_actual_params">Guardado: %1$d MiB / %2$d rondas</string>
     <string name="brute_force_clamped"> (limitado)</string>
@@ -566,4 +566,49 @@
     <string name="continue_without_saving">Continuar sin guardar</string>
     <string name="vault_no_recovery_warning">Se utiliza cifrado sin conexión. Si olvida su contraseña o PIN, no hay forma de recuperar su bóveda.</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">Sin registro, sin nube, solo tu galería.</string>
+    <string name="onboarding_offline_title">Totalmente sin conexión</string>
+    <string name="onboarding_offline_desc">No se conecta a internet. Tus datos solo te pertenecen a ti.</string>
+    <string name="onboarding_vault_title">Bóveda cifrada</string>
+    <string name="onboarding_vault_desc">Cifra tus fotos y vídeos. Nadie más podrá acceder a ellos.</string>
+    <string name="onboarding_albums_title">Listas de reproducción para tus fotos</string>
+    <string name="onboarding_albums_desc">Las carpetas virtuales te permiten reunir las fotos y vídeos que quieras en tantos álbumes como desees, sin moverlos de sus carpetas ni ocupar espacio extra con copias.</string>
+    <string name="onboarding_media_permission_note">Se necesita permiso de acceso multimedia para mostrar tus fotos y vídeos.</string>
+    <string name="onboarding_continue">Continuar</string>
+    <string name="onboarding_media_required_title">Se requiere acceso multimedia completo</string>
+    <string name="onboarding_media_required_desc">La Galería Calypso necesita acceso total para mostrar todas tus fotos y vídeos.</string>
+    <string name="onboarding_media_steps_header">Cómo activar el permiso</string>
+    <string name="onboarding_media_step_1">Ajustes</string>
+    <string name="onboarding_media_step_2">Permisos</string>
+    <string name="onboarding_media_step_3">Fotos y vídeos</string>
+    <string name="onboarding_media_step_4">Permitir todo</string>
+    <string name="onboarding_media_required_hint">Una vez concedido el acceso, tu galería se abrirá automáticamente al volver a la aplicación.</string>
+    <string name="onboarding_go_to_settings">Ir a ajustes</string>
+    <string name="onboarding_close">Cerrar</string>
+    <string name="onboarding_all_files_title">Acceso a todos los archivos</string>
+    <string name="onboarding_all_files_desc">Se recomienda el acceso a todos los archivos para la bóveda cifrada y una gestión de archivos fluida.</string>
+    <string name="onboarding_all_files_vault_title">Bóveda cifrada y carpetas ocultas</string>
+    <string name="onboarding_all_files_vault_desc">Gestiona tus archivos cifrados y carpetas ocultas sin restricciones del sistema.</string>
+    <string name="onboarding_all_files_backup_title">No pierdas tus favoritos ni álbumes virtuales</string>
+    <string name="onboarding_all_files_backup_desc">Aunque desinstales la aplicación por error, tus favoritos y álbumes virtuales se respaldarán automáticamente en tu dispositivo. Puedes desactivar la copia automática en los ajustes de la aplicación.</string>
+    <string name="onboarding_all_files_offline_title">Sigue completamente en tu dispositivo</string>
+    <string name="onboarding_all_files_offline_desc">La aplicación sigue funcionando sin conexión, este permiso solo se utiliza para operaciones locales de archivos.</string>
+    <string name="onboarding_grant_access">Conceder acceso</string>
+    <string name="onboarding_not_now">Ahora no</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d elementos</string>
+    <string name="media_header_virtual_album">Álbum virtual · %d elementos</string>
+    <string name="media_header_encrypted_album">Álbum cifrado · %d elementos</string>
+
+    <!-- Appearance Live Preview -->
+    <string name="appearance_preview">Vista previa</string>
+    <string name="appearance_preview_text">Tus recuerdos, tus colores</string>
+    <string name="appearance_preview_button">Botón de ejemplo</string>
+    <string name="appearance_contrast_warning">Bajo contraste: texto %1$.1f:1, botón %2$.1f:1. Auméntalo para mejorar la legibilidad.</string>
+    <string name="use_biometrics">Usar biometría</string>
+    <string name="hide_vault_key_presses">Ocultar las pulsaciones al introducir la contraseña de la bóveda</string>
+    <string name="show_pin_dots">Mostrar un punto por cada dígito al introducir el PIN</string>
 </resources>

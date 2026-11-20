@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/onboarding_media_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:id="@+id/onboarding_media_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="16dp">
+
+            <!-- Emblem -->
+            <FrameLayout
+                android:id="@+id/onboarding_media_emblem"
+                android:layout_width="86dp"
+                android:layout_height="86dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="20dp">
+
+                <View
+                    android:id="@+id/onboarding_media_halo"
+                    android:layout_width="86dp"
+                    android:layout_height="86dp"
+                    android:layout_gravity="center" />
+
+                <FrameLayout
+                    android:id="@+id/onboarding_media_emblem_core"
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:layout_gravity="center">
+
+                    <ImageView
+                        android:id="@+id/onboarding_media_emblem_icon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_media" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/onboarding_media_badge_dot"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="end|bottom"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="4dp">
+
+                    <ImageView
+                        android:id="@+id/onboarding_media_badge_icon"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_alert" />
+                </FrameLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/onboarding_media_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:breakStrategy="balanced"
+                android:gravity="center"
+                android:letterSpacing="-0.02"
+                android:text="@string/onboarding_media_required_title"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/onboarding_media_desc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="24dp"
+                android:breakStrategy="balanced"
+                android:gravity="center"
+                android:hyphenationFrequency="normal"
+                android:lineSpacingMultiplier="1.32"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:text="@string/onboarding_media_required_desc"
+                android:textSize="14sp" />
+
+            <!-- Step-by-step Settings Guide Card -->
+            <LinearLayout
+                android:id="@+id/onboarding_media_steps_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingStart="18dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="18dp"
+                android:paddingBottom="10dp">
+
+                <TextView
+                    android:id="@+id/onboarding_media_steps_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:letterSpacing="0.06"
+                    android:text="@string/onboarding_media_steps_header"
+                    android:textAllCaps="true"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <!-- Step 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/onboarding_step_num_1"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:gravity="center"
+                        android:text="1"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_step_label_1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_media_step_1"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/onboarding_step_div_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp" />
+
+                <!-- Step 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/onboarding_step_num_2"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:gravity="center"
+                        android:text="2"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_step_label_2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_media_step_2"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/onboarding_step_div_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp" />
+
+                <!-- Step 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/onboarding_step_num_3"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:gravity="center"
+                        android:text="3"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_step_label_3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_media_step_3"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/onboarding_step_div_3"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp" />
+
+                <!-- Step 4 (Final) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/onboarding_step_num_4"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginEnd="12dp"
+                        android:gravity="center"
+                        android:text="4"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_step_label_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/onboarding_media_step_4"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:id="@+id/onboarding_step_check_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginStart="8dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_check" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/onboarding_media_hint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:breakStrategy="balanced"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:text="@string/onboarding_media_required_hint"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/onboarding_media_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/onboarding_media_settings_btn"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:letterSpacing="0"
+            android:text="@string/onboarding_go_to_settings"
+            android:textAllCaps="false"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="26dp"
+            app:elevation="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/onboarding_media_close_btn"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="6dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:letterSpacing="0"
+            android:text="@string/onboarding_close"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            app:cornerRadius="22dp" />
+    </LinearLayout>
+</LinearLayout>

@@ -464,9 +464,7 @@
     <string name="conflict_handling_smart_dialog_short">Smart dialog (Auto-skip identical, ask when content differs)</string>
     <string name="conflict_handling_auto_short">Automatic (Experimental — Auto-skip identical, rename different as (1))</string>
     <string name="skipped_encrypt_files_mode_label">Manage skipped files during encryption</string>
-    <string name="skipped_decrypt_files_mode_label">Manage skipped files during decryption</string>
     <string name="skipped_encrypt_files_info_message">Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination.</string>
-    <string name="skipped_decrypt_files_info_message">Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination.</string>
     <string name="skipped_crypto_files_ask">Always ask (Default)</string>
     <string name="skipped_crypto_files_keep">Keep</string>
     <string name="skipped_crypto_files_delete">Delete</string>
@@ -546,7 +544,6 @@
     <string name="cannot_mix_encrypted_and_unencrypted">Cannot combine encrypted and unencrypted items in this operation</string>
     <string name="lock_album">Lock album</string>
     <string name="unlock_album">Unlock album</string>
-    <string name="auto_backup_prompt_message">Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time.</string>
     <string name="auto_backup_favorites_and_virtual_albums">Back up favorites and virtual albums to device storage</string>
     <string name="use_for_this_album">Use for this album only</string>
     <string name="export_encrypted_vault">Export encrypted vault</string>
@@ -618,7 +615,10 @@
 
     <string name="argon2_profile_title">Brute-Force resistance</string>
     <string name="brute_force_time_title">Target vault unlock time</string>
-    <string name="brute_force_time_hint">Seconds (%1$.1f–10.0, in 0.1 s steps). The minimum is this device\'s safe standard (64 MiB / 3 rounds) time; default is 1.0 s (or the safe floor on slower devices). Parameters are stored in the vault; unlock time varies on other devices.</string>
+    <string name="brute_force_time_hint">Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder.</string>
+    <string name="brute_force_time_min_hint">The lower bound is this device\'s safe standard time.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (on this device)</string>
+    <string name="brute_force_time_out_of_range">This time is above the selectable maximum (10 s). Tap to change it.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
     <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d rounds)</string>
     <string name="brute_force_actual_params">Stored: %1$d MiB / %2$d rounds</string>
@@ -627,4 +627,43 @@
     <string name="measuring_device_kdf_speed">Measuring standard KDF speed on this device…</string>
     <string name="kdf_settings_updated_successfully">Brute-Force resistance updated for encrypted vault</string>
     <string name="vault_no_recovery_warning">Offline encryption is used. If you forget your password or PIN, there is no way to recover your vault.</string>
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">No sign-up, no cloud, just your gallery.</string>
+    <string name="onboarding_offline_title">Completely Offline</string>
+    <string name="onboarding_offline_desc">Never connects to the internet. Your data belongs only to you.</string>
+    <string name="onboarding_vault_title">Encrypted Vault</string>
+    <string name="onboarding_vault_desc">Encrypt your photos and videos. No one else can access them.</string>
+    <string name="onboarding_albums_title">Playlists for your photos</string>
+    <string name="onboarding_albums_desc">Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies.</string>
+    <string name="onboarding_media_permission_note">Media access permission is required to display your photos and videos.</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_media_required_title">Full media access required</string>
+    <string name="onboarding_media_required_desc">Calypso Gallery needs full access to display all your photos and videos.</string>
+    <string name="onboarding_media_steps_header">How to enable permission</string>
+    <string name="onboarding_media_step_1">Settings</string>
+    <string name="onboarding_media_step_2">Permissions</string>
+    <string name="onboarding_media_step_3">Photos and videos</string>
+    <string name="onboarding_media_step_4">Allow all</string>
+    <string name="onboarding_media_required_hint">Once access is granted, your gallery will open automatically when you return to the app.</string>
+    <string name="onboarding_go_to_settings">Go to settings</string>
+    <string name="onboarding_close">Close</string>
+    <string name="onboarding_all_files_title">All files access</string>
+    <string name="onboarding_all_files_desc">All files access is recommended for the Encrypted Vault and seamless file management.</string>
+    <string name="onboarding_all_files_vault_title">Encrypted Vault and hidden folders</string>
+    <string name="onboarding_all_files_vault_desc">Manage your encrypted files and hidden folders without system restrictions.</string>
+    <string name="onboarding_all_files_backup_title">Don\'t lose your Favorites and Virtual Albums</string>
+    <string name="onboarding_all_files_backup_desc">Keep your favorites and virtual albums automatically backed up on your device even if you accidentally uninstall the app. You can turn off automatic backup anytime in app settings.</string>
+    <string name="onboarding_all_files_offline_title">Still completely on your device</string>
+    <string name="onboarding_all_files_offline_desc">The app stays completely offline, this permission is used only for local file operations.</string>
+    <string name="onboarding_grant_access">Grant access</string>
+    <string name="onboarding_not_now">Not now</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d items</string>
+    <string name="media_header_virtual_album">Virtual album · %d items</string>
+    <string name="media_header_encrypted_album">Encrypted album · %d items</string>
+    <string name="use_biometrics">Use biometrics</string>
+    <string name="hide_vault_key_presses">Hide key presses when entering vault password</string>
+    <string name="show_pin_dots">Show a dot for each PIN digit</string>
 </resources>

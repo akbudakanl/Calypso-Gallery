@@ -1,13 +1,22 @@
 package org.fossify.gallery.activities
 
+import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import androidx.activity.OnBackPressedCallback
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
-import org.fossify.commons.extensions.getProperBackgroundColor
-import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.helpers.PROTECTION_PIN
@@ -15,9 +24,11 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivityVaultLockBinding
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.EXTRA_EXITED_FROM_VAULT
+import org.fossify.gallery.helpers.OnboardingUiHelper
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
 import org.fossify.gallery.helpers.VaultSessionManager
@@ -37,6 +48,7 @@ class VaultLockActivity : SimpleActivity() {
     private lateinit var inputHelper: VaultAuthInputHelper
     private var currentType: Int = PROTECTION_PIN
     private var autoBiometricTriggered = false
+    private var haloPulseAnimator: Animator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +58,13 @@ class VaultLockActivity : SimpleActivity() {
         binding = ActivityVaultLockBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val backgroundColor = getProperBackgroundColor()
-        val textColor = getProperTextColor()
-        binding.vaultLockRoot.setBackgroundColor(backgroundColor)
+        val palette = AppearanceManager.resolve(this, config)
+        val density = resources.displayMetrics.density
+        val strokePx = (1f * density).toInt().coerceAtLeast(1)
+
+        OnboardingUiHelper.applySystemBars(window, palette)
+        binding.vaultLockRoot.setBackgroundColor(palette.background)
+        binding.vaultLockBackdrop.applyPalette(palette)
         binding.vaultLockRoot.filterTouchesWhenObscured = true
         binding.vaultLockBackBtn.applyColorFilter(textColor)
         binding.vaultLockBackBtn.filterTouchesWhenObscured = true

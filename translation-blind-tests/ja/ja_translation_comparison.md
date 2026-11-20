@@ -64,29 +64,29 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | 隠し保管庫でのスクリーンショットを禁止する | Settings switch (default ON) blocking screenshots in hidden vault |
 | 34 | `confirm_decrypt_hidden_file`               | Are you sure you want to decrypt the hidden file(s)?                                                                                                                                                                                                                                                                                                                | 非表示ファイルを復号してもよろしいですか？                                                                                                                                                                                                    | Confirmation prompt for decrypting hidden file(s)                                  |
 | 35 | `copy_to_clipboard_disabled_in_vault`       | Copying to clipboard is disabled while vault is unlocked for security.                                                                                                                                                                                                                                                                                              | セキュリティのため、保管庫のロック解除中はクリップボードへのコピーが無効になっています。                                                                                                                                                                             | Security notice while vault is unlocked                                            |
-| 44 | `open_system_language_settings`             | Open system language settings                                                                                                                                                                                                                                                                                                                                       | システムの言語設定を開く                                                                                                                                                                                                             | Neutral dialog button in language picker                                           |
-| 45 | `file_encrypted_successfully`               | File encrypted successfully                                                                                                                                                                                                                                                                                                                                         | ファイルを暗号化しました                                                                                                                                                                                                             | Success toast after encrypting a single file                                |
-| 46 | `files_encrypted_successfully`              | Files encrypted successfully                                                                                                                                                                                                                                                                                                                                        | ファイルを暗号化しました                                                                                                                                                                                                             | Success toast after encrypting multiple files                               |
-| 47 | `file_decrypted_successfully`               | File decrypted successfully                                                                                                                                                                                                                                                                                                                                         | ファイルを復号しました                                                                                                                                                                                                              | Success toast after decrypting a single file                              |
-| 48 | `files_decrypted_successfully`              | Files decrypted successfully                                                                                                                                                                                                                                                                                                                                        | ファイルを復号しました                                                                                                                                                                                                              | Success toast after decrypting multiple files                             |
-| 49 | `access_hidden_items_with_biometrics`       | Access hidden items with biometrics                                                                                                                                                                                                                                                                                                                                 | 生体認証で非表示項目にアクセス                                                                                                                                                                                                          | Settings switch, setup prompt title, and vault security dialog button              |
-| 50 | `enable_hidden_protection_first_prompt`     | Please enable hidden item password protection first                                                                                                                                                                                                                                                                                                                 | 先に非表示項目のパスワード保護を有効にしてください                                                                                                                                                                                                | Toast shown when enabling biometrics before hidden-item password protection        |
-| 51 | `biometric_unlock_vault`                    | Unlock encrypted vault                                                                                                                                                                                                                                                                                                                                                 | 暗号化された保管庫をロック解除                                                                                                                                                                                                            | BiometricPrompt title when unlocking the encrypted vault                              |
-| 52 | `biometric_unlock_prompt`                   | Verify your biometric identity to access hidden items                                                                                                                                                                                                                                                                                                               | 非表示項目にアクセスするには生体認証で本人確認を行ってください                                                                                                                                                                                          | BiometricPrompt subtitle when unlocking hidden items                               |
-| 53 | `biometric_setup_prompt`                    | Confirm your biometric identity to enable biometric vault access                                                                                                                                                                                                                                                                                                    | 保管庫への生体認証アクセスを有効にするには生体認証で本人確認を行ってください                                                                                                                                                                                   | BiometricPrompt subtitle when enabling biometric vault access                      |
-| 54 | `use_password_or_pin`                       | Use PIN / Password                                                                                                                                                                                                                                                                                                                                                  | PIN / パスワードを使用                                                                                                                                                                                                           | BiometricPrompt negative button to fall back to PIN/password                       |
-| 55 | `biometric_key_invalidated`                 | Biometric credentials have changed. Please enter your PIN or password.                                                                                                                                                                                                                                                                                              | 生体認証情報が変更されました。PIN またはパスワードを入力してください。                                                                                                                                                                                    | Toast shown when biometric credentials changed and Keystore key invalidated        |
-| 56 | `no_biometric_hardware_or_enrolled`         | No biometric hardware or enrolled credentials found on this device                                                                                                                                                                                                                                                                                                  | このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません                                                                                                                                                                                    | Toast shown when no biometric hardware or enrolled credentials exist               |
-| 57 | `default_hidden_album`                      | Default Hidden Album                                                                                                                                                                                                                                                                                                                                                | デフォルトの非表示アルバム                                                                                                                                                                                                            | Settings / picker label for default hidden album                                   |
-| 58 | `select_hidden_album`                       | Select Encrypted Album                                                                                                                                                                                                                                                                                                                                              | 暗号化アルバムを選択                                                                                                                                                                                                               | Dialog title for choosing the target encrypted album                                      |
-| 59 | `create_new_hidden_album`                   | Create New Encrypted Album                                                                                                                                                                                                                                                                                                                                          | 新しい暗号化アルバムを作成                                                                                                                                                                                                            | Action label to create a new encrypted album                                          |
-| 60 | `new_hidden_album`                          | New encrypted album                                                                                                                                                                                                                                                                                                                                                 | 新しい暗号化アルバム                                                                                                                                                                                                               | Input hint / default label for a new encrypted album                                    |
-| 61 | `hidden_album_name_empty`                   | Album name cannot be empty                                                                                                                                                                                                                                                                                                                                          | アルバム名を空にすることはできません                                                                                                                                                                                                       | Validation error when hidden album name is blank                                   |
-| 62 | `file_hidden_to_album`                      | File encrypted to \"%s\"                                                                                                                                                                                                                                                                                                                                            | ファイルを「%s」に暗号化しました                                                                                                                                                                                                        | Success toast after encrypting a single file into album `%s`                           |
-| 63 | `files_hidden_to_album`                     | %1$d files encrypted to \"%2$s\"                                                                                                                                                                                                                                                                                                                                    | %1$d 個のファイルを「%2$s」に暗号化しました                                                                                                                                                                                               | Success toast after encrypting `%1$d` files into album `%2$s`                          |
-| 64 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 暗号化された保管庫を開くには引き下げ続けてください | Vault pull gesture hint shown while the pull is below the open threshold |
-| 65 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 暗号化された保管庫を開くには押し続けてください | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
-| 66 | `release_to_open_vault` | Release to open Encrypted Vault | 指を離して暗号化された保管庫を開く | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
+| 36 | `open_system_language_settings`             | Open system language settings                                                                                                                                                                                                                                                                                                                                       | システムの言語設定を開く                                                                                                                                                                                                             | Neutral dialog button in language picker                                           |
+| 37 | `file_encrypted_successfully`               | File encrypted successfully                                                                                                                                                                                                                                                                                                                                         | ファイルを暗号化しました                                                                                                                                                                                                             | Success toast after encrypting a single file                                |
+| 38 | `files_encrypted_successfully`              | Files encrypted successfully                                                                                                                                                                                                                                                                                                                                        | ファイルを暗号化しました                                                                                                                                                                                                             | Success toast after encrypting multiple files                               |
+| 39 | `file_decrypted_successfully`               | File decrypted successfully                                                                                                                                                                                                                                                                                                                                         | ファイルを復号しました                                                                                                                                                                                                              | Success toast after decrypting a single file                              |
+| 40 | `files_decrypted_successfully`              | Files decrypted successfully                                                                                                                                                                                                                                                                                                                                        | ファイルを復号しました                                                                                                                                                                                                              | Success toast after decrypting multiple files                             |
+| 41 | `access_hidden_items_with_biometrics`       | Access hidden items with biometrics                                                                                                                                                                                                                                                                                                                                 | 生体認証で非表示項目にアクセス                                                                                                                                                                                                          | Settings switch, setup prompt title, and vault security dialog button              |
+| 42 | `enable_hidden_protection_first_prompt`     | Please enable hidden item password protection first                                                                                                                                                                                                                                                                                                                 | 先に非表示項目のパスワード保護を有効にしてください                                                                                                                                                                                                | Toast shown when enabling biometrics before hidden-item password protection        |
+| 43 | `biometric_unlock_vault`                    | Unlock encrypted vault                                                                                                                                                                                                                                                                                                                                                 | 暗号化された保管庫をロック解除                                                                                                                                                                                                            | BiometricPrompt title when unlocking the encrypted vault                              |
+| 44 | `biometric_unlock_prompt`                   | Verify your biometric identity to access hidden items                                                                                                                                                                                                                                                                                                               | 非表示項目にアクセスするには生体認証で本人確認を行ってください                                                                                                                                                                                          | BiometricPrompt subtitle when unlocking hidden items                               |
+| 45 | `biometric_setup_prompt`                    | Confirm your biometric identity to enable biometric vault access                                                                                                                                                                                                                                                                                                    | 保管庫への生体認証アクセスを有効にするには生体認証で本人確認を行ってください                                                                                                                                                                                   | BiometricPrompt subtitle when enabling biometric vault access                      |
+| 46 | `use_password_or_pin`                       | Use PIN / Password                                                                                                                                                                                                                                                                                                                                                  | PIN / パスワードを使用                                                                                                                                                                                                           | BiometricPrompt negative button to fall back to PIN/password                       |
+| 47 | `biometric_key_invalidated`                 | Biometric credentials have changed. Please enter your PIN or password.                                                                                                                                                                                                                                                                                              | 生体認証情報が変更されました。PIN またはパスワードを入力してください。                                                                                                                                                                                    | Toast shown when biometric credentials changed and Keystore key invalidated        |
+| 48 | `no_biometric_hardware_or_enrolled`         | No biometric hardware or enrolled credentials found on this device                                                                                                                                                                                                                                                                                                  | このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません                                                                                                                                                                                    | Toast shown when no biometric hardware or enrolled credentials exist               |
+| 49 | `default_hidden_album`                      | Default Hidden Album                                                                                                                                                                                                                                                                                                                                                | デフォルトの非表示アルバム                                                                                                                                                                                                            | Settings / picker label for default hidden album                                   |
+| 50 | `select_hidden_album`                       | Select Encrypted Album                                                                                                                                                                                                                                                                                                                                              | 暗号化アルバムを選択                                                                                                                                                                                                               | Dialog title for choosing the target encrypted album                                      |
+| 51 | `create_new_hidden_album`                   | Create New Encrypted Album                                                                                                                                                                                                                                                                                                                                          | 新しい暗号化アルバムを作成                                                                                                                                                                                                            | Action label to create a new encrypted album                                          |
+| 52 | `new_hidden_album`                          | New encrypted album                                                                                                                                                                                                                                                                                                                                                 | 新しい暗号化アルバム                                                                                                                                                                                                               | Input hint / default label for a new encrypted album                                    |
+| 53 | `hidden_album_name_empty`                   | Album name cannot be empty                                                                                                                                                                                                                                                                                                                                          | アルバム名を空にすることはできません                                                                                                                                                                                                       | Validation error when hidden album name is blank                                   |
+| 54 | `file_hidden_to_album`                      | File encrypted to \"%s\"                                                                                                                                                                                                                                                                                                                                            | ファイルを「%s」に暗号化しました                                                                                                                                                                                                        | Success toast after encrypting a single file into album `%s`                           |
+| 55 | `files_hidden_to_album`                     | %1$d files encrypted to \"%2$s\"                                                                                                                                                                                                                                                                                                                                    | %1$d 個のファイルを「%2$s」に暗号化しました                                                                                                                                                                                               | Success toast after encrypting `%1$d` files into album `%2$s`                          |
+| 56 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 暗号化された保管庫を開くには引き下げ続けてください | Vault pull gesture hint shown while the pull is below the open threshold |
+| 57 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 暗号化された保管庫を開くには押し続けてください | Vault pull gesture hint shown once the pull passes the threshold, before the 2.5 s hold completes |
+| 58 | `release_to_open_vault` | Release to open Encrypted Vault | 指を離して暗号化された保管庫を開く | Vault pull gesture hint shown after holding the pull for 2.5 s; releasing opens the vault |
 
 ### Newly Added Translations for Strings Already Present in the Original Fossify Gallery (18 Keys)
 
@@ -510,257 +510,259 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | - | `block_vault_screenshots` | Block screenshots in hidden vault | 隠し保管庫でのスクリーンショットを禁止する |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 非表示ファイルを復号してもよろしいですか？ |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | セキュリティのため、保管庫のロック解除中はクリップボードへのコピーが無効になっています。 |
-| 307 | `stop_showing_hidden` | Stop showing encrypted media | 暗号化メディアの表示を停止 |
-| 308 | `system_default` | System default | システムのデフォルト |
-| 309 | `language` | Language | 言語 |
-| 310 | `open_system_language_settings` | Open system language settings | システムの言語設定を開く |
-| 311 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 生体認証で非表示項目にアクセス |
-| 312 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 先に非表示項目のパスワード保護を有効にしてください |
-| 313 | `biometric_unlock_vault` | Unlock encrypted vault | 暗号化された保管庫をロック解除 |
-| 314 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 非表示項目にアクセスするには生体認証で本人確認を行ってください |
-| 315 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 保管庫への生体認証アクセスを有効にするには生体認証で本人確認を行ってください |
-| 316 | `use_password_or_pin` | Use PIN / Password | PIN / パスワードを使用 |
-| 317 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生体認証情報が変更されました。PIN またはパスワードを入力してください。 |
-| 318 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません |
-| 319 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
-| 320 | `select_hidden_album` | Select Encrypted Album | 暗号化アルバムを選択 |
-| 321 | `create_new_hidden_album` | Create New Encrypted Album | 新しい暗号化アルバムを作成 |
-| 322 | `new_hidden_album` | New encrypted album | 新しい暗号化アルバム |
-| 323 | `hidden_album_name_empty` | Album name cannot be empty | アルバム名を空にすることはできません |
-| 324 | `file_hidden_to_album` | File encrypted to \"%s\" | ファイルを「%s」に暗号化しました  |
-| 325 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個のファイルを「%2$s」に暗号化しました  |
-| 326 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | 本当に %d ファイルを復元しますか? *(CLDR `other`)* |
-| 327 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | 本当に %d ファイルを復元しますか? |
-| 328 | `failed_to_resize_images` (`one`) | Failed to resize %d image | %d個の画像のサイズを変更できませんでした *(CLDR `other`)* |
-| 329 | `failed_to_resize_images` (`other`) | Failed to resize %d images | %d個の画像のサイズを変更できませんでした |
-| 330 | `search` *(fossify-commons)* | *(inherited from commons)* | 検索 |
-| 331 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | 日付と時刻の表示形式を変更 |
-| 332 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | ファイルの削除と移動をパスワードで保護する |
-| 333 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | ファイルの操作時、既存の最終更新日を保持する (更新日を更新しない) |
-| 334 | `clear_cache` *(fossify-commons)* | Clear cache | キャッシュのクリア |
-| 335 | `export_settings` *(fossify-commons)* | Export settings | 設定をエクスポート |
-| 336 | `import_settings` *(fossify-commons)* | Import settings | 設定をインポート |
-| 337 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | 除外項目を一時的に表示 |
-| 338 | `change_view_type` *(fossify-commons)* | Change view type | 表示形式の変更 |
-| 339 | `contributors` *(fossify-commons)* | Contributors | 貢献者 |
-| 340 | `known_issues` *(fossify-commons)* | Known issues | 既知の問題 |
-| 341 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Fossifyに寄付 |
-| 342 | `privacy_policy` *(fossify-commons)* | Privacy policy | プライバシー ポリシー |
-| 343 | `create_shortcut` *(fossify-commons)* | Create shortcut | ショートカットを作成 |
-| 344 | `print` *(fossify-commons)* | Print | 印刷 |
-| 345 | `search_files` *(fossify-commons)* | Search files | ファイルを検索 |
-| 346 | `search_folders` *(fossify-commons)* | Search folders | フォルダーを検索 |
-| 347 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 暗号化された保管庫を開くには引き下げ続けてください |
-| 348 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 暗号化された保管庫を開くには押し続けてください |
-| 349 | `release_to_open_vault` | Release to open Encrypted Vault | 指を離して暗号化された保管庫を開く |
-| 350 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | 除外フォルダの管理 |
-| 351 | `exclude` *(fossify-commons)* | Exclude | 除外する |
-| 352 | `exclude_folder` *(fossify-commons)* | Exclude folder | フォルダを除外 |
-| 353 | `lock_folder` *(fossify-commons)* | Lock folder | フォルダに鍵をかける |
-| 354 | `change_cover_image` *(fossify-commons)* | Change cover image | カバー画像を変更 |
-| 355 | `select_photo` *(fossify-commons)* | Select photo | 写真を選択 |
-| 356 | `use_default` *(fossify-commons)* | Use default | デフォルトを使用 |
-| 357 | `column_count` *(fossify-commons)* | Column count | 列数 |
-| 358 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | ごみ箱を開く |
-| 359 | `grid` *(fossify-commons)* | Grid | グリッド |
-| 360 | `list` *(fossify-commons)* | List | リスト |
-| 361 | `resize` *(fossify-commons)* | Resize | リサイズ |
-| 362 | `version_placeholder` *(fossify-commons)* | Version %s | バージョン %s |
-| 363 | `number_of_items` *(fossify-commons)* | Number of items | 項目数 |
-| 364 | `random` *(fossify-commons)* | Random | ランダム |
-| 365 | `shuffle` | Shuffle | シャッフル |
-| 366 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | 除外した項目を表示しない |
-| 367 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | クリップボードにコピー |
-| 368 | `encrypt` | Encrypt | 暗号化 |
-| 369 | `decrypt` | Decrypt | 復号 |
-| 370 | `encrypt_album` | Encrypt album | アルバムを暗号化 |
-| 371 | `decrypt_album` | Decrypt album | アルバムを復号 |
-| 372 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | 新しい暗号化仮想アルバムを作成 |
-| 373 | `new_album` | New album | 新しいアルバム |
-| 374 | `filename_without_zip` | Filename (without .zip) | ファイル名（.zip を除く） |
-| 375 | `favorites_already_exist` | You already have a favorites list | お気に入りリストはすでに存在します |
-| 376 | `delete_existing_list` | Delete existing list | 既存のリストを削除 |
-| 377 | `merge_lists` | Merge lists | リストを統合 |
-| 378 | `confirm` | Confirm | 確認 |
-| 379 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | このアルバムを暗号化してもよろしいですか？中のメディアファイルはすべて暗号化され、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
-| 380 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 選択したアルバムを暗号化してもよろしいですか？中のメディアファイルはすべて暗号化され、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
-| 381 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | このファイルを暗号化してもよろしいですか？暗号化されて、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
-| 382 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | 選択したファイルを暗号化してもよろしいですか？暗号化されて、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
-| 383 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | 選択したファイルは、暗号化された保管庫にコピーされるときに暗号化されます。続行しますか？ |
-| 384 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | 暗号化 / 復号 |
-| 385 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | 複数のファイルが選択されているときに一括で名前変更を許可 |
-| 386 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | 元のファイルを保持し、この仮想アルバムからのみ削除する |
-| 387 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | 元のファイルを保持し、お気に入りからのみ削除する |
-| 388 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | お気に入りおよび仮想アルバムから削除するときに元のファイルも削除する |
-| 389 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | この操作では暗号化されたアルバムを対象にできません |
-| 390 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | この操作では暗号化された項目と暗号化されていない項目を混在させることはできません |
-| 391 | `lock_album` | Lock album | アルバムをロック |
-| 392 | `unlock_album` | Unlock album | アルバムのロックを解除 |
-| 393 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。 |
-| 394 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | お気に入りと仮想アルバムを端末のストレージにバックアップする |
-| 394 | `encrypt_info_title` | How Encryption Works | 暗号化の仕組み |
-| 395 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 |
-| 396 | `decrypt_info_title` | How Decryption Works | 復号の仕組み |
-| 397 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 暗号化されたアルバムまたはファイルを復号すると、元の名前と形式で選択した保存先フォルダーに復元され、暗号化された保管庫から削除されます。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいフォルダーを作成するか、既存の保存先フォルダーに統合するかを確認します（設定で変更可能）。\n• 統合時は、保存先とビット単位で100%一致することが確認された暗号化コピーを保管庫から削除するか残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 |
-| 398 | `vault_location` | Vault location | 保管庫の場所 |
-| 399 | `vault_location_standard_summary` | Standard (Internal Storage) | 標準（内部ストレージ） |
-| 400 | `vault_location_unavailable_summary` | External drive disconnected (%s) | 外部ドライブが切断されています (%s) |
-| 401 | `select_vault_location` | Select vault location | 保管庫の場所を選択 |
-| 402 | `vault_setup_action_title` | Encrypted vault | 暗号化された保管庫 |
-| 403 | `create_new_vault_option` | Create new vault | 新しい保管庫を作成 |
-| 404 | `use_existing_vault_option` | Use existing vault | 既存の保管庫を使用 |
-| 405 | `where_to_create_vault_title` | Where should the vault be created? | 保管庫をどこに作成しますか？ |
-| 406 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 既定の場所 (内部 > Calypso Gallery > Secrets) |
-| 407 | `vault_location_custom_short` | Custom Location | カスタムの場所 |
-| 408 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。 |
-| 409 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。 |
-| 410 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | 標準の場所 (内部ストレージ > Calypso Gallery > Secrets) |
-| 411 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | カスタム / 外部の場所（USB ドライブ、SD カード、またはカスタムフォルダー） |
-| 412 | `external_vault_unavailable_title` | External vault unavailable | 外部保管庫を利用できません |
-| 413 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 設定された保管庫の場所 (%s) は現在切断されているか利用できません。ドライブを接続して「再試行」をタップするか、別の保管庫の場所を選択してください。 |
-| 414 | `retry` | Retry | 再試行 |
-| 415 | `change_vault_location` | Change location | 場所を変更 |
-| 416 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | %s に既存の保管庫が見つかりました。ロックを解除するにはパスワードまたは PIN を入力してください。 |
-| 417 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | %s に保管庫が存在しません。この場所に新しい暗号化された保管庫を作成しますか？ |
-| 418 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | この USB パスは Android の仮想 OTG プロバイダー経由でのみ公開されており、ファイルシステムパスとして直接アクセスできません。マウントされたストレージディレクトリ、または内部ストレージ / SD カード上のフォルダーを選択してください。 |
-| 419 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | 選択したフォルダーは存在しないか、このデバイスでは書き込みできません。 |
-| 420 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | 選択したフォルダーは存在しないか、このデバイスでは読み取れません。 |
-| 421 | `sync_vault_from_external` | Import encrypted media files to encrypted section | 暗号化されたメディアファイルを暗号化セクションにインポート |
-| 422 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | 暗号化メディアのインポートの仕組み:\n\n1. 統合 Secrets フォルダー:\n外部ドライブ (USB / SD) に Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。 |
-| 423 | `conflict_handling_mode_label` | File conflict & duplicate resolution | ファイルの競合と重複の解決 |
-| 424 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | 完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更） |
-| 425 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | スマートダイアログ（同一は自動スキップ、内容が異なる場合のみ確認） |
-| 426 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | アルバムの競合（暗号化 / 復号） |
-| 427 | `album_crypto_conflict_ask` | Always ask (Default) | 毎回確認（既定） |
-| 428 | `album_crypto_conflict_merge` | Merge into existing album | 既存のアルバムに統合 |
-| 429 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | 既存のアルバムに統合して同一の元ファイルを自動削除 |
-| 430 | `album_crypto_conflict_rename` | Create new album as (1) | 新しいアルバムを (1) として作成 |
-| 431 | `album_crypto_conflict_title` | Album Already Exists | アルバムは既に存在します |
-| 432 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | 保存先に「%s」という名前のアルバムが既に存在します。どのように処理しますか？ |
-| 433 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | 選択した %1$d 個のアルバムが保存先に既に存在します。どのように処理しますか？\n\nこの選択は競合するすべてのアルバムに適用されます。アルバムごとに個別に選択するには、1つずつ選択して処理してください。 |
-| 434 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | 新しいアルバムを「%s」として作成 |
-| 435 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | 新しいアルバムを (1), (2), … として作成 |
-| 436 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | 既存の「%s」に統合 |
-| 437 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | 既存のアルバムに統合 |
-| 438 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | 同一の元ファイルを削除（ビット単位で100%検証済み） |
-| 439 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | アルバムの競合の選択を記憶する（統合または名前変更） |
-| 440 | `album_crypto_merge_identical_title` | Identical Files During Merge | 統合時の同一ファイル |
-| 441 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 「%1$s」に統合する際、保存先にビット単位で100%%同一のファイルが既にある場合、元のコピーを削除しますか、それとも保持しますか？ |
-| 442 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 競合する %1$d 個のアルバムを統合する際、保存先にビット単位で100%%同一のファイルが既にある場合、元のコピーを削除しますか、それとも保持しますか？ |
-| 443 | `delete_identical_sources` | Delete identical | 同一を削除 |
-| 444 | `keep_identical_sources` | Keep in source | 元に保持 |
-| 445 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | 大容量ファイルの高速重複チェック (>8 MB) |
-| 446 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 大容量ファイルを含む転送に重要: ファイル全体を読み取る代わりに1ファイルあたり5ブロック（合計1.25 MB）を確認し、重複チェックを数十倍高速化します。 |
-| 447 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 高速重複チェック (>8 MB) |
-| 449 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | ファイルの競合と重複の解決 |
-| 450 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | ファイルやアルバムのコピー、移動、暗号化、または復号時に、同じ名前のファイルが保存先に既に存在する場合:\n\n1. ビット単位の重複チェック (RAM):\nアプリは最初にファイルサイズを確認し、一致する場合は RAM 上でファイル内容をビット単位で比較します（暗号化ファイルはディスクに平文を書き込まずメモリ内で確認されます）。コピー/移動時は同一ファイルがスキップされ、元ファイルは元のフォルダーにそのまま残ります。暗号化/復号時にアルバムを統合する場合は、ビット単位で100%同一の元ファイルを削除するか残すかを選択できます。\n\n2. 同名で異なる内容（例: 2つの異なる download.jpg ファイル）:\n• 完全自動（既定）: 新しいファイルを download(1).jpg、download(2).jpg のように名前変更して、操作を中断せず両方のファイルを保持します。\n• スマートダイアログ: ビット単位で同一のファイルは引き続き静かにスキップし、名前が同じで内容が異なる場合のみ確認します（スキップ / 上書き / 両方保持）。 |
-| 451 | `syncing_vault_progress` | Syncing vault from external drive… | 外部ドライブから保管庫を同期中… |
-| 452 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保管庫の同期が完了しました:\n• コピー: %1$d\n• 名前変更（名前の競合）: %2$d\n• スキップ（同一）: %3$d\n• 失敗: %4$d |
-| 453 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。 |
-| 454 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 選択した参照元フォルダーは、現在有効な保管庫と同じです。 |
-| 455 | `use_for_this_album` | Use for this album only | このアルバムのみに適用 |
-| 456 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 暗号化/復号時に同じファイルが保存先フォルダにすでに存在する場合 |
-| 457 | `crypto_duplicate_source_ask` | Always ask (Default) | 毎回確認する（デフォルト） |
-| 458 | `crypto_duplicate_source_keep` | Keep file in source folder | 元のフォルダのファイルを残す |
-| 459 | `crypto_duplicate_source_delete` | Delete file from source folder | 元のフォルダのファイルを削除する |
-| 460 | `crypto_duplicate_source_title` | File Already Exists in Destination | 保存先に同じファイルがすでに存在します |
-| 461 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 暗号化しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
-| 462 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 復号しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
-| 463 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：未暗号化ファイルで「残す」を選択すると、元のファイルは暗号化されないままディスク上に残ります。 |
-| 464 | `crypto_duplicate_source_always_ask` | Always ask | 毎回確認する |
-| 465 | `export_encrypted_vault` | Export encrypted vault | 暗号化された保管庫をエクスポート |
-| 466 | `export_vault_only_header` | Export folder containing only .vault file | .vault ファイルのみを含むフォルダーをエクスポート |
-| 467 | `export_vault_entire_folder` | Export entire folder | フォルダー全体をエクスポート |
-| 468 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Secrets という名前のフォルダーを使用するだけで十分です。 |
-| 469 | `exporting_vault_progress` | Exporting encrypted vault… | 暗号化された保管庫をエクスポート中… |
-| 470 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | エクスポート先に現在使用中の保管庫フォルダーまたはそのサブフォルダーを指定することはできません。 |
-| 471 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準ダイアログ |
-| 472 | `conflict_handling_smart_dialog_summary` | Smart dialog | スマートダイアログ |
-| 473 | `conflict_handling_auto_summary` | Automatic (Experimental) | 自動（実験的） |
-| 474 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準ダイアログ（既定 — 元の Fossify Gallery と同様、ファイル名のみを確認） |
-| 475 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 暗号化時にスキップされたファイルを管理 |
-| 476 | `skipped_decrypt_files_mode_label` | Manage skipped files during decryption | 復号時にスキップされたファイルを管理 |
-| 477 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 暗号化時に送信元フォルダーでスキップされたファイルを保持するか、セキュリティのため削除するかを選択します。この選択は、アルバムの暗号化時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。 |
-| 478 | `skipped_decrypt_files_info_message` | Choose whether files skipped in the source folder during decryption should be kept or deleted. This choice also applies to album conflicts during album decryption (see setting below) when the source album is merged into an existing album at the destination. | 復号時に送信元フォルダーでスキップされたファイルを保持するか削除するかを選択します。この選択は、アルバムの復号時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。 |
-| 479 | `skipped_crypto_files_ask` | Always ask (Default) | 毎回確認（既定） |
-| 480 | `skipped_crypto_files_keep` | Keep | 保持 |
-| 481 | `skipped_crypto_files_delete` | Delete | 削除 |
-| 482 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | スキップしたファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
-| 483 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | スキップしたファイルは転送されませんでした。これらのファイルを削除できます。 |
-| 484 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
-| 485 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
-| 486 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
-| 487 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
-| 488 | `skipped_crypto_files_always_ask` | Always ask | 毎回確認 |
-| 489 | `delete_skipped_files_confirm_title` | Are you sure? | よろしいですか？ |
-| 490 | `delete_skipped_files_confirm_message` | Your files will be deleted! | ファイルが削除されます！ |
-| 491 | `date_tie_break_label` | When content is identical but dates differ | 内容は同一だが日付が異なる場合 |
-| 492 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 既存ファイルの日付を保持（既定） |
-| 493 | `date_tie_break_use_source` | Use the source file\'s date | 送信元ファイルの日付を使用 |
-| 494 | `date_tie_break_ask` | Always ask | 毎回確認 |
-| 495 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | スマートダイアログと自動モードのみに適用されます。標準ダイアログは影響を受けません。 |
-| 496 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | \"毎回確認\"がスマートダイアログと自動モードを無効にする理由 |
-| 497 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありません。自動モードでは同一ファイルが name(1) として再度書き込まれ、フォルダーが無意味なコピーで埋まります。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 |
-| 498 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
-| 499 | `smart_conflict_incoming_label` | Incoming (New) | 受信（新規） |
-| 500 | `smart_conflict_existing_label` | Existing (Target) | 既存（宛先） |
-| 501 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 破損または読み取り不能 |
-| 502 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 整合性チェックに失敗（ビットロット / 破損） |
-| 503 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | いずれかのサムネイルをタップして全サイズのプレビューを確認 |
-| 504 | `smart_conflict_comparing` | Comparing file contents and dates… | ファイルの内容と日付を比較しています… |
-| 505 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | ファイルの内容が異なります。\nこの2つのファイルが同じであるはずだった場合、データの破損が発生している可能性があります。両方を保持して確認することをお勧めします。 |
-| 506 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | ファイルの内容は同一ですが、作成日時（撮影日時）が異なります。 |
-| 507 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | ファイルの内容は同一ですが、更新日時が異なります。 |
-| 508 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | ファイルの内容は同一ですが、作成日時と更新日時が異なります。 |
-| 509 | `smart_conflict_meta_date_taken` | Taken: %s | 撮影日時: %s |
-| 510 | `smart_conflict_meta_date_modified` | Modified: %s | 更新日時: %s |
-| 511 | `album_type_icons` | Album type icons | アルバムの種類のアイコン |
-| 512 | `virtual_folders` | Virtual folders | 仮想フォルダー |
-| 513 | `favorites_album` | Favorites | お気に入り |
-| 514 | `excluded_folders_album` | Excluded folders | 除外されたフォルダー |
-| 515 | `hidden_folders_album` | Hidden folders | 非表示フォルダー |
-| 516 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 非表示フォルダーを一時的に表示 |
-| 517 | `stop_showing_hidden_folders` | Stop showing hidden folders | 非表示フォルダーの表示を停止 |
-| 518 | `unexclude` | Stop excluding | 除外を解除 |
-| 519 | `hide_folder` | Hide | 非表示にする |
-| 520 | `unhide_folder` | Unhide | 再表示 |
-| 521 | `about_title` | About Calypso Gallery | Calypso Gallery について |
-| 522 | `about_version` | Version %1$s (%2$s) | バージョン %1$s (%2$s) |
-| 523 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery は、Fossify Gallery の独立して保守された非公式の個人フォークです。Fossify とは提携しておらず、Fossify によって推奨もされていません。 |
-| 524 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | この配布物は Fossify Gallery の改造版です。このフォークはアップストリームのコミット 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) から作成されており、フォーク固有のすべての変更は FORK_CHANGELOG.md に記載されています。 |
-| 525 | `about_license_heading` | License | ライセンス |
-| 526 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本プログラムはフリーソフトウェアです。フリーソフトウェア財団が公開する GNU General Public License（バージョン3）の条件に基づき、再配布および／または改変することができます。\n\n本プログラムは有用であることを願って配布されますが、無保証です。商品性および特定目的への適合性の黙示的保証を含む、いかなる保証もありません。詳細は GNU General Public License をご覧ください。\n\n本プログラムとともに GNU General Public License の写しを受け取っているはずです。受け取っていない場合は、下のライセンスの操作を実行するか、https://www.gnu.org/licenses/ にアクセスしてください。 |
-| 527 | `about_read_gpl_license` | Read the GNU GPL v3 license | GNU GPL v3 ライセンスを読む |
-| 528 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Tink の Apache 2.0 ライセンスと帰属表示を読む |
-| 529 | `about_source_heading` | Source code | ソースコード |
-| 530 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | このフォークの完全な対応ソースはフォークのリポジトリに保管されています。タグ付けされたリリースには、対応するソースアーカイブもあります。リポジトリには、プロジェクトの調査と再ビルドに必要なビルドスクリプト、依存関係の宣言、および完全なフォーク履歴が含まれています。 |
-| 531 | `about_fork_source` | Fork source code and corresponding source | フォークのソースコードと対応ソース |
-| 532 | `about_release_sources` | Release source archives | リリースのソースアーカイブ |
-| 533 | `about_fork_issues` | Fork issue tracker | フォークのイシュートラッカー |
-| 534 | `about_upstream_source` | Upstream Fossify Gallery source code | アップストリームの Fossify Gallery ソースコード |
-| 535 | `about_upstream_project` | Upstream Fossify project | アップストリームの Fossify プロジェクト |
-| 536 | `about_help_heading` | Help and legal information | ヘルプと法的情報 |
-| 537 | `about_faq` | Frequently asked questions | よくある質問 |
-| 538 | `about_third_party_licenses` | Third-party licenses | サードパーティのライセンス |
-| 539 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
-| 540 | `tink_license_title` | Tink license and attribution | Tink のライセンスと帰属表示 |
-| 541 | `fork_disclaimer_title` | Fork notice | フォークに関する通知 |
-| 542 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。 |
-| 543 | `fork_disclaimer_acknowledge` | I understand | 理解しました |
-| 560 | `argon2_profile_title` | Brute-Force resistance | 総当たり攻撃への耐性 |
-| 561 | `brute_force_mode_title` | Calibration mode | 調整モード |
-| 562 | `brute_force_mode_time` | Via vault unlock time | 保管庫のロック解除時間を使用 |
-| 563 | `brute_force_mode_presets` | Via ready-made modes | 用意されたモードを使用 |
-| 564 | `brute_force_time_title` | Target vault unlock time | 目標とする保管庫のロック解除時間 |
-| 565 | `brute_force_time_hint` | Seconds (2.0–7.0). The app measures this device once and stores the resulting KDF parameters in the vault; real unlock time varies on other devices. | 秒数（2.0–7.0）。アプリはこの端末を一度測定し、結果の KDF パラメーターを保管庫に保存します。実際のロック解除時間は他の端末では異なります。 |
-| 566 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
-| 567 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 保存済み: %1$d MiB / %2$d ラウンド |
-| 568 | `brute_force_clamped` |  (clamped) |  (範囲内に制限されました) |
-| 569 | `argon2_profile_low` | Low-end device (not recommended) | ローエンド端末（非推奨） |
-| 570 | `argon2_profile_default` | Default | 既定 |
-| 571 | `argon2_profile_high` | High security | 高いセキュリティ |
-| 572 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。 |
-| 573 | `argon2_profile_current` | Current: %s | 現在: %s |
+| 299 | `stop_showing_hidden` | Stop showing encrypted media | 暗号化メディアの表示を停止 |
+| 300 | `system_default` | System default | システムのデフォルト |
+| 301 | `language` | Language | 言語 |
+| 302 | `open_system_language_settings` | Open system language settings | システムの言語設定を開く |
+| 303 | `access_hidden_items_with_biometrics` | Access hidden items with biometrics | 生体認証で非表示項目にアクセス |
+| 304 | `enable_hidden_protection_first_prompt` | Please enable hidden item password protection first | 先に非表示項目のパスワード保護を有効にしてください |
+| 305 | `biometric_unlock_vault` | Unlock encrypted vault | 暗号化された保管庫をロック解除 |
+| 306 | `biometric_unlock_prompt` | Verify your biometric identity to access hidden items | 非表示項目にアクセスするには生体認証で本人確認を行ってください |
+| 307 | `biometric_setup_prompt` | Confirm your biometric identity to enable biometric vault access | 保管庫への生体認証アクセスを有効にするには生体認証で本人確認を行ってください |
+| 308 | `use_password_or_pin` | Use PIN / Password | PIN / パスワードを使用 |
+| 309 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生体認証情報が変更されました。PIN またはパスワードを入力してください。 |
+| 310 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | このデバイスに生体認証ハードウェアまたは登録済みの認証情報が見つかりません |
+| 311 | `default_hidden_album` | Default Secret Album | *(non-translatable in `values/strings.xml`)* |
+| 312 | `select_hidden_album` | Select Encrypted Album | 暗号化アルバムを選択 |
+| 313 | `create_new_hidden_album` | Create New Encrypted Album | 新しい暗号化アルバムを作成 |
+| 314 | `new_hidden_album` | New encrypted album | 新しい暗号化アルバム |
+| 315 | `hidden_album_name_empty` | Album name cannot be empty | アルバム名を空にすることはできません |
+| 316 | `file_hidden_to_album` | File encrypted to \"%s\" | ファイルを「%s」に暗号化しました  |
+| 317 | `files_hidden_to_album` | %1$d files encrypted to \"%2$s\" | %1$d 個のファイルを「%2$s」に暗号化しました  |
+| 318 | `restore_confirmation` (`one`) | Are you sure you want to restore %d file? | 本当に %d ファイルを復元しますか? *(CLDR `other`)* |
+| 319 | `restore_confirmation` (`other`) | Are you sure you want to restore %d files? | 本当に %d ファイルを復元しますか? |
+| 320 | `failed_to_resize_images` (`one`) | Failed to resize %d image | %d個の画像のサイズを変更できませんでした *(CLDR `other`)* |
+| 321 | `failed_to_resize_images` (`other`) | Failed to resize %d images | %d個の画像のサイズを変更できませんでした |
+| 322 | `search` *(fossify-commons)* | *(inherited from commons)* | 検索 |
+| 323 | `change_date_and_time_format` *(fossify-commons)* | Change date and time format | 日付と時刻の表示形式を変更 |
+| 324 | `password_protect_file_deletion` *(fossify-commons)* | Password protect file deletion and moving | ファイルの削除と移動をパスワードで保護する |
+| 325 | `keep_last_modified` *(fossify-commons)* | Keep old last-modified value at file operations | ファイルの操作時、既存の最終更新日を保持する (更新日を更新しない) |
+| 326 | `clear_cache` *(fossify-commons)* | Clear cache | キャッシュのクリア |
+| 327 | `export_settings` *(fossify-commons)* | Export settings | 設定をエクスポート |
+| 328 | `import_settings` *(fossify-commons)* | Import settings | 設定をインポート |
+| 329 | `temporarily_show_excluded` *(fossify-commons)* | Temporarily show excluded | 除外項目を一時的に表示 |
+| 330 | `change_view_type` *(fossify-commons)* | Change view type | 表示形式の変更 |
+| 331 | `contributors` *(fossify-commons)* | Contributors | 貢献者 |
+| 332 | `known_issues` *(fossify-commons)* | Known issues | 既知の問題 |
+| 333 | `donate_to_fossify` *(fossify-commons)* | Donate to Fossify | Fossifyに寄付 |
+| 334 | `privacy_policy` *(fossify-commons)* | Privacy policy | プライバシー ポリシー |
+| 335 | `create_shortcut` *(fossify-commons)* | Create shortcut | ショートカットを作成 |
+| 336 | `print` *(fossify-commons)* | Print | 印刷 |
+| 337 | `search_files` *(fossify-commons)* | Search files | ファイルを検索 |
+| 338 | `search_folders` *(fossify-commons)* | Search folders | フォルダーを検索 |
+| 339 | `pull_down_to_open_vault` | Keep pulling down for Encrypted Vault | 暗号化された保管庫を開くには引き下げ続けてください |
+| 340 | `keep_holding_to_open_vault` | Keep holding to open Encrypted Vault | 暗号化された保管庫を開くには押し続けてください |
+| 341 | `release_to_open_vault` | Release to open Encrypted Vault | 指を離して暗号化された保管庫を開く |
+| 342 | `manage_excluded_folders` *(fossify-commons)* | Manage excluded folders | 除外フォルダの管理 |
+| 343 | `exclude` *(fossify-commons)* | Exclude | 除外する |
+| 344 | `exclude_folder` *(fossify-commons)* | Exclude folder | フォルダを除外 |
+| 345 | `lock_folder` *(fossify-commons)* | Lock folder | フォルダに鍵をかける |
+| 346 | `change_cover_image` *(fossify-commons)* | Change cover image | カバー画像を変更 |
+| 347 | `select_photo` *(fossify-commons)* | Select photo | 写真を選択 |
+| 348 | `use_default` *(fossify-commons)* | Use default | デフォルトを使用 |
+| 349 | `column_count` *(fossify-commons)* | Column count | 列数 |
+| 350 | `open_the_recycle_bin` *(fossify-commons)* | Open the recycle bin | ごみ箱を開く |
+| 351 | `grid` *(fossify-commons)* | Grid | グリッド |
+| 352 | `list` *(fossify-commons)* | List | リスト |
+| 353 | `resize` *(fossify-commons)* | Resize | リサイズ |
+| 354 | `version_placeholder` *(fossify-commons)* | Version %s | バージョン %s |
+| 355 | `number_of_items` *(fossify-commons)* | Number of items | 項目数 |
+| 356 | `random` *(fossify-commons)* | Random | ランダム |
+| 357 | `shuffle` | Shuffle | シャッフル |
+| 358 | `stop_showing_excluded` *(fossify-commons)* | Stop showing excluded | 除外した項目を表示しない |
+| 359 | `copy_to_clipboard` *(fossify-commons)* | Copy to clipboard | クリップボードにコピー |
+| 360 | `encrypt` | Encrypt | 暗号化 |
+| 361 | `decrypt` | Decrypt | 復号 |
+| 362 | `encrypt_album` | Encrypt album | アルバムを暗号化 |
+| 363 | `decrypt_album` | Decrypt album | アルバムを復号 |
+| 364 | `create_new_encrypted_virtual_album` | Create new encrypted virtual album | 新しい暗号化仮想アルバムを作成 |
+| 365 | `new_album` | New album | 新しいアルバム |
+| 366 | `filename_without_zip` | Filename (without .zip) | ファイル名（.zip を除く） |
+| 367 | `favorites_already_exist` | You already have a favorites list | お気に入りリストはすでに存在します |
+| 368 | `delete_existing_list` | Delete existing list | 既存のリストを削除 |
+| 369 | `merge_lists` | Merge lists | リストを統合 |
+| 370 | `confirm` | Confirm | 確認 |
+| 371 | `confirm_encrypt_album` | Are you sure you want to encrypt this album? All of its media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | このアルバムを暗号化してもよろしいですか？中のメディアファイルはすべて暗号化され、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
+| 372 | `confirm_encrypt_albums` | Are you sure you want to encrypt the selected albums? All of their media files will be encrypted and moved to the encrypted vault. The original files will be deleted. | 選択したアルバムを暗号化してもよろしいですか？中のメディアファイルはすべて暗号化され、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
+| 373 | `confirm_encrypt_file` | Are you sure you want to encrypt this file? It will be encrypted and moved to the encrypted vault. The original file will be deleted. | このファイルを暗号化してもよろしいですか？暗号化されて、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
+| 374 | `confirm_encrypt_files` | Are you sure you want to encrypt the selected files? They will be encrypted and moved to the encrypted vault. The original files will be deleted. | 選択したファイルを暗号化してもよろしいですか？暗号化されて、暗号化された保管庫に移動されます。元のファイルは削除されます。 |
+| 375 | `confirm_encrypt_files_to_vault` | The selected files will be encrypted when they are copied into the encrypted vault. Do you want to continue? | 選択したファイルは、暗号化された保管庫にコピーされるときに暗号化されます。続行しますか？ |
+| 376 | `encrypt_decrypt_notifications` | Encrypt / Decrypt | 暗号化 / 復号 |
+| 377 | `allow_batch_renaming` | Allow batch renaming when multiple files are selected | 複数のファイルが選択されているときに一括で名前変更を許可 |
+| 378 | `keep_original_remove_from_virtual_album` | Keep the original file, remove it only from this virtual album | 元のファイルを保持し、この仮想アルバムからのみ削除する |
+| 379 | `keep_original_remove_from_favorites` | Keep the original file, remove it only from favorites | 元のファイルを保持し、お気に入りからのみ削除する |
+| 380 | `delete_original_from_favorites_and_virtual_albums` | Delete the original version of a file when it is deleted from favorites and virtual albums | お気に入りおよび仮想アルバムから削除するときに元のファイルも削除する |
+| 381 | `cannot_target_encrypted_album` | Encrypted albums cannot be targeted for this operation | この操作では暗号化されたアルバムを対象にできません |
+| 382 | `cannot_mix_encrypted_and_unencrypted` | Cannot combine encrypted and unencrypted items in this operation | この操作では暗号化された項目と暗号化されていない項目を混在させることはできません |
+| 383 | `lock_album` | Lock album | アルバムをロック |
+| 384 | `unlock_album` | Unlock album | アルバムのロックを解除 |
+| 385 | `auto_backup_prompt_message` | Do you want your favorites and virtual albums to be regularly written to system storage outside of app memory? This will ensure that you do not lose your favorites list and virtual albums if you uninstall the app. You can manually create a backup from app settings at any time. | お気に入りと仮想アルバムを、アプリメモリ外のシステムストレージに定期的に書き出しますか？これにより、アプリをアンインストールしてもお気に入りリストや仮想アルバムを失わずに済みます。アプリの設定からいつでも手動でバックアップを作成できます。 |
+| 386 | `auto_backup_favorites_and_virtual_albums` | Back up favorites and virtual albums to device storage | お気に入りと仮想アルバムを端末のストレージにバックアップする |
+| 387 | `encrypt_info_title` | How Encryption Works | 暗号化の仕組み |
+| 388 | `encrypt_info_message` | Folder & File Structure:\n• When an unencrypted album is encrypted, it is converted into an encrypted subfolder inside the vault (Secrets).\n• Both the folder name and all file names/contents inside it are encrypted, so nothing is readable outside the app.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new album such as Album(1) or merge into the existing encrypted album (configurable in Settings).\n• When merging, you can choose whether source files verified 100% bit-identical to the destination are deleted or kept in the source folder.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 未暗号化のアルバムを暗号化すると、保管庫 (Secrets) 内の暗号化されたサブフォルダーに変換されます。\n• フォルダー名と中のすべてのファイル名・内容が暗号化されるため、アプリ外からは何も読み取れません。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいアルバムを作成するか、既存の暗号化アルバムに統合するかを確認します（設定で変更可能）。\n• 統合時は、宛先とビット単位で100%一致することが確認された元ファイルを削除するか、元のフォルダーに残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 |
+| 389 | `decrypt_info_title` | How Decryption Works | 復号の仕組み |
+| 390 | `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 暗号化されたアルバムまたはファイルを復号すると、元の名前と形式で選択した保存先フォルダーに復元され、暗号化された保管庫から削除されます。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいフォルダーを作成するか、既存の保存先フォルダーに統合するかを確認します（設定で変更可能）。\n• 統合時は、保存先とビット単位で100%一致することが確認された暗号化コピーを保管庫から削除するか残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 |
+| 391 | `vault_location` | Vault location | 保管庫の場所 |
+| 392 | `vault_location_standard_summary` | Standard (Internal Storage) | 標準（内部ストレージ） |
+| 393 | `vault_location_unavailable_summary` | External drive disconnected (%s) | 外部ドライブが切断されています (%s) |
+| 394 | `select_vault_location` | Select vault location | 保管庫の場所を選択 |
+| 395 | `vault_setup_action_title` | Encrypted vault | 暗号化された保管庫 |
+| 396 | `create_new_vault_option` | Create new vault | 新しい保管庫を作成 |
+| 397 | `use_existing_vault_option` | Use existing vault | 既存の保管庫を使用 |
+| 398 | `where_to_create_vault_title` | Where should the vault be created? | 保管庫をどこに作成しますか？ |
+| 399 | `vault_location_default_short` | Default Location (Internal > Calypso Gallery > Secrets) | 既定の場所 (内部 > Calypso Gallery > Secrets) |
+| 400 | `vault_location_custom_short` | Custom Location | カスタムの場所 |
+| 401 | `no_existing_vault_at_location` | No existing encrypted vault (.vault) was found in the selected folder. | 選択したフォルダーに既存の暗号化された保管庫 (.vault) が見つかりませんでした。 |
+| 402 | `unlock_existing_vault_at_location_prompt` | An existing encrypted vault was found at %s. Do you want to unlock and use it? Tap No to pick a different folder. | %s に既存の暗号化された保管庫が見つかりました。ロックを解除して使用しますか？別のフォルダーを選ぶには「いいえ」をタップしてください。 |
+| 403 | `vault_location_standard_option` | Standard location (Internal Storage > Calypso Gallery > Secrets) | 標準の場所 (内部ストレージ > Calypso Gallery > Secrets) |
+| 404 | `vault_location_custom_option` | Custom / External location (USB drive, SD card, or custom folder) | カスタム / 外部の場所（USB ドライブ、SD カード、またはカスタムフォルダー） |
+| 405 | `external_vault_unavailable_title` | External vault unavailable | 外部保管庫を利用できません |
+| 406 | `external_vault_unavailable_prompt` | Your configured vault location (%s) is currently disconnected or unavailable. Plug in the drive and tap Retry, or choose another vault location. | 設定された保管庫の場所 (%s) は現在切断されているか利用できません。ドライブを接続して「再試行」をタップするか、別の保管庫の場所を選択してください。 |
+| 407 | `retry` | Retry | 再試行 |
+| 408 | `change_vault_location` | Change location | 場所を変更 |
+| 409 | `existing_vault_detected_at_location` | Existing vault found at %s. Enter its password or PIN to unlock it. | %s に既存の保管庫が見つかりました。ロックを解除するにはパスワードまたは PIN を入力してください。 |
+| 410 | `create_new_vault_at_location_prompt` | No vault exists at %s. Do you want to create a new encrypted vault at this location? | %s に保管庫が存在しません。この場所に新しい暗号化された保管庫を作成しますか？ |
+| 411 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | この USB パスは Android の仮想 OTG プロバイダー経由でのみ公開されており、ファイルシステムパスとして直接アクセスできません。マウントされたストレージディレクトリ、または内部ストレージ / SD カード上のフォルダーを選択してください。 |
+| 412 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | 選択したフォルダーは存在しないか、このデバイスでは書き込みできません。 |
+| 413 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | 選択したフォルダーは存在しないか、このデバイスでは読み取れません。 |
+| 414 | `sync_vault_from_external` | Import encrypted media files to encrypted section | 暗号化されたメディアファイルを暗号化セクションにインポート |
+| 415 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | 暗号化メディアのインポートの仕組み:\n\n1. 統合 Secrets フォルダー:\n外部ドライブ (USB / SD) に Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。 |
+| 416 | `conflict_handling_mode_label` | File conflict & duplicate resolution | ファイルの競合と重複の解決 |
+| 417 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | 完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更） |
+| 418 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | スマートダイアログ（同一は自動スキップ、内容が異なる場合のみ確認） |
+| 419 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | アルバムの競合（暗号化 / 復号） |
+| 420 | `album_crypto_conflict_ask` | Always ask (Default) | 毎回確認（既定） |
+| 421 | `album_crypto_conflict_merge` | Merge into existing album | 既存のアルバムに統合 |
+| 422 | `album_crypto_conflict_merge_delete_identical` | Merge into existing album and automatically delete identical sources | 既存のアルバムに統合して同一の元ファイルを自動削除 |
+| 423 | `album_crypto_conflict_rename` | Create new album as (1) | 新しいアルバムを (1) として作成 |
+| 424 | `album_crypto_conflict_title` | Album Already Exists | アルバムは既に存在します |
+| 425 | `album_crypto_conflict_message` | An album named \"%s\" already exists at the destination. How would you like to proceed? | 保存先に「%s」という名前のアルバムが既に存在します。どのように処理しますか？ |
+| 426 | `album_crypto_conflict_message_multiple` | %1$d selected albums already exist at the destination. How would you like to proceed?\n\nYour choice will apply to all conflicting albums. To choose separately per album, select and process them one by one. | 選択した %1$d 個のアルバムが保存先に既に存在します。どのように処理しますか？\n\nこの選択は競合するすべてのアルバムに適用されます。アルバムごとに個別に選択するには、1つずつ選択して処理してください。 |
+| 427 | `album_crypto_conflict_rename_option` | Create new album as \"%s\" | 新しいアルバムを「%s」として作成 |
+| 428 | `album_crypto_conflict_rename_option_multiple` | Create new albums as (1), (2), … | 新しいアルバムを (1), (2), … として作成 |
+| 429 | `album_crypto_conflict_merge_option` | Merge into existing \"%s\" | 既存の「%s」に統合 |
+| 430 | `album_crypto_conflict_merge_option_multiple` | Merge into existing albums | 既存のアルバムに統合 |
+| 431 | `album_crypto_delete_identical_source` | Delete identical source files (100% bit-by-bit verified) | 同一の元ファイルを削除（ビット単位で100%検証済み） |
+| 432 | `album_crypto_dont_ask_again` | Remember album conflict choice (merge or rename) | アルバムの競合の選択を記憶する（統合または名前変更） |
+| 433 | `album_crypto_merge_identical_title` | Identical Files During Merge | 統合時の同一ファイル |
+| 434 | `album_crypto_merge_identical_message` | When merging into \"%1$s\", if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 「%1$s」に統合する際、保存先にビット単位で100%%同一のファイルが既にある場合、元のコピーを削除しますか、それとも保持しますか？ |
+| 435 | `album_crypto_merge_identical_message_multiple` | When merging the %1$d conflicting albums, if any files are already 100%% bit-identical at the destination, should their source copies be deleted or kept? | 競合する %1$d 個のアルバムを統合する際、保存先にビット単位で100%%同一のファイルが既にある場合、元のコピーを削除しますか、それとも保持しますか？ |
+| 436 | `delete_identical_sources` | Delete identical | 同一を削除 |
+| 437 | `keep_identical_sources` | Keep in source | 元に保持 |
+| 438 | `fast_large_duplicate_check_label` | Fast duplicate check for large files (>8 MB) | 大容量ファイルの高速重複チェック (>8 MB) |
+| 439 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 大容量ファイルを含む転送に重要: ファイル全体を読み取る代わりに1ファイルあたり5ブロック（合計1.25 MB）を確認し、重複チェックを数十倍高速化します。 |
+| 440 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 高速重複チェック (>8 MB) |
+| 441 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | ファイルの競合と重複の解決 |
+| 442 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | ファイルやアルバムのコピー、移動、暗号化、または復号時に、同じ名前のファイルが保存先に既に存在する場合:\n\n1. ビット単位の重複チェック (RAM):\nアプリは最初にファイルサイズを確認し、一致する場合は RAM 上でファイル内容をビット単位で比較します（暗号化ファイルはディスクに平文を書き込まずメモリ内で確認されます）。コピー/移動時は同一ファイルがスキップされ、元ファイルは元のフォルダーにそのまま残ります。暗号化/復号時にアルバムを統合する場合は、ビット単位で100%同一の元ファイルを削除するか残すかを選択できます。\n\n2. 同名で異なる内容（例: 2つの異なる download.jpg ファイル）:\n• 完全自動（既定）: 新しいファイルを download(1).jpg、download(2).jpg のように名前変更して、操作を中断せず両方のファイルを保持します。\n• スマートダイアログ: ビット単位で同一のファイルは引き続き静かにスキップし、名前が同じで内容が異なる場合のみ確認します（スキップ / 上書き / 両方保持）。 |
+| 443 | `syncing_vault_progress` | Syncing vault from external drive… | 外部ドライブから保管庫を同期中… |
+| 444 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保管庫の同期が完了しました:\n• コピー: %1$d\n• 名前変更（名前の競合）: %2$d\n• スキップ（同一）: %3$d\n• 失敗: %4$d |
+| 445 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。 |
+| 446 | `vault_sync_same_folder_error` | The selected source folder is the same as your active vault. | 選択した参照元フォルダーは、現在有効な保管庫と同じです。 |
+| 447 | `use_for_this_album` | Use for this album only | このアルバムのみに適用 |
+| 448 | `crypto_duplicate_source_mode_label` | When a file already exists in destination during encrypt/decrypt | 暗号化/復号時に同じファイルが保存先フォルダにすでに存在する場合 |
+| 449 | `crypto_duplicate_source_ask` | Always ask (Default) | 毎回確認する（デフォルト） |
+| 450 | `crypto_duplicate_source_keep` | Keep file in source folder | 元のフォルダのファイルを残す |
+| 451 | `crypto_duplicate_source_delete` | Delete file from source folder | 元のフォルダのファイルを削除する |
+| 452 | `crypto_duplicate_source_title` | File Already Exists in Destination | 保存先に同じファイルがすでに存在します |
+| 453 | `crypto_duplicate_source_encrypt_message` | Some of the files you are encrypting already exist in the destination folder. What should happen to the files in the source folder? | 暗号化しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
+| 454 | `crypto_duplicate_source_decrypt_message` | Some of the files you are decrypting already exist in the destination folder. What should happen to the files in the source folder? | 復号しようとしているファイルの一部が保存先フォルダにすでに存在します。元のフォルダのファイルをどうしますか？ |
+| 455 | `crypto_duplicate_source_encrypt_keep_warning` | Warning: Choosing \"Keep\" for unencrypted files will leave the source file unencrypted on disk. | 警告：未暗号化ファイルで「残す」を選択すると、元のファイルは暗号化されないままディスク上に残ります。 |
+| 456 | `crypto_duplicate_source_always_ask` | Always ask | 毎回確認する |
+| 457 | `export_encrypted_vault` | Export encrypted vault | 暗号化された保管庫をエクスポート |
+| 458 | `export_vault_only_header` | Export folder containing only .vault file | .vault ファイルのみを含むフォルダーをエクスポート |
+| 459 | `export_vault_entire_folder` | Export entire folder | フォルダー全体をエクスポート |
+| 460 | `export_vault_only_header_info` | To add media items encrypted on other devices using the supported CLI tool to the encrypted vault on your phone, you only need to use a folder named Secrets containing the .vault file. | 対応する CLI ツールを使用して他のデバイスで暗号化したメディア項目をスマートフォン上の暗号化された保管庫に追加するには、.vault ファイルを含む Secrets という名前のフォルダーを使用するだけで十分です。 |
+| 461 | `exporting_vault_progress` | Exporting encrypted vault… | 暗号化された保管庫をエクスポート中… |
+| 462 | `vault_export_same_folder_error` | The export destination cannot be the active vault folder or inside it. | エクスポート先に現在使用中の保管庫フォルダーまたはそのサブフォルダーを指定することはできません。 |
+| 463 | `conflict_handling_standard_dialog_summary` | Standard dialog | 標準ダイアログ |
+| 464 | `conflict_handling_smart_dialog_summary` | Smart dialog | スマートダイアログ |
+| 465 | `conflict_handling_auto_summary` | Automatic (Experimental) | 自動（実験的） |
+| 466 | `conflict_handling_standard_dialog_short` | Standard dialog (Default — Checks filename only, like original Fossify Gallery) | 標準ダイアログ（既定 — 元の Fossify Gallery と同様、ファイル名のみを確認） |
+| 467 | `skipped_encrypt_files_mode_label` | Manage skipped files during encryption | 暗号化時にスキップされたファイルを管理 |
+| 468 | `skipped_encrypt_files_info_message` | Choose whether files skipped in the source folder during encryption should be kept or deleted for security. This choice also applies to album conflicts during album encryption (see setting below) when the source album is merged into an existing album at the destination. | 暗号化時に送信元フォルダーでスキップされたファイルを保持するか、セキュリティのため削除するかを選択します。この選択は、アルバムの暗号化時に送信元アルバムが宛先の既存のアルバムに統合される場合のアルバムの競合（下の設定を参照）にも適用されます。 |
+| 469 | `skipped_crypto_files_ask` | Always ask (Default) | 毎回確認（既定） |
+| 470 | `skipped_crypto_files_keep` | Keep | 保持 |
+| 471 | `skipped_crypto_files_delete` | Delete | 削除 |
+| 472 | `skipped_crypto_files_encrypt_message` | The files you skipped were not transferred. For your privacy, you can delete these files. | スキップしたファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 473 | `skipped_crypto_files_decrypt_message` | The files you skipped were not transferred. You can delete these files. | スキップしたファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 474 | `skipped_crypto_files_identical_encrypt_message` | Files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 475 | `skipped_crypto_files_identical_decrypt_message` | Files that already exist in the destination folder were not transferred. You can delete these files. | 宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 476 | `skipped_crypto_files_both_encrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. For your privacy, you can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。プライバシーのため、これらのファイルを削除できます。 |
+| 477 | `skipped_crypto_files_both_decrypt_message` | The files you skipped and the files that already exist in the destination folder were not transferred. You can delete these files. | スキップしたファイルと宛先フォルダーにすでに存在するファイルは転送されませんでした。これらのファイルを削除できます。 |
+| 478 | `skipped_crypto_files_always_ask` | Always ask | 毎回確認 |
+| 479 | `delete_skipped_files_confirm_title` | Are you sure? | よろしいですか？ |
+| 480 | `delete_skipped_files_confirm_message` | Your files will be deleted! | ファイルが削除されます！ |
+| 481 | `date_tie_break_label` | When content is identical but dates differ | 内容は同一だが日付が異なる場合 |
+| 482 | `date_tie_break_keep_target` | Keep the existing file\'s date (default) | 既存ファイルの日付を保持（既定） |
+| 483 | `date_tie_break_use_source` | Use the source file\'s date | 送信元ファイルの日付を使用 |
+| 484 | `date_tie_break_ask` | Always ask | 毎回確認 |
+| 485 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | スマートダイアログと自動モードのみに適用されます。標準ダイアログは影響を受けません。 |
+| 486 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | \"毎回確認\"がスマートダイアログと自動モードを無効にする理由 |
+| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありません。自動モードでは同一ファイルが name(1) として再度書き込まれ、フォルダーが無意味なコピーで埋まります。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 |
+| 488 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
+| 489 | `smart_conflict_incoming_label` | Incoming (New) | 受信（新規） |
+| 490 | `smart_conflict_existing_label` | Existing (Target) | 既存（宛先） |
+| 491 | `smart_conflict_corrupted_unreadable` | Corrupted or unreadable | 破損または読み取り不能 |
+| 492 | `smart_conflict_integrity_failed` | Integrity check failed (Bit-rot / Corrupted) | 整合性チェックに失敗（ビットロット / 破損） |
+| 493 | `smart_conflict_tap_to_preview` | Tap either thumbnail to inspect full-size preview | いずれかのサムネイルをタップして全サイズのプレビューを確認 |
+| 494 | `smart_conflict_comparing` | Comparing file contents and dates… | ファイルの内容と日付を比較しています… |
+| 495 | `smart_conflict_content_differs_warning` | File contents differ.\nIf these two files were supposed to be the same, data corruption may have occurred. Keeping both and inspecting them is recommended. | ファイルの内容が異なります。\nこの2つのファイルが同じであるはずだった場合、データの破損が発生している可能性があります。両方を保持して確認することをお勧めします。 |
+| 496 | `smart_conflict_date_taken_differs` | File contents are identical, creation (date taken) timestamps differ. | ファイルの内容は同一ですが、作成日時（撮影日時）が異なります。 |
+| 497 | `smart_conflict_modified_date_differs` | File contents are identical, modification dates differ. | ファイルの内容は同一ですが、更新日時が異なります。 |
+| 498 | `smart_conflict_both_dates_differ` | File contents are identical, creation and modification dates differ. | ファイルの内容は同一ですが、作成日時と更新日時が異なります。 |
+| 499 | `smart_conflict_meta_date_taken` | Taken: %s | 撮影日時: %s |
+| 500 | `smart_conflict_meta_date_modified` | Modified: %s | 更新日時: %s |
+| 501 | `album_type_icons` | Album type icons | アルバムの種類のアイコン |
+| 502 | `virtual_folders` | Virtual folders | 仮想フォルダー |
+| 503 | `favorites_album` | Favorites | お気に入り |
+| 504 | `excluded_folders_album` | Excluded folders | 除外されたフォルダー |
+| 505 | `hidden_folders_album` | Hidden folders | 非表示フォルダー |
+| 506 | `temporarily_show_hidden_folders` | Temporarily show hidden folders | 非表示フォルダーを一時的に表示 |
+| 507 | `stop_showing_hidden_folders` | Stop showing hidden folders | 非表示フォルダーの表示を停止 |
+| 508 | `unexclude` | Stop excluding | 除外を解除 |
+| 509 | `hide_folder` | Hide | 非表示にする |
+| 510 | `unhide_folder` | Unhide | 再表示 |
+| 511 | `about_title` | About Calypso Gallery | Calypso Gallery について |
+| 512 | `about_version` | Version %1$s (%2$s) | バージョン %1$s (%2$s) |
+| 513 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery は、Fossify Gallery の独立して保守された非公式の個人フォークです。Fossify とは提携しておらず、Fossify によって推奨もされていません。 |
+| 514 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | この配布物は Fossify Gallery の改造版です。このフォークはアップストリームのコミット 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2) から作成されており、フォーク固有のすべての変更は FORK_CHANGELOG.md に記載されています。 |
+| 515 | `about_license_heading` | License | ライセンス |
+| 516 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本プログラムはフリーソフトウェアです。フリーソフトウェア財団が公開する GNU General Public License（バージョン3）の条件に基づき、再配布および／または改変することができます。\n\n本プログラムは有用であることを願って配布されますが、無保証です。商品性および特定目的への適合性の黙示的保証を含む、いかなる保証もありません。詳細は GNU General Public License をご覧ください。\n\n本プログラムとともに GNU General Public License の写しを受け取っているはずです。受け取っていない場合は、下のライセンスの操作を実行するか、https://www.gnu.org/licenses/ にアクセスしてください。 |
+| 517 | `about_read_gpl_license` | Read the GNU GPL v3 license | GNU GPL v3 ライセンスを読む |
+| 518 | `about_read_tink_license` | Read the Tink Apache 2.0 license and attribution | Tink の Apache 2.0 ライセンスと帰属表示を読む |
+| 519 | `about_source_heading` | Source code | ソースコード |
+| 520 | `about_corresponding_source_notice` | The complete corresponding source for this fork is kept in the fork repository. Tagged releases also have a matching source archive. The repository contains the build scripts, dependency declarations, and complete fork history needed to inspect and rebuild the project. | このフォークの完全な対応ソースはフォークのリポジトリに保管されています。タグ付けされたリリースには、対応するソースアーカイブもあります。リポジトリには、プロジェクトの調査と再ビルドに必要なビルドスクリプト、依存関係の宣言、および完全なフォーク履歴が含まれています。 |
+| 521 | `about_fork_source` | Fork source code and corresponding source | フォークのソースコードと対応ソース |
+| 522 | `about_release_sources` | Release source archives | リリースのソースアーカイブ |
+| 523 | `about_fork_issues` | Fork issue tracker | フォークのイシュートラッカー |
+| 524 | `about_upstream_source` | Upstream Fossify Gallery source code | アップストリームの Fossify Gallery ソースコード |
+| 525 | `about_upstream_project` | Upstream Fossify project | アップストリームの Fossify プロジェクト |
+| 526 | `about_help_heading` | Help and legal information | ヘルプと法的情報 |
+| 527 | `about_faq` | Frequently asked questions | よくある質問 |
+| 528 | `about_third_party_licenses` | Third-party licenses | サードパーティのライセンス |
+| 529 | `gpl_license_title` | GNU General Public License v3 | GNU General Public License v3 |
+| 530 | `tink_license_title` | Tink license and attribution | Tink のライセンスと帰属表示 |
+| 531 | `fork_disclaimer_title` | Fork notice | フォークに関する通知 |
+| 532 | `fork_disclaimer_message` | This application is not developed by the Fossify team. Calypso Gallery is an independently maintained, unofficial fork of Fossify Gallery; the original developer is referenced solely for attribution. It is not affiliated with, endorsed by, or supported by Fossify.\n\nBy continuing you acknowledge this notice. Fork-specific changes are documented in FORK_CHANGELOG.md. | このアプリケーションは Fossify チームによって開発されたものではありません。Calypso Gallery は Fossify Gallery の独立して保守された非公式フォークであり、元の開発者への言及は帰属表示のみを目的としています。Fossify とは提携、推奨、サポートの関係にはありません。\n\n続行することで、この通知を確認したものとみなされます。フォーク固有の変更は FORK_CHANGELOG.md に記載されています。 |
+| 533 | `fork_disclaimer_acknowledge` | I understand | 理解しました |
+| 534 | `argon2_profile_title` | Brute-Force resistance | 総当たり攻撃への耐性 |
+| 535 | `brute_force_mode_title` | Calibration mode | 調整モード |
+| 536 | `brute_force_mode_time` | Via vault unlock time | 保管庫のロック解除時間を使用 |
+| 537 | `brute_force_mode_presets` | Via ready-made modes | 用意されたモードを使用 |
+| 538 | `brute_force_time_title` | Target vault unlock time | 目標とする保管庫のロック解除時間 |
+| 539 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。 |
+| 540 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限はこの端末の安全な標準時間です。 |
+| 541 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（この端末） |
+| 542 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | この時間は選択可能な上限（10 秒）を超えています。変更するにはタップしてください。 |
+| 543 | `brute_force_time_value` | %1$.1f s | %1$.1f 秒 |
+| 544 | `brute_force_actual_params` | Stored: %1$d MiB / %2$d rounds | 保存済み: %1$d MiB / %2$d ラウンド |
+| 545 | `brute_force_clamped` |  (clamped) |  (範囲内に制限されました) |
+| 546 | `argon2_profile_low` | Low-end device (not recommended) | ローエンド端末（非推奨） |
+| 547 | `argon2_profile_default` | Default | 既定 |
+| 548 | `argon2_profile_high` | High security | 高いセキュリティ |
+| 549 | `argon2_profile_hint` | If you don\'t know what you\'re doing, it is recommended to keep the default setting. This only affects newly created vaults and password changes. | 設定内容がわからない場合は、既定の設定を保持することをお勧めします。これは新しく作成する保管庫とパスワードの変更にのみ影響します。 |
+| 550 | `argon2_profile_current` | Current: %s | 現在: %s |
+| 551 | `show_pin_dots` | Show a dot for each PIN digit | PIN入力時に各桁をドットで表示する |
 
 ## Settings Headers, Font Options & File Encryption Info
 
@@ -803,3 +805,94 @@ Added to `values-ja/strings.xml` for the Appearance settings **Custom colors** s
 | 7 | `custom_theme_name` | Custom theme | カスタムテーマ | Base name for newly saved custom themes (suffixed with index) |
 | 8 | `discard_changes_question` | Do you want to save your changes? | 変更を保存しますか？ | Prompt shown when switching themes with unsaved custom color changes |
 | 9 | `continue_without_saving` | Continue without saving | 保存せずに続行 | Negative dialog button to discard unsaved custom color changes |
+
+## Onboarding & Full-Screen Permission Flow (29 keys)
+
+Added to `values-ja/strings.xml` for the 3-screen first-launch welcome and full-screen permission flow (unsupported system locales fall back cleanly to English in `values/strings.xml`). Also removed the retired `auto_backup_prompt_message` key since auto-backup is now enabled by default and always shown in Settings.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `onboarding_motto` | No sign-up, no cloud, just your gallery. | 登録不要、クラウドなし、あなただけのギャラリー。 | Welcome screen tagline |
+| 2 | `onboarding_offline_title` | Completely Offline | 完全オフライン | Welcome card 1 title |
+| 3 | `onboarding_offline_desc` | Never connects to the internet. Your data belongs only to you. | インターネットに接続しません。データはあなただけのものです。 | Welcome card 1 description |
+| 4 | `onboarding_vault_title` | Encrypted Vault | 暗号化された保管庫 | Welcome card 2 title |
+| 5 | `onboarding_vault_desc` | Encrypt your photos and videos. No one else can access them. | 写真や動画を暗号化します。あなた以外の誰もアクセスできません。 | Welcome card 2 description |
+| 6 | `onboarding_albums_title` | Playlists for your photos | 写真のためのプレイリスト | Welcome card 3 title |
+| 7 | `onboarding_albums_desc` | Virtual folders let you bring together the photos and videos you want to view in as many albums as you like, without moving them from their folders or taking up extra space with copies. | 仮想フォルダーを使えば、元のフォルダーから移動したりコピーで容量を消費したりすることなく、見たい写真や動画を好きなだけアルバムにまとめられます。 | Welcome card 3 description |
+| 8 | `onboarding_media_permission_note` | Media access permission is required to display your photos and videos. | 写真や動画を表示するには、メディアへのアクセス権限が必要です。 | Welcome footer media permission note |
+| 9 | `onboarding_continue` | Continue | 続行 | Welcome primary button |
+| 10 | `onboarding_media_required_title` | Full media access required | メディアへの完全なアクセスが必要 | Media permission screen title |
+| 11 | `onboarding_media_required_desc` | Calypso Gallery needs full access to display all your photos and videos. | Calypsoギャラリーは、すべての写真と動画を表示するために完全なアクセスを必要とします。 | Media permission screen description |
+| 12 | `onboarding_media_steps_header` | How to enable permission | 権限を有効にする手順 | Settings steps card header |
+| 13 | `onboarding_media_step_1` | Settings | 設定 | Settings guide step 1 |
+| 14 | `onboarding_media_step_2` | Permissions | 権限 | Settings guide step 2 |
+| 15 | `onboarding_media_step_3` | Photos and videos | 写真と動画 | Settings guide step 3 |
+| 16 | `onboarding_media_step_4` | Allow all | すべて許可 | Settings guide step 4 (final) |
+| 17 | `onboarding_media_required_hint` | Once access is granted, your gallery will open automatically when you return to the app. | アクセスを許可してアプリに戻ると、ギャラリーが自動的に開きます。 | Media permission screen return hint |
+| 18 | `onboarding_go_to_settings` | Go to settings | 設定を開く | Media permission primary button |
+| 19 | `onboarding_close` | Close | 閉じる | Media permission secondary button |
+| 20 | `onboarding_all_files_title` | All files access | すべてのファイルへのアクセス | All files access screen title |
+| 21 | `onboarding_all_files_desc` | All files access is recommended for the Encrypted Vault and seamless file management. | 暗号化された保管庫やスムーズなファイル管理のために、すべてのファイルへのアクセス権限をおすすめします。 | All files access screen subtitle |
+| 22 | `onboarding_all_files_vault_title` | Encrypted Vault and hidden folders | 暗号化された保管庫と非表示フォルダー | All files card 1 title |
+| 23 | `onboarding_all_files_vault_desc` | Manage your encrypted files and hidden folders without system restrictions. | 暗号化されたファイルや非表示フォルダーをシステム制限なしで管理できます。 | All files card 1 description |
+| 24 | `onboarding_all_files_backup_title` | Don\'t lose your Favorites and Virtual Albums | お気に入りと仮想アルバムを失わないために | All files card 2 title |
+| 25 | `onboarding_all_files_backup_desc` | Keep your favorites and virtual albums automatically backed up on your device even if you accidentally uninstall the app. You can turn off automatic backup anytime in app settings. | アプリを誤ってアンインストールしても、お気に入りと仮想アルバムが端末内に自動でバックアップされます。自動バックアップはアプリ設定からいつでもオフにできます。 | All files card 2 description |
+| 26 | `onboarding_all_files_offline_title` | Still completely on your device | これまで通り完全に端末内で完結 | All files card 3 title |
+| 27 | `onboarding_all_files_offline_desc` | The app stays completely offline, this permission is used only for local file operations. | アプリはオフラインのまま動作し、この権限は端末内のファイル操作のみに使用されます。 | All files card 3 description |
+| 28 | `onboarding_grant_access` | Grant access | 許可する | All files primary button |
+| 29 | `onboarding_not_now` | Not now | 後で | All files secondary button |
+
+## Vault Lock & Album Header Polish (4 keys)
+
+Added to `values-ja/strings.xml` for the redesigned Vault Lock screen biometric button and album interior header.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `use_biometrics` | Use biometrics | 生体認証を使用 | Vault lock screen biometric button label |
+| 2 | `media_header_items_count` | %d items | %d件 | MediaActivity album header item count |
+| 3 | `media_header_virtual_album` | Virtual album · %d items | 仮想アルバム · %d件 | MediaActivity virtual album header subtitle |
+| 4 | `media_header_encrypted_album` | Encrypted album · %d items | 暗号化アルバム · %d件 | MediaActivity encrypted album header subtitle |
+## Appearance Live Preview (4 keys)
+
+Added to `values-ja/strings.xml` for the live Appearance preview card and WCAG contrast warning.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `appearance_preview` | Preview | プレビュー | Appearance live preview section header |
+| 2 | `appearance_preview_text` | Your memories, your colors | あなたの思い出、あなたの色 | Appearance preview sample headline |
+| 3 | `appearance_preview_button` | Sample button | サンプルボタン | Appearance preview sample button |
+| 4 | `appearance_contrast_warning` | Low contrast: text %1$.1f:1, button %2$.1f:1. Increase it for readability. | コントラストが低すぎます：テキスト %1$.1f:1、ボタン %2$.1f:1。読みやすくするためコントラストを上げてください。 | WCAG contrast warning in Appearance preview |
+
+## Vault Privacy Input Toggle (1 key)
+
+Added to `values-ja/strings.xml` for the optional shoulder-surfing protection switch (default off).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `hide_vault_key_presses` | Hide key presses when entering vault password | 保管庫のパスワード入力時にキー押下を非表示にする | Settings switch to hide PIN/password key press feedback |
+
+## PIN Dot Indicator Setting (1 key)
+
+Added to `values-ja/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 16 digits).
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_pin_dots` | Show a dot for each PIN digit | PIN入力時に各桁をドットで表示する | Settings switch; hidden for alphanumeric vaults and PINs longer than 16 digits |
+
+## KDF Unlock-Time Hint Revision (this revision)
+
+Updated `brute_force_time_hint` and added `brute_force_time_min_hint` in `values-ja/strings.xml`. The lower-bound sentence is appended only when the device's measured safe floor is above 1.0 s.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_hint` | Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder. | 暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。 | Explanation shown in the target vault unlock time dialog |
+| 2 | `brute_force_time_min_hint` | The lower bound is this device's safe standard time. | 下限はこの端末の安全な標準時間です。 | Appended only when minSec > 1.0 |
+
+## Existing Vault Time Recalculation (this revision)
+
+Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-ja/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（この端末） | Value shown for an existing vault |
+| 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | この時間は選択可能な上限（10 秒）を超えています。変更するにはタップしてください。 | Shown when the real time exceeds 10 s |

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/onboarding_welcome_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:id="@+id/onboarding_welcome_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="16dp">
+
+            <org.fossify.gallery.views.OnboardingHeroLogoView
+                android:id="@+id/onboarding_hero_logo"
+                android:layout_width="210dp"
+                android:layout_height="122dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="12dp"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:id="@+id/onboarding_welcome_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:letterSpacing="-0.02"
+                android:text="@string/app_launcher_name"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/onboarding_welcome_motto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="24dp"
+                android:breakStrategy="balanced"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.25"
+                android:text="@string/onboarding_motto"
+                android:textSize="14sp" />
+
+            <!-- Card 1: Offline -->
+            <LinearLayout
+                android:id="@+id/onboarding_card_offline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="top"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="15dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="15dp">
+
+                <FrameLayout
+                    android:id="@+id/onboarding_icon_box_offline"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginEnd="14dp">
+
+                    <ImageView
+                        android:id="@+id/onboarding_icon_offline"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_offline" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/onboarding_offline_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:text="@string/onboarding_offline_title"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_offline_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:lineSpacingMultiplier="1.28"
+                        android:text="@string/onboarding_offline_desc"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card 2: Encrypted Vault -->
+            <LinearLayout
+                android:id="@+id/onboarding_card_vault"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="top"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="15dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="15dp">
+
+                <FrameLayout
+                    android:id="@+id/onboarding_icon_box_vault"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginEnd="14dp">
+
+                    <ImageView
+                        android:id="@+id/onboarding_icon_vault"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_vault_lock" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/onboarding_vault_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:text="@string/onboarding_vault_title"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_vault_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:lineSpacingMultiplier="1.28"
+                        android:text="@string/onboarding_vault_desc"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card 3: Virtual Albums -->
+            <LinearLayout
+                android:id="@+id/onboarding_card_albums"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingTop="15dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="15dp">
+
+                <FrameLayout
+                    android:id="@+id/onboarding_icon_box_albums"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginEnd="14dp">
+
+                    <ImageView
+                        android:id="@+id/onboarding_icon_albums"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_onboarding_virtual_albums" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/onboarding_albums_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:text="@string/onboarding_albums_title"
+                        android:textSize="14.5sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/onboarding_albums_desc"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:breakStrategy="balanced"
+                        android:hyphenationFrequency="normal"
+                        android:lineSpacingMultiplier="1.28"
+                        android:text="@string/onboarding_albums_desc"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/onboarding_welcome_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="24dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="20dp">
+
+        <TextView
+            android:id="@+id/onboarding_welcome_permission_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:breakStrategy="balanced"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.25"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:text="@string/onboarding_media_permission_note"
+            android:textSize="12sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/onboarding_welcome_continue_btn"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:letterSpacing="0"
+            android:text="@string/onboarding_continue"
+            android:textAllCaps="false"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="26dp"
+            app:elevation="0dp" />
+    </LinearLayout>
+</LinearLayout>

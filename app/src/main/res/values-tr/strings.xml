@@ -36,7 +36,7 @@
     <string name="font_system_default">Sistem varsayılanı</string>
     <string name="font_monospace">Monospace</string>
     <string name="appearance_preview">Önizleme</string>
-    <string name="appearance_preview_text">Anıların, senin renklerin</string>
+    <string name="appearance_preview_text">Senin anıların, senin renklerin</string>
     <string name="appearance_preview_button">Örnek düğme</string>
     <string name="appearance_contrast_warning">Düşük kontrast: metin %1$.1f:1, düğme %2$.1f:1. Okunabilirlik için artırın.</string>
     <string name="edit">Düzenle</string>
@@ -408,9 +408,7 @@
     <string name="conflict_handling_smart_dialog_short">Akıllı diyalog (Aynıları otomatik atla, içerik farklıysa sor)</string>
     <string name="conflict_handling_auto_short">Otomatik (Deneysel — Aynıları otomatik atla, içerik farklıysa (1) olarak sakla)</string>
     <string name="skipped_encrypt_files_mode_label">Şifreleme sırasında atlanan dosyaları yönet</string>
-    <string name="skipped_decrypt_files_mode_label">Şifre çözme sırasında atlanan dosyaları yönet</string>
     <string name="skipped_encrypt_files_info_message">Şifreleme işlemi sırasında kaynak klasördeki bazı dosyalar atlanırsa bu dosyaların saklanması veya güvenlik amacıyla silinmesi arasında seçim yapın. Bu seçim, albümlerin şifrelenmesi durumunda meydana gelebilecek albüm çakışmalarında (aşağıdaki ayara bakın) kaynak albümün hedefteki mevcut albümle birleştirilmesi durumunda da geçerli olacaktır.</string>
-    <string name="skipped_decrypt_files_info_message">Şifre çözme işlemi sırasında kaynak klasördeki bazı dosyalar atlanırsa bu dosyaların saklanması veya silinmesi arasında seçim yapın. Bu seçim, albümlerin şifresinin çözülmesi durumunda meydana gelebilecek albüm çakışmalarında (aşağıdaki ayara bakın) kaynak albümün hedefteki mevcut albümle birleştirilmesi durumunda da geçerli olacaktır.</string>
     <string name="skipped_crypto_files_ask">Her zaman sor (Varsayılan)</string>
     <string name="skipped_crypto_files_keep">Sakla</string>
     <string name="skipped_crypto_files_delete">Sil</string>
@@ -493,7 +491,6 @@
     <string name="decrypt">Şifre çöz</string>
     <string name="encrypt_album">Albümü şifrele</string>
     <string name="decrypt_album">Albümün şifresini çöz</string>
-    <string name="auto_backup_prompt_message">Favorilerinizin ve sanal albümlerinizin uygulama hafızası dışında düzenli olarak sistem belleğine yazılmasını istiyor musunuz? Bu, uygulamayı silmeniz durumunda favoriler listenizi ve sanal albümlerinizi kaybetmemenizi sağlayacaktır. İstediğiniz zaman uygulama ayarlarından manuel olarak backup oluşturabilirsiniz</string>
     <string name="auto_backup_favorites_and_virtual_albums">Favorileri ve sanal albümleri cihaz hafızasında yedekle</string>
     <string name="filename_without_zip">Dosya adı (.zip olmadan)</string>
     <string name="favorites_already_exist">Zaten bir favoriler listeniz var</string>
@@ -538,7 +535,10 @@
 
     <string name="argon2_profile_title">Brute-Force direnci</string>
     <string name="brute_force_time_title">Hedef kasa açılış süresi</string>
-    <string name="brute_force_time_hint">Saniye (%1$.1f–10.0, 0.1 sn adımlarla). Alt sınır bu cihazın güvenli standart (64 MiB / 3 tur) süresidir; varsayılan değer 1.0 sn\'dir (daha yavaş cihazlarda güvenli sınır süresi). Parametreler kasaya kaydedilir; diğer cihazlarda açılış süresi cihaz hızına göre değişir.</string>
+    <string name="brute_force_time_hint">Şifreli kasayı açma işlemi sırasında harcanan süreyi seçiniz. Bu değeri yüksek tutmak, deneme-yanılma saldırılarını zorlaştırarak ekstra güvenlik sağlar.</string>
+    <string name="brute_force_time_min_hint">Alt sınır, bu cihazın güvenli standart süresidir.</string>
+    <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>
+    <string name="brute_force_time_out_of_range">Bu süre seçilebilir üst sınırın (10 sn) üzerinde. Değiştirmek için dokunun.</string>
     <string name="brute_force_time_value">%1$.1f sn</string>
     <string name="brute_force_time_with_params">%1$.1f sn (%2$d MiB / %3$d tur)</string>
     <string name="brute_force_actual_params">Kayıtlı: %1$d MiB / %2$d tur</string>
@@ -577,4 +577,43 @@
     <string name="authenticate">Kimlik doğrula</string>
     <string name="vault_no_recovery_warning">Çevrimdışı şifreleme kullanılır. Parolanızı veya PIN\'inizi unutursanız kasanızı kurtarmanın hiçbir yolu yoktur.</string>
 
+
+    <!-- Onboarding & Permissions -->
+    <string name="onboarding_motto">Kayıt yok, bulut yok, yalnızca galeriniz.</string>
+    <string name="onboarding_offline_title">Tamamen Çevrimdışı</string>
+    <string name="onboarding_offline_desc">İnternete bağlanmaz. Verileriniz sadece size aittir.</string>
+    <string name="onboarding_vault_title">Şifreli Kasa</string>
+    <string name="onboarding_vault_desc">Fotoğraf ve videolarınızı şifreleyin. Sizden başkası erişemez.</string>
+    <string name="onboarding_albums_title">Fotoğraflarınız için çalma listeleri</string>
+    <string name="onboarding_albums_desc">Sanal klasörler, bir arada görmek istediğiniz fotoğraf ve videolarınızı ait oldukları klasörlerden ayırmadan veya kopyalarıyla ek yer kaplamadan istediğiniz kadar albümde birleştirmenizi sağlar.</string>
+    <string name="onboarding_media_permission_note">Fotoğraf ve videolarınızı görüntüleyebilmek için medya ögelerine erişim izni gerekir.</string>
+    <string name="onboarding_continue">Devam et</string>
+    <string name="onboarding_media_required_title">Tam medya erişimi gerekli</string>
+    <string name="onboarding_media_required_desc">Calypso Galeri tüm fotoğraf ve videolarınızı görüntülemek için tam erişime ihtiyaç duyar.</string>
+    <string name="onboarding_media_steps_header">İzni nasıl açabilirsiniz?</string>
+    <string name="onboarding_media_step_1">Ayarlar</string>
+    <string name="onboarding_media_step_2">İzinler</string>
+    <string name="onboarding_media_step_3">Fotoğraf ve videolar</string>
+    <string name="onboarding_media_step_4">Tümüne izin ver</string>
+    <string name="onboarding_media_required_hint">Erişim verildikten sonra uygulamaya döndüğünüzde galeriniz otomatik olarak açılır.</string>
+    <string name="onboarding_go_to_settings">Ayarlara git</string>
+    <string name="onboarding_close">Kapat</string>
+    <string name="onboarding_all_files_title">Tüm dosyalara erişim</string>
+    <string name="onboarding_all_files_desc">Şifreli Kasa ve kesintisiz dosya yönetimi için tüm dosyalara erişim izni önerilir.</string>
+    <string name="onboarding_all_files_vault_title">Şifreli Kasa ve gizli klasörler</string>
+    <string name="onboarding_all_files_vault_desc">Şifrelenmiş dosyalarınızı ve gizli klasörleri sistem kısıtlamasına takılmadan yönetin.</string>
+    <string name="onboarding_all_files_backup_title">Favorilerinizi ve Sanal Albümlerinizi kaybetmeyin</string>
+    <string name="onboarding_all_files_backup_desc">Uygulamayı yanlışlıkla silseniz bile favorileriniz ve sanal albümleriniz cihazınızda otomatik olarak yedeklensin. Dilerseniz uygulama ayarlarından otomatik yedeklemeyi kapatabilirsiniz.</string>
+    <string name="onboarding_all_files_offline_title">Yine tamamen cihazınızda</string>
+    <string name="onboarding_all_files_offline_desc">Uygulama çevrimdışı çalışmaya devam eder, bu izin yalnızca yerel dosya işlemleri için kullanılır.</string>
+    <string name="onboarding_grant_access">İzin ver</string>
+    <string name="onboarding_not_now">Şimdi değil</string>
+
+    <!-- Vault Lock & Album Header Polish -->
+    <string name="media_header_items_count">%d öge</string>
+    <string name="media_header_virtual_album">Sanal albüm · %d öge</string>
+    <string name="media_header_encrypted_album">Şifreli albüm · %d öge</string>
+    <string name="use_biometrics">Biyometrik kullan</string>
+    <string name="hide_vault_key_presses">Kasa parolası girerken tuş basımlarını gizle</string>
+    <string name="show_pin_dots">PIN girilirken her basamağı bir nokta ile göster</string>
 </resources>
