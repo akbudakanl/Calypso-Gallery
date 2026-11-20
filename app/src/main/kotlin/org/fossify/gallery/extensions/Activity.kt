@@ -73,6 +73,7 @@ import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.TEMP_FOLDER_NAME
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.extensions.VirtualAlbumConflictHelper
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
 import org.fossify.gallery.helpers.copyMoveFilesWithProgress
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -2520,21 +2521,14 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                 return@PickDirectoryDialog
             }
             val albumId = destination.getVirtualAlbumId() ?: return@PickDirectoryDialog
-            ensureBackgroundThread {
-                // Only vault content makes the album hidden. A file coming from a hidden folder is
-                // explicitly referenced by the user, so it does not hide the album.
-                val hasVaultSource = fileDirItems.any { CryptoManager.isVaultMediaPath(this, it.path) }
-                val added = addFileDirItemsToVirtualAlbum(
-                    albumId = albumId,
-                    fileDirItems = fileDirItems,
-                    forceMarkAlbumHidden = hasVaultSource
-                )
+            // Only vault content makes the album hidden. A file coming from a hidden folder is
+            // explicitly referenced by the user, so it does not hide the album.
+            val hasVaultSource = fileDirItems.any { CryptoManager.isVaultMediaPath(this, it.path) }
+            VirtualAlbumConflictHelper.add(this, albumId, fileDirItems, hasVaultSource) { added ->
                 val albumName = getVirtualAlbumName(destination) ?: ""
-                runOnUiThread {
-                    val msgRes = if (added > 0) R.string.added_to_virtual_album else R.string.already_in_virtual_album
-                    toast(getString(msgRes, albumName))
-                    callback(destination)
-                }
+                val msgRes = if (added > 0) R.string.added_to_virtual_album else R.string.already_in_virtual_album
+                toast(getString(msgRes, albumName))
+                callback(destination)
             }
             return@PickDirectoryDialog
         }

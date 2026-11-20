@@ -263,14 +263,20 @@
                 android:singleLine="true" />
         </org.fossify.commons.views.MyTextInputLayout>
 
-        <org.fossify.commons.views.MyButton
-            android:id="@+id/vault_password_ok_btn"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginStart="@dimen/small_margin"
-            android:text="✓"
-            android:textSize="20sp" />
+        <!-- Fixed-width slot so the 44dp button centres in the space between the field and the screen edge. -->
+        <FrameLayout
+            android:layout_width="80dp"
+            android:layout_height="wrap_content">
+
+            <org.fossify.commons.views.MyButton
+                android:id="@+id/vault_password_ok_btn"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center"
+                android:text="✓"
+                android:textSize="20sp" />
+        </FrameLayout>
     </LinearLayout>
 
     <!-- Guidance only: shown while creating a vault so the chosen secret can be assessed. -->
