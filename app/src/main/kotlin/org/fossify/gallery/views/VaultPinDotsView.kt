@@ -1,11 +1,13 @@
 package org.fossify.gallery.views
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 
 /**
  * Draws one dot slot per PIN digit: solid dots for the digits already entered and thin outlined
@@ -19,8 +21,10 @@ class VaultPinDotsView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var slotCount = 0
+    var slotCount: Int = 0
+        private set
     private var filledCount = 0
+    private val dotPulse = FloatArray(MAX_SLOTS)
 
     private var dotDiameter = 0f
     private var dotStep = 0f
@@ -55,6 +59,20 @@ class VaultPinDotsView @JvmOverloads constructor(
         invalidate()
     }
 
+    /** One-shot confirmation pulse used by the shutter unlock motion. */
+    fun pulseDot(index: Int) {
+        if (index !in 0 until slotCount) return
+        ValueAnimator.ofFloat(0f, 1f, 0f).apply {
+            duration = 380L
+            interpolator = DecelerateInterpolator()
+            addUpdateListener { animator ->
+                dotPulse[index] = animator.animatedValue as Float
+                invalidate()
+            }
+            start()
+        }
+    }
+
     fun setColors(filledColor: Int, ringFillColor: Int, ringStrokeColor: Int) {
         filledPaint.color = filledColor
         ringFillPaint.color = ringFillColor
@@ -75,10 +93,11 @@ class VaultPinDotsView @JvmOverloads constructor(
         val centerY = height / 2f
 
         for (index in 0 until slotCount) {
+            val pulseRadius = radius * (1f + 0.55f * dotPulse[index])
             if (index < filledCount) {
-                canvas.drawCircle(centerX, centerY, radius, filledPaint)
+                canvas.drawCircle(centerX, centerY, pulseRadius, filledPaint)
             } else {
-                val ringRadius = radius - ringInset
+                val ringRadius = pulseRadius - ringInset
                 if (ringFillPaint.color != Color.TRANSPARENT) {
                     canvas.drawCircle(centerX, centerY, ringRadius, ringFillPaint)
                 }

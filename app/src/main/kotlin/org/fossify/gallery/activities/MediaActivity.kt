@@ -1903,6 +1903,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     }
                     hideKeyboard()
                     startActivity(this)
+                    overridePendingTransition(R.anim.vault_shutter_enter, R.anim.vault_shutter_exit)
                     finish()
                 }
             }

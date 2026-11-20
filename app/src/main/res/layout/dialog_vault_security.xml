@@ -15,6 +15,15 @@
         app:tabGravity="fill"
         app:tabMode="fixed" />
 
+    <!-- Lock glyph for the shutter unlock feedback (visible in credential-entry mode). -->
+    <org.fossify.gallery.views.VaultShutterLockView
+        android:id="@+id/vault_unlock_emblem"
+        android:layout_width="62dp"
+        android:layout_height="62dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone" />
+
     <org.fossify.commons.views.MyTextView
         android:id="@+id/vault_status_label"
         android:layout_width="match_parent"
@@ -46,11 +55,24 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <org.fossify.gallery.views.VaultPinDotsView
-            android:id="@+id/vault_pin_dots"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="54dp"
-            android:layout_marginBottom="18dp" />
+            android:layout_marginBottom="18dp">
+
+            <org.fossify.gallery.views.VaultPinDotsView
+                android:id="@+id/vault_pin_dots"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <View
+                android:id="@+id/vault_unlock_sweep"
+                android:layout_width="64dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/vault_unlock_sweep"
+                android:visibility="invisible" />
+        </FrameLayout>
 
         <GridLayout
             android:id="@+id/vault_pin_grid"

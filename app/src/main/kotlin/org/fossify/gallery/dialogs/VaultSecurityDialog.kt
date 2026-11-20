@@ -29,6 +29,7 @@ import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
+import org.fossify.gallery.helpers.VaultShutterAnimator
 import java.io.File
 import org.fossify.gallery.helpers.canUnlockWithBiometrics
 import org.fossify.gallery.helpers.getVaultProtectionType
@@ -55,6 +56,7 @@ class VaultSecurityDialog(
     private var setupInFlight = false
     private var autoPromptDecorView: View? = null
     private var autoPromptFocusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
+    private var shutterAnimator: VaultShutterAnimator? = null
     private val binding = DialogVaultSecurityBinding.inflate(activity.layoutInflater)
     private val isSetupMode = isChangePasswordMode || customTargetDir != null ||
         (!CryptoManager.hasExistingVault(activity) && (requiredHash.isEmpty() || showTabIndex == SHOW_ALL_TABS))
@@ -100,6 +102,12 @@ class VaultSecurityDialog(
         val backgroundColor = palette.background
 
         binding.vaultPatternHolder.beGone()
+
+        // The lock glyph belongs to credential entry, not to vault creation / password change.
+        if (!isSetupMode) {
+            binding.vaultUnlockEmblem.beVisible()
+            binding.vaultUnlockEmblem.setColors(palette.text, palette.surface, palette.background)
+        }
 
         if (isSetupMode) {
             binding.vaultNoRecoveryWarning.beVisible()
@@ -151,8 +159,7 @@ class VaultSecurityDialog(
 
         inputHelper.setupBiometricButton(enabled = biometricsEnabled) {
             dialogSucceeded = true
-            dialog?.dismiss()
-            callback(requiredHash, currentType, true)
+            completeUnlockSuccess()
         }
 
         // Host the security form on the same ambient frosted backdrop as the full-screen lock
@@ -179,6 +186,8 @@ class VaultSecurityDialog(
                 dialog = alertDialog
                 alertDialog.setOnDismissListener {
                     clearAutoPromptFocusListener()
+                    shutterAnimator?.cancel()
+                    shutterAnimator = null
                     if (!dialogSucceeded) {
                         cancelDialog()
                     }
@@ -219,8 +228,7 @@ class VaultSecurityDialog(
             clearAutoPromptFocusListener()
             inputHelper.promptBiometricUnlock(isAutoTrigger = true) {
                 dialogSucceeded = true
-                dialog?.dismiss()
-                callback(requiredHash, currentType, true)
+                completeUnlockSuccess()
             }
         }
 
@@ -318,8 +326,7 @@ class VaultSecurityDialog(
             ) { success ->
                 if (success) {
                     dialogSucceeded = true
-                    dialog?.dismiss()
-                    callback(requiredHash, currentType, true)
+                    completeUnlockSuccess()
                 } else {
                     updateStatusLabel()
                 }
@@ -388,7 +395,37 @@ class VaultSecurityDialog(
         }
     }
 
+    /**
+     * Plays the approved shutter feedback on a real unlock. Setup, password-change and KDF
+     * rewrap flows keep their immediate behaviour - the motion is only for entering the vault.
+     */
+    private fun completeUnlockSuccess() {
+        if (isSetupMode || isChangePasswordMode || rewrapKdfOnUnlock ||
+            !android.animation.ValueAnimator.areAnimatorsEnabled()
+        ) {
+            dialog?.dismiss()
+            callback(requiredHash, currentType, true)
+            return
+        }
+
+        setDialogBusy(true)
+        binding.vaultUnlockSweep.visibility = View.INVISIBLE
+        val animator = VaultShutterAnimator(
+            lock = binding.vaultUnlockEmblem,
+            dots = binding.vaultPinDots,
+            sweep = binding.vaultUnlockSweep,
+            panel = binding.root
+        )
+        shutterAnimator = animator
+        animator.play {
+            dialog?.dismiss()
+            callback(requiredHash, currentType, true)
+        }
+    }
+
     private fun cancelDialog() {
+        shutterAnimator?.cancel()
+        shutterAnimator = null
         clearFirstStepSecret()
         inputHelper.clearInputs()
         if (dialogSucceeded || cancelNotified) return

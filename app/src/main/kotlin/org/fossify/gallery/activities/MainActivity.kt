@@ -10,6 +10,7 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
 import android.view.MotionEvent
+import android.view.animation.DecelerateInterpolator
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
@@ -1229,6 +1230,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 mIsSwitchingVaultView = true
                 hideKeyboard()
                 startActivity(this)
+                overridePendingTransition(R.anim.vault_shutter_enter, R.anim.vault_shutter_exit)
                 finish()
             }
         }
@@ -1363,6 +1365,17 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun toggleTemporarilyShowHidden(show: Boolean) {
         mLoadedInitialPhotos = false
         config.temporarilyShowHidden = show
+        if (show && android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            // Shutter follow-through for the in-place (folders view) vault entry.
+            binding.directoriesGrid.translationY = 48f
+            binding.directoriesGrid.alpha = 0.35f
+            binding.directoriesGrid.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(520L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
         if (!show) {
             mIsSecretVaultView = false
             mHiddenDisplayMode = DISPLAY_NONE
