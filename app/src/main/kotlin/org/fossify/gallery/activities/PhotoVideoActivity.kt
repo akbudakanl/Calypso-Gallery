@@ -40,6 +40,7 @@ import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.IS_FROM_GALLERY
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.REAL_FILE_PATH
+import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.gallery.BuildConfig
@@ -331,6 +332,7 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
                 // Preserve the caller's album identity when available so the viewer does not
                 // silently switch to the file's real parent folder.
                 putExtra(EXTRA_ALBUM_PATH, intent.getStringExtra(EXTRA_ALBUM_PATH).orEmpty())
+                putExtra(SHOW_ALL, intent.getBooleanExtra(SHOW_ALL, false))
                 putExtra(IS_VIEW_INTENT, true)
                 putExtra(IS_FROM_GALLERY, mIsFromGallery)
                 putExtra(PATH, path)

@@ -58,12 +58,14 @@ import org.fossify.gallery.dialogs.SmartFileConflictDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
+import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
+import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.ENCRYPTED_BIN_EXT
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.PickDirectoryMode
@@ -153,6 +155,33 @@ fun Activity.openPath(path: String, forceChooser: Boolean, extras: HashMap<Strin
     // viewer relay treats a directly opened video as external and hides Shuffle, and drops mMedia.
     extras[IS_FROM_GALLERY] = true
     openPathIntent(path, forceChooser, BuildConfig.APPLICATION_ID, extras = extras)
+}
+
+/**
+ * ACTION_VIEW for a video that must keep its gallery context. The plain commons openPath helper
+ * cannot carry String extras, which made the viewer lose the album path and therefore the album's
+ * random sort - hiding Shuffle when the video was opened directly.
+ */
+fun Activity.openVideoWithDefaultPlayer(
+    path: String,
+    albumPath: String,
+    showAll: Boolean,
+    extras: HashMap<String, Boolean> = HashMap()
+) {
+    ensureBackgroundThread {
+        val uri = getFinalUriFromPath(path, BuildConfig.APPLICATION_ID) ?: return@ensureBackgroundThread
+        val mimeType = getUriMimeType(path, uri)
+        Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, mimeType)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            putExtra(REAL_FILE_PATH, path)
+            putExtra(IS_FROM_GALLERY, true)
+            putExtra(EXTRA_ALBUM_PATH, albumPath)
+            putExtra(SHOW_ALL, showAll)
+            extras.forEach { (key, value) -> putExtra(key, value) }
+            startActivity(this)
+        }
+    }
 }
 
 fun Activity.launchGesturePlayer(path: String, extras: HashMap<String, Boolean> = HashMap()) {

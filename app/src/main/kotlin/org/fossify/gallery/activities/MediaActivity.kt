@@ -104,6 +104,7 @@ import org.fossify.gallery.extensions.launchGesturePlayer
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.movePathsInRecycleBin
 import org.fossify.gallery.extensions.openPath
+import org.fossify.gallery.extensions.openVideoWithDefaultPlayer
 import org.fossify.gallery.extensions.openRecycleBin
 import org.fossify.gallery.extensions.restoreRecycleBinPaths
 import org.fossify.gallery.extensions.showRecycleBinEmptyingDialog
@@ -1597,9 +1598,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun openSystemDefaultPlayer(path: String) {
-        openPath(
+        openVideoWithDefaultPlayer(
             path = path,
-            forceChooser = false,
+            albumPath = mPath,
+            showAll = mShowAll,
             extras = hashMapOf(SHOW_FAVORITES to (mPath == FAVORITES)).apply {
                 if (path.startsWith(recycleBinPath)) put(IS_IN_RECYCLE_BIN, true)
                 if (shouldSkipAuthentication()) put(SKIP_AUTHENTICATION, true)
