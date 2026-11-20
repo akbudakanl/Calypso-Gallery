@@ -175,7 +175,12 @@ The "Warning: Do not delete this file" line exists for this reason: the user los
 - `Calypso Gallery` lives at the root of external storage (**not** under `Android/data`); uninstalling and reinstalling the app preserves both folders and `mtime` values. Therefore **"1st archived vault", "2nd archived vault" ordering survives reinstall.**
 - Labels are generated in the UI only; no on-disk counterpart. Same-second archives are tie-broken by random id.
 - If an archive is deleted with a file manager, the remaining ones are renumbered.
-- If `info.txt` is missing, the folder's own `mtime` is used as fallback.
+- **Date source priority** (the answer to "what happens if info.txt is deleted?"):
+  1. `archivedAt` in the app's private `archivedVaults` record (always present during normal use, until reinstall).
+  2. `info.txt.lastModified()` — created at archival time, survives reinstall.
+  3. If neither exists, show **"date unknown"** and sort by random id. The folder's own `mtime` is **not** reliable: renaming a directory does not change its `mtime`, and while the vault is active it reflects file edits — it does not represent archival time.
+- **`.vault` cannot be used:** its header format (`magic | version | algorithm | Argon2 params | salt | IVs | wrapped VMK | keyring | protection type`) has **no date field**. Its `mtime` records the last header rewrite (password change / KDF rewrap), not archival time; rename does not change it. Writing a date into `.vault` would risk corrupting a security-critical file — **rejected**.
+- If `.vault` is **deleted or its header is corrupted**, `isValidVaultHeader` fails; `resolveExistingVaultInDirectory` no longer treats the folder as a vault and it disappears from the list. This is correct: a folder without a valid vault header is not a vault. If a private-preference entry exists but no valid vault is on disk, the UI shows an **"invalid archive entry"** row with the path and *"Vault header not found; you can delete this folder with a file manager."*
 
 ---
 

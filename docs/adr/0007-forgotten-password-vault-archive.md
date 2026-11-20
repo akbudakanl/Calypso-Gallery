@@ -177,7 +177,12 @@ Vault location → Open from archive.
 - `Calypso Gallery` harici depolamanın kökündedir (`Android/data` altında **değil**); uygulama kaldırılıp yeniden kurulsa da klasörler ve `mtime` değerleri korunur. Yani **"1. arşivlenen kasa", "2. arşivlenen kasa" sıralaması yeniden kurulumdan sonra da hatırlanır.**
 - Etiketler yalnızca UI'da üretilir; diskte karşılığı yoktur. Aynı saniyede oluşan arşivler rastgele id ile tie-break edilir.
 - Bir arşiv dosya yöneticisiyle silinirse kalanlar yeniden numaralanır.
-- `info.txt` silinirse fallback olarak klasörün kendi `mtime` değeri kullanılır.
+- **Tarih kaynağı önceliği** (info.txt silinirse ne olur sorusunun cevabı):
+  1. Uygulamanın özel `archivedVaults` kaydındaki `archivedAt` (normal kullanımda her zaman vardır; uygulama yeniden kurulana kadar).
+  2. `info.txt.lastModified()` — arşivleme anında oluşturulur, yeniden kurulumdan sonra da durur.
+  3. Hiçbiri yoksa **tarih bilinmez** olarak gösterilir; liste rastgele id ile sıralanır. Klasörün kendi `mtime`'ı güvenilir değildir, çünkü bir dizinin `mtime`'ı yeniden adlandırmada değişmez ve kasa aktifken dosya değişikliklerini yansıtır — **arşivleme zamanını temsil etmez**.
+- **`.vault` kullanılamaz:** başlık formatında (`magic | versiyon | algoritma | Argon2 parametreleri | salt | IV'ler | sarınmış VMK | keyring | koruma tipi`) **tarih alanı yoktur**. `.vault` dosyasının mtime'ı da başlığın son yazıldığı (parola değişimi / KDF yeniden sarma) anı gösterir, arşivleme anını değil; rename bu değeri değiştirmez. `.vault` içine tarih yazmak güvenlik kritik dosyayı bozma riski taşır — **reddedildi**.
+- `.vault` **silinirse veya başlığı bozulursa** `isValidVaultHeader` başarısız olur; klasör `resolveExistingVaultInDirectory` tarafından kasa olarak kabul edilmez ve listeden çıkar. Bu doğru davranıştır: geçerli kasa başlığı olmayan klasör kasa değildir. Özel tercihte kaydı bulunup diskte geçerli başlık yoksa UI'da **"Geçersiz arşiv kaydı"** satırı gösterilir: yol + *"Kasa başlığı bulunamadı; bu klasörü dosya yöneticisiyle silebilirsiniz."*
 
 ---
 
