@@ -2,32 +2,32 @@ package org.fossify.gallery.helpers
 
 import android.animation.Animator
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
+import android.widget.ImageView
 import android.widget.TextView
+import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.gallery.R
-import org.fossify.gallery.views.VaultShutterLockView
 import kotlin.math.abs
 
 /**
  * Pull-to-open gesture for the encrypted vault.
  *
- * The icon stays calm while the user drags - no progressive "filling" animation. Once the pull is
- * held past [HOLD_OPEN_THRESHOLD_DP] for [ARM_DELAY_MS], a single unlock animation plays and the
- * label switches to "release to open". Releasing after that opens the credential prompt. A short
- * pull or an early release only snaps back; pull-to-refresh has been removed.
+ * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. After it has been held for
+ * [ARM_DELAY_MS] a single bounce animation plays and the label switches to "release to open";
+ * releasing then opens the credential prompt. The lock icon stays locked - no shackle opening,
+ * because nothing has been decrypted at this point. Short/early releases only snap back.
  */
 class VaultPullGestureHandler(
     private val containerView: View,
     private val indicatorView: View,
-    private val iconView: VaultShutterLockView,
+    private val iconView: ImageView,
     private val textView: TextView,
     private val isListAtTop: () -> Boolean,
     private val primaryColor: () -> Int,
@@ -74,30 +74,23 @@ class VaultPullGestureHandler(
                                 dispatchToChildren(cancelEvent)
                                 cancelEvent.recycle()
                             }
-
                             containerView.translationY = translation
-                            indicatorView.beVisible()
-                            indicatorView.bringToFront()
-                            iconView.setColors(textColor(), SURFACE_COLOR, textColor())
-                            indicatorView.alpha = (translation / holdThreshold * 1.4f).coerceIn(0.1f, 1f)
 
-                            if (translation >= holdThreshold && !thresholdMet) {
-                                thresholdMet = true
-                                armAfterDelay()
-                            }
-                            if (!armed) {
-                                textView.text = textView.context.getString(
-                                    if (thresholdMet) R.string.keep_holding_to_open_vault
-                                    else R.string.pull_down_to_open_vault
-                                )
+                            if (translation >= holdThreshold) {
+                                if (!thresholdMet) {
+                                    thresholdMet = true
+                                    showIndicator()
+                                    armAfterDelay()
+                                }
+                            } else if (!armed) {
+                                // Keep the pull completely silent until the vault threshold.
+                                hideIndicator()
                             }
                             return true
                         }
-                    } else if (deltaY < 0) {
-                        if (containerView.translationY > 0f) {
-                            containerView.translationY = 0f
-                            indicatorView.beGone()
-                        }
+                    } else if (deltaY < 0 && containerView.translationY > 0f) {
+                        containerView.translationY = 0f
+                        hideIndicator()
                         if (isListAtTop()) gestureStarted = false
                     }
                 }
@@ -123,40 +116,50 @@ class VaultPullGestureHandler(
         return false
     }
 
+    private fun showIndicator() {
+        iconView.applyColorFilter(textColor())
+        iconView.scaleX = 1f
+        iconView.scaleY = 1f
+        indicatorView.beVisible()
+        indicatorView.bringToFront()
+        indicatorView.alpha = 1f
+        textView.text = textView.context.getString(R.string.keep_holding_to_open_vault)
+    }
+
+    private fun hideIndicator() {
+        indicatorView.beGone()
+        indicatorView.alpha = 1f
+    }
+
     private fun armAfterDelay() {
         cancelArm()
         val runnable = Runnable {
             armRunnable = null
-            if (thresholdMet) playUnlockAnimation()
+            if (thresholdMet) playReadyAnimation()
         }
         armRunnable = runnable
         iconView.postDelayed(runnable, ARM_DELAY_MS)
     }
 
-    /**
-     * One-shot final animation. The shackle deliberately stays closed - releasing only opens the
-     * credential prompt, nothing has been decrypted yet. A short glow + bounce marks the ready
-     * state.
-     */
-    private fun playUnlockAnimation() {
+    /** One-shot bounce + tint flash. The lock itself never opens. */
+    private fun playReadyAnimation() {
         armed = true
         textView.text = textView.context.getString(R.string.release_to_open_vault)
         indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
-        iconView.openProgress = 0f
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.1f, 1f).apply {
-            duration = 420L
+        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_X, 1f, 1.18f, 1f).apply {
+            duration = 440L
             interpolator = OvershootInterpolator(1.4f)
         }
-        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.1f, 1f).apply {
-            duration = 420L
+        armAnimators += ObjectAnimator.ofFloat(iconView, View.SCALE_Y, 1f, 1.18f, 1f).apply {
+            duration = 440L
             interpolator = OvershootInterpolator(1.4f)
         }
-        armAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 620L
+        armAnimators += ObjectAnimator.ofFloat(iconView, "alpha", 1f, 0.45f, 1f).apply {
+            duration = 440L
             interpolator = DecelerateInterpolator()
-            addUpdateListener { iconView.glow = it.animatedValue as Float }
         }
+        iconView.applyColorFilter(primaryColor())
         armAnimators.forEach { it.start() }
     }
 
@@ -164,10 +167,9 @@ class VaultPullGestureHandler(
         thresholdMet = false
         armed = false
         cancelArm()
-        iconView.openProgress = 0f
-        iconView.glow = 0f
         iconView.scaleX = 1f
         iconView.scaleY = 1f
+        iconView.alpha = 1f
     }
 
     private fun resetGesture() {
@@ -194,6 +196,7 @@ class VaultPullGestureHandler(
         armRunnable = null
         armAnimators.forEach { it.cancel() }
         armAnimators.clear()
+        iconView.applyColorFilter(textColor())
     }
 
     companion object {
@@ -202,6 +205,5 @@ class VaultPullGestureHandler(
         private const val TRANSLATION_FACTOR = 0.45f
         private const val ARM_DELAY_MS = 420L
         private const val RESET_ANIM_MS = 220L
-        private const val SURFACE_COLOR = 0xFF161619.toInt()
     }
 }

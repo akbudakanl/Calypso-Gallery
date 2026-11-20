@@ -1,5 +1,6 @@
 package org.fossify.gallery.dialogs
 
+import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
@@ -8,15 +9,12 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.widget.FrameLayout
-import androidx.appcompat.app.AlertDialog
 import com.google.android.material.tabs.TabLayout
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
-import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.hideKeyboard
-import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.helpers.SHOW_ALL_TABS
@@ -51,7 +49,7 @@ class VaultSecurityDialog(
     private val onCancelCallback: (() -> Unit)? = null,
     private val callback: (hash: String, type: Int, success: Boolean) -> Unit
 ) {
-    private var dialog: AlertDialog? = null
+    private var dialog: Dialog? = null
     private var dialogSucceeded = false
     private var cancelNotified = false
     private var setupInFlight = false
@@ -179,54 +177,46 @@ class VaultSecurityDialog(
         hostBinding.vaultSecurityBack.applyColorFilter(palette.text)
         hostBinding.vaultSecurityBack.setOnClickListener { cancelDialog() }
 
-        val builder = activity.getAlertDialogBuilder()
-        builder.setOnCancelListener {
-            cancelDialog()
-        }
-
-        builder.apply {
-            activity.setupDialogStuff(hostBinding.root, this) { alertDialog ->
-                dialog = alertDialog
-                alertDialog.setOnDismissListener {
-                    clearAutoPromptFocusListener()
-                    shutterAnimator?.cancel()
-                    shutterAnimator = null
-                    if (!dialogSucceeded) {
-                        cancelDialog()
-                    }
-                }
-                alertDialog.window?.apply {
-                    addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    // Cover the whole display, including the system-bar area. Without these
-                    // flags the dialog stops above the navigation bar and the home screen leaks
-                    // through the gap at the bottom.
-                    addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-                    clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-                    setDimAmount(0f)
-                    setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-                    setLayout(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                        setDecorFitsSystemWindows(false)
-                    }
-                    setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-                }
-                inputHelper.applyThemeColors()
-                inputHelper.applyTouchFilter()
-                if (currentType == PROTECTION_PASSWORD) {
-                    inputHelper.focusPasswordInput(alertDialog.window)
-                }
-
-                if (biometricsEnabled && autoPromptBiometrics && CryptoManager.canUnlockWithBiometrics(activity)) {
-                    scheduleAutoBiometricPrompt(alertDialog)
+        // A plain full-screen Dialog is used instead of AlertDialog: AlertDialog reserves space
+        // for its button panel and system insets, which left a strip of the unlocked gallery
+        // visible along the bottom/navigation bar.
+        val credentialDialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen).apply {
+            setOnCancelListener { cancelDialog() }
+            setOnDismissListener {
+                clearAutoPromptFocusListener()
+                shutterAnimator?.cancel()
+                shutterAnimator = null
+                if (!dialogSucceeded) {
+                    cancelDialog()
                 }
             }
+            window?.apply {
+                addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            }
+            setContentView(hostBinding.root)
         }
+        dialog = credentialDialog
+
+        inputHelper.applyThemeColors()
+        inputHelper.applyTouchFilter()
+        if (currentType == PROTECTION_PASSWORD) {
+            inputHelper.focusPasswordInput(credentialDialog.window)
+        }
+
+        if (biometricsEnabled && autoPromptBiometrics && CryptoManager.canUnlockWithBiometrics(activity)) {
+            scheduleAutoBiometricPrompt(credentialDialog)
+        }
+
+        credentialDialog.show()
     }
 
-    private fun scheduleAutoBiometricPrompt(alertDialog: AlertDialog) {
+    private fun scheduleAutoBiometricPrompt(alertDialog: Dialog) {
         val decorView = alertDialog.window?.decorView ?: return
         var triggered = false
 
@@ -319,7 +309,6 @@ class VaultSecurityDialog(
     private fun setDialogBusy(busy: Boolean) {
         inputHelper.setInputsEnabled(!busy)
         dialog?.setCancelable(!busy)
-        dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.isEnabled = !busy
     }
 
     private fun handleSecretSubmission(secret: CharArray) {

@@ -95,10 +95,11 @@
             android:paddingBottom="@dimen/medium_margin"
             android:visibility="gone">
 
-            <org.fossify.gallery.views.VaultShutterLockView
+            <ImageView
                 android:id="@+id/vault_pull_icon"
-                android:layout_width="56dp"
-                android:layout_height="56dp" />
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_onboarding_vault_lock" />
 
             <org.fossify.commons.views.MyTextView
                 android:id="@+id/vault_pull_text"
