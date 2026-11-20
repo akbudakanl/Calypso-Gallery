@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.tabs.TabLayout
 import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getAlertDialogBuilder
@@ -106,7 +107,7 @@ class VaultSecurityDialog(
         // The lock glyph belongs to credential entry, not to vault creation / password change.
         if (!isSetupMode) {
             binding.vaultUnlockEmblem.beVisible()
-            binding.vaultUnlockEmblem.setColors(palette.text, palette.surface, palette.background)
+            binding.vaultUnlockEmblem.setColors(palette.text, palette.surface, palette.text)
         }
 
         if (isSetupMode) {
@@ -175,8 +176,10 @@ class VaultSecurityDialog(
             )
         )
 
+        hostBinding.vaultSecurityBack.applyColorFilter(palette.text)
+        hostBinding.vaultSecurityBack.setOnClickListener { cancelDialog() }
+
         val builder = activity.getAlertDialogBuilder()
-        builder.setNegativeButton(org.fossify.commons.R.string.cancel, null)
         builder.setOnCancelListener {
             cancelDialog()
         }
@@ -194,7 +197,10 @@ class VaultSecurityDialog(
                 }
                 alertDialog.window?.apply {
                     addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    // The host view itself draws the frosted backdrop, so suppress the opaque dim.
+                    // Cover the whole display, including the system-bar area. Without these
+                    // flags the dialog stops above the navigation bar and the home screen leaks
+                    // through the gap at the bottom.
+                    addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
                     clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
                     setDimAmount(0f)
                     setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -202,6 +208,10 @@ class VaultSecurityDialog(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                        setDecorFitsSystemWindows(false)
+                    }
+                    setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
                 }
                 inputHelper.applyThemeColors()
                 inputHelper.applyTouchFilter()

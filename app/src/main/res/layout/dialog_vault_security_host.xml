@@ -15,4 +15,24 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true" />
+
+    <!-- Top-left exit affordance for the credential prompt. Wrapped so system-bar insets
+         keep it clear of the status bar. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true">
+
+        <ImageButton
+            android:id="@+id/vault_security_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="top|start"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/back"
+            android:padding="@dimen/medium_margin"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_arrow_left_vector" />
+    </FrameLayout>
 </FrameLayout>

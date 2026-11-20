@@ -352,6 +352,16 @@ class VaultAuthInputHelper(
     }
 
     private fun updatePinDots() {
+        // The per-digit slot indicator is opt-in. With the setting off, preserve the original
+        // presentation: one bullet per entered digit, still occupying the box above the keypad.
+        if (!showPinDots) {
+            binding.vaultPinDots.beGone()
+            binding.vaultPinDotsLegacy.beVisible()
+            binding.vaultPinDotsLegacy.text = "•".repeat(pinLength)
+            return
+        }
+        binding.vaultPinDotsLegacy.beGone()
+
         // Once the PIN passes the dot-indicator limit the whole view goes away, and a PIN of
         // unknown length (setup mode) keeps growing until it reaches that limit too.
         val trackedLength = if (fixedPinLength > 0) maxOf(fixedPinLength, pinLength) else pinLength
