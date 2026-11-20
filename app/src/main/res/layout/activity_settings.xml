@@ -645,6 +645,21 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/settings_show_bottom_action_names_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_show_bottom_action_names"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/show_bottom_action_names" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:id="@+id/settings_screen_rotation_holder"
                 style="@style/SettingsHolderTextViewStyle"
                 android:layout_width="match_parent"

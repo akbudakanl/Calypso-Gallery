@@ -40,4 +40,15 @@
             android:textAppearance="@style/MediaAlbumToolbarSubtitle"
             tools:text="Virtual album · 12 items" />
     </LinearLayout>
+
+    <!-- Same magnifier drawable/color as the main screen search bar; sits left of the overflow. -->
+    <ImageButton
+        android:id="@+id/album_toolbar_search"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/search"
+        android:padding="12dp"
+        android:src="@drawable/ic_search_vector"
+        tools:ignore="UseAppTint" />
 </LinearLayout>

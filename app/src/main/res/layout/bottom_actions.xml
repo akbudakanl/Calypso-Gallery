@@ -86,7 +86,7 @@
         android:textColor="#E4E4E7"
         android:textSize="11.5sp"
         app:drawableTint="#FAFAFA"
-        app:drawableTopCompat="@drawable/ic_onboarding_vault_lock"
+        app:drawableTopCompat="@drawable/ic_encrypt_calypso_vector"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/bottom_delete"
         app:layout_constraintStart_toEndOf="@+id/bottom_edit"

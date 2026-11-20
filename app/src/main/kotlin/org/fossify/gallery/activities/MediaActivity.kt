@@ -9,6 +9,7 @@ import android.os.Handler
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
@@ -71,7 +72,7 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
-import org.fossify.gallery.extensions.enableScrollAway
+import org.fossify.gallery.extensions.keepHeaderPinned
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
@@ -619,6 +620,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this@MediaActivity, mPath)
         binding.mediaMenu.requireToolbar().menu.apply {
+            // Albums keep only the magnifier and overflow in the bar; sorting moves into overflow.
+            findItem(R.id.sort).setShowAsAction(
+                if (mShowAll) MenuItem.SHOW_AS_ACTION_ALWAYS else MenuItem.SHOW_AS_ACTION_NEVER
+            )
             findItem(R.id.group).isVisible = !config.scrollHorizontally
 
             findItem(R.id.empty_recycle_bin).isVisible = mPath == RECYCLE_BIN || isVaultRecycleBin
@@ -657,6 +662,16 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             searchQueryChanged(text)
             updateAlbumHeader()
             binding.mediaRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
+        }
+
+        // The album header turns into the search field; refresh its visibility on both transitions.
+        binding.mediaMenu.onSearchOpenListener = {
+            applyToolbarMode()
+            updateAlbumHeader()
+        }
+        binding.mediaMenu.onSearchClosedListener = {
+            applyToolbarMode()
+            updateAlbumHeader()
         }
 
         binding.mediaMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->
@@ -716,15 +731,15 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
-        binding.mediaMenu.enableScrollAway()
+        binding.mediaMenu.keepHeaderPinned()
         applyToolbarMode()
         updateAlbumHeader()
     }
 
     /**
-     * Album views use a clean, fixed header (back arrow + title + count + sort/more actions)
-     * like the store screenshot. All-files views keep the regular search bar, which is also
-     * pinned to the top instead of scrolling away.
+     * Album views use a clean, fixed header: back arrow + title/count, a magnifier that opens
+     * the in-place search bar, and overflow (Sort now lives there). All-files views keep the
+     * regular search bar. Both headers are pinned to the top instead of scrolling away.
      */
     private fun applyToolbarMode() {
         val palette = AppearanceManager.resolve(this, config)
@@ -758,9 +773,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }
 
         val header = albumToolbarHeader()
-        searchField?.beVisibleIf(mShowAll)
+        val isSearchOpen = binding.mediaMenu.isSearchOpen
+        searchField?.beVisibleIf(mShowAll || isSearchOpen)
         searchIcon?.beVisibleIf(mShowAll)
-        header.beVisibleIf(!mShowAll)
+        header.beVisibleIf(!mShowAll && !isSearchOpen)
 
         // The custom header provides its own back button. Suppress MySearchMenu's navigation
         // icon so we never end up with two arrows, and clear the stock title/subtitle so the
@@ -775,7 +791,16 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             header.findViewById<TextView>(R.id.album_toolbar_subtitle).setTextColor(palette.secondary)
             header.findViewById<ImageButton>(R.id.album_toolbar_back).imageTintList =
                 ColorStateList.valueOf(palette.text)
-            toolbarContainer?.background = null
+            // Same drawable and tint as the main screen magnifier.
+            header.findViewById<ImageButton>(R.id.album_toolbar_search).apply {
+                imageTintList = ColorStateList.valueOf(palette.text)
+                setOnClickListener { binding.mediaMenu.isSearchOpen = true }
+            }
+            if (isSearchOpen) {
+                binding.mediaMenu.applyCalypsoSearchBarStyle()
+            } else {
+                toolbarContainer?.background = null
+            }
         }
 
         toolbar.requestLayout()
@@ -914,7 +939,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateAlbumHeader() {
         // The album title now lives in the fixed toolbar, so the in-grid header is no longer used.
         binding.mediaAlbumHeader.beGone()
-        val shouldShow = !mShowAll && mCurrentAlbumDisplayName.isNotEmpty() && mLastSearchedText.isEmpty()
+        val shouldShow = !mShowAll && mCurrentAlbumDisplayName.isNotEmpty() && mLastSearchedText.isEmpty() &&
+            !binding.mediaMenu.isSearchOpen
         val header = albumToolbarHeader()
         val titleView = header.findViewById<TextView>(R.id.album_toolbar_title)
         val subtitleView = header.findViewById<TextView>(R.id.album_toolbar_subtitle)

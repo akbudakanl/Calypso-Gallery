@@ -102,6 +102,7 @@ import org.fossify.gallery.dialogs.RenameEncryptedItemDialog
 import org.fossify.gallery.dialogs.SaveAsDialog
 import org.fossify.gallery.dialogs.SlideshowDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
+import org.fossify.gallery.extensions.applyBottomActionLabelVisibility
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.promptVaultUnlock
@@ -130,6 +131,7 @@ import org.fossify.gallery.extensions.openPath
 import org.fossify.gallery.extensions.restoreRecycleBinPath
 import org.fossify.gallery.extensions.saveRotatedImageToFile
 import org.fossify.gallery.extensions.setAs
+import org.fossify.gallery.extensions.setBottomActionLabel
 import org.fossify.gallery.extensions.shareMediumPath
 import org.fossify.gallery.extensions.showFileOnMap
 import org.fossify.gallery.extensions.showSystemUI
@@ -1255,6 +1257,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     private fun initBottomActionsLayout() {
         binding.bottomActions.root.animate().cancel()
+        binding.bottomActions.root.applyBottomActionLabelVisibility(config.showBottomActionNames)
         if (shouldShowBottomActions() && !mIsFullScreen) {
             binding.bottomActions.root.alpha = 1f
             binding.bottomActions.root.beVisible()
@@ -1422,10 +1425,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
-    private fun setBottomActionIcon(view: android.widget.TextView, iconRes: Int) {
+    private fun setBottomActionIcon(view: android.widget.TextView, iconRes: Int, sizeDp: Float = 24f) {
         val drawable = androidx.core.content.ContextCompat.getDrawable(this, iconRes)?.mutate()
         drawable?.setTint(Color.WHITE)
-        val sizePx = (24f * resources.displayMetrics.density).toInt()
+        val sizePx = (sizeDp * resources.displayMetrics.density).toInt()
         drawable?.setBounds(0, 0, sizePx, sizePx)
         view.setCompoundDrawablesRelative(null, drawable, null, null)
     }
@@ -1440,9 +1443,16 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         setBottomActionIcon(binding.bottomActions.bottomFavorite, favoriteIcon)
 
         val isHidden = medium.isHidden()
-        val hideIcon = if (isHidden) org.fossify.commons.R.drawable.ic_unhide_vector else R.drawable.ic_onboarding_vault_lock
-        setBottomActionIcon(binding.bottomActions.bottomToggleFileVisibility, hideIcon)
-        binding.bottomActions.bottomToggleFileVisibility.setText(if (isHidden) R.string.decrypt else R.string.encrypt)
+        val hideIcon = if (isHidden) org.fossify.commons.R.drawable.ic_unhide_vector else R.drawable.ic_encrypt_calypso_vector
+        setBottomActionIcon(
+            binding.bottomActions.bottomToggleFileVisibility,
+            hideIcon,
+            if (isHidden) 24f else 28f
+        )
+        binding.bottomActions.bottomToggleFileVisibility.setBottomActionLabel(
+            getString(if (isHidden) R.string.decrypt else R.string.encrypt),
+            config.showBottomActionNames
+        )
 
         binding.bottomActions.bottomRotate.beVisibleIf(
             getVisibleBottomActions() and BOTTOM_ACTION_ROTATE != 0 && getCurrentMedium()?.isImage() == true

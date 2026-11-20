@@ -159,6 +159,7 @@ class SettingsActivity : SimpleActivity() {
         setupScrollHorizontally()
         setupScreenRotation()
         setupHideSystemUI()
+        setupShowBottomActionNames()
 
 
         setupExcludedItemPasswordProtection()
@@ -730,6 +731,14 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsHideSystemUiHolder.setOnClickListener {
             binding.settingsHideSystemUi.toggle()
             config.hideSystemUI = binding.settingsHideSystemUi.isChecked
+        }
+    }
+
+    private fun setupShowBottomActionNames() {
+        binding.settingsShowBottomActionNames.isChecked = config.showBottomActionNames
+        binding.settingsShowBottomActionNamesHolder.setOnClickListener {
+            binding.settingsShowBottomActionNames.toggle()
+            config.showBottomActionNames = binding.settingsShowBottomActionNames.isChecked
         }
     }
 
@@ -1952,6 +1961,7 @@ class SettingsActivity : SimpleActivity() {
                 put(ALLOW_BATCH_RENAMING, config.allowBatchRenaming)
                 put(BOTTOM_ACTIONS, config.bottomActions)
                 put(VISIBLE_BOTTOM_ACTIONS, config.visibleBottomActions)
+                put(SHOW_BOTTOM_ACTION_NAMES, config.showBottomActionNames)
                 put(USE_RECYCLE_BIN, config.useRecycleBin)
                 put(SHOW_RECYCLE_BIN_AT_FOLDERS, config.showRecycleBinAtFolders)
                 put(SHOW_RECYCLE_BIN_LAST, config.showRecycleBinLast)
@@ -2118,6 +2128,7 @@ class SettingsActivity : SimpleActivity() {
                 ALLOW_BATCH_RENAMING -> config.allowBatchRenaming = value.toBoolean()
                 BOTTOM_ACTIONS -> config.bottomActions = value.toBoolean()
                 VISIBLE_BOTTOM_ACTIONS -> config.visibleBottomActions = value.toInt()
+                SHOW_BOTTOM_ACTION_NAMES -> config.showBottomActionNames = value.toBoolean()
                 USE_RECYCLE_BIN -> config.useRecycleBin = value.toBoolean()
                 SHOW_RECYCLE_BIN_AT_FOLDERS -> config.showRecycleBinAtFolders = value.toBoolean()
                 SHOW_RECYCLE_BIN_LAST -> config.showRecycleBinLast = value.toBoolean()

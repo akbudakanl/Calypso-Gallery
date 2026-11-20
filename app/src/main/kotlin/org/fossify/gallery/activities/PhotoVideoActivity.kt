@@ -45,6 +45,7 @@ import org.fossify.commons.helpers.isRPlus
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.FragmentHolderBinding
+import org.fossify.gallery.extensions.applyBottomActionLabelVisibility
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.isPathHiddenOrEncrypted
 import org.fossify.gallery.extensions.config
@@ -374,6 +375,7 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
     }
 
     private fun initBottomActionsLayout() {
+        binding.bottomActions.root.applyBottomActionLabelVisibility(config.showBottomActionNames)
         if (config.bottomActions) {
             binding.bottomActions.root.beVisible()
         } else {
