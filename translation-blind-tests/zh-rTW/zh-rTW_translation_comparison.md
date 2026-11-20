@@ -944,25 +944,25 @@ Added/updated in `values-zh-rTW/strings.xml`. The reminder is shown in-app when 
 | 3 | `vault_password_reminder_weeks` | %d weeks | %d 遁 |  |
 | 4 | `vault_password_reminder_months` | %d months | %d 個月 |  |
 | 5 | `vault_password_reminder_dialog_title` | Reminder interval | 提醒間隔 |  |
-| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | 如果這段期間內没有使用密碼開啟加密保险箱，我國會提醒您。 |  |
-| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | 我國會定期傳送提醒，以免您忘記密碼。您可以在「設定 → 加密保险箱 → 定期提醒我的密碼」中關閉。 |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | 如果這段期間內没有使用密碼開啟加密保險箱，我國會提醒您。 |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | 我國會定期傳送提醒，以免您忘記密碼。您可以在「設定 → 加密保險箱 → 定期提醒我的密碼」中關閉。 |  |
 | 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | 若您選擇使用生物辨識登入，請記得您仍需要知道密碼。 |  |
 | 9 | `vault_password_saved_title` | Have you saved your password? | 您已儲存密碼了嗎？ |  |
-| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | 若忘記密碼，您將永久失去加密保险箱的存取標。請在繼續前確認已將密碼儲存在某處，建議使用密碼管理器。 |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | 若忘記密碼，您將永久失去加密保險箱的存取標。請在繼續前確認已將密碼儲存在某處，建議使用密碼管理器。 |  |
 | 11 | `vault_password_saved_confirm` | Yes, I saved it | 是，我已儲存 |  |
 | 12 | `vault_password_saved_later` | I will save it | 我會儲存 |  |
-| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | 您還記得保险箱密碼嗎？ |  |
-| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | 這段期間內您没有使用密碼開啟加密保险箱。密碼是復原保险箱的唯一方法。 |  |
+| 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | 您還記得保險箱密碼嗎？ |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | 這段期間內您没有使用密碼開啟加密保險箱。密碼是復原保險箱的唯一方法。 |  |
 | 15 | `vault_password_reminder_verify_title` | Confirm your password | 確認您的密碼 |  |
-| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | 這不是解鎖保险箱，我國只是想確認您仍記得密碼。 |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | 這不是解鎖保險箱，我國只是想確認您仍記得密碼。 |  |
 | 17 | `vault_password_reminder_verified` | Password confirmed | 密碼已確認 |  |
 | 18 | `vault_password_reminder_not_now` | Not now | 稍後再說 |  |
 | 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | 不記得密碼了嗎？ |  |
-| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | 請先用生物辨識解鎖保险箱，汇出加密資料，然後使用「設定 → 重設加密保险箱」設定新密碼並還原資料。若生物辨識也無法解鎖，則無法存取保险箱。 |  |
+| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | 請先用生物辨識解鎖保險箱，汇出加密資料，然後使用「設定 → 重設加密保險箱」設定新密碼並還原資料。若生物辨識也無法解鎖，則無法存取保險箱。 |  |
 | 21 | `vault_password_reminder_verify_action` | Verify my password | 確認我的密碼 |  |
 | 22 | `vault_password_reminder_forgot_action` | I don't remember | 我不記得了 |  |
 | 23 | `vault_password_reminder_open_settings` | Open settings | 開啟設定 |  |
-| 24 | `empty_encrypted_vault` | Reset encrypted vault | 重設加密保险箱 | Renamed label |
+| 24 | `empty_encrypted_vault` | Reset encrypted vault | 重設加密保險箱 | Renamed label |
 
 ## Existing Vault Time Recalculation (this revision)
 
