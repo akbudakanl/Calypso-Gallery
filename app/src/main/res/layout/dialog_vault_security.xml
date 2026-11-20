@@ -236,49 +236,72 @@
     </LinearLayout>
 
     <!-- Full Alphanumeric Password View (PROTECTION_PASSWORD = 3) -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/vault_password_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
         android:visibility="gone">
 
-        <org.fossify.commons.views.MyTextInputLayout
-            android:id="@+id/vault_password_input_layout"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:importantForAutofill="noExcludeDescendants"
-            app:endIconMode="password_toggle">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/vault_password_input"
-                android:layout_width="match_parent"
+            <org.fossify.commons.views.MyTextInputLayout
+                android:id="@+id/vault_password_input_layout"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textCursorDrawable="@drawable/vault_text_cursor"
-                android:imeOptions="actionDone|flagNoPersonalizedLearning"
-                android:importantForAutofill="no"
-                android:inputType="textPassword|textNoSuggestions"
-                android:maxLines="1"
-                android:singleLine="true" />
-        </org.fossify.commons.views.MyTextInputLayout>
+                android:layout_weight="1"
+                android:importantForAutofill="noExcludeDescendants"
+                app:endIconMode="password_toggle">
 
-        <!-- Fixed-width slot so the 44dp button centres in the space between the field and the screen edge. -->
-        <FrameLayout
-            android:layout_width="80dp"
-            android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/vault_password_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textCursorDrawable="@drawable/vault_text_cursor"
+                    android:imeOptions="actionDone|flagNoPersonalizedLearning"
+                    android:importantForAutofill="no"
+                    android:inputType="textPassword|textNoSuggestions"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+            </org.fossify.commons.views.MyTextInputLayout>
 
-            <org.fossify.commons.views.MyButton
-                android:id="@+id/vault_password_ok_btn"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_gravity="center"
-                android:text="✓"
-                android:textSize="20sp" />
-        </FrameLayout>
-    </LinearLayout>
+            <!-- Fixed-width slot so the 44dp button centres in the space between the field and the screen edge. -->
+            <FrameLayout
+                android:layout_width="80dp"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyButton
+                    android:id="@+id/vault_password_ok_btn"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/ok" />
+
+                <!-- A vector icon is geometrically centred; the "✓" glyph sits low in the font box. -->
+                <ImageView
+                    android:id="@+id/vault_password_ok_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:src="@drawable/ic_onboarding_check" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- Same left-to-right shutter sweep as the PIN dots, overlaid on the password field. -->
+        <View
+            android:id="@+id/vault_unlock_sweep_password"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_gravity="center_vertical"
+            android:background="@drawable/vault_unlock_sweep"
+            android:visibility="invisible" />
+    </FrameLayout>
 
     <!-- Guidance only: shown while creating a vault so the chosen secret can be assessed. -->
     <LinearLayout

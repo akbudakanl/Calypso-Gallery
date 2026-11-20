@@ -155,7 +155,7 @@ class VaultAuthInputHelper(
             )
         }
 
-        // Confirm buttons: high-contrast primary rounded squares with a centred text checkmark.
+        // Confirm buttons: high-contrast primary rounded squares with a centred checkmark.
         listOf(
             binding.pinOk to cornerRadiusPx,
             binding.vaultPasswordOkBtn to 12f * density
@@ -177,9 +177,17 @@ class VaultAuthInputHelper(
                 }
                 btn.background = RippleDrawable(primaryRipple, content, mask)
             }
-            // The ✓ glyph sits low in the font box; 2px bottom padding lifts it ~1px to centre it.
-            btn.setPadding(btn.paddingLeft, btn.paddingTop, btn.paddingRight, btn.paddingBottom + 2)
         }
+
+        // The PIN key's "✓" glyph sits low in the font box; a little bottom padding lifts it.
+        // The password key uses a vector icon overlaid on the button, which is centred exactly.
+        binding.pinOk.setPadding(
+            binding.pinOk.paddingLeft,
+            binding.pinOk.paddingTop,
+            binding.pinOk.paddingRight,
+            binding.pinOk.paddingBottom + 2
+        )
+        binding.vaultPasswordOkIcon.imageTintList = primaryButtonTextColors
 
         // Legacy bullet dots inherit the fullscreen dialog's white text color; tie it to the theme.
         binding.vaultPinDotsLegacy.setTextColor(palette.text)
@@ -314,6 +322,11 @@ class VaultAuthInputHelper(
         binding.vaultPasswordOkBtn.setOnClickListener {
             submitPassword(onPasswordSubmit)
         }
+        binding.vaultPasswordInput.setOnClickListener {
+            // The IME is deliberately left closed when the prompt appears so the biometric
+            // button stays visible; open it only when the user taps the password field.
+            activity.showKeyboard(binding.vaultPasswordInput)
+        }
         binding.vaultPasswordInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_NULL) {
                 submitPassword(onPasswordSubmit)
@@ -356,13 +369,10 @@ class VaultAuthInputHelper(
 
     fun focusPasswordInput(window: Window?) {
         window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
-        // Do not force the IME on every window resume (background / screen-off return): it would
-        // cover the biometric button. The initial entry below still shows it explicitly.
+        // Keep the IME closed when the prompt is (re)shown. On a background / screen-off return
+        // an auto-opened keyboard covers the biometric button. The user either taps the biometric
+        // option or taps the password field, which shows the keyboard (see setupPasswordInput).
         window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
-        binding.vaultPasswordInput.postDelayed({
-            binding.vaultPasswordInput.requestFocus()
-            activity.showKeyboard(binding.vaultPasswordInput)
-        }, 100)
     }
 
     fun clearInputs() {

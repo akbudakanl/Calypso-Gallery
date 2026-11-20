@@ -224,12 +224,15 @@ class VaultLockActivity : SimpleActivity() {
         haloPulseAnimator = null
         binding.vaultLockBackBtn.isEnabled = false
         val securityBinding = binding.vaultSecurityContent
+        val isPassword = currentType == PROTECTION_PASSWORD
         securityBinding.vaultUnlockSweep.visibility = View.INVISIBLE
+        securityBinding.vaultUnlockSweepPassword.visibility = View.INVISIBLE
         val animator = VaultShutterAnimator(
             lock = securityBinding.vaultUnlockEmblem,
-            dots = securityBinding.vaultPinDots,
-            sweep = securityBinding.vaultUnlockSweep,
-            panel = binding.vaultLockContainer
+            dots = if (isPassword) null else securityBinding.vaultPinDots,
+            sweep = if (isPassword) securityBinding.vaultUnlockSweepPassword else securityBinding.vaultUnlockSweep,
+            panel = binding.vaultLockContainer,
+            pulseView = if (isPassword) securityBinding.vaultPasswordInputLayout else null
         )
         shutterAnimator = animator
         animator.play {

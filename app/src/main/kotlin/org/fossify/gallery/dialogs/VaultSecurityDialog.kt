@@ -23,6 +23,7 @@ import com.google.android.material.tabs.TabLayout
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.beInvisible
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.toast
@@ -158,8 +159,8 @@ class VaultSecurityDialog(
                 BruteForceDialog.show(activity) { refreshBruteForceLabel() }
             }
 
-            // Strength guidance: local-only estimate, never blocks vault creation. The holder
-            // stays hidden until the first character, so no empty track/line is ever visible.
+            // Strength guidance: local-only estimate, never blocks vault creation. The row keeps
+            // its space so nothing moves; only the bar/label appear after the first character.
             val strengthRadius = 3f * density
             val track = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
@@ -178,12 +179,20 @@ class VaultSecurityDialog(
                 setId(1, android.R.id.progress)
             }
             binding.vaultStrengthLabel.setTextColor(palette.secondary)
+            // Reserve the strength row's space up front. Only its contents toggle between invisible
+            // and visible: the first character reveals the bar without changing the form's height,
+            // so the PIN keys and the brute-force row never shift position.
+            binding.vaultStrengthHolder.beVisible()
+            binding.vaultStrengthBar.beInvisible()
+            binding.vaultStrengthLabel.beInvisible()
             fun refreshStrength(secret: CharArray, isPin: Boolean) {
                 if (secret.isEmpty()) {
-                    binding.vaultStrengthHolder.beGone()
+                    binding.vaultStrengthBar.beInvisible()
+                    binding.vaultStrengthLabel.beInvisible()
                     return
                 }
-                binding.vaultStrengthHolder.beVisible()
+                binding.vaultStrengthBar.beVisible()
+                binding.vaultStrengthLabel.beVisible()
                 val result = VaultPasswordStrength.evaluate(secret, isPin)
                 binding.vaultStrengthBar.progress = result.score
                 binding.vaultStrengthLabel.text = activity.getString(
@@ -522,12 +531,15 @@ class VaultSecurityDialog(
         setDialogBusy(true)
         haloPulseAnimator?.cancel()
         haloPulseAnimator = null
+        val isPassword = currentType == PROTECTION_PASSWORD
         binding.vaultUnlockSweep.visibility = View.INVISIBLE
+        binding.vaultUnlockSweepPassword.visibility = View.INVISIBLE
         val animator = VaultShutterAnimator(
             lock = binding.vaultUnlockEmblem,
-            dots = binding.vaultPinDots,
-            sweep = binding.vaultUnlockSweep,
-            panel = binding.root
+            dots = if (isPassword) null else binding.vaultPinDots,
+            sweep = if (isPassword) binding.vaultUnlockSweepPassword else binding.vaultUnlockSweep,
+            panel = binding.root,
+            pulseView = if (isPassword) binding.vaultPasswordInputLayout else null
         )
         shutterAnimator = animator
         animator.play {

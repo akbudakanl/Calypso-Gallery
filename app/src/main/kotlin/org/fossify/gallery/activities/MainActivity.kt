@@ -1101,11 +1101,22 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             // Keep this generation marked as an in-flight cold load so a pull-to-refresh does not
             // abort it and restart the scan from scratch (which made refresh appear broken).
             mActiveInitialScanGeneration = generation
-            getCachedDirectories(getVideos && !getImages, getImages && !getVideos, includeVirtualAlbums = true, isSecretVaultView = mIsSecretVaultView) {
+            getCachedDirectories(getVideos && !getImages, getImages && !getVideos, includeVirtualAlbums = true, isSecretVaultView = mIsSecretVaultView) { cachedDirs ->
                 if (generation != mFetchGeneration.get() || isDestroyed || isFinishing) {
                     return@getCachedDirectories
                 }
-                gotDirectories(addTempFolderIfNeeded(it), generation, prioritySet, isIncremental = false, forceRepair = forceRepair)
+                // The persisted cache can lag behind what is already on screen: opening an album
+                // cancels an in-flight scan before its DB insert, so a later cold load can deliver
+                // only virtual albums. Keep the regular albums we have already rendered so the
+                // first dispatch is complete instead of showing a virtual-only flash first.
+                val mergedDirs = ArrayList(cachedDirs)
+                val knownPaths = mergedDirs.mapTo(HashSet()) { it.path.getDistinctPath() }
+                mDirs.filterNot { it.isVirtualAlbum() }.forEach { dir ->
+                    if (knownPaths.add(dir.path.getDistinctPath())) {
+                        mergedDirs.add(dir.copy())
+                    }
+                }
+                gotDirectories(addTempFolderIfNeeded(mergedDirs), generation, prioritySet, isIncremental = false, forceRepair = forceRepair)
             }
         } else {
             val currentDirsSnapshot = mDirs.map { it.copy() } as ArrayList<Directory>

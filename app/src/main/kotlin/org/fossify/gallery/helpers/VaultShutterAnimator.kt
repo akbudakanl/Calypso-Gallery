@@ -14,17 +14,18 @@ import org.fossify.gallery.views.VaultShutterLockView
 /**
  * "Shutter" unlock feedback, matching the approved motion prototype:
  *  1. the lock shackle lifts with a spring while the emblem glows,
- *  2. PIN dots pulse one after another,
- *  3. a light sweep confirms the digits,
+ *  2. PIN dots pulse one after another (the password field pulses for alphanumeric secrets),
+ *  3. a light sweep confirms the entry,
  *  4. the credential panel slides up and the caller opens the vault.
  *
  * Every step is skipped (and [onComplete] invoked immediately) when system animations are off.
  */
 class VaultShutterAnimator(
     private val lock: VaultShutterLockView,
-    private val dots: VaultPinDotsView,
+    private val dots: VaultPinDotsView?,
     private val sweep: View,
-    private val panel: View
+    private val panel: View,
+    private val pulseView: View? = null
 ) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val running = mutableListOf<Animator>()
@@ -52,8 +53,23 @@ class VaultShutterAnimator(
             addUpdateListener { lock.glow = it.animatedValue as Float }
         })
 
-        // 2 — staggered dot pulses (70-450 ms)
-        repeat(dots.slotCount) { index -> post(70L * index) { dots.pulseDot(index) } }
+        // 2 — staggered dot pulses for PIN; a single field pulse for alphanumeric passwords
+        if (dots != null) {
+            repeat(dots.slotCount) { index -> post(70L * index) { dots.pulseDot(index) } }
+        } else {
+            pulseView?.let { field ->
+                post(70L) {
+                    track(ObjectAnimator.ofFloat(field, "scaleX", 1f, 1.05f, 1f).apply {
+                        duration = 520L
+                        interpolator = DecelerateInterpolator()
+                    })
+                    track(ObjectAnimator.ofFloat(field, "scaleY", 1f, 1.05f, 1f).apply {
+                        duration = 520L
+                        interpolator = DecelerateInterpolator()
+                    })
+                }
+            }
+        }
 
         // 3 — light sweep across the dots (380-900 ms)
         sweep.alpha = 0f
