@@ -212,6 +212,7 @@
     <string name="all_files">Alle filer</string>
     <string name="main_screen_view_on_launch">Hovedskjermvisning ved oppstart</string>
     <string name="show_folders">Vis mapper</string>
+    <string name="show_albums">Vis album</string>
     <string name="show_files">Vis filer</string>
     <string name="show_all_folders">Vis en menyknapp for å raskt slå av/på \"Vis alle mappers innhold\"</string>
     <string name="thumbnails">Minibilder</string>

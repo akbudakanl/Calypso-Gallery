@@ -217,6 +217,7 @@
     <string name="all_files">所有檔案</string>
     <string name="main_screen_view_on_launch">啟動時的主畫面檢視</string>
     <string name="show_folders">顯示資料夾</string>
+    <string name="show_albums">顯示相簿</string>
     <string name="show_files">顯示檔案</string>
     <string name="show_all_folders">顯示一個選單按鈕，快速切換「顯示所有資料夾內容」</string>
     <string name="thumbnails">縮圖</string>

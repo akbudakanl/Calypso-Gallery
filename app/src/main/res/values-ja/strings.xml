@@ -208,6 +208,7 @@
     <string name="all_files">すべてのファイル</string>
     <string name="main_screen_view_on_launch">起動時のメイン画面表示</string>
     <string name="show_folders">フォルダーを表示</string>
+    <string name="show_albums">アルバムを表示</string>
     <string name="show_files">ファイルを表示</string>
     <string name="show_all_folders">「すべてを表示」を素早く切り替えるためのメニューボタンを表示</string>
     <string name="thumbnails">サムネイル設定</string>

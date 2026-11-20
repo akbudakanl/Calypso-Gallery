@@ -238,6 +238,7 @@
     <string name="all_files">Todos los archivos</string>
     <string name="main_screen_view_on_launch">Vista de la pantalla principal al iniciar</string>
     <string name="show_folders">Mostrar carpetas</string>
+    <string name="show_albums">Mostrar álbumes</string>
     <string name="show_files">Mostrar archivos</string>
     <string name="show_all_folders">Mostrar un botón de menú para ver rápidamente el contenido de todas las carpetas</string>
     <string name="thumbnails">Miniaturas</string>

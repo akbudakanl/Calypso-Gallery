@@ -1,12 +1,13 @@
 # Japanese (values-ja) Translation Completion & English 1-to-1 Comparison
 
-## New fork string - bottom action names (1 key)
+## New fork strings - bottom action bar and view switch (2 keys)
 
 Added to `values-ja/strings.xml`. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
 |--:|---|---|---|---|
 | 1 | `show_bottom_action_names` | Show action names in the bottom action bar | 下部アクションバーにアクション名を表示 | Fullscreen media setting, default ON |
+| 2 | `show_albums` | Show albums | アルバムを表示 | Files-view overflow item that returns to the album view |
 
 ## ADR 0003 — resumable file operations (7 new keys)
 

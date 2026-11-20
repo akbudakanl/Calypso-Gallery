@@ -249,6 +249,7 @@
     <string name="all_files">Tüm dosyalar</string>
     <string name="main_screen_view_on_launch">Açılışta ana ekran görünümü</string>
     <string name="show_folders">Klasörleri göster</string>
+    <string name="show_albums">Albümleri göster</string>
     <string name="show_files">Dosyaları göster</string>
     <string name="show_all_folders">Tüm Klasör İçeriğini Göster seçeneğini hızlıca değiştirmek için bir menü düğmesi göster</string>
     <string name="thumbnails">Küçük resimler</string>

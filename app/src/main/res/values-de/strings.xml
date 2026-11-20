@@ -215,6 +215,7 @@
     <string name="all_files">Alle Dateien</string>
     <string name="main_screen_view_on_launch">Hauptbildschirm-Ansicht beim Start</string>
     <string name="show_folders">Ordner anzeigen</string>
+    <string name="show_albums">Alben anzeigen</string>
     <string name="show_files">Dateien anzeigen</string>
     <string name="show_all_folders">Menüschaltfläche einblenden für schnelles Umschalten „Alle Ordnerinhalte anzeigen“</string>
     <string name="thumbnails">Vorschaubilder</string>

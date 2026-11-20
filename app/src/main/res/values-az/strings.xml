@@ -258,6 +258,7 @@
     <string name="all_files">Bütün fayllar</string>
     <string name="main_screen_view_on_launch">Açılışda əsas ekran görünüşü</string>
     <string name="show_folders">Qovluqları göstər</string>
+    <string name="show_albums">Albomları göstər</string>
     <string name="show_files">Faylları göstər</string>
     <string name="show_all_folders">Bütün qovluqların məzmununu göstər seçimini tez dəyişmək üçün menyu düyməsini göstər</string>
 

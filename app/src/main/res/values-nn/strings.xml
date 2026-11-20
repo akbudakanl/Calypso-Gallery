@@ -258,6 +258,7 @@
     <string name="all_files">Alle filer</string>
     <string name="main_screen_view_on_launch">Hovudskjermsyning ved oppstart</string>
     <string name="show_folders">Syn mapper</string>
+    <string name="show_albums">Vis album</string>
     <string name="show_files">Syn filer</string>
     <string name="show_all_folders">Syn ein menyknapp for raskt å slå av/på \"Syn innhaldet i alle mapper\"</string>
 
