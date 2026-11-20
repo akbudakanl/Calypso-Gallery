@@ -786,7 +786,13 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         val header = albumToolbarHeader()
         val isSearchOpen = binding.mediaMenu.isSearchOpen
-        searchField?.beVisibleIf(mShowAll || isSearchOpen)
+        // MySearchMenu opens search when this field gains focus, so it must stay focusable even
+        // while the album header is showing. GONE blocks focus; INVISIBLE does not.
+        if (mShowAll || isSearchOpen) {
+            searchField?.beVisible()
+        } else {
+            searchField?.visibility = View.INVISIBLE
+        }
         // The stock icon becomes the back arrow while searching, so keep it available to close.
         searchIcon?.beVisibleIf(mShowAll || isSearchOpen)
         header.beVisibleIf(!mShowAll && !isSearchOpen)
