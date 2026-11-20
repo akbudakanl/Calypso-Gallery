@@ -153,7 +153,10 @@ class VaultAuthInputHelper(
         }
 
         // Confirm buttons: high-contrast primary rounded squares with a centred text checkmark.
-        listOf(binding.pinOk to cornerRadiusPx, binding.vaultPasswordOkBtn to cornerRadiusPx).forEach { (btn, radius) ->
+        listOf(
+            binding.pinOk to cornerRadiusPx,
+            binding.vaultPasswordOkBtn to 12f * density
+        ).forEach { (btn, radius) ->
             btn.setTextColor(primaryButtonTextColors)
             val content = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
