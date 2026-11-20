@@ -56,6 +56,18 @@ data class AppearancePalette(
 
         /** Build a coherent palette from the four user-editable Custom colors. */
         fun fromCustom(text: Int, background: Int, primary: Int, secondary: Int, appIcon: Int): AppearancePalette {
+            // Seeding Custom from a built-in mode copies the preset's final colors into the raw
+            // custom fields. Deriving surface/border/secondary from those values would NOT reproduce
+            // the hand-tuned preset (dark mode got a low-contrast button because of this), so return
+            // the preset verbatim. Any real edit falls through to the derived palette below and is
+            // then correctly reported as an unsaved change.
+            if (secondary == 0 || secondary == LIGHT.secondary) {
+                if (text == LIGHT.text && background == LIGHT.background && primary == LIGHT.primary) return LIGHT
+            }
+            if (secondary == 0 || secondary == DARK.secondary) {
+                if (text == DARK.text && background == DARK.background && primary == DARK.primary) return DARK
+            }
+
             val surface = if (isLight(background)) {
                 ColorUtils.blendARGB(background, Color.WHITE, 0.55f)
             } else {
@@ -99,11 +111,11 @@ data class AppearancePalette(
             contrastRatio(color, Color.WHITE) < contrastRatio(color, Color.BLACK)
 
         private fun contrastText(background: Int): Int = if (
-            contrastRatio(Color.WHITE, background) >= contrastRatio(DARK.text, background)
+            contrastRatio(Color.WHITE, background) >= contrastRatio(Color.BLACK, background)
         ) {
             Color.WHITE
         } else {
-            DARK.text
+            Color.BLACK
         }
 
         private fun shiftHue(color: Int, degrees: Float): Int {

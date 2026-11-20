@@ -262,6 +262,7 @@ class AppearanceActivity : SimpleActivity() {
         config.customTextColor = active.text
         config.customBackgroundColor = active.background
         config.customPrimaryColor = active.primary
+        config.customAccentColor = active.secondary
         config.customAppIconColor = active.appIcon
     }
 
