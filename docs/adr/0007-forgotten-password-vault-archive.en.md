@@ -84,12 +84,16 @@ The "I don't remember" button in the reminder dialog opens `FaqActivity` directl
 > **Question:** "I forgot my encrypted vault password, what can I do?"
 >
 > 1. Unlock the vault with biometrics.
-> 2. Export your encrypted data.
+> 2. **Copy (export) your encrypted data.** This does not remove the vault from its place; the original stays where it is. You can open the copy on another device with "Use existing vault".
 > 3. Use Settings → Reset encrypted vault to set a new password and restore.
 >
-> **Warning:** If biometrics cannot unlock it either, the vault is inaccessible. You can create a new vault by **archiving** the current one, or permanently remove it by deleting the vault folder at *(its location)* with a file manager.
+> **Warning:** If biometrics cannot unlock it either, the vault is inaccessible. You have three options (least destructive first):
+>
+> - Create a new vault by **archiving** the current one — the old vault is preserved on this device; you can return to it if you remember the password.
+> - **Copy (export) your encrypted data** — for use on another device; **copying is not moving**, the original stays in place.
+> - **Permanently remove the vault** — delete the vault folder at *(its location)* with a file manager. This cannot be undone.
 
-*archiving* is a clickable link (`SpannableString`/`ClickableSpan` in FaqActivity or a target extra for SettingsActivity) leading to the **Archive vault** setting. *(its location)* is replaced with the dynamic path from §8; no hardcoded path is printed.
+*archiving* and *copy (export)* are clickable links (`SpannableString`/`ClickableSpan` in FaqActivity or a target extra for SettingsActivity) leading to **Archive vault** and **Export encrypted vault** respectively. *(its location)* is replaced with the dynamic path from §8; no hardcoded path is printed. The option order is deliberate: the least destructive one comes first.
 
 ---
 
@@ -249,15 +253,16 @@ These two operations must not be confused:
 
 | | **Archiving** | **Export encrypted vault** |
 |---|---|---|
-| Purpose | Keep the old vault on this device | Move the vault to another device / desktop CLI |
+| Purpose | Keep the old vault on this device | **Copy** the vault to another device / desktop CLI |
 | Location | `Calypso Gallery/Archive/<random-id>` | User-selected folder or external disk |
+| Source vault | **Moved** — the original location is vacated | **Copied** — the original stays in place |
 | Encryption | Preserved | Preserved |
 | Opened from | "Select from archived vaults" on this device | "Use existing vault" on the target device |
-| Password | Required | Required |
+| Password | Required (vault opens with its own password) | **Not required** (§9.1) |
 
 If the user's goal is **"use the vault on another device"**, the correct path is **export**; archiving does not serve that purpose. Archiving is only for "if I remember the password later on this device, I want to go back".
 
-FAQ step 2 ("Export your encrypted data") explains exactly this distinction. The archival confirmation dialog also reminds: *"If you want to use the vault on another device, use Settings → Export encrypted vault."*
+FAQ step 2 ("**Copy (export)** your encrypted data") explains exactly this distinction. The archival confirmation dialog also reminds: *"If you want to use the vault on another device, use Settings → Export encrypted vault. This copies the files; your current vault stays where it is."*
 
 So the user never has to wonder "where did my old vault go?": **same device → archive, other device → export.**
 
@@ -274,7 +279,18 @@ The password / biometric / unlocked-vault requirement for export is **removed**.
 
 In-app export has **the same security level as copying with a file manager**; the app merely makes it convenient. This does not violate the axiom (no passwordless deletion): export is a **copy**, not a deletion or invalidation.
 
-Thanks to this change, FAQ step 2 ("Export your encrypted data") also works for a user who forgot the password — the vault does not need to be unlocked. The archive-vs-export distinction (§9) is preserved: same device → archive, other device → export.
+Thanks to this change, FAQ step 2 ("Copy (export) your encrypted data") also works for a user who forgot the password — the vault does not need to be unlocked. The archive-vs-export distinction (§9) is preserved: same device → archive, other device → export.
+
+### 9.2. Terminology: "export" means copying
+
+The word "export" gives users the impression of a **move**, while the operation is `copyTo` and the source vault stays in place. To remove the ambiguity:
+
+- Settings and FAQ use **"copy (export)"** rather than "export" alone.
+- The export confirmation states explicitly: *"Files will be copied; your current vault stays where it is."*
+- The comparison table (§9) has a **Source vault** row: archiving **moves**, export **copies**.
+- The existing "export" term in code/CLI/docs is kept (no large rename); **user-facing text emphasizes copying**.
+
+The three verbs are now distinct: **archive = move within this device**, **export = copy elsewhere**, **delete = permanent removal via file manager**.
 
 ---
 

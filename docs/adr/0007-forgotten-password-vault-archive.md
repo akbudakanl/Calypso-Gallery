@@ -86,12 +86,16 @@ Hatırlatma dialogundaki "Hatırlamıyorum", `FaqActivity`'yi ilgili maddeyi ön
 > **Soru:** "Şifreli kasanın parolasını unuttum, ne yapabilirim?"
 >
 > 1. Biyometrik ile kasaya giriş yapın.
-> 2. Şifreli verilerinizi dışa aktarın.
+> 2. Şifreli verilerinizi **kopyalayın (dışa aktarın)**. Bu işlem kasayı yerinden çıkarmaz; mevcut kasa olduğu yerde kalır. Kopyayı başka bir cihazda "Mevcut kasayı kullan" ile açabilirsiniz.
 > 3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola ve geri yükleme.
 >
-> **Uyarı:** Biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı **arşivleyerek** yeni bir kasa oluşturabilirsiniz veya bir dosya yöneticisi ile *(ait olduğu konum)* konumundaki şifreli kasa klasörünü silerek kasayı kalıcı olarak ortadan kaldırabilirsiniz.
+> **Uyarı:** Biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Üç seçeneğiniz vardır (güvenli olandan yıkıcı olana doğru):
+>
+> - Mevcut kasayı **arşivleyerek** yeni bir kasa oluşturun — eski kasa aynı cihazda korunur; parolanızı hatırlarsanız geri dönebilirsiniz.
+> - Şifreli verilerinizi **kopyalayın (dışa aktarın)** — başka bir cihazda kullanmak içindir; **kopyalama, taşıma değildir**, orijinal yerinde kalır.
+> - Kasayı **kalıcı olarak ortadan kaldırın** — *(ait olduğu konum)* konumundaki şifreli kasa klasörünü bir dosya yöneticisiyle silin. Bu işlem geri alınamaz.
 
-*arşivleyerek* ifadesi tıklanabilir bir bağlantıdır (FaqActivity içinde `SpannableString`/`ClickableSpan` ya da SettingsActivity'ye hedef extra ile) ve **Kasayı arşivle** ayarına götürür. *(ait olduğu konum)* ifadesi §8'deki dinamik yolla değiştirilir; sabit yol yazılmaz.
+*arşivleyerek* ve *kopyalayın (dışa aktarın)* ifadeleri tıklanabilir bağlantılardır (FaqActivity içinde `SpannableString`/`ClickableSpan` ya da SettingsActivity'ye hedef extra ile) ve sırasıyla **Kasayı arşivle** ile **Şifreli kasayı dışa aktar** ayarlarına götürür. *(ait olduğu konum)* ifadesi §8'deki dinamik yolla değiştirilir; sabit yol yazılmaz. Seçeneklerin sırası bilinçlidir: en az yıkıcı seçenek en üsttedir.
 
 ---
 
@@ -251,15 +255,16 @@ Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
 
 | | **Arşivleme** | **Şifreli kasayı dışa aktar** |
 |---|---|---|
-| Amaç | Bu cihazda eski kasayı saklamak | Kasayı başka cihaza / masaüstü CLI'a taşımak |
+| Amaç | Bu cihazda eski kasayı saklamak | Kasayı başka cihaza / masaüstü CLI'a **kopyalamak** |
 | Yer | `Calypso Gallery/Archive/<rastgele-id>` | Kullanıcının seçtiği klasör veya harici disk |
+| Kaynak kasa | **Taşınır** — orijinal konum boşalır | **Kopyalanır** — orijinal yerinde kalır |
 | Şifreleme | Korunur | Korunur |
 | Açılış | Bu cihazda "Arşivlenmiş kasalardan seç" | Hedef cihazda "Mevcut kasayı kullan" |
-| Parola | Gerekir | Gerekir |
+| Parola | Gerekir (kasa kendi parolasıyla açılır) | **Gerekmez** (§9.1) |
 
 Kullanıcının amacı **"kasayı başka cihazda kullanmaksa"** izlenmesi gereken yol **dışa aktarmadır**; arşivleme bu amaca hizmet etmez. Arşiv yalnızca "ileride bu cihazda parolamı hatırlarsam geri döneyim" içindir.
 
-SSS maddesindeki 2. adım ("Şifreli verilerinizi dışa aktarın") tam olarak bu ayrımı anlatır. Arşivleme onay dialogunda da şu hatırlatma yer alır: *"Başka bir cihazda kullanmak istiyorsanız Ayarlar → Şifreli kasayı dışa aktar seçeneğini kullanın."*
+SSS maddesindeki 2. adım ("Şifreli verilerinizi **kopyalayın (dışa aktarın)**") tam olarak bu ayrımı anlatır. Arşivleme onay dialogunda da şu hatırlatma yer alır: *"Başka bir cihazda kullanmak istiyorsanız Ayarlar → Şifreli kasayı dışa aktar seçeneğini kullanın. Bu işlem kopyalar; mevcut kasanız yerinde kalır."*
 
 Böylece kullanıcı "eski kasayı nereye koydum?" diye düşünmek zorunda kalmaz: **aynı cihaz → arşiv, başka cihaz → dışa aktar.**
 
@@ -277,6 +282,17 @@ Dışa aktarma için parola/biyometrik/açık kasa şartı **kaldırılır**. Ye
 Kalıcı dışa aktarma, dosya yöneticisiyle kopyalamayla **aynı güvenlik seviyesindedir**; uygulama sadece bunu kolaylaştırır. Bu, aksiyomu (parolasız silme yasağı) ihlal etmez: dışa aktarma silme veya geçersiz kılma değil, **kopyalamadır**.
 
 Bu değişiklik sayesinde SSS'teki 2. adım ("Şifreli verilerinizi dışa aktarın"), parolasını unutan kullanıcı için de çalışır — kasanın açılması gerekmez. Arşivleme ile dışa aktarma ayrımı (§9) korunur: aynı cihaz → arşiv, başka cihaz → dışa aktar.
+
+### 9.2. Terminoloji: "dışa aktar" bir kopyalamadır
+
+"Dışa aktar" ifadesi kullanıcıda **taşıma** izlenimi veriyor; oysa işlem `copyTo` ile kopyalamadır ve kaynak kasa yerinde kalır. Bu yanılgıyı gidermek için:
+
+- Ayar satırı ve SSS'te **"kopyala (dışa aktar)"** ifadesi kullanılır; yalnızca "dışa aktar" denmez.
+- Dışa aktarma onay metninde açıkça yazılır: *"Dosyalar kopyalanır; mevcut kasanız yerinde kalır."*
+- Arşivleme ile karşılaştırma tablosunda (§9) **kaynak kasa** satırı eklenir: arşivleme **taşır**, dışa aktarma **kopyalar**.
+- Mevcut arayüz/CLI/dokümantasyondaki "export" terimi korunur (büyük çaplı rename gerekmez); **kullanıcıya yönelik metinlerde kopyalama vurgulanır.**
+
+Böylece üç fiil net ayrılır: **arşivle = aynı cihazda taşı**, **dışa aktar = başka yere kopyala**, **sil = dosya yöneticisiyle kalıcı kaldır**.
 
 ---
 
