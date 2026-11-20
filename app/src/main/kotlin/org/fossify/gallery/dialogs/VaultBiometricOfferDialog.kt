@@ -30,8 +30,8 @@ object VaultBiometricOfferDialog {
         if (CryptoManager.readVaultKdfParams(activity) == null) return
 
         // No TEE/StrongBox (or no strong biometric enrolled): the app never uses biometrics here.
+        // Do not mark the offer as shown - a later creation on the same/other device re-checks.
         if (!CryptoManager.isBiometricHardwareAvailable(activity) || CryptoManager.getOrCreateBiometricKey() == null) {
-            config.vaultBiometricOfferShown = true
             config.isVaultBiometricEnabled = false
             config.vaultBiometricWrappedBundle = ""
             return
@@ -42,12 +42,14 @@ object VaultBiometricOfferDialog {
         config.isVaultBiometricEnabled = false
         config.vaultBiometricWrappedBundle = ""
 
+        val palette = org.fossify.gallery.helpers.AppearanceManager.resolve(activity, config)
         val view = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             val padding = (24f * resources.displayMetrics.density).toInt()
             setPadding(padding, padding / 2, padding, 0)
             addView(MyTextView(activity).apply {
                 text = activity.getString(R.string.vault_biometric_offer_message)
+                setTextColor(palette.text)
             })
         }
 

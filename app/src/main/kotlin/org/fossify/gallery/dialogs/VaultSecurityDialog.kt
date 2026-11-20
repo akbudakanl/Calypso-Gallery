@@ -438,8 +438,13 @@ class VaultSecurityDialog(
                     clearFirstStepSecret()
                     dialogSucceeded = true
                     dialog?.dismiss()
-                    VaultBiometricOfferDialog.showIfNeeded(activity)
                     callback(hash, currentType, true)
+                    // A freshly created vault always gets a fresh one-time offer, even if a
+                    // previous (deleted) vault had already seen it.
+                    if (!activity.isFinishing && !activity.isDestroyed) {
+                        activity.config.vaultBiometricOfferShown = false
+                        VaultBiometricOfferDialog.showIfNeeded(activity)
+                    }
                 } else {
                     clearFirstStepSecret()
                     inputHelper.clearInputs()
