@@ -227,6 +227,7 @@
     <string name="open_in_app_player">Opna spelar i appen</string>
     <string name="open_system_default_player">Opna standardspelarapp</string>
     <string name="show_notch">Syn skjermhakk viss tilgjengeleg</string>
+    <string name="show_bottom_action_names">Vis namn på handlingane i handlingslinja nedst</string>
     <string name="allow_rotating_gestures">Tillat rotering av bilete med fingerrørsler</string>
     <string name="file_loading_priority">Prioritet for fillasting</string>
     <string name="speed">Fart</string>
@@ -334,7 +335,7 @@
     <string name="delete_virtual_album_confirmation">Sletta albumet %s? Berre albumet vert fjerna, bileta og videoane dine vert verande der dei er.</string>
     <string name="virtual_album_empty">Dette albumet er tomt. Vel element i ei kva som helst mappe og bruk \"Kopier til\".</string>
     <string name="virtual_album_cannot_be_modified">Denne handlinga er ikkje tilgjengeleg for virtuelle album</string>
-    <string name="alphanumeric_password">Passord</string>
+    <string name="alphanumeric_password">Alfanumerisk</string>
     <string name="enter_password">Skriv inn passord</string>
     <string name="repeat_password">Gjenta passord</string>
     <string name="wrong_password">Feil passord</string>

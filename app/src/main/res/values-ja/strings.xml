@@ -177,6 +177,7 @@
     <string name="allow_one_to_one_zoom">ダブルタップして 1:1 ズームする</string>
     <string name="open_videos_on_separate_screen">左右ジェスチャー機能の切り替え (別の動画を開くor早送り/早戻し)</string>
     <string name="show_notch">ノッチ領域にも画像を表示</string>
+    <string name="show_bottom_action_names">下部アクションバーにアクション名を表示</string>
     <string name="allow_rotating_gestures">ジェスチャーで画像を回転</string>
     <string name="file_loading_priority">ファイルの優先ローディング</string>
     <string name="speed">スピード</string>
@@ -298,7 +299,7 @@
     <string name="delete_virtual_album_confirmation">アルバム %s を削除しますか？アルバムのみが削除され、写真や動画はそのまま残ります。</string>
     <string name="virtual_album_empty">このアルバムは空です。任意のフォルダーで項目を選択し、「コピー先」を使用してください。</string>
     <string name="virtual_album_cannot_be_modified">この操作は仮想アルバムでは利用できません</string>
-    <string name="alphanumeric_password">パスワード</string>
+    <string name="alphanumeric_password">英数字</string>
     <string name="enter_password">パスワードを入力</string>
     <string name="repeat_password">パスワードを再入力</string>
     <string name="wrong_password">パスワードが間違っています</string>

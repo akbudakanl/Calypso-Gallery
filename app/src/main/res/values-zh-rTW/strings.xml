@@ -186,6 +186,7 @@
     <string name="allow_one_to_one_zoom">點兩下螢幕來 1:1 縮放</string>
     <string name="open_videos_on_separate_screen">透過橫向手勢在獨立螢幕上播放影片</string>
     <string name="show_notch">允許螢幕凹口遮擋畫面</string>
+    <string name="show_bottom_action_names">在底部動作列顯示動作名稱</string>
     <string name="allow_rotating_gestures">使用手勢來旋轉圖片</string>
     <string name="file_loading_priority">檔案讀取優先權</string>
     <string name="speed">速度</string>
@@ -298,7 +299,7 @@
     <string name="delete_virtual_album_confirmation">確定要刪除相簿 %s 嗎？僅會移除相簿本身，您的相片和影片仍會保留在原處。</string>
     <string name="virtual_album_empty">此相簿為空。請在任意資料夾中選取項目，並使用「複製」。</string>
     <string name="virtual_album_cannot_be_modified">此操作不適用於虛擬相簿</string>
-    <string name="alphanumeric_password">密碼</string>
+    <string name="alphanumeric_password">英數字</string>
     <string name="enter_password">輸入密碼</string>
     <string name="repeat_password">再次輸入密碼</string>
     <string name="wrong_password">密碼錯誤</string>

@@ -45,7 +45,7 @@ translation-blind-tests/
 ## Purpose & Methodology
 
 1. **Dual-Source Completeness Audit (App + `fossify-commons`):** Every target `values-<lang>/strings.xml` file must be checked against **both** string sources:
-   - **App-owned resources:** `app/src/main/res/values/strings.xml` (`326 <string>` and `2 <plurals>` entries = `328` resource entries).
+   - **App-owned resources:** `app/src/main/res/values/strings.xml` (`327 <string>` and `2 <plurals>` entries = `329` resource entries). The newest key, `show_bottom_action_names` ("Show action names in the bottom action bar"), is documented as a separate "New fork string" table at the top of each comparison report.
    - **Inherited library resources (`org.fossify:commons`):** Strings used in Settings, Options menus, About (`AboutActivity`), contextual action bars (CAB), and shared dialogs (such as `change_date_and_time_format`, `password_protect_file_deletion`, `keep_last_modified`, `clear_cache`, `export_settings`, `import_settings`, `temporarily_show_excluded`, `change_view_type`, `contributors`, `known_issues`, `donate_to_fossify`, `privacy_policy`, `create_shortcut`, `print`, and `search`) live in the `org.fossify:commons` AAR dependency (`res/values/values.xml` and `res/values-<lang>/values-<lang>.xml`) rather than `app/src/main/res/values/strings.xml`. Because several locales in `org.fossify:commons` are incomplete, any missing `fossify-commons` keys should be overridden locally in `app/src/main/res/values-<lang>/strings.xml`.
 2. **Blind Translation & Consistency Review:** Missing or inaccurate strings are translated independently from the English source while matching existing Fossify Gallery terminology, UI tone, placeholders (`%s`, `%d`), HTML/escape sequences (`&gt;`, `\'`, `\"`, `\n`), and plural rules (CLDR categories per language).
 3. **1-to-1 Comparison Report:** Each `<lang>_translation_comparison.md` file documents:
@@ -57,6 +57,24 @@ translation-blind-tests/
 
 - **Why `fossify-commons` must be checked alongside `values/strings.xml`:** Checking only `app/src/main/res/values/strings.xml` can leave visible UI labels in English if `org.fossify:commons`'s own `res/values-<lang>/values-<lang>.xml` is missing those keys. Adding local `<string>` overrides in `app/src/main/res/values-<lang>/strings.xml` takes precedence during Android resource merging without duplicating the entire `fossify-commons` resource table into `app/src/main/res/values/strings.xml`.
 - **Plural forms (`<plurals>`):** English defines `one` and `other` quantities for `restore_confirmation` and `failed_to_resize_images`. Languages with different CLDR plural rules (for example, Japanese using only `other`) map accordingly in XML while retaining full row-by-row parity in the comparison table.
+
+## Terminology Note — `alphanumeric_password`
+
+The vault credential tab uses **Alphanumeric** (not "Password" / "Şifre"): it denotes a full alphanumeric secret, as opposed to a PIN or the generic password concept used elsewhere in the app. Current translations:
+
+| Locale | Label |
+|---|---|
+| English (`values/`) | Alphanumeric |
+| Türkçe (`values-tr/`) | Alfanumerik |
+| Azerbaijani (`values-az/`) | Alfanumerik |
+| Deutsch (`values-de/`) | Alphanumerisch |
+| Español — Standard / Latin America / US (`values-es/`, `values-b+es+419/`, `values-es-rUS/`) | Alfanumérico |
+| 日本語 (`values-ja/`) | 英数字 |
+| Norsk bokmål (`values-nb-rNO/`) | Alfanumerisk |
+| Norsk nynorsk (`values-nn/`) | Alfanumerisk |
+| 繁體中文 (`values-zh-rTW/`) | 英數字 |
+
+Related password-prompt strings (`enter_password`, `repeat_password`, `wrong_password`, `enter_new_password`, `repeat_new_password`, `change_encrypted_vault_password`, `faq_2_title`, `existing_vault_detected_at_location`) consistently use the word for **password** — Türkçe `parola`, Azerbaijani `parol` — and reserve `şifre` / `şifrə` strictly for encryption ("encrypt", "encrypted vault"). The other audited locales already follow the same distinction (`Passwort`, `contraseña`, `パスワード`, `passord`, `密碼`).
 
 ## Adding a New Language Audit
 

@@ -207,6 +207,7 @@
     <string name="open_in_app_player">Abrir el reproductor de la aplicación</string>
     <string name="open_system_default_player">Abrir la aplicación de reproducción predeterminada</string>
     <string name="show_notch">Mostrar una muesca si está disponible</string>
+    <string name="show_bottom_action_names">Mostrar los nombres de las acciones en la barra de acciones inferior</string>
     <string name="allow_rotating_gestures">Permitir girar con gestos</string>
     <string name="file_loading_priority">Prioridad de carga de archivos</string>
     <string name="speed">Velocidad</string>
@@ -302,7 +303,7 @@
     <string name="delete_virtual_album_confirmation">¿Eliminar el álbum %s? Solo se eliminará el álbum; tus fotos y vídeos permanecerán donde están.</string>
     <string name="virtual_album_empty">Este álbum está vacío. Selecciona elementos en cualquier carpeta y usa \"Copiar a\".</string>
     <string name="virtual_album_cannot_be_modified">Esta acción no está disponible para álbumes virtuales</string>
-    <string name="alphanumeric_password">Contraseña</string>
+    <string name="alphanumeric_password">Alfanumérico</string>
     <string name="enter_password">Introduzca la contraseña</string>
     <string name="repeat_password">Repetir contraseña</string>
     <string name="wrong_password">Contraseña incorrecta</string>

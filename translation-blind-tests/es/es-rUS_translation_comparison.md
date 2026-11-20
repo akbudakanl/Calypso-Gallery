@@ -1,5 +1,13 @@
 # Spanish (United States, values-es-rUS) Translation Completion & English 1-to-1 Comparison
 
+## New fork string - bottom action names (1 key)
+
+Added to `values-es-rUS/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish (US) (`values-es-rUS/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Mostrar los nombres de las acciones en la barra de acciones inferior | Fullscreen media setting, default ON |
+
 ## ADR 0003 — resumable file operations (7 new keys)
 
 Added to `values-es-rUS/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly; uses `archivos` and US-Spanish phrasing consistent with the es-rUS audit.
@@ -98,7 +106,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 15 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. |  |
 | 16 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". |  |
 | 17 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums |  |
-| 18 | 18 | `alphanumeric_password` | Password |  |
+| 18 | 18 | `alphanumeric_password` | Alphanumeric | Alfanumérico |
 | 19 | 19 | `repeat_password` | Repeat password |  |
 | 20 | 20 | `wrong_password` | Wrong password |  |
 | 21 | 21 | `encrypting_files` | Encrypting files… |  |
@@ -479,7 +487,7 @@ Following the previous audit, 22 additional keys were localized in `values-es-rU
 | 273 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | ¿Eliminar el álbum %s? Solo se eliminará el álbum; tus fotos y videos permanecerán donde están. |
 | 274 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Este álbum está vacío. Selecciona elementos en cualquier carpeta y usa \"Copiar a\". |
 | 275 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Esta acción no está disponible para álbumes virtuales |
-| 276 | `alphanumeric_password` | Password | Contraseña |
+| 276 | `alphanumeric_password` | Alphanumeric | Alfanumérico |
 | 277 | `enter_password` | Enter password | Ingresar contraseña |
 | 278 | `repeat_password` | Repeat password | Repetir contraseña |
 | 279 | `wrong_password` | Wrong password | Contraseña incorrecta |

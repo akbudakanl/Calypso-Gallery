@@ -184,6 +184,7 @@
     <string name="allow_one_to_one_zoom">Tillat å zoome 1:1 med to dobbeltrykk</string>
     <string name="open_videos_on_separate_screen">Spill videoer på en separat skjerm med horisontale bevegelser</string>
     <string name="show_notch">Vis flik hvis tilgjengelig</string>
+    <string name="show_bottom_action_names">Vis navn på handlingene i handlingslinjen nederst</string>
     <string name="allow_rotating_gestures">Tillat rotering av bilder med fingerbevegelser</string>
     <string name="file_loading_priority">Fillastingsprioritet</string>
     <string name="speed">Hastighet</string>
@@ -304,7 +305,7 @@
     <string name="delete_virtual_album_confirmation">Slette albumet %s? Bare albumet fjernes, bildene og videoene dine forblir der de er.</string>
     <string name="virtual_album_empty">Dette albumet er tomt. Velg elementer i en hvilken som helst mappe og bruk \"Kopier til\".</string>
     <string name="virtual_album_cannot_be_modified">Denne handlingen er ikke tilgjengelig for virtuelle album</string>
-    <string name="alphanumeric_password">Passord</string>
+    <string name="alphanumeric_password">Alfanumerisk</string>
     <string name="enter_password">Skriv inn passord</string>
     <string name="repeat_password">Gjenta passord</string>
     <string name="wrong_password">Feil passord</string>

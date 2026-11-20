@@ -1,5 +1,13 @@
 # Azerbaijani (values-az) Translation Revision & English 1-to-1 Comparison
 
+## New fork string - bottom action names (1 key)
+
+Added to `values-az/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Alt əməliyyat çubuğunda ikonların adını göstər | Fullscreen media setting, default ON |
+
 ## ADR 0003 — resumable file operations (7 new keys)
 
 Added to `values-az/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
@@ -17,7 +25,7 @@ Added to `values-az/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are pres
 | 9 | `space_continue_anyway` | Continue anyway | Yine də davam et | Positive button: proceed without a verified space reading |
 
 > **Scope:** `app/src/main/res/values-az/strings.xml` was reviewed from scratch: existing inaccurate translations were corrected, and all missing keys from `values/strings.xml` (347 `<string>` + 2 `<plurals>` = 349 app resource entries; `search` and 17 previously overridden shared UI keys from `fossify-commons` plus the `skip_the_recycle_bin` override, and 13 additional `fossify-commons` UI keys (`manage_excluded_folders`, `exclude`, `exclude_folder`, `lock_folder`, `change_cover_image`, `select_photo`, `use_default`, `column_count`, `open_the_recycle_bin`, `grid`, `list`, `resize`, `version_placeholder`) newly overridden because they are missing in `fossify-commons` `values-az`; 373 total comparison rows) were completed. Nine keys that were missing from `values-az/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-az/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-az/strings.xml` to 403 `<string>` + 2 `<plurals>` = 405 resource entries and 394 total comparison rows.
-> **Key Terminology:** `Settings` → `Parametrlər` · `Default` → `Susmaya görə` · `Folder` → `Qovluq` · `Encrypted Vault` → `Şifrəli Seyf` · `Password` → `Parol` · `Encrypt/Decrypt` → `Şifrələ / Şifrəsini aç` · `Thumbnails` → `Miniatürlər` · `Recycle bin` → `Zibil qutusu` · `Clipboard` → `Mübadilə buferi`
+> **Key Terminology:** `Settings` → `Parametrlər` · `Default` → `Susmaya görə` · `Folder` → `Qovluq` · `Encrypted Vault` → `Şifrəli Seyf` · `Password` → `Parol` · `Alphanumeric` → `Alfanumerik` · `Encrypt/Decrypt` → `Şifrələ / Şifrəsini aç` · `Thumbnails` → `Miniatürlər` · `Recycle bin` → `Zibil qutusu` · `Clipboard` → `Mübadilə buferi`
 
 ## 1. Review of 11 Previously Existing Translations and Changes Made
 
@@ -95,7 +103,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 15 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. |  |
 | 16 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". |  |
 | 17 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums |  |
-| 18 | 18 | `alphanumeric_password` | Password |  |
+| 18 | 18 | `alphanumeric_password` | Alphanumeric | Alfanumerik |
 | 19 | 19 | `repeat_password` | Repeat password |  |
 | 20 | 20 | `wrong_password` | Wrong password |  |
 | 21 | 21 | `encrypting_files` | Encrypting files… |  |
@@ -476,7 +484,7 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 273 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | %s albomu silinsin? Yalnız albom silinir, foto və videolarınız olduğu yerdə qalır. |
 | 274 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Bu albom boşdur. İstənilən qovluqda elementləri seçin və \"Köçür\" seçimindən istifadə edin. |
 | 275 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Bu əməliyyat virtual albomlar üçün əlçatan deyil |
-| 276 | `alphanumeric_password` | Password | Parol |
+| 276 | `alphanumeric_password` | Alphanumeric | Alfanumerik |
 | 277 | `enter_password` | Enter password | Parolu daxil edin |
 | 278 | `repeat_password` | Repeat password | Parolu təkrarlayın |
 | 279 | `wrong_password` | Wrong password | Yanlış parol |

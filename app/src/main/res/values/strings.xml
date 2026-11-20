@@ -251,6 +251,7 @@
     <string name="open_in_app_player">Open in-app player</string>
     <string name="open_system_default_player">Open default player app</string>
     <string name="show_notch">Show a notch if available</string>
+    <string name="show_bottom_action_names">Show action names in the bottom action bar</string>
     <string name="allow_rotating_gestures">Allow rotating images with gestures</string>
     <string name="file_loading_priority">File loading priority</string>
     <string name="speed">Speed</string>
@@ -382,7 +383,7 @@
     <string name="delete_virtual_album_confirmation">Delete the album %s? Only the album is removed, your photos and videos stay where they are.</string>
     <string name="virtual_album_empty">This album is empty. Select items in any folder and use \"Copy to\".</string>
     <string name="virtual_album_cannot_be_modified">This action is not available for virtual albums</string>
-    <string name="alphanumeric_password">Password</string>
+    <string name="alphanumeric_password">Alphanumeric</string>
     <string name="enter_password">Enter password</string>
     <string name="repeat_password">Repeat password</string>
     <string name="wrong_password">Wrong password</string>

@@ -1,5 +1,13 @@
 # Norwegian Bokmål (values-nb-rNO) Translation Completion & English 1-to-1 Comparison
 
+## New fork string - bottom action names (1 key)
+
+Added to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_bottom_action_names` | Show action names in the bottom action bar | Vis navn på handlingene i handlingslinjen nederst | Fullscreen media setting, default ON |
+
 ## ADR 0003 — resumable file operations (7 new keys)
 
 Added to `values-nb-rNO/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are preserved exactly.
@@ -17,7 +25,7 @@ Added to `values-nb-rNO/strings.xml`. Placeholders (`%1$s`, `%2$s`, `%1$d`) are 
 | 9 | `space_continue_anyway` | Continue anyway | Fortsett likevel | Positive button: proceed without a verified space reading |
 
 > **Scope:** `app/src/main/res/values-nb-rNO/strings.xml` was audited against `app/src/main/res/values/strings.xml`. Three existing errors/typos were corrected, two multiline placeholders were normalized, and all 91 missing strings were translated into Norwegian Bokmål and added, bringing `values-nb-rNO` to full parity (363 `<string>` + 2 `<plurals>` = 365 app resource entries; `search` and 17 previously overridden shared UI keys from `fossify-commons` plus 4 additional `fossify-commons` UI keys (`exclude_folder`, `column_count`, `open_the_recycle_bin`, `version_placeholder`) newly overridden because they are missing in `fossify-commons` `values-nb-rNO`; 364 total comparison rows with plural forms expanded). Nine keys that were missing from `values-nb-rNO/strings.xml` were translated and added (`number_of_items`, `random`, `shuffle`, `stop_showing_excluded`, `copy_to_clipboard`, `encrypt`, `decrypt`, `encrypt_album`, `decrypt_album`), and eleven existing entries were revised so that files and albums use the new \"encrypt / decrypt\" wording and so that the favorites import/export labels mention virtual albums as well. Subsequently, 22 additional keys were localized in `values-nb-rNO/strings.xml`, `hide_folder_description` was removed, and `default_hidden_album` was marked `translatable="false"` (`Default Secret Album`), bringing `values-nb-rNO/strings.xml` to 384 `<string>` + 2 `<plurals>` = 386 resource entries and 385 total comparison rows.
-> **Key Terminology:** `Settings` → `Innstillinger` · `Default` → `Standard` / `Systemstandard` · `Folder` → `Mappe` · `Album` → `Album` · `Encrypted Vault` → `Kryptert hvelv` · `Hidden` → `Skjult` · `Excluded` → `Ekskludert` · `Password` → `Passord` · `Encrypt / Decrypt` → `Krypter / Dekrypter` · `Thumbnails` → `Minibilder` · `Recycle bin` → `Papirkurv` · `Clipboard` → `Utklippstavlen`
+> **Key Terminology:** `Settings` → `Innstillinger` · `Default` → `Standard` / `Systemstandard` · `Folder` → `Mappe` · `Album` → `Album` · `Encrypted Vault` → `Kryptert hvelv` · `Hidden` → `Skjult` · `Excluded` → `Ekskludert` · `Password` → `Passord` · `Alphanumeric` → `Alfanumerisk` · `Encrypt / Decrypt` → `Krypter / Dekrypter` · `Thumbnails` → `Minibilder` · `Recycle bin` → `Papirkurv` · `Clipboard` → `Utklippstavlen`
 
 ## 1. Summary of Revisions & Newly Added Norwegian Bokmål Strings & Translations
 
@@ -52,7 +60,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 24 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | No extra quotes around %s (formatted with album name or count) |
 | 25 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Empty state placeholder referencing "Kopier til" (Copy to) |
 | 26 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Toast message when action is unsupported on virtual albums |
-| 27 | 18 | `alphanumeric_password` | Password | Password input label |
+| 27 | 18 | `alphanumeric_password` | Alphanumeric | Alphanumeric input label |
 | 28 | 19 | `repeat_password` | Repeat password | Password confirmation prompt |
 | 29 | 20 | `wrong_password` | Wrong password | Password validation error |
 | 30 | 21 | `encrypting_files` | Encrypting files… | Progress message |
@@ -512,7 +520,7 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 273 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | Slette albumet %s? Bare albumet fjernes, bildene og videoene dine forblir der de er. |
 | 274 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Dette albumet er tomt. Velg elementer i en hvilken som helst mappe og bruk \"Kopier til\". |
 | 275 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Denne handlingen er ikke tilgjengelig for virtuelle album |
-| 276 | `alphanumeric_password` | Password | Passord |
+| 276 | `alphanumeric_password` | Alphanumeric | Alfanumerisk |
 | 277 | `enter_password` | Enter password | Skriv inn passord |
 | 278 | `repeat_password` | Repeat password | Gjenta passord |
 | 279 | `wrong_password` | Wrong password | Feil passord |

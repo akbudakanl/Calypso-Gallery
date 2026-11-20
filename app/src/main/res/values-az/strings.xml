@@ -227,6 +227,7 @@
     <string name="open_in_app_player">Tətbiqdaxili pleyerdə aç</string>
     <string name="open_system_default_player">Susmaya görə pleyer tətbiqində aç</string>
     <string name="show_notch">Varsa ekran kəsiyini göstər</string>
+    <string name="show_bottom_action_names">Alt əməliyyat çubuğunda ikonların adını göstər</string>
     <string name="allow_rotating_gestures">Şəkilləri jestlərlə döndərməyə icazə ver</string>
     <string name="file_loading_priority">Fayl yükləmə prioriteti</string>
     <string name="speed">Sürət</string>
@@ -334,7 +335,7 @@
     <string name="delete_virtual_album_confirmation">%s albomu silinsin? Yalnız albom silinir, foto və videolarınız olduğu yerdə qalır.</string>
     <string name="virtual_album_empty">Bu albom boşdur. İstənilən qovluqda elementləri seçin və \"Köçür\" seçimindən istifadə edin.</string>
     <string name="virtual_album_cannot_be_modified">Bu əməliyyat virtual albomlar üçün əlçatan deyil</string>
-    <string name="alphanumeric_password">Parol</string>
+    <string name="alphanumeric_password">Alfanumerik</string>
     <string name="enter_password">Parolu daxil edin</string>
     <string name="repeat_password">Parolu təkrarlayın</string>
     <string name="wrong_password">Yanlış parol</string>
@@ -411,16 +412,16 @@
     <string name="files_hidden_to_album">%1$d fayl \"%2$s\" albomuna şifrələndi</string>
     <string name="encrypted_vault">Şifrəli seyf</string>
     <string name="create_encrypted_vault">Şifrəli seyf yarat</string>
-    <string name="change_encrypted_vault_password">Şifrəli seyfin şifrəsini dəyiş</string>
+    <string name="change_encrypted_vault_password">Şifrəli seyfin parolunu dəyiş</string>
     <string name="biometric_access_to_encrypted_vault">Şifrəli seyfə biometrik ilə giriş</string>
     <string name="auto_biometric_prompt_on_vault_return">Tətbiqə qayıdarkən biometrik doğrulamanı avtomatik aç</string>
     <string name="block_vault_screenshots">Gizli seyfdə ekran görüntüsü çəkməyi qadağan et</string>
     <string name="empty_encrypted_vault">Şifrəli seyfi boşalt</string>
     <string name="enter_new_pin">Yeni PIN daxil edin</string>
     <string name="repeat_new_pin">Yeni PIN-i təkrarlayın</string>
-    <string name="enter_new_password">Yeni şifrəni daxil edin</string>
-    <string name="repeat_new_password">Yeni şifrəni təkrarlayın</string>
-    <string name="password_changed_successfully">Şifrə uğurla dəyişdirildi</string>
+    <string name="enter_new_password">Yeni parolu daxil edin</string>
+    <string name="repeat_new_password">Yeni parolu təkrarlayın</string>
+    <string name="password_changed_successfully">Parol uğurla dəyişdirildi</string>
     <string name="encrypted_vault_emptied">Şifrəli seyf boşaldıldı</string>
     <string name="empty_encrypted_vault_warning">Şifrəli seyf (Secrets) və daxilindəki bütün fayllar birdəfəlik silinəcək. Əminsiniz?</string>
     <string name="refresh">Yenilə</string>

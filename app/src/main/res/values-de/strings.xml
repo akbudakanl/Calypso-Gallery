@@ -184,6 +184,7 @@
     <string name="allow_one_to_one_zoom">1:1-Zoom mit zweimaligem doppeltem Antippen zulassen</string>
     <string name="open_videos_on_separate_screen">Videos auf einem separaten Bildschirm mit horizontalen Gesten abspielen</string>
     <string name="show_notch">Notch anzeigen, wenn vorhanden</string>
+    <string name="show_bottom_action_names">Namen der Aktionen in der unteren Aktionsleiste anzeigen</string>
     <string name="allow_rotating_gestures">Rotieren von Bildern mit Gesten zulassen</string>
     <string name="file_loading_priority">Priorität beim Laden von Dateien</string>
     <string name="speed">Geschwindigkeit</string>
@@ -300,7 +301,7 @@
     <string name="delete_virtual_album_confirmation">Album %s löschen? Nur das Album wird entfernt, deine Fotos und Videos bleiben an ihrem Ort.</string>
     <string name="virtual_album_empty">Dieses Album ist leer. Wähle in einem beliebigen Ordner Elemente aus und verwende „Kopieren nach“.</string>
     <string name="virtual_album_cannot_be_modified">Diese Aktion ist für virtuelle Alben nicht verfügbar</string>
-    <string name="alphanumeric_password">Passwort</string>
+    <string name="alphanumeric_password">Alphanumerisch</string>
     <string name="enter_password">Passwort eingeben</string>
     <string name="repeat_password">Passwort wiederholen</string>
     <string name="wrong_password">Falsches Passwort</string>
