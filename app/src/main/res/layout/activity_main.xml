@@ -1,21 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/directories_coordinator"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
+    <!-- Fixed top search bar: a sibling of the scrolling content, never part of it. -->
     <org.fossify.commons.views.MySearchMenu
         android:id="@+id/main_menu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:elevation="0dp" />
+        android:elevation="8dp" />
 
     <RelativeLayout
         android:id="@+id/directories_holder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <org.fossify.commons.views.MyTextView
             android:id="@+id/directories_switch_searching"
@@ -110,4 +112,4 @@
                 android:textSize="@dimen/normal_text_size" />
         </LinearLayout>
     </RelativeLayout>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

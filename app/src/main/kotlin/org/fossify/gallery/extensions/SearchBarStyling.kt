@@ -74,20 +74,34 @@ fun MySearchMenu.applyCalypsoSearchBarStyle() {
     val actionIconColor = resolveCalypsoSearchIconColor(context, isSearchOpen)
     val toolbar = requireToolbar()
     toolbar.overflowIcon = ContextCompat.getDrawable(context, R.drawable.ic_more_vertical_calypso_vector)
-        ?.mutate()?.apply { setTint(actionIconColor) }
+        ?.mutate()?.apply { setTintList(ColorStateList.valueOf(actionIconColor)) }
     toolbar.menu?.findItem(R.id.sort)?.icon = ContextCompat.getDrawable(context, R.drawable.ic_sort_view_calypso_vector)
-        ?.mutate()?.apply { setTint(actionIconColor) }
+        ?.mutate()?.apply { setTintList(ColorStateList.valueOf(actionIconColor)) }
+
+    // The overflow button is an ImageView owned by the toolbar/ActionMenuView. Some AppCompat
+    // paths tint it with a stock white ColorStateList, which made it invisible in Light mode.
+    // Refresh every icon view with the same color as the magnifier and sort icons, including
+    // views created after this call.
+    fun tintIcons(view: View) {
+        if (view is ImageView && view.id != org.fossify.commons.R.id.top_toolbar_search_icon) {
+            view.imageTintList = ColorStateList.valueOf(actionIconColor)
+        }
+        if (view is android.view.ViewGroup) {
+            for (i in 0 until view.childCount) tintIcons(view.getChildAt(i))
+        }
+    }
+    tintIcons(toolbar)
+    toolbar.post { tintIcons(toolbar) }
 }
 
 /**
- * Allows the search bar / album header inside [MySearchMenu] (an [AppBarLayout]) to scroll
- * off-screen when the user scrolls down, and reappear immediately on upward scroll.
+ * Keeps the search bar / album header inside [MySearchMenu] (an [AppBarLayout]) pinned at the
+ * top. Any inherited scroll flags are cleared so the bar can never collapse into the empty strip
+ * that appeared when the header was allowed to scroll away.
  */
-fun MySearchMenu.enableScrollAway() {
+fun MySearchMenu.keepHeaderPinned() {
     val container = findViewById<View>(org.fossify.commons.R.id.search_bar_container) ?: return
     val params = container.layoutParams as? AppBarLayout.LayoutParams ?: return
-    params.scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
-        AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS or
-        AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP
+    params.scrollFlags = 0
     container.layoutParams = params
 }

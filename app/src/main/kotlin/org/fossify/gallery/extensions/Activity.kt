@@ -148,6 +148,10 @@ fun Activity.setAs(path: String) {
 }
 
 fun Activity.openPath(path: String, forceChooser: Boolean, extras: HashMap<String, Boolean> = HashMap()) {
+    // commons only adds IS_FROM_GALLERY for org.fossify.gallery(.debug). This fork uses
+    // com.calypso.gallery, so mark gallery-originated ACTION_VIEW intents here. Otherwise the
+    // viewer relay treats a directly opened video as external and hides Shuffle, and drops mMedia.
+    extras[IS_FROM_GALLERY] = true
     openPathIntent(path, forceChooser, BuildConfig.APPLICATION_ID, extras = extras)
 }
 
