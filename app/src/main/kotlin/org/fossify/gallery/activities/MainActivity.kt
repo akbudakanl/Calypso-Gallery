@@ -893,7 +893,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun refreshMenuItems() {
         if (!mIsThirdPartyIntent) {
             binding.mainMenu.requireToolbar().menu.apply {
-                findItem(R.id.set_as_default_folder)?.isVisible = !mIsSecretVaultView && !config.defaultFolder.isEmpty()
                 findItem(R.id.open_recycle_bin)?.isVisible =
                     !mIsSecretVaultView && config.useRecycleBin && !config.showRecycleBinAtFolders
             }
@@ -956,7 +955,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
                 R.id.create_new_folder -> createNewFolder()
                 R.id.open_recycle_bin -> openRecycleBin()
-                R.id.set_as_default_folder -> setAsDefaultFolder()
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false

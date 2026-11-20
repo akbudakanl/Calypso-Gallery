@@ -12,7 +12,7 @@
         android:id="@+id/show_all"
         android:icon="@drawable/ic_files_vector"
         android:showAsAction="never"
-        android:title="@string/show_all"
+        android:title="@string/show_files"
         app:showAsAction="never" />
     <item
         android:id="@+id/filter"
@@ -54,11 +54,6 @@
         android:id="@+id/stop_showing_hidden_folders"
         android:showAsAction="never"
         android:title="@string/stop_showing_hidden_folders"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/set_as_default_folder"
-        android:showAsAction="never"
-        android:title="@string/set_as_default_folder"
         app:showAsAction="never" />
     <item
         android:id="@+id/create_new_folder"

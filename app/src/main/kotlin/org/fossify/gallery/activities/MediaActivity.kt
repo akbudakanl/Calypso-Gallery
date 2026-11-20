@@ -71,6 +71,9 @@ import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
+import org.fossify.gallery.extensions.handleExcludedFolderPasswordProtection
+import org.fossify.gallery.extensions.hasExcludedNormalFolders
+import org.fossify.gallery.extensions.hasHiddenNormalFolders
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
 import org.fossify.gallery.extensions.applyVaultScreenProtection
@@ -96,7 +99,6 @@ import org.fossify.gallery.extensions.getFolderNameFromPath
 import org.fossify.gallery.extensions.getHumanizedFilename
 import org.fossify.gallery.extensions.isDownloadsFolder
 import org.fossify.gallery.extensions.launchAbout
-import org.fossify.gallery.extensions.launchCamera
 import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.launchGesturePlayer
 import org.fossify.gallery.extensions.mediaDB
@@ -109,6 +111,7 @@ import org.fossify.gallery.extensions.showRestoreConfirmationDialog
 import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateWidgets
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
 import org.fossify.gallery.helpers.DIRECTORY
@@ -200,6 +203,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mIsSwitchingVaultView = false
     private val mVaultBackHelper = VaultExitBackHelper()
     private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
+    private var mHasNormalExcludedFolders = false
+    private var mHasNormalHiddenFolders = false
+    private var mExcludedCheckGeneration = 0
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted/live one.
@@ -314,6 +320,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }
 
         updateMenuColors()
+        updateExcludedFoldersAvailability()
         if (mStoredAnimateGifs != config.animateGifs) {
             getMediaAdapter()?.updateAnimateGifs(config.animateGifs)
         }
@@ -615,24 +622,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun refreshMenuItems() {
-        val isDefaultFolder = !config.defaultFolder.isEmpty()
-                && File(config.defaultFolder).compareTo(File(mPath)) == 0
-
         val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this@MediaActivity, mPath)
         binding.mediaMenu.requireToolbar().menu.apply {
             // Albums keep only the magnifier and overflow in the bar; sorting moves into overflow.
             findItem(R.id.sort).setShowAsAction(
                 if (mShowAll) MenuItem.SHOW_AS_ACTION_ALWAYS else MenuItem.SHOW_AS_ACTION_NEVER
             )
+            findItem(R.id.show_albums).isVisible = mShowAll
             findItem(R.id.group).isVisible = !config.scrollHorizontally
 
             findItem(R.id.empty_recycle_bin).isVisible = mPath == RECYCLE_BIN || isVaultRecycleBin
             findItem(R.id.empty_disable_recycle_bin).isVisible = mPath == RECYCLE_BIN
             findItem(R.id.restore_all_files).isVisible = mPath == RECYCLE_BIN || isVaultRecycleBin
 
-            findItem(R.id.folder_view).isVisible = mShowAll
-            findItem(R.id.open_camera).isVisible = mShowAll && !mIsVaultFilesView
-            findItem(R.id.about).isVisible = mShowAll && !mIsVaultFilesView
+            findItem(R.id.about).isVisible = !mIsVaultFilesView
             findItem(R.id.create_new_folder).isVisible =
                 !mShowAll && mPath != RECYCLE_BIN && !isVaultRecycleBin && mPath != FAVORITES && !mPath.isVirtualAlbumPath()
             findItem(R.id.open_recycle_bin).isVisible =
@@ -642,10 +645,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             findItem(R.id.stop_showing_hidden).isVisible =
                 !mIsVaultFilesView && (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden
 
-            findItem(R.id.set_as_default_folder).isVisible =
-                !isDefaultFolder && !mPath.isVirtualAlbumPath() && !isVaultRecycleBin && !mIsVaultFilesView
-            findItem(R.id.unset_as_default_folder).isVisible =
-                isDefaultFolder && !isVaultRecycleBin && !mIsVaultFilesView
+            // Same two visibility toggles the album screen offers, available in the files view too.
+            val excludedVisibility = ExcludedMenuPolicy.resolve(
+                hasExcludedInCurrentScope = !mIsVaultFilesView && mHasNormalExcludedFolders,
+                isCurrentlyShowingExcluded = !mIsVaultFilesView && config.temporarilyShowExcluded
+            )
+            findItem(R.id.temporarily_show_excluded).isVisible = excludedVisibility.showTemporarilyShowExcluded
+            findItem(R.id.stop_showing_excluded).isVisible = excludedVisibility.showStopShowingExcluded
+
+            val hiddenFoldersVisibility = ExcludedMenuPolicy.resolve(
+                hasExcludedInCurrentScope = !mIsVaultFilesView && mHasNormalHiddenFolders,
+                isCurrentlyShowingExcluded = !mIsVaultFilesView && config.temporarilyShowHiddenFolders
+            )
+            findItem(R.id.temporarily_show_hidden_folders).isVisible = hiddenFoldersVisibility.showTemporarilyShowExcluded
+            findItem(R.id.stop_showing_hidden_folders).isVisible = hiddenFoldersVisibility.showStopShowingExcluded
 
             val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
             findItem(R.id.toggle_filename).isVisible = viewType == VIEW_TYPE_GRID
@@ -687,16 +700,15 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 R.id.empty_disable_recycle_bin -> emptyAndDisableRecycleBin()
                 R.id.restore_all_files -> restoreAllFiles()
                 R.id.toggle_filename -> toggleFilenameVisibility()
-                R.id.open_camera -> launchCamera()
-                R.id.folder_view -> switchToFolderView()
+                R.id.show_albums -> switchToFolderView()
                 R.id.change_view_type -> changeViewType()
                 R.id.group -> showGroupByDialog()
                 R.id.create_new_folder -> createNewFolder()
                 R.id.open_recycle_bin -> openRecycleBin()
                 R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
                 R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.set_as_default_folder -> setAsDefaultFolder()
-                R.id.unset_as_default_folder -> unsetAsDefaultFolder()
+                R.id.temporarily_show_excluded, R.id.stop_showing_excluded -> tryToggleTemporarilyShowExcluded()
+                R.id.temporarily_show_hidden_folders, R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
                 R.id.slideshow -> startSlideshow()
                 R.id.settings -> launchSettings()
                 R.id.about -> launchAbout()
@@ -775,8 +787,12 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         val header = albumToolbarHeader()
         val isSearchOpen = binding.mediaMenu.isSearchOpen
         searchField?.beVisibleIf(mShowAll || isSearchOpen)
-        searchIcon?.beVisibleIf(mShowAll)
+        // The stock icon becomes the back arrow while searching, so keep it available to close.
+        searchIcon?.beVisibleIf(mShowAll || isSearchOpen)
         header.beVisibleIf(!mShowAll && !isSearchOpen)
+        // While searching the pill must contain only the field and its back arrow; the album
+        // toolbar (and its overflow) would otherwise leave an empty bar above the grid.
+        toolbar.beVisibleIf(mShowAll || !isSearchOpen)
 
         // The custom header provides its own back button. Suppress MySearchMenu's navigation
         // icon so we never end up with two arrows, and clear the stock title/subtitle so the
@@ -794,7 +810,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             // Same drawable and tint as the main screen magnifier.
             header.findViewById<ImageButton>(R.id.album_toolbar_search).apply {
                 imageTintList = ColorStateList.valueOf(palette.text)
-                setOnClickListener { binding.mediaMenu.isSearchOpen = true }
+                // MySearchMenu.setSearchOpen only flips a flag; the private openSearch() is driven by
+            // the stock magnifier's click listener, so route through it to get the real transform.
+            setOnClickListener {
+                findViewById<View>(org.fossify.commons.R.id.top_toolbar_search_icon)?.performClick()
+            }
             }
             if (isSearchOpen) {
                 binding.mediaMenu.applyCalypsoSearchBarStyle()
@@ -1323,6 +1343,53 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         refreshMenuItems()
     }
 
+    private fun tryToggleTemporarilyShowExcluded() {
+        if (mIsVaultFilesView) return
+        if (config.temporarilyShowExcluded) {
+            toggleTemporarilyShowExcluded(false)
+        } else {
+            handleExcludedFolderPasswordProtection { toggleTemporarilyShowExcluded(true) }
+        }
+    }
+
+    private fun toggleTemporarilyShowExcluded(show: Boolean) {
+        config.temporarilyShowExcluded = show
+        getMedia()
+        refreshMenuItems()
+    }
+
+    private fun tryToggleTemporarilyShowHiddenFolders() {
+        if (mIsVaultFilesView) return
+        if (config.temporarilyShowHiddenFolders) {
+            toggleTemporarilyShowHiddenFolders(false)
+        } else if (isRPlus() && !isExternalStorageManager()) {
+            GrantAllFilesDialog(this)
+        } else {
+            toggleTemporarilyShowHiddenFolders(true)
+        }
+    }
+
+    private fun toggleTemporarilyShowHiddenFolders(show: Boolean) {
+        config.temporarilyShowHiddenFolders = show
+        getMedia()
+        refreshMenuItems()
+    }
+
+    private fun updateExcludedFoldersAvailability() {
+        val generation = ++mExcludedCheckGeneration
+        ensureBackgroundThread {
+            if (isDestroyed || isFinishing) return@ensureBackgroundThread
+            val hasExcluded = hasExcludedNormalFolders()
+            val hasHidden = hasHiddenNormalFolders()
+            runOnUiThread {
+                if (generation != mExcludedCheckGeneration || isDestroyed || isFinishing) return@runOnUiThread
+                mHasNormalExcludedFolders = hasExcluded
+                mHasNormalHiddenFolders = hasHidden
+                refreshMenuItems()
+            }
+        }
+    }
+
     private fun setupLayoutManager() {
         val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
         if (viewType == VIEW_TYPE_GRID) {
@@ -1833,16 +1900,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 binding.mediaGrid.getItemDecorationAt(0) as GridSpacingItemDecoration
             currentGridDecoration.items = media
         }
-    }
-
-    private fun setAsDefaultFolder() {
-        config.defaultFolder = mPath
-        refreshMenuItems()
-    }
-
-    private fun unsetAsDefaultFolder() {
-        config.defaultFolder = ""
-        refreshMenuItems()
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
