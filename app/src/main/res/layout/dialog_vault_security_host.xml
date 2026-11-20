@@ -16,23 +16,36 @@
         android:layout_height="match_parent"
         android:fitsSystemWindows="true" />
 
-    <!-- Top-left exit affordance for the credential prompt. Wrapped so system-bar insets
-         keep it clear of the status bar. -->
+    <!-- Top stack for the credential prompt. In setup mode the PIN / Alphanumeric tabs are
+         moved here so they sit at the very top; the exit button follows directly beneath the
+         left (PIN) tab. The wrapper keeps both clear of the status bar. -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true">
 
-        <ImageButton
-            android:id="@+id/vault_security_back"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="top|start"
-            android:layout_marginStart="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/back"
-            android:padding="@dimen/medium_margin"
-            android:scaleType="centerInside"
-            android:src="@drawable/ic_arrow_left_vector" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- TabLayout from dialog_vault_security.xml is reparented here in setup mode. -->
+            <FrameLayout
+                android:id="@+id/vault_security_tabs_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <ImageButton
+                android:id="@+id/vault_security_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="start"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/back"
+                android:padding="@dimen/medium_margin"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_arrow_left_vector" />
+        </LinearLayout>
     </FrameLayout>
 </FrameLayout>
