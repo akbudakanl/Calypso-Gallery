@@ -81,14 +81,13 @@ class VaultSecurityDialog(
         PROTECTION_PIN -> PROTECTION_PIN
         else -> {
             val vaultType = if (customTargetDir != null) null else CryptoManager.getVaultProtectionType(activity)
-            when (vaultType) {
-                PROTECTION_PASSWORD -> PROTECTION_PASSWORD
-                PROTECTION_PIN -> PROTECTION_PIN
-                else -> if (activity.config.hiddenProtectionType == PROTECTION_PASSWORD) {
-                    PROTECTION_PASSWORD
-                } else {
-                    PROTECTION_PIN
-                }
+            when {
+                // Yeni kasa oluştururken alfanumerik parola varsayılan; mevcut kasada tip korunur.
+                isSetupMode && !isChangePasswordMode -> PROTECTION_PASSWORD
+                vaultType == PROTECTION_PASSWORD -> PROTECTION_PASSWORD
+                vaultType == PROTECTION_PIN -> PROTECTION_PIN
+                activity.config.hiddenProtectionType == PROTECTION_PASSWORD -> PROTECTION_PASSWORD
+                else -> PROTECTION_PIN
             }
         }
     }
