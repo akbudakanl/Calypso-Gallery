@@ -4,6 +4,12 @@ import android.content.Context
 import org.fossify.gallery.R
 
 private const val DAY_MS = 24L * 60 * 60 * 1000
+private const val ONE_WEEK_DAYS = 7
+private const val TWO_WEEKS_DAYS = 14
+private const val THREE_WEEKS_DAYS = 21
+private const val ONE_MONTH_DAYS = 30
+private const val TWO_MONTHS_DAYS = 60
+private const val THREE_MONTHS_DAYS = 90
 
 /** Pure state used by the unit tests; no Android or Keystore access. */
 data class PasswordReminderState(
@@ -59,8 +65,15 @@ fun Config.shouldShowPasswordReminder(vaultExists: Boolean, now: Long = System.c
 fun formatPasswordReminderInterval(context: Context, days: Int): String {
     return when (days) {
         0 -> context.getString(R.string.vault_password_reminder_disabled)
-        7, 14, 21 -> String.format(context.getString(R.string.vault_password_reminder_weeks), days / 7)
-        30, 60, 90 -> String.format(context.getString(R.string.vault_password_reminder_months), days / 30)
+        ONE_WEEK_DAYS, TWO_WEEKS_DAYS, THREE_WEEKS_DAYS -> String.format(
+            context.getString(R.string.vault_password_reminder_weeks),
+            days / ONE_WEEK_DAYS,
+        )
+
+        ONE_MONTH_DAYS, TWO_MONTHS_DAYS, THREE_MONTHS_DAYS -> String.format(
+            context.getString(R.string.vault_password_reminder_months),
+            days / ONE_MONTH_DAYS,
+        )
         else -> context.getString(R.string.vault_password_reminder_disabled)
     }
 }
