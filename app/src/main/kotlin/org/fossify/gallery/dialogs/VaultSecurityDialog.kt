@@ -331,10 +331,9 @@ class VaultSecurityDialog(
             return
         }
         val hasFirstStep = firstStepSecret?.isNotEmpty() == true
-        // Reveal the KDF duration setting only once the password/PIN has been entered.
+        // During creation the target time is relevant from the very first entry, not just the repeat.
         if (isSetupMode) {
-            if (hasFirstStep) binding.vaultBruteForceHolder.beVisible()
-            else binding.vaultBruteForceHolder.beGone()
+            binding.vaultBruteForceHolder.beVisible()
         }
         binding.vaultStatusLabel.beVisible()
         if (isChangePasswordMode) {

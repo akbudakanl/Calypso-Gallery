@@ -269,7 +269,8 @@
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_marginStart="@dimen/small_margin"
-            android:text="✓"
+            android:contentDescription="@string/ok"
+            android:text=""
             android:textSize="22sp" />
     </LinearLayout>
 
@@ -277,6 +278,7 @@
         android:id="@+id/vault_brute_force_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
         android:layout_marginBottom="@dimen/normal_margin"
         android:background="?attr/selectableItemBackground"
         android:foreground="?attr/selectableItemBackground"

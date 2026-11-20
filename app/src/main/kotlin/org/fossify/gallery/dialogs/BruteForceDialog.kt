@@ -14,7 +14,9 @@ import org.fossify.commons.views.MyEditText
 import org.fossify.commons.views.MySeekBar
 import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
+import org.fossify.gallery.extensions.applyThemedCursor
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
@@ -122,6 +124,7 @@ object BruteForceDialog {
             gravity = Gravity.CENTER
             background = null
             setText(String.format(Locale.US, "%.1f", initialTenths / TENTHS_PER_SECOND))
+            applyThemedCursor(activity.config.let { AppearanceManager.resolve(activity, it) }.primary)
         }
         val seek = MySeekBar(activity).apply {
             max = (MAX_TENTHS - minTenths).coerceAtLeast(0)

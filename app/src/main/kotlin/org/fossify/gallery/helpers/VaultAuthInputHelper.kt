@@ -28,6 +28,7 @@ import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogVaultSecurityBinding
+import org.fossify.gallery.extensions.applyThemedCursor
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 
@@ -151,7 +152,7 @@ class VaultAuthInputHelper(
             )
         }
 
-        // Confirm buttons (PIN ✓ and Password ✓): high-contrast primary pill/key
+        // Confirm buttons: high-contrast primary pill/circle with a crisp vector checkmark.
         listOf(binding.pinOk to cornerRadiusPx, binding.vaultPasswordOkBtn to 26f * density).forEach { (btn, radius) ->
             btn.setTextColor(primaryButtonTextColors)
             val content = GradientDrawable().apply {
@@ -170,7 +171,18 @@ class VaultAuthInputHelper(
                 }
                 btn.background = RippleDrawable(primaryRipple, content, mask)
             }
+            val checkMark = ContextCompat.getDrawable(activity, org.fossify.commons.R.drawable.ic_check_vector)
+                ?.mutate()?.apply {
+                    val size = (22f * density).toInt()
+                    setBounds(0, 0, size, size)
+                    setTint(palette.onPrimary)
+                }
+            btn.text = null
+            btn.setCompoundDrawablesRelative(checkMark, null, null, null)
         }
+
+        // Legacy bullet dots inherit the fullscreen dialog's white text color; tie it to the theme.
+        binding.vaultPinDotsLegacy.setTextColor(palette.text)
 
         // Rounded PIN dots box; empty slots render as dim outlined rings (see 02-vault design)
         binding.vaultPinDots.setColors(
@@ -233,6 +245,7 @@ class VaultAuthInputHelper(
         }
         binding.vaultPasswordInput.setTextColor(palette.text)
         binding.vaultPasswordInput.setHintTextColor(palette.secondary)
+        binding.vaultPasswordInput.applyThemedCursor(palette.primary)
     }
 
     fun applyTouchFilter() {
