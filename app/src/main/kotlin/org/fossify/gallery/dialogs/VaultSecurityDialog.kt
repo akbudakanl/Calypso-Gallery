@@ -3,7 +3,13 @@ package org.fossify.gallery.dialogs
 import android.animation.Animator
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -102,6 +108,7 @@ class VaultSecurityDialog(
         val palette = AppearanceManager.resolve(activity, activity.config)
         val primaryColor = palette.primary
         val backgroundColor = palette.background
+        val density = activity.resources.displayMetrics.density
 
         binding.vaultPatternHolder.beGone()
 
@@ -120,9 +127,28 @@ class VaultSecurityDialog(
 
         if (isSetupMode) {
             binding.vaultNoRecoveryWarning.beVisible()
+            // Palette-aware rounded row: it reads as a tappable setting, not plain body text.
+            binding.vaultBruteForceHolder.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 10f * density
+                setColor(palette.surface)
+                setStroke((1f * density).toInt().coerceAtLeast(1), palette.border)
+            }
             fun refreshBruteForceLabel() {
-                binding.vaultBruteForceHolder.text =
-                    activity.getString(R.string.brute_force_time_title) + "\n" + BruteForceDialog.summary(activity)
+                val value = BruteForceDialog.summary(activity)
+                binding.vaultBruteForceHolder.text = SpannableStringBuilder().apply {
+                    append(
+                        activity.getString(R.string.brute_force_time_title),
+                        StyleSpan(Typeface.BOLD),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    if (value.isNotEmpty()) {
+                        append('\n')
+                        val start = length
+                        append(value)
+                        setSpan(ForegroundColorSpan(primaryColor), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                    }
+                }
             }
             refreshBruteForceLabel()
             binding.vaultBruteForceHolder.setOnClickListener {
