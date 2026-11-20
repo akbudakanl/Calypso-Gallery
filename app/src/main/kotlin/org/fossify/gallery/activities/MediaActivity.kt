@@ -220,13 +220,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             onVaultOpen = {
                 mIsVaultOpening = true
                 triggerSecretVaultMenu()
-            },
-            onListRefresh = {
-                if (config.enablePullToRefresh) {
-                    RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
-                    binding.mediaRefreshLayout.isRefreshing = true
-                    getMedia()
-                }
             }
         )
     }
@@ -361,7 +354,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         binding.mediaFastscroller.updateColors(primaryColor)
         mIsVaultOpening = false
-        binding.mediaRefreshLayout.isEnabled = (!mShowAll || mIsVaultFilesView) && config.enablePullToRefresh
+        binding.mediaRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
         getMediaAdapter()?.apply {
             dateFormat = config.dateFormat
             timeFormat = getTimeFormat()
@@ -665,7 +658,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             mLastSearchedText = text
             searchQueryChanged(text)
             updateAlbumHeader()
-            binding.mediaRefreshLayout.isEnabled = (!mShowAll || mIsVaultFilesView) && text.isEmpty() && config.enablePullToRefresh
+            binding.mediaRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
         }
 
         binding.mediaMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->

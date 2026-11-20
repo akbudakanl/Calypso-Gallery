@@ -178,7 +178,6 @@ class SettingsActivity : SimpleActivity() {
         setupFileThumbnailStyle()
         setupFolderThumbnailStyle()
         setupKeepLastModified()
-        setupEnablePullToRefresh()
         setupAllowZoomingImages()
         setupShowHighestQuality()
         setupAllowOneToOneZoom()
@@ -1483,14 +1482,6 @@ class SettingsActivity : SimpleActivity() {
                 binding.settingsKeepLastModified.toggle()
                 config.keepLastModified = binding.settingsKeepLastModified.isChecked
             }
-        }
-    }
-
-    private fun setupEnablePullToRefresh() {
-        binding.settingsEnablePullToRefresh.isChecked = config.enablePullToRefresh
-        binding.settingsEnablePullToRefreshHolder.setOnClickListener {
-            binding.settingsEnablePullToRefresh.toggle()
-            config.enablePullToRefresh = binding.settingsEnablePullToRefresh.isChecked
         }
     }
 

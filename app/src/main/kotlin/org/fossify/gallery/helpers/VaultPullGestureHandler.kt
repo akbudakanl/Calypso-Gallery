@@ -1,33 +1,28 @@
 package org.fossify.gallery.helpers
 
-import android.animation.ValueAnimator
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
-import android.view.animation.LinearInterpolator
-import android.widget.ImageView
 import android.widget.TextView
-import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.gallery.R
+import org.fossify.gallery.views.VaultPullOrbitalView
 import kotlin.math.abs
 
 /**
- * Handles the pull gesture at the top of a list that can open the encrypted vault.
+ * Handles the pull gesture at the top of a list that opens the encrypted vault.
  *
- * - Pulling past [HOLD_OPEN_THRESHOLD_DP] and keeping the pull sustained for
- *   [VAULT_HOLD_OPEN_MS] plays an unlocking animation; releasing the gesture
- *   afterwards opens the vault.
- * - Releasing a shorter pull behaves like the classic pull-to-refresh and simply
- *   refreshes the list contents.
+ * Pull-to-refresh has been removed from this gesture: a short pull simply snaps back, while a
+ * sustained pull past [HOLD_OPEN_THRESHOLD_DP] arms the orbital indicator and opens the vault on
+ * release. Refresh remains available from the overflow menu / Settings toggle.
  */
 class VaultPullGestureHandler(
     private val containerView: View,
     private val indicatorView: View,
-    private val iconView: ImageView,
+    private val iconView: VaultPullOrbitalView,
     private val textView: TextView,
     /** Returns true while the underlying list cannot scroll up, i.e. it is at the top. */
     private val isListAtTop: () -> Boolean,
@@ -36,7 +31,6 @@ class VaultPullGestureHandler(
     /** Lets the owning activity deliver the generated ACTION_CANCEL to its children. */
     private val dispatchToChildren: (MotionEvent) -> Unit,
     private val onVaultOpen: () -> Unit,
-    private val onListRefresh: () -> Unit,
 ) {
     private val touchSlop = ViewConfiguration.get(containerView.context).scaledTouchSlop
     private val density = containerView.context.resources.displayMetrics.density
@@ -48,15 +42,12 @@ class VaultPullGestureHandler(
     private var gestureStarted = false
     private var cancelDispatched = false
     private var thresholdMet = false
-    private var thresholdMetAt = 0L
-    private var holdLongEnough = false
-    private var holdAnimator: ValueAnimator? = null
     private var armRunnable: Runnable? = null
 
-    /**
-     * Feeds a touch event into the gesture. Returns true when the event has been
-     * consumed and must not reach the children of the owning activity.
-     */
+    /** True once the sustained pull has armed the "release to open" state. */
+    private var armed = false
+
+    /** Feeds a touch event into the gesture. Returns true when the event has been consumed. */
     fun handleTouchEvent(ev: MotionEvent): Boolean {
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -68,6 +59,7 @@ class VaultPullGestureHandler(
                 resetThresholdState()
                 cancelDispatched = false
             }
+
             MotionEvent.ACTION_MOVE -> {
                 if (gestureStarted) {
                     val deltaX = abs(ev.rawX - startRawX)
@@ -83,27 +75,22 @@ class VaultPullGestureHandler(
                             }
 
                             containerView.translationY = translation
-
                             indicatorView.beVisible()
                             indicatorView.bringToFront()
-                            iconView.applyColorFilter(primaryColor())
-                            textView.setTextColor(textColor())
+                            iconView.setColors(textColor(), primaryColor(), textColor())
 
                             val progress = (translation / holdThreshold).coerceIn(0f, 1f)
+                            iconView.progress = progress
                             indicatorView.alpha = (progress * 1.4f).coerceIn(0.1f, 1f)
 
                             if (translation >= holdThreshold) {
                                 if (!thresholdMet) {
                                     thresholdMet = true
-                                    thresholdMetAt = System.currentTimeMillis()
-                                    startHoldAnimation()
+                                    armAfterDelay()
                                 }
                                 textView.text = textView.context.getString(
-                                    if (holdLongEnough) {
-                                        R.string.release_to_open_vault
-                                    } else {
-                                        R.string.keep_holding_to_open_vault
-                                    }
+                                    if (armed) R.string.release_to_open_vault
+                                    else R.string.keep_holding_to_open_vault
                                 )
                             } else {
                                 resetThresholdState()
@@ -122,26 +109,21 @@ class VaultPullGestureHandler(
                     }
                 }
             }
+
             MotionEvent.ACTION_UP -> {
                 if (gestureStarted) {
-                    val wasThresholdMet = thresholdMet
-                    val holdDuration = if (thresholdMet) System.currentTimeMillis() - thresholdMetAt else 0L
-                    val shouldOpenVault = wasThresholdMet && holdDuration >= VAULT_HOLD_OPEN_MS
-
+                    val shouldOpenVault = thresholdMet && armed
                     resetGesture()
                     gestureStarted = false
 
                     if (shouldOpenVault) {
                         onVaultOpen()
-                        return true
                     }
-
-                    if (wasThresholdMet) {
-                        onListRefresh()
-                        return true
-                    }
+                    // A pull that was not held long enough only snaps back - it never refreshes.
+                    if (cancelDispatched) return true
                 }
             }
+
             MotionEvent.ACTION_CANCEL -> {
                 if (gestureStarted) {
                     resetGesture()
@@ -152,20 +134,8 @@ class VaultPullGestureHandler(
         return false
     }
 
-    private fun startHoldAnimation() {
-        cancelHoldAnimator()
-        holdLongEnough = false
-        holdAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            // the lock icon rotates one full turn in half the time (2x spin speed)
-            duration = VAULT_HOLD_OPEN_MS / 2
-            interpolator = LinearInterpolator()
-            addUpdateListener { animator ->
-                iconView.rotation = (animator.animatedValue as Float) * 360f
-            }
-            start()
-        }
-        // Arming stays tied to the full hold duration so the faster spin never shows
-        // "release to open" before the vault can actually be opened.
+    private fun armAfterDelay() {
+        cancelArm()
         val runnable = Runnable {
             armRunnable = null
             if (thresholdMet) {
@@ -173,38 +143,21 @@ class VaultPullGestureHandler(
             }
         }
         armRunnable = runnable
-        iconView.postDelayed(runnable, VAULT_HOLD_OPEN_MS)
+        iconView.postDelayed(runnable, VAULT_ARM_DELAY_MS)
     }
 
     private fun armVaultOpen() {
-        holdLongEnough = true
+        armed = true
+        iconView.animateArm()
         textView.text = textView.context.getString(R.string.release_to_open_vault)
-
-        // short bounce on the lock icon to signal that the vault can be opened
-        iconView.animate()
-            .scaleX(1.25f)
-            .scaleY(1.25f)
-            .setDuration(ARM_PULSE_MS)
-            .setInterpolator(DecelerateInterpolator())
-            .withEndAction {
-                iconView.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(ARM_PULSE_MS)
-                    .start()
-            }
-            .start()
         indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
     private fun resetThresholdState() {
         thresholdMet = false
-        thresholdMetAt = 0L
-        holdLongEnough = false
-        cancelHoldAnimator()
-        iconView.rotation = 0f
-        iconView.scaleX = 1f
-        iconView.scaleY = 1f
+        armed = false
+        cancelArm()
+        iconView.resetState()
     }
 
     private fun resetGesture() {
@@ -226,9 +179,7 @@ class VaultPullGestureHandler(
         resetThresholdState()
     }
 
-    private fun cancelHoldAnimator() {
-        holdAnimator?.cancel()
-        holdAnimator = null
+    private fun cancelArm() {
         armRunnable?.let { iconView.removeCallbacks(it) }
         armRunnable = null
     }
@@ -238,10 +189,9 @@ class VaultPullGestureHandler(
         private const val HOLD_OPEN_THRESHOLD_DP = 95f
         private const val TRANSLATION_FACTOR = 0.45f
 
-        /** How long the pull must be sustained before the vault can be opened. */
-        private const val VAULT_HOLD_OPEN_MS = 1250L
+        /** How long the threshold must be held before the orbital lock arms. */
+        private const val VAULT_ARM_DELAY_MS = 625L
 
         private const val RESET_ANIM_MS = 220L
-        private const val ARM_PULSE_MS = 120L
     }
 }

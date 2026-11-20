@@ -1767,7 +1767,8 @@ class DirectoryAdapter(
     }
 
     override fun onRowClear(myViewHolder: ViewHolder?) {
-        swipeRefreshLayout?.isEnabled = activity.config.enablePullToRefresh
+        // Pull-to-refresh kaldırıldı; refresh sadece taşma menüsünden tetikleniyor.
+        swipeRefreshLayout?.isEnabled = false
     }
 
     override fun onChange(position: Int) = dirs.getOrNull(position)?.getBubbleText(directorySorting, activity, dateFormat, timeFormat) ?: ""

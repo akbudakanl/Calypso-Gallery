@@ -375,20 +375,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             dispatchToChildren = { event -> super.dispatchTouchEvent(event) },
             onVaultOpen = {
                 triggerSecretVaultMenu()
-            },
-            onListRefresh = {
-                if (config.enablePullToRefresh) {
-                    RandomOrderManager.invalidateDirectoryOrder()
-                    binding.directoriesRefreshLayout.isRefreshing = true
-                    if (!InitialFolderDiscoveryPolicy.shouldReuseInFlightInitialLoadOnRefresh(
-                            loadedInitialPhotos = mLoadedInitialPhotos,
-                            activeInitialGeneration = mActiveInitialScanGeneration,
-                            currentGeneration = mFetchGeneration.get()
-                        )
-                    ) {
-                        getDirectories(forceRepair = true)
-                    }
-                }
             }
         )
     }
@@ -609,7 +595,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
 
         binding.directoriesFastscroller.updateColors(primaryColor)
-        binding.directoriesRefreshLayout.isEnabled = mIsSecretVaultView && !binding.mainMenu.isSearchOpen && config.enablePullToRefresh
+        binding.directoriesRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
         getRecyclerAdapter()?.apply {
             dateFormat = config.dateFormat
             timeFormat = getTimeFormat()
@@ -946,7 +932,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
         binding.mainMenu.onSearchTextChangedListener = { text ->
             setupAdapter(mDirsIgnoringSearch, text)
-            binding.directoriesRefreshLayout.isEnabled = mIsSecretVaultView && text.isEmpty() && config.enablePullToRefresh
+            binding.directoriesRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
             binding.directoriesSwitchSearching.beVisibleIf(text.isNotEmpty())
         }
 
@@ -1290,7 +1276,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun updateVaultModeUi() {
         runOnUiThread {
             if (isDestroyed || isFinishing) return@runOnUiThread
-            binding.directoriesRefreshLayout.isEnabled = mIsSecretVaultView && !binding.mainMenu.isSearchOpen && config.enablePullToRefresh
+            binding.directoriesRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
             val hasEncryptedActive = mIsSecretVaultView || (CryptoManager.isVaultUnlocked && (mHiddenDisplayMode == DISPLAY_ALL_HIDDEN || mHiddenDisplayMode == DISPLAY_ENCRYPTED_ONLY))
             applyVaultScreenProtection(hasEncryptedActive)
             if (mIsSecretVaultView) {
@@ -2555,7 +2541,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val dirsCopy = ArrayList(dirs)
         runOnUiThread {
             if (isDestroyed || isFinishing) return@runOnUiThread
-            binding.directoriesRefreshLayout.isEnabled = mIsSecretVaultView && !binding.mainMenu.isSearchOpen && config.enablePullToRefresh
+            binding.directoriesRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
             val query = textToSearch ?: binding.mainMenu.getCurrentQuery()
             val currAdapter = binding.directoriesGrid.adapter
             val filtered = if (mIsSecretVaultView) {

@@ -94,11 +94,10 @@
             android:paddingBottom="@dimen/medium_margin"
             android:visibility="gone">
 
-            <ImageView
+            <org.fossify.gallery.views.VaultPullOrbitalView
                 android:id="@+id/vault_pull_icon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@drawable/ic_lock_vector" />
+                android:layout_width="56dp"
+                android:layout_height="56dp" />
 
             <org.fossify.commons.views.MyTextView
                 android:id="@+id/vault_pull_text"
