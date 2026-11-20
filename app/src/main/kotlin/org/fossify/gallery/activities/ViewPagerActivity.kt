@@ -1382,8 +1382,16 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         binding.bottomActions.bottomToggleFileVisibility.setOnLongClickListener {
             toast(if (currentMedium?.isHidden() == true) R.string.decrypt else R.string.encrypt); true
         }
+        // Without All Files access encryption cannot run: keep the action discoverable but muted,
+        // and explain what is missing when it is tapped (same warning as the pull-to-open gesture).
+        val needsAllFiles = isRPlus() && !isExternalStorageManager() && currentMedium?.isHidden() != true
+        binding.bottomActions.bottomToggleFileVisibility.alpha = if (needsAllFiles) 0.45f else 1f
 
         binding.bottomActions.bottomToggleFileVisibility.setOnClickListener {
+            if (isRPlus() && !isExternalStorageManager() && currentMedium?.isHidden() != true) {
+                GrantAllFilesDialog(this)
+                return@setOnClickListener
+            }
             currentMedium?.apply {
                 toggleFileVisibility(!isHidden()) {
                     updateBottomActionIcons(currentMedium)
