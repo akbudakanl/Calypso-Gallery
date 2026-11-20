@@ -1,0 +1,175 @@
+# ADR 0007 — Unutulan kasa parolası: arşivleme ve yeniden oluşturma
+
+- **Durum:** Accepted — **Aksiyom: uygulama içinde parolasız kasa silinmez (2026-11-21)**
+- **Tarih:** 2026-11-21
+- **İlgili:** [ADR 0002](0002-operational-security-hardening.md) (operasyonel güvenlik), [ADR 0003](0003-resumable-file-operations.md) (kesintiye dayanıklı işlemler), [ADR 0006](0006-strong-biometrics-only.md) (güçlü biyometrik kararı)
+- **İngilizce çeviri:** [0007-forgotten-password-vault-archive.en.md](0007-forgotten-password-vault-archive.en.md)
+
+> **Özet Karar.** Kullanıcı kasa parolasını unuttuğunda uygulama **asla** parolasız silme yapmaz. Bunun yerine mevcut kasayı `Calypso Gallery/Archive/` altına **taşır** (arşivler), varsayılan konumda yeni bir kasa oluşturur ve eski kasayı parolasıyla geri yüklemeyi mümkün tutar. Arşiv klasörü yalnızca ilk arşivlemede oluşur; rastgele, tarih/sayaç içermeyen bir ad kullanılır. Disk alanı boşaltmak kullanıcıya bırakılır ve yol gösterilir; uygulama içinde arşiv silme yoktur.
+
+---
+
+## 1. Aksiyom
+
+**Uygulama içinde hiçbir kasa, kasa parolası/PIN'i olmadan silinemez veya geçersiz kılınamaz.**
+
+Bu kural bir tercih değil, tasarım aksiyomudur:
+
+- Cihaza erişimi olan bir kişi, parolayı bilmeden kasayı "sıfırlayabilir" veya silebilirse bu bir **hizmet reddi** saldırısıdır. Saldırgan veriyi okuyamasa da kullanıcının erişimini kalıcı olarak yok eder.
+- Aksiyom, mevcut **"Şifreli kasayı sıfırla"** ayarını da kapsar: bu ayar yalnızca **mevcut parola girildikten sonra** erişilebilir ve kasayı aynı konumda yeni parolayla yeniden oluşturur. Parolasız bir "sıfırla" yolu açılmaz.
+- Aksiyom arşivlenmiş kasaları da kapsar: uygulama, arşivdeki bir kasayı da parolasız **silemez**. Silme yalnızca kullanıcının kendi eliyle, dosya yöneticisiyle yapılabilir (§8).
+
+Biyometrik doğrulama bu aksiyomu değiştirmez: Class 3 biyometrik kasa kilidini açabilir ama "parola olmadan kasa silme" yetkisi vermez (bkz. ADR 0006).
+
+---
+
+## 2. Problem
+
+Basit bir kullanıcı, varsayılan konumdaki (`Calypso Gallery/Secrets`) kasasının parolasını unutursa:
+
+- Kasayı açamaz; dolayısıyla mevcut "Şifreli kasayı sıfırla" ayarına erişemez.
+- Yeni bir kasa oluşturmak için varsayılan konumu boşaltması gerekir, ama bunu dosya yöneticisiyle yapmak onun için zordur ve risklidir.
+- İlk tepki "sil" olmamalıdır: kullanıcı daha sonra parolasını hatırlayabilir ve eski kasaya dönmek isteyebilir.
+- Öte yandan arşiv sonsuza kadar diskte kalamaz; kullanıcının depolama üzerinde kontrolü olmalıdır. Bu yüzden kullanıcıya **arşivle / vazgeç** seçimi sorulur; kalıcı silmeyi tercih eden kullanıcıya yol gösterilir (§3.2, §8).
+
+---
+
+## 3. Karar
+
+### 3.1. Ayar yeri
+
+"Şifreli kasa" bölümünün en altına, parola gerektiren "Şifreli kasayı sıfırla"nın altına ayrı bir satır eklenir:
+
+> **Parolamı unuttum** — *Eski kasayı arşivler, varsayılan konumda yeni kasa oluşturur*
+
+Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki "Parolamı unuttum" bağlantısı da doğrudan bu akışa götürür; kullanıcı ayarlarda aramak zorunda kalmaz.
+
+### 3.2. Kullanıcıya sorulan soru
+
+İlk dialogda iki seçenek sunulur:
+
+1. **Arşivle ve devam et** (varsayılan, önerilen): eski kasa korunur, varsayılan `Secrets` konumunda yeni kasa oluşturulur.
+2. **Arşivlemeden sil ve devam et**: ikinci, ayrı bir sert onaydan sonra eski kasa kalıcı silinir.
+
+İkinci seçenek uygulama içinde **parolasız silme** anlamına gelir ve aksiyomla çelişir. Bu nedenle **reddedilmiştir** — aşağıda da belirtildiği gibi, silme işlemi yalnızca dosya yöneticisiyle kullanıcı tarafından yapılır. Dialogda kullanıcıya şu seçenekler sunulur: **Arşivle ve devam et / Vazgeç**. "Arşivle" varsayılandır.
+
+> Not: §2'de "arşivle / kalıcı sil" seçimi sorulması gerektiği yazılmıştır; aksiyom gereği kalıcı silme uygulama içinde yapılamaz. Kullanıcının silme kararı, arşiv yolunun gösterilmesiyle (§8) dosya yöneticisine yönlendirilerek karşılanır. Uygulama, silme kararını kolaylaştırmak için yolu panoya kopyalayabilir; **silme fiilini gerçekleştirmez**.
+
+### 3.3. Arşivleme akışı
+
+Ön koşullar: kasa kilitli olmalı, aktif foreground dosya işlemi bulunmamalı, cihaz açık olmalı.
+
+1. Kullanıcı onayı alınır; arşivin diskte yer kapladığı ve geri yüklenebileceği açıkça anlatılır.
+2. `Calypso Gallery/Archive/` klasörü **yoksa** oluşturulur ve içine jenerik `readme.txt` yazılır. Klasör uygulama kurulumunda **var olmaz**; ilk arşivlemeye kadar oluşturulmaz.
+3. Rastgele hedef ad üretilir (§5); çakışma kontrolü yapılır.
+4. Hedef yol özel tercihlere (`archivedVaults`) kaydedilir; eski kasa klasörü bu yola **taşınır**.
+5. Taşıma başarısız olursa tercih kaydı geri alınır, kaynak yerinde kalır.
+6. Biyometrik kasa durumu temizlenir: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. Eski kasanın biyometrik bağı yeni kasaya devredilmez.
+7. Varsayılan konumda (`Calypso Gallery/Secrets`) yeni kasa oluşturma akışı başlatılır; kullanıcı yeni parolasını/PIN'ini belirler.
+8. Yeni kasa oluşturulamazsa `config.vaultRootPath` arşiv yoluna geri yazılır; eski kasa erişilebilir kalır.
+9. Başarıda `config.vaultRootPath` yeni kasayı gösterir; arşiv kaydı özel tercihlerde durur.
+
+Adımların tamamı [ADR 0003](#) mantığıyla bir **journal** üzerinden yürür; uygulama herhangi bir adımda ölürse ya eski kasa yerinde kalır ya da arşiv yolundan erişilebilir. **Hiçbir durumda veri kaybı olmaz.**
+
+---
+
+## 4. Arşiv düzeni ve meta veri
+
+```
+Calypso Gallery/                      (varsayılan: /storage/emulated/0/Calypso Gallery)
+├── Secrets/                          ← aktif kasa
+└── Archive/                          ← yalnızca ilk arşivlemede oluşur
+    ├── readme.txt                    ← jenerik: amaç, geri yükleme, silme uyarısı
+    └── a3f1c7d9e2b4/                  ← rastgele ad, tarih/sayaç YOK
+        ├── .vault
+        └── *.bin
+```
+
+- `Archive` klasörü **`Calypso Gallery` kökünde** oluşturulur; üst klasördeki `.nomedia` dosyası alt dizinleri de kapsar, böylece arşiv galerilerde görünmez.
+- `readme.txt` ve varsa `info.txt` **jeneriktir**: tarih, orijinal yol, kullanıcı adı veya "parola unutuldu" gibi davranışsal bilgi içermez.
+- Orijinal kasa yolu, arşiv tarihi ve isteğe bağlı kullanıcı etiketi yalnızca **uygulamanın özel `SharedPreferences` alanında**, rastgele id ile eşleştirilerek tutulur. Dosya yöneticisi bunu göremez.
+- Klasör adında **tarih yoktur**, çünkü bu bir meta veri ihlali olarak algılanabilir: "kullanıcı şu tarihte parolasını unuttu" bilgisi doğrudan okunur. Dosya sistemi `mtime` zaten vardır; klasör adına eklemek gereksizdir.
+- `.cache` gibi **yanıltıcı/sahte adlar reddedilmiştir**: kullanıcıyı kandırmak olur ve arşivin varlığını gizleme amacına hizmet etmez.
+
+---
+
+## 5. Rastgele ad ve çakışma güvenliği
+
+Kasa adı **kriptografik olarak rastgele** üretilir:
+
+- `SecureRandom` ile 12 bayt → 24 karakter hex (ör. `a3f1c7d9e2b4c6d8e0f1a2b3`).
+- Üretimden sonra `File.exists()` ile hedef kontrol edilir; **çakışma varsa yeniden üretilir**. Maksimum deneme (ör. 10) aşılırsa işlem iptal edilir ve hata bildirilir.
+- `renameTo` zaten hedef varsa başarısız olur; bu ikinci bir güvenlik katmanıdır.
+- `UUIDv4` kabul edilebilir; **ULID / UUIDv7 kullanılmaz** çünkü bunlar zaman damgasını ismin içine gömer.
+- Sayaç (`Secrets (1)`, `Secrets (2)`) kullanılmaz: arşiv sayısını sızdırır ve silme sonrası numara çakışması yaratır.
+
+Kullanıcıya gösterilen dostane ad ("Arşiv 1", "Arşiv 2") yalnızca UI'da üretilir; diskte karşılığı rastgele addır. Liste **dosya `mtime`'ına göre** sıralanır.
+
+---
+
+## 6. Taşıma, rollback ve anahtar durumu
+
+- Kaynak kasa `Calypso Gallery` altındaysa hedef de aynı filesystem'dedir; `File.renameTo` **atomik ve anındadır**, veri kopyalanmaz. ADR 0003'teki uzun süren foreground operasyon gerekmez.
+- Kaynak kasa özel/harici bir klasördeyse filesystem farklı olabilir. `renameTo` başarısız olursa:
+  - ya ADR 0003 journal'ı ile **kopyala → doğrula → kaynağı kaldır** yapılır (veri kaybı yok, ama uzun sürer),
+  - ya da otomatik arşivleme iptal edilip kullanıcıya "bu konum için otomatik arşivleme desteklenmiyor" bilgisi verilir.
+- Journal adımları: tercih yaz → rename → biyometrik temizle → yeni kasa oluştur → config geçir. Her adım geri alınabilir.
+- Arşivlenen kasanın `.vault` başlığı ve `.bin` dosyaları **yol bağımlı değildir**; anahtarlar bozulmaz. Arşivlenen kasa daha sonra yalnızca **kendi parolasıyla** açılabilir.
+
+---
+
+## 7. Geri yükleme
+
+"Kasa konumu" ayarına **"Arşivden kasa aç"** seçeneği eklenir:
+
+- Özel tercihlerdeki `archivedVaults` listesi gösterilir (dostane ad + `mtime`).
+- Tercihler sıfırlanmışsa `Archive/*` dizini taranır ve `CryptoManager.resolveExistingVaultInDirectory(dir)` ile geçerli `.vault` başlığı aranır; rastgele ad fallback olarak gösterilir.
+- Seçilen arşiv **yerinde aktif kasa yapılır** (`config.vaultRootPath` = arşiv yolu); kullanıcı kasa parolasıyla açar.
+- Varsayılan konuma geri taşıma otomatik yapılmaz: orada zaten yeni kasa vardır ve bu, parolasız silme anlamına gelirdi (aksiyom).
+
+---
+
+## 8. Disk alanı boşaltma
+
+Uygulama içinde arşiv silme **yoktur** (aksiyom). Kullanıcıya gösterilir:
+
+> "Arşivlenen kasa diskte yer kaplar. Yer açmak için şifreli kasa klasörünü bir dosya yöneticisiyle silebilirsiniz: **/storage/emulated/0/Calypso Gallery/Archive/<id>**."
+
+- Yol her zaman **o an seçili kasanın/arşiv kaydının gerçek yolu** olarak gösterilir; sabit varsayılan yol yazılmaz (özel konumlar desteklenir).
+- "Yolu kopyala" butonu olabilir; uygulama silme fiilini **gerçekleştirmez**.
+- `Calypso Gallery` harici depolamanın kökündedir ve `Android/data` altında değildir; uygulama kaldırılsa da kalır. Bu yüzden kullanıcıya temizlik sorumluluğu açıkça anlatılır.
+
+---
+
+## 9. Reddedilen alternatifler
+
+1. **Parolasız "Şifreli kasayı sıfırla":** aksiyomu ihlal eder; hizmet reddi riski. Reddedildi.
+2. **Uygulama içinde arşiv kasasını silme:** aksiyomu ihlal eder. Reddedildi; silme dosya yöneticisine bırakılır.
+3. **Tarih/sayaçlı klasör adı:** meta veri ihlali ve çakışma riski. Reddedildi (§5).
+4. **`.cache` gibi sahte ad:** yanıltıcı. Reddedildi.
+5. **Kullanıcıyı doğrudan dosya yöneticisine göndermek:** basit kullanıcı için zor ve riskli. Reddedildi; arşivleme uygulama içinde otomatik yapılır.
+6. **Yeni kasayı `Secrets-2` gibi yan konuma oluşturmak:** taşıma riskini azaltır ama "varsayılan konumda yeni kasa" hedefini karşılamaz. Reddedildi.
+
+---
+
+## 10. Doğrulama kriterleri
+
+- Varsayılan konumda bir kasa varken "Parolamı unuttum" akışı **parola istemeden** arşivleme yapabilir; ancak **hiçbir kod yolu parolasız `delete()`/`wipe()` çağıramaz** (statik test).
+- `Archive` klasörü uygulama kurulumunda yoktur; ilk arşivlemeden önce `exists() == false`.
+- 1000 arşiv denemesinde çakışan ad üretilmez; çakışma simülasyonunda yeniden üretim çalışır.
+- Taşıma ortasında süreç öldürülürse: kasa ya kaynakta ya arşivde erişilebilir, asla kayıp değil.
+- Arşivlenen kasa "Arşivden kasa aç" ile **kendi parolasıyla** açılır; parolasız açılamaz.
+- Arşiv klasör adında tarih/sayaç yoktur; `readme.txt`/`info.txt` hassas meta veri içermez.
+- Yeni kasa varsayılan `Secrets` konumunda oluşur ve `config.vaultRootPath` yeni kasayı gösterir.
+- Biyometrik kalıntı temizlenir: yeni kasa için `isVaultBiometricEnabled == false`.
+
+---
+
+## 11. Sıradaki adımlar
+
+Bu ADR onaylandıktan sonra:
+
+1. Akışın HTML maketi (ayar satırı, onay dialogu, arşiv listesi, yol bildirimi) hazırlanır.
+2. Uygulama kodu ADR 0003 journal kalıbıyla yazılır.
+3. Yeni string'ler 9 dile çevrilir ve `translation-blind-tests/` raporları güncellenir.
+4. `FORK_CHANGELOG.md` altında yeni sürüm notu eklenir.
