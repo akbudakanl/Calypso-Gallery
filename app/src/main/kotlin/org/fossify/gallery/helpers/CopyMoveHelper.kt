@@ -473,7 +473,8 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
                     taskSucceeded = result.succeeded,
                     transferredCount = result.transferredCount,
                     expectedCount = result.expectedCount,
-                    skippedConflictCount = result.skippedConflictCount
+                    skippedConflictCount = result.skippedConflictCount,
+                    identicalSkippedCount = result.identicalSkippedCount
                 )
                 if (result.succeeded) {
                     callback(destination)
@@ -501,13 +502,15 @@ private fun BaseSimpleActivity.showCopyMoveCompletionToast(
     taskSucceeded: Boolean,
     transferredCount: Int,
     expectedCount: Int,
-    skippedConflictCount: Int = 0
+    skippedConflictCount: Int = 0,
+    identicalSkippedCount: Int = 0
 ) {
     if (!taskSucceeded) {
         toast(org.fossify.commons.R.string.copy_move_failed)
         return
     }
     if (transferredCount == 0 && expectedCount == 0 && skippedConflictCount > 0) {
+        showSkippedIdenticalToast(identicalSkippedCount)
         return
     }
     val allSucceeded = transferredCount >= expectedCount
@@ -526,6 +529,7 @@ private fun BaseSimpleActivity.showCopyMoveCompletionToast(
         }
     }
     toast(msgId)
+    showSkippedIdenticalToast(identicalSkippedCount)
 }
 
 private data class CopyMoveConfig(
@@ -544,7 +548,8 @@ private data class CopyMoveResult(
     val transferredCount: Int,
     val expectedCount: Int,
     val skippedConflictCount: Int,
-    val itemsToDeleteSdk30: ArrayList<FileDirItem>
+    val itemsToDeleteSdk30: ArrayList<FileDirItem>,
+    val identicalSkippedCount: Int = 0
 )
 
 private sealed class TopLevelResolution {
@@ -572,6 +577,8 @@ private class CopyMoveRunner(
 
     private var totalItems = 0
     private var processedItems = 0
+    /** Silently skipped files whose name, bytes and timestamps all match at the destination. */
+    private var identicalSkippedCount = 0
     private var totalBytes = 0L
     private var transferredBytes = 0L
     private var lastUiUpdateMs = 0L
@@ -594,7 +601,10 @@ private class CopyMoveRunner(
     ): Boolean {
         if (!srcFile.isFile) return false
         if (activity.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG) return false
-        if (srcFile.absolutePath in config.precheckedIdenticalPaths) return true
+        if (srcFile.absolutePath in config.precheckedIdenticalPaths) {
+            identicalSkippedCount++
+            return true
+        }
         if (srcFile.absolutePath in config.precheckedNonIdenticalPaths) return false
 
         val candidates = destIndex.findCandidates(desiredName, includeCollisionVariants = true)
@@ -636,6 +646,7 @@ private class CopyMoveRunner(
                 fastSampling = activity.config.fastLargeDuplicateCheck
             )
             if (identical) {
+                identicalSkippedCount++
                 CryptoManager.applyDuplicateDateToPlainFile(
                     context = activity.applicationContext,
                     target = existing,
@@ -691,7 +702,8 @@ private class CopyMoveRunner(
                         transferredCount = transferredFiles.size,
                         expectedCount = expectedCount,
                         skippedConflictCount = skippedConflictCount,
-                        itemsToDeleteSdk30 = itemsToDeleteSdk30
+                        itemsToDeleteSdk30 = itemsToDeleteSdk30,
+                        identicalSkippedCount = identicalSkippedCount
                     )
                 }
                 val itemCtx = OperationContext(operation.operationId, index, operation.kind, operation.batch)
@@ -744,7 +756,8 @@ private class CopyMoveRunner(
             transferredCount = transferredFiles.size,
             expectedCount = expectedCount,
             skippedConflictCount = skippedConflictCount,
-            itemsToDeleteSdk30 = itemsToDeleteSdk30
+            itemsToDeleteSdk30 = itemsToDeleteSdk30,
+            identicalSkippedCount = identicalSkippedCount
         )
     }
 

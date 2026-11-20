@@ -364,7 +364,7 @@
     <string name="vault_password_reminder_verified">パスワードを確認しました</string>
     <string name="vault_password_reminder_not_now">今はしない</string>
     <string name="vault_password_reminder_forgot_title">パスワードを覚えていませんか？</string>
-    <string name="vault_password_reminder_forgot_steps">生体認証で保管庫を開け、暗号化データをエクスポートし、設定 → 暗号化保管庫をリセット で新しいパスワードを設定してデータを復元してください。生体認証でも開けない場合、保管庫にはアクセスできません。</string>
+    <string name="vault_password_reminder_forgot_steps">1. 生体認証で開きます。\n2. 暗号化データをコピーします。\n3. 設定 → 暗号化保管庫をリセット。\n\n生体認証も使えない場合は、アーカイブ、コピー、または %1$s のフォルダーを削除してください。</string>
     <string name="vault_password_reminder_verify_action">パスワードを確認する</string>
     <string name="vault_password_reminder_forgot_action">覚えていない</string>
     <string name="vault_password_reminder_open_settings">設定を開く</string>
@@ -523,7 +523,10 @@
     <string name="date_tie_break_ask">毎回確認</string>
     <string name="date_tie_break_hint">スマートダイアログと自動モードのみに適用されます。標準ダイアログは影響を受けません。</string>
     <string name="date_tie_break_ask_info_title">\"毎回確認\"がスマートダイアログと自動モードを無効にする理由</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありません。自動モードでは同一ファイルが name(1) として再度書き込まれ、フォルダーが無意味なコピーで埋まります。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありませんが、その場で判断できます。自動（実験的）モードではダイアログを一切表示しないため、\"毎回確認\"は使用できません。自動モードを選択すると\"既存ファイルの日付を保持（既定）\"にフォールバックします。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="other">%d 個の同一ファイルをスキップしました</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">受信（新規）</string>
     <string name="smart_conflict_existing_label">既存（宛先）</string>
@@ -656,4 +659,17 @@
     <string name="use_biometrics">生体認証を使用</string>
     <string name="hide_vault_key_presses">保管庫のパスワード入力時にキー押下を非表示にする</string>
     <string name="show_pin_dots">PIN入力時に各桁をドットで表示する</string>
+<string name="archive_vault">保管庫をアーカイブ</string>
+    <string name="archive_vault_summary">古い保管庫をアーカイブし、新しい保管庫を作成します</string>
+    <string name="archive_vault_confirm">現在の保管庫はアーカイブに移動され、既定の場所に新しい保管庫が作成されます。削除はされません。別のデバイスで使う場合は「暗号化保管庫をエクスポート」を使用してください。コピーであり、元の保管庫は残ります。</string>
+    <string name="archive_vault_success">保管庫をアーカイブしました。場所: %1$s</string>
+    <string name="archive_vault_failed">保管庫をアーカイブできませんでした。変更はありません。</string>
+    <string name="select_archived_vault">アーカイブ済み保管庫から選択</string>
+    <string name="archived_vault_indexed">%1$d 番目にアーカイブした保管庫</string>
+    <string name="archived_vault_unknown_date">日付不明の暗号化保管庫</string>
+    <string name="archived_vault_invalid">無効なアーカイブ項目</string>
+    <string name="archived_vault_invalid_message">%1$s に保管庫ヘッダーが見つかりません。ファイルマネージャーで削除できます。</string>
+    <string name="copy_path">パスをコピー</string>
+    <string name="faq_forgot_password_title">暗号化保管庫のパスワードを忘れました。どうすればいいですか？</string>
+    <string name="faq_forgot_password_text">1. 生体認証で開けます。\n2. 暗号化データをコピー（エクスポート）します。コピーであり移動ではありません。\n3. 設定 → 暗号化保管庫をリセット で新しいパスワードを設定します。\n\n警告: 生体認証も使えない場合、保管庫にはアクセスできません。アーカイブ、コピー、または %1$s のフォルダーをファイルマネージャーで削除できます。</string>
 </resources>

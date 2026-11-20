@@ -1295,14 +1295,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun showVaultPasswordRecovery() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.vault_password_reminder_forgot_title)
-            .setMessage(R.string.vault_password_reminder_forgot_steps)
-            .setPositiveButton(R.string.vault_password_reminder_open_settings) { _, _ ->
-                startActivity(Intent(this, SettingsActivity::class.java))
-            }
-            .setNegativeButton(org.fossify.commons.R.string.ok, null)
-            .show()
+        startActivity(
+            Intent(this, AboutActivity::class.java).apply {
+                putExtra(AboutActivity.EXTRA_OPEN_FORGOT_FAQ, true)
+            },
+        )
     }
 
     private fun handleVaultIntent(intent: Intent?) {

@@ -4,6 +4,10 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 
 ## [Unreleased]
 
+### Eklendi
+
+- Dosya işlemleri: Akıllı diyalog veya Otomatik modda adı, bit düzeyinde içeriği ve tarihi birebir aynı olduğu için sessizce atlanan dosyalar, işlem sonunda kısa bir "N aynı dosya atlandı" toast'ıyla bildirilir. "İçerik aynı, tarih farklıysa → Her zaman sor" seçiliyse bu dosyalar thumbnail'li çakışma penceresinde kullanıcıya gösterilir ve onaylandığı için toast çıkmaz; yalnızca üçü de aynı olan dosyalar bildirilir. Otomatik (Deneysel) modda "Her zaman sor" seçeneği devre dışıdır ve bu moda geçildiğinde "Hedefteki dosyanın tarihi kalsın (varsayılan)" seçeneğine geri dönülür.
+
 ### Güvenlik ve kararlılık düzeltmeleri
 
 - Class 2 (zayıf) biyometriğin şifreli kasa erişimi için desteklenmediğine dair açık not eklendi; güçlü biyometrik olmayan cihazlarda ayar sessizce gizlenmek yerine devre dışı görünür ve nedeni yerelleştirilmiş bir pencerede anlatılır (bkz. [ADR 0006](docs/adr/0006-strong-biometrics-only.md)).

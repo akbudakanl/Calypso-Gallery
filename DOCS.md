@@ -751,6 +751,9 @@ To prevent this while preserving idempotency on repeated operations, deduplicati
 > [!NOTE]
 > **Special Timestamp Exception vs. General File Metadata:** Unlike EXIF payloads or image/video bitstreams (which are already covered bit-for-bit by payload comparison), filesystem `lastModified` and out-of-band capture timestamps (`dateTaken`) are external temporal context. This architecture treats **only** `(lastModified, dateTaken)` equivalence—rather than arbitrary metadata properties or collision indices (`matchCollisionVariants`)—as a separator between distinct temporal instances, avoiding unrequested duplicate bloat on identical re-saves while keeping timestamped history intact.
 
+> [!NOTE]
+> **User Visibility of Silent Skips:** In Smart dialog and Automatic modes, files that are skipped *without* a dialog (name, payload bytes and `(lastModified, dateTaken)` all equivalent) are counted per operation and reported once at completion through `showSkippedIdenticalToast` (`SkippedIdenticalToast.kt`). Files whose bytes match but dates differ while `DATE_TIE_BREAK_ASK` ("Always ask") is selected are *not* counted: `shouldGateDuplicatesByDate()` turns them into a `NAME_CONFLICT` that is reviewed in `SmartFileConflictDialog` with both thumbnails, so the user is already aware. Automatic (Experimental) mode cannot use `DATE_TIE_BREAK_ASK`; `Config.dateTieBreakMode` falls back to `DATE_TIE_BREAK_KEEP_TARGET` whenever that combination is set or restored, and the settings dialog disables the corresponding radio.
+
 ### Residual Operational Notes & Edge Cases
 
 1. **Tails OS / RAM Staging Timestamp Hygiene Before CLI Encryption:**

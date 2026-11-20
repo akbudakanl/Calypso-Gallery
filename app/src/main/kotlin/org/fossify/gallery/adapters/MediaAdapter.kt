@@ -146,6 +146,7 @@ import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultMediaPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.showSkippedIdenticalToast
 import org.fossify.gallery.helpers.operations.BatchOperationInfo
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.JournalItem
@@ -922,6 +923,7 @@ class MediaAdapter(
                             } else {
                                 activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
                             }
+                            activity.showSkippedIdenticalToast(identicalTargetMap.size)
                             activity.resolveSkippedCryptoFiles(
                                 isEncrypt = false,
                                 skippedFiles = skippedSourceFiles,
@@ -1130,6 +1132,7 @@ class MediaAdapter(
                             } else {
                                 activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
                             }
+                            activity.showSkippedIdenticalToast(identicalTargetMap.size)
                             activity.resolveSkippedCryptoFiles(
                                 isEncrypt = true,
                                 skippedFiles = skippedSourceFiles,

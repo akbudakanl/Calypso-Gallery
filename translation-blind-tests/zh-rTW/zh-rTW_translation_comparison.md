@@ -729,7 +729,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 484 | `date_tie_break_ask` | Always ask | 一律詢問 |
 | 485 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | 僅適用於智慧對話方塊與全自動模式。標準對話方塊不受影響。 |
 | 486 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | 為何「一律詢問」會停用智慧對話方塊與全自動模式 |
-| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異。在全自動模式中，相同的檔案會再次寫入為 name(1)，讓資料夾塞滿毫無意義的副本。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 |
+| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異，您可以在那裡自行決定。全自動（實驗性）模式一律不顯示對話方塊，因此「一律詢問」在此模式中無法使用；選擇全自動模式時會回退到「保留現有檔案的日期（預設）」。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 |
 | 488 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
 | 489 | `smart_conflict_incoming_label` | Incoming (New) | 傳入（新） |
 | 490 | `smart_conflict_existing_label` | Existing (Target) | 現有（目標） |
@@ -964,7 +964,29 @@ Added/updated in `values-zh-rTW/strings.xml`. The reminder is shown in-app when 
 | 23 | `vault_password_reminder_open_settings` | Open settings | 開啟設定 |  |
 | 24 | `empty_encrypted_vault` | Reset encrypted vault | 重設加密保險箱 | Renamed label |
 
+## Vault Archive & Forgot-Password Strings (this revision)
+
+Added/updated in `values-zh-rTW/strings.xml`. Archive moves the old vault; export copies it; deletion is left to the file manager (ADR 0007). English source: `values/strings.xml`.
+
+| # | Key (`name`) | English | Traditional Chinese (Taiwan) |
+|--:|---|---|---|
+| 1 | `archive_vault` | Archive vault | 封存保險箱 |
+| 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | 將舊保險箱移至封存區並建立新保險箱 |
+| 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | 目前保險箱將移至封存區，並在預設位置建立新保險箱。不會刪除任何內容。若要在其他裝置使用，請使用「匯出加密保險箱」；該操作會複製檔案，原保險箱仍保留。 |
+| 4 | `archive_vault_success` | Vault archived. Location: %1$s | 保險箱已封存。位置：%1$s |
+| 5 | `archive_vault_failed` | Could not archive the vault. Nothing was changed. | 無法封存保險箱，未變更任何內容。 |
+| 6 | `select_archived_vault` | Select from archived vaults | 從封存的保險箱中選擇 |
+| 7 | `archived_vault_indexed` | %1$d. archived vault | 第 %1$d 個封存的保險箱 |
+| 8 | `archived_vault_unknown_date` | Encrypted vault with unknown date | 日期未知的加密保險箱 |
+| 9 | `archived_vault_invalid` | Invalid archive entry | 無效的封存項目 |
+| 10 | `archived_vault_invalid_message` | Vault header not found at %1$s. You can delete this folder with a file manager. | 在 %1$s 找不到保險箱標頭。您可以用檔案管理器刪除此資料夾。 |
+| 11 | `copy_path` | Copy path | 複製路徑 |
+| 12 | `faq_forgot_password_title` | I forgot my encrypted vault password, what can I do? | 我忘記加密保險箱的密碼了，該怎麼辦？ |
+| 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. 使用生物辨識解鎖。 2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。 3. 設定 → 重設加密保險箱以設定新密碼。  警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
+| 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 使用生物辨識解鎖。 2. 複製加密資料。 3. 設定 → 重設加密保險箱。  若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-zh-rTW/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
@@ -973,3 +995,12 @@ Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `va
 |--:|---|---|---|---|
 | 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（此裝置） | Value shown for an existing vault |
 | 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | 此時間超過可選上限（10 秒）。點按即可變更。 | Shown when the real time exceeds 10 s |
+
+## Silent identical-skip toast & Automatic mode date tie-break (this revision)
+
+Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_message` in `values-zh-rTW/strings.xml`. Smart dialog and Automatic mode now report silently skipped, byte-identical files at the end of an operation with a short toast; identical files with different dates that were reviewed in the thumbnail conflict dialog are excluded. "Always ask" can no longer be selected in Automatic (Experimental) mode and falls back to keeping the existing file's date. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `identical_files_skipped` | one: "%d identical file skipped" / other: "%d identical files skipped" | other: "已略過 %d 個相同的檔案" | Short end-of-operation toast in Smart/Automatic mode |
+| 2 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIn Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異，您可以在那裡自行決定。全自動（實驗性）模式一律不顯示對話方塊，因此「一律詢問」在此模式中無法使用；選擇全自動模式時會回退到「保留現有檔案的日期（預設）」。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 | Revised: "Always ask" unavailable in Automatic; falls back to keep-target date |

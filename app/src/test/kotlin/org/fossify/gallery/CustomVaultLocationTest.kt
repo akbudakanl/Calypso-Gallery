@@ -15,6 +15,7 @@ import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_ASK
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_KEEP_TARGET
+import org.fossify.gallery.helpers.DATE_TIE_BREAK_USE_SOURCE
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
@@ -1507,6 +1508,29 @@ class CustomVaultLocationTest {
 
         testContext.config.albumCryptoConflictMode = ALBUM_CRYPTO_CONFLICT_MERGE
         assertEquals(ALBUM_CRYPTO_CONFLICT_MERGE, testContext.config.albumCryptoConflictMode)
+    }
+
+    @Test
+    fun automaticMode_neverAllowsAlwaysAskDateTieBreak_andFallsBackToKeepTarget() {
+        testContext.config.conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_ASK
+        assertEquals(DATE_TIE_BREAK_ASK, testContext.config.dateTieBreakMode)
+
+        // Switching to Automatic falls back to the default date behaviour.
+        testContext.config.conflictHandlingMode = CONFLICT_HANDLING_AUTO
+        assertEquals(DATE_TIE_BREAK_KEEP_TARGET, testContext.config.dateTieBreakMode)
+
+        // "Always ask" cannot be set while Automatic is active, but the other two options can.
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_ASK
+        assertEquals(DATE_TIE_BREAK_KEEP_TARGET, testContext.config.dateTieBreakMode)
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_USE_SOURCE
+        assertEquals(DATE_TIE_BREAK_USE_SOURCE, testContext.config.dateTieBreakMode)
+
+        // It becomes available again after returning to the Smart dialog.
+        testContext.config.conflictHandlingMode = CONFLICT_HANDLING_SMART_DIALOG
+        assertEquals(DATE_TIE_BREAK_USE_SOURCE, testContext.config.dateTieBreakMode)
+        testContext.config.dateTieBreakMode = DATE_TIE_BREAK_ASK
+        assertEquals(DATE_TIE_BREAK_ASK, testContext.config.dateTieBreakMode)
     }
 
     @Test

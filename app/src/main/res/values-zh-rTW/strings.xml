@@ -364,7 +364,7 @@
     <string name="vault_password_reminder_verified">密碼已確認</string>
     <string name="vault_password_reminder_not_now">稍後再說</string>
     <string name="vault_password_reminder_forgot_title">不記得密碼了嗎？</string>
-    <string name="vault_password_reminder_forgot_steps">請先用生物辨識解鎖保險箱，汇出加密資料，然後使用「設定 → 重設加密保險箱」設定新密碼並還原資料。若生物辨識也無法解鎖，則無法存取保險箱。</string>
+    <string name="vault_password_reminder_forgot_steps">1. 使用生物辨識解鎖。\n2. 複製加密資料。\n3. 設定 → 重設加密保險箱。\n\n若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。</string>
     <string name="vault_password_reminder_verify_action">確認我的密碼</string>
     <string name="vault_password_reminder_forgot_action">我不記得了</string>
     <string name="vault_password_reminder_open_settings">開啟設定</string>
@@ -520,7 +520,10 @@
     <string name="date_tie_break_ask">一律詢問</string>
     <string name="date_tie_break_hint">僅適用於智慧對話方塊與全自動模式。標準對話方塊不受影響。</string>
     <string name="date_tie_break_ask_info_title">為何「一律詢問」會停用智慧對話方塊與全自動模式</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異。在全自動模式中，相同的檔案會再次寫入為 name(1)，讓資料夾塞滿毫無意義的副本。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異，您可以在那裡自行決定。全自動（實驗性）模式一律不顯示對話方塊，因此「一律詢問」在此模式中無法使用；選擇全自動模式時會回退到「保留現有檔案的日期（預設）」。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="other">已略過 %d 個相同的檔案</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">傳入（新）</string>
     <string name="smart_conflict_existing_label">現有（目標）</string>
@@ -653,4 +656,17 @@
     <string name="use_biometrics">使用生物辨識</string>
     <string name="hide_vault_key_presses">輸入保險庫密碼時隱藏按鍵回饋</string>
     <string name="show_pin_dots">輸入 PIN 時，每位數字顯示一個圓點</string>
+<string name="archive_vault">封存保險箱</string>
+    <string name="archive_vault_summary">將舊保險箱移至封存區並建立新保險箱</string>
+    <string name="archive_vault_confirm">目前保險箱將移至封存區，並在預設位置建立新保險箱。不會刪除任何內容。若要在其他裝置使用，請使用「匯出加密保險箱」；該操作會複製檔案，原保險箱仍保留。</string>
+    <string name="archive_vault_success">保險箱已封存。位置：%1$s</string>
+    <string name="archive_vault_failed">無法封存保險箱，未變更任何內容。</string>
+    <string name="select_archived_vault">從封存的保險箱中選擇</string>
+    <string name="archived_vault_indexed">第 %1$d 個封存的保險箱</string>
+    <string name="archived_vault_unknown_date">日期未知的加密保險箱</string>
+    <string name="archived_vault_invalid">無效的封存項目</string>
+    <string name="archived_vault_invalid_message">在 %1$s 找不到保險箱標頭。您可以用檔案管理器刪除此資料夾。</string>
+    <string name="copy_path">複製路徑</string>
+    <string name="faq_forgot_password_title">我忘記加密保險箱的密碼了，該怎麼辦？</string>
+    <string name="faq_forgot_password_text">1. 使用生物辨識解鎖。\n2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。\n3. 設定 → 重設加密保險箱以設定新密碼。\n\n警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。</string>
 </resources>

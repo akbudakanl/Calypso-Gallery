@@ -577,15 +577,36 @@ class Config(context: Context) : BaseConfig(context) {
 
     var conflictHandlingMode: Int
         get() = prefs.getInt(CONFLICT_HANDLING_MODE, CONFLICT_HANDLING_STANDARD_DIALOG)
-        set(mode) = prefs.edit().putInt(CONFLICT_HANDLING_MODE, mode).apply()
+        set(mode) {
+            prefs.edit().putInt(CONFLICT_HANDLING_MODE, mode).apply()
+            // Automatic mode never shows a dialog, so "Always ask" would only create pointless
+            // name(1) copies. Fall back to the default date behaviour when switching to it.
+            if (mode == CONFLICT_HANDLING_AUTO && dateTieBreakMode == DATE_TIE_BREAK_ASK) {
+                dateTieBreakMode = DATE_TIE_BREAK_KEEP_TARGET
+            }
+        }
 
     var fastLargeDuplicateCheck: Boolean
         get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, false)
         set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
 
     var dateTieBreakMode: Int
-        get() = prefs.getInt(DATE_TIE_BREAK_MODE, DATE_TIE_BREAK_KEEP_TARGET)
-        set(mode) = prefs.edit().putInt(DATE_TIE_BREAK_MODE, mode).apply()
+        get() = prefs.getInt(DATE_TIE_BREAK_MODE, DATE_TIE_BREAK_KEEP_TARGET).let { stored ->
+            // Defensive: an older build could have persisted AUTO + ASK together.
+            if (conflictHandlingMode == CONFLICT_HANDLING_AUTO && stored == DATE_TIE_BREAK_ASK) {
+                DATE_TIE_BREAK_KEEP_TARGET
+            } else {
+                stored
+            }
+        }
+        set(mode) {
+            val effective = if (conflictHandlingMode == CONFLICT_HANDLING_AUTO && mode == DATE_TIE_BREAK_ASK) {
+                DATE_TIE_BREAK_KEEP_TARGET
+            } else {
+                mode
+            }
+            prefs.edit().putInt(DATE_TIE_BREAK_MODE, effective).apply()
+        }
 
     var albumCryptoConflictMode: Int
         get() = prefs.getInt(ALBUM_CRYPTO_CONFLICT_MODE, ALBUM_CRYPTO_CONFLICT_ASK)
@@ -980,6 +1001,17 @@ class Config(context: Context) : BaseConfig(context) {
     var vaultLastPasswordReminderAt: Long
         get() = prefs.getLong(VAULT_LAST_PASSWORD_REMINDER_AT, 0L)
         set(value) = prefs.edit().putLong(VAULT_LAST_PASSWORD_REMINDER_AT, value).apply()
+
+    /** Archived vaults; kept in app-private prefs, never written next to the encrypted data. */
+    var archivedVaults: ArrayList<ArchivedVault>
+        get() {
+            val raw = prefs.getString(ARCHIVED_VAULTS, "") ?: ""
+            if (raw.isEmpty()) return ArrayList(1)
+            val type = object : TypeToken<ArrayList<ArchivedVault>>() {}.type
+            return runCatching { Gson().fromJson<ArrayList<ArchivedVault>>(raw, type) }.getOrNull()
+                ?: ArrayList(1)
+        }
+        set(value) = prefs.edit().putString(ARCHIVED_VAULTS, Gson().toJson(value)).apply()
 
     var vaultRootPath: String
         get() = prefs.getString(VAULT_ROOT_PATH, "")!!

@@ -371,7 +371,7 @@
     <string name="vault_password_reminder_verified">Contraseña confirmada</string>
     <string name="vault_password_reminder_not_now">Ahora no</string>
     <string name="vault_password_reminder_forgot_title">¿No recuerdas tu contraseña?</string>
-    <string name="vault_password_reminder_forgot_steps">Abre la bóveda con biometría, exporta tus datos cifrados y luego usa Configuración → Restablecer bóveda cifrada para poner una nueva contraseña y restaurar tus datos. Si la biometría tampoco puede abrirla, la bóveda es inaccesible.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Acceda con biometría.\n2. Copie los datos cifrados.\n3. Configuración → Restablecer bóveda cifrada.\n\nSi la biometría tampoco funciona: archive, copie o elimine la carpeta %1$s con un gestor de archivos.</string>
     <string name="vault_password_reminder_verify_action">Verificar mi contraseña</string>
     <string name="vault_password_reminder_forgot_action">No la recuerdo</string>
     <string name="vault_password_reminder_open_settings">Abrir configuración</string>
@@ -527,7 +527,12 @@
     <string name="date_tie_break_ask">Preguntar siempre</string>
     <string name="date_tie_break_hint">Se aplica solo al diálogo inteligente y al modo automático. El diálogo estándar no se ve afectado.</string>
     <string name="date_tie_break_ask_info_title">Por qué \"Preguntar siempre\" deshabilita el diálogo inteligente y el modo automático</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">El diálogo inteligente y el modo automático existen por una razón: omitir los archivos cuyo contenido ya está presente, para que solo veas los archivos que realmente necesitan tu atención — mismo nombre, contenido distinto. Ese es justamente el caso en el que comparar las miniaturas puede revelar degeneración de datos (bit-rot).\n\nSi eliges \"Preguntar siempre\" aquí, todos los archivos idénticos con una fecha distinta vuelven a presentarse como conflictos. En el diálogo inteligente verás dos miniaturas de la misma imagen, sin nada que verificar. En el modo automático, el archivo idéntico se vuelve a escribir como nombre(1), llenando tus carpetas de copias innecesarias.\n\nUsa esta opción solo si quieres revisar deliberadamente cada diferencia de fecha, por ejemplo para corregir a mano una fecha incorrecta.\n\nNota: cuando el contenido es idéntico bit a bit, la fecha de captura EXIF también es idéntica. Una diferencia de fecha significa que un lado perdió sus datos EXIF y recurrió a la fecha de modificación del archivo (la fecha de copia).</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">El diálogo inteligente y el modo automático existen por una razón: omitir los archivos cuyo contenido ya está presente, para que solo veas los archivos que realmente necesitan tu atención — mismo nombre, contenido distinto. Ese es justamente el caso en el que comparar las miniaturas puede revelar degeneración de datos (bit-rot).\n\nSi eliges \"Preguntar siempre\" aquí, todos los archivos idénticos con una fecha distinta vuelven a presentarse como conflictos. En el diálogo inteligente verás dos miniaturas de la misma imagen, sin nada que verificar, y podrás decidir allí. El modo automático (experimental) nunca muestra un diálogo, por lo que \"Preguntar siempre\" no está disponible allí; al seleccionar Automático se vuelve a \"Conservar la fecha del archivo existente\".\n\nUsa esta opción solo si quieres revisar deliberadamente cada diferencia de fecha, por ejemplo para corregir a mano una fecha incorrecta.\n\nNota: cuando el contenido es idéntico bit a bit, la fecha de captura EXIF también es idéntica. Una diferencia de fecha significa que un lado perdió sus datos EXIF y recurrió a la fecha de modificación del archivo (la fecha de copia).</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="one">Se omitió %d archivo idéntico</item>
+        <item quantity="many">Se omitieron %d archivos idénticos</item>
+        <item quantity="other">Se omitieron %d archivos idénticos</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">Entrante (nuevo)</string>
     <string name="smart_conflict_existing_label">Existente (destino)</string>
@@ -660,4 +665,17 @@
     <string name="use_biometrics">Usar biometría</string>
     <string name="hide_vault_key_presses">Ocultar las pulsaciones al ingresar la contraseña de la bóveda</string>
     <string name="show_pin_dots">Mostrar un punto por cada dígito al ingresar el PIN</string>
+<string name="archive_vault">Archivar bóveda</string>
+    <string name="archive_vault_summary">Mueve la bóveda antigua al archivo y crea una nueva</string>
+    <string name="archive_vault_confirm">La bóveda actual se moverá al archivo y se creará una nueva en la ubicación predeterminada. No se elimina nada. Para usarla en otro dispositivo, use Exportar bóveda cifrada: copia los archivos y la bóveda actual permanece.</string>
+    <string name="archive_vault_success">Bóveda archivada. Ubicación: %1$s</string>
+    <string name="archive_vault_failed">No se pudo archivar la bóveda. No se cambió nada.</string>
+    <string name="select_archived_vault">Seleccionar de bóvedas archivadas</string>
+    <string name="archived_vault_indexed">Bóveda archivada n.º %1$d</string>
+    <string name="archived_vault_unknown_date">Bóveda cifrada de fecha desconocida</string>
+    <string name="archived_vault_invalid">Entrada de archivo no válida</string>
+    <string name="archived_vault_invalid_message">No se encontró la cabecera de la bóveda en %1$s. Puede eliminar la carpeta con un gestor de archivos.</string>
+    <string name="copy_path">Copiar ruta</string>
+    <string name="faq_forgot_password_title">Olvidé la contraseña de la bóveda cifrada, ¿qué puedo hacer?</string>
+    <string name="faq_forgot_password_text">1. Acceda con biometría.\n2. Copie (exporte) sus datos cifrados; copiar no es mover.\n3. Configuración → Restablecer bóveda cifrada para crear una contraseña nueva.\n\nAdvertencia: si la biometría tampoco funciona, la bóveda es inaccesible. Puede archivarla, copiar los datos o eliminar la carpeta en %1$s con un gestor de archivos.</string>
 </resources>

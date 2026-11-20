@@ -432,7 +432,7 @@
     <string name="vault_password_reminder_verified">Parola təsdiqləndi</string>
     <string name="vault_password_reminder_not_now">İndi deyil</string>
     <string name="vault_password_reminder_forgot_title">Parolanızı xatırlamırsınız?</string>
-    <string name="vault_password_reminder_forgot_steps">Biyometrik ilə seyfə daxil olun, şifrəli məlumatlarınızı ixrac edin, sonra Parametrlər → Şifrəli seyfi sıfırla ilə yeni parola təyin edib məlumatları geri yükləyin. Biyometrik də açamırsa, seyf əlçatan deyildir.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile giriş yapın.\n2. Şifreli verileri kopyalayın (dışa aktarın).\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola.\n\nBiyometrik de çalışmıyorsa kasa erişilemez; arşivleyebilir, kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
     <string name="vault_password_reminder_verify_action">Parolamı təsdiqlə</string>
     <string name="vault_password_reminder_forgot_action">Xatırlamıram</string>
     <string name="vault_password_reminder_open_settings">Parametrlərə get</string>
@@ -589,7 +589,11 @@
     <string name="date_tie_break_ask">Həmişə soruş</string>
     <string name="date_tie_break_hint">Yalnız Ağıllı dialoq və Avtomatik rejimə tətbiq olunur. Standart dialoq təsirlənmir.</string>
     <string name="date_tie_break_ask_info_title">Niyə &quot;Həmişə soruş&quot; Ağıllı dialoq və Avtomatik rejimi deaktiv edir</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Ağıllı dialoq və Avtomatik rejim yalnız bir səbəbdən mövcuddur: məzmunu artıq mövcud olan faylları ötürmək, beləliklə yalnız həqiqətən diqqətinizi tələb edən faylları görəsiniz — eyni adda, lakin fərqli məzmunlu. Miniatürlərin müqayisəsi məhz belə hallarda bit çürüməsini (bit-rot) aşkar edə bilər.\n\nBurada &quot;Həmişə soruş&quot; seçsəniz, fərqli tarixli hər eyni fayl sizə ziddiyyət kimi qayıdacaq. Ağıllı dialoqda tam eyni şəklin iki miniatürünü görəcəksiniz, lakin yoxlayacaq heç nə olmayacaq. Avtomatik rejimdə eyni fayl name(1) olaraq yenidən yazılır və qovluqlarınız mənasız nüsxələrlə dolur.\n\nBu seçimdən yalnız hər bir tarix fərqini qəsdən nəzərdən keçirmək istədiyinizdə, məsələn yanlış tarixi əl ilə düzəltmək üçün istifadə edin.\n\nQeyd: məzmun bit-bə-bit eyni olduqda, EXIF çəkilmə tarixi də eyni olur. Tarix fərqi o deməkdir ki, bir tərəf EXIF məlumatını itirib və faylın dəyişdirilmə tarixinə (köçürmə tarixinə) qayıdıb.</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Ağıllı dialoq və Avtomatik rejim yalnız bir səbəbdən mövcuddur: məzmunu artıq mövcud olan faylları ötürmək, beləliklə yalnız həqiqətən diqqətinizi tələb edən faylları görəsiniz — eyni adda, lakin fərqli məzmunlu. Miniatürlərin müqayisəsi məhz belə hallarda bit çürüməsini (bit-rot) aşkar edə bilər.\n\nBurada &quot;Həmişə soruş&quot; seçsəniz, fərqli tarixli hər eyni fayl sizə ziddiyyət kimi qayıdacaq. Ağıllı dialoqda tam eyni şəklin iki miniatürünü görəcək və orada qərar verəcəksiniz. Otomatik (Eksperimental) rejim heç vaxt dialoq göstərmədiyi üçün &quot;Həmişə soruş&quot; bu rejimdə mövcud deyil; Otomatik rejim seçildikdə &quot;Mövcud faylın tarixini saxla&quot; seçənəyinə qayıdılır.\n\nBu seçimdən yalnız hər bir tarix fərqini qəsdən nəzərdən keçirmək istədiyinizdə, məsələn yanlış tarixi əl ilə düzəltmək üçün istifadə edin.\n\nQeyd: məzmun bit-bə-bit eyni olduqda, EXIF çəkilmə tarixi də eyni olur. Tarix fərqi o deməkdir ki, bir tərəf EXIF məlumatını itirib və faylın dəyişdirilmə tarixinə (köçürmə tarixinə) qayıdıb.</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="one">%d eyni fayl atlandı</item>
+        <item quantity="other">%d eyni fayl atlandı</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">Gələn (Yeni)</string>
     <string name="smart_conflict_existing_label">Mövcud (Hədəf)</string>
@@ -726,4 +730,17 @@
     <string name="use_biometrics">Biometriyadan istifadə et</string>
     <string name="hide_vault_key_presses">Kassa parolunu daxil edərkən düymə basışlarını gizlət</string>
     <string name="show_pin_dots">PIN daxil edərkən hər rəqəm üçün bir nöqtə göstər</string>
+<string name="archive_vault">Kasayı arşivle</string>
+    <string name="archive_vault_summary">Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur</string>
+    <string name="archive_vault_confirm">Mevcut kasa arşive taşınacak, varsayılan konumda yeni kasa oluşturulacak. Hiçbir şey silinmez. Kasayı başka cihazda kullanmak için Şifreli kasayı dışa aktar seçeneğini kullanın; bu kopyalar, mevcut kasa yerinde kalır.</string>
+    <string name="archive_vault_success">Kasa arşivlendi. Konum: %1$s</string>
+    <string name="archive_vault_failed">Kasa arşivlenemedi. Hiçbir şey değişmedi.</string>
+    <string name="select_archived_vault">Arşivlenmiş kasalardan seç</string>
+    <string name="archived_vault_indexed">%1$d. arşivlenen kasa</string>
+    <string name="archived_vault_unknown_date">Bilinmeyen tarihli şifreli kasa</string>
+    <string name="archived_vault_invalid">Geçersiz arşiv kaydı</string>
+    <string name="archived_vault_invalid_message">%1$s konumunda kasa başlığı bulunamadı. Bu klasörü dosya yöneticisiyle silebilirsiniz.</string>
+    <string name="copy_path">Yolu kopyala</string>
+    <string name="faq_forgot_password_title">Şifreli kasanın parolasını unuttum, ne yapabilirim?</string>
+    <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama taşıma değildir.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturun.\n\nUyarı: biyometrik de çalışmıyorsa kasaya erişim yoktur. Kasayı arşivleyip yeni kasa oluşturabilir, verileri kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
 </resources>

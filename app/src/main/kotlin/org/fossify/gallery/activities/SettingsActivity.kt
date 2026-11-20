@@ -2,6 +2,8 @@ package org.fossify.gallery.activities
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -20,6 +22,7 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -826,6 +829,10 @@ class SettingsActivity : SimpleActivity() {
             hasStoragePermission && vaultExists && biometricUsable && config.isVaultBiometricEnabled
         )
         binding.settingsVaultPasswordReminderHolder.beVisibleIf(hasStoragePermission && vaultExists)
+        // An already archived vault cannot be archived again (ADR 0007).
+        binding.settingsArchiveVaultHolder.beVisibleIf(
+            hasStoragePermission && vaultExists && !VaultArchiveManager.isActiveVaultArchived(this)
+        )
 
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
@@ -857,6 +864,7 @@ class SettingsActivity : SimpleActivity() {
         setupVaultBiometric()
         setupVaultBiometricAutoReturn()
         setupVaultPasswordReminder()
+        setupArchiveVault()
         setupBlockVaultScreenshots()
         setupHideVaultKeyPresses()
         setupShowVaultPinDots()
@@ -1165,6 +1173,36 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupArchiveVault() {
+        binding.settingsArchiveVaultHolder.setOnClickListener {
+            if (!doesVaultExist() || VaultArchiveManager.isActiveVaultArchived(this)) return@setOnClickListener
+            DeleteSecretsDialog(this, getString(R.string.archive_vault_confirm)) {
+                CryptoManager.lockVault()
+                val entry = VaultArchiveManager.archiveActiveVault(this)
+                if (entry == null) {
+                    toast(R.string.archive_vault_failed)
+                    setupVaultSettings()
+                    return@DeleteSecretsDialog
+                }
+
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.archive_vault)
+                    .setMessage(getString(R.string.archive_vault_success, humanizePath(entry.path)))
+                    .setPositiveButton(R.string.copy_path) { _, _ ->
+                        val clipboard = getSystemService(ClipboardManager::class.java)
+                        clipboard?.setPrimaryClip(ClipData.newPlainText(getString(R.string.archive_vault), entry.path))
+                    }
+                    .setNegativeButton(org.fossify.commons.R.string.ok, null)
+                    .show()
+
+                promptWhereToCreateVault(
+                    onVaultReady = { setupVaultSettings() },
+                    onBack = { setupVaultSettings() },
+                )
+            }
+        }
+    }
+
     private fun setupVaultPasswordReminder() {
         fun updateValue() {
             binding.settingsVaultPasswordReminder.text =
@@ -1404,17 +1442,27 @@ class SettingsActivity : SimpleActivity() {
 
             fun updateDependentState() {
                 val usesDuplicateCheck = !dialogBinding.conflictHandlingStandardDialog.isChecked
+                val isAutomatic = dialogBinding.conflictHandlingAuto.isChecked
+                // Automatic (Experimental) never shows a dialog, so "Always ask" is not offered
+                // there. If it was selected before switching modes, fall back to the default.
+                val askAllowed = usesDuplicateCheck && !isAutomatic
                 dialogBinding.fastLargeDuplicateCheckCheckbox.isEnabled = usesDuplicateCheck
                 dialogBinding.fastLargeDuplicateCheckRow.alpha = if (usesDuplicateCheck) 1f else 0.45f
                 dialogBinding.fastLargeDuplicateCheckHint.alpha = if (usesDuplicateCheck) 0.75f else 0.35f
 
                 dialogBinding.dateTieBreakLabel.alpha = if (usesDuplicateCheck) 1f else 0.45f
                 tieBreakRadios.forEach { radio ->
-                    radio.isEnabled = usesDuplicateCheck
-                    radio.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                    radio.isEnabled = if (radio === dialogBinding.dateTieBreakAsk) askAllowed else usesDuplicateCheck
+                    radio.alpha = if (radio.isEnabled) 1f else 0.45f
                 }
-                dialogBinding.dateTieBreakAskInfo.alpha = if (usesDuplicateCheck) 1f else 0.45f
+                dialogBinding.dateTieBreakAskInfo.isEnabled = askAllowed
+                dialogBinding.dateTieBreakAskInfo.alpha = if (askAllowed) 1f else 0.45f
                 dialogBinding.dateTieBreakHint.alpha = if (usesDuplicateCheck) 0.75f else 0.35f
+
+                if (isAutomatic && dialogBinding.dateTieBreakAsk.isChecked) {
+                    dialogBinding.dateTieBreakAsk.isChecked = false
+                    dialogBinding.dateTieBreakKeepTarget.isChecked = true
+                }
             }
             updateDependentState()
 

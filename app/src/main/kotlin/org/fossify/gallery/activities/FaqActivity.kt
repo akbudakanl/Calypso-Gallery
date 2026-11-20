@@ -50,6 +50,8 @@ class FaqActivity : SimpleActivity() {
         val faqItems = (intent.getSerializableExtra(EXTRA_APP_FAQ) as? ArrayList<*>)
             ?.filterIsInstance<FAQItem>()
             .orEmpty()
+        val highlightTitle = intent.getIntExtra(EXTRA_FAQ_HIGHLIGHT, -1)
+        var highlightView: MyTextView? = null
 
         val accentColor = getProperPrimaryColor()
         val textColor = getProperTextColor()
@@ -79,6 +81,9 @@ class FaqActivity : SimpleActivity() {
                 setTextIsSelectable(true)
             }
             binding.faqHolder.addView(titleView)
+            if (highlightTitle != -1 && item.title == highlightTitle) {
+                highlightView = titleView
+            }
 
             val bodyView = MyTextView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
@@ -109,6 +114,12 @@ class FaqActivity : SimpleActivity() {
                 binding.faqHolder.addView(divider)
             }
         }
+
+        highlightView?.let { view ->
+            binding.faqScrollView.post {
+                binding.faqScrollView.scrollTo(0, view.top)
+            }
+        }
     }
 
     private fun resolveText(value: Any): String = when (value) {
@@ -119,6 +130,7 @@ class FaqActivity : SimpleActivity() {
 
     companion object {
         const val EXTRA_APP_FAQ = "app_faq"
+        const val EXTRA_FAQ_HIGHLIGHT = "faq_highlight"
         private const val DIVIDER_ALPHA = 0.2f
         private const val TITLE_TEXT_SIZE_SP = 16f
         private const val BODY_TEXT_SIZE_SP = 14f

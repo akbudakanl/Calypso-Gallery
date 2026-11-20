@@ -433,7 +433,7 @@
     <string name="vault_password_reminder_verified">Passord stadfesta</string>
     <string name="vault_password_reminder_not_now">Ikkje no</string>
     <string name="vault_password_reminder_forgot_title">Hugsar du ikkje passordet ditt?</string>
-    <string name="vault_password_reminder_forgot_steps">Lås opp kvelvet med biometri, eksporter dei krypterte dataene dine, og bruk deretter Innstillingar → Nullstill kryptert kvelv for å setje eit nytt passord og gjenopprette dataene. Om biometri heller ikkje kan låse opp kvelvet, er det utilgjengeleg.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Lås opp med biometri.\n2. Kopier dei krypterte dataene.\n3. Innstillingar → Nullstill kryptert kvelv.\n\nOm biometri ikkje verkar: arkiver, kopier eller slett mappa %1$s med ein filbehandlar.</string>
     <string name="vault_password_reminder_verify_action">Stadfest passordet mitt</string>
     <string name="vault_password_reminder_forgot_action">Eg hugsar ikkje</string>
     <string name="vault_password_reminder_open_settings">Opne innstillingar</string>
@@ -590,7 +590,11 @@
     <string name="date_tie_break_ask">Spør alltid</string>
     <string name="date_tie_break_hint">Gjeld berre for Smart dialog og automatisk modus. Standard dialog vert ikkje påverka.</string>
     <string name="date_tie_break_ask_info_title">Kvifor \"Spør alltid\" slår av Smart dialog og automatisk modus</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog og automatisk modus finst av éin grunn: å hoppa over filer som alt er til stades, slik at du berre ser filene som verkeleg treng merksemda di — same namn, ulikt innhald. Det er nettopp i dette tilfellet at samanlikning av minibilete kan avdekkja bit-rot.\n\nViss du vel \"Spør alltid\" her, kjem kvar identisk fil med ein annan dato tilbake til deg som ein konflikt. I Smart dialog ser du to minibilete av det same biletet, utan noko å stadfesta. I automatisk modus vert den identiske fila skriven på nytt som namn(1), og fyller mappene dine med meiningslause kopiar.\n\nBruk dette valet berre viss du med vilje vil gå gjennom kvar einaste datoskilnad, til dømes for å retta ein feil dato for hand.\n\nMerk: når innhaldet er bit-identisk, er EXIF-opptaksdatoen òg identisk. Ein datoskilnad tyder at den eine sida mista EXIF-dataa sine og fall tilbake til endringsdatoen til fila (kopieringsdatoen).</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog og automatisk modus finst av éin grunn: å hoppa over filer som alt er til stades, slik at du berre ser filene som verkeleg treng merksemda di — same namn, ulikt innhald. Det er nettopp i dette tilfellet at samanlikning av minibilete kan avdekkja bit-rot.\n\nViss du vel \"Spør alltid\" her, kjem kvar identisk fil med ein annan dato tilbake til deg som ein konflikt. I Smart dialog ser du to minibilete av det same biletet, utan noko å stadfesta, og kan avgjera der. Automatisk modus (eksperimentell) viser aldri dialog, så \"Spør alltid\" er ikkje tilgjengeleg der – når du vel Automatisk, blir det falla tilbake til \"Behald datoen til den eksisterande fila\".\n\nBruk dette valet berre viss du med vilje vil gå gjennom kvar einaste datoskilnad, til dømes for å retta ein feil dato for hand.\n\nMerk: når innhaldet er bit-identisk, er EXIF-opptaksdatoen òg identisk. Ein datoskilnad tyder at den eine sida mista EXIF-dataa sine og fall tilbake til endringsdatoen til fila (kopieringsdatoen).</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="one">%d identisk fil hoppa over</item>
+        <item quantity="other">%d identiske filer hoppa over</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">Innkommande (ny)</string>
     <string name="smart_conflict_existing_label">Eksisterande (mål)</string>
@@ -729,4 +733,17 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av kvelvpassord</string>
     <string name="show_pin_dots">Vis ein prikk for kvart siffer når PIN-koden blir skriven inn</string>
+<string name="archive_vault">Arkiver kvelv</string>
+    <string name="archive_vault_summary">Flyttar det gamle kvelvet til arkivet og lagar eit nytt</string>
+    <string name="archive_vault_confirm">Det noverande kvelvet blir flytta til arkivet og eit nytt blir laga på standardstaden. Ingenting blir sletta. For bruk på ein annan eining, bruk Eksporter kryptert kvelv — det kopierer og kvelvet blir liggjande.</string>
+    <string name="archive_vault_success">Kvelvet er arkivert. Plassering: %1$s</string>
+    <string name="archive_vault_failed">Klarte ikkje å arkivere kvelvet. Ingenting vart endra.</string>
+    <string name="select_archived_vault">Vel frå arkiverte kvelv</string>
+    <string name="archived_vault_indexed">%1$d. arkivert kvelv</string>
+    <string name="archived_vault_unknown_date">Kryptert kvelv med ukjend dato</string>
+    <string name="archived_vault_invalid">Ugyldig arkivoppføring</string>
+    <string name="archived_vault_invalid_message">Fann ikkje kvelvheader i %1$s. Du kan slette mappa med ein filbehandlar.</string>
+    <string name="copy_path">Kopier sti</string>
+    <string name="faq_forgot_password_title">Eg har gløymd passordet til det krypterte kvelvet, kva kan eg gjere?</string>
+    <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) dei krypterte dataene — kopiering er ikkje flytting.\n3. Innstillingar → Nullstill kryptert kvelv for nytt passord.\n\nÅtvaring: om biometri heller ikkje verkar, er kvelvet utilgjengeleg. Du kan arkivere, kopiere eller slette mappa på %1$s med ein filbehandlar.</string>
 </resources>

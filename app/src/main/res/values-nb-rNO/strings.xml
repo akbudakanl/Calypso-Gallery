@@ -379,7 +379,7 @@
     <string name="vault_password_reminder_verified">Passord bekreftet</string>
     <string name="vault_password_reminder_not_now">Ikke nå</string>
     <string name="vault_password_reminder_forgot_title">Husker du ikke passordet ditt?</string>
-    <string name="vault_password_reminder_forgot_steps">Lås opp hvelvet med biometri, eksporter de krypterte dataene dine, og bruk deretter Innstillinger → Nullstill kryptert hvelv for å angi et nytt passord og gjenopprette dataene. Hvis biometri heller ikke kan låse opp hvelvet, er det utilgjengelig.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Lås opp med biometri.\n2. Kopier de krypterte dataene.\n3. Innstillinger → Nullstill kryptert hvelv.\n\nHvis biometri ikke virker: arkiver, kopier eller slett mappen %1$s med en filbehandler.</string>
     <string name="vault_password_reminder_verify_action">Bekreft passordet mitt</string>
     <string name="vault_password_reminder_forgot_action">Jeg husker ikke</string>
     <string name="vault_password_reminder_open_settings">Åpne innstillinger</string>
@@ -536,7 +536,11 @@
     <string name="date_tie_break_ask">Alltid spørre</string>
     <string name="date_tie_break_hint">Gjelder kun for Smart dialog og automatisk modus. Standard dialog påvirkes ikke.</string>
     <string name="date_tie_break_ask_info_title">Hvorfor «Alltid spørre» deaktiverer Smart dialog og automatisk modus</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog og automatisk modus finnes av én grunn: å hoppe over filer hvis innhold allerede er til stede, slik at du bare ser filene som virkelig trenger din oppmerksomhet — samme navn, ulikt innhold. Det er nettopp i slike tilfeller at sammenligning av minibilder kan avdekke bit-forråtnelse.\n\nHvis du velger «Alltid spørre» her, vil hver identisk fil med en annen dato komme tilbake til deg som en konflikt. I Smart dialog ser du to minibilder av helt samme bilde, uten noe å verifisere. I automatisk modus skrives den identiske filen på nytt som name(1), og fyller mappene dine med meningsløse kopier.\n\nBruk dette alternativet bare hvis du bevisst vil gå gjennom hvert eneste datoforskjell, for eksempel for å rette en feil dato manuelt.\n\nMerk: når innholdet er bit-identisk, er EXIF-opptaksdatoen også identisk. En datoforskjell betyr at den ene siden mistet EXIF-dataene sine og falt tilbake til filens endringsdato (kopieringsdatoen).</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Smart dialog og automatisk modus finnes av én grunn: å hoppe over filer hvis innhold allerede er til stede, slik at du bare ser filene som virkelig trenger din oppmerksomhet — samme navn, ulikt innhold. Det er nettopp i slike tilfeller at sammenligning av minibilder kan avdekke bit-forråtnelse.\n\nHvis du velger «Alltid spørre» her, vil hver identisk fil med en annen dato komme tilbake til deg som en konflikt. I Smart dialog ser du to minibilder av helt samme bilde, uten noe å verifisere, og kan bestemme der. Automatisk modus (eksperimentell) viser aldri en dialog, så «Alltid spørre» er ikke tilgjengelig der – når du velger Automatisk, falles det tilbake til «Behold datoen til den eksisterende filen».\n\nBruk dette alternativet bare hvis du bevisst vil gå gjennom hvert eneste datoforskjell, for eksempel for å rette en feil dato manuelt.\n\nMerk: når innholdet er bit-identisk, er EXIF-opptaksdatoen også identisk. En datoforskjell betyr at den ene siden mistet EXIF-dataene sine og falt tilbake til filens endringsdato (kopieringsdatoen).</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="one">%d identisk fil hoppet over</item>
+        <item quantity="other">%d identiske filer hoppet over</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">Innkommende (ny)</string>
     <string name="smart_conflict_existing_label">Eksisterende (mål)</string>
@@ -672,4 +676,17 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av hvelvpassord</string>
     <string name="show_pin_dots">Vis én prikk for hvert siffer når PIN-koden tastes inn</string>
+<string name="archive_vault">Arkiver hvelv</string>
+    <string name="archive_vault_summary">Flytter det gamle hvelvet til arkivet og lager et nytt</string>
+    <string name="archive_vault_confirm">Det nåværende hvelvet flyttes til arkivet og et nytt opprettes på standardstedet. Ingenting slettes. For bruk på en annen enhet, bruk Eksporter kryptert hvelv — det kopierer og hvelvet blir liggende.</string>
+    <string name="archive_vault_success">Hvelvet er arkivert. Plassering: %1$s</string>
+    <string name="archive_vault_failed">Kunne ikke arkivere hvelvet. Ingenting ble endret.</string>
+    <string name="select_archived_vault">Velg fra arkiverte hvelv</string>
+    <string name="archived_vault_indexed">%1$d. arkivert hvelv</string>
+    <string name="archived_vault_unknown_date">Kryptert hvelv med ukjent dato</string>
+    <string name="archived_vault_invalid">Ugyldig arkivoppføring</string>
+    <string name="archived_vault_invalid_message">Fant ikke hvelvheader i %1$s. Du kan slette mappen med en filbehandler.</string>
+    <string name="copy_path">Kopier sti</string>
+    <string name="faq_forgot_password_title">Jeg har glemt passordet til det krypterte hvelvet, hva kan jeg gjøre?</string>
+    <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) de krypterte dataene — kopiering er ikke flytting.\n3. Innstillinger → Nullstill kryptert hvelv for nytt passord.\n\nAdvarsel: hvis biometri heller ikke virker, er hvelvet utilgjengelig. Du kan arkivere, kopiere eller slette mappen på %1$s med en filbehandler.</string>
 </resources>

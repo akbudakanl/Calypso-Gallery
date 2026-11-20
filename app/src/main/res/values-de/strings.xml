@@ -366,7 +366,7 @@
     <string name="vault_password_reminder_verified">Passwort bestätigt</string>
     <string name="vault_password_reminder_not_now">Jetzt nicht</string>
     <string name="vault_password_reminder_forgot_title">Passwort vergessen?</string>
-    <string name="vault_password_reminder_forgot_steps">Öffne den Tresor mit Biometrie, exportiere deine verschlüsselten Daten und setze unter Einstellungen → Verschlüsselten Tresor zurücksetzen ein neues Passwort und stelle die Daten wieder her. Wenn auch Biometrie den Tresor nicht öffnen kann, ist er nicht zugänglich.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren.\n3. Einstellungen → Tresor zurücksetzen.\n\nWenn auch Biometrie nicht geht: archivieren, kopieren oder Ordner %1$s mit einem Dateimanager löschen.</string>
     <string name="vault_password_reminder_verify_action">Passwort bestätigen</string>
     <string name="vault_password_reminder_forgot_action">Ich weiß es nicht mehr</string>
     <string name="vault_password_reminder_open_settings">Einstellungen öffnen</string>
@@ -522,7 +522,11 @@
     <string name="date_tie_break_ask">Immer fragen</string>
     <string name="date_tie_break_hint">Gilt nur für den intelligenten Dialog und den automatischen Modus. Der Standarddialog ist nicht betroffen.</string>
     <string name="date_tie_break_ask_info_title">Warum &quot;Immer fragen&quot; den intelligenten Dialog und den automatischen Modus deaktiviert</string>
-    <string name="date_tie_break_ask_info_message" formatted="false">Intelligenter Dialog und automatischer Modus existieren aus einem Grund: Dateien zu überspringen, deren Inhalt bereits vorhanden ist, damit du nur die Dateien siehst, die wirklich deine Aufmerksamkeit brauchen — gleicher Name, unterschiedlicher Inhalt. Genau in diesem Fall kann der Vergleich von Vorschaubildern Bit-Rot (Datenverfall) aufdecken.\n\nWenn du hier &quot;Immer fragen&quot; wählst, wird jede identische Datei mit einem anderen Datum erneut als Konflikt gemeldet. Im intelligenten Dialog siehst du zwei Vorschaubilder desselben Bildes, bei denen es nichts zu überprüfen gibt. Im automatischen Modus wird die identische Datei erneut als name(1) geschrieben und deine Ordner mit sinnlosen Kopien gefüllt.\n\nVerwende diese Option nur, wenn du bewusst jede Datumsabweichung prüfen möchtest, zum Beispiel um ein falsches Datum manuell zu korrigieren.\n\nHinweis: Sind die Inhalte bitgleich, ist auch das EXIF-Aufnahmedatum identisch. Eine Datumsabweichung bedeutet, dass auf einer Seite die EXIF-Daten verloren gegangen sind und stattdessen das Datei-Änderungsdatum (das Kopierdatum) verwendet wird.</string>
+    <string name="date_tie_break_ask_info_message" formatted="false">Intelligenter Dialog und automatischer Modus existieren aus einem Grund: Dateien zu überspringen, deren Inhalt bereits vorhanden ist, damit du nur die Dateien siehst, die wirklich deine Aufmerksamkeit brauchen — gleicher Name, unterschiedlicher Inhalt. Genau in diesem Fall kann der Vergleich von Vorschaubildern Bit-Rot (Datenverfall) aufdecken.\n\nWenn du hier &quot;Immer fragen&quot; wählst, wird jede identische Datei mit einem anderen Datum erneut als Konflikt gemeldet. Im intelligenten Dialog siehst du zwei Vorschaubilder desselben Bildes, bei denen es nichts zu überprüfen gibt, und kannst dort entscheiden. Der automatische Modus (Experimentell) zeigt nie einen Dialog, daher ist &quot;Immer fragen&quot; dort nicht verfügbar – wenn du Automatisch wählst, wird auf &quot;Datum der vorhandenen Datei beibehalten&quot; zurückgegriffen.\n\nVerwende diese Option nur, wenn du bewusst jede Datumsabweichung prüfen möchtest, zum Beispiel um ein falsches Datum manuell zu korrigieren.\n\nHinweis: Sind die Inhalte bitgleich, ist auch das EXIF-Aufnahmedatum identisch. Eine Datumsabweichung bedeutet, dass auf einer Seite die EXIF-Daten verloren gegangen sind und stattdessen das Datei-Änderungsdatum (das Kopierdatum) verwendet wird.</string>
+    <plurals name="identical_files_skipped">
+        <item quantity="one">%d identische Datei übersprungen</item>
+        <item quantity="other">%d identische Dateien übersprungen</item>
+    </plurals>
     <string name="smart_conflict_counter">%1$s (%2$d / %3$d)</string>
     <string name="smart_conflict_incoming_label">Eingehend (Neu)</string>
     <string name="smart_conflict_existing_label">Vorhanden (Ziel)</string>
@@ -655,4 +659,17 @@
     <string name="use_biometrics">Biometrie verwenden</string>
     <string name="hide_vault_key_presses">Tastendrücke bei der Tresor-Passworteingabe ausblenden</string>
     <string name="show_pin_dots">Bei der PIN-Eingabe für jede Ziffer einen Punkt anzeigen</string>
+<string name="archive_vault">Tresor archivieren</string>
+    <string name="archive_vault_summary">Verschiebt den alten Tresor ins Archiv und erstellt einen neuen</string>
+    <string name="archive_vault_confirm">Der aktuelle Tresor wird ins Archiv verschoben und ein neuer am Standardort erstellt. Nichts wird gelöscht. Für ein anderes Gerät nutzen Sie „Verschlüsselten Tresor exportieren“ — dabei wird kopiert, der aktuelle Tresor bleibt.</string>
+    <string name="archive_vault_success">Tresor archiviert. Speicherort: %1$s</string>
+    <string name="archive_vault_failed">Tresor konnte nicht archiviert werden. Nichts wurde geändert.</string>
+    <string name="select_archived_vault">Aus archivierten Tresoren auswählen</string>
+    <string name="archived_vault_indexed">%1$d. archivierter Tresor</string>
+    <string name="archived_vault_unknown_date">Verschlüsselter Tresor mit unbekanntem Datum</string>
+    <string name="archived_vault_invalid">Ungültiger Archiv-Eintrag</string>
+    <string name="archived_vault_invalid_message">Kein Tresor-Kopf in %1$s gefunden. Sie können den Ordner mit einem Dateimanager löschen.</string>
+    <string name="copy_path">Pfad kopieren</string>
+    <string name="faq_forgot_password_title">Ich habe das Tresor-Passwort vergessen, was kann ich tun?</string>
+    <string name="faq_forgot_password_text">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren (exportieren) — kopieren ist nicht verschieben.\n3. Einstellungen → Tresor zurücksetzen für ein neues Passwort.\n\nWarnung: Wenn auch Biometrie nicht funktioniert, ist der Tresor nicht erreichbar. Sie können ihn archivieren, kopieren oder den Ordner unter %1$s mit einem Dateimanager löschen.</string>
 </resources>

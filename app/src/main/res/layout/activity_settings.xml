@@ -932,6 +932,29 @@
             </RelativeLayout>
 
             <RelativeLayout
+                android:id="@+id/settings_archive_vault_holder"
+                style="@style/SettingsHolderTextViewStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_archive_vault_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archive_vault" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_archive_vault"
+                    style="@style/SettingsTextValueStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/settings_archive_vault_label"
+                    android:text="@string/archive_vault_summary" />
+
+            </RelativeLayout>
+
+            <RelativeLayout
                 android:id="@+id/settings_hide_vault_key_presses_holder"
                 style="@style/SettingsHolderSwitchStyle"
                 android:layout_width="match_parent"

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.humanizePath
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.launchViewIntent
 import org.fossify.commons.extensions.viewBinding
@@ -12,6 +13,9 @@ import org.fossify.commons.helpers.NavigationIcon
 import org.fossify.commons.models.FAQItem
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.findVaultRoot
 import org.fossify.gallery.databinding.ActivityAboutBinding
 
 class AboutActivity : SimpleActivity() {
@@ -20,6 +24,12 @@ class AboutActivity : SimpleActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+        if (intent.getBooleanExtra(EXTRA_OPEN_FORGOT_FAQ, false)) {
+            launchFaqActivity()
+            finish()
+            return
+        }
 
         binding.aboutToolbar.title = getString(R.string.about_title)
         binding.aboutVersion.text = getString(
@@ -103,6 +113,7 @@ class AboutActivity : SimpleActivity() {
     private fun launchFaqActivity() {
         startActivity(Intent(this, FaqActivity::class.java).apply {
             putExtra(FaqActivity.EXTRA_APP_FAQ, getFaqItems())
+            putExtra(FaqActivity.EXTRA_FAQ_HIGHLIGHT, R.string.faq_forgot_password_title)
         })
     }
 
@@ -131,6 +142,17 @@ class AboutActivity : SimpleActivity() {
             FAQItem(org.fossify.commons.R.string.faq_9_title_commons, org.fossify.commons.R.string.faq_9_text_commons),
         )
 
+        val activePath = CryptoManager.findVaultRoot(this)?.absolutePath ?: config.vaultRootPath
+        if (activePath.isNotEmpty()) {
+            faqItems.add(
+                0,
+                FAQItem(
+                    R.string.faq_forgot_password_title,
+                    getString(R.string.faq_forgot_password_text, humanizePath(activePath)),
+                ),
+            )
+        }
+
         if (isRPlus() && !isExternalStorageManager()) {
             faqItems.add(0, FAQItem(R.string.faq_16_title, "${getString(R.string.faq_16_text)} ${getString(R.string.faq_16_text_extra)}"))
             faqItems.add(1, FAQItem(R.string.faq_17_title, R.string.faq_17_text))
@@ -143,6 +165,7 @@ class AboutActivity : SimpleActivity() {
     }
 
     companion object {
+        const val EXTRA_OPEN_FORGOT_FAQ = "open_forgot_faq"
         private const val FORK_REPOSITORY_URL = "https://github.com/akbudakanl/Gallery-Cipher"
         private const val FORK_RELEASES_URL = "$FORK_REPOSITORY_URL/releases"
         private const val FORK_ISSUES_URL = "$FORK_REPOSITORY_URL/issues"

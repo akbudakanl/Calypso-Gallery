@@ -168,6 +168,7 @@ import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultRecycleBin
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.previewEncryptAlbumConflict
+import org.fossify.gallery.helpers.showSkippedIdenticalToast
 
 class DirectoryAdapter(
     activity: BaseSimpleActivity,
@@ -788,6 +789,7 @@ class DirectoryAdapter(
                             } else {
                                 activity.toast(org.fossify.commons.R.string.unknown_error_occurred)
                             }
+                            activity.showSkippedIdenticalToast(identicalMapSnapshot.size)
                             activity.resolveSkippedCryptoFiles(
                                 isEncrypt = true,
                                 skippedFiles = skippedSnapshot,

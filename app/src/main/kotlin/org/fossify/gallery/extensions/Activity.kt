@@ -59,10 +59,13 @@ import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SHOW_ALL
+import org.fossify.gallery.helpers.VAULT_ACTION_ARCHIVED
+import org.fossify.gallery.helpers.VaultArchiveManager
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CopyMovePolicy
+import org.fossify.gallery.helpers.ArchivedVault
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DIRECTORY
 import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
@@ -127,6 +130,7 @@ import org.fossify.gallery.helpers.resolvePickedPathToFile
 import org.fossify.gallery.helpers.resolveSyncSourceRoot
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.setVaultRootLocation
+import org.fossify.gallery.helpers.showSkippedIdenticalToast
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.verifyVaultOnDisk
 
@@ -539,6 +543,9 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
         RadioItem(VAULT_ACTION_CREATE_NEW, getString(R.string.create_new_vault_option)),
         RadioItem(VAULT_ACTION_USE_EXISTING, getString(R.string.use_existing_vault_option))
     )
+    if (VaultArchiveManager.archivedEntries(this).isNotEmpty()) {
+        items.add(RadioItem(VAULT_ACTION_ARCHIVED, getString(R.string.select_archived_vault)))
+    }
 
     RadioGroupDialog(
         activity = this,
@@ -566,7 +573,74 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
                     onBack = reopenStage1
                 )
             }
+            VAULT_ACTION_ARCHIVED -> {
+                showArchivedVaultPicker(onVaultReady = onCreated, onBack = reopenStage1)
+            }
             else -> onCancelled()
+        }
+    }
+}
+
+private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit, onBack: () -> Unit) {
+    val valid = VaultArchiveManager.archivedEntries(this)
+    val validIds = valid.map { it.vault.id }.toHashSet()
+    val invalid = config.archivedVaults.filterNot { validIds.contains(it.id) }
+
+    val items = ArrayList<RadioItem>()
+    valid.forEachIndexed { index, entry ->
+        val label = if (entry.dateKnown) {
+            getString(R.string.archived_vault_indexed, index + 1)
+        } else {
+            getString(R.string.archived_vault_unknown_date)
+        }
+        items.add(RadioItem(1000 + index, label))
+    }
+    invalid.forEachIndexed { index, entry ->
+        items.add(RadioItem(2000 + index, getString(R.string.archived_vault_invalid)))
+    }
+    if (items.isEmpty()) {
+        onBack()
+        return
+    }
+
+    RadioGroupDialog(
+        activity = this,
+        items = items,
+        checkedItemId = -1,
+        titleId = R.string.select_archived_vault,
+        cancelCallback = onBack,
+    ) { selected ->
+        val id = selected as Int
+        if (id >= 2000) {
+            val entry = invalid[id - 2000]
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.archived_vault_invalid)
+                .setMessage(getString(R.string.archived_vault_invalid_message, humanizePath(entry.path)))
+                .setPositiveButton(R.string.copy_path) { _, _ ->
+                    val clipboard = getSystemService(android.content.ClipboardManager::class.java)
+                    clipboard?.setPrimaryClip(
+                        android.content.ClipData.newPlainText(getString(R.string.archived_vault_invalid), entry.path)
+                    )
+                }
+                .setNegativeButton(org.fossify.commons.R.string.ok, null)
+                .show()
+            return@RadioGroupDialog
+        }
+
+        val entry = valid[id - 1000].vault
+        val restored = VaultArchiveManager.restoreArchivedVault(this, entry)
+        if (restored == null) {
+            toast(R.string.archive_vault_failed)
+            onBack()
+            return@RadioGroupDialog
+        }
+        VaultSecurityDialog(
+            activity = this,
+            requiredHash = config.hiddenPasswordHash,
+            showTabIndex = SHOW_ALL_TABS,
+            minimalist = false,
+        ) { _, _, success ->
+            if (success) onVaultReady() else showArchivedVaultPicker(onVaultReady, onBack)
         }
     }
 }
@@ -1127,7 +1201,8 @@ fun BaseSimpleActivity.promptExportEncryptedVault(
         return
     }
 
-    ensureVaultUnlocked {
+    // Export is a pure file copy; no password/biometric gate (ADR 0007 §9.1).
+    run {
         pickCustomVaultDirectory(
             initialPath = defaultSyncSourcePickerPath(),
             requireWritable = true,
@@ -1345,6 +1420,7 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                             runOnUiThread {
                                 progressDialog.updateProgress(if (isSkipped || decryptedFile != null) 1 else 0, 1)
                                 progressDialog.dismiss()
+                                showSkippedIdenticalToast(if (identicalTarget != null) 1 else 0)
                                 if (isSkipped) {
                                     val identicalMap = if (identicalTarget != null) {
                                         mapOf(srcFile.absolutePath to identicalTarget)
@@ -1558,6 +1634,7 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
                         runOnUiThread {
                             progressDialog.updateProgress(if (isSkipped || (encryptedFile != null && encryptedFile.exists())) 1 else 0, 1)
                             progressDialog.dismiss()
+                            showSkippedIdenticalToast(if (identicalTarget != null) 1 else 0)
                             if (isSkipped) {
                                 val identicalMap = if (identicalTarget != null) {
                                     mapOf(srcFile.absolutePath to identicalTarget)
@@ -2238,6 +2315,7 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                                 } else {
                                     toast(org.fossify.commons.R.string.unknown_error_occurred)
                                 }
+                                showSkippedIdenticalToast(identicalTargetMap.size)
                                 resolveSkippedCryptoFiles(
                                     isEncrypt = false,
                                     skippedFiles = skippedSourceFiles,
@@ -2455,6 +2533,7 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
                             } else {
                                 toast(org.fossify.commons.R.string.unknown_error_occurred)
                             }
+                            showSkippedIdenticalToast(identicalMapSnapshot.size)
                             resolveSkippedCryptoFiles(
                                 isEncrypt = false,
                                 skippedFiles = skippedSnapshot,
@@ -2859,6 +2938,9 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                             runOnUiThread {
                                 progressDialog.updateProgress(cryptoItems.size, cryptoItems.size)
                                 progressDialog.dismiss()
+                                showSkippedIdenticalToast(
+                                    identicalEncryptTargetMap.size + identicalDecryptTargetMap.size
+                                )
                                 resolveSkippedCryptoFiles(
                                     isEncrypt = true,
                                     skippedFiles = skippedEncryptFiles,

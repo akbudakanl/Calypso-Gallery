@@ -721,7 +721,7 @@ Following the previous audit, 22 additional keys were localized in `values-ja/st
 | 484 | `date_tie_break_ask` | Always ask | 毎回確認 |
 | 485 | `date_tie_break_hint` | Applies only to Smart dialog and Automatic mode. The Standard dialog is not affected. | スマートダイアログと自動モードのみに適用されます。標準ダイアログは影響を受けません。 |
 | 486 | `date_tie_break_ask_info_title` | Why "Always ask" disables Smart dialog and Automatic mode | \"毎回確認\"がスマートダイアログと自動モードを無効にする理由 |
-| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify. In Automatic mode the identical file is written again as name(1), filling your folders with pointless copies.\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありません。自動モードでは同一ファイルが name(1) として再度書き込まれ、フォルダーが無意味なコピーで埋まります。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 |
+| 487 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIf you choose "Always ask" here, every identical file with a different date comes back to you as a conflict. In Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありませんが、その場で判断できます。自動（実験的）モードではダイアログを一切表示しないため、\"毎回確認\"は使用できません。自動モードを選択すると\"既存ファイルの日付を保持（既定）\"にフォールバックします。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 |
 | 488 | `smart_conflict_counter` | %1$s (%2$d / %3$d) | %1$s (%2$d / %3$d) |
 | 489 | `smart_conflict_incoming_label` | Incoming (New) | 受信（新規） |
 | 490 | `smart_conflict_existing_label` | Existing (Target) | 既存（宛先） |
@@ -956,7 +956,29 @@ Added/updated in `values-ja/strings.xml`. The reminder is shown in-app when the 
 | 23 | `vault_password_reminder_open_settings` | Open settings | 設定を開く |  |
 | 24 | `empty_encrypted_vault` | Reset encrypted vault | 暗号化保管庫をリセット | Renamed label |
 
+## Vault Archive & Forgot-Password Strings (this revision)
+
+Added/updated in `values-ja/strings.xml`. Archive moves the old vault; export copies it; deletion is left to the file manager (ADR 0007). English source: `values/strings.xml`.
+
+| # | Key (`name`) | English | Japanese |
+|--:|---|---|---|
+| 1 | `archive_vault` | Archive vault | 保管庫をアーカイブ |
+| 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | 古い保管庫をアーカイブし、新しい保管庫を作成します |
+| 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | 現在の保管庫はアーカイブに移動され、既定の場所に新しい保管庫が作成されます。削除はされません。別のデバイスで使う場合は「暗号化保管庫をエクスポート」を使用してください。コピーであり、元の保管庫は残ります。 |
+| 4 | `archive_vault_success` | Vault archived. Location: %1$s | 保管庫をアーカイブしました。場所: %1$s |
+| 5 | `archive_vault_failed` | Could not archive the vault. Nothing was changed. | 保管庫をアーカイブできませんでした。変更はありません。 |
+| 6 | `select_archived_vault` | Select from archived vaults | アーカイブ済み保管庫から選択 |
+| 7 | `archived_vault_indexed` | %1$d. archived vault | %1$d 番目にアーカイブした保管庫 |
+| 8 | `archived_vault_unknown_date` | Encrypted vault with unknown date | 日付不明の暗号化保管庫 |
+| 9 | `archived_vault_invalid` | Invalid archive entry | 無効なアーカイブ項目 |
+| 10 | `archived_vault_invalid_message` | Vault header not found at %1$s. You can delete this folder with a file manager. | %1$s に保管庫ヘッダーが見つかりません。ファイルマネージャーで削除できます。 |
+| 11 | `copy_path` | Copy path | パスをコピー |
+| 12 | `faq_forgot_password_title` | I forgot my encrypted vault password, what can I do? | 暗号化保管庫のパスワードを忘れました。どうすればいいですか？ |
+| 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. 生体認証で開けます。 2. 暗号化データをコピー（エクスポート）します。コピーであり移動ではありません。 3. 設定 → 暗号化保管庫をリセット で新しいパスワードを設定します。  警告: 生体認証も使えない場合、保管庫にはアクセスできません。アーカイブ、コピー、または %1$s のフォルダーをファイルマネージャーで削除できます。 |
+| 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 生体認証で開きます。 2. 暗号化データをコピーします。 3. 設定 → 暗号化保管庫をリセット。  生体認証も使えない場合は、アーカイブ、コピー、または %1$s のフォルダーを削除してください。 |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `values-ja/strings.xml`. The Settings/vault-setup summary now shows the existing vault's real unlock time on the current device (measured on unlock, otherwise estimated from the portable `.vault` KDF cost), with a note when it exceeds the 10 s maximum, showing only the stored parameters when this device has no measurement yet.
@@ -965,3 +987,12 @@ Added `brute_force_time_value_device` and `brute_force_time_out_of_range` to `va
 |--:|---|---|---|---|
 | 1 | `brute_force_time_value_device` | %1$.1f s (on this device) | %1$.1f 秒（この端末） | Value shown for an existing vault |
 | 2 | `brute_force_time_out_of_range` | This time is above the selectable maximum (10 s). Tap to change it. | この時間は選択可能な上限（10 秒）を超えています。変更するにはタップしてください。 | Shown when the real time exceeds 10 s |
+
+## Silent identical-skip toast & Automatic mode date tie-break (this revision)
+
+Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_message` in `values-ja/strings.xml`. Smart dialog and Automatic mode now report silently skipped, byte-identical files at the end of an operation with a short toast; identical files with different dates that were reviewed in the thumbnail conflict dialog are excluded. "Always ask" can no longer be selected in Automatic (Experimental) mode and falls back to keeping the existing file's date. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `identical_files_skipped` | one: "%d identical file skipped" / other: "%d identical files skipped" | other: "%d 個の同一ファイルをスキップしました" | Short end-of-operation toast in Smart/Automatic mode |
+| 2 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIn Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありませんが、その場で判断できます。自動（実験的）モードではダイアログを一切表示しないため、\"毎回確認\"は使用できません。自動モードを選択すると\"既存ファイルの日付を保持（既定）\"にフォールバックします。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 | Revised: "Always ask" unavailable in Automatic; falls back to keep-target date |
