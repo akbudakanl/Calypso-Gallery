@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calypso Gallery — Vault Unlock Motion Lab</title>
+<style>
+:root{
+  --bg:#09090b; --page:#0d0d10; --surface:#18181b; --border:#27272a;
+  --text:#fafafa; --secondary:#a1a1aa; --muted:#71717a;
+  --accent:#d9af76; --speed:1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--page);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.page{max-width:1240px;margin:0 auto;padding:40px 26px 90px}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:999px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#d4d4d8}
+.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--text);display:block}
+h1{font-size:38px;line-height:1.1;letter-spacing:-.035em;margin:20px 0 10px}
+h1 span{color:var(--muted)}
+.lead{max-width:760px;color:var(--secondary);font-size:15px;line-height:1.6;margin:0 0 30px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:26px}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--secondary);
+  padding:10px 16px;border-radius:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  transition:background .18s,border-color .18s,color .18s}
+.tab:hover{border-color:#52525b;color:var(--text)}
+.tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);
+  padding:10px 16px;border-radius:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:#52525b}
+.layout{display:grid;grid-template-columns:400px 1fr;gap:56px;align-items:start}
+@media(max-width:940px){.layout{grid-template-columns:1fr;gap:34px}.phone-wrap{margin:0 auto}}
+
+/* ---------- phone shell ---------- */
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
+.phone{position:relative;width:360px;height:744px;padding:13px;border-radius:48px;
+  background:linear-gradient(145deg,#32323a 0%,#16161a 38%,#0d0d10 72%,#2a2a31 100%);
+  box-shadow:0 32px 80px rgba(0,0,0,.8),0 8px 22px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,255,255,.12)}
+.screen{position:relative;width:100%;height:100%;border-radius:36px;background:#000;overflow:hidden}
+.punch{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:11px;height:11px;
+  border-radius:50%;background:#050507;z-index:40;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.status{position:absolute;top:0;left:0;right:0;height:46px;padding:9px 22px 0;display:flex;
+  justify-content:space-between;align-items:center;font-size:12.5px;font-weight:600;z-index:38}
+.status-icons{display:flex;gap:7px;align-items:center}
+.status-icons svg{width:13px;height:13px;fill:currentColor}
+
+/* blurred gallery behind the lock gate */
+.backdrop{position:absolute;inset:-6%;display:grid;grid-template-columns:repeat(3,1fr);
+  grid-auto-rows:1fr;gap:6px;padding:60px 10px 0;
+  filter:blur(26px) brightness(.42) saturate(.7);transform:scale(1.08);transform-origin:center 42%}
+.backdrop img{width:100%;height:100%;object-fit:cover;border-radius:12px}
+
+/* unlocked vault grid */
+.vault{position:absolute;inset:0;padding:88px 18px 26px;z-index:6;opacity:0;
+  background:#000;clip-path:circle(0% at 50% 42%)}
+.vault-head{padding:0 4px 16px}
+.vault-head h3{margin:0;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.vault-head p{margin:5px 0 0;font-size:12.5px;color:var(--secondary)}
+.vault-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.vault-grid .cell{aspect-ratio:1;border-radius:11px;overflow:hidden;opacity:0;transform:translateY(14px) scale(.94)}
+.vault-grid img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* lock gate UI */
+.lock{position:absolute;left:0;right:0;top:23%;z-index:20;padding:0 26px;text-align:center}
+.halo{position:relative;width:96px;height:96px;margin:0 auto 22px;display:grid;place-items:center}
+.halo::before,.halo::after{content:"";position:absolute;inset:6px;border-radius:50%;
+  border:1px solid rgba(250,250,250,.16)}
+.halo::after{inset:-4px;border-style:dashed;border-color:rgba(250,250,250,.09)}
+.emblem{position:relative;width:70px;height:70px;border-radius:20px;background:#141417;
+  border:1px solid #2e2e36;display:grid;place-items:center;
+  box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 0 10px rgba(255,255,255,.03)}
+.emblem svg{width:30px;height:30px;stroke:var(--text);fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round}
+.lock h2{font-size:19px;font-weight:700;letter-spacing:-.02em;margin:0 0 18px}
+.dots{height:56px;border-radius:16px;background:#141417;border:1px solid #2e2e36;
+  display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:14px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--text)}
+.dot.empty{background:transparent;border:2px solid #52525b}
+.unlock-btn{height:52px;border-radius:26px;background:var(--text);color:var(--bg);
+  display:grid;place-items:center;font-size:14px;font-weight:700;margin-bottom:12px}
+.bio-btn{height:50px;border-radius:25px;background:rgba(255,255,255,.05);
+  border:1px solid #2e2e36;color:#e4e4e7;display:flex;align-items:center;
+  justify-content:center;gap:10px;font-size:13px;font-weight:600}
+.bio-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+
+/* generic fx layer */
+.fx{position:absolute;inset:0;z-index:15;pointer-events:none}
+.ring,.beam,.sweep{position:absolute;opacity:0}
+/* each concept fills the phone's content box (padding = frame thickness) */
+.demo{position:absolute;inset:13px;display:none}
+.demo.active{display:block}
+
+/* ---------- info panel ---------- */
+.info h2{font-size:24px;letter-spacing:-.025em;margin:0 0 8px}
+.info .tag{color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.info p{color:var(--secondary);font-size:14px;line-height:1.65;margin:14px 0 20px}
+.tl{border-top:1px solid var(--border);padding-top:18px;margin-top:18px}
+.tl-row{display:grid;grid-template-columns:74px 1fr;gap:14px;padding:9px 0;align-items:start}
+.tl-time{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;color:var(--accent)}
+.tl-row span:last-child{font-size:13.5px;color:#d4d4d8;line-height:1.45}
+.notes{margin-top:26px;border:1px solid var(--border);border-radius:14px;background:#111114;padding:20px 22px}
+.notes h4{margin:0 0 10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--secondary)}
+.notes code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;color:#e4e4e7}
+.notes ul{margin:0;padding-left:18px;color:var(--secondary);font-size:13px;line-height:1.7}
+
+/* ================= CONCEPT 1 : IRIS ================= */
+.demo[data-c="iris"].playing .lock{animation:irisLockOut calc(520ms*var(--speed)) ease both}
+@keyframes irisLockOut{to{opacity:0;transform:scale(.9);filter:blur(3px)}}
+.demo[data-c="iris"].playing .backdrop{animation:irisBackdrop calc(1000ms*var(--speed)) ease calc(220ms*var(--speed)) both}
+@keyframes irisBackdrop{to{filter:blur(0) brightness(1) saturate(1);transform:scale(1)}}
+.demo[data-c="iris"].playing .vault{animation:irisReveal calc(900ms*var(--speed)) cubic-bezier(.22,.72,.22,1) calc(260ms*var(--speed)) both}
+@keyframes irisReveal{from{opacity:1;clip-path:circle(0% at 50% 42%)}to{opacity:1;clip-path:circle(150% at 50% 42%)}}
+.demo[data-c="iris"].playing .ring{left:50%;top:42%;width:70px;height:70px;margin:-35px;border:1px solid rgba(255,255,255,.5);border-radius:50%;
+  animation:irisRing calc(1000ms*var(--speed)) ease-out both}
+.demo[data-c="iris"].playing .ring.r2{animation-delay:calc(110ms*var(--speed))}
+.demo[data-c="iris"].playing .ring.r3{animation-delay:calc(220ms*var(--speed))}
+@keyframes irisRing{0%{opacity:.9;transform:scale(.6)}100%{opacity:0;transform:scale(7)}}
+
+/* ================= CONCEPT 2 : SHUTTER ================= */
+.demo[data-c="shutter"].playing .shackle{transform-origin:12px 10px;
+  animation:shackleOpen calc(420ms*var(--speed)) cubic-bezier(.3,1.5,.5,1) both}
+@keyframes shackleOpen{0%{transform:rotate(0) translateY(0)}100%{transform:rotate(-26deg) translate(-2px,-3px)}}
+.demo[data-c="shutter"].playing .emblem{animation:emblemGlow calc(700ms*var(--speed)) ease both}
+@keyframes emblemGlow{40%{box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 0 16px rgba(255,255,255,.10)}100%{box-shadow:0 18px 44px rgba(0,0,0,.55),0 0 0 0 transparent}}
+.demo[data-c="shutter"].playing .dot{animation:dotPulse calc(380ms*var(--speed)) ease both}
+.demo[data-c="shutter"].playing .dot:nth-of-type(2){animation-delay:calc(70ms*var(--speed))}
+.demo[data-c="shutter"].playing .dot:nth-of-type(3){animation-delay:calc(140ms*var(--speed))}
+.demo[data-c="shutter"].playing .dot:nth-of-type(4){animation-delay:calc(210ms*var(--speed))}
+.demo[data-c="shutter"].playing .dot:nth-of-type(5){animation-delay:calc(280ms*var(--speed))}
+@keyframes dotPulse{45%{transform:scale(1.5);background:#fff}100%{transform:scale(1)}}
+.demo[data-c="shutter"].playing .sweep{top:calc(23% + 244px);left:26px;width:56px;height:4px;border-radius:4px;
+  background:linear-gradient(90deg,transparent,#fff,transparent);filter:blur(2px);
+  animation:sweepMove calc(520ms*var(--speed)) ease-in-out calc(380ms*var(--speed)) both}
+@keyframes sweepMove{0%{opacity:0;transform:translateX(0) scaleX(.2)}30%{opacity:1}100%{opacity:0;transform:translateX(240px) scaleX(1)}}
+.demo[data-c="shutter"].playing .lock{animation:shutterLockOut calc(560ms*var(--speed)) cubic-bezier(.5,0,.7,.2) calc(620ms*var(--speed)) both}
+@keyframes shutterLockOut{to{opacity:0;transform:translateY(-70px) scale(.96)}}
+.demo[data-c="shutter"].playing .backdrop{animation:shutterBackdrop calc(900ms*var(--speed)) ease calc(560ms*var(--speed)) both}
+@keyframes shutterBackdrop{to{filter:blur(0) brightness(1) saturate(1);transform:scale(1)}}
+.demo[data-c="shutter"].playing .vault{opacity:1;clip-path:none;
+  animation:shutterIn calc(820ms*var(--speed)) cubic-bezier(.16,1,.3,1) calc(640ms*var(--speed)) both}
+@keyframes shutterIn{from{transform:translateY(100%);opacity:.4}to{transform:translateY(0);opacity:1}}
+
+/* ================= CONCEPT 3 : BEAM ================= */
+.demo[data-c="beam"].playing .halo::before{animation:haloCollapse calc(620ms*var(--speed)) cubic-bezier(.4,0,.2,1) both}
+@keyframes haloCollapse{to{inset:40px;opacity:0;border-color:rgba(255,255,255,.7)}}
+.demo[data-c="beam"].playing .lock{animation:beamLockOut calc(460ms*var(--speed)) ease calc(420ms*var(--speed)) both}
+@keyframes beamLockOut{to{opacity:0;filter:blur(4px)}}
+.demo[data-c="beam"].playing .beam{left:calc(50% - 1px);top:42%;width:2px;height:2px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,.95) 18%,#fff 50%,rgba(255,255,255,.95) 82%,transparent);
+  box-shadow:0 0 22px 5px rgba(255,255,255,.35);
+  animation:beamGrow calc(680ms*var(--speed)) cubic-bezier(.2,.8,.2,1) calc(300ms*var(--speed)) both}
+@keyframes beamGrow{0%{opacity:0;height:2px;transform:translateY(0)}
+  35%{opacity:1;height:100%;transform:translateY(-42%)}
+  100%{opacity:.9;height:100%;transform:translateY(-42%) scaleX(120)}}
+.demo[data-c="beam"].playing .backdrop{animation:beamBackdrop calc(900ms*var(--speed)) ease calc(420ms*var(--speed)) both}
+@keyframes beamBackdrop{to{filter:blur(0) brightness(1) saturate(1);transform:scale(1)}}
+.demo[data-c="beam"].playing .vault{opacity:1;clip-path:inset(0 50% 0 50%);
+  animation:beamReveal calc(760ms*var(--speed)) cubic-bezier(.3,.8,.2,1) calc(480ms*var(--speed)) both}
+@keyframes beamReveal{from{clip-path:inset(0 50% 0 50%)}to{clip-path:inset(0 0 0 0)}}
+
+/* ================= CONCEPT 4 : MORPH ================= */
+.demo[data-c="morph"].playing .lock{animation:morphFade calc(420ms*var(--speed)) ease calc(480ms*var(--speed)) both}
+@keyframes morphFade{to{opacity:0;transform:translateY(-26px)}}
+.demo[data-c="morph"].playing .halo{position:absolute;left:26px;top:16px;margin:0;width:62px;height:62px;
+  animation:morphHalo calc(900ms*var(--speed)) cubic-bezier(.2,.9,.2,1) both}
+@keyframes morphHalo{0%{left:calc(50% - 48px);top:calc(42% - 48px);width:96px;height:96px}
+  100%{left:26px;top:16px;width:62px;height:62px}}
+.demo[data-c="morph"].playing .halo::before{animation:morphHaloRing calc(900ms*var(--speed)) ease both}
+@keyframes morphHaloRing{to{inset:0;border-radius:18px;border-color:rgba(255,255,255,.12)}}
+.demo[data-c="morph"].playing .halo::after{opacity:0;animation:fadeOut calc(300ms*var(--speed)) both}
+.demo[data-c="morph"].playing .emblem{width:46px;height:46px;border-radius:14px;
+  animation:morphEmblem calc(900ms*var(--speed)) cubic-bezier(.2,.9,.2,1) both}
+@keyframes morphEmblem{0%{width:70px;height:70px;border-radius:20px}
+  100%{width:46px;height:46px;border-radius:14px}}
+.demo[data-c="morph"].playing .emblem svg{width:21px;height:21px}
+.demo[data-c="morph"].playing .backdrop{animation:morphBackdrop calc(900ms*var(--speed)) ease calc(360ms*var(--speed)) both}
+@keyframes morphBackdrop{to{filter:blur(0) brightness(1) saturate(1);transform:scale(1)}}
+.demo[data-c="morph"].playing .vault{opacity:1;clip-path:none;
+  animation:morphVault calc(700ms*var(--speed)) ease calc(420ms*var(--speed)) both}
+@keyframes morphVault{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeOut{to{opacity:0}}
+
+/* staggered tiles for every concept */
+.demo.playing .vault-grid .cell{animation:tileIn calc(560ms*var(--speed)) cubic-bezier(.2,.9,.25,1) both}
+.demo.playing .vault-grid .cell:nth-child(1){animation-delay:calc(680ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(2){animation-delay:calc(730ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(3){animation-delay:calc(780ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(4){animation-delay:calc(810ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(5){animation-delay:calc(860ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(6){animation-delay:calc(910ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(7){animation-delay:calc(840ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(8){animation-delay:calc(890ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(9){animation-delay:calc(940ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(10){animation-delay:calc(970ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(11){animation-delay:calc(1020ms*var(--speed))}
+.demo.playing .vault-grid .cell:nth-child(12){animation-delay:calc(1070ms*var(--speed))}
+@keyframes tileIn{from{opacity:0;transform:translateY(16px) scale(.94);filter:blur(5px)}
+  to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="eyebrow"><i></i> CALYPSO GALLERY · MOTION LAB</div>
+  <h1>Vault unlock <span>/ opening motion</span></h1>
+  <p class="lead">Şifreli kasanın açılışını modernleştirmek için dört farklı hareket dili önerisi. Her biri 02-vault ekranının renk, tipografi ve düzenini korur; yalnızca doğrulamadan kasaya geçişin hareketini yeniden tasarlar. Sekmeleri değiştirip <strong>Replay</strong> ile izleyebilir, <strong>0.35×</strong> ile yavaş çekimde inceleyebilirsin.</p>
+
+  <div class="toolbar" id="tabs"></div>
+
+  <div class="layout">
+    <div class="phone-wrap">
+      <div class="phone" id="phoneSlot"></div>
+      <button class="btn" id="replay">↻&nbsp; Replay</button>
+    </div>
+    <div class="info" id="info"></div>
+  </div>
+
+  <div class="notes">
+    <h4>Android uygulamasına uyarlama notları</h4>
+    <ul>
+      <li><code>ValueAnimator</code> / <code>MotionLayout</code> ile <code>clip-path: circle()</code> yerine <code>PathInterpolator</code> + <code>ViewAnimationUtils.createCircularReveal()</code> kullanılabilir (API 21+).</li>
+      <li><code>VAULT_SPIN_ANIM_MS</code> (625 ms) bugün kilit ikonu animasyonunun süresi; önerilerin ilk fazı bu süreyle eşleşecek şekilde kurgulandı, böylece "animasyon bitince açılır" hissi korunuyor.</li>
+      <li>Blur geçişi için <code>RenderEffect.IN_BLUR</code> (API 31+) veya düşük maliyetli önizleme katmanı; eski cihazlarda <code>alpha</code> geçişine düşüş yapılmalı.</li>
+      <li>Tüm fazlar <code>ValueAnimator.areAnimatorsEnabled()</code> kontrolünden geçmeli; sistem animasyonu kapalıysa son durum anında uygulanmalı.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* ---------- shared phone markup ---------- */
+const ICONS = `
+<svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+<svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>`;
+
+const LOCK_SVG = `
+<svg viewBox="0 0 24 24">
+  <path class="shackle" d="M8 11V7a4 4 0 0 1 8 0v4"/>
+  <rect x="4" y="11" width="16" height="10" rx="2.5"/>
+  <circle cx="12" cy="16" r="1.2" fill="#fafafa" stroke="none"/>
+</svg>`;
+
+const BIO_SVG = `<svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>`;
+
+function phoneHTML(id){
+  const pic = n => `../store-screenshots/photos/photo-${n}.jpg`;
+  const back = [3,1,6,2,5,4].map(n=>`<img src="${pic(n)}" alt="">`).join('');
+  const cells = [3,1,6,2,5,4,6,3,1,4,2,5].map(n=>
+    `<div class="cell"><img src="${pic(n)}" alt=""></div>`).join('');
+  return `
+  <div class="demo" data-c="${id}">
+    <div class="screen">
+      <div class="backdrop">${back}</div>
+      <div class="vault">
+        <div class="vault-head"><h3>Secret vault</h3><p>Virtual album · 12 items</p></div>
+        <div class="vault-grid">${cells}</div>
+      </div>
+      <div class="fx">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="beam"></div><div class="sweep"></div>
+      </div>
+      <div class="lock">
+        <div class="halo"><div class="emblem">${LOCK_SVG}</div></div>
+        <h2>Unlock encrypted vault</h2>
+        <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot empty"></span></div>
+        <div class="unlock-btn">Unlock Vault</div>
+        <div class="bio-btn">${BIO_SVG} Use biometrics</div>
+      </div>
+      <div class="punch"></div>
+      <div class="status"><span>9:41</span><span class="status-icons">${ICONS}</span></div>
+    </div>
+  </div>`;
+}
+
+const CONCEPTS = [
+  {
+    id:'iris', short:'01 · Iris reveal', title:'Iris / Aperture Reveal',
+    tag:'En zarif',
+    desc:'Doğrulama başarılı olduğunda kilit rozeti merkezden üç konsantrik halka açar; kasa ızgarası dairesel bir kırpma (circular reveal) ile görünür. Bulanık arka plan aynı anda netleşir. Kilit arayüzü hafifçe geri çekilip kaybolur.',
+    tl:[['0–260 ms','PIN doğrulanır, rozet hafifçe geri çekilir'],
+        ['260–420 ms','Üç halka 110 ms arayla genişler'],
+        ['260–1160 ms','Circular reveal ile kasa ızgarası açılır'],
+        ['680+ ms','Kutucuklar 50 ms arayla yerine oturur']]
+  },
+  {
+    id:'shutter', short:'02 · Shutter', title:'Shutter / Mechanical Unlock',
+    tag:'En hissedilir',
+    desc:'Kilit mandalı yaylı bir hareketle açılır, PIN noktaları sırayla nabız atar ve bir ışık süpürmesi doğrulamayı onaylar. Ardından kilit paneli yukarı kayar, kasa ekranı aşağıdan yaylı bir eğriyle girer. Mekanik ve dokunsal bir his verir.',
+    tl:[['0–420 ms','Mandallar açılır, rozet ışık alır'],
+        ['70–350 ms','PIN noktaları sırayla nabız atar'],
+        ['380–900 ms','Işık süpürmesi + panel yukarı çıkış'],
+        ['640–1460 ms','Kasa ekranı aşağıdan yaylı girer']]
+  },
+  {
+    id:'beam', short:'03 · Light beam', title:'Light Beam / Decrypt Scan',
+    tag:'En "kriptolu"',
+    desc:'Mevcut halo halkası rozete doğru çöker, ardından merkezden dikey bir ışık huzmesi büyüyerek ekranı doldurur ve kasa içeriği bu huzmenin içinden açılır. Şifre çözme / tarama hissini en güçlü veren versiyon.',
+    tl:[['0–620 ms','Halo halkası rozete çöker'],
+        ['300–980 ms','Dikey huzme büyür ve yatay genişler'],
+        ['420–1320 ms','Bulanıklık kalkar, içerik huzmeden görünür'],
+        ['680+ ms','Kutucuklar kademeli girer']]
+  },
+  {
+    id:'morph', short:'04 · Shared element', title:'Shared-Element Morph',
+    tag:'En modern',
+    desc:'Kilit rozeti büyüklüğünü koruyup başlığa doğru süzülür ve kasa başlığındaki küçük kilit rozetine dönüşür. Panel sessizce kaybolurken kasa ekranı yerine oturur. Material Motion / iOS shared-element mantığına en yakın, en sade çözüm.',
+    tl:[['0–900 ms','Rozet 96 → 62 px olup üst sola taşınır'],
+        ['360–1260 ms','Arka plan netleşir'],
+        ['420–1120 ms','Kilit paneli kaybolur, kasa görünür'],
+        ['680+ ms','Kutucuklar blur+scale ile girer']]
+  }
+];
+
+/* build tabs + all demos */
+const tabs = document.getElementById('tabs');
+const slot = document.getElementById('phoneSlot');
+CONCEPTS.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='tab'+(i===0?' active':''); b.textContent=c.short; b.dataset.id=c.id;
+  b.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===b));
+    document.querySelectorAll('.demo').forEach(d=>d.classList.toggle('active',d.dataset.c===c.id));
+    renderInfo(c); play();
+  };
+  tabs.appendChild(b);
+  slot.insertAdjacentHTML('beforeend',phoneHTML(c.id));
+});
+document.querySelector('.demo').classList.add('active');
+
+function renderInfo(c){
+  document.getElementById('info').innerHTML=`
+    <div class="tag">${c.tag}</div>
+    <h2>${c.title}</h2>
+    <p>${c.desc}</p>
+    <div class="tl">${c.tl.map(r=>`<div class="tl-row"><span class="tl-time">${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`;
+}
+function play(){
+  // Only the selected concept should animate — otherwise hidden demos keep their
+  // keyframes alive and their final fill state can leak into the active one.
+  const all=document.querySelectorAll('.demo');
+  all.forEach(d=>d.classList.remove('playing'));
+  void document.body.offsetWidth; // force reflow so keyframes restart
+  const d=document.querySelector('.demo.active');
+  if(d) d.classList.add('playing');
+}
+document.getElementById('replay').onclick=play;
+
+/* slow-motion toggle */
+const slow=document.createElement('button');
+slow.className='btn'; slow.textContent='◐  0.35× yavaş';
+slow.onclick=()=>{
+  const now=getComputedStyle(document.documentElement).getPropertyValue('--speed').trim();
+  document.documentElement.style.setProperty('--speed', now==='1'?'0.35':'1');
+  slow.textContent = now==='1'?'◐  0.35× açık':'◐  normal hız';
+  play();
+};
+tabs.appendChild(slow);
+
+renderInfo(CONCEPTS[0]);
+requestAnimationFrame(play);
+</script>
+</body>
+</html>
