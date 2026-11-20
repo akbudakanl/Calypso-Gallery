@@ -16,7 +16,9 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
+import org.fossify.gallery.helpers.effectiveVaultUnlockMs
 import org.fossify.gallery.helpers.measureStandardArgon2Ms
+import org.fossify.gallery.helpers.readVaultKdfParams
 import java.util.Locale
 
 /** "Brute-Force direnci" ayari: hedef kasa acilis suresi. */
@@ -35,16 +37,37 @@ object BruteForceDialog {
 
     fun summary(activity: Activity): String {
         val config = activity.config
-        val base = activity.getString(R.string.brute_force_time_value, config.unlockTargetMs / MS_PER_SECOND)
-        val clamped = if (config.argon2CalibrationClamped) {
+        val vaultParams = CryptoManager.readVaultKdfParams(activity)
+        val vaultMs = CryptoManager.effectiveVaultUnlockMs(activity, vaultParams)
+        // A vault exists but this device has neither a cached baseline nor a real unlock
+        // measurement: show only the portable stored parameters, never a misleading time.
+        if (vaultParams != null && vaultMs <= 0) {
+            return activity.getString(
+                R.string.brute_force_actual_params,
+                vaultParams.memoryKb / KIB_PER_MIB,
+                vaultParams.iterations
+            )
+        }
+        val hasVault = vaultMs > 0
+        val shownMs = if (hasVault) vaultMs else config.unlockTargetMs
+        val valueRes = if (hasVault) R.string.brute_force_time_value_device else R.string.brute_force_time_value
+        val base = activity.getString(valueRes, shownMs / MS_PER_SECOND)
+        val clamped = if (!hasVault && config.argon2CalibrationClamped) {
             activity.getString(R.string.brute_force_clamped)
         } else {
             ""
         }
-        val memMb = config.lastCalibratedMemoryKb / KIB_PER_MIB
-        val iters = config.lastCalibratedIterations
+        val memMb = (vaultParams?.memoryKb ?: config.lastCalibratedMemoryKb) / KIB_PER_MIB
+        val iters = vaultParams?.iterations ?: config.lastCalibratedIterations
         val params = activity.getString(R.string.brute_force_actual_params, memMb, iters)
-        return "$base$clamped\n$params"
+        // Sub-second values are selectable (down to the KDF floor); only values above the
+        // 10 s slider maximum need an explicit note.
+        val outOfRange = if (hasVault && shownMs > Config.MAX_UNLOCK_TARGET_MS) {
+            "\n" + activity.getString(R.string.brute_force_time_out_of_range)
+        } else {
+            ""
+        }
+        return "$base$clamped\n$params$outOfRange"
     }
 
     fun show(activity: Activity, onChanged: () -> Unit) {
@@ -82,7 +105,11 @@ object BruteForceDialog {
         val minTenths = ((stdMs + TENTHS_ROUND_UP_MS) / MS_PER_TENTH).coerceIn(MIN_TENTHS, MAX_TENTHS)
         val minSec = minTenths / TENTHS_PER_SECOND
         val maxHeapKb = (Runtime.getRuntime().maxMemory() / BYTES_PER_KIB).coerceAtLeast(1L)
-        val initialTenths = (activity.config.unlockTargetMs / MS_PER_TENTH).coerceIn(minTenths, MAX_TENTHS)
+        // After a reinstall/transfer the local target is just a default; start from the
+        // actual (measured or estimated) cost of the existing vault on this device.
+        val effectiveMs = CryptoManager.effectiveVaultUnlockMs(activity)
+        val preferredMs = if (effectiveMs > 0) effectiveMs else activity.config.unlockTargetMs
+        val initialTenths = (preferredMs / MS_PER_TENTH).coerceIn(minTenths, MAX_TENTHS)
 
         val padding = (DIALOG_PADDING_DP * activity.resources.displayMetrics.density).toInt()
         val view = LinearLayout(activity).apply {
@@ -93,7 +120,14 @@ object BruteForceDialog {
             textSize = VALUE_TEXT_SP
         }
         val hint = MyTextView(activity).apply {
-            text = activity.getString(R.string.brute_force_time_hint, minSec)
+            text = buildString {
+                append(activity.getString(R.string.brute_force_time_hint))
+                // The lower-bound sentence is only useful when the safe floor is above 1 s.
+                if (minSec > 1f) {
+                    append(' ')
+                    append(activity.getString(R.string.brute_force_time_min_hint))
+                }
+            }
         }
         val input = MyEditText(activity).apply {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL

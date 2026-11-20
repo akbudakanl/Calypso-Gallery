@@ -147,6 +147,13 @@ internal data class UnwrappedVaultKeys(
     val iterations: Int = CryptoManager.ARGON2_ITERATIONS
 )
 
+/** Parolanin bilinmesini gerektirmeyen, tasinabilir .vault basligindaki KDF maliyeti. */
+data class VaultKdfParams(
+    val memoryKb: Int,
+    val iterations: Int,
+    val parallelism: Int
+)
+
 private class KdfCostParams(
     val iterations: Int,
     val memoryKb: Int,
@@ -283,6 +290,7 @@ internal fun CryptoManager.unwrapVaultKeysEphemeral(
     val header = readParsedVaultHeader(headerFile) ?: return null
     var bundle: ByteArray? = null
     return try {
+        val kdfStartedAt = System.nanoTime()
         val wrappingKey = try {
             deriveKeyArgon2id(
                 secret,
@@ -305,6 +313,7 @@ internal fun CryptoManager.unwrapVaultKeysEphemeral(
                 header.kdf.parallelism
             )
         }
+        val measuredUnlockMs = ((System.nanoTime() - kdfStartedAt) / NS_PER_MS).toInt()
 
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, wrappingKey, GCMParameterSpec(GCM_TAG_BITS, header.ivPdk))
@@ -318,6 +327,11 @@ internal fun CryptoManager.unwrapVaultKeysEphemeral(
             vmk.fill(0)
             null
         } else {
+            // A successful unlock on this device gives the exact KDF cost for the current
+            // vault header; it overrides the estimate used before/after reinstall or transfer.
+            if (context != null && measuredUnlockMs > 0) {
+                context.config.vaultUnlockMeasuredMs = measuredUnlockMs
+            }
             UnwrappedVaultKeys(
                 vmk = vmk,
                 kek = kek,
@@ -485,6 +499,51 @@ internal fun readVaultProtectionType(headerFile: File): Int? {
 fun CryptoManager.getVaultProtectionType(context: Context): Int? {
     val vaultRoot = findVaultRoot(context) ?: return null
     return readVaultProtectionType(File(vaultRoot, VAULT_HEADER_FILE))
+}
+
+/** Reads the portable KDF cost from the current vault header without needing the password. */
+fun CryptoManager.readVaultKdfParams(context: Context): VaultKdfParams? {
+    val vaultRoot = findVaultRoot(context) ?: return null
+    val header = readParsedVaultHeader(File(vaultRoot, VAULT_HEADER_FILE)) ?: return null
+    return try {
+        VaultKdfParams(
+            memoryKb = header.kdf.memoryKb,
+            iterations = header.kdf.iterations,
+            parallelism = header.kdf.parallelism
+        )
+    } finally {
+        header.wipe()
+    }
+}
+
+/**
+ * Reverse calculation: given the stored Argon2 cost and this device's measured 64 MiB / 3 rounds baseline,
+ * estimate the real unlock time on THIS device. Memory scales roughly linearly, so 128 MiB
+ * costs about twice as much per round as 64 MiB.
+ */
+fun estimateVaultUnlockMs(std64Ms: Int, params: VaultKdfParams): Int {
+    val safeStd64Ms = std64Ms.coerceAtLeast(ARGON2_MIN_MEASURED_MS).toDouble()
+    val memoryFactor = (params.memoryKb.toDouble() / ARGON2_MIN_MEMORY_KB).coerceAtLeast(1.0)
+    val perIterationMs = safeStd64Ms / ARGON2_MIN_ITERATIONS * memoryFactor
+    return Math.round(perIterationMs * params.iterations).toInt().coerceAtLeast(1)
+}
+
+/**
+ * The time to show for the EXISTING vault on the current device:
+ * measured during a real unlock when available, otherwise estimated from the portable
+ * header cost and this device's standard KDF speed. Returns 0 when a vault is not available
+ * or the local baseline has not been measured yet.
+ */
+fun CryptoManager.effectiveVaultUnlockMs(
+    context: Context,
+    knownParams: VaultKdfParams? = null
+): Int {
+    val measured = context.config.vaultUnlockMeasuredMs
+    if (measured > 0) return measured
+    val std64Ms = context.config.cachedStdArgon2Ms
+    if (std64Ms <= 0) return 0
+    val params = knownParams ?: readVaultKdfParams(context) ?: return 0
+    return estimateVaultUnlockMs(std64Ms, params)
 }
 
 
@@ -728,6 +787,8 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
             Base64.getEncoder().encodeToString(wrappedVmK)
         context.config.vaultWrappedKeyData = data
         context.config.vaultRootPath = vaultRoot.absolutePath
+        // New header params: let the time be re-estimated for this device and re-measured on unlock.
+        context.config.vaultUnlockMeasuredMs = 0
         cachedVaultRoot = vaultRoot
         encryptedFolderCache.clear()
 
@@ -746,6 +807,11 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     val marker = "argon2id_aes256_gcm"
     context.config.hiddenPasswordHash = marker
     context.config.hiddenProtectionType = protectionType
+    context.config.vaultPinLength = if (protectionType == PROTECTION_PIN) secret.size else 0
+    // The dot indicator only makes sense for short PINs; never offer it for passwords or oversized PINs.
+    if (protectionType != PROTECTION_PIN || secret.size > VAULT_PIN_DOTS_MAX_LENGTH) {
+        context.config.showVaultPinDots = false
+    }
     context.config.isHiddenPasswordProtectionOn = true
 
     if (isNewVault) {
@@ -929,6 +995,8 @@ fun CryptoManager.rewrapVaultHeaderWithCurrentKdf(context: Context, secret: Char
         context.config.vaultWrappedKeyData = data
         context.config.hiddenPasswordHash = "argon2id_aes256_gcm"
         context.config.vaultRootPath = vaultRoot.absolutePath
+        // Re-wrapped with new KDF params: drop the measurement taken under the old params.
+        context.config.vaultUnlockMeasuredMs = 0
         cachedVaultRoot = vaultRoot
         true
     } catch (_: OutOfMemoryError) {

@@ -7,6 +7,8 @@ import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
 import org.fossify.gallery.helpers.deriveKeyArgon2id
+import org.fossify.gallery.helpers.estimateVaultUnlockMs
+import org.fossify.gallery.helpers.VaultKdfParams
 import org.fossify.gallery.helpers.readVaultHeaderVersion
 import org.fossify.gallery.helpers.readVaultProtectionType
 import org.fossify.gallery.helpers.unwrapVaultKeysEphemeral
@@ -143,6 +145,37 @@ class VaultHeaderFormatTest {
         assertEquals(ARGON2_MIN_MEMORY_KB, oomFallback.first)
         assertEquals(67, oomFallback.second)
         assertTrue(oomFallback.third)
+    }
+
+    @Test
+    fun estimateVaultUnlockMs_roundTripsCalibratedParamsAndHandlesSlowerDevice() {
+        val fastStd64Ms = 450
+        val maxHeapKb = 512L * 1024L
+
+        val subSecond = calculateTieredArgon2Params(750, fastStd64Ms, maxHeapKb)
+        assertEquals(
+            750,
+            estimateVaultUnlockMs(
+                fastStd64Ms,
+                VaultKdfParams(ARGON2_MIN_MEMORY_KB, subSecond.second, 2)
+            )
+        )
+
+        val highTier = calculateTieredArgon2Params(1_500, fastStd64Ms, maxHeapKb)
+        assertEquals(
+            1_500,
+            estimateVaultUnlockMs(
+                fastStd64Ms,
+                VaultKdfParams(ARGON2_HIGH_MEMORY_KB, highTier.second, 2)
+            )
+        )
+
+        // Same portable vault params, but the new device is ~5x slower at the 64 MiB floor.
+        val slowDeviceEstimate = estimateVaultUnlockMs(
+            2_400,
+            VaultKdfParams(ARGON2_HIGH_MEMORY_KB, highTier.second, 2)
+        )
+        assertEquals(8_000, slowDeviceEstimate)
     }
 
     @Test

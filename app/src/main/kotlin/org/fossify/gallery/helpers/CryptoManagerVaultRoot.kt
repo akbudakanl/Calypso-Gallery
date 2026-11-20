@@ -303,6 +303,7 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
     cfg.vaultRootPath = newVaultRoot?.absolutePath ?: ""
     cfg.vaultWrappedKeyData = ""
     cfg.hiddenPasswordHash = ""
+    cfg.vaultUnlockMeasuredMs = 0
     cfg.isHiddenPasswordProtectionOn = false
     cfg.temporarilyShowHidden = false
     cfg.temporarilyShowVaultExcluded = false
@@ -490,6 +491,7 @@ fun CryptoManager.resetStaleVaultState(context: Context) {
     cfg.vaultRootPath = ""
     cfg.vaultWrappedKeyData = ""
     cfg.hiddenPasswordHash = ""
+    cfg.vaultUnlockMeasuredMs = 0
     cfg.isHiddenPasswordProtectionOn = false
     cfg.isVaultBiometricEnabled = false
     cfg.temporarilyShowHidden = false
