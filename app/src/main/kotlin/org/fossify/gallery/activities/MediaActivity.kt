@@ -12,7 +12,9 @@ import android.view.View
 import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
@@ -39,6 +41,7 @@ import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getTimeFormat
 import org.fossify.commons.extensions.handleHiddenFolderPasswordProtection
+import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.isExternalStorageManager
@@ -754,6 +757,28 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
      * the in-place search bar, and overflow (Sort now lives there). All-files views keep the
      * regular search bar. Both headers are pinned to the top instead of scrolling away.
      */
+    /**
+     * Opens the in-place search directly. The stock magnifier's own click listener is remapped to
+     * "back" in album mode (useArrowIcon), so routing through it would exit the album instead of
+     * opening search. Everything here is the local equivalent of MySearchMenu's private openSearch().
+     */
+    private fun openAlbumSearch() {
+        if (binding.mediaMenu.isSearchOpen) return
+        val field = findViewById<EditText>(org.fossify.commons.R.id.top_toolbar_search) ?: return
+        val icon = findViewById<ImageView>(org.fossify.commons.R.id.top_toolbar_search_icon) ?: return
+
+        binding.mediaMenu.isSearchOpen = true
+        icon.setImageResource(org.fossify.commons.R.drawable.ic_arrow_left_vector)
+        icon.contentDescription = getString(org.fossify.commons.R.string.back)
+        applyToolbarMode()
+        updateAlbumHeader()
+        binding.mediaMenu.applyCalypsoSearchBarStyle()
+        field.beVisible()
+        icon.beVisible()
+        field.requestFocus()
+        showKeyboard(field)
+    }
+
     private fun applyToolbarMode() {
         val palette = AppearanceManager.resolve(this, config)
         val toolbar = binding.mediaMenu.requireToolbar()
@@ -817,11 +842,14 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             // Same drawable and tint as the main screen magnifier.
             header.findViewById<ImageButton>(R.id.album_toolbar_search).apply {
                 imageTintList = ColorStateList.valueOf(palette.text)
-                // MySearchMenu.setSearchOpen only flips a flag; the private openSearch() is driven by
-            // the stock magnifier's click listener, so route through it to get the real transform.
-            setOnClickListener {
-                findViewById<View>(org.fossify.commons.R.id.top_toolbar_search_icon)?.performClick()
+                setOnClickListener { openAlbumSearch() }
             }
+            // In album mode the stock icon is forced into "arrow = back" mode, so closing search
+            // leaves it as an arrow. Restore the magnifier for the next idle state.
+            if (!isSearchOpen) {
+                findViewById<ImageView>(org.fossify.commons.R.id.top_toolbar_search_icon)?.setImageResource(
+                    org.fossify.commons.R.drawable.ic_search_vector
+                )
             }
             if (isSearchOpen) {
                 binding.mediaMenu.applyCalypsoSearchBarStyle()
