@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import com.google.android.material.appbar.AppBarLayout
 import org.fossify.commons.views.MySearchMenu
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.AppearanceManager
@@ -76,4 +77,17 @@ fun MySearchMenu.applyCalypsoSearchBarStyle() {
         ?.mutate()?.apply { setTint(actionIconColor) }
     toolbar.menu?.findItem(R.id.sort)?.icon = ContextCompat.getDrawable(context, R.drawable.ic_sort_view_calypso_vector)
         ?.mutate()?.apply { setTint(actionIconColor) }
+}
+
+/**
+ * Allows the search bar / album header inside [MySearchMenu] (an [AppBarLayout]) to scroll
+ * off-screen when the user scrolls down, and reappear immediately on upward scroll.
+ */
+fun MySearchMenu.enableScrollAway() {
+    val container = findViewById<View>(org.fossify.commons.R.id.search_bar_container) ?: return
+    val params = container.layoutParams as? AppBarLayout.LayoutParams ?: return
+    params.scrollFlags = AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
+        AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS or
+        AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP
+    container.layoutParams = params
 }

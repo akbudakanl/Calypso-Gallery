@@ -30,46 +30,6 @@
             android:paddingEnd="24dp"
             android:paddingBottom="28dp">
 
-            <!-- Framed Lock Emblem with Ambient Pulse Ring -->
-            <FrameLayout
-                android:id="@+id/vault_lock_emblem"
-                android:layout_width="86dp"
-                android:layout_height="86dp"
-                android:layout_marginBottom="20dp">
-
-                <View
-                    android:id="@+id/vault_lock_halo"
-                    android:layout_width="86dp"
-                    android:layout_height="86dp"
-                    android:layout_gravity="center" />
-
-                <FrameLayout
-                    android:id="@+id/vault_lock_emblem_core"
-                    android:layout_width="70dp"
-                    android:layout_height="70dp"
-                    android:layout_gravity="center">
-
-                    <ImageView
-                        android:id="@+id/vault_lock_icon"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:contentDescription="@string/biometric_unlock_vault"
-                        android:src="@drawable/ic_onboarding_vault_lock" />
-                </FrameLayout>
-            </FrameLayout>
-
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/vault_lock_title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
-                android:gravity="center"
-                android:letterSpacing="-0.02"
-                android:text="@string/biometric_unlock_vault"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
             <include
                 android:id="@+id/vault_security_content"
                 layout="@layout/dialog_vault_security"

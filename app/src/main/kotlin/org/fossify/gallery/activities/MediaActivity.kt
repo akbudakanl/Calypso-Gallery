@@ -71,6 +71,7 @@ import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
+import org.fossify.gallery.extensions.enableScrollAway
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
@@ -715,6 +716,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
+        binding.mediaMenu.enableScrollAway()
         applyToolbarMode()
         updateAlbumHeader()
     }

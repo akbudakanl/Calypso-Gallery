@@ -1,5 +1,6 @@
 package org.fossify.gallery.dialogs
 
+import android.animation.Animator
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -28,6 +29,7 @@ import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
+import org.fossify.gallery.helpers.VaultLockEmblemHelper
 import org.fossify.gallery.helpers.VaultShutterAnimator
 import java.io.File
 import org.fossify.gallery.helpers.canUnlockWithBiometrics
@@ -56,6 +58,7 @@ class VaultSecurityDialog(
     private var autoPromptDecorView: View? = null
     private var autoPromptFocusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
     private var shutterAnimator: VaultShutterAnimator? = null
+    private var haloPulseAnimator: Animator? = null
     private val binding = DialogVaultSecurityBinding.inflate(activity.layoutInflater)
     private val isSetupMode = isChangePasswordMode || customTargetDir != null ||
         (!CryptoManager.hasExistingVault(activity) && (requiredHash.isEmpty() || showTabIndex == SHOW_ALL_TABS))
@@ -102,10 +105,17 @@ class VaultSecurityDialog(
 
         binding.vaultPatternHolder.beGone()
 
-        // The lock glyph belongs to credential entry, not to vault creation / password change.
+        // The framed lock emblem belongs to credential entry, not to vault creation / password change.
         if (!isSetupMode) {
-            binding.vaultUnlockEmblem.beVisible()
-            binding.vaultUnlockEmblem.setColors(palette.text, palette.surface, palette.text)
+            binding.vaultLockEmblem.beVisible()
+            VaultLockEmblemHelper.applyStyle(
+                context = activity,
+                palette = palette,
+                haloView = binding.vaultLockHalo,
+                coreView = binding.vaultLockEmblemCore,
+                lockView = binding.vaultUnlockEmblem
+            )
+            haloPulseAnimator = VaultLockEmblemHelper.startHaloPulse(binding.vaultLockHalo)
         }
 
         if (isSetupMode) {
@@ -203,6 +213,8 @@ class VaultSecurityDialog(
             setOnCancelListener { cancelDialog() }
             setOnDismissListener {
                 clearAutoPromptFocusListener()
+                haloPulseAnimator?.cancel()
+                haloPulseAnimator = null
                 shutterAnimator?.cancel()
                 shutterAnimator = null
                 if (!dialogSucceeded) {
@@ -427,6 +439,8 @@ class VaultSecurityDialog(
         }
 
         setDialogBusy(true)
+        haloPulseAnimator?.cancel()
+        haloPulseAnimator = null
         binding.vaultUnlockSweep.visibility = View.INVISIBLE
         val animator = VaultShutterAnimator(
             lock = binding.vaultUnlockEmblem,
@@ -442,6 +456,8 @@ class VaultSecurityDialog(
     }
 
     private fun cancelDialog() {
+        haloPulseAnimator?.cancel()
+        haloPulseAnimator = null
         shutterAnimator?.cancel()
         shutterAnimator = null
         clearFirstStepSecret()

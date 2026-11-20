@@ -1,22 +1,17 @@
 package org.fossify.gallery.activities
 
 import android.animation.Animator
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
-import android.view.animation.DecelerateInterpolator
 import androidx.activity.OnBackPressedCallback
-import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.helpers.PROTECTION_PIN
@@ -31,7 +26,9 @@ import org.fossify.gallery.helpers.EXTRA_EXITED_FROM_VAULT
 import org.fossify.gallery.helpers.OnboardingUiHelper
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.VaultAuthInputHelper
+import org.fossify.gallery.helpers.VaultLockEmblemHelper
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.VaultShutterAnimator
 import org.fossify.gallery.helpers.VaultViewPolicy
 import org.fossify.gallery.helpers.canUnlockWithBiometrics
 import org.fossify.gallery.helpers.clearAppImageCaches
@@ -49,6 +46,7 @@ class VaultLockActivity : SimpleActivity() {
     private var currentType: Int = PROTECTION_PIN
     private var autoBiometricTriggered = false
     private var haloPulseAnimator: Animator? = null
+    private var shutterAnimator: VaultShutterAnimator? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +57,6 @@ class VaultLockActivity : SimpleActivity() {
         setContentView(binding.root)
 
         val palette = AppearanceManager.resolve(this, config)
-        val density = resources.displayMetrics.density
-        val strokePx = (1f * density).toInt().coerceAtLeast(1)
 
         OnboardingUiHelper.applySystemBars(window, palette)
         binding.vaultLockRoot.setBackgroundColor(palette.background)
@@ -91,28 +87,19 @@ class VaultLockActivity : SimpleActivity() {
             exitVaultToNormalGallery()
         }
 
-        // Framed lock emblem + ambient pulse ring (matching 02-vault design)
-        val isLightBg = ColorUtils.calculateLuminance(palette.background) > 0.5
-        val strongBorder = ColorUtils.blendARGB(palette.border, palette.text, 0.14f)
-        val ringColor = ColorUtils.setAlphaComponent(palette.text, 40)
-        val emblemSurface = ColorUtils.setAlphaComponent(palette.surface, if (isLightBg) 232 else 214)
-        binding.vaultLockHalo.background = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(Color.TRANSPARENT)
-            setStroke(strokePx, ringColor)
-        }
-        binding.vaultLockEmblemCore.background = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = 20f * density
-            setColor(emblemSurface)
-            setStroke(strokePx, strongBorder)
-        }
-        binding.vaultLockIcon.applyColorFilter(palette.text)
-        binding.vaultLockTitle.setTextColor(palette.text)
-
-        haloPulseAnimator = createHaloPulse(binding.vaultLockHalo)
-
         val securityBinding = binding.vaultSecurityContent
+        securityBinding.vaultLockEmblem.beVisible()
+        securityBinding.vaultLockTitle.beVisible()
+        securityBinding.vaultLockTitle.setTextColor(palette.text)
+        VaultLockEmblemHelper.applyStyle(
+            context = this,
+            palette = palette,
+            haloView = securityBinding.vaultLockHalo,
+            coreView = securityBinding.vaultLockEmblemCore,
+            lockView = securityBinding.vaultUnlockEmblem
+        )
+        haloPulseAnimator = VaultLockEmblemHelper.startHaloPulse(securityBinding.vaultLockHalo)
+
         securityBinding.vaultTabs.beGone()
         securityBinding.vaultStatusLabel.beGone()
         securityBinding.vaultPasswordInputLayout.hint = getString(R.string.enter_password)
@@ -136,34 +123,6 @@ class VaultLockActivity : SimpleActivity() {
                 moveTaskToBack(true)
             }
         })
-    }
-
-    private fun createHaloPulse(haloView: View): Animator? {
-        if (!ValueAnimator.areAnimatorsEnabled()) {
-            haloView.alpha = 0.5f
-            haloView.scaleX = 1.05f
-            haloView.scaleY = 1.05f
-            return null
-        }
-        val scaleX = ObjectAnimator.ofFloat(haloView, View.SCALE_X, 0.88f, 1.24f).apply {
-            duration = 3800L
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = DecelerateInterpolator(1.2f)
-        }
-        val scaleY = ObjectAnimator.ofFloat(haloView, View.SCALE_Y, 0.88f, 1.24f).apply {
-            duration = 3800L
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = DecelerateInterpolator(1.2f)
-        }
-        val alpha = ObjectAnimator.ofFloat(haloView, View.ALPHA, 0f, 0.65f, 0f).apply {
-            duration = 3800L
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = DecelerateInterpolator(1.2f)
-        }
-        return AnimatorSet().apply {
-            playTogether(scaleX, scaleY, alpha)
-            start()
-        }
     }
 
     override fun isVaultAssistProtectionActive(): Boolean = true
@@ -200,6 +159,8 @@ class VaultLockActivity : SimpleActivity() {
     override fun onDestroy() {
         haloPulseAnimator?.cancel()
         haloPulseAnimator = null
+        shutterAnimator?.cancel()
+        shutterAnimator = null
         VaultSessionManager.setLockScreenOpen(false)
         super.onDestroy()
     }
@@ -251,9 +212,31 @@ class VaultLockActivity : SimpleActivity() {
     }
 
     private fun onAuthenticated() {
-        VaultSessionManager.onVaultReauthenticated(this)
-        finish()
-        @Suppress("DEPRECATION")
-        overridePendingTransition(0, 0)
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            VaultSessionManager.onVaultReauthenticated(this)
+            finish()
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+            return
+        }
+
+        haloPulseAnimator?.cancel()
+        haloPulseAnimator = null
+        binding.vaultLockBackBtn.isEnabled = false
+        val securityBinding = binding.vaultSecurityContent
+        securityBinding.vaultUnlockSweep.visibility = View.INVISIBLE
+        val animator = VaultShutterAnimator(
+            lock = securityBinding.vaultUnlockEmblem,
+            dots = securityBinding.vaultPinDots,
+            sweep = securityBinding.vaultUnlockSweep,
+            panel = binding.vaultLockContainer
+        )
+        shutterAnimator = animator
+        animator.play {
+            VaultSessionManager.onVaultReauthenticated(this)
+            finish()
+            @Suppress("DEPRECATION")
+            overridePendingTransition(0, 0)
+        }
     }
 }
