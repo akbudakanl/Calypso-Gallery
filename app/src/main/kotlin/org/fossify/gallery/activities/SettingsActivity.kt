@@ -30,7 +30,6 @@ import org.fossify.commons.dialogs.*
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.commons.models.RadioItem
-import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivitySettingsBinding
 import org.fossify.gallery.dialogs.*
@@ -168,7 +167,6 @@ class SettingsActivity : SimpleActivity() {
         setupVaultSettings()
         setupConflictHandlingMode()
         setupSkippedEncryptFilesMode()
-        setupSkippedDecryptFilesMode()
         setupAlbumCryptoConflictMode()
         setupDeleteEmptyFolders()
         setupKeepScreenOn()
@@ -289,7 +287,11 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsSearch.setHintTextColor(
             ColorUtils.blendARGB(getProperTextColor(), getProperBackgroundColor(), 0.45f),
         )
-        binding.settingsSearch.compoundDrawablesRelative[0]?.setTint(getProperPrimaryColor())
+        // Use the very same palette color as the Main/Media/Search pill bars so the magnifying
+        // glass stays black in light mode instead of falling back to Commons' accent tint.
+        binding.settingsSearch.compoundDrawablesRelative[0]?.mutate()?.setTintList(
+            ColorStateList.valueOf(resolveCalypsoSearchIconColor(this)),
+        )
     }
 
     private fun viewText(view: View): String {
@@ -810,6 +812,15 @@ class SettingsActivity : SimpleActivity() {
         // 4) Gizli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
+        // 4b) Kasa parolası girerken tuş basımlarını gizle
+        binding.settingsHideVaultKeyPressesHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
+        // 4c) Nokta göstergesi: sadece kısa PIN kullanan kasalarda mantıklı
+        val pinDotsApplicable = vaultExists &&
+            CryptoManager.getVaultProtectionType(this) == PROTECTION_PIN &&
+            config.vaultPinLength in 1..VAULT_PIN_DOTS_MAX_LENGTH
+        binding.settingsShowVaultPinDotsHolder.beVisibleIf(hasStoragePermission && pinDotsApplicable)
+
         // 5) Şifreli kasayı boşalt
         binding.settingsEmptyVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -825,6 +836,8 @@ class SettingsActivity : SimpleActivity() {
         setupVaultBiometric()
         setupVaultBiometricAutoReturn()
         setupBlockVaultScreenshots()
+        setupHideVaultKeyPresses()
+        setupShowVaultPinDots()
         setupEmptyVault()
     }
 
@@ -852,22 +865,34 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupHideVaultKeyPresses() {
+        binding.settingsHideVaultKeyPresses.isChecked = config.hideVaultKeyPresses
+        binding.settingsHideVaultKeyPressesHolder.setOnClickListener {
+            requireVaultPassword {
+                binding.settingsHideVaultKeyPresses.toggle()
+                config.hideVaultKeyPresses = binding.settingsHideVaultKeyPresses.isChecked
+            }
+        }
+    }
+
+    private fun setupShowVaultPinDots() {
+        binding.settingsShowVaultPinDots.isChecked = config.showVaultPinDots
+        binding.settingsShowVaultPinDotsHolder.setOnClickListener {
+            requireVaultPassword {
+                binding.settingsShowVaultPinDots.toggle()
+                config.showVaultPinDots = binding.settingsShowVaultPinDots.isChecked
+            }
+        }
+    }
+
     private fun setupArgon2Profile() {
         fun refreshSummary() {
             binding.settingsArgon2ProfileValue.text =
                 org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
         }
         refreshSummary()
-        if (config.cachedStdArgon2Ms <= 0) {
-            ensureBackgroundThread {
-                CryptoManager.measureStandardArgon2Ms(this)
-                runOnUiThread {
-                    if (!isFinishing && !isDestroyed) {
-                        refreshSummary()
-                    }
-                }
-            }
-        }
+        // No silent background probing: the 64 MiB / 3 rounds measurement runs only when the
+        // user taps the row (BruteForceDialog.show), with a visible progress dialog.
 
         binding.settingsArgon2ProfileHolder.setOnClickListener {
             val prevTargetMs = config.unlockTargetMs
@@ -1333,43 +1358,20 @@ class SettingsActivity : SimpleActivity() {
     )
 
     private fun setupSkippedEncryptFilesMode() {
-        setupSkippedFilesSetting(
-            holderView = binding.settingsSkippedEncryptFilesHolder,
-            valueView = binding.settingsSkippedEncryptFiles,
-            isEncrypt = true
-        )
-    }
-
-    private fun setupSkippedDecryptFilesMode() {
-        setupSkippedFilesSetting(
-            holderView = binding.settingsSkippedDecryptFilesHolder,
-            valueView = binding.settingsSkippedDecryptFiles,
-            isEncrypt = false
-        )
-    }
-
-    private fun setupSkippedFilesSetting(
-        holderView: android.view.View,
-        valueView: MyTextView,
-        isEncrypt: Boolean
-    ) {
-        valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
-        holderView.setOnClickListener {
-            showSkippedCryptoFilesSettingsDialog(this, isEncrypt = isEncrypt) {
-                valueView.text = getSkippedCryptoFilesModeText(isEncrypt)
-            }
+        val valueView = binding.settingsSkippedEncryptFiles
+        val updateValue = {
+            valueView.text = getString(
+                when (config.skippedEncryptFilesMode) {
+                    CRYPTO_SKIPPED_FILES_KEEP -> R.string.skipped_crypto_files_keep
+                    CRYPTO_SKIPPED_FILES_DELETE -> R.string.skipped_crypto_files_delete
+                    else -> R.string.skipped_crypto_files_ask
+                }
+            )
         }
-    }
-
-    private fun getSkippedCryptoFilesModeText(isEncrypt: Boolean): String {
-        val mode = if (isEncrypt) config.skippedEncryptFilesMode else config.skippedDecryptFilesMode
-        return getString(
-            when (mode) {
-                CRYPTO_SKIPPED_FILES_KEEP -> R.string.skipped_crypto_files_keep
-                CRYPTO_SKIPPED_FILES_DELETE -> R.string.skipped_crypto_files_delete
-                else -> R.string.skipped_crypto_files_ask
-            }
-        )
+        updateValue()
+        binding.settingsSkippedEncryptFilesHolder.setOnClickListener {
+            showSkippedCryptoFilesSettingsDialog(this) { updateValue() }
+        }
     }
 
     private fun setupAlbumCryptoConflictMode() {
@@ -1582,7 +1584,6 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupAutoBackupFavoritesAndVirtualAlbums() {
-        binding.settingsAutoBackupFavoritesAndVirtualAlbumsHolder.beVisibleIf(config.wasAutoBackupPromptShown)
         binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked = config.autoBackupFavoritesAndVirtualAlbums
         binding.settingsAutoBackupFavoritesAndVirtualAlbumsHolder.setOnClickListener {
             binding.settingsAutoBackupFavoritesAndVirtualAlbums.toggle()

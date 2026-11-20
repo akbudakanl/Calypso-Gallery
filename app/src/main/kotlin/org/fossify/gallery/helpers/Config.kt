@@ -882,7 +882,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(hasSeenOnboarding) = prefs.edit().putBoolean(HAS_SEEN_ONBOARDING, hasSeenOnboarding).apply()
 
     var autoBackupFavoritesAndVirtualAlbums: Boolean
-        get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, false)
+        get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, true)
         set(autoBackupFavoritesAndVirtualAlbums) = prefs.edit().putBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, autoBackupFavoritesAndVirtualAlbums).apply()
 
     var showVirtualAlbumIcon: Boolean

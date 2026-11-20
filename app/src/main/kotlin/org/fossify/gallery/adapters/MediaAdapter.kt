@@ -92,7 +92,6 @@ import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.extensions.rescanFolderMedia
 import java.io.File
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
-import org.fossify.gallery.dialogs.promptAutoBackupIfNeeded
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.extensions.TransferPairSpec
 import org.fossify.gallery.extensions.findIdenticalTransferTarget
