@@ -2,6 +2,29 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
+## [Unreleased]
+
+## [1.2.0] - 2026-11-22
+
+### Eklendi
+
+- Sanal albümler için özel ekleme/çıkarma işlemleri, albüm içi arama ve boş durum ekranı eklendi; dizinler, medya öğeleri ve görüntüleyici için bağlam eylemi kısayolları sunuldu.
+- Şifreli kasa biyometrik hatırlatma simgesinin animasyonu, onaylanan prototipteki zamanlama ve parıltı görünümüne uyarlandı.
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- Kasa parola ve kilit ekranlarında sistem Geri tuşu artık hiçbir işe yaramıyor; uygulama içindeki tek çıkış yolu sol üstteki ok. Bu ok anahtar türetme (KDF) süresince devre dışı kalıp soluklaştırılıyor; böylece iptal edilen bir ekrana geç gelen açılış sonucunun uygulanması engelleniyor. Ok rengi temadan gelmeye devam ediyor.
+- Başlatıcı simgesinin arka plan rengi temadan bağımsız sabitlendi; tema değiştiğinde simge renginin bozulması giderildi.
+
+### İyileştirmeler
+
+- Görünüm paleti, arama çubuğu stili ve kopyalama/taşıma politikası iyileştirildi; ilgili birim testleri genişletildi.
+- Kasa etiketleri yeniden adlandırıldı; parola hatırlatıcı ayarı hedef açılış süresinin hemen altına taşındı, şifreli kasayı sıfırlama ayarı listenin sonuna alındı ve parola değiştirme satırındaki ok işareti kaldırıldı.
+
+### Çeviriler
+
+- Sanal albüm ve kasa etiketlerindeki yeni/değişen metinler 10 dilde çevrildi; kör çeviri karşılaştırma raporları güncellendi.
+
 ## [1.1.5] - 2026-11-21
 
 ### Güvenlik ve kararlılık düzeltmeleri
@@ -109,3 +132,6 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 [1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.1
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
+
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...HEAD
+[1.2.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.5...1.2.0
