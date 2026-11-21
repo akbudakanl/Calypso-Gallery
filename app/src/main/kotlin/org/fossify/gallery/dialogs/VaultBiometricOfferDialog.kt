@@ -6,11 +6,13 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.showBiometricPasswordNoteDialog
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.completeBiometricSetup
 import org.fossify.gallery.helpers.getBiometricEncryptCipher
@@ -70,28 +72,35 @@ object VaultBiometricOfferDialog {
 
     private fun startEnrollment(activity: Activity) {
         val host = activity as? FragmentActivity ?: return
-        val cipher = CryptoManager.getBiometricEncryptCipher() ?: return
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(activity.getString(R.string.vault_biometric_offer_title))
-            .setDescription(
-                activity.getString(R.string.vault_biometric_offer_message) + "\n" +
-                    activity.getString(R.string.vault_biometric_setup_password_note)
-            )
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .setNegativeButtonText(activity.getString(android.R.string.cancel))
-            .build()
-        val prompt = BiometricPrompt(
-            host,
-            ContextCompat.getMainExecutor(activity),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val authCipher = result.cryptoObject?.cipher ?: return
-                    if (CryptoManager.completeBiometricSetup(activity, authCipher)) {
-                        onBiometricChanged?.invoke()
+
+        fun launchSystemPrompt() {
+            val cipher = CryptoManager.getBiometricEncryptCipher() ?: return
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle(activity.getString(R.string.vault_biometric_offer_title))
+                .setDescription(activity.getString(R.string.vault_biometric_offer_message))
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setNegativeButtonText(activity.getString(android.R.string.cancel))
+                .build()
+            val prompt = BiometricPrompt(
+                host,
+                ContextCompat.getMainExecutor(activity),
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        val authCipher = result.cryptoObject?.cipher ?: return
+                        if (CryptoManager.completeBiometricSetup(activity, authCipher)) {
+                            onBiometricChanged?.invoke()
+                        }
                     }
                 }
-            }
-        )
-        prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            )
+            prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+        }
+
+        // The password reminder must be acknowledged before the (dismissible) system prompt.
+        if (activity is BaseSimpleActivity) {
+            activity.showBiometricPasswordNoteDialog { launchSystemPrompt() }
+        } else {
+            launchSystemPrompt()
+        }
     }
 }

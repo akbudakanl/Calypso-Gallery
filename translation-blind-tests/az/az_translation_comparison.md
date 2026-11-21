@@ -989,7 +989,17 @@ Added to `values-az/strings.xml`. Unarchive moves the vault back to its recorded
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Arşiv kasasını parolasıyla açın, dosyaları çözülmüş olarak dışa aktarın, ardından diğer kasaya içe aktarın. |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Kasa arşivden açıldı. Eski konumuna taşımak için Ayarlar → Arşivden çıkar seçeneğini kullanın. |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-az/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | Azerbaijani |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | Hedef klasörde zaten farklı bir şifreli kasa var. Mevcut kasayı korumak için dışa aktarma iptal edildi. Lütfen boş bir klasör seçin. |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | Hedef klasörde şifreli dosyalar var ancak kasa başlığı yok. Kasaların karışmaması için dışa aktarma iptal edildi. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

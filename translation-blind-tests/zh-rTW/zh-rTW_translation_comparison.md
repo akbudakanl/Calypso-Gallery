@@ -1000,7 +1000,17 @@ Added to `values-zh-rTW/strings.xml`. Unarchive moves the vault back to its reco
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | 用密碼解鎖封存的保險箱，匯出解密後的檔案，再匯入另一個保險箱。 |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | 保險箱已從封存區開啟。請使用 設定 → 從封存區還原 移回原位置。 |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-zh-rTW/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | Traditional Chinese |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | 目的資料夾已有另一個加密保險箱。為保護它，匯出已取消。請選擇空資料夾。 |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | 目的資料夾有加密檔案但沒有保險箱標頭，已取消匯出。 |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

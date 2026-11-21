@@ -479,6 +479,8 @@
     <string name="unarchive_vault_merge">Combine data into one vault</string>
     <string name="unarchive_vault_merge_steps">Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply.</string>
     <string name="archived_vault_activated">The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location.</string>
+    <string name="export_vault_different_vault">The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder.</string>
+    <string name="export_vault_unknown_content">The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults.</string>
     <string name="faq_forgot_password_title">I forgot my encrypted vault password, what can I do?</string>
     <string name="faq_forgot_password_text">1. Unlock the vault with biometrics.\n2. Copy (export) your encrypted data — copying is not moving; the original stays in place.\n3. Settings → Reset encrypted vault to set a new password and restore.\n\nWarning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone.</string>
     <string name="default_hidden_album" translatable="false">Default Secret Album</string>

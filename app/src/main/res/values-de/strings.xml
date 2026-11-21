@@ -681,4 +681,7 @@
     <string name="unarchive_vault_merge">Daten in einem Tresor zusammenführen</string>
     <string name="unarchive_vault_merge_steps">Archivierten Tresor mit Passwort öffnen, Dateien entschlüsselt exportieren und in den anderen Tresor importieren.</string>
     <string name="archived_vault_activated">Tresor aus dem Archiv geöffnet. Nutzen Sie Einstellungen → Aus Archiv wiederherstellen.</string>
+
+    <string name="export_vault_different_vault">Am Zielort liegt bereits ein anderer verschlüsselter Tresor. Der Export wurde zum Schutz abgebrochen. Bitte einen leeren Ordner wählen.</string>
+    <string name="export_vault_unknown_content">Am Zielort liegen verschlüsselte Dateien, aber kein Tresor-Kopf. Der Export wurde abgebrochen.</string>
 </resources>

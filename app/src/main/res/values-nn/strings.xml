@@ -755,4 +755,7 @@
     <string name="unarchive_vault_merge">Slå saman data i eitt kvelv</string>
     <string name="unarchive_vault_merge_steps">Lås opp det arkiverte kvelvet med passord, eksporter filene dekryptert og importer dei i det andre kvelvet.</string>
     <string name="archived_vault_activated">Kvelvet er opna frå arkivet. Bruk Innstillingar → Ta ut av arkivet.</string>
+
+    <string name="export_vault_different_vault">Målmappa inneheld allereie eit anna kryptert kvelv. Eksporten vart avbroten for å verne det. Vel ei tom mappe.</string>
+    <string name="export_vault_unknown_content">Målmappa inneheld krypterte filer, men ingen kvelvheader. Eksporten vart avbroten.</string>
 </resources>

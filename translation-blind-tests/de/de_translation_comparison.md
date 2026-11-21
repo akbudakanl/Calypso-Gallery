@@ -951,7 +951,17 @@ Added to `values-de/strings.xml`. Unarchive moves the vault back to its recorded
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Archivierten Tresor mit Passwort öffnen, Dateien entschlüsselt exportieren und in den anderen Tresor importieren. |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Tresor aus dem Archiv geöffnet. Nutzen Sie Einstellungen → Aus Archiv wiederherstellen. |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-de/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | German |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | Am Zielort liegt bereits ein anderer verschlüsselter Tresor. Der Export wurde zum Schutz abgebrochen. Bitte einen leeren Ordner wählen. |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | Am Zielort liegen verschlüsselte Dateien, aber kein Tresor-Kopf. Der Export wurde abgebrochen. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

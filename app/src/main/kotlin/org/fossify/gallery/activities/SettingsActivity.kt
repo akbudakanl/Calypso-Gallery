@@ -1306,6 +1306,7 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun showBiometricEnrollmentPrompt(lockVaultAfter: Boolean) {
+        showBiometricPasswordNoteDialog {
         val cipher = CryptoManager.getBiometricEncryptCipher()
         if (cipher == null) {
             if (lockVaultAfter) {
@@ -1313,15 +1314,12 @@ class SettingsActivity : SimpleActivity() {
                 applyVaultScreenProtection(false)
             }
             toast(org.fossify.commons.R.string.an_error_occurred)
-            return
+            return@showBiometricPasswordNoteDialog
         }
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
-            .setSubtitle(
-                getString(R.string.biometric_setup_prompt) + "\n" +
-                    getString(R.string.vault_biometric_setup_password_note)
-            )
+            .setSubtitle(getString(R.string.biometric_setup_prompt))
             .setNegativeButtonText(getString(org.fossify.commons.R.string.cancel))
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
@@ -1357,6 +1355,7 @@ class SettingsActivity : SimpleActivity() {
             }
         )
         biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+        }
     }
 
     private fun setupEmptyVault() {

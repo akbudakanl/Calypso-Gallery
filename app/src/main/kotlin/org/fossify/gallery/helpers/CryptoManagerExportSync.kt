@@ -17,17 +17,22 @@ import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
  */
 
 fun CryptoManager.resolveExportVaultTargetDir(targetDir: File): File {
-    if (targetDir.name.equals(SECRETS_DIR_NAME, ignoreCase = true)) {
+    // Always export into <picked>/Calypso Gallery/Secrets so an unrelated "Secrets" folder
+    // cannot be mistaken for a vault container.
+    if (targetDir.name.equals(SECRETS_DIR_NAME, ignoreCase = true) &&
+        targetDir.parentFile?.name.equals(CIPHER_APP_DIR_NAME, ignoreCase = true) == true
+    ) {
         return targetDir
     }
-    // Reuse an existing Secrets container inside the picked folder instead of creating a second one.
-    return listOf(SECRETS_DIR_NAME)
-        .map { File(targetDir, it) }
-        .firstOrNull { it.isDirectory }
-        ?: File(targetDir, SECRETS_DIR_NAME)
+    if (targetDir.name.equals(CIPHER_APP_DIR_NAME, ignoreCase = true)) {
+        return File(targetDir, SECRETS_DIR_NAME)
+    }
+    return File(File(targetDir, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME)
 }
 
 
+
+@Suppress("CyclomaticComplexMethod", "ReturnCount")
 fun CryptoManager.exportEncryptedVault(
     context: Context,
     targetDir: File,
@@ -42,6 +47,8 @@ fun CryptoManager.exportEncryptedVault(
     if (exportCanonical == vaultCanonical || exportCanonical.startsWith("$vaultCanonical${File.separator}")) {
         return null
     }
+    // Never overwrite a different vault header or mix encrypted files from two vaults.
+    if (checkVaultExportTarget(vaultRoot, exportDir) != VaultExportHeaderCheck.SAFE) return null
 
     if (!exportDir.exists() && !exportDir.mkdirs()) {
         return null

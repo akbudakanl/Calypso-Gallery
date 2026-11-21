@@ -989,7 +989,17 @@ Added to `values-b+es+419/strings.xml`. Unarchive moves the vault back to its re
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Abra la bóveda archivada con su contraseña, exporte los archivos descifrados e impórtelos en la otra bóveda. |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Bóveda abierta desde el archivo. Use Configuración → Sacar del archivo para devolverla. |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-b+es+419/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | Spanish (LatAm) |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | La carpeta de destino ya contiene otra bóveda cifrada. Se canceló la exportación para protegerla. Elige una carpeta vacía. |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | La carpeta de destino contiene archivos cifrados pero no cabecera de bóveda. Se canceló la exportación. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

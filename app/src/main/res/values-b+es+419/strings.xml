@@ -687,4 +687,7 @@
     <string name="unarchive_vault_merge">Unir los datos en una sola bóveda</string>
     <string name="unarchive_vault_merge_steps">Abra la bóveda archivada con su contraseña, exporte los archivos descifrados e impórtelos en la otra bóveda.</string>
     <string name="archived_vault_activated">Bóveda abierta desde el archivo. Use Configuración → Sacar del archivo para devolverla.</string>
+
+    <string name="export_vault_different_vault">La carpeta de destino ya contiene otra bóveda cifrada. Se canceló la exportación para protegerla. Elige una carpeta vacía.</string>
+    <string name="export_vault_unknown_content">La carpeta de destino contiene archivos cifrados pero no cabecera de bóveda. Se canceló la exportación.</string>
 </resources>

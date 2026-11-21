@@ -698,4 +698,7 @@
     <string name="unarchive_vault_merge">Slå sammen data i ett hvelv</string>
     <string name="unarchive_vault_merge_steps">Lås opp det arkiverte hvelvet med passord, eksporter filene dekryptert og importer dem i det andre hvelvet.</string>
     <string name="archived_vault_activated">Hvelvet er åpnet fra arkivet. Bruk Innstillinger → Ta ut av arkivet.</string>
+
+    <string name="export_vault_different_vault">Målmappen inneholder allerede et annet kryptert hvelv. Eksporten ble avbrutt for å beskytte det. Velg en tom mappe.</string>
+    <string name="export_vault_unknown_content">Målmappen inneholder krypterte filer, men ingen hvelvheader. Eksporten ble avbrutt.</string>
 </resources>

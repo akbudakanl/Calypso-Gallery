@@ -1007,7 +1007,17 @@ Added to `values-nn/strings.xml`. Unarchive moves the vault back to its recorded
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | Lås opp det arkiverte kvelvet med passord, eksporter filene dekryptert og importer dei i det andre kvelvet. |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | Kvelvet er opna frå arkivet. Bruk Innstillingar → Ta ut av arkivet. |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-nn/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | Norwegian Nynorsk |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | Målmappa inneheld allereie eit anna kryptert kvelv. Eksporten vart avbroten for å verne det. Vel ei tom mappe. |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | Målmappa inneheld krypterte filer, men ingen kvelvheader. Eksporten vart avbroten. |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 

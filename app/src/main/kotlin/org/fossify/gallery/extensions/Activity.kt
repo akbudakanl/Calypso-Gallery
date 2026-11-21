@@ -18,7 +18,9 @@ import android.provider.MediaStore.Files
 import android.provider.MediaStore.Images
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.widget.ScrollView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.Glide
@@ -61,6 +63,8 @@ import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.VAULT_ACTION_ARCHIVED
 import org.fossify.gallery.helpers.VaultArchiveManager
+import org.fossify.gallery.helpers.VaultExportHeaderCheck
+import org.fossify.gallery.helpers.checkVaultExportTarget
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
@@ -365,6 +369,7 @@ private const val VAULT_ACTION_CREATE_NEW = 1
 private const val VAULT_ACTION_USE_EXISTING = 2
 private const val ARCHIVED_ITEM_ID_BASE = 1000
 private const val INVALID_ARCHIVE_ITEM_ID_BASE = 2000
+private const val DIALOG_MESSAGE_TEXT_SIZE_SP = 14f
 private const val VAULT_LOCATION_OPTION_STANDARD = 1
 private const val VAULT_LOCATION_OPTION_CUSTOM = 2
 
@@ -1216,6 +1221,19 @@ fun BaseSimpleActivity.promptExportEncryptedVault(
             onPicked = { pickedDir ->
                 val targetExportDir = CryptoManager.resolveExportVaultTargetDir(pickedDir)
                 val activeVaultRoot = CryptoManager.findVaultRoot(this)
+                if (activeVaultRoot != null) {
+                    when (checkVaultExportTarget(activeVaultRoot, targetExportDir)) {
+                        VaultExportHeaderCheck.SAFE -> Unit
+                        VaultExportHeaderCheck.DIFFERENT_VAULT -> {
+                            showVaultLocationNoticeDialog(R.string.export_vault_different_vault, {})
+                            return@pickCustomVaultDirectory
+                        }
+                        VaultExportHeaderCheck.UNKNOWN_ENCRYPTED_CONTENT -> {
+                            showVaultLocationNoticeDialog(R.string.export_vault_unknown_content, {})
+                            return@pickCustomVaultDirectory
+                        }
+                    }
+                }
                 val invalidTarget = activeVaultRoot != null && runCatching {
                     val exportCanonical = targetExportDir.canonicalPath
                     val vaultCanonical = activeVaultRoot.canonicalPath
@@ -3242,17 +3260,38 @@ fun BaseSimpleActivity.emptyAndDisableTheRecycleBin(callback: () -> Unit) {
     }
 }
 
+private fun BaseSimpleActivity.scrollableDialogMessage(text: String): ScrollView {
+    val horizontalPadding = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
+    return ScrollView(this).apply {
+        setPadding(horizontalPadding, 0, horizontalPadding, 0)
+        addView(org.fossify.commons.views.MyTextView(context).apply {
+            this.text = text
+            textSize = DIALOG_MESSAGE_TEXT_SIZE_SP
+            setTextColor(getProperTextColor())
+        })
+    }
+}
+
 /** Shown right after vault creation / password change, before any biometric offer. */
 fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
-    ConfirmationDialog(
-        this,
-        getString(R.string.vault_password_saved_title),
-        R.string.vault_password_saved_message,
-        R.string.vault_password_saved_confirm,
-        R.string.vault_password_saved_later,
-    ) {
-        onDone()
-    }
+    // Non-cancelable: the password-save acknowledgement must be read, not tapped away.
+    AlertDialog.Builder(this)
+        .setTitle(R.string.vault_password_saved_title)
+        .setView(scrollableDialogMessage(getString(R.string.vault_password_saved_message)))
+        .setPositiveButton(R.string.vault_password_saved_confirm) { _, _ -> onDone() }
+        .setNegativeButton(R.string.vault_password_saved_later) { _, _ -> onDone() }
+        .setCancelable(false)
+        .show()
+}
+
+/** Shown before a biometric enrollment prompt so the password reminder cannot be skipped. */
+fun BaseSimpleActivity.showBiometricPasswordNoteDialog(onContinue: () -> Unit) {
+    AlertDialog.Builder(this)
+        .setTitle(R.string.vault_biometric_offer_title)
+        .setView(scrollableDialogMessage(getString(R.string.vault_biometric_setup_password_note)))
+        .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ -> onContinue() }
+        .setCancelable(false)
+        .show()
 }
 
 fun BaseSimpleActivity.showRecycleBinEmptyingDialog(callback: () -> Unit) {

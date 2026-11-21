@@ -992,7 +992,17 @@ Added to `values-ja/strings.xml`. Unarchive moves the vault back to its recorded
 | 7 | `unarchive_vault_merge_steps` | Unlock the archived vault with its password, export the files in decrypted form, then import them into the other vault. The existing conflict-handling modes apply. | アーカイブした保管庫をパスワードで開き、復号したファイルをエクスポートして別の保管庫にインポートします。 |
 | 8 | `archived_vault_activated` | The vault is open from the archive. Use Settings → Unarchive vault to move it back to its original location. | アーカイブから開きました。設定 → アーカイブから戻す で元の場所に戻せます。 |
 
+## Export Target Conflict Strings (this revision)
+
+Added to `values-ja/strings.xml`. Export now targets `<picked>/Calypso Gallery/Secrets` and is blocked when the target holds a different vault.
+
+| # | Key | English | Japanese |
+|--:|---|---|---|
+| 1 | `export_vault_different_vault` | The destination already contains a different encrypted vault. Export was cancelled to protect it. Choose an empty folder. | 移動先に別の暗号化保管庫があります。保護するためエクスポートを中止しました。空のフォルダーを選択してください。 |
+| 2 | `export_vault_unknown_content` | The destination contains encrypted files but no vault header. Export was cancelled to avoid mixing vaults. | 移動先に暗号化ファイルはありますが保管庫ヘッダーがありません。エクスポートを中止しました。 |
+
 ## Existing Vault Time Recalculation (this revision)
+
 
 
 
