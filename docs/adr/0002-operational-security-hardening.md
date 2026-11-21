@@ -29,14 +29,14 @@ ADR 0001 defines the canonical cryptographic format. This ADR covers the *operat
 
 **Rules:** never call `SecureRandom.setSeed()` with predictable or attacker-influenced data; never use `Math.random()` for any security value; each file's `fileId`, DEK, header IV and Tink salt/nonce-prefix come from `SecureRandom` only. The device-bound Keystore key remains an additional derivation ingredient through the existing VMK wrapping, not through custom entropy mixing.
 
-**No homegrown cryptography.** Every cipher, MAC, KDF and random source comes from Tink, JCE or BouncyCastle: AES-GCM / HMAC / PBKDF2 / SHA-256 via JCE, Argon2id via BouncyCastle, streaming AEAD and RFC 5869 HKDF via Tink. The only hand-written pieces are **format plumbing** — byte layouts, domain-label strings and header-AAD concatenation — none of which is a cryptographic primitive. All key separation uses standard HKDF-SHA256 with `CalypsoGallery:` domain labels (ADR 0001).
+**No homegrown cryptography.** Every cipher, MAC, KDF and random source comes from Tink, JCE or audited Rust/native crates: AES-GCM / HMAC / PBKDF2 / SHA-256 via JCE, Argon2id v1.3 via native RustCrypto `argon2` over JNI (originally BouncyCastle; see [ADR 0004 §11.1](0004-argon2-memory-and-cross-device-kdf.md#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented)), streaming AEAD and RFC 5869 HKDF via Tink. The only hand-written pieces are **format plumbing** — byte layouts, domain-label strings and header-AAD concatenation — none of which is a cryptographic primitive. All key separation uses standard HKDF-SHA256 with `CalypsoGallery:` domain labels (ADR 0001).
 
 ---
 
 ## 3. Decision — Argon2id profiles and unlock delay
 
-> **Superseded by [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md) (2026-11-18).**
-> ADR 0004 raised the safe RFC 9106 floor to `64 MiB / t=3 / p=2`, removed the `32 MiB` low-end option, introduced a tiered `64 MiB -> 128 MiB` memory ceiling with `1.0 s` sweet-spot device calibration (`T_std_64 .. 10.0 s` slider in `0.1 s` steps, plus `Default` / `High` presets) in `BruteForceDialog` and `CryptoManagerCredentials`, and replaced artificial UI sleep delays with real time-calibrated Argon2id KDF cost so both online and offline attacks share the configured cost. Historical section kept below for context:
+> **Superseded by [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md) (2026-11-18; updated 2026-11-21).**
+> ADR 0004 raised the safe RFC 9106 floor to `64 MiB / t=3 / p=2`, removed the `32 MiB` low-end option, moved Argon2id to native Rust JNI (`rust/calypso-argon2`, removing BouncyCastle from the runtime APK), introduced 3-tier `64 → 128 → 256 MiB` physical-RAM + 64-bit calibration with a conditional 256 MiB warning and `1.0 s` sweet-spot target (`T_std_64 .. 10.0 s` slider in `0.1 s` steps) in `BruteForceDialog` and `CryptoManagerCredentials`, and replaced artificial UI sleep delays with real time-calibrated Argon2id KDF cost so both online and offline attacks share the configured cost. Historical section kept below for context:
 
 ### 3.1 KDF profiles (advanced setting) — historical
 

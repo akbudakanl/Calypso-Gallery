@@ -1,8 +1,8 @@
 # ADR 0004 — Argon2 memory allocation, cross-device KDF compatibility and the unlock deadlock
 
-- **Status:** Implemented (2026-11-18)
-- **Date:** 2026-11-17 (implemented 2026-11-18)
-- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md ("Brute-Force direnci"); `CryptoManagerCredentials.kt`
+- **Status:** Implemented (2026-11-18; updated 2026-11-21 — Rust Native Argon2id JNI §9)
+- **Date:** 2026-11-17 (implemented 2026-11-18; updated 2026-11-21)
+- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md ("Brute-Force direnci"); `CryptoManagerCredentials.kt`; `NativeArgon2.kt`; `rust/calypso-argon2`
 - **Decision owner:** Accepted and implemented (2026-11-18)
 
 > **Terminology.** User-facing text uses **"Encrypted Vault" / "Şifreli Kasa"** and keeps the English phrase **"Brute-Force"** in Turkish strings, as decided earlier.
@@ -20,9 +20,11 @@ The "Brute-Force direnci" setting originally let a user pick a fixed target unlo
 
 ---
 
-## 2. What we use today (Post-Decision)
+## 2. Historical baseline (2026-11-18, BouncyCastle)
 
-- **Variant: Argon2id, version 1.3.** `deriveKeyArgon2id` uses `Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)` with `ARGON2_VERSION_13` (BouncyCastle). The header stores `KDF: 1 = Argon2id` and the marker is `argon2id_aes256_gcm`.
+> **Active architecture update (2026-11-21):** The BouncyCastle Java-heap path described in this section was replaced on 2026-11-21 by native **RustCrypto `argon2` over JNI** with physical-RAM + 64-bit `64 → 128 → 256 MiB` scaling and zero runtime BouncyCastle dependency. See [§11.1](#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented) for the active implementation.
+
+- **Variant: Argon2id, version 1.3.** `deriveKeyArgon2id` originally used `Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)` with `ARGON2_VERSION_13` (BouncyCastle). The header stores `KDF: 1 = Argon2id` and the marker is `argon2id_aes256_gcm`.
 - **Rationale for Argon2id:** Argon2d is stronger against GPU/ASIC but side-channel sensitive; Argon2i is the opposite; Argon2id is the hybrid and the RFC 9106 / OWASP recommended default.
 - **Implementation constraint:** BouncyCastle's `Argon2BytesGenerator` allocates the whole working memory as a **single Java `int[]`** — inside the **Java heap**.
 
@@ -112,6 +114,12 @@ Idea: at creation, also wrap the VMK with a second, cheap KDF (e.g. 64 MiB / 2) 
 
 **Rejected:** an offline attacker simply attacks the weaker wrapper. Effective security collapses to the weakest KDF (~1.6 s), making the user's chosen 7 s target cosmetic and the UI misleading. A fallback that shares the password cannot preserve security.
 
+### 8.1 Rejected option — caching the current password or a fast verifier across password-change dialogs
+
+Idea: skip the extra Argon2id invocation (`CryptoManager.isCurrentVaultSecret`) in `VaultSecurityDialog.handleSetupSubmission` during password change by carrying either a short-lived `CharArray` copy of the current password or an ephemeral keyed digest (`HMAC-SHA256`) from the initial authentication dialog to the new-password dialog.
+
+**Rejected (2026-11-21):** Saving a few seconds on an infrequent password-change flow provides no security benefit, whereas retaining any representation of the old secret (plaintext or fast verifier) in RAM across dialog boundaries violates the zero-retention principle. The same-password check continues to run the full stored Argon2id verification against `.vault`, and a standalone hygiene fix in `VaultSecurityDialog.kt` ensures the temporary `newSecret` and `candidate` buffers are always zeroized inside `finally` blocks on every exit path (`same == true`, dismissed/cancelled dialog, finishing/destroyed activity, or background execution error).
+
 ---
 
 ## 9. Candidate option — native Argon2 (JNI)
@@ -156,7 +164,7 @@ Use the reference Argon2 C library's `argon2id_hash_raw(t_cost, m_cost, parallel
 
 ### 9.5 Cost
 
-NDK/CMake setup, native binaries for `arm64-v8a` / `armeabi-v7a` (+ x86 if needed), APK size increase, and a vetted, reproducible build of the Argon2 reference library.
+NDK/CMake setup, native binaries for `arm64-v8a` / `armeabi-v7a` (+ `x86` / `x86_64` if needed) linked with `-Wl,-z,max-page-size=16384` for Android 15+/16 16 KB ELF page-size compliance, APK size increase, and a vetted, reproducible build of the Argon2 reference library.
 
 ---
 
@@ -188,7 +196,28 @@ Rather than introducing an NDK/CMake build pipeline for native C Argon2 right aw
    - Updated `completeBiometricUnlock` in `CryptoManagerBiometrics.kt` to unwrap `unlockedKek` from `.vault` using the biometric-unwrapped `VMK`, and guarded `setupOrUpdateCredentialsInternal` against replacing an unloaded `KEK`.
 
 Deferred / future options:
-- Native JNI Argon2 (`§9`) and exported Recovery Key (`§10`) remain valid future enhancements if memory requirements above `128 MiB` or sub-128 MB heap legacy hardware ever need to be supported.
+- Exported Recovery Key (`§10`) remains a valid future enhancement if sub-128 MB legacy hardware or recovery workflows ever need to bypass KDF cost.
+
+---
+
+## 11.1 Update (2026-11-21) — Rust Native Argon2id JNI (§9 Implemented)
+
+Because Java-heap allocation limits forced a `128 MiB` ceiling under BouncyCastle and left a performance gap relative to native C/GPU crackers, §9 was implemented specifically for the KDF layer using **pure-Rust `RustCrypto/argon2`** over JNI while keeping the rest of the application in Kotlin + Tink:
+
+1. **Memory-safe native KDF (`rust/calypso-argon2`):**
+   - Uses `argon2 = 0.5.3` (RFC 9106 Argon2id v1.3, single-threaded — no `rayon`) and `zeroize = 1.8.1` (`ZeroizingBlocks` RAII drop guard + `Zeroizing<Vec<u8>>` for password/salt/key buffers).
+   - Allocates Argon2 working memory via `Vec::try_reserve_exact(block_count)` + `hash_password_into_with_memory` rather than infallible `vec![]`, translating native allocation failures into `java/lang/OutOfMemoryError` instead of aborting (`SIGABRT`).
+   - Wraps the JNI entry point (`Java_org_fossify_gallery_helpers_NativeArgon2_deriveKeyArgon2idNative`) in `std::panic::catch_unwind` with `panic = "unwind"` so no Rust panic can cross FFI.
+   - Compiled across `arm64-v8a`, `armeabi-v7a`, `x86`, and `x86_64` with `-C link-arg=-Wl,-z,max-page-size=16384` for Android 15+/16 16 KB ELF page-size compliance.
+2. **BouncyCastle removed from runtime:** `org.bouncycastle:bcprov-jdk18on` moved from `implementation` to `testImplementation` exclusively for cross-implementation bit-identity verification. `ThirdPartyLicensesActivity` was updated to credit RustCrypto Argon2.
+3. **Three-tier physical-RAM calibration (`64 → 128 → 256 MiB`):**
+   - Replaces Java `Runtime.maxMemory()` gating with `DeviceMemoryCapabilities` (`ActivityManager.MemoryInfo.totalMem` + `Build.SUPPORTED_64_BIT_ABIS`):
+     - `64 MiB`: RFC 9106 floor (`T_std_64`).
+     - `128 MiB`: `targetMs >= 2 * T_std_64` and `totalRamMib >= 1_536`.
+     - `256 MiB`: `targetMs >= max(4 * T_std_64, 3.0 s)` (`ARGON2_ULTRA_MIN_TARGET_MS = 3_000`), 64-bit ABI, and `totalRamMib >= 5_120` (~6 GB+ phones). Falls back cleanly `256 → 128 → 64 MiB` if an allocation probe throws `OutOfMemoryError`.
+   - `ARGON2_MIN_MEASURED_MS` lowered from `100 ms` to `20 ms` to reflect native KDF speeds while keeping the UI slider lower bound at `0.1 s`. `kdfEngineVersion` (`KDF_ENGINE_RUST_V1 = 1`) automatically invalidates stale BouncyCastle speed baselines (`cachedStdArgon2Ms`, `vaultUnlockMeasuredMs`) upon upgrade.
+   - `BruteForceDialog` shows a conditional calm recovery-guidance warning only while the selected time maps to `256 MiB`, noting that `<= 2 GB RAM` devices may have trouble opening the vault and advising how to lower the unlock time and re-export if needed.
+4. **Python CLI (`calypso_vault.py`) intentionally unchanged:** Keeps `argon2-cffi` (zero-compile install via `apt`/`pip` on Tails OS, desktop Linux, macOS, Windows, and Raspberry Pi) and serves as an independent verifier producing bit-identical Argon2id keys.
 
 ---
 
@@ -207,4 +236,4 @@ Deferred / future options:
 - RFC 9106 — Argon2 (Argon2id recommended; 64 MiB and 256 MiB parameter sets).
 - OWASP Password Storage Cheat Sheet — Argon2id baseline (≥19 MiB, t≥2, p≥1).
 - `docs/argon2-calibration-methodology.md` — device measurements, OOM detail, derived model and current safety bounds.
-- `CryptoManagerCredentials.kt` — `deriveKeyArgon2id`, `resolveArgon2Params`, `writeVaultHeaderV4`.
+- `CryptoManagerCredentials.kt` — `deriveKeyArgon2id`, `resolveArgon2Params`, `writeVaultHeader`, `isCurrentVaultSecret`, `rewrapVaultHeaderWithCurrentKdf`.
