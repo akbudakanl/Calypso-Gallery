@@ -276,14 +276,15 @@
                 android:importantForAutofill="noExcludeDescendants"
                 app:endIconMode="password_toggle">
 
-                <com.google.android.material.textfield.TextInputEditText
+                <org.fossify.gallery.views.VaultPasswordEditText
                     android:id="@+id/vault_password_input"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textCursorDrawable="@drawable/vault_text_cursor"
-                    android:imeOptions="actionDone|flagNoPersonalizedLearning"
+                    android:imeOptions="actionDone|flagNoPersonalizedLearning|flagNoExtractUi"
                     android:importantForAutofill="no"
                     android:inputType="textPassword|textNoSuggestions"
+                    android:longClickable="false"
                     android:maxLines="1"
                     android:singleLine="true" />
             </org.fossify.commons.views.MyTextInputLayout>
