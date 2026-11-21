@@ -1,5 +1,11 @@
 package org.fossify.gallery.helpers
 
+import org.fossify.commons.extensions.isGif
+import org.fossify.commons.extensions.isImageFast
+import org.fossify.commons.extensions.isMediaFile
+import org.fossify.commons.extensions.isRawFast
+import org.fossify.commons.extensions.isSvg
+import org.fossify.commons.extensions.isVideoFast
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.gallery.extensions.isVirtualAlbumPath
 
@@ -119,5 +125,41 @@ object CopyMovePolicy {
             PickDirectoryMode.ENCRYPTED_MOVE -> isEncryptedAlbum && !isVirtualAlbum
             PickDirectoryMode.DECRYPT_MOVE -> !isEncryptedAlbum && !isVirtualAlbum
         }
+    }
+
+    fun isEncryptedVaultFileName(fileName: String): Boolean {
+        return (!fileName.startsWith('.') && fileName.endsWith(ENCRYPTED_BIN_EXT, ignoreCase = true)) ||
+            fileName.endsWith(ENCRYPTED_FILE_EXT, ignoreCase = true)
+    }
+
+    fun shouldCollectFolderEntry(
+        fileName: String,
+        isDirectory: Boolean,
+        isEncryptedFolder: Boolean,
+        showHidden: Boolean,
+        filterMedia: Int
+    ): Boolean {
+        if (isDirectory || fileName.isEmpty()) {
+            return false
+        }
+        if (isEncryptedFolder) {
+            return isEncryptedVaultFileName(fileName)
+        }
+        if (fileName.endsWith(ENCRYPTED_BIN_EXT, ignoreCase = true) ||
+            fileName.endsWith(ENCRYPTED_FILE_EXT, ignoreCase = true)
+        ) {
+            return false
+        }
+        if (!showHidden && fileName.startsWith('.')) {
+            return false
+        }
+        if (!fileName.isMediaFile()) {
+            return false
+        }
+        return (fileName.isImageFast() && filterMedia and TYPE_IMAGES != 0) ||
+            (fileName.isVideoFast() && filterMedia and TYPE_VIDEOS != 0) ||
+            (fileName.isGif() && filterMedia and TYPE_GIFS != 0) ||
+            (fileName.isRawFast() && filterMedia and TYPE_RAWS != 0) ||
+            (fileName.isSvg() && filterMedia and TYPE_SVGS != 0)
     }
 }

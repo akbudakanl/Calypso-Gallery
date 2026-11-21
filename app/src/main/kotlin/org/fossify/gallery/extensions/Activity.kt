@@ -2656,7 +2656,7 @@ fun BaseSimpleActivity.tryAddFilesToVirtualAlbum(
     }
 
     val source = currentDirectoryPath.ifEmpty { validItems[0].getParentPath() }
-    val isHiddenSource = CryptoManager.isVaultMediaPath(this, source) ||
+    val isHiddenSource = CryptoManager.isEncryptedFolderPath(this, source) ||
         (source.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(source)) ||
         hasEncrypted
     val excludedAlbumId = currentDirectoryPath.getVirtualAlbumId()

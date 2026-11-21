@@ -139,6 +139,7 @@ import org.fossify.gallery.extensions.storeDirectoryItems
 import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateDBDirectory
 import org.fossify.gallery.extensions.updateWidgets
+import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.getVaultProtectionType
@@ -2727,13 +2728,13 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     File(it.path).list()?.asList()
                 }
 
+                val isEncryptedFolder = CryptoManager.isEncryptedFolderPath(this, it.path)
                 val hasMediaFile = children?.any { childName ->
-                    childName != null && (
-                            childName.isMediaFile()
-                                    || CryptoManager.isEncryptedFile(childName)
-                                    || (childName.startsWith("img_", true)
-                                    && File(it.path, childName).isDirectory)
-                            )
+                    childName != null && if (isEncryptedFolder) {
+                        CopyMovePolicy.isEncryptedVaultFileName(childName)
+                    } else {
+                        childName.isMediaFile() || (childName.startsWith("img_", true) && File(it.path, childName).isDirectory)
+                    }
                 } == true
 
                 if (!hasMediaFile) {

@@ -45,8 +45,6 @@ import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.isAStorageRootFolder
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isGif
-import org.fossify.commons.extensions.isImageFast
-import org.fossify.commons.extensions.isMediaFile
 import org.fossify.commons.extensions.isRawFast
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
@@ -124,6 +122,7 @@ import org.fossify.gallery.helpers.AlbumTypeIcon
 import org.fossify.gallery.helpers.AlbumTypeIconPolicy
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
+import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
@@ -1248,15 +1247,15 @@ class DirectoryAdapter(
         val showHidden = config.shouldShowHidden || config.temporarilyShowHiddenFolders
         val filter = config.filterMedia
         validPaths.forEach { folderPath ->
+            val isEncryptedFolder = CryptoManager.isEncryptedFolderPath(activity, folderPath)
             File(folderPath).listFiles()?.filter { file ->
-                !file.isDirectory &&
-                    (CryptoManager.isEncryptedFile(file.name) ||
-                        (file.absolutePath.isMediaFile() && (showHidden || !file.name.startsWith('.')) &&
-                            ((file.isImageFast() && filter and TYPE_IMAGES != 0) ||
-                                (file.isVideoFast() && filter and TYPE_VIDEOS != 0) ||
-                                (file.isGif() && filter and TYPE_GIFS != 0) ||
-                                (file.isRawFast() && filter and TYPE_RAWS != 0) ||
-                                (file.isSvg() && filter and TYPE_SVGS != 0))))
+                CopyMovePolicy.shouldCollectFolderEntry(
+                    fileName = file.name,
+                    isDirectory = file.isDirectory,
+                    isEncryptedFolder = isEncryptedFolder,
+                    showHidden = showHidden,
+                    filterMedia = filter
+                )
             }?.mapTo(paths) { it.absolutePath }
         }
         return paths.mapTo(ArrayList(paths.size)) { FileDirItem(it, it.getFilenameFromPath()) }

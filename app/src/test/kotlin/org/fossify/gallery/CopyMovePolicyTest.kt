@@ -4,6 +4,11 @@ import org.fossify.commons.helpers.FAVORITES
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.PickDirectoryMode
 import org.fossify.gallery.helpers.RECYCLE_BIN
+import org.fossify.gallery.helpers.TYPE_GIFS
+import org.fossify.gallery.helpers.TYPE_IMAGES
+import org.fossify.gallery.helpers.TYPE_RAWS
+import org.fossify.gallery.helpers.TYPE_SVGS
+import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -116,6 +121,68 @@ class CopyMovePolicyTest {
         assertFalse(allowed(PickDirectoryMode.DECRYPT_MOVE, isVirtual = true, isEncrypted = true))
         assertFalse(allowed(PickDirectoryMode.DECRYPT_MOVE, isVirtual = false, isEncrypted = false, isRecycleBin = true))
         assertFalse(allowed(PickDirectoryMode.DECRYPT_MOVE, isVirtual = false, isEncrypted = false, isFavorites = true))
+    }
+
+    @Test
+    fun isEncryptedVaultFileNameMatchesVaultItemsAndExcludesTempStaging() {
+        assertTrue(CopyMovePolicy.isEncryptedVaultFileName("a1b2c3d4.bin"))
+        assertTrue(CopyMovePolicy.isEncryptedVaultFileName("ABCDEF01.BIN"))
+        assertTrue(CopyMovePolicy.isEncryptedVaultFileName(".fv_abc.fenc"))
+
+        assertFalse(CopyMovePolicy.isEncryptedVaultFileName(".tmp_12345678.bin"))
+        assertFalse(CopyMovePolicy.isEncryptedVaultFileName(".sync_tmp_12345678.bin"))
+        assertFalse(CopyMovePolicy.isEncryptedVaultFileName(".meta"))
+        assertFalse(CopyMovePolicy.isEncryptedVaultFileName("photo.jpg"))
+    }
+
+    @Test
+    fun shouldCollectFolderEntryIgnoresBinAndFencInUnencryptedFolders() {
+        val allMediaFilter = TYPE_IMAGES or TYPE_VIDEOS or TYPE_GIFS or TYPE_RAWS or TYPE_SVGS
+
+        assertTrue(collect(fileName = "photo.jpg", isEncryptedFolder = false, showHidden = false, filterMedia = allMediaFilter))
+        assertTrue(collect(fileName = "clip.mp4", isEncryptedFolder = false, showHidden = false, filterMedia = allMediaFilter))
+        assertTrue(collect(fileName = "anim.gif", isEncryptedFolder = false, showHidden = false, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = ".photo.jpg", isEncryptedFolder = false, showHidden = false, filterMedia = allMediaFilter))
+        assertTrue(collect(fileName = ".photo.jpg", isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+
+        assertFalse(collect(fileName = "download.bin", isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "UPPER.BIN", isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = ".hidden.bin", isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "legacy.fenc", isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "subfolder", isDirectory = true, isEncryptedFolder = false, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "clip.mp4", isEncryptedFolder = false, showHidden = false, filterMedia = TYPE_IMAGES))
+    }
+
+    @Test
+    fun shouldCollectFolderEntryCollectsOnlyVaultEntriesInEncryptedFolders() {
+        val allMediaFilter = TYPE_IMAGES or TYPE_VIDEOS or TYPE_GIFS or TYPE_RAWS or TYPE_SVGS
+
+        assertTrue(collect(fileName = "a1b2c3d4.bin", isEncryptedFolder = true, showHidden = false, filterMedia = allMediaFilter))
+        assertTrue(collect(fileName = "ABCDEF01.BIN", isEncryptedFolder = true, showHidden = false, filterMedia = allMediaFilter))
+        assertTrue(collect(fileName = ".fv_abc.fenc", isEncryptedFolder = true, showHidden = false, filterMedia = allMediaFilter))
+
+        assertFalse(collect(fileName = ".tmp_12345678.bin", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = ".sync_tmp_12345678.bin", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = ".meta", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = ".nomedia", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "photo.jpg", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+        assertFalse(collect(fileName = "sub", isDirectory = true, isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+    }
+
+    private fun collect(
+        fileName: String,
+        isDirectory: Boolean = false,
+        isEncryptedFolder: Boolean,
+        showHidden: Boolean,
+        filterMedia: Int
+    ): Boolean {
+        return CopyMovePolicy.shouldCollectFolderEntry(
+            fileName = fileName,
+            isDirectory = isDirectory,
+            isEncryptedFolder = isEncryptedFolder,
+            showHidden = showHidden,
+            filterMedia = filterMedia
+        )
     }
 
     private fun allowed(
