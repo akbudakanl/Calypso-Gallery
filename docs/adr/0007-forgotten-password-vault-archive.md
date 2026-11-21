@@ -7,6 +7,8 @@
 
 > **Özet Karar.** Kullanıcı kasa parolasını unuttuğunda uygulama **asla** parolasız silme yapmaz. Bunun yerine mevcut kasayı `Calypso Gallery/Archive/` altına **taşır** (arşivler), varsayılan konumda yeni bir kasa oluşturur ve eski kasayı parolasıyla geri yüklemeyi mümkün tutar. Arşiv klasörü yalnızca ilk arşivlemede oluşur; rastgele, tarih/sayaç içermeyen bir ad kullanılır. Disk alanı boşaltmak kullanıcıya bırakılır ve yol gösterilir; uygulama içinde arşiv silme yoktur.
 
+> **Mantık (kısa).** Güvenlik standartları gereği parolasını bilmediğiniz bir şifreli kasayı uygulamadan silemezsiniz. Çoğu kullanıcı kasayı varsayılan konumda tuttuğu için parolası unutulan kasa bu alanı doldurur ve yeni kasa oluşturmayı da engeller. Kullanıcının iki seçeneği vardır: kasayı bir dosya yöneticisiyle kalıcı olarak silmek (veya ileride parolayı tekrar denemek için **Şifreli kasayı dışa aktar** ile harici diske yedeklemek), ya da telefonunda saklamaya devam etmek istiyorsa onu izole bir arşive taşıyıp aynı konumda yeni bir kasa oluşturmak.
+
 ---
 
 ## 1. Aksiyom

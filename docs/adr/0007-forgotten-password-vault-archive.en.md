@@ -7,6 +7,8 @@
 
 > **Summary Decision.** When a user forgets the vault password, the app **never** performs a passwordless deletion. Instead it **moves** the existing vault into `Calypso Gallery/Archive/`, creates a new vault at the default location, and keeps the old one restorable with its password. The Archive folder is created only on the first archival and uses a random name with no date or counter. Freeing disk space is left to the user, with the exact path shown; there is no in-app archive deletion.
 
+> **Rationale (short).** Security standards forbid deleting an encrypted vault from the app without knowing its password. Most users keep the vault at the default location, so a forgotten-password vault fills that slot and also prevents creating a new one. The user has two options: permanently delete the vault with a file manager (or first back it up to external storage with **Export encrypted vault** to retry the password later), or, if they want to keep it on the phone, move it into an isolated archive and create a fresh vault at the same location.
+
 ---
 
 ## 1. Axiom
