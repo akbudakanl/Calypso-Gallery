@@ -10,12 +10,12 @@
     android:orientation="vertical"
     android:padding="22dp">
 
-    <!-- 3b only: equal top/left breathing room (16dp card padding + 16dp slot in the mockup). -->
+    <!-- 3b only: preserve horizontal offset (22dp + 10dp) while centering vertically between top edge and title. -->
     <FrameLayout
         android:id="@+id/notice_glyph_host"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginBottom="14dp"
         android:clipChildren="false"
         android:clipToPadding="false"
         android:paddingStart="10dp"

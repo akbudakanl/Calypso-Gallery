@@ -837,7 +837,12 @@ class SettingsActivity : SimpleActivity() {
                 RadioItem(PRIORITY_VALIDITY, getString(R.string.avoid_showing_invalid_files))
             )
 
-            RadioGroupDialog(this@SettingsActivity, items, config.fileLoadingPriority) {
+            RadioGroupDialog(
+                activity = this@SettingsActivity,
+                items = items,
+                checkedItemId = config.fileLoadingPriority,
+                titleId = R.string.file_loading_priority,
+            ) {
                 config.fileLoadingPriority = it as Int
                 binding.settingsFileLoadingPriority.text = getFileLoadingPriorityText()
             }
@@ -963,7 +968,8 @@ class SettingsActivity : SimpleActivity() {
             RadioGroupDialog(
                 activity = this@SettingsActivity,
                 items = items,
-                checkedItemId = config.videoPlayerType
+                checkedItemId = config.videoPlayerType,
+                titleId = R.string.on_video_tap,
             ) {
                 config.videoPlayerType = it as Int
                 binding.settingsOnVideoTap.text = getVideoPlayerTypeText()
@@ -989,7 +995,8 @@ class SettingsActivity : SimpleActivity() {
             RadioGroupDialog(
                 activity = this@SettingsActivity,
                 items = items,
-                checkedItemId = config.videoDoubleTapFastForward
+                checkedItemId = config.videoDoubleTapFastForward,
+                titleId = R.string.video_double_tap_duration,
             ) {
                 config.videoDoubleTapFastForward = it as Int
                 binding.settingsVideoDoubleTapSeekDuration.text = getVideoSeekDurationText()
@@ -1252,8 +1259,9 @@ class SettingsActivity : SimpleActivity() {
         // Bu ayar yalnızca kasa mevcutsa ve bu cihaz için bir süre kaydedilmişse görünür.
         binding.settingsArgon2ProfileHolder.beVisibleIf(doesVaultExist())
         fun refreshSummary() {
-            binding.settingsArgon2ProfileValue.text =
-                org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
+            val summary = org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
+            binding.settingsArgon2ProfileValue.text = summary
+            binding.settingsArgon2ProfileValue.beGoneIf(summary.isEmpty())
         }
         refreshSummary()
         // No silent background probing: the 64 MiB / 3 rounds measurement runs only when the
@@ -1503,14 +1511,18 @@ class SettingsActivity : SimpleActivity() {
     private fun setupArchiveVault() {
         binding.settingsArchiveVaultHolder.setOnClickListener {
             if (!doesVaultExist() || VaultArchiveManager.isActiveVaultArchived(this)) return@setOnClickListener
-            DeleteSecretsDialog(this, getString(R.string.archive_vault_confirm)) {
-                requireDeviceOwner {
+            requireDeviceOwner {
+                DeleteSecretsDialog(
+                    this,
+                    getString(R.string.archive_vault_confirm),
+                    titleId = R.string.archive_vault,
+                ) {
                     CryptoManager.lockVault()
                     val entry = VaultArchiveManager.archiveActiveVault(this)
                     if (entry == null) {
                         toast(R.string.archive_vault_failed)
                         setupVaultSettings()
-                        return@requireDeviceOwner
+                        return@DeleteSecretsDialog
                     }
 
                     VaultNoticeDialog(
@@ -1761,7 +1773,11 @@ class SettingsActivity : SimpleActivity() {
             if (!doesVaultExist()) return@setOnClickListener
 
             requireVaultPassword(allowBiometrics = false) {
-                DeleteSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
+                DeleteSecretsDialog(
+                    this,
+                    getString(R.string.empty_encrypted_vault_warning),
+                    titleId = R.string.empty_encrypted_vault,
+                ) {
                     ensureBackgroundThread {
                         CryptoManager.deleteExistingVault(this)
                         runOnUiThread {
@@ -1965,7 +1981,12 @@ class SettingsActivity : SimpleActivity() {
                 RadioItem(ALBUM_CRYPTO_CONFLICT_MERGE, getString(R.string.album_crypto_conflict_merge)),
                 RadioItem(ALBUM_CRYPTO_CONFLICT_RENAME, getString(R.string.album_crypto_conflict_rename))
             )
-            RadioGroupDialog(this@SettingsActivity, items, config.albumCryptoConflictMode) {
+            RadioGroupDialog(
+                activity = this@SettingsActivity,
+                items = items,
+                checkedItemId = config.albumCryptoConflictMode,
+                titleId = R.string.album_crypto_conflict_mode_label,
+            ) {
                 config.albumCryptoConflictMode = it as Int
                 binding.settingsAlbumCryptoConflict.text = getAlbumCryptoConflictModeText()
             }
@@ -2166,20 +2187,71 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupAutoBackupFavoritesAndVirtualAlbums() {
         binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked = config.autoBackupFavoritesAndVirtualAlbums
+        var isCheckingExistingBackups = false
         binding.settingsAutoBackupFavoritesAndVirtualAlbumsHolder.setOnClickListener {
-            binding.settingsAutoBackupFavoritesAndVirtualAlbums.toggle()
-            val isEnabled = binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked
-            config.autoBackupFavoritesAndVirtualAlbums = isEnabled
-            if (isEnabled) {
+            if (isCheckingExistingBackups) {
+                return@setOnClickListener
+            }
+
+            val currentlyEnabled = binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked
+            if (!currentlyEnabled) {
+                binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked = true
+                config.autoBackupFavoritesAndVirtualAlbums = true
+                config.hasCompletedInitialFavoritesRestore = true
+                config.hasCompletedInitialVirtualAlbumsRestore = true
                 ensureBackgroundThread {
                     ReferenceBackupManager.saveFavorites(this)
-                    virtualAlbumsDB.getAllAlbums()
-                        .filter { !it.isHidden }
-                        .forEach { album ->
-                            album.id?.let { albumId ->
-                                VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+                    VirtualAlbumSyncManager.backupAllPublicAlbums(this)
+                }
+                return@setOnClickListener
+            }
+
+            isCheckingExistingBackups = true
+            ensureBackgroundThread {
+                val hasFavoritesBackup = ReferenceBackupManager.hasValidFavoritesBackup(this)
+                val hasVirtualAlbumsBackup = VirtualAlbumSyncManager.hasValidPublicVirtualAlbumBackups(this)
+                runOnUiThread {
+                    isCheckingExistingBackups = false
+                    if (isDestroyed || isFinishing) {
+                        return@runOnUiThread
+                    }
+
+                    val disableAutoBackup = {
+                        binding.settingsAutoBackupFavoritesAndVirtualAlbums.isChecked = false
+                        config.autoBackupFavoritesAndVirtualAlbums = false
+                        config.hasCompletedInitialFavoritesRestore = true
+                        config.hasCompletedInitialVirtualAlbumsRestore = true
+                    }
+
+                    if (!hasFavoritesBackup && !hasVirtualAlbumsBackup) {
+                        disableAutoBackup()
+                        return@runOnUiThread
+                    }
+
+                    val targetText = when {
+                        hasFavoritesBackup && hasVirtualAlbumsBackup -> getString(R.string.delete_auto_backup_target_both)
+                        hasFavoritesBackup -> getString(R.string.delete_auto_backup_target_favorites)
+                        else -> getString(R.string.delete_auto_backup_target_virtual_albums)
+                    }
+                    val message = getString(R.string.delete_auto_backup_confirm, targetText)
+                    DeleteAutoBackupsDialog(
+                        activity = this,
+                        messageText = message,
+                        onYes = {
+                            disableAutoBackup()
+                            ensureBackgroundThread {
+                                if (hasFavoritesBackup) {
+                                    ReferenceBackupManager.deleteFavoritesBackup(this)
+                                }
+                                if (hasVirtualAlbumsBackup) {
+                                    VirtualAlbumSyncManager.deletePublicVirtualAlbumBackups(this)
+                                }
                             }
+                        },
+                        onNo = {
+                            disableAutoBackup()
                         }
+                    )
                 }
             }
         }
@@ -2194,7 +2266,12 @@ class SettingsActivity : SimpleActivity() {
                 RadioItem(ROTATE_BY_ASPECT_RATIO, getString(R.string.screen_rotation_aspect_ratio))
             )
 
-            RadioGroupDialog(this@SettingsActivity, items, config.screenRotation) {
+            RadioGroupDialog(
+                activity = this@SettingsActivity,
+                items = items,
+                checkedItemId = config.screenRotation,
+                titleId = R.string.screen_rotation_by,
+            ) {
                 config.screenRotation = it as Int
                 binding.settingsScreenRotation.text = getScreenRotationText()
             }

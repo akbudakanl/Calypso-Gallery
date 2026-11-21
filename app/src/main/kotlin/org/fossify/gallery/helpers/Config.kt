@@ -963,6 +963,14 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, true)
         set(autoBackupFavoritesAndVirtualAlbums) = prefs.edit().putBoolean(AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS, autoBackupFavoritesAndVirtualAlbums).apply()
 
+    var hasCompletedInitialFavoritesRestore: Boolean
+        get() = prefs.getBoolean(HAS_COMPLETED_INITIAL_FAVORITES_RESTORE, false)
+        set(hasCompleted) = prefs.edit().putBoolean(HAS_COMPLETED_INITIAL_FAVORITES_RESTORE, hasCompleted).apply()
+
+    var hasCompletedInitialVirtualAlbumsRestore: Boolean
+        get() = prefs.getBoolean(HAS_COMPLETED_INITIAL_VIRTUAL_ALBUMS_RESTORE, false)
+        set(hasCompleted) = prefs.edit().putBoolean(HAS_COMPLETED_INITIAL_VIRTUAL_ALBUMS_RESTORE, hasCompleted).apply()
+
     var showVirtualAlbumIcon: Boolean
         get() = prefs.getBoolean(SHOW_VIRTUAL_ALBUM_ICON, true)
         set(show) = prefs.edit().putBoolean(SHOW_VIRTUAL_ALBUM_ICON, show).apply()

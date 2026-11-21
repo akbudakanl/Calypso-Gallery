@@ -59,6 +59,8 @@ object VirtualAlbumSyncManager {
     @VisibleForTesting
     internal var daoProviderForTest: ((Context) -> VirtualAlbumsDao)? = null
 
+    private val publicRestoreLock = Any()
+
     @Volatile
     private var lastSyncTs = 0L
 
@@ -72,6 +74,116 @@ object VirtualAlbumSyncManager {
 
     private fun getDao(context: Context): VirtualAlbumsDao {
         return daoProviderForTest?.invoke(context) ?: context.virtualAlbumsDB
+    }
+
+    private fun canAccessSharedStorage(): Boolean {
+        return customStorageDirForTest != null ||
+            customVaultDirForTest != null ||
+            android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R ||
+            Environment.isExternalStorageManager()
+    }
+
+    private fun isValidPublicVirtualAlbumBackupFile(file: File, gson: Gson = Gson()): Boolean {
+        if (!file.isFile || !file.extension.equals("json", ignoreCase = true)) {
+            return false
+        }
+        return try {
+            val content = file.readText(Charsets.UTF_8).trim()
+            if (content.isEmpty()) {
+                return false
+            }
+            val backup = gson.fromJson(content, VirtualAlbumBackup::class.java) ?: return false
+            !backup.isHidden && backup.encryptedPayload == null && !backup.name.isNullOrBlank()
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun hasValidPublicVirtualAlbumBackups(context: Context): Boolean {
+        if (!canAccessSharedStorage()) {
+            return false
+        }
+        val publicDir = getVirtualAlbumsStorageDir()
+        if (!publicDir.exists() || !publicDir.isDirectory) {
+            return false
+        }
+        val jsonFiles = publicDir.listFiles { file ->
+            file.isFile && file.extension.equals("json", ignoreCase = true)
+        } ?: return false
+        val gson = Gson()
+        return jsonFiles.any { isValidPublicVirtualAlbumBackupFile(it, gson) }
+    }
+
+    fun deletePublicVirtualAlbumBackups(context: Context): Int {
+        if (!canAccessSharedStorage()) {
+            return 0
+        }
+        val publicDir = getVirtualAlbumsStorageDir()
+        if (!publicDir.exists() || !publicDir.isDirectory) {
+            return 0
+        }
+        val jsonFiles = publicDir.listFiles { file ->
+            file.isFile && file.extension.equals("json", ignoreCase = true)
+        } ?: return 0
+        val gson = Gson()
+        var deletedCount = 0
+        for (file in jsonFiles) {
+            if (isValidPublicVirtualAlbumBackupFile(file, gson)) {
+                if (try { file.delete() } catch (_: Exception) { false }) {
+                    deletedCount++
+                }
+            }
+        }
+        if (publicDir.listFiles().isNullOrEmpty()) {
+            try {
+                publicDir.delete()
+            } catch (_: Exception) {
+            }
+        }
+        return deletedCount
+    }
+
+    fun backupAllPublicAlbums(context: Context) {
+        if (!canAccessSharedStorage() || !context.config.autoBackupFavoritesAndVirtualAlbums) {
+            return
+        }
+        try {
+            val publicAlbums = getDao(context).getAllAlbums().filter { !it.isHidden }
+            val expectedFileNames = publicAlbums.map {
+                getPublicAlbumFileName(it.name, it.id).lowercase()
+            }.toHashSet()
+
+            val publicDir = getVirtualAlbumsStorageDir()
+            if (publicDir.exists() && publicDir.isDirectory) {
+                val gson = Gson()
+                val existingFiles = publicDir.listFiles { file ->
+                    file.isFile && file.extension.equals("json", ignoreCase = true)
+                } ?: emptyArray()
+                for (file in existingFiles) {
+                    if (!expectedFileNames.contains(file.name.lowercase()) &&
+                        isValidPublicVirtualAlbumBackupFile(file, gson)
+                    ) {
+                        try {
+                            file.delete()
+                        } catch (_: Exception) {
+                        }
+                    }
+                }
+                if (publicAlbums.isEmpty() && publicDir.listFiles().isNullOrEmpty()) {
+                    try {
+                        publicDir.delete()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+
+            publicAlbums.forEach { album ->
+                album.id?.let { albumId ->
+                    saveAlbumToFile(context, albumId)
+                }
+            }
+        } catch (_: Exception) {
+        }
     }
 
     private fun isVaultJsonRelativePath(relPath: String): Boolean {
@@ -172,7 +284,9 @@ object VirtualAlbumSyncManager {
     }
 
     fun ensurePublicStorageDirExists(): File {
-        CryptoManager.ensureCipherRootDirectory()
+        if (customStorageDirForTest == null) {
+            CryptoManager.ensureCipherRootDirectory()
+        }
         val dir = getVirtualAlbumsStorageDir()
         if (!dir.exists()) {
             dir.mkdirs()
@@ -235,7 +349,7 @@ object VirtualAlbumSyncManager {
         try {
             val dao = getDao(context)
             val album = dao.getAlbumById(albumId) ?: return
-            if (!album.isHidden && !context.config.autoBackupFavoritesAndVirtualAlbums) {
+            if (!album.isHidden && (!context.config.autoBackupFavoritesAndVirtualAlbums || !canAccessSharedStorage())) {
                 return
             }
             val items = dao.getItems(albumId)
@@ -311,10 +425,17 @@ object VirtualAlbumSyncManager {
 
     fun deleteAlbumFile(context: Context, album: VirtualAlbum) {
         invalidateDirectoryCache()
+        if (!album.isHidden && (!context.config.autoBackupFavoritesAndVirtualAlbums || !canAccessSharedStorage())) {
+            return
+        }
         try {
             val file = getAlbumFile(context, album)
             if (file.exists()) {
-                CryptoManager.secureWipeAndDeleteFile(file, context)
+                if (album.isHidden) {
+                    CryptoManager.secureWipeAndDeleteFile(file, context)
+                } else {
+                    file.delete()
+                }
             }
             // Check other location just in case
             val otherFile = if (album.isHidden) {
@@ -324,6 +445,12 @@ object VirtualAlbumSyncManager {
             }
             if (otherFile.exists()) {
                 CryptoManager.secureWipeAndDeleteFile(otherFile, context)
+            }
+            if (!album.isHidden) {
+                val publicDir = getVirtualAlbumsStorageDir()
+                if (publicDir.exists() && publicDir.isDirectory && publicDir.listFiles().isNullOrEmpty()) {
+                    publicDir.delete()
+                }
             }
         } catch (_: Exception) {
         }
@@ -371,10 +498,7 @@ object VirtualAlbumSyncManager {
     }
 
     fun syncVirtualAlbums(context: Context, force: Boolean = false): Boolean {
-        val canReadSharedStorage = customStorageDirForTest != null ||
-            customVaultDirForTest != null ||
-            android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.R ||
-            Environment.isExternalStorageManager()
+        val canReadSharedStorage = canAccessSharedStorage()
         val now = System.currentTimeMillis()
         if (!force && now - lastSyncTs < 30_000L) {
             return false
@@ -385,20 +509,21 @@ object VirtualAlbumSyncManager {
         var anyDbChange = false
 
         val dao = getDao(context)
-        val dbAlbums = try {
-            dao.getAllAlbums()
-        } catch (_: Exception) {
-            emptyList()
-        }
-
         val publicDir = getVirtualAlbumsStorageDir()
 
         val gson = Gson()
         val processedAlbumNames = HashSet<String>()
 
-        // 1. Restore public non-hidden albums from the storage folder
-        val candidateDirs = listOf(publicDir).filter { it.exists() && it.isDirectory }
-        for (sourceDir in candidateDirs) {
+        // 1. Restore public non-hidden albums once on a fresh install / cleared app data.
+        // Afterwards, the app database is the single source of truth and device-storage JSONs are
+        // maintained as a one-way backup (never re-imported or recreated if deleted externally).
+        if (canReadSharedStorage) {
+            synchronized(publicRestoreLock) {
+                if (!context.config.hasCompletedInitialVirtualAlbumsRestore &&
+                    context.config.autoBackupFavoritesAndVirtualAlbums
+                ) {
+                    val candidateDirs = listOf(publicDir).filter { it.exists() && it.isDirectory }
+                    for (sourceDir in candidateDirs) {
             val jsonFiles = sourceDir.listFiles { file -> file.isFile && file.extension.equals("json", ignoreCase = true) } ?: emptyArray()
             for (file in jsonFiles) {
                 try {
@@ -540,6 +665,10 @@ object VirtualAlbumSyncManager {
                         saveAlbumToFile(context, albumId)
                     }
                 } catch (_: Exception) {
+                }
+            }
+                    }
+                    context.config.hasCompletedInitialVirtualAlbumsRestore = true
                 }
             }
         }
@@ -740,13 +869,17 @@ object VirtualAlbumSyncManager {
             }
         }
 
-        // 3. Export any existing albums in DB that don't have a file on disk yet
+        // 3. Reconcile hidden (vault) virtual albums in DB: clean up undecryptable rows from
+        // other vaults and ensure active vault albums have their on-disk vault manifest.
+        // Public virtual albums are NOT exported here so externally deleted backup files/folders
+        // are never recreated automatically.
         val updatedDbAlbums = try {
             dao.getAllAlbums()
         } catch (_: Exception) {
             emptyList()
         }
         for (album in updatedDbAlbums) {
+            if (!album.isHidden) continue
             val albumId = album.id ?: continue
 
             // A hidden virtual album whose stored name is a vault string that cannot be decrypted
@@ -755,7 +888,7 @@ object VirtualAlbumSyncManager {
             // folder as an empty album whose name shows up as a random "FVSTR:…" string. Remove
             // the stale row (and its on-disk manifest) instead. Only do this while the vault is
             // unlocked, otherwise every hidden name would look undecryptable.
-            if (album.isHidden && CryptoManager.isVaultUnlocked &&
+            if (CryptoManager.isVaultUnlocked &&
                 CryptoManager.isEncryptedVaultString(album.name) &&
                 CryptoManager.decryptStringFromVault(album.name) == null
             ) {
@@ -770,10 +903,8 @@ object VirtualAlbumSyncManager {
             }
 
             val albumFile = getAlbumFile(context, album)
-            if (!albumFile.exists()) {
-                if (!album.isHidden || CryptoManager.isVaultUnlocked) {
-                    saveAlbumToFile(context, albumId)
-                }
+            if (!albumFile.exists() && CryptoManager.isVaultUnlocked) {
+                saveAlbumToFile(context, albumId)
             }
         }
         if (anyDbChange) {

@@ -467,7 +467,7 @@
     <string name="usb_direct_filesystem_required">Bu USB yolu yalnızca Android\'in sanal OTG sağlayıcısı üzerinden erişilebilir ve doğrudan dosya sistemi yolu olarak kullanılamaz. Lütfen bağlanmış bir depolama dizini veya dahili depolama / SD kart üzerinde bir klasör seçin.</string>
     <string name="vault_location_not_writable">Seçilen klasör mevcut değil veya bu cihazda yazılabilir değil.</string>
     <string name="vault_location_not_readable">Seçilen klasör mevcut değil veya bu cihazda okunabilir değil.</string>
-    <string name="sync_vault_from_external">şifrelenmiş yeni medya dosyalarını şifreli alana aktar</string>
+    <string name="sync_vault_from_external">Şifrelenmiş yeni medya dosyalarını şifreli alana aktar</string>
     <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Secrets):\nHarici diskinizde (USB / SD) Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
     <string name="conflict_handling_mode_label">Dosya çakışması ve kopya kontrolü</string>
     <string name="conflict_handling_standard_dialog_summary">Standart diyalog</string>
@@ -565,6 +565,10 @@
     <string name="encrypt_album">Albümü şifrele</string>
     <string name="decrypt_album">Albümün şifresini çöz</string>
     <string name="auto_backup_favorites_and_virtual_albums">Favorileri ve sanal albümleri cihaz hafızasında yedekle</string>
+    <string name="delete_auto_backup_confirm">Bu ayar açıkken oluşturduğunuz %1$s için cihaz hafızasındaki yedekler silinsin mi?</string>
+    <string name="delete_auto_backup_target_favorites">favoriler</string>
+    <string name="delete_auto_backup_target_virtual_albums">sanal albümler</string>
+    <string name="delete_auto_backup_target_both">favoriler ve sanal albümler</string>
     <string name="filename_without_zip">Dosya adı (.zip olmadan)</string>
     <string name="favorites_already_exist">Zaten bir favoriler listeniz var</string>
     <string name="delete_existing_list">Mevcut listeyi sil</string>

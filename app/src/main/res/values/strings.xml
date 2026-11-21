@@ -618,6 +618,10 @@
     <string name="lock_album">Lock album</string>
     <string name="unlock_album">Unlock album</string>
     <string name="auto_backup_favorites_and_virtual_albums">Back up favorites and virtual albums to device storage</string>
+    <string name="delete_auto_backup_confirm">Delete device storage backups for the %1$s created while this setting was enabled?</string>
+    <string name="delete_auto_backup_target_favorites">favorites</string>
+    <string name="delete_auto_backup_target_virtual_albums">virtual albums</string>
+    <string name="delete_auto_backup_target_both">favorites and virtual albums</string>
     <string name="use_for_this_album">Use for this album only</string>
     <string name="export_encrypted_vault">Export encrypted vault</string>
     <string name="export_vault_only_header">Export folder containing only .vault file</string>
