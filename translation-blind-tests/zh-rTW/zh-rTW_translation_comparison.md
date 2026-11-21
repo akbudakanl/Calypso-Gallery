@@ -82,13 +82,13 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 7 | `virtual_folder_name` | Virtual folder name | 虛擬資料夾名稱 | Input hint / label for virtual folder |
 | 8 | `virtual_album_name_empty` | The album name cannot be empty | 相簿名稱不可為空 | Validation error when album name is empty |
 | 9 | `virtual_album_exists` | An album with this name already exists | 已存在相同名稱的相簿 | Validation error when album name already exists |
-| 10 | `add_to_virtual_album` | Add to album | 加入相簿 | Menu action to add items to an album |
-| 11 | `remove_from_virtual_album` | Remove from album | 從相簿中移除 | Menu action to remove items from an album |
+| 10 | `add_to_virtual_album` | Add to virtual album | 加入虛擬相簿 | Menu action to add items to a virtual album |
+| 11 | `remove_from_virtual_album` | Remove from virtual album | 從虛擬相簿中移除 | Menu action to remove items from a virtual album |
 | 12 | `added_to_virtual_album` | Added to \"%s\" | 已加入「%s」 | Toast message using Taiwanese corner brackets `「%s」` |
 | 13 | `already_in_virtual_album` | Already in \"%s\" | 已在「%s」中 | Toast message using Taiwanese corner brackets `「%s」` |
 | 14 | `removed_from_virtual_album` | Removed from the album | 已從相簿中移除 | Toast message after removing items from an album |
 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | 確定要刪除相簿 %s 嗎？僅會移除相簿本身，您的相片和影片仍會保留在原處。 | No extra quotes around `%s` (code passes quoted name or item count) |
-| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | 此相簿為空。請在任意資料夾中選取項目，並使用「複製」。 | References `fossify-commons` `copy_to` (`複製`) |
+| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Add to virtual album\". | 此相簿為空。請在任意資料夾中選取項目，並使用「加入虛擬相簿」。 | References `add_to_virtual_album` (`加入虛擬相簿`) |
 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | 此操作不適用於虛擬相簿 | Toast message when action is unsupported on virtual albums |
 | 18 | `alphanumeric_password` | Alphanumeric | 英數字 | Tab label for the alphanumeric secret option; distinct from the generic password label |
 | 19 | `repeat_password` | Repeat password | 再次輸入密碼 | Matches `fossify-commons` `repeat_pin` (`再次輸入PIN碼`) |

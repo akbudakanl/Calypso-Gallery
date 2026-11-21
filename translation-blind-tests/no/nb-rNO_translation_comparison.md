@@ -67,13 +67,13 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 16 | 7 | `virtual_folder_name` | Virtual folder name | Input hint / label for virtual folder |
 | 17 | 8 | `virtual_album_name_empty` | The album name cannot be empty | Validation error when album name is empty |
 | 18 | 9 | `virtual_album_exists` | An album with this name already exists | Validation error when album name already exists |
-| 19 | 10 | `add_to_virtual_album` | Add to album | Menu action to add items to an album |
-| 20 | 11 | `remove_from_virtual_album` | Remove from album | Menu action to remove items from an album |
+| 19 | 10 | `add_to_virtual_album` | Add to virtual album | Menu action to add items to a virtual album |
+| 20 | 11 | `remove_from_virtual_album` | Remove from virtual album | Menu action to remove items from a virtual album |
 | 21 | 12 | `added_to_virtual_album` | Added to \"%s\" | Toast message preserving \"%s\" |
 | 22 | 13 | `already_in_virtual_album` | Already in \"%s\" | Toast message preserving \"%s\" |
 | 23 | 14 | `removed_from_virtual_album` | Removed from the album | Toast message after removing items from an album |
 | 24 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | No extra quotes around %s (formatted with album name or count) |
-| 25 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Empty state placeholder referencing "Kopier til" (Copy to) |
+| 25 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Add to virtual album\". | Empty state placeholder referencing "Legg til i virtuelt album" (Add to virtual album) |
 | 26 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Toast message when action is unsupported on virtual albums |
 | 27 | 18 | `alphanumeric_password` | Alphanumeric | Alphanumeric input label |
 | 28 | 19 | `repeat_password` | Repeat password | Password confirmation prompt |

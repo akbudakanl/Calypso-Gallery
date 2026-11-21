@@ -95,13 +95,13 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 7 | `virtual_folder_name` | Virtual folder name | Nombre de la carpeta virtual | Input hint/label |
 | 8 | `virtual_album_name_empty` | The album name cannot be empty | El nombre del álbum no puede estar vacío | Validation error |
 | 9 | `virtual_album_exists` | An album with this name already exists | Ya existe un álbum con este nombre | Validation error |
-| 10 | `add_to_virtual_album` | Add to album | Añadir al álbum | Menu action (`añadir` in `es`) |
-| 11 | `remove_from_virtual_album` | Remove from album | Quitar del álbum | Menu action |
+| 10 | `add_to_virtual_album` | Add to virtual album | Añadir al álbum virtual | Menu action (`añadir` in `es`) |
+| 11 | `remove_from_virtual_album` | Remove from virtual album | Quitar del álbum virtual | Menu action |
 | 12 | `added_to_virtual_album` | Added to \"%s\" | Añadido a \"%s\" | Toast confirmation |
 | 13 | `already_in_virtual_album` | Already in \"%s\" | Ya está en \"%s\" | Toast message |
 | 14 | `removed_from_virtual_album` | Removed from the album | Quitado del álbum | Toast message |
 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | ¿Eliminar el álbum %s? Solo se eliminará el álbum; tus fotos y vídeos permanecerán donde están. | No extra quotes around `%s`; uses `vídeos` for `es` |
-| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Este álbum está vacío. Selecciona elementos en cualquier carpeta y usa \"Copiar a\". | Matches `fossify-commons` `copy_to` (`Copiar a`) |
+| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Add to virtual album\". | Este álbum está vacío. Selecciona elementos en cualquier carpeta y usa \"Añadir al álbum virtual\". | References `add_to_virtual_album` (`Añadir al álbum virtual`) |
 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Esta acción no está disponible para álbumes virtuales | Toast error |
 | 18 | `alphanumeric_password` | Alphanumeric | Alfanumérico | Tab label for the alphanumeric secret option; distinct from the generic password label |
 | 19 | `repeat_password` | Repeat password | Repetir contraseña | Matches `fossify-commons` `repeat_pin` (`Repetir PIN`) |

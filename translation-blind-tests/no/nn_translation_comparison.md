@@ -125,13 +125,13 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 7 | 7 | `virtual_folder_name` | Virtual folder name |  |
 | 8 | 8 | `virtual_album_name_empty` | The album name cannot be empty |  |
 | 9 | 9 | `virtual_album_exists` | An album with this name already exists |  |
-| 10 | 10 | `add_to_virtual_album` | Add to album |  |
-| 11 | 11 | `remove_from_virtual_album` | Remove from album |  |
+| 10 | 10 | `add_to_virtual_album` | Add to virtual album | Legg til i virtuelt album |
+| 11 | 11 | `remove_from_virtual_album` | Remove from virtual album | Fjern frå virtuelt album |
 | 12 | 12 | `added_to_virtual_album` | Added to \"%s\" |  |
 | 13 | 13 | `already_in_virtual_album` | Already in \"%s\" |  |
 | 14 | 14 | `removed_from_virtual_album` | Removed from the album |  |
 | 15 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. |  |
-| 16 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". |  |
+| 16 | 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Add to virtual album\". | Dette albumet er tomt. Vel element i ei kva som helst mappe og bruk \"Legg til i virtuelt album\". |
 | 17 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums |  |
 | 18 | 18 | `alphanumeric_password` | Alphanumeric | Alfanumerisk |
 | 19 | 19 | `repeat_password` | Repeat password |  |

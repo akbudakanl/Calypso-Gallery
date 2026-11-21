@@ -59,13 +59,13 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 7 | `virtual_folder_name` | Virtual folder name | Name des virtuellen Ordners | Input hint / label for virtual folder |
 | 8 | `virtual_album_name_empty` | The album name cannot be empty | Der Albumname darf nicht leer sein | Validation error |
 | 9 | `virtual_album_exists` | An album with this name already exists | Ein Album mit diesem Namen existiert bereits | Validation error |
-| 10 | `add_to_virtual_album` | Add to album | Zum Album hinzufügen | Matches source text ("Add to album") |
-| 11 | `remove_from_virtual_album` | Remove from album | Aus dem Album entfernen | Matches source text ("Remove from album") |
+| 10 | `add_to_virtual_album` | Add to virtual album | Zu virtuellem Album hinzufügen | Dedicated overflow/CAB menu action |
+| 11 | `remove_from_virtual_album` | Remove from virtual album | Aus virtuellem Album entfernen | Dedicated overflow/CAB menu action |
 | 12 | `added_to_virtual_album` | Added to \"%s\" | Zu „%s“ hinzugefügt | German typographic quotes `„%s“` matching `values-de` style |
 | 13 | `already_in_virtual_album` | Already in \"%s\" | Bereits in „%s“ | German typographic quotes `„%s“` matching `values-de` style |
 | 14 | `removed_from_virtual_album` | Removed from the album | Aus dem Album entfernt | Matches source text ("Removed from the album") |
 | 15 | `delete_virtual_album_confirmation` | Delete the album %s? Only the album is removed, your photos and videos stay where they are. | Album %s löschen? Nur das Album wird entfernt, deine Fotos und Videos bleiben an ihrem Ort. | No quotes around `%s` (formatted with either album name or item count) |
-| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Copy to\". | Dieses Album ist leer. Wähle in einem beliebigen Ordner Elemente aus und verwende „Kopieren nach“. | References `fossify-commons` `copy_to` ("Kopieren nach") |
+| 16 | `virtual_album_empty` | This album is empty. Select items in any folder and use \"Add to virtual album\". | Dieses Album ist leer. Wähle in einem beliebigen Ordner Elemente aus und verwende „Zu virtuellem Album hinzufügen“. | References `add_to_virtual_album` ("Zu virtuellem Album hinzufügen") |
 | 17 | `virtual_album_cannot_be_modified` | This action is not available for virtual albums | Diese Aktion ist für virtuelle Alben nicht verfügbar | Toast message when action is unsupported on virtual albums |
 | 18 | `alphanumeric_password` | Alphanumeric | Alphanumerisch | Tab label for the alphanumeric secret option; distinct from the generic password label |
 | 19 | `repeat_password` | Repeat password | Passwort wiederholen | Matches `fossify-commons` `repeat_pattern`/`repeat_pin` phrasing |
