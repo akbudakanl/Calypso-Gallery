@@ -46,7 +46,7 @@ class VaultPasswordEditText : TextInputEditText {
         customSelectionActionModeCallback = NO_OP_ACTION_MODE_CALLBACK
         customInsertionActionModeCallback = NO_OP_ACTION_MODE_CALLBACK
         setTextClassifier(TextClassifier.NO_OP)
-        ViewCompat.setOnReceiveContentListener(this, ALL_MIME_TYPES) { _, _ -> null }
+        ViewCompat.setOnReceiveContentListener(this, BLOCKED_RECEIVE_MIME_TYPES) { _, _ -> null }
     }
 
     override fun isSuggestionsEnabled(): Boolean = false
@@ -111,7 +111,16 @@ class VaultPasswordEditText : TextInputEditText {
     }
 
     private companion object {
-        val ALL_MIME_TYPES = arrayOf("*/*")
+        // View.setOnReceiveContentListener rejects MIME types starting with '*' (API 31+):
+        // "A MIME type set here must not start with *". Category wildcards such as "text/*"
+        // are valid and, since the listener returns null, all of these insertions are dropped.
+        val BLOCKED_RECEIVE_MIME_TYPES = arrayOf(
+            "text/*",
+            "image/*",
+            "video/*",
+            "audio/*",
+            "application/*",
+        )
 
         val NO_OP_ACTION_MODE_CALLBACK = object : ActionMode.Callback2() {
             override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
