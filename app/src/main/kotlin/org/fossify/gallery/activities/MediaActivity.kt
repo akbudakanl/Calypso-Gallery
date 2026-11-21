@@ -40,9 +40,9 @@ import org.fossify.commons.extensions.getLatestMediaId
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getTimeFormat
-import org.fossify.commons.extensions.handleHiddenFolderPasswordProtection
+import org.fossify.gallery.extensions.handleHiddenFolderPasswordProtection
 import org.fossify.commons.extensions.showKeyboard
-import org.fossify.commons.extensions.handleLockedFolderOpening
+import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isGone

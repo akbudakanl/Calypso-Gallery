@@ -606,6 +606,20 @@ class VaultLockPolicyTest {
             "Destructive reset must stay behind the current password, never biometrics",
             resetBody.contains("requireVaultPassword(allowBiometrics = false)")
         )
+
+        val authenticatorsBody = settings.substringAfter("private fun deviceOwnerAuthenticators()")
+            .substringBefore("private fun requireDeviceOwner")
+        val requireOwnerBody = settings.substringAfter("private fun requireDeviceOwner")
+            .substringBefore("private fun setupUnarchiveVault")
+        val disableBiometricBody = settings.substringAfter("private fun confirmDisableBiometric")
+            .substringBefore("private fun showBiometricEnrollmentPrompt")
+        assertTrue(
+            "Device-owner prompt must fall back to BIOMETRIC_WEAK | DEVICE_CREDENTIAL on API 28-29 to avoid AndroidX IllegalArgumentException",
+            authenticatorsBody.contains("Build.VERSION_CODES.P..Build.VERSION_CODES.Q") &&
+                authenticatorsBody.contains("BIOMETRIC_WEAK or") &&
+                requireOwnerBody.contains("setAllowedAuthenticators(deviceOwnerAuthenticators())") &&
+                disableBiometricBody.contains("setAllowedAuthenticators(deviceOwnerAuthenticators())")
+        )
     }
 
     @Test
@@ -636,6 +650,170 @@ class VaultLockPolicyTest {
         assertTrue(
             "VaultResume must respect config.autoBiometricPromptOnVaultReturn",
             resumeText.contains("autoPromptBiometrics = config.autoBiometricPromptOnVaultReturn")
+        )
+    }
+
+    @Test
+    fun reprintIsCompletelyRemovedAndAppSecurityUsesAndroidXBiometric() {
+        val initializerFile = File("src/main/kotlin/org/fossify/gallery/helpers/LegacyFingerprintInitializer.kt")
+            .takeIf { File("src/main").exists() }
+            ?: File("app/src/main/kotlin/org/fossify/gallery/helpers/LegacyFingerprintInitializer.kt")
+        assertFalse("LegacyFingerprintInitializer.kt must be deleted", initializerFile.exists())
+
+        val mainKotlinDir = locateAppFile("src/main/kotlin")
+        val forbiddenRefs = listOf(
+            "com.github.ajalt.reprint",
+            "Reprint.",
+            "org.fossify.commons.dialogs.SecurityDialog",
+            "org.fossify.commons.adapters.PasswordTypesAdapter",
+            "org.fossify.commons.adapters.AppLockAdapter",
+            "org.fossify.commons.extensions.handleLockedFolderOpening",
+            "org.fossify.commons.extensions.handleDeletePasswordProtection",
+            "org.fossify.commons.extensions.handleHiddenFolderPasswordProtection",
+            "org.fossify.commons.extensions.handleAppPasswordProtection"
+        )
+        for (src in mainKotlinDir.walkTopDown().filter { it.isFile && it.extension == "kt" }) {
+            val content = src.readText()
+            for (forbidden in forbiddenRefs) {
+                assertFalse("${src.name} must not reference legacy $forbidden", content.contains(forbidden))
+            }
+        }
+
+        val adapterText = locateAppFile("src/main/kotlin/org/fossify/gallery/adapters/AppPasswordTypesAdapter.kt").readText()
+        assertTrue(
+            "AppPasswordTypesAdapter must route PROTECTION_FINGERPRINT to AndroidX tab_biometric_id",
+            adapterText.contains("tab_biometric_id") && !adapterText.contains("tab_fingerprint")
+        )
+
+        val unlockActivityText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/AppUnlockActivity.kt").readText()
+        assertTrue(
+            "AppUnlockActivity must route PROTECTION_FINGERPRINT to AndroidX tab_biometric_id",
+            unlockActivityText.contains("tab_biometric_id") && !unlockActivityText.contains("tab_fingerprint")
+        )
+
+        val gradleText = locateAppFile("build.gradle.kts").readText()
+        assertTrue(
+            "app/build.gradle.kts must exclude Reprint transitive artifacts",
+            gradleText.contains("exclude(group = \"com.github.tibbi\", module = \"reprint\")") &&
+                gradleText.contains("exclude(group = \"com.github.tibbi.reprint\")")
+        )
+
+        val manifestText = locateAppFile("src/main/AndroidManifest.xml").readText()
+        assertTrue(
+            "AndroidManifest.xml must declare .activities.AppUnlockActivity and remove Commons AppLockActivity",
+            manifestText.contains("android:name=\".activities.AppUnlockActivity\"") &&
+                manifestText.contains("android:name=\"org.fossify.commons.activities.AppLockActivity\"") &&
+                manifestText.contains("tools:node=\"remove\"")
+        )
+        val fingerprintPermissionMatch = Regex(
+            """<uses-permission[^>]*android\.permission\.USE_FINGERPRINT[^>]*/>""",
+            RegexOption.DOT_MATCHES_ALL
+        ).find(manifestText)
+        assertTrue(
+            "AndroidManifest.xml must cap legacy USE_FINGERPRINT permission at maxSdkVersion=29",
+            fingerprintPermissionMatch?.value?.contains("android:maxSdkVersion=\"29\"") == true
+        )
+
+        val licensesText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/ThirdPartyLicensesActivity.kt").readText()
+        assertFalse(
+            "ThirdPartyLicensesActivity must not list removed Reprint library",
+            licensesText.contains("reprint_title")
+        )
+    }
+
+    @Test
+    fun emptyPendingWipeJournalDoesNotActivateForegroundOperationRegistry() {
+        val states = ArrayList<Boolean>()
+        ForegroundOperationRegistry.onStateChanged = { states.add(it) }
+
+        assertFalse(CryptoManager.getPendingWipeJournalFile(testContext).exists())
+        assertEquals(0, CryptoManager.processPendingWipeJournalSync(testContext))
+        assertTrue(
+            "Empty pending wipe journal must not trigger ForegroundOperationRegistry or FileOperationService",
+            states.isEmpty()
+        )
+    }
+
+    @Test
+    fun android16RuntimeHardeningContractsHold() {
+        val appText = locateAppFile("src/main/kotlin/org/fossify/gallery/App.kt").readText()
+        assertTrue(
+            "App.kt must register screen-off receiver with ContextCompat.RECEIVER_NOT_EXPORTED",
+            appText.contains("ContextCompat.registerReceiver") &&
+                appText.contains("ContextCompat.RECEIVER_NOT_EXPORTED")
+        )
+        val onCreateToNextMethod = appText.substringAfter("override fun onCreate()")
+            .substringBefore("private fun syncKeepScreenOnForTrackedActivities")
+        assertTrue(
+            "App.kt must schedule pending wipe journal once on foreground start via pendingWipeJournalScheduled",
+            appText.contains("pendingWipeJournalScheduled.compareAndSet(false, true)") &&
+                !onCreateToNextMethod.substringBefore("registerActivityLifecycleCallbacks").contains("processPendingWipeJournal") &&
+                !onCreateToNextMethod.substringAfterLast("})").contains("processPendingWipeJournal")
+        )
+
+        val bootText = locateAppFile("src/main/kotlin/org/fossify/gallery/receivers/BootCompletedReceiver.kt").readText()
+        assertFalse(
+            "BootCompletedReceiver must not trigger processPendingWipeJournal (avoids FGS start from boot)",
+            bootText.contains("processPendingWipeJournal")
+        )
+        assertTrue(
+            "BootCompletedReceiver must guard background scan with goAsync() and finish()",
+            bootText.contains("goAsync()") && bootText.contains("pendingResult.finish()")
+        )
+
+        val serviceText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/operations/FileOperationService.kt").readText()
+        assertTrue(
+            "FileOperationService must guard startForeground against ForegroundServiceStartNotAllowedException",
+            serviceText.contains("startForeground(NOTIFICATION_ID") && serviceText.contains("catch (_: Throwable)")
+        )
+        assertTrue(
+            "FileOperationService must override Android 15+ onTimeout(startId, fgsType)",
+            serviceText.contains("override fun onTimeout(startId: Int, fgsType: Int)")
+        )
+        val stopSelfBody = serviceText.substringAfter("private fun stopSelfSafe()")
+            .substringBefore("override fun onDestroy()")
+        val onDestroyBody = serviceText.substringAfter("override fun onDestroy()")
+        assertTrue(
+            "FileOperationService must release wake lock in both stopSelfSafe() and onDestroy()",
+            stopSelfBody.contains("releaseWakeLock()") && onDestroyBody.contains("releaseWakeLock()")
+        )
+
+        val lockActivityText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/VaultLockActivity.kt").readText()
+        assertTrue(
+            "VaultLockActivity must apply displayCutout and ime insets",
+            lockActivityText.contains("WindowInsetsCompat.Type.displayCutout()") &&
+                lockActivityText.contains("WindowInsetsCompat.Type.ime()")
+        )
+
+        val onboardingHelperText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/OnboardingUiHelper.kt").readText()
+        assertTrue(
+            "OnboardingUiHelper must apply displayCutout insets and guard deprecated bar color setters on API 35+",
+            onboardingHelperText.contains("WindowInsetsCompat.Type.displayCutout()") &&
+                onboardingHelperText.contains("Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM")
+        )
+    }
+
+    @Test
+    fun samePasswordCheckUsesFullKdfAndAlwaysZeroizesTemporaryBuffers() {
+        val dialogText = locateAppFile("src/main/kotlin/org/fossify/gallery/dialogs/VaultSecurityDialog.kt").readText()
+        val changeBranch = dialogText.substringAfter("private fun handleSetupSubmission(secret: CharArray)")
+            .substringAfter("if (isChangePasswordMode) {")
+            .substringBefore("} else {\r\n                handleWeakFirstEntry(secret)")
+            .substringBefore("} else {\n                handleWeakFirstEntry(secret)")
+
+        assertTrue(
+            "Password change must keep running full Argon2 verification via CryptoManager.isCurrentVaultSecret",
+            changeBranch.contains("CryptoManager.isCurrentVaultSecret(activity, candidate)")
+        )
+        val uiThreadBlock = changeBranch.substringAfter("activity.runOnUiThread {")
+        assertTrue(
+            "newSecret must be zeroized in a finally block inside runOnUiThread so same==true / early returns cannot leak it",
+            uiThreadBlock.contains("finally {\n                                    newSecret.fill('\\u0000')") ||
+                uiThreadBlock.contains("finally {\r\n                                    newSecret.fill('\\u0000')")
+        )
+        assertTrue(
+            "newSecret must also be zeroized if posting to UI thread fails (!postedToUi)",
+            changeBranch.contains("if (!postedToUi)") && changeBranch.contains("newSecret.fill('\\u0000')")
         )
     }
 

@@ -1541,6 +1541,19 @@ class SettingsActivity : SimpleActivity() {
      * with the device PIN/pattern/password as a fallback. With no secure lock screen there is no
      * owner signal to check, so the 10-second confirmation of DeleteSecretsDialog is the only gate.
      */
+    private fun deviceOwnerAuthenticators(): Int {
+        return if (Build.VERSION.SDK_INT in Build.VERSION_CODES.P..Build.VERSION_CODES.Q) {
+            // AndroidX Biometric's AuthenticatorUtils.isSupportedCombination() rejects
+            // BIOMETRIC_STRONG | DEVICE_CREDENTIAL on API 28-29 (throws IllegalArgumentException).
+            // These prompts are non-crypto device-owner checks that already permit DEVICE_CREDENTIAL.
+            BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        } else {
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        }
+    }
+
     private fun requireDeviceOwner(onConfirmed: () -> Unit) {
         val keyguard = getSystemService(KeyguardManager::class.java)
         if (keyguard?.isDeviceSecure != true) {
@@ -1550,10 +1563,7 @@ class SettingsActivity : SimpleActivity() {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.device_owner_verify_title))
             .setSubtitle(getString(R.string.device_owner_verify_subtitle))
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
+            .setAllowedAuthenticators(deviceOwnerAuthenticators())
             .build()
         BiometricPrompt(
             this,
@@ -1672,9 +1682,7 @@ class SettingsActivity : SimpleActivity() {
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
             .setSubtitle(getString(R.string.biometric_disable_confirmation))
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
+            .setAllowedAuthenticators(deviceOwnerAuthenticators())
             .build()
         BiometricPrompt(
             this,

@@ -234,4 +234,14 @@ open class SimpleActivity : BaseSimpleActivity() {
         toast(org.fossify.commons.R.string.no_storage_permissions)
         finish()
     }
+
+    @Suppress("DEPRECATION")
+    override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
+        if (intent.component?.className == "org.fossify.commons.activities.AppLockActivity") {
+            val replacement = Intent(intent).setClass(this, AppUnlockActivity::class.java)
+            super.startActivityForResult(replacement, requestCode, options)
+            return
+        }
+        super.startActivityForResult(intent, requestCode, options)
+    }
 }

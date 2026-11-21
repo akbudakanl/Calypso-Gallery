@@ -30,7 +30,7 @@ import org.fossify.commons.extensions.getFormattedDuration
 import org.fossify.commons.extensions.getOTGPublicPath
 import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.extensions.getTimeFormat
-import org.fossify.commons.extensions.handleDeletePasswordProtection
+import org.fossify.gallery.extensions.handleDeletePasswordProtection
 import org.fossify.commons.extensions.hasOTGConnected
 import org.fossify.commons.extensions.internalStoragePath
 import org.fossify.commons.extensions.isAStorageRootFolder

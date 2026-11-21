@@ -11,7 +11,7 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import com.github.ajalt.reprint.core.Reprint
+import androidx.core.content.ContextCompat
 import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.SplashActivity
@@ -32,6 +32,7 @@ import java.net.URLConnection
 import java.net.URLStreamHandler
 import java.util.Collections
 import java.util.WeakHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import org.fossify.gallery.helpers.processPendingWipeJournal
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.OperationJournal
@@ -40,6 +41,7 @@ class App : FossifyApp() {
 
     override val isAppLockFeatureAvailable = true
     private var startedActivities = 0
+    private val pendingWipeJournalScheduled = AtomicBoolean(false)
     private val trackedActivities = Collections.newSetFromMap(WeakHashMap<Activity, Boolean>())
     private val operationKeepScreenOnActivities = Collections.newSetFromMap(WeakHashMap<Activity, Boolean>())
 
@@ -72,16 +74,22 @@ class App : FossifyApp() {
         appearanceConfig.lastIconColor = appearanceConfig.appIconColor
         AppearanceManager.applyLauncherIcon(this, palette.appIcon)
         installCodeLevelNetworkBlocker()
-        Reprint.initialize(this)
 
-        registerReceiver(object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                    VaultSessionManager.onScreenOff(this@App)
-                    syncPrivacyCurtainForTrackedActivities()
-                }
-            }
-        }, IntentFilter(Intent.ACTION_SCREEN_OFF))
+        runCatching {
+            ContextCompat.registerReceiver(
+                this,
+                object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent?) {
+                        if (intent?.action == Intent.ACTION_SCREEN_OFF) {
+                            VaultSessionManager.onScreenOff(this@App)
+                            syncPrivacyCurtainForTrackedActivities()
+                        }
+                    }
+                },
+                IntentFilter(Intent.ACTION_SCREEN_OFF),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
 
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -97,6 +105,11 @@ class App : FossifyApp() {
                     // Back in the foreground: expire session only if the 30 minute background deadline passed.
                     VaultSessionManager.onAppForegrounded(this@App)
                     RandomOrderManager.onAppForegrounded()
+                    if (pendingWipeJournalScheduled.compareAndSet(false, true)) {
+                        runCatching {
+                            org.fossify.gallery.helpers.CryptoManager.processPendingWipeJournal(this@App)
+                        }
+                    }
                 }
                 syncPrivacyCurtain(activity)
                 syncKeepScreenOn(activity, ForegroundOperationRegistry.isActive)
@@ -130,10 +143,6 @@ class App : FossifyApp() {
                 operationKeepScreenOnActivities.remove(activity)
             }
         })
-
-        try {
-            org.fossify.gallery.helpers.CryptoManager.processPendingWipeJournal(this)
-        } catch (_: Throwable) {}
     }
 
     private fun syncKeepScreenOnForTrackedActivities(active: Boolean) {

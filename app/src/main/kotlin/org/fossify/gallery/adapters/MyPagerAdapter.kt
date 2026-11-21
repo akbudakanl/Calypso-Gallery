@@ -117,6 +117,12 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
         }
     }
 
+    fun onPageScrollStateChanged(state: Int) {
+        for (fragment in fragments.values.toList()) {
+            fragment.onPageScrollStateChanged(state)
+        }
+    }
+
     // try fixing TransactionTooLargeException crash on Android Nougat, tip from https://stackoverflow.com/a/43193425/1967672
     override fun saveState(): Parcelable? {
         val bundle = super.saveState() as Bundle?

@@ -198,8 +198,18 @@ detekt {
     allRules = false
 }
 
+configurations.configureEach {
+    exclude(group = "com.github.tibbi", module = "reprint")
+    exclude(group = "com.github.tibbi.reprint")
+    exclude(group = "com.github.ajalt", module = "reprint")
+    exclude(group = "com.github.ajalt.reprint")
+}
+
 dependencies {
-    implementation(libs.fossify.commons)
+    implementation(libs.fossify.commons) {
+        exclude(group = "com.github.tibbi", module = "reprint")
+        exclude(group = "com.github.tibbi.reprint")
+    }
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.print)
     implementation(libs.android.image.cropper)

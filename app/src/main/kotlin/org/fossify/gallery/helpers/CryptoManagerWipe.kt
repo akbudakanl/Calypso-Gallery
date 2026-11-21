@@ -82,6 +82,12 @@ fun CryptoManager.processPendingWipeJournal(context: Context) {
 
 
 internal fun CryptoManager.processPendingWipeJournalSync(context: Context): Int {
+    val hasPendingEntries = synchronized(pendingWipeLock) {
+        val file = getPendingWipeJournalFile(context)
+        file.exists() && file.length() > 0L
+    }
+    if (!hasPendingEntries) return 0
+
     return ForegroundOperationRegistry.withOperation(context, "pending-wipe") {
         try {
             val snapshot = synchronized(pendingWipeLock) {

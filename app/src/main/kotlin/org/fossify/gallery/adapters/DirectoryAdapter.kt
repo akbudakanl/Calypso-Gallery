@@ -40,8 +40,8 @@ import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getTimeFormat
-import org.fossify.commons.extensions.handleDeletePasswordProtection
-import org.fossify.commons.extensions.handleLockedFolderOpening
+import org.fossify.gallery.extensions.handleDeletePasswordProtection
+import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.isAStorageRootFolder
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isGif

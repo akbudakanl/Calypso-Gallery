@@ -547,32 +547,52 @@ class VaultSecurityDialog(
                 weakWarningInFlight = true
                 binding.vaultStatusLabel.beVisible()
                 binding.vaultStatusLabel.setText(R.string.checking_password)
-                ensureBackgroundThread {
-                    val same = try {
-                        CryptoManager.isCurrentVaultSecret(activity, candidate)
-                    } catch (_: Throwable) {
-                        false
-                    } finally {
-                        candidate.fill('\u0000')
-                    }
-                    activity.runOnUiThread {
-                        if (activity.isFinishing || activity.isDestroyed) return@runOnUiThread
-                        weakWarningInFlight = false
-                        binding.vaultStatusLabel.beGone()
-                        if (same) {
-                            VaultNoticeDialog(
-                                activity = activity,
-                                title = activity.getString(R.string.vault_same_password_title),
-                                message = activity.getString(R.string.vault_same_password_message),
-                                positiveText = activity.getString(org.fossify.commons.R.string.ok),
-                                onPositive = {},
-                            )
-                            inputHelper.clearInputs()
-                            return@runOnUiThread
+                try {
+                    ensureBackgroundThread {
+                        var postedToUi = false
+                        try {
+                            val same = try {
+                                CryptoManager.isCurrentVaultSecret(activity, candidate)
+                            } catch (_: Throwable) {
+                                false
+                            } finally {
+                                candidate.fill('\u0000')
+                            }
+                            activity.runOnUiThread {
+                                try {
+                                    if (activity.isFinishing || activity.isDestroyed || dialog?.isShowing != true) {
+                                        return@runOnUiThread
+                                    }
+                                    weakWarningInFlight = false
+                                    binding.vaultStatusLabel.beGone()
+                                    if (same) {
+                                        VaultNoticeDialog(
+                                            activity = activity,
+                                            title = activity.getString(R.string.vault_same_password_title),
+                                            message = activity.getString(R.string.vault_same_password_message),
+                                            positiveText = activity.getString(org.fossify.commons.R.string.ok),
+                                            onPositive = {},
+                                        )
+                                        inputHelper.clearInputs()
+                                        return@runOnUiThread
+                                    }
+                                    handleWeakFirstEntry(newSecret)
+                                } finally {
+                                    newSecret.fill('\u0000')
+                                }
+                            }
+                            postedToUi = true
+                        } finally {
+                            candidate.fill('\u0000')
+                            if (!postedToUi) {
+                                newSecret.fill('\u0000')
+                            }
                         }
-                        handleWeakFirstEntry(newSecret)
-                        newSecret.fill('\u0000')
                     }
+                } catch (_: Throwable) {
+                    weakWarningInFlight = false
+                    candidate.fill('\u0000')
+                    newSecret.fill('\u0000')
                 }
             } else {
                 handleWeakFirstEntry(secret)

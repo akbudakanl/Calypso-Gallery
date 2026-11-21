@@ -25,6 +25,7 @@ class FileOperationService : Service() {
         private const val NOTIFICATION_ID = 4103
         private const val EXTRA_LABEL = "label"
         private const val ACTION_CANCEL = "org.fossify.gallery.action.CANCEL_FILE_OPERATION"
+        private const val WAKE_LOCK_TIMEOUT_MS = 10 * 60 * 1000L
 
         @Volatile
         private var shouldRun = false
@@ -61,7 +62,7 @@ class FileOperationService : Service() {
         fun stop(context: Context) {
             shouldRun = false
             val instance = activeInstance
-            if (instance != null && instance.foregroundStarted) {
+            if (instance != null) {
                 runCatching { instance.stopSelfSafe() }
             }
             // If activeInstance is null, startForegroundService() may still be in flight;
@@ -87,24 +88,35 @@ class FileOperationService : Service() {
             ?: getString(R.string.resume_operations_title)
         ensureChannel()
         val notification = buildNotification(label)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        val started = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            true
+        } catch (_: Throwable) {
+            false
         }
-        foregroundStarted = true
+        foregroundStarted = started
+        if (!started) {
+            releaseWakeLock()
+            runCatching { stopSelf() }
+            return START_NOT_STICKY
+        }
 
         if (!shouldRun) {
             stopSelfSafe()
             return START_NOT_STICKY
         }
 
-        if (wakeLock == null) {
-            val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "cipher:file_operation")
-                .also { it.acquire(30 * 60 * 1000L) }
-        }
+        acquireOrRefreshWakeLock()
         return START_NOT_STICKY
+    }
+
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        shouldRun = false
+        stopSelfSafe()
     }
 
     private fun ensureChannel() {
@@ -149,21 +161,47 @@ class FileOperationService : Service() {
 
     private fun updateNotification(label: String) {
         if (!foregroundStarted) return
+        if (shouldRun) {
+            acquireOrRefreshWakeLock()
+        }
         runCatching {
             getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotification(label))
         }
     }
 
-    private fun stopSelfSafe() {
+    private fun acquireOrRefreshWakeLock() {
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE)
-            } else {
-                @Suppress("DEPRECATION")
-                stopForeground(true)
+            val lock = wakeLock ?: run {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+                powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "cipher:file_operation").apply {
+                    setReferenceCounted(false)
+                }.also { wakeLock = it }
+            }
+            lock.acquire(WAKE_LOCK_TIMEOUT_MS)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        runCatching {
+            wakeLock?.let { if (it.isHeld) it.release() }
+        }
+        wakeLock = null
+    }
+
+    private fun stopSelfSafe() {
+        if (foregroundStarted) {
+            foregroundStarted = false
+            runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(true)
+                }
             }
         }
-        stopSelf()
+        releaseWakeLock()
+        runCatching { stopSelf() }
     }
 
     override fun onDestroy() {
@@ -171,8 +209,7 @@ class FileOperationService : Service() {
             activeInstance = null
         }
         foregroundStarted = false
-        wakeLock?.let { if (it.isHeld) it.release() }
-        wakeLock = null
+        releaseWakeLock()
         super.onDestroy()
     }
 }

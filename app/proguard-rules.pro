@@ -12,6 +12,4 @@
 native <methods>;
 }
 -keep class androidx.renderscript.** { *; }
-
-# Reprint
--keep class com.github.ajalt.reprint.module.** { *; }
+-dontwarn com.github.ajalt.reprint.**

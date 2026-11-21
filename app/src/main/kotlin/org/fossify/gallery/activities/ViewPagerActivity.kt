@@ -57,8 +57,8 @@ import org.fossify.commons.extensions.getIsPathDirectory
 import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getUriMimeType
-import org.fossify.commons.extensions.handleDeletePasswordProtection
-import org.fossify.commons.extensions.handleLockedFolderOpening
+import org.fossify.gallery.extensions.handleDeletePasswordProtection
+import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.internalStoragePath
@@ -268,6 +268,9 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart)
     private var mIsVaultResumePrompting = false
+
+    private var mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+    private val mDeferredPlayerReleases = ArrayList<() -> Unit>()
     private var mVaultResumeBlob: String? = null
     private var mFavoritePaths = ArrayList<String>()
     private var mIgnoredPaths = ArrayList<String>()
@@ -339,6 +342,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         super.onPause()
         stopSlideshow()
         flushPendingMediaOrderIfNeeded()
+        mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+        flushDeferredPlayerReleases()
     }
 
     private fun ensureDirectoryFlagsCached() {
@@ -388,6 +393,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     override fun onDestroy() {
+        mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+        flushDeferredPlayerReleases()
         super.onDestroy()
         VideoFragment.clearFrameCache()
         ColorModeHelper.resetColorMode(this)
@@ -609,6 +616,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             mPath = currentPath
         }
         stopSlideshow()
+        mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+        flushDeferredPlayerReleases()
         binding.viewPager.removeOnPageChangeListener(this)
         binding.viewPager.adapter = null
         binding.viewPager.visibility = View.INVISIBLE
@@ -831,6 +840,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     private fun updatePagerItems(media: MutableList<Medium>) {
         val pagerAdapter = MyPagerAdapter(this, supportFragmentManager, media)
         if (!isDestroyed) {
+            mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+            flushDeferredPlayerReleases()
             pagerAdapter.shouldInitFragment = mPos < 5
             binding.viewPager.apply {
                 // must remove the listener before changing adapter, otherwise it might cause `mPos` to be set to 0
@@ -2296,6 +2307,25 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     override fun isFullScreen() = mIsFullScreen
 
+    override fun isPagerScrolling(): Boolean = mPagerScrollState != ViewPager.SCROLL_STATE_IDLE
+
+    override fun deferPlayerRelease(releaseAction: () -> Unit) {
+        if (isPagerScrolling()) {
+            mDeferredPlayerReleases.add(releaseAction)
+        } else {
+            releaseAction()
+        }
+    }
+
+    private fun flushDeferredPlayerReleases() {
+        if (mDeferredPlayerReleases.isEmpty()) {
+            return
+        }
+        val actions = mDeferredPlayerReleases.toList()
+        mDeferredPlayerReleases.clear()
+        actions.forEach { it.invoke() }
+    }
+
     override fun saveVideoPlaybackPosition(path: String, position: Long) {
         mVideoPlaybackPositions[path] = position
     }
@@ -2411,9 +2441,14 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     override fun onPageScrollStateChanged(state: Int) {
-        if (state == ViewPager.SCROLL_STATE_IDLE && getCurrentMedium() != null) {
-            checkOrientation()
+        mPagerScrollState = state
+        if (state == ViewPager.SCROLL_STATE_IDLE) {
+            flushDeferredPlayerReleases()
+            if (getCurrentMedium() != null) {
+                checkOrientation()
+            }
         }
+        (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
     }
 
     private fun isExternalIntent(): Boolean {

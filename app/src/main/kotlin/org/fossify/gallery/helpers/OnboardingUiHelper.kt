@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.view.View
 import android.view.Window
 import android.view.animation.DecelerateInterpolator
@@ -36,8 +37,12 @@ object OnboardingUiHelper {
 
     fun applySystemBars(window: Window, palette: AppearancePalette) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.TRANSPARENT
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            @Suppress("DEPRECATION")
+            window.statusBarColor = Color.TRANSPARENT
+            @Suppress("DEPRECATION")
+            window.navigationBarColor = Color.TRANSPARENT
+        }
         val lightBars = isLightColor(palette.background)
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = lightBars
@@ -46,18 +51,36 @@ object OnboardingUiHelper {
     }
 
     fun applyInsets(scrollView: View, footerView: View) {
-        val baseTop = scrollView.paddingTop
-        val baseBottom = footerView.paddingBottom
+        val baseScrollLeft = scrollView.paddingLeft
+        val baseScrollTop = scrollView.paddingTop
+        val baseScrollRight = scrollView.paddingRight
+        val baseScrollBottom = scrollView.paddingBottom
+        val baseFooterLeft = footerView.paddingLeft
+        val baseFooterTop = footerView.paddingTop
+        val baseFooterRight = footerView.paddingRight
+        val baseFooterBottom = footerView.paddingBottom
         ViewCompat.setOnApplyWindowInsetsListener(scrollView) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, baseTop + bars.top, v.paddingRight, v.paddingBottom)
+            val safeBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.setPadding(
+                baseScrollLeft + safeBars.left,
+                baseScrollTop + safeBars.top,
+                baseScrollRight + safeBars.right,
+                baseScrollBottom
+            )
             insets
         }
         ViewCompat.setOnApplyWindowInsetsListener(footerView) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, baseBottom + bars.bottom)
+            val safeBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            v.setPadding(
+                baseFooterLeft + safeBars.left,
+                baseFooterTop,
+                baseFooterRight + safeBars.right,
+                baseFooterBottom + safeBars.bottom
+            )
             insets
         }
+        ViewCompat.requestApplyInsets(scrollView)
+        ViewCompat.requestApplyInsets(footerView)
     }
 
     fun styleWelcomePane(context: Context, binding: LayoutOnboardingWelcomeBinding, palette: AppearancePalette) {

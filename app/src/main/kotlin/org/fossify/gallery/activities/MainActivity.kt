@@ -41,8 +41,7 @@ import org.fossify.commons.extensions.getProperSize
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getStorageDirectories
 import org.fossify.commons.extensions.getTimeFormat
-import org.fossify.commons.extensions.handleHiddenFolderPasswordProtection
-import org.fossify.commons.extensions.handleLockedFolderOpening
+import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.hasAllPermissions
 import org.fossify.commons.extensions.hasOTGConnected
 import org.fossify.commons.extensions.hasPermission

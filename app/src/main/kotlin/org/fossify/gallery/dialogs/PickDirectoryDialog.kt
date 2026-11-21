@@ -18,7 +18,7 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getDefaultCopyDestinationPath
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.handleLockedFolderOpening
+import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.internalStoragePath
 import org.fossify.commons.extensions.isGone

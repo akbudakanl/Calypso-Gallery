@@ -63,23 +63,34 @@ class VaultLockActivity : SimpleActivity() {
         binding.vaultLockBackdrop.applyPalette(palette)
         binding.vaultLockRoot.filterTouchesWhenObscured = true
 
-        // Apply system bar insets cleanly to scroll container and top-left back button
+        // Apply system bar, display cutout, and IME insets cleanly to scroll container and top-left back button
+        val baseScrollLeft = binding.vaultLockScroll.paddingLeft
         val baseScrollTop = binding.vaultLockScroll.paddingTop
+        val baseScrollRight = binding.vaultLockScroll.paddingRight
         val baseScrollBottom = binding.vaultLockScroll.paddingBottom
         val backParams = binding.vaultLockBackBtn.layoutParams as android.widget.FrameLayout.LayoutParams
         val baseBackTop = backParams.topMargin
+        val baseBackStart = backParams.marginStart
         ViewCompat.setOnApplyWindowInsetsListener(binding.vaultLockRoot) { _, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val safeBars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             binding.vaultLockScroll.setPadding(
-                binding.vaultLockScroll.paddingLeft,
-                baseScrollTop + bars.top,
-                binding.vaultLockScroll.paddingRight,
-                baseScrollBottom + bars.bottom
+                baseScrollLeft + safeBars.left,
+                baseScrollTop + safeBars.top,
+                baseScrollRight + safeBars.right,
+                baseScrollBottom + maxOf(safeBars.bottom, imeBottom)
             )
-            backParams.topMargin = baseBackTop + bars.top
+            val horizontalStartInset = if (binding.vaultLockRoot.layoutDirection == View.LAYOUT_DIRECTION_RTL) {
+                safeBars.right
+            } else {
+                safeBars.left
+            }
+            backParams.topMargin = baseBackTop + safeBars.top
+            backParams.marginStart = baseBackStart + horizontalStartInset
             binding.vaultLockBackBtn.layoutParams = backParams
             insets
         }
+        ViewCompat.requestApplyInsets(binding.vaultLockRoot)
 
         binding.vaultLockBackBtn.applyColorFilter(palette.text)
         binding.vaultLockBackBtn.filterTouchesWhenObscured = true

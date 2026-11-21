@@ -6,11 +6,11 @@ import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.auth.AuthPromptHost
 import androidx.fragment.app.FragmentActivity
-import org.fossify.commons.adapters.PasswordTypesAdapter
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.commons.interfaces.HashListener
 import org.fossify.commons.views.MyDialogViewPager
+import org.fossify.gallery.adapters.AppPasswordTypesAdapter
 import org.fossify.gallery.databinding.DialogAppSecurityBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
@@ -18,14 +18,13 @@ import org.fossify.gallery.helpers.AppearanceManager
 /**
  * In-app replacement for Commons' SecurityDialog.
  *
- * Two differences matter here:
+ * Three differences matter here:
  *  - the PIN / password / pattern tabs are outside the ScrollView, so they stay pinned;
  *  - the dialog is not cancelable by Back or by tapping outside — a password prompt must be
  *    finished (or explicitly cancelled with the button) instead of vanishing while the user
- *    scrolls the settings behind it.
- *
- * Secret hashing and biometric auth still use Commons' PasswordTypesAdapter, so the stored hashes
- * stay fully compatible with the upstream app-protection settings.
+ *    scrolls the settings behind it;
+ *  - secret hashing and biometric auth use [AppPasswordTypesAdapter], which always uses
+ *    AndroidX Biometric across API 26–36 instead of the legacy Reprint library on API < 30.
  */
 class AppSecurityDialog(
     private val activity: Activity,
@@ -35,7 +34,7 @@ class AppSecurityDialog(
 ) : HashListener {
     private var dialog: AlertDialog? = null
     private val binding = DialogAppSecurityBinding.inflate(activity.layoutInflater, null, false)
-    private var tabsAdapter: PasswordTypesAdapter
+    private var tabsAdapter: AppPasswordTypesAdapter
     private var viewPager: MyDialogViewPager
 
     init {
@@ -64,7 +63,7 @@ class AppSecurityDialog(
         binding.apply {
             viewPager = dialogTabViewPager
             viewPager.offscreenPageLimit = 2
-            tabsAdapter = PasswordTypesAdapter(
+            tabsAdapter = AppPasswordTypesAdapter(
                 context = root.context,
                 requiredHash = requiredHash,
                 hashListener = this@AppSecurityDialog,
@@ -73,7 +72,7 @@ class AppSecurityDialog(
                 // Always expose the third page: on devices without biometrics Commons renders
                 // an explanation there instead of hiding the tab entirely.
                 showBiometricIdTab = true,
-                showBiometricAuthentication = showTabIndex == PROTECTION_FINGERPRINT && isRPlus(),
+                showBiometricAuthentication = showTabIndex == PROTECTION_FINGERPRINT,
             )
             viewPager.adapter = tabsAdapter
             viewPager.onPageChangeListener { dialogTabLayout.getTabAt(it)?.select() }
@@ -84,12 +83,10 @@ class AppSecurityDialog(
             dialogTabLayout.setSelectedTabIndicatorColor(palette.primary)
 
             if (showTabIndex == SHOW_ALL_TABS) {
-                val biometricTitle = if (isRPlus()) {
-                    org.fossify.commons.R.string.biometrics
-                } else {
-                    org.fossify.commons.R.string.fingerprint
-                }
-                dialogTabLayout.addTab(dialogTabLayout.newTab().setText(biometricTitle), PROTECTION_FINGERPRINT)
+                dialogTabLayout.addTab(
+                    dialogTabLayout.newTab().setText(org.fossify.commons.R.string.biometrics),
+                    PROTECTION_FINGERPRINT
+                )
                 dialogTabLayout.onTabSelectionChanged(tabSelectedAction = { tab ->
                     viewPager.currentItem = when {
                         tab.text.toString().equals(root.context.getString(org.fossify.commons.R.string.pattern), true) -> PROTECTION_PATTERN

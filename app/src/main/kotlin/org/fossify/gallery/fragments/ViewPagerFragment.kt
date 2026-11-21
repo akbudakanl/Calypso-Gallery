@@ -25,6 +25,8 @@ abstract class ViewPagerFragment : Fragment() {
 
     abstract fun fullscreenToggled(isFullscreen: Boolean)
 
+    open fun onPageScrollStateChanged(state: Int) {}
+
     interface FragmentListener {
         fun fragmentClicked()
 
@@ -39,6 +41,19 @@ abstract class ViewPagerFragment : Fragment() {
         fun isSlideShowActive(): Boolean
 
         fun isFullScreen(): Boolean
+
+        /**
+         * True while the host ViewPager is actively dragging or settling between pages.
+         */
+        fun isPagerScrolling(): Boolean = false
+
+        /**
+         * Defers expensive player teardown (ExoPlayer.release / MediaCodec release) until the
+         * host ViewPager settles into SCROLL_STATE_IDLE so page swipes stay stutter-free.
+         */
+        fun deferPlayerRelease(releaseAction: () -> Unit) {
+            releaseAction()
+        }
 
         /**
          * Keeps a video position while this viewer is open, even when ViewPager

@@ -31,6 +31,7 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.updateLayoutParams
+import androidx.viewpager.widget.ViewPager
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -105,6 +106,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         private const val TOUCH_HOLD_DURATION_MS = 500L
         private const val TOUCH_HOLD_SPEED_MULTIPLIER = 2.0f
         private const val TOUCH_SLOP_DIVIDER = 3
+        private const val CACHED_FRAME_MAX_DIMENSION = 720f
 
         val sVideoFrameCache = object : androidx.collection.LruCache<String, Bitmap>(6 * 1024 * 1024) {
             override fun sizeOf(key: String, value: Bitmap): Int {
@@ -143,7 +145,20 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     var mIsPlaying = false
     private var mSkippedToEnd = false
 
+    private class DeferredPlayerRelease(
+        val player: ExoPlayer,
+        val surface: Surface?,
+        var surfaceTexture: SurfaceTexture?,
+    )
+
     private var mExoPlayer: ExoPlayer? = null
+    private var mVideoSurface: Surface? = null
+    private var mDeferredSurfaceTexture: SurfaceTexture? = null
+    private var mActiveDeferredRelease: DeferredPlayerRelease? = null
+    private var mPausedByPagerDrag = false
+    private var mPendingAutoplayOnIdle = false
+    private var mPendingInitOnIdle = false
+    private var mPendingFrameCaptureOnIdle = false
     private var mVideoSize = Point(1, 1)
     private var mTimerHandler = Handler(Looper.getMainLooper())
 
@@ -432,7 +447,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
                 videoSurface.onGlobalLayout {
                     if (mIsFragmentVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
-                        playVideo()
+                        if (listener?.isPagerScrolling() == true) {
+                            mPendingAutoplayOnIdle = true
+                        } else {
+                            playVideo()
+                        }
                     }
                 }
             }
@@ -445,7 +464,15 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         setupVideoDuration()
 
         if (mIsFragmentVisible) {
-            initExoPlayer()
+            if (listener?.isPagerScrolling() == true) {
+                if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
+                    mPendingAutoplayOnIdle = true
+                } else {
+                    mPendingInitOnIdle = true
+                }
+            } else {
+                initExoPlayer()
+            }
         }
         return mView
     }
@@ -471,7 +498,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     override fun onPause() {
         super.onPause()
         storeStateVariables()
-        pauseVideo()
+        mPausedByPagerDrag = false
+        mPendingAutoplayOnIdle = false
+        mPendingInitOnIdle = false
+        mPendingFrameCaptureOnIdle = false
+        pauseVideo(deferFrameCapture = false)
         if (mStoredRememberLastVideoPosition && mIsFragmentVisible && mWasVideoStarted) {
             saveVideoProgress()
         }
@@ -486,16 +517,84 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
     override fun setMenuVisibility(menuVisible: Boolean) {
         super.setMenuVisibility(menuVisible)
+        mPausedByPagerDrag = false
         if (mIsFragmentVisible && !menuVisible) {
-            pauseVideo()
+            mPendingAutoplayOnIdle = false
+            mPendingInitOnIdle = false
+            pauseVideo(deferFrameCapture = listener?.isPagerScrolling() == true)
         }
 
         mIsFragmentVisible = menuVisible
-        val shouldPlayVideo = mWasFragmentInit && menuVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
+        if (!menuVisible) {
+            return
+        }
+
+        mPendingFrameCaptureOnIdle = false
+        val shouldPlayVideo = mWasFragmentInit && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
+        val isScrolling = listener?.isPagerScrolling() == true
         if (shouldPlayVideo) {
-            playVideo()
-        } else if (mWasFragmentInit && menuVisible && mPositionAtPause > 0L && mExoPlayer == null) {
-            initExoPlayer()
+            if (isScrolling) {
+                mPendingAutoplayOnIdle = true
+            } else {
+                playVideo()
+            }
+        } else if (mWasFragmentInit && mPositionAtPause > 0L && mExoPlayer == null) {
+            if (isScrolling) {
+                mPendingInitOnIdle = true
+            } else {
+                initExoPlayer()
+            }
+        }
+    }
+
+    override fun onPageScrollStateChanged(state: Int) {
+        if (!mWasFragmentInit) {
+            return
+        }
+
+        when (state) {
+            ViewPager.SCROLL_STATE_DRAGGING -> {
+                mTimerHandler.removeCallbacks(mTouchHoldRunnable)
+                stopHoldSpeedMultiplierGesture()
+                if (mIsFragmentVisible && mIsPlaying && mExoPlayer != null) {
+                    mPausedByPagerDrag = true
+                    mExoPlayer?.playWhenReady = false
+                    stopTimer()
+                }
+            }
+
+            ViewPager.SCROLL_STATE_IDLE -> {
+                if (mIsFragmentVisible) {
+                    mPendingFrameCaptureOnIdle = false
+                    if (mPausedByPagerDrag) {
+                        mPausedByPagerDrag = false
+                        if (mIsPlaying && mExoPlayer != null) {
+                            mExoPlayer?.playWhenReady = true
+                            startTimer()
+                        }
+                    }
+
+                    if (mPendingAutoplayOnIdle) {
+                        mPendingAutoplayOnIdle = false
+                        if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
+                            playVideo()
+                        }
+                    } else if (mPendingInitOnIdle) {
+                        mPendingInitOnIdle = false
+                        if (mPositionAtPause > 0L && mExoPlayer == null) {
+                            initExoPlayer()
+                        }
+                    }
+                } else {
+                    mPausedByPagerDrag = false
+                    mPendingAutoplayOnIdle = false
+                    mPendingInitOnIdle = false
+                    if (mPendingFrameCaptureOnIdle) {
+                        mPendingFrameCaptureOnIdle = false
+                        captureFrameSnapshot()
+                    }
+                }
+            }
         }
     }
 
@@ -585,8 +684,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         if (shouldSkipInit) return
 
         // Cancel an in-flight thumbnail extraction before the player starts reading
-        // the same file. This also covers videos opened manually after their preview.
-        Glide.with(this).clear(binding.videoPreview)
+        // the same file. If Glide already produced a drawable, keep it visible until
+        // ExoPlayer renders its first frame to avoid a black flash.
+        if (binding.videoPreview.drawable == null) {
+            Glide.with(this).clear(binding.videoPreview)
+        }
 
         val isContentUri = mMedium.path.startsWith("content://")
         val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
@@ -643,8 +745,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                         .build(), false
                 )
                 initListeners()
-                if (mTextureView.surfaceTexture != null) {
-                    setVideoSurface(Surface(mTextureView.surfaceTexture))
+                mTextureView.surfaceTexture?.let { surfaceTexture ->
+                    attachSurface(this, surfaceTexture)
                 }
                 prepare()
 
@@ -1068,7 +1170,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
-    private fun pauseVideo() {
+    private fun pauseVideo(allowFrameCapture: Boolean = true, deferFrameCapture: Boolean = false) {
         if (mExoPlayer == null) {
             return
         }
@@ -1076,6 +1178,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPlayOnPrepared = false
         // A playback that was waiting for the screen rotation must not start anymore.
         mPendingPlayStart = false
+        mPausedByPagerDrag = false
         mIsPlaying = false
         stopTimer()
         val ended = videoEnded()
@@ -1088,23 +1191,33 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPositionAtPause = if (ended) 0L else (mExoPlayer?.currentPosition ?: 0L)
         listener?.saveVideoPlaybackPosition(mMedium.path, mPositionAtPause)
 
-        if (!ended && mPositionAtPause > 0L && mTextureView.isAvailable && mTextureView.width > 0 && mTextureView.height > 0) {
-            try {
-                // Use ONE scale factor for both axes: clamping width and height independently
-                // distorted the cached frame whenever the screen orientation did not match the
-                // video orientation (e.g. a landscape video on a portrait tablet). The distorted
-                // bitmap was briefly shown before autoplay rendered the first frame.
-                val sourceWidth = mTextureView.width
-                val sourceHeight = mTextureView.height
-                val scale = minOf(1f, 1080f / sourceWidth, 1920f / sourceHeight)
-                val scaleWidth = maxOf(1, (sourceWidth * scale).toInt())
-                val scaleHeight = maxOf(1, (sourceHeight * scale).toInt())
-                val bmp = mTextureView.getBitmap(scaleWidth, scaleHeight)
-                if (bmp != null) {
-                    sVideoFrameCache.put(mMedium.path, bmp)
-                }
-            } catch (_: Throwable) {}
+        if (!ended && mPositionAtPause > 0L && allowFrameCapture) {
+            if (deferFrameCapture) {
+                mPendingFrameCaptureOnIdle = true
+            } else {
+                captureFrameSnapshot()
+            }
         }
+    }
+
+    private fun captureFrameSnapshot() {
+        if (!mWasFragmentInit || !mTextureView.isAvailable || mTextureView.width <= 0 || mTextureView.height <= 0) {
+            return
+        }
+
+        try {
+            // Use ONE scale factor for both axes so aspect ratio is always preserved, and keep
+            // the longest edge capped so the readback is fast and fits comfortably in sVideoFrameCache.
+            val sourceWidth = mTextureView.width
+            val sourceHeight = mTextureView.height
+            val scale = minOf(1f, CACHED_FRAME_MAX_DIMENSION / maxOf(sourceWidth, sourceHeight))
+            val scaleWidth = maxOf(1, (sourceWidth * scale).toInt())
+            val scaleHeight = maxOf(1, (sourceHeight * scale).toInt())
+            val bmp = mTextureView.getBitmap(scaleWidth, scaleHeight)
+            if (bmp != null) {
+                sVideoFrameCache.put(mMedium.path, bmp)
+            }
+        } catch (_: Throwable) {}
     }
 
     private fun restoreSessionPlaybackPosition() {
@@ -1210,8 +1323,12 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun cleanup() {
-        pauseVideo()
-        releaseExoPlayer()
+        mPausedByPagerDrag = false
+        mPendingAutoplayOnIdle = false
+        mPendingInitOnIdle = false
+        mPendingFrameCaptureOnIdle = false
+        pauseVideo(allowFrameCapture = false)
+        releaseExoPlayer(allowDefer = true)
 
         if (mWasFragmentInit) {
             mCurrTimeView.text = 0.getFormattedDuration()
@@ -1221,25 +1338,81 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
     }
 
-    private fun releaseExoPlayer() {
+    private fun attachSurface(player: ExoPlayer, surfaceTexture: SurfaceTexture) {
+        val oldSurface = mVideoSurface
+        val oldDeferredTexture = mDeferredSurfaceTexture
+        val surface = Surface(surfaceTexture)
+        mVideoSurface = surface
+        mDeferredSurfaceTexture = null
+        player.setVideoSurface(surface)
+        oldSurface?.release()
+        if (oldDeferredTexture != null && oldDeferredTexture !== surfaceTexture) {
+            oldDeferredTexture.release()
+        }
+    }
+
+    private fun releaseExoPlayer(allowDefer: Boolean = false) {
         mIsPlayerPrepared = false
         mPlayOnPrepared = false
-        mExoPlayer?.apply {
-            setVideoSurface(null)
-            stop()
-            release()
-        }
+        val player = mExoPlayer ?: return
+        val surface = mVideoSurface
+        val surfaceTexture = mDeferredSurfaceTexture
         mExoPlayer = null
+        mVideoSurface = null
+        mDeferredSurfaceTexture = null
+
+        // Stop playback and silence audio immediately without blocking the UI thread.
+        player.playWhenReady = false
+        player.volume = 0f
+
+        val holder = DeferredPlayerRelease(player, surface, surfaceTexture)
+        val releaseAction: () -> Unit = {
+            if (mActiveDeferredRelease === holder) {
+                mActiveDeferredRelease = null
+            }
+            try {
+                holder.player.setVideoSurface(null)
+                holder.player.stop()
+                holder.player.release()
+            } catch (_: Throwable) {
+            }
+            try {
+                holder.surface?.release()
+            } catch (_: Throwable) {
+            }
+            try {
+                holder.surfaceTexture?.release()
+            } catch (_: Throwable) {
+            }
+        }
+
+        if (allowDefer && listener?.isPagerScrolling() == true) {
+            mActiveDeferredRelease = holder
+            listener?.deferPlayerRelease(releaseAction)
+        } else {
+            releaseAction()
+        }
     }
 
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
 
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
 
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture) = false
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        val deferred = mActiveDeferredRelease
+        if (deferred != null) {
+            deferred.surfaceTexture = surface
+            return false
+        }
+        if (mExoPlayer != null) {
+            mDeferredSurfaceTexture = surface
+            return false
+        }
+        return true
+    }
 
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-        mExoPlayer?.setVideoSurface(Surface(mTextureView.surfaceTexture))
+        mExoPlayer?.let { attachSurface(it, surface) }
     }
 
     private fun setVideoSize() {
