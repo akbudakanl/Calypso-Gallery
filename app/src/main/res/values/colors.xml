@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="app_icon_background">#09090B</color>
     <color name="crop_image_view_background">#BB000000</color>
     <color name="circle_black_background">#66000000</color>
 </resources>

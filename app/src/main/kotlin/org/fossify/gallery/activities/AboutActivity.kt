@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import androidx.core.content.ContextCompat
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.humanizePath
 import org.fossify.commons.extensions.isExternalStorageManager
@@ -70,12 +71,15 @@ class AboutActivity : SimpleActivity() {
         binding.aboutHeroCard.background = SettingsCardUi.createCardBackground(this, palette, 18f)
         binding.aboutHeroCard.clipToOutline = true
 
+        // The About emblem mirrors the real launcher icon: fixed dark background and the
+        // drawable's own white mark. It must not follow the active theme's primary color.
         binding.aboutEmblemBg.background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
             cornerRadius = 13f * density
-            setColor(palette.primary)
+            setColor(ContextCompat.getColor(this@AboutActivity, R.color.app_icon_background))
         }
-        binding.aboutEmblemIcon.imageTintList = ColorStateList.valueOf(palette.onPrimary)
+        binding.aboutEmblemIcon.imageTintList = null
+        binding.aboutEmblemIcon.clearColorFilter()
 
         listOf(
             binding.aboutVersion,
