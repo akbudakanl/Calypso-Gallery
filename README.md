@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/store-screenshots/out/github-banner.png" alt="Calypso Gallery — offline-first photo management with a Tink-encrypted vault and zero-footprint virtual albums" width="100%" />
+</p>
+
 # Calypso Gallery
 
 Calypso Gallery is a security-hardened, independently maintained personal fork of [Fossify Gallery](https://github.com/FossifyOrg/Gallery). It was forked from upstream commit [`2688360242468f1d591eddf23740c879616bb828`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (v1.14.2) on **07-11-2026**. Thanks to the original authors and contributors of Fossify Gallery. It is an unofficial project and is not affiliated with, endorsed by, or supported by the Fossify organization.
