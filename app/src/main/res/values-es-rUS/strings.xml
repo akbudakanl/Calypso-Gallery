@@ -621,6 +621,7 @@
     <string name="search_in_storage">Buscar en el almacenamiento</string>
     <string name="brute_force_time_hint">Seleccione el tiempo empleado en abrir la bóveda cifrada. Mantener este valor alto aporta seguridad adicional al dificultar los ataques de fuerza bruta.</string>
     <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
+    <string name="brute_force_high_memory_warning">Una mayor seguridad usa más memoria. Es posible que abrir su bóveda en dispositivos con 2 GB de RAM o menos presente problemas. En ese caso, reduzca el tiempo de apertura en la configuración de la aplicación y vuelva a exportar la bóveda.</string>
     <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>
     <string name="brute_force_time_out_of_range">Este tiempo supera el máximo seleccionable (10 s). Toque para cambiarlo.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
@@ -740,7 +741,7 @@
     <string name="appearance_title">Apariencia</string>
     <string name="search_settings">Buscar en configuración</string>
     <string name="license_tink_title">Google Tink (criptografía AEAD en flujo y HKDF)</string>
-    <string name="license_bouncycastle_title">Bouncy Castle (derivación de claves Argon2id)</string>
+    <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (derivación de claves Argon2id nativa)</string>
     <string name="license_webpdecoder_title">GlideWebpDecoder (decodificación de WebP animado)</string>
     <string name="license_jxl_coder_title">JXL Coder Glide (compatibilidad con JPEG XL)</string>
     <string name="license_androidsvg_title">AndroidSVG (renderizado de SVG)</string>

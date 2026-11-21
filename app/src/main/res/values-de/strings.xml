@@ -584,6 +584,7 @@
     <string name="search_in_storage">Im Speicher suchen</string>
     <string name="brute_force_time_hint">Wählen Sie die Zeit, die für das Öffnen des verschlüsselten Tresors aufgewendet wird. Ein hoher Wert erhöht die Sicherheit, da Brute-Force-Angriffe erschwert werden.</string>
     <string name="brute_force_time_min_hint">Der untere Grenzwert entspricht der sicheren Standardzeit dieses Geräts.</string>
+    <string name="brute_force_high_memory_warning">Höhere Sicherheit benötigt mehr Arbeitsspeicher. Auf Geräten mit 2 GB RAM oder weniger kann es beim Öffnen Ihres Tresors zu Problemen kommen. Verringern Sie in diesem Fall die Entsperrzeit in den App-Einstellungen und exportieren Sie den Tresor erneut.</string>
     <string name="brute_force_time_value_device">%1$.1f s (auf diesem Gerät)</string>
     <string name="brute_force_time_out_of_range">Diese Zeit liegt über dem einstellbaren Maximum (10 s). Zum Ändern tippen.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
@@ -697,7 +698,7 @@
     <string name="appearance_title">Erscheinungsbild</string>
     <string name="search_settings">Einstellungen durchsuchen</string>
     <string name="license_tink_title">Google Tink (Streaming-AEAD- und HKDF-Kryptografie)</string>
-    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id-Schlüsselableitung)</string>
+    <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (native Argon2id-Schlüsselableitung)</string>
     <string name="license_webpdecoder_title">GlideWebpDecoder (Dekodierung animierter WebP-Bilder)</string>
     <string name="license_jxl_coder_title">JXL Coder Glide (JPEG-XL-Unterstützung)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG-Darstellung)</string>

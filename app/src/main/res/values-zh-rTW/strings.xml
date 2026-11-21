@@ -581,6 +581,7 @@
     <string name="search_in_storage">在儲存空間中搜尋</string>
     <string name="brute_force_time_hint">選擇開啟加密保險箱時所花費的時間。提高此值可讓暴力破解攻擊更為困難，提供額外的安全性。</string>
     <string name="brute_force_time_min_hint">下限為此裝置的安全標準時間。</string>
+    <string name="brute_force_high_memory_warning">較高的安全性會使用更多記憶體。在 2 GB 以下 RAM 的裝置上，開啟保險庫時可能會遇到問題。若發生這種情況，請在應用程式設定中降低解鎖時間，然後重新匯出保險庫。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（此裝置）</string>
     <string name="brute_force_time_out_of_range">此時間超過可選上限（10 秒）。點按即可變更。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
@@ -694,7 +695,7 @@
     <string name="appearance_title">外觀</string>
     <string name="search_settings">搜尋設定</string>
     <string name="license_tink_title">Google Tink（串流 AEAD 與 HKDF 加密技術）</string>
-    <string name="license_bouncycastle_title">Bouncy Castle（Argon2id 金鑰衍生）</string>
+    <string name="license_rustcrypto_argon2_title">RustCrypto Argon2（原生 Argon2id 金鑰衍生）</string>
     <string name="license_webpdecoder_title">GlideWebpDecoder（動態 WebP 解碼）</string>
     <string name="license_jxl_coder_title">JXL Coder Glide（JPEG XL 支援）</string>
     <string name="license_androidsvg_title">AndroidSVG（SVG 算繪）</string>

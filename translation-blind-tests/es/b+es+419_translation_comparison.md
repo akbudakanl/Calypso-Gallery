@@ -1045,7 +1045,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `appearance_title` | Appearance | Apariencia |
 | `search_settings` | Search settings | Buscar en configuración |
 | `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (criptografía AEAD en flujo y HKDF) |
-| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (derivación de claves Argon2id) |
+| `license_rustcrypto_argon2_title` | RustCrypto Argon2 (native Argon2id key derivation) | RustCrypto Argon2 (derivación de claves Argon2id nativa) |
 | `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (decodificación de WebP animado) |
 | `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (compatibilidad con JPEG XL) |
 | `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (renderizado de SVG) |
@@ -1055,6 +1055,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Misma contraseña |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | La nueva contraseña es idéntica a la contraseña actual de la bóveda. Elige una diferente. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d rondas) |
+| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Una mayor seguridad usa más memoria. Es posible que tengas problemas para abrir tu bóveda en dispositivos con 2 GB de RAM o menos. En ese caso, reduce el tiempo de apertura en la configuración de la aplicación y vuelve a exportar la bóveda. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Midiendo la velocidad KDF estándar en este dispositivo… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Resistencia a fuerza bruta actualizada para la bóveda cifrada |
 | `appearance_automatic` | Automatic | Automático |

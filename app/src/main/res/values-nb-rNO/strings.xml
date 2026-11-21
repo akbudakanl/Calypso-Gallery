@@ -598,6 +598,7 @@
     <string name="search_in_storage">Søk i lagring</string>
     <string name="brute_force_time_hint">Velg tiden som brukes på å åpne det krypterte hvelvet. Å holde denne verdien høy gir ekstra sikkerhet ved å gjøre brute force-angrep vanskeligere.</string>
     <string name="brute_force_time_min_hint">Nedre grense er denne enhetens sikre standardtid.</string>
+    <string name="brute_force_high_memory_warning">Høyere sikkerhet bruker mer minne. Du kan få problemer med å åpne hvelvet på enheter med 2 GB RAM eller mindre. Hvis dette skjer, senker du åpningstiden i appinnstillingene og eksporterer hvelvet på nytt.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne enheten)</string>
     <string name="brute_force_time_out_of_range">Denne tiden er over det valgbare maksimumet (10 s). Trykk for å endre den.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
@@ -714,7 +715,7 @@
     <string name="appearance_title">Utseende</string>
     <string name="search_settings">Søk i innstillinger</string>
     <string name="license_tink_title">Google Tink (strømmende AEAD- og HKDF-kryptografi)</string>
-    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id-nøkkelutledning)</string>
+    <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (innebygd Argon2id-nøkkelutledning)</string>
     <string name="license_webpdecoder_title">GlideWebpDecoder (dekoding av animert WebP)</string>
     <string name="license_jxl_coder_title">JXL Coder Glide (støtte for JPEG XL)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG-gjengivelse)</string>

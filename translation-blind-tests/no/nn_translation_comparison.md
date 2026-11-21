@@ -1063,7 +1063,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `appearance_title` | Appearance | Utsjånad |
 | `search_settings` | Search settings | Søk i innstillingar |
 | `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (strøymande AEAD- og HKDF-kryptografi) |
-| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id-nøkkelutleiing) |
+| `license_rustcrypto_argon2_title` | RustCrypto Argon2 (native Argon2id key derivation) | RustCrypto Argon2 (native Argon2id-nøkkelutleiing) |
 | `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (dekoding av animert WebP) |
 | `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (støtte for JPEG XL) |
 | `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG-attgjeving) |
@@ -1073,6 +1073,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Same passord |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Det nye passordet er likt det noverande passordet for kvelvet. Ver venleg og vel eit anna. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d rundar) |
+| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Høgare tryggleik bruker meir minne. Du kan få problem med å opne kvelvet på einingar med 2 GB RAM eller mindre. Om dette skjer, senkar du opningstida i appinnstillingane og eksporterer kvelvet på nytt. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Måler standard KDF-snøggleik på denne eininga… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Motstand mot brute force oppdatert for det krypterte kvelvet |
 | `appearance_automatic` | Automatic | Automatisk |

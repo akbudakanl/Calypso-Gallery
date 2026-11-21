@@ -1056,7 +1056,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `appearance_title` | Appearance | 外觀 |
 | `search_settings` | Search settings | 搜尋設定 |
 | `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink（串流 AEAD 與 HKDF 加密技術） |
-| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle（Argon2id 金鑰衍生） |
+| `license_rustcrypto_argon2_title` | RustCrypto Argon2 (native Argon2id key derivation) | RustCrypto Argon2（原生 Argon2id 金鑰衍生） |
 | `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder（動態 WebP 解碼） |
 | `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide（JPEG XL 支援） |
 | `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG（SVG 算繪） |
@@ -1066,6 +1066,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | 密碼相同 |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | 新密碼與目前的保險箱密碼相同。請選擇其他密碼。 |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f 秒（%2$d MiB / %3$d 回合） |
+| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | 較高的安全性會使用更多記憶體。在 2 GB 以下 RAM 的裝置上，開啟保險庫時可能會遇到問題。若發生這種情況，請在應用程式設定中降低解鎖時間，然後重新匯出保險庫。 |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | 正在測量此裝置的標準 KDF 速度… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | 已為加密保險箱更新暴力破解防護強度 |
 | `appearance_automatic` | Automatic | 自動 |

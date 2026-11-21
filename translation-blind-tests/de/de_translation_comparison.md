@@ -1007,7 +1007,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `appearance_title` | Appearance | Erscheinungsbild |
 | `search_settings` | Search settings | Einstellungen durchsuchen |
 | `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (Streaming-AEAD- und HKDF-Kryptografie) |
-| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id-Schlüsselableitung) |
+| `license_rustcrypto_argon2_title` | RustCrypto Argon2 (native Argon2id key derivation) | RustCrypto Argon2 (native Argon2id-Schlüsselableitung) |
 | `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (Dekodierung animierter WebP-Bilder) |
 | `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (JPEG-XL-Unterstützung) |
 | `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG-Darstellung) |
@@ -1017,6 +1017,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Gleiches Passwort |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Das neue Passwort ist mit dem aktuellen Tresor-Passwort identisch. Bitte wählen Sie ein anderes. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d Runden) |
+| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Höhere Sicherheit benötigt mehr Arbeitsspeicher. Auf Geräten mit 2 GB RAM oder weniger kann es beim Öffnen Ihres Tresors zu Problemen kommen. Verringern Sie in diesem Fall die Entsperrzeit in den App-Einstellungen und exportieren Sie den Tresor erneut. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Standard-KDF-Geschwindigkeit auf diesem Gerät wird gemessen… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Brute-Force-Widerstand für den verschlüsselten Tresor aktualisiert |
 | `appearance_automatic` | Automatic | Automatisch |

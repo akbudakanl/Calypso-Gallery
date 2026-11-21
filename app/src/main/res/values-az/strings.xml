@@ -651,6 +651,7 @@
     <string name="search_in_storage">Yaddaşda axtar</string>
     <string name="brute_force_time_hint">Şifreli seyfin açılması zamanı sərf olunan vaxtı seçin. Bu dəyəri yüksək saxlamaq, sınaq-yanılma hücumlarını çətinləşdirərək əlavə təhlükəsizlik təmin edir.</string>
     <string name="brute_force_time_min_hint">Alt hədd bu cihazın təhlükəsiz standart vaxtıdır.</string>
+    <string name="brute_force_high_memory_warning">Yüksək təhlükəsizlik daha çox yaddaşdan istifadə edir. 2 GB və daha az RAM-lı cihazlarda seyfinizi açmaqda problem yaşaya bilərsiniz. Belə bir halda tətbiq parametrlərindən açılış müddətini azaldıb seyfi yenidən ixrac edin.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>
     <string name="brute_force_time_out_of_range">Bu vaxt seçilə bilən yuxarı həddin (10 s) üzərindədir. Dəyişdirmək üçün toxunun.</string>
     <string name="brute_force_time_value">%1$.1f s</string>
@@ -768,7 +769,7 @@
     <string name="appearance_title">Görünüş</string>
     <string name="search_settings">Parametrlərdə axtar</string>
     <string name="license_tink_title">Google Tink (axınlı AEAD və HKDF kriptoqrafiyası)</string>
-    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id açar törətməsi)</string>
+    <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (yerli Argon2id açar törətməsi)</string>
     <string name="license_webpdecoder_title">GlideWebpDecoder (animasiyalı WebP deşifrələməsi)</string>
     <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL dəstəyi)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG göstərilməsi)</string>

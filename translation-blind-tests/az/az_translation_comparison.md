@@ -1045,7 +1045,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `appearance_title` | Appearance | Görünüş |
 | `search_settings` | Search settings | Parametrlərdə axtar |
 | `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (axınlı AEAD və HKDF kriptoqrafiyası) |
-| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id açar törətməsi) |
+| `license_rustcrypto_argon2_title` | RustCrypto Argon2 (native Argon2id key derivation) | RustCrypto Argon2 (yerli Argon2id açar törətməsi) |
 | `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (animasiyalı WebP deşifrələməsi) |
 | `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (JPEG XL dəstəyi) |
 | `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG göstərilməsi) |
@@ -1055,6 +1055,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Eyni parol |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Yeni parol cari seyf parolu ilə eynidir. Zəhmət olmasa fərqli bir parol seçin. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d dövr) |
+| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Yüksək təhlükəsizlik daha çox yaddaşdan istifadə edir. 2 GB və daha az RAM-lı cihazlarda seyfinizi açmaqda problem yaşaya bilərsiniz. Belə bir halda tətbiq parametrlərindən açılış müddətini azaldıb seyfi yenidən ixrac edin. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Bu cihazda standart KDF sürəti ölçülür… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Brute-Force müqaviməti şifrəli seyfə tətbiq edildi |
 | `appearance_automatic` | Automatic | Avtomatik |
