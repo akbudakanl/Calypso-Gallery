@@ -61,7 +61,16 @@ class VaultNoticeDialog(
         if (showBiometricGlyph) {
             binding.noticeGlyphHost.beVisible()
             binding.noticeBiometricGlyph.applyPalette(palette)
-            binding.noticeBiometricGlyph.post { binding.noticeBiometricGlyph.start() }
+            binding.noticeBiometricGlyph.post {
+                var parent = binding.noticeBiometricGlyph.parent
+                while (parent is android.view.ViewGroup) {
+                    parent.clipChildren = false
+                    parent.clipToPadding = false
+                    if (parent == binding.noticeRoot) break
+                    parent = parent.parent
+                }
+                binding.noticeBiometricGlyph.start()
+            }
         }
 
         if (noteText != null) {
