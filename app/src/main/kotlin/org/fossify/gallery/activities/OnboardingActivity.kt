@@ -3,6 +3,7 @@ package org.fossify.gallery.activities
 import android.animation.Animator
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
@@ -12,7 +13,6 @@ import org.fossify.commons.extensions.canManageMedia
 import org.fossify.commons.extensions.hasAllPermissions
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.openDeviceSettings
-import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivityOnboardingBinding
@@ -49,13 +49,49 @@ class OnboardingActivity : SimpleActivity() {
         }
     }
 
-    private val binding by viewBinding(ActivityOnboardingBinding::inflate)
+    private lateinit var binding: ActivityOnboardingBinding
     private var currentMode = MODE_WELCOME
     private var activePulseAnimator: Animator? = null
     private var allFilesHandled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val initialMode = savedInstanceState?.getInt(STATE_CURRENT_MODE)
+            ?: intent.getIntExtra(EXTRA_START_MODE, MODE_WELCOME)
+        currentMode = initialMode
+
+        inflateAndBindLayout()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                when (currentMode) {
+                    MODE_ALL_FILES_ACCESS -> {
+                        config.avoidShowingAllFilesPrompt = true
+                        allFilesHandled = true
+                        finishWithSuccess()
+                    }
+                    else -> {
+                        setResult(RESULT_CANCELED)
+                        finish()
+                    }
+                }
+            }
+        })
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (::binding.isInitialized) {
+            activePulseAnimator?.cancel()
+            activePulseAnimator = null
+            binding.paneWelcome.onboardingHeroLogo.stopAnimations()
+        }
+        inflateAndBindLayout()
+    }
+
+    private fun inflateAndBindLayout() {
+        binding = ActivityOnboardingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val palette = AppearanceManager.resolve(this, config)
@@ -80,27 +116,7 @@ class OnboardingActivity : SimpleActivity() {
         OnboardingUiHelper.styleAllFilesPane(this, binding.paneAllFiles, palette)?.cancel()
 
         setupClickListeners()
-
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                when (currentMode) {
-                    MODE_ALL_FILES_ACCESS -> {
-                        config.avoidShowingAllFilesPrompt = true
-                        allFilesHandled = true
-                        finishWithSuccess()
-                    }
-                    else -> {
-                        setResult(RESULT_CANCELED)
-                        finish()
-                    }
-                }
-            }
-        })
-
-        val initialMode = savedInstanceState?.getInt(STATE_CURRENT_MODE)
-            ?: intent.getIntExtra(EXTRA_START_MODE, MODE_WELCOME)
-
-        showMode(initialMode, animateTransition = false)
+        showMode(currentMode, animateTransition = false)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
