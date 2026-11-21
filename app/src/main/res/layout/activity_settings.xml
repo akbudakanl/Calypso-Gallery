@@ -880,15 +880,20 @@
                     style="@style/SettingsSwitchStyle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_toStartOf="@id/settings_vault_biometric_info"
                     android:text="@string/biometric_access_to_encrypted_vault" />
 
-                <!-- Stays visible when the switch is unavailable: explains why instead of hiding silently. -->
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_vault_biometric_status"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/settings_vault_biometric"
+                <!-- Only visible while the setting is passive; tap it for the reason dialog. -->
+                <ImageView
+                    android:id="@+id/settings_vault_biometric_info"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/vault_biometric_unavailable_title"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_info_vector"
                     android:visibility="gone" />
 
             </RelativeLayout>
@@ -928,29 +933,6 @@
                     android:layout_height="wrap_content"
                     android:layout_below="@id/settings_vault_password_reminder_label"
                     tools:text="@string/vault_password_reminder_disabled" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_archive_vault_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_archive_vault_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/archive_vault" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_archive_vault"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/settings_archive_vault_label"
-                    android:text="@string/archive_vault_summary" />
 
             </RelativeLayout>
 
@@ -1099,6 +1081,24 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/empty_encrypted_vault"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Archive vault is the last encrypted-vault row, below Reset (summary text removed). -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/settings_archive_vault_holder"
+                style="@style/SettingsHolderTextViewOneLinerStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/settings_archive_vault_label"
+                    style="@style/SettingsTextLabelStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/archive_vault"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 

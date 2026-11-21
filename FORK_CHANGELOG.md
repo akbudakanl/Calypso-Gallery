@@ -1,8 +1,8 @@
 # Değişiklik günlüğü
 
-Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yayınlanmadığı için bu dosya yalnızca ilk genel sürümü (1.0.0) kapsar. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
+Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
-## [Unreleased]
+## [1.1.0] - 2026-11-21
 
 ### Eklendi
 
@@ -11,6 +11,7 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 ### Güvenlik ve kararlılık düzeltmeleri
 
 - Class 2 (zayıf) biyometriğin şifreli kasa erişimi için desteklenmediğine dair açık not eklendi; güçlü biyometrik olmayan cihazlarda ayar sessizce gizlenmek yerine devre dışı görünür ve nedeni yerelleştirilmiş bir pencerede anlatılır (bkz. [ADR 0006](docs/adr/0006-strong-biometrics-only.md)).
+- Android 16 (API 36) uyumluluğu: büyük ekranlarda (sw ≥ 600dp) sistem yön kısıtlarını yok saydığı için tabletlerde etkisiz olan "yataya zorla / dikeye zorla" menüleri, alt aksiyon düğmesi ve ilgili ayar gizlendi.
 
 ## [1.0.0] - 2026-11-19
 
@@ -56,4 +57,5 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Önceki sürüm yay
 - Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
 - Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
 
+[1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0

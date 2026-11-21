@@ -75,6 +75,7 @@ import org.fossify.gallery.extensions.getActionBarHeight
 import org.fossify.gallery.extensions.getFormattedDuration
 import org.fossify.gallery.extensions.getFriendlyMessage
 import org.fossify.gallery.extensions.hideSystemUI
+import org.fossify.gallery.extensions.isLargeScreen
 import org.fossify.gallery.extensions.openPath
 import org.fossify.gallery.extensions.shareMediumPath
 import org.fossify.gallery.extensions.showSystemUI
@@ -225,6 +226,10 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         }
 
         updateMenuItemColors(binding.videoToolbar.menu, forceWhiteIcons = true)
+        // Android 16 ignores force-orientation requests on large screens (sw >= 600dp).
+        if (isLargeScreen) {
+            binding.videoToolbar.menu.findItem(R.id.menu_change_orientation)?.isVisible = false
+        }
         binding.videoToolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.menu_force_portrait -> toggleOrientation(SCREEN_ORIENTATION_PORTRAIT)

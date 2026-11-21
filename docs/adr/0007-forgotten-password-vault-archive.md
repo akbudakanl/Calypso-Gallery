@@ -21,7 +21,7 @@ Bu kural bir tercih değil, tasarım aksiyomudur:
 - Aksiyom, mevcut **"Şifreli kasayı sıfırla"** ayarını da kapsar: bu ayar yalnızca **mevcut parola girildikten sonra** erişilebilir ve kasayı aynı konumda yeni parolayla yeniden oluşturur. Parolasız bir "sıfırla" yolu açılmaz.
 - Aksiyom arşivlenmiş kasaları da kapsar: uygulama, arşivdeki bir kasayı da parolasız **silemez**. Silme yalnızca kullanıcının kendi eliyle, dosya yöneticisiyle yapılabilir (§8).
 
-Biyometrik doğrulama bu aksiyomu değiştirmez: Class 3 biyometrik kasa kilidini açabilir ama "parola olmadan kasa silme" yetkisi vermez (bkz. ADR 0006).
+Biyometrik doğrulama bu aksiyomu değiştirmez: Class 3 biyometrik kasa kilidini açabilir ama parola olmadan kasayı **silme veya sıfırlama** yetkisi vermez (bkz. ADR 0006). Arşivleme öncesindeki cihaz sahibi doğrulaması (§3.3) yalnızca yıkıcı olmayan bir taşıma için kimlik kontrolüdür; hiçbir kasa anahtarını açığa çıkarmaz.
 
 ---
 
@@ -44,7 +44,7 @@ Basit bir kullanıcı, varsayılan konumdaki (`Calypso Gallery/Secrets`) kasası
 
 > **Kasayı arşivle** — *Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur*
 
-Satır yalnızca **kasa varsa** görünür. Parola hatırlatma dialogundaki **"Hatırlamıyorum"** butonu **ayarlara değil**, Hakkında → SSS içindeki **"Şifreli kasanın parolasını unuttum, ne yapabilirim?"** maddesine götürür (§3.4). SSS metnindeki *arşivleyerek* ifadesi ise bu ayara yönlendirir.
+Satır yalnızca **kasa varsa** görünür. Parola doğrulama ekranındaki (hatırlatma akışının 5. ekranı) **"Hatırlamıyorum"** bağlantısı **ayarlara değil**, numaralı adımlar ve o an seçili kasanın yolu gösteren kompakt uygulama içi kurtarma penceresine götürür (§3.4). Hakkında → SSS içindeki **"Şifreli kasanın parolasını unuttum, ne yapabilirim?"** maddesi Hakkında üzerinden erişilebilirliğini korur; SSS metnindeki *arşivleyerek* ifadesi bu ayara yönlendirir.
 
 **"Kasa konumu"** menüsü üç seçenek gösterir:
 
@@ -56,40 +56,38 @@ Arşiv listesi arşivlenme zamanına göre sıralanır ve UI'da **"1. arşivlene
 
 ### 3.2. Kullanıcıya sorulan soru
 
-İlk dialogda iki seçenek sunulur:
+Dialogda tek bir gerçek akış sunulur:
 
-1. **Arşivle ve devam et** (varsayılan, önerilen): eski kasa korunur, varsayılan `Secrets` konumunda yeni kasa oluşturulur.
-2. **Arşivlemeden sil ve devam et**: ikinci, ayrı bir sert onaydan sonra eski kasa kalıcı silinir.
+1. **Arşivle ve devam et** (varsayılan): eski kasa korunur, varsayılan `Secrets` konumunda yeni kasa oluşturulur. Diğer seçenek **Vazgeç**'tir.
 
-İkinci seçenek uygulama içinde **parolasız silme** anlamına gelir ve aksiyomla çelişir. Bu nedenle **reddedilmiştir** — aşağıda da belirtildiği gibi, silme işlemi yalnızca dosya yöneticisiyle kullanıcı tarafından yapılır. Dialogda kullanıcıya şu seçenekler sunulur: **Arşivle ve devam et / Vazgeç**. "Arşivle" varsayılandır.
-
-> Not: §2'de "arşivle / kalıcı sil" seçimi sorulması gerektiği yazılmıştır; aksiyom gereği kalıcı silme uygulama içinde yapılamaz. Kullanıcının silme kararı, arşiv yolunun gösterilmesiyle (§8) dosya yöneticisine yönlendirilerek karşılanır. Uygulama, silme kararını kolaylaştırmak için yolu panoya kopyalayabilir; **silme fiilini gerçekleştirmez**.
+> Reddedilen "arşivlemeden sil ve devam et" seçeneği ve parolasız sıfırlama fikri §10'da kayıtlıdır, burada yer almaz. Aksiyom gereği uygulama silme yapamaz: silmek isteyen kullanıcıya arşiv yolu gösterilir (§8) ve panoya kopyalama imkânı verilir; uygulama **silme fiilini gerçekleştirmez**.
 
 ### 3.3. Arşivleme akışı
 
-Ön koşullar: kasa kilitli olmalı, aktif foreground dosya işlemi bulunmamalı, cihaz açık olmalı.
+Ön koşullar: kasa kilitli olmalı ve aktif foreground dosya işlemi bulunmamalı.
 
-1. Kullanıcı onayı, mevcut "Şifreli kasayı sıfırla" ile aynı `DeleteSecretsDialog` üzerinden alınır: **10 saniyelik geri sayım + onay kutusu + Evet/Hayır**. **Fark: parola sorulmaz** — aksiyom parolasız silmeyi yasaklar, arşivleme ise silme değil taşımadır (§6). Dialog ayrıca "Başka bir cihazda kullanmak istiyorsanız Şifreli kasayı dışa aktar seçeneğini kullanın" hatırlatmasını içerir (§9).
-2. `Calypso Gallery/Archive/` klasörü **yoksa** oluşturulur ve içine jenerik `readme.txt` yazılır. Klasör uygulama kurulumunda **var olmaz**; ilk arşivlemeye kadar oluşturulmaz.
-3. Rastgele hedef ad üretilir (§5); çakışma kontrolü yapılır.
-4. Hedef yol özel tercihlere (`archivedVaults`) kaydedilir; eski kasa klasörü bu yola **taşınır**.
-5. Taşıma başarısız olursa tercih kaydı geri alınır, kaynak yerinde kalır.
-6. Biyometrik kasa durumu temizlenir: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. Eski kasanın biyometrik bağı yeni kasaya devredilmez.
-7. Varsayılan konumda (`Calypso Gallery/Secrets`) yeni kasa oluşturma akışı başlatılır; kullanıcı yeni parolasını/PIN'ini belirler.
-8. Yeni kasa oluşturulamazsa `config.vaultRootPath` arşiv yoluna geri yazılır; eski kasa erişilebilir kalır.
-9. Başarıda `config.vaultRootPath` yeni kasayı gösterir; arşiv kaydı özel tercihlerde durur.
+1. Kullanıcı onayı, mevcut "Şifreli kasayı sıfırla" ile aynı `DeleteSecretsDialog` üzerinden alınır: **10 saniyelik geri sayım + onay kutusu + Evet/Hayır**. **Fark: kasa parolası sorulmaz** — aksiyom parolasız silmeyi yasaklar, arşivleme ise silme değil taşımadır (§6). Dialog ayrıca "Başka bir cihazda kullanmak istiyorsanız Şifreli kasayı dışa aktar seçeneğini kullanın" hatırlatmasını içerir (§9).
+2. **Cihaz sahibi doğrulaması**, güvenli ekran kilidi olan cihazlarda onayın ardından gelir: `BiometricPrompt`, `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` ile — Class 3 biyometrik, yedekte cihaz PIN'i/desen/parolası. Bu, kasa parolasını değil **cihazın elde olduğunu** doğrular ve hiçbir kasa anahtarını açığa çıkarmaz. **Hiç güvenli ekran kilidi olmayan** cihazlarda doğrulanacak bir sinyal bulunmadığından yalnızca 10 saniyelik onay uygulanır. Bu, "kilitsiz telefonu eline alan biri" açığını kapatırken parolasız **silme** yolu açmaz. `DEVICE_CREDENTIAL` açıkça izin verildiği için biyometrik başarısız olursa (arızalı sensör, ıslak parmak vb.) akış tıkanmaz; sistem penceresi cihaz PIN'i/deseni/parolasını sunmaya devam eder.
+3. `Calypso Gallery/Archive/` klasörü **yoksa** oluşturulur ve içine jenerik `readme.txt` yazılır. Klasör uygulama kurulumunda **var olmaz**; ilk arşivlemeye kadar oluşturulmaz.
+4. Rastgele hedef ad üretilir (§5); çakışma kontrolü yapılır.
+5. Hedef yol özel tercihlere (`archivedVaults`) kaydedilir; eski kasa klasörü bu yola **taşınır**.
+6. Taşıma başarısız olursa tercih kaydı geri alınır, kaynak yerinde kalır.
+7. Biyometrik kasa durumu temizlenir: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. Eski kasanın biyometrik bağı yeni kasaya devredilmez.
+8. Varsayılan konumda (`Calypso Gallery/Secrets`) yeni kasa oluşturma akışı başlatılır; kullanıcı yeni parolasını/PIN'ini belirler.
+9. Yeni kasa oluşturulamazsa `config.vaultRootPath` arşiv yoluna geri yazılır; eski kasa erişilebilir kalır.
+10. Başarıda `config.vaultRootPath` yeni kasayı gösterir; arşiv kaydı özel tercihlerde durur.
 
-Adımların tamamı [ADR 0003](0003-resumable-file-operations.md) mantığıyla bir **journal** üzerinden yürür; uygulama herhangi bir adımda ölürse ya eski kasa yerinde kalır ya da arşiv yolundan erişilebilir. **Hiçbir durumda veri kaybı olmaz.**
+Uygulama, arşiv kaydını rename'den önce yazar ve rename başarısız olursa geri alır; çökme durumunda kasa ya kaynağında ya da arşiv yolundan erişilebilir kalır. Çok adımlı bir [ADR 0003](0003-resumable-file-operations.md) journal'ı kullanılmaz. **Hiçbir durumda veri kaybı olmaz.**
 
 ### 3.4. SSS maddesi ve yönlendirme
 
-Hatırlatma dialogundaki "Hatırlamıyorum", `FaqActivity`'yi ilgili maddeyi öne çıkaracak bir extra ile doğrudan açar. Yeni SSS maddesi:
+Doğrulama ekranındaki (hatırlatma akışının 5. ekranı) "Hatırlamıyorum" bağlantısı, `FaqActivity` yerine kompakt ve temaya uyumlu bir uygulama içi pencere açar (6. ekran): üç numaralı kurtarma adımı, uyarı paragrafı, `CryptoManager.getVaultRoot()` / `config.vaultRootPath` ile o an seçili kasanın **gerçek yolu** ve tek bir **Tamam** butonu. Bu giriş noktası için `FaqActivity` extra'sı kullanılmaz; aşağıdaki SSS maddesi Hakkında'dan erişimde durmaya devam eder. Yeni SSS maddesi:
 
 > **Soru:** "Şifreli kasanın parolasını unuttum, ne yapabilirim?"
 >
 > 1. Biyometrik ile kasaya giriş yapın.
 > 2. Şifreli verilerinizi **kopyalayın (dışa aktarın)**. Bu işlem kasayı yerinden çıkarmaz; mevcut kasa olduğu yerde kalır. Kopyayı başka bir cihazda "Mevcut kasayı kullan" ile açabilirsiniz.
-> 3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola ve geri yükleme.
+> 3. Aynı konumu kullanmaya devam etmek için Ayarlar → Şifreli kasa → **Kasayı arşivle** seçeneğini kullanın. Eski kasa `Calypso Gallery/Archive/` altına taşınır, varsayılan konumda yeni parolayla yeni bir kasa oluşturulur. **"Şifreli kasayı sıfırla" mevcut parolayı gerektirdiği için bu durumda kullanılamaz.**
 >
 > **Uyarı:** Biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Üç seçeneğiniz vardır (güvenli olandan yıkıcı olana doğru):
 >
@@ -205,10 +203,9 @@ Kullanıcıya gösterilen dostane ad ("Arşiv 1", "Arşiv 2") yalnızca UI'da ü
 ## 6. Taşıma, rollback ve anahtar durumu
 
 - Kaynak kasa `Calypso Gallery` altındaysa hedef de aynı filesystem'dedir; `File.renameTo` **atomik ve anındadır**, veri kopyalanmaz. ADR 0003'teki uzun süren foreground operasyon gerekmez.
-- Kaynak kasa özel/harici bir klasördeyse filesystem farklı olabilir. `renameTo` başarısız olursa:
-  - ya ADR 0003 journal'ı ile **kopyala → doğrula → kaynağı kaldır** yapılır (veri kaybı yok, ama uzun sürer),
-  - ya da otomatik arşivleme iptal edilip kullanıcıya "bu konum için otomatik arşivleme desteklenmiyor" bilgisi verilir.
-- Journal adımları: tercih yaz → rename → biyometrik temizle → yeni kasa oluştur → config geçir. Her adım geri alınabilir.
+- **Harici depolama aygıtındaki bir kasayı arşivleyemezsiniz.** Arşiv cihaz diskinde (`Calypso Gallery/Archive/`) tutulur, farklı filesystem'ler arasında `File.renameTo` başarısız olur. İşlem hata vererek iptal edilir; kopyalama yapılmaz, hiçbir şey taşınmaz. Kullanıcıya gösterilecek not:
+  > "Harici depolama aygıtındaki bir kasayı arşivleyemezsiniz. Eğer mevcut kasayı silmeden onunla aynı konumda başka bir şifreli kasa oluşturmak istiyorsanız mevcut kasayı arşivlemeden önce cihaz diskine taşımalısınız."
+- Uygulama detayı: arşiv kaydı, rename'den **önce** tercihlere yazılır ve rename başarısız olursa geri alınır; böylece çökme durumunda kasa bulunamaz hâle gelmez. Çok adımlı bir ADR 0003 journal'ı yoktur; kalan adımlar (biyometrik temizleme, yeni kasa oluşturma, config geçirme) tek atomik rename'den sonra yapılır.
 - Arşivlenen kasanın `.vault` başlığı ve `.bin` dosyaları **yol bağımlı değildir**; anahtarlar bozulmaz. Arşivlenen kasa daha sonra yalnızca **kendi parolasıyla** açılabilir.
 
 ---
@@ -218,6 +215,8 @@ Kullanıcıya gösterilen dostane ad ("Arşiv 1", "Arşiv 2") yalnızca UI'da ü
 Kullanıcıya şu cümle söylenir:
 
 > "Arşivdeki bir kasayı tekrar kullanmak isterseniz **Ayarlar → Şifreli kasa → Kasa konumu → Arşivden kasa aç** seçeneğini kullanın. Listeden kasayı seçin. Seçtiğiniz kasa varsayılan konuma geri döner, o anki kasa arşive alınır. **Hiçbir şey silinmez.**"
+
+Arşivden geri taşıma da arşivleme ile aynı cihaz sahibi doğrulamasını kullanır (§3.3): Class 3 biyometrik, yedekte cihaz parolası; kasa parolası gerekmez. Seçim penceresinde ayrıca tüm arşiv kasalarının toplam boyutunu gösteren bir i ikonu bulunur.
 
 Bu modelde kullanıcı "aktif kasa" ve "arşiv" kavramlarını bilmek zorunda değildir; zihinsel modeli **"iki kasa yer değiştirir"**dir.
 
@@ -265,8 +264,7 @@ Kullanıcı arşivlediği kasayı dosya yöneticisiyle silebilmek için **o kasa
 
 Uygulama içinde silme **yoktur**; en fazla:
 
-- **Yolu kopyala** (`ClipboardManager`) — güvenilir ana mekanizma,
-- isteğe bağlı **Klasörü göster** butonu — SAF `ACTION_OPEN_DOCUMENT_TREE` + `EXTRA_INITIAL_URI` (veya FileProvider URI ile `ACTION_VIEW`); hiçbir uygulama işlemezse sessizce "Yolu kopyala"ya düşülür. Bu buton **silme yapmaz**, yalnızca konumu açar/gösterir.
+- **Yolu kopyala** (`ClipboardManager`) — yayımlanan tek mekanizma. SAF "Klasörü göster" butonu değerlendirildi ama v2'ye ertelendi; bu kararın parçası değildir.
 
 Yol her zaman arşiv kaydından / gerçek klasörden alınır; sabit varsayılan yol yazılmaz. Uygulama yeniden kurulup özel tercihler silinse bile `Archive/*` taranarak yol yeniden üretilir (§4.4).
 
@@ -295,14 +293,17 @@ Böylece kullanıcı "eski kasayı nereye koydum?" diye düşünmek zorunda kalm
 
 `CryptoManager.exportEncryptedVault` saf bir dosya kopyalamasıdır (`copyTo`): **ne anahtar kullanır ne şifre çözer.** `.vault` dosyası zaten diskte düz bir dosya olarak durur; kullanıcı onu dosya yöneticisi veya MTP ile zaten kopyalayabilir. Dolayısıyla `promptExportEncryptedVault` içindeki `ensureVaultUnlocked` çağrısı **gerçek bir güvenlik sınırı değil, yalnızca gereksiz sürtünmedir.** Önceki "açık kasa şartı kalmalı" kararı bu gerekçeyle **tersine çevrilmiştir**.
 
-Dışa aktarma için parola/biyometrik/açık kasa şartı **kaldırılır**. Yerine korunan kontroller:
+Dışa aktarma için **kasa parolası / açık kasa şartı kaldırılır**. Yerine korunan kontroller:
 
+- **cihaz sahibi doğrulaması**, güvenli ekran kilidi olan cihazlarda (Class 3 biyometrik, yedekte cihaz PIN'i/desen/parolası — §3.3). Bu yerel bir sürtünmedir, kasa anahtarı kapısı değildir: dışa aktarılan dosyalar şifreli kalır ve kasa parolası sorulmaz.
 - hedef klasör seçimi (mevcut `pickCustomVaultDirectory`),
 - kasayı kendi içine dışa aktarma engeli (mevcut canonical-path kontrolü),
 - ilerleme dialogu,
 - açık onay metni: *"Şifreli dosyalar kopyalanır. Parola gerekmez; veriler şifreli kalır."*
 
 Kalıcı dışa aktarma, dosya yöneticisiyle kopyalamayla **aynı güvenlik seviyesindedir**; uygulama sadece bunu kolaylaştırır. Bu, aksiyomu (parolasız silme yasağı) ihlal etmez: dışa aktarma silme veya geçersiz kılma değil, **kopyalamadır**.
+
+> **Çevrimdışı kaba kuvvet notu.** Kasa dosyaları parolasız kopyalanabildiği için (uygulamayla veya herhangi bir dosya yöneticisiyle) gizlilik tamamen `.vault` içindeki Argon2id parametrelerine ve kasa parolasının uzunluk/kalitesine bağlıdır. Yukarıdaki cihaz sahibi kontrolü yalnızca açık telefonu eline alanı caydırmaya yöneliktir; çevrimdışı saldırının gücünü **değiştirmez**.
 
 Bu değişiklik sayesinde SSS'teki 2. adım ("Şifreli verilerinizi dışa aktarın"), parolasını unutan kullanıcı için de çalışır — kasanın açılması gerekmez. Arşivleme ile dışa aktarma ayrımı (§9) korunur: aynı cihaz → arşiv, başka cihaz → dışa aktar.
 
@@ -321,12 +322,13 @@ Böylece üç fiil net ayrılır: **arşivle = aynı cihazda taşı**, **dışa 
 
 ## 10. Reddedilen alternatifler
 
-1. **Parolasız "Şifreli kasayı sıfırla":** aksiyomu ihlal eder; hizmet reddi riski. Reddedildi.
+1. **Parolasız "Şifreli kasayı sıfırla" — biyometrik veya cihaz parolasıyla yetkilendirmek de dahil:** aksiyomu ihlal eder; hizmet reddi riski. Reddedildi. Biyometrik kasayı açar ve yıkıcı olmayan arşivleme taşıması için cihaz sahibini doğrular (§3.3), ama yıkıcı sıfırlamaya asla yetki vermez.
 2. **Uygulama içinde arşiv kasasını silme:** aksiyomu ihlal eder. Reddedildi; silme dosya yöneticisine bırakılır.
-3. **Tarih/sayaçlı klasör adı:** meta veri ihlali ve çakışma riski. Reddedildi (§5).
-4. **`.cache` gibi sahte ad:** yanıltıcı. Reddedildi.
-5. **Kullanıcıyı doğrudan dosya yöneticisine göndermek:** basit kullanıcı için zor ve riskli. Reddedildi; arşivleme uygulama içinde otomatik yapılır.
-6. **Yeni kasayı `Secrets-2` gibi yan konuma oluşturmak:** taşıma riskini azaltır ama "varsayılan konumda yeni kasa" hedefini karşılamaz. Reddedildi.
+3. **Unutulmuş parola dialogunda "arşivlemeden sil ve devam et":** ikinci onaya rağmen uygulama içinde parolasız silme olur. Reddedildi; dialog yalnızca Arşivle / Vazgeç sunar (§3.2).
+4. **Tarih/sayaçlı klasör adı:** meta veri ihlali ve çakışma riski. Reddedildi (§5).
+5. **`.cache` gibi sahte ad:** yanıltıcı. Reddedildi.
+6. **Kullanıcıyı doğrudan dosya yöneticisine göndermek:** basit kullanıcı için zor ve riskli. Reddedildi; arşivleme uygulama içinde otomatik yapılır.
+7. **Yeni kasayı `Secrets-2` gibi yan konuma oluşturmak:** taşıma riskini azaltır ama "varsayılan konumda yeni kasa" hedefini karşılamaz. Reddedildi.
 
 ---
 

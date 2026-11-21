@@ -388,6 +388,7 @@
     <string name="vault_password_reminder_dialog_message">Bu süre boyunca şifreli kasaya parolan ile giriş yapmazsan parolanı hatırlatırız.</string>
     <string name="vault_password_reminder_setup_note">Parolanızı hatırladığınızdan emin olmak için düzenli olarak bildirim göndereceğiz. İsterseniz bunu Ayarlar → Şifreli kasa → Parolayı düzenli hatırlat üzerinden kapatabilirsiniz.</string>
     <string name="vault_biometric_setup_password_note">Biyometrik ile giriş yapmayı seçerseniz parolanızı hâlâ hatırlamanız gerektiğini unutmayın.</string>
+    <string name="vault_biometric_setup_continue">Devam</string>
     <string name="vault_password_saved_title">Parolanızı kaydettiniz mi?</string>
     <string name="vault_password_saved_message">Parolanızı unutursanız şifreli kasanıza erişiminizi kalıcı olarak kaybedersiniz. Devam etmeden önce parolanızı bir yere kaydettiğinizden emin olun. Parola yöneticisi kullanmanız önerilir.</string>
     <string name="vault_password_saved_confirm">Evet, kaydettim</string>
@@ -407,6 +408,10 @@
     <!-- Kasa arşivleme (ADR 0007): arşivleme taşır, dışa aktarma kopyalar, silme dosya yöneticisindedir. -->
     <string name="archive_vault">Kasayı arşivle</string>
     <string name="archive_vault_summary">Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur</string>
+    <string name="archive_total_size_title">Arşiv depolama alanı</string>
+    <string name="archive_total_size">Arşivlenen kasaların toplam boyutu: %1$s</string>
+    <string name="device_owner_verify_title">Cihaz sahibini doğrulayın</string>
+    <string name="device_owner_verify_subtitle">Devam etmek için biyometrik veya cihaz PIN\'inizle onaylayın. Kasa parolası gerekmez.</string>
     <string name="archive_vault_confirm">Mevcut kasa arşive taşınacak, varsayılan konumda yeni bir kasa oluşturulacak. Hiçbir şey silinmez. Kasayı başka bir cihazda kullanmak için Şifreli kasayı dışa aktar seçeneğini kullanın; bu işlem kopyalar ve mevcut kasa yerinde kalır.</string>
     <string name="archive_vault_success">Kasa arşivlendi. Konum: %1$s</string>
     <string name="archive_vault_failed">Kasa arşivlenemedi. Hiçbir şey değişmedi.</string>

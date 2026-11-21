@@ -16,7 +16,6 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.dialogs.CreateNewFolderDialog
 import org.fossify.commons.dialogs.FilePickerDialog
@@ -69,6 +68,7 @@ import org.fossify.commons.helpers.DAY_SECONDS
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.PERMISSION_READ_STORAGE
+import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.helpers.SHOW_ALL_TABS
 import org.fossify.commons.helpers.SORT_BY_DATE_MODIFIED
 import org.fossify.commons.helpers.SORT_BY_DATE_TAKEN
@@ -89,6 +89,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.adapters.DirectoryAdapter
 import org.fossify.gallery.databinding.ActivityMainBinding
 import org.fossify.gallery.dialogs.ChangeSortingDialog
+import org.fossify.gallery.dialogs.VaultNoticeDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
@@ -141,6 +142,9 @@ import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateDBDirectory
 import org.fossify.gallery.extensions.updateWidgets
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.PROTECTION_PASSWORD
+import org.fossify.gallery.helpers.getVaultProtectionType
+import org.fossify.gallery.helpers.getVaultRoot
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.markPasswordReminderShown
 import org.fossify.gallery.helpers.markVaultPasswordEntered
@@ -1266,26 +1270,32 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         // Mark it as shown so repeated resumes in the same period do not nag the user.
         markPasswordReminderShown(config)
 
-        AlertDialog.Builder(this)
-            .setTitle(R.string.vault_password_reminder_due_title)
-            .setMessage(R.string.vault_password_reminder_due_message)
-            .setPositiveButton(R.string.vault_password_reminder_verify_action) { _, _ ->
-                showVaultPasswordVerification()
-            }
-            .setNeutralButton(R.string.vault_password_reminder_forgot_action) { _, _ ->
-                showVaultPasswordRecovery()
-            }
-            .setNegativeButton(R.string.vault_password_reminder_not_now, null)
-            .show()
+        // HTML screen 4: two buttons only. "I don't remember" moved to screen 6, reachable
+        // from the verification form below.
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.vault_password_reminder_due_title),
+            message = getString(R.string.vault_password_reminder_due_message),
+            positiveText = getString(R.string.vault_password_reminder_verify_action),
+            negativeText = getString(R.string.vault_password_reminder_not_now),
+            cancelable = true,
+            onPositive = { showVaultPasswordVerification() },
+        )
     }
 
     private fun showVaultPasswordVerification() {
+        // HTML screen 5: open the credential type actually used by the vault; do not ask again.
+        val vaultType = CryptoManager.getVaultProtectionType(this)
+            ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
         VaultSecurityDialog(
             activity = this,
             requiredHash = config.hiddenPasswordHash,
-            showTabIndex = SHOW_ALL_TABS,
+            showTabIndex = vaultType,
             minimalist = true,
             allowBiometrics = false,
+            showVerificationMessage = true,
+            showForgotPasswordLink = true,
+            onForgotPassword = { showVaultPasswordRecovery() },
         ) { _, _, success ->
             if (success) {
                 markVaultPasswordEntered(config)
@@ -1295,10 +1305,15 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun showVaultPasswordRecovery() {
-        startActivity(
-            Intent(this, AboutActivity::class.java).apply {
-                putExtra(AboutActivity.EXTRA_OPEN_FORGOT_FAQ, true)
-            },
+        // HTML screen 6: compact themed dialog with the numbered steps and the *currently
+        // selected* vault path. The FAQ entry remains in About for other entry points.
+        val vaultPath = CryptoManager.getVaultRoot(this)?.absolutePath ?: config.vaultRootPath
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.vault_password_reminder_forgot_title),
+            message = getString(R.string.vault_password_reminder_forgot_steps, vaultPath),
+            positiveText = getString(org.fossify.commons.R.string.ok),
+            onPositive = {},
         )
     }
 

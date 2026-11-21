@@ -236,11 +236,29 @@
     </LinearLayout>
 
     <!-- Full Alphanumeric Password View (PROTECTION_PASSWORD = 3) -->
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/vault_password_holder"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:visibility="gone">
+
+        <!-- The shutter sweep travels in its own 24dp corridor between the lock emblem/status
+             label and the input field, mirroring the open space the PIN dots sit in. It must
+             never cross the password field itself. -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="24dp"
+            android:layout_marginBottom="10dp">
+
+            <View
+                android:id="@+id/vault_unlock_sweep_password"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_gravity="center_vertical"
+                android:background="@drawable/vault_unlock_sweep"
+                android:visibility="invisible" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -292,16 +310,20 @@
                     android:src="@drawable/ic_onboarding_check" />
             </FrameLayout>
         </LinearLayout>
+    </LinearLayout>
 
-        <!-- Same left-to-right shutter sweep as the PIN dots, overlaid on the password field. -->
-        <View
-            android:id="@+id/vault_unlock_sweep_password"
-            android:layout_width="match_parent"
-            android:layout_height="4dp"
-            android:layout_gravity="center_vertical"
-            android:background="@drawable/vault_unlock_sweep"
-            android:visibility="invisible" />
-    </FrameLayout>
+    <!-- Password-reminder verification only (HTML screen 5): bottom-right recovery link. -->
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/vault_forgot_password_link"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="12dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:text="@string/vault_password_reminder_forgot_action"
+        android:textSize="13sp"
+        android:visibility="gone" />
 
     <!-- Guidance only: shown while creating a vault so the chosen secret can be assessed. -->
     <LinearLayout

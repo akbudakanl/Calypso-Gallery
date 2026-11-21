@@ -1,10 +1,12 @@
 package org.fossify.gallery.dialogs
 
 import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.databinding.DialogManageBottomActionsBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.isLargeScreen
 import org.fossify.gallery.helpers.*
 
 class ManageBottomActionsDialog(val activity: BaseSimpleActivity, val callback: (result: Int) -> Unit) {
@@ -20,6 +22,11 @@ class ManageBottomActionsDialog(val activity: BaseSimpleActivity, val callback: 
             manageBottomActionsRotate.isChecked = actions and BOTTOM_ACTION_ROTATE != 0
             manageBottomActionsProperties.isChecked = actions and BOTTOM_ACTION_PROPERTIES != 0
             manageBottomActionsChangeOrientation.isChecked = actions and BOTTOM_ACTION_CHANGE_ORIENTATION != 0
+            // Android 16 ignores orientation requests on large screens; don't offer a
+            // setting that can never take effect there.
+            if (activity.isLargeScreen) {
+                manageBottomActionsChangeOrientation.beGone()
+            }
             manageBottomActionsSlideshow.isChecked = actions and BOTTOM_ACTION_SLIDESHOW != 0
             manageBottomActionsShowOnMap.isChecked = actions and BOTTOM_ACTION_SHOW_ON_MAP != 0
             manageBottomActionsToggleVisibility.isChecked = actions and BOTTOM_ACTION_TOGGLE_VISIBILITY != 0

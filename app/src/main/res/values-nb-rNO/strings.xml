@@ -701,4 +701,9 @@
 
     <string name="export_vault_different_vault">Målmappen inneholder allerede et annet kryptert hvelv. Eksporten ble avbrutt for å beskytte det. Velg en tom mappe.</string>
     <string name="export_vault_unknown_content">Målmappen inneholder krypterte filer, men ingen hvelvheader. Eksporten ble avbrutt.</string>
+    <string name="vault_biometric_setup_continue">Fortsett</string>
+    <string name="device_owner_verify_title">Bekreft enhetsinnehaver</string>
+    <string name="device_owner_verify_subtitle">Bekreft med biometri eller enhets-PIN for å fortsette. Hvelvpassordet er ikke nødvendig.</string>
+    <string name="archive_total_size_title">Arkivlagring</string>
+    <string name="archive_total_size">Samlet størrelse på arkiverte hvelv: %1$s</string>
 </resources>

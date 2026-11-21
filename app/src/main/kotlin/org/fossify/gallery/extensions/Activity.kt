@@ -57,6 +57,8 @@ import org.fossify.gallery.dialogs.ResizeMultipleImagesDialog
 import org.fossify.gallery.dialogs.ResizeWithPathDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.dialogs.SmartFileConflictDialog
+import org.fossify.gallery.dialogs.VaultBiometricOfferDialog
+import org.fossify.gallery.dialogs.VaultNoticeDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
@@ -594,52 +596,51 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
     val invalid = config.archivedVaults.filterNot { validIds.contains(it.id) }
 
     val items = ArrayList<RadioItem>()
+    val labels = ArrayList<String>()
     valid.forEachIndexed { index, entry ->
         val label = if (entry.dateKnown) {
             getString(R.string.archived_vault_indexed, index + 1)
         } else {
             getString(R.string.archived_vault_unknown_date)
         }
+        labels.add(label)
         items.add(RadioItem(ARCHIVED_ITEM_ID_BASE + index, label))
     }
-    invalid.forEachIndexed { index, entry ->
-        items.add(RadioItem(INVALID_ARCHIVE_ITEM_ID_BASE + index, getString(R.string.archived_vault_invalid)))
+    invalid.forEachIndexed { index, _ ->
+        labels.add(getString(R.string.archived_vault_invalid))
+        items.add(RadioItem(INVALID_ARCHIVE_ITEM_ID_BASE + index, labels.last()))
     }
     if (items.isEmpty()) {
         onBack()
         return
     }
 
-    RadioGroupDialog(
-        activity = this,
-        items = items,
-        checkedItemId = -1,
-        titleId = R.string.select_archived_vault,
-        cancelCallback = onBack,
-    ) { selected ->
-        val id = selected as Int
+    fun handleSelection(id: Int) {
         if (id >= INVALID_ARCHIVE_ITEM_ID_BASE) {
             val entry = invalid[id - INVALID_ARCHIVE_ITEM_ID_BASE]
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle(R.string.archived_vault_invalid)
-                .setMessage(getString(R.string.archived_vault_invalid_message, humanizePath(entry.path)))
-                .setPositiveButton(R.string.copy_path) { _, _ ->
+            VaultNoticeDialog(
+                activity = this,
+                title = getString(R.string.archived_vault_invalid),
+                message = getString(R.string.archived_vault_invalid_message, humanizePath(entry.path)),
+                positiveText = getString(org.fossify.commons.R.string.ok),
+                negativeText = getString(R.string.copy_path),
+                onPositive = {},
+                onNegative = {
                     val clipboard = getSystemService(android.content.ClipboardManager::class.java)
                     clipboard?.setPrimaryClip(
                         android.content.ClipData.newPlainText(getString(R.string.archived_vault_invalid), entry.path)
                     )
-                }
-                .setNegativeButton(org.fossify.commons.R.string.ok, null)
-                .show()
-            return@RadioGroupDialog
+                },
+            )
+            return
         }
 
-        val entry = valid[id - 1000].vault
+        val entry = valid[id - ARCHIVED_ITEM_ID_BASE].vault
         // Activation happens in place; moving back is a separate, explicit "Unarchive vault" action.
         if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
             toast(R.string.archive_vault_failed)
             onBack()
-            return@RadioGroupDialog
+            return
         }
         VaultSecurityDialog(
             activity = this,
@@ -655,6 +656,54 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
             }
         }
     }
+
+    fun showArchiveSizeInfo() {
+        val totalBytes = VaultArchiveManager.archiveRoot().listFiles()
+            ?.filter { it.isDirectory }
+            ?.sumOf { dir -> dir.walkTopDown().filter { it.isFile }.map { it.length() }.sum() }
+            ?: 0L
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.archive_total_size_title),
+            message = getString(
+                R.string.archive_total_size,
+                android.text.format.Formatter.formatFileSize(this, totalBytes)
+            ),
+            positiveText = getString(org.fossify.commons.R.string.ok),
+            onPositive = {},
+        )
+    }
+
+    val density = resources.displayMetrics.density
+    fun dp(value: Float) = (value * density).toInt()
+    val primary = org.fossify.gallery.helpers.AppearanceManager.resolve(this, config).primary
+    val titleView = android.widget.LinearLayout(this).apply {
+        orientation = android.widget.LinearLayout.HORIZONTAL
+        gravity = android.view.Gravity.CENTER_VERTICAL
+        setPadding(dp(20f), dp(16f), dp(8f), dp(4f))
+        addView(org.fossify.commons.views.MyTextView(context).apply {
+            text = getString(R.string.select_archived_vault)
+            textSize = 18f
+            setTextColor(getProperTextColor())
+            layoutParams = android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        addView(android.widget.ImageView(context).apply {
+            setImageResource(org.fossify.commons.R.drawable.ic_info_vector)
+            applyColorFilter(primary)
+            layoutParams = android.widget.LinearLayout.LayoutParams(dp(40f), dp(40f))
+            setOnClickListener { showArchiveSizeInfo() }
+        })
+    }
+
+    AlertDialog.Builder(this)
+        .setCustomTitle(titleView)
+        .setSingleChoiceItems(labels.toTypedArray(), -1) { dialog, which ->
+            dialog.dismiss()
+            handleSelection(items[which].id)
+        }
+        .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+        .setOnCancelListener { onBack() }
+        .show()
 }
 
 fun BaseSimpleActivity.promptWhereToCreateVault(
@@ -872,17 +921,14 @@ private fun BaseSimpleActivity.validatePickedVaultDirectory(
 }
 
 private fun BaseSimpleActivity.showVaultLocationNoticeDialog(messageResId: Int, onDone: () -> Unit) {
-    val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).setText(messageResId)
-    getAlertDialogBuilder()
-        .setPositiveButton(org.fossify.commons.R.string.ok, null)
-        .apply {
-            setupDialogStuff(messageView, this) { alertDialog ->
-                alertDialog.setOnDismissListener {
-                    onDone()
-                }
-            }
-        }
+    // Use the theme-aware card; Commons' platform buttons would otherwise stay green.
+    VaultNoticeDialog(
+        activity = this,
+        title = getString(R.string.vault_location),
+        message = getString(messageResId),
+        positiveText = getString(org.fossify.commons.R.string.ok),
+        onPositive = onDone,
+    )
 }
 
 private fun BaseSimpleActivity.unlockCandidateVault(
@@ -1213,7 +1259,8 @@ fun BaseSimpleActivity.promptExportEncryptedVault(
         return
     }
 
-    // Export is a pure file copy; no password/biometric gate (ADR 0007 §9.1).
+    // Export is a pure file copy. No vault password is needed; the caller applies the shared
+    // device-owner check (Class 3 biometric or device credential) before reaching this point.
     run {
         pickCustomVaultDirectory(
             initialPath = defaultSyncSourcePickerPath(),
@@ -3260,38 +3307,50 @@ fun BaseSimpleActivity.emptyAndDisableTheRecycleBin(callback: () -> Unit) {
     }
 }
 
-private fun BaseSimpleActivity.scrollableDialogMessage(text: String): ScrollView {
-    val horizontalPadding = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.activity_margin)
-    return ScrollView(this).apply {
-        setPadding(horizontalPadding, 0, horizontalPadding, 0)
-        addView(org.fossify.commons.views.MyTextView(context).apply {
-            this.text = text
-            textSize = DIALOG_MESSAGE_TEXT_SIZE_SP
-            setTextColor(getProperTextColor())
-        })
-    }
-}
-
 /** Shown right after vault creation / password change, before any biometric offer. */
 fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
-    // Non-cancelable: the password-save acknowledgement must be read, not tapped away.
-    AlertDialog.Builder(this)
-        .setTitle(R.string.vault_password_saved_title)
-        .setView(scrollableDialogMessage(getString(R.string.vault_password_saved_message)))
-        .setPositiveButton(R.string.vault_password_saved_confirm) { _, _ -> onDone() }
-        .setNegativeButton(R.string.vault_password_saved_later) { _, _ -> onDone() }
-        .setCancelable(false)
-        .show()
+    // Non-cancelable: the whole acknowledgement (including the reminder explanation) must be read.
+    VaultNoticeDialog(
+        activity = this,
+        title = getString(R.string.vault_password_saved_title),
+        message = getString(R.string.vault_password_saved_message) +
+            "\n\n" + getString(R.string.vault_password_reminder_setup_note),
+        positiveText = getString(R.string.vault_password_saved_confirm),
+        onPositive = {
+            // HTML: 3a is acknowledged first, then the one-time biometric offer (3b) may appear.
+            onDone()
+            if (!isFinishing && !isDestroyed) {
+                config.vaultBiometricOfferShown = false
+                VaultBiometricOfferDialog.showIfNeeded(this)
+            }
+        },
+    )
 }
 
-/** Shown before a biometric enrollment prompt so the password reminder cannot be skipped. */
-fun BaseSimpleActivity.showBiometricPasswordNoteDialog(onContinue: () -> Unit) {
-    AlertDialog.Builder(this)
-        .setTitle(R.string.vault_biometric_offer_title)
-        .setView(scrollableDialogMessage(getString(R.string.vault_biometric_setup_password_note)))
-        .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ -> onContinue() }
-        .setCancelable(false)
-        .show()
+/**
+ * Theme-aware card shown before the system biometric enrollment prompt (HTML screen 3b).
+ * The system prompt itself is drawn by Android and cannot be restyled, so the full explanation
+ * lives here and the prompt only carries its own title/description.
+ */
+fun BaseSimpleActivity.showBiometricPasswordNoteDialog(
+    title: String,
+    message: String,
+    note: String,
+    onContinue: () -> Unit,
+    onCancel: (() -> Unit)? = null,
+) {
+    VaultNoticeDialog(
+        activity = this,
+        title = title,
+        message = message,
+        noteText = note,
+        positiveText = getString(R.string.vault_biometric_setup_continue),
+        negativeText = getString(org.fossify.commons.R.string.cancel),
+        cancelable = true,
+        showBiometricGlyph = true,
+        onPositive = onContinue,
+        onNegative = onCancel ?: {},
+    )
 }
 
 fun BaseSimpleActivity.showRecycleBinEmptyingDialog(callback: () -> Unit) {

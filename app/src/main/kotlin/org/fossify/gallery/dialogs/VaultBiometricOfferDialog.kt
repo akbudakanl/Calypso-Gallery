@@ -1,29 +1,24 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
-import android.widget.LinearLayout
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import org.fossify.commons.activities.BaseSimpleActivity
-import org.fossify.commons.extensions.getAlertDialogBuilder
-import org.fossify.commons.extensions.setupDialogStuff
-import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.showBiometricPasswordNoteDialog
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.completeBiometricSetup
+import org.fossify.gallery.helpers.ensureBiometricKeyAvailable
 import org.fossify.gallery.helpers.getBiometricEncryptCipher
-import org.fossify.gallery.helpers.getOrCreateBiometricKey
-import org.fossify.gallery.helpers.isBiometricHardwareAvailable
 import org.fossify.gallery.helpers.readVaultKdfParams
 
 /**
- * One-time offer shown right after the first vault is created. The master key is already unlocked
- * at that point, so accepting does not ask for the password a second time. Declining, back, or
- * leaving the app without answering leaves biometrics off; the question is never repeated.
+ * One-time biometric setup shown right after the first vault is created / the password changes,
+ * when a Class 3 biometric is enrolled. It goes straight to the themed 3b card; cancelling or
+ * closing it leaves biometrics off and the prompt is not repeated until the next vault setup.
  */
 object VaultBiometricOfferDialog {
     /** Set by Settings so the toggle reflects enrolment immediately. */
@@ -34,40 +29,20 @@ object VaultBiometricOfferDialog {
         if (config.vaultBiometricOfferShown) return
         if (CryptoManager.readVaultKdfParams(activity) == null) return
 
-        // No TEE/StrongBox (or no strong biometric enrolled): the app never uses biometrics here.
-        // Do not mark the offer as shown - a later creation on the same/other device re-checks.
-        if (!CryptoManager.isBiometricHardwareAvailable(activity) || CryptoManager.getOrCreateBiometricKey() == null) {
-            config.isVaultBiometricEnabled = false
-            config.vaultBiometricWrappedBundle = ""
-            return
-        }
+        // Only offer enrollment when a strong biometric is actually enrolled and a hardware key
+        // can be created. Otherwise say nothing during setup: no note, no config change. The
+        // user can discover the state later in Settings (passive row + info icon). The offer is
+        // not marked as shown, so a later creation re-checks.
+        if (!CryptoManager.ensureBiometricKeyAvailable(activity)) return
 
         // Mark and default to off before showing: exiting without an answer counts as a decline.
         config.vaultBiometricOfferShown = true
         config.isVaultBiometricEnabled = false
         config.vaultBiometricWrappedBundle = ""
 
-        val palette = org.fossify.gallery.helpers.AppearanceManager.resolve(activity, config)
-        val view = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            val padding = (24f * resources.displayMetrics.density).toInt()
-            setPadding(padding, padding / 2, padding, 0)
-            addView(MyTextView(activity).apply {
-                text = activity.getString(R.string.vault_biometric_offer_message)
-                setTextColor(palette.text)
-            })
-        }
-
-        activity.getAlertDialogBuilder()
-            .setCancelable(false)
-            .setNegativeButton(R.string.vault_biometric_offer_decline, null)
-            .setPositiveButton(R.string.vault_biometric_offer_accept) { dialog, _ ->
-                startEnrollment(activity)
-                dialog.dismiss()
-            }
-            .apply {
-                activity.setupDialogStuff(view, this, titleId = R.string.vault_biometric_offer_title)
-            }
+        // Go straight to the themed 3b card — the old platform "offer" dialog duplicated the
+        // same explanation and is no longer shown.
+        startEnrollment(activity)
     }
 
     private fun startEnrollment(activity: Activity) {
@@ -96,9 +71,16 @@ object VaultBiometricOfferDialog {
             prompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
         }
 
-        // The password reminder must be acknowledged before the (dismissible) system prompt.
+        // Full explanation lives in the theme-aware card (HTML screen 3b); the system prompt
+        // stays short because Android draws it with its own, non-themable style.
         if (activity is BaseSimpleActivity) {
-            activity.showBiometricPasswordNoteDialog { launchSystemPrompt() }
+            activity.showBiometricPasswordNoteDialog(
+                title = activity.getString(R.string.vault_biometric_offer_title),
+                message = activity.getString(R.string.vault_biometric_offer_message),
+                note = activity.getString(R.string.vault_biometric_setup_password_note),
+                onContinue = { launchSystemPrompt() },
+                onCancel = {},
+            )
         } else {
             launchSystemPrompt()
         }

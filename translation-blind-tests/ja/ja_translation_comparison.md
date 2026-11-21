@@ -1022,3 +1022,13 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 |--:|---|---|---|---|
 | 1 | `identical_files_skipped` | one: "%d identical file skipped" / other: "%d identical files skipped" | other: "%d 個の同一ファイルをスキップしました" | Short end-of-operation toast in Smart/Automatic mode |
 | 2 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIn Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | スマートダイアログと自動モードは、内容がすでに存在するファイルをスキップし、本当に注意が必要なファイル（名前は同じだが内容が異なるもの）だけを表示するために存在します。まさにこのような場合に、サムネイルの比較によってビットロット（データの劣化）を検出できます。\n\nここで\"毎回確認\"を選択すると、日付が異なる同一ファイルがすべて競合として再び表示されます。スマートダイアログでは同じ画像のサムネイルが2つ表示され、確認するものが何もありませんが、その場で判断できます。自動（実験的）モードではダイアログを一切表示しないため、\"毎回確認\"は使用できません。自動モードを選択すると\"既存ファイルの日付を保持（既定）\"にフォールバックします。\n\nこのオプションは、誤った日付を手動で修正するなど、すべての日付の違いを意図的に確認したい場合にのみ使用してください。\n\n注: 内容がビット単位で同一の場合、EXIF の撮影日も同一です。日付が異なるということは、いずれかの側が EXIF データを失い、ファイルの更新日時（コピーした日時）にフォールバックしたことを意味します。 | Revised: "Always ask" unavailable in Automatic; falls back to keep-target date |
+
+## New strings (biometric setup, device-owner check, archive size)
+
+| Key | Translation |
+|---|---|
+| `vault_biometric_setup_continue` | 続ける |
+| `device_owner_verify_title` | 端末の所有者を確認 |
+| `device_owner_verify_subtitle` | 生体認証または端末のPINで確認して続行してください。金庫のパスワードは不要です。 |
+| `archive_total_size_title` | アーカイブの保存領域 |
+| `archive_total_size` | アーカイブ済み金庫の合計サイズ: %1$s |

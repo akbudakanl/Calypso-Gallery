@@ -60,6 +60,11 @@ class VaultSecurityDialog(
     private val allowBiometrics: Boolean = true,
     private val autoPromptBiometrics: Boolean = true,
     private val rewrapKdfOnUnlock: Boolean = false,
+    /** HTML screen 5: explain that this is a password check, not a vault unlock. */
+    private val showVerificationMessage: Boolean = false,
+    /** HTML screen 5: bottom-right "I forgot my password" link to the recovery dialog. */
+    private val showForgotPasswordLink: Boolean = false,
+    private val onForgotPassword: (() -> Unit)? = null,
     private val onCancelCallback: (() -> Unit)? = null,
     private val callback: (hash: String, type: Int, success: Boolean) -> Unit
 ) {
@@ -242,8 +247,15 @@ class VaultSecurityDialog(
             binding.vaultTabs.beGone()
         }
 
-        if (minimalist && !isSetupMode) {
+        if (minimalist && !isSetupMode && !showVerificationMessage) {
             binding.vaultStatusLabel.beGone()
+        }
+        if (showForgotPasswordLink) {
+            binding.vaultForgotPasswordLink.apply {
+                setTextColor(primaryColor)
+                beVisible()
+                setOnClickListener { onForgotPassword?.invoke() }
+            }
         }
         binding.vaultPasswordInputLayout.hint = activity.getString(R.string.enter_password)
 
@@ -387,6 +399,21 @@ class VaultSecurityDialog(
     }
 
     private fun updateStatusLabel() {
+        if (showVerificationMessage) {
+            binding.vaultStatusLabel.apply {
+                text = SpannableStringBuilder().apply {
+                    append(
+                        activity.getString(R.string.vault_password_reminder_verify_title),
+                        StyleSpan(Typeface.BOLD),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    append('\n')
+                    append(activity.getString(R.string.vault_password_reminder_verify_message))
+                }
+                beVisible()
+            }
+            return
+        }
         if (minimalist && !isSetupMode) {
             binding.vaultStatusLabel.beGone()
             return
@@ -502,12 +529,8 @@ class VaultSecurityDialog(
                     dialogSucceeded = true
                     dialog?.dismiss()
                     callback(hash, currentType, true)
-                    // A freshly created vault always gets a fresh one-time offer, even if a
-                    // previous (deleted) vault had already seen it.
-                    if (!activity.isFinishing && !activity.isDestroyed) {
-                        activity.config.vaultBiometricOfferShown = false
-                        VaultBiometricOfferDialog.showIfNeeded(activity)
-                    }
+                    // The one-time biometric offer is triggered by showVaultPasswordSavedDialog's
+                    // acknowledgement (HTML screen 3a → 3b), never directly from this callback.
                 } else {
                     clearFirstStepSecret()
                     inputHelper.clearInputs()
@@ -542,7 +565,8 @@ class VaultSecurityDialog(
             dots = if (isPassword) null else binding.vaultPinDots,
             sweep = if (isPassword) binding.vaultUnlockSweepPassword else binding.vaultUnlockSweep,
             panel = binding.root,
-            pulseView = if (isPassword) binding.vaultPasswordInputLayout else null
+            pulseView = if (isPassword) binding.vaultPasswordInputLayout else null,
+            sweepColor = AppearanceManager.resolve(activity, activity.config).primary,
         )
         shutterAnimator = animator
         animator.play {

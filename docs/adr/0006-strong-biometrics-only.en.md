@@ -5,7 +5,7 @@
 - **Related:** [ADR 0002](0002-operational-security-hardening.md) (operational security hardening), [ADR 0005](0005-kek-rotation.md) (key hierarchy and local threat model)
 - **Language:** Turkish original: [0006-strong-biometrics-only.md](0006-strong-biometrics-only.md)
 
-> **Summary Decision.** The encrypted vault's biometric lock accepts only **Class 3 / `BIOMETRIC_STRONG`** biometrics, and every authentication is bound to a hardware-backed Keystore key via `BiometricPrompt.CryptoObject`. Class 2 / `BIOMETRIC_WEAK` (e.g. the 2D face unlock on the Samsung Galaxy Tab S10 Lite) is **deliberately rejected**; no relaxation is applied, including an "exception for these devices only". On devices without strong biometrics the settings row is not hidden: it remains visible but disabled, with the reason explained both underneath it and in a dialog opened by tapping it.
+> **Summary Decision.** The encrypted vault's biometric lock accepts only **Class 3 / `BIOMETRIC_STRONG`** biometrics, and every authentication is bound to a hardware-backed Keystore key via `BiometricPrompt.CryptoObject`. Class 2 / `BIOMETRIC_WEAK` (e.g. the 2D face unlock on the Samsung Galaxy Tab S10 Lite) is **deliberately rejected**; no relaxation is applied, including an "exception for these devices only". The enrollment offer after vault creation / password change appears **only when a strong biometric is actually enrolled**; otherwise setup stays silent. On devices without a usable strong biometric the settings row is not hidden: it stays visible but passive (grey), with an **info icon** that opens the reason dialog on demand. Android sends no broadcast for enrollment changes, so the state is re-evaluated in `SettingsActivity.onResume()`; leaving and re-entering Settings is enough to update the appearance. No popup is shown when biometrics become available, and the switch stays off by default.
 
 ---
 
@@ -31,7 +31,9 @@ This ADR records both that user-experience defect and the **security decision be
 | Authentication | `BiometricPrompt.CryptoObject(cipher)` in every enrollment and unlock flow |
 | Device PIN/password | Accepted **only to confirm turning biometrics off** (`DEVICE_CREDENTIAL`); never used as an unlock fallback |
 | Weak biometrics | Not supported; no silent or explicit fallback |
-| UI | Row is visible whenever a vault exists; when suitable hardware/key is missing it is disabled, with a persistent explanation and a dialog on tap (not a toast) |
+| UI | Row is visible whenever a vault exists; when a usable strong biometric/key is missing the switch is passive (grey) with an info icon opening the reason dialog (not a toast, not an always-visible text) |
+| Enrollment offer | Shown only if `canAuthenticate(BIOMETRIC_STRONG) == SUCCESS` and a usable hardware key exists; otherwise no note and no config rewrite during setup |
+| Enrollment changes | No broadcast/callback is available; `SettingsActivity.onResume()` re-checks the state. No popup; the setting activates on returning to Settings and remains off by default |
 
 `CryptoManagerBiometrics.kt` and `BiometricAvailability.kt` are the single implementation points for these rules. The `canAuthenticate` result (`NO_HARDWARE`, `NONE_ENROLLED`, `HW_UNAVAILABLE`, `SECURITY_UPDATE_REQUIRED`, key failure) is mapped to a specific user-facing message, localized into 9 audited languages plus English/Turkish.
 
@@ -92,11 +94,22 @@ This fork is defined by security: Argon2id target unlock time, screenshot blocki
 Independently of the security decision, the old behaviour was wrong: the settings row disappeared silently with no explanation. The new behaviour is:
 
 - The row is **always visible** when a vault exists and storage permission is granted;
-- if strong biometrics or a hardware-backed key are unavailable, the switch is disabled with a localized explanation underneath;
-- tapping the row shows the same explanation in a **`ConfirmationDialog`** (a toast is not used because it truncates long text);
-- a user who has biometrics already enabled can still **turn them off** even if the hardware is no longer usable (`confirmDisableBiometric` accepts the device PIN/password).
+- if no strong biometric is usable, the switch is **passive/grey** and an **info icon** appears at its right; no explanation text is forced into the row;
+- tapping the info icon (or the passive row) shows the localized explanation in a **`ConfirmationDialog`** (a toast is not used because it truncates long text);
+- the vault-creation / password-change enrollment note appears **only when a Class 3 biometric is enrolled**. With no enrollment there is no "you cannot add a fingerprint" message during setup — the user discovers the state later in Settings;
+- Android does not notify apps when biometric enrollment changes. The state is therefore re-read in `onResume()`. **Leaving and re-entering Settings is the refresh trigger.** If the user enables biometrics in Android settings, no dialog pops up: the info icon disappears, the switch becomes active and remains **off by default**;
+- a key generated while nothing was enrolled would be invalidated by a later enrollment (`setInvalidatedByBiometricEnrollment(true)`). `ensureBiometricKeyAvailable()` detects this and clears the stale key/config, so re-enrollment leaves the setting off instead of leaving a dead configuration behind.
 
 The message varies by cause; in particular, "weak face unlock is not accepted; enrol a fingerprint or a Class 3 face unlock" gives the user both the hardware limit and the remedy. This is presented as a **device security-feature limit**, not as an error.
+
+### 4.1. Setup card (3b) and dismissal rules
+
+- Order is strict: **3a (password saved acknowledgement) → 3b (biometric setup card)**. The one-time offer is triggered from the 3a acknowledgement, never directly from the credential callback, so 3b can no longer appear before 3a.
+- 3b appears **only when a Class 3 biometric is enrolled**. On devices without one, 3b is skipped and 3a is the last message of the setup flow.
+- The card uses the approved **"İz dalgası"** glyph: seven fingerprint ridges are drawn with 90 ms stagger (450 ms each), darken from 30 % to full opacity at 850 ms, then a single background circle fades in with a glow peaking at 12 dp and settling at 4 dp (1250–2150 ms). With `ANIMATOR_DURATION_SCALE == 0` the final state is drawn immediately.
+- **Dismissal:** 3a and the recovery dialog (6) are **not cancelable** (back/outside tap does nothing). The reminder dialog (4) and the 3b card **are** cancelable with the back button. The separate one-time offer dialog keeps its existing platform behaviour; it is not changed.
+- **Enrollment state:** until 3b is completed, `isVaultBiometricEnabled` stays **false**. Closing 3b does not re-show the offer; the user must later open Settings, verify the password and enable biometrics explicitly.
+- **Reminder scheduling is independent of 3a/3b.** Dismissing them or closing the app while they are visible does not touch the reminder clock. Dismissing 4/5/6 or closing the app there does: the notice timestamp was already written when 4 was shown, so the reminder returns after the next full interval (e.g. two weeks).
 
 ---
 
@@ -122,14 +135,16 @@ When two strong biometrics — Class 3 3D face unlock **and** fingerprint — ar
 1. **Weak biometrics + application-level verification:** rejected because it moves the security boundary from the TEE to the app (§3.3–3.4).
 2. **Exception only for Tab S10 Lite / specific devices:** rejected because a hardware exception ties the security model to device identity, expands with each new device and spreads the same weakness.
 3. **Silent hiding:** rejected and fixed because it gives the user no information (§4).
-4. **Short toast warning:** rejected because the long explanation gets truncated; persistent text plus a dialog was adopted instead.
-5. **Using `DEVICE_CREDENTIAL` for general vault unlock:** rejected for now because it offers no extra convenience (a PIN is still entered) and is out of scope. It may be evaluated in a separate ADR later, but must remain Keystore-backed and must not become an application-level gate.
+4. **Short toast warning / always-visible explanation text:** rejected because the toast truncates long text and permanent text clutters the row; an on-demand info icon plus dialog was adopted instead.
+5. **Enrollment note on every vault creation / password change:** rejected because it tells the user they "cannot add biometrics" on devices where the feature is irrelevant; the note is now conditional on an actually enrolled strong biometric.
+6. **Popup when Android biometrics become available:** rejected; the user asked for a purely visual change discovered in Settings, so only `onResume()` re-evaluation is used.
+7. **Using `DEVICE_CREDENTIAL` for general vault unlock:** rejected for now because it offers no extra convenience (a PIN is still entered) and is out of scope. It may be evaluated in a separate ADR later, but must remain Keystore-backed and must not become an application-level gate.
 
 ---
 
 ## 7. Verification and Status
 
-- `VaultLockPolicyTest` verifies, at source level, the error-code → message mapping, that the row is not hidden, and that the explanation is shown in a dialog.
+- `VaultLockPolicyTest` verifies, at source level, the error-code → message mapping, that the row is not re-hidden by `setupVaultBiometric()`, that the switch is passive when unusable, that the info icon exists, and that the enrollment offer stays silent when no strong biometric is enrolled.
 - The 1:1 comparison tables for the 7 new keys in 9 audited locales (az, de, es, es-419, es-US, ja, nb-NO, nn, zh-TW) were updated under `translation-blind-tests/`.
 - `:app:testFossDebugUnitTest` passes; resource merging is error-free.
 - **Test coverage limit:** No device with Class 3 3D face-unlock hardware was available, so this modality was **not tested on a physical device**. The behaviour described in §5 is based on Android/AOSP and OEM documentation and still needs verification on such a device.

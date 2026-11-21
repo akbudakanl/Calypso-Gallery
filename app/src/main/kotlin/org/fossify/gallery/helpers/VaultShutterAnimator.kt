@@ -3,6 +3,8 @@ package org.fossify.gallery.helpers
 import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.graphics.Color
+import android.graphics.PorterDuff
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -25,7 +27,9 @@ class VaultShutterAnimator(
     private val dots: VaultPinDotsView?,
     private val sweep: View,
     private val panel: View,
-    private val pulseView: View? = null
+    private val pulseView: View? = null,
+    /** The gradient drawable is white in XML; tint it so the sweep stays visible in light themes. */
+    private val sweepColor: Int = Color.WHITE,
 ) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val running = mutableListOf<Animator>()
@@ -71,7 +75,9 @@ class VaultShutterAnimator(
             }
         }
 
-        // 3 — light sweep across the dots (380-900 ms)
+        // 3 — light sweep across the dots (380-900 ms). The XML gradient is white, so light
+        // themes need the active primary colour to keep it visible on a light input field.
+        sweep.background?.mutate()?.setColorFilter(sweepColor, PorterDuff.Mode.SRC_ATOP)
         sweep.alpha = 0f
         sweep.visibility = View.VISIBLE
         val sweepDistance = (sweep.parent as? View)?.measuredWidth?.toFloat() ?: sweep.width * 3f

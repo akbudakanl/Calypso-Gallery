@@ -727,4 +727,9 @@
 
     <string name="export_vault_different_vault">La carpeta de destino ya contiene otra bóveda cifrada. Se canceló la exportación para protegerla. Elige una carpeta vacía.</string>
     <string name="export_vault_unknown_content">La carpeta de destino contiene archivos cifrados pero no cabecera de bóveda. Se canceló la exportación.</string>
+    <string name="vault_biometric_setup_continue">Continuar</string>
+    <string name="device_owner_verify_title">Verificar al propietario del dispositivo</string>
+    <string name="device_owner_verify_subtitle">Confirme con su biometría o el PIN del dispositivo para continuar. No se requiere la contraseña de la bóveda.</string>
+    <string name="archive_total_size_title">Almacenamiento del archivo</string>
+    <string name="archive_total_size">Tamaño total de las bóvedas archivadas: %1$s</string>
 </resources>

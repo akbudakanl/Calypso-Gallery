@@ -758,4 +758,9 @@
 
     <string name="export_vault_different_vault">Målmappa inneheld allereie eit anna kryptert kvelv. Eksporten vart avbroten for å verne det. Vel ei tom mappe.</string>
     <string name="export_vault_unknown_content">Målmappa inneheld krypterte filer, men ingen kvelvheader. Eksporten vart avbroten.</string>
+    <string name="vault_biometric_setup_continue">Hald fram</string>
+    <string name="device_owner_verify_title">Stadfest eigar av eininga</string>
+    <string name="device_owner_verify_subtitle">Stadfest med biometri eller PIN-kode for eininga for å halde fram. Kvelvpassordet er ikkje nødvendig.</string>
+    <string name="archive_total_size_title">Arkivlager</string>
+    <string name="archive_total_size">Samla storleik på arkiverte kvelv: %1$s</string>
 </resources>

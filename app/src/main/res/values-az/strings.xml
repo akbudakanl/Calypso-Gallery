@@ -755,4 +755,9 @@
 
     <string name="export_vault_different_vault">Hedef klasörde zaten farklı bir şifreli kasa var. Mevcut kasayı korumak için dışa aktarma iptal edildi. Lütfen boş bir klasör seçin.</string>
     <string name="export_vault_unknown_content">Hedef klasörde şifreli dosyalar var ancak kasa başlığı yok. Kasaların karışmaması için dışa aktarma iptal edildi.</string>
+    <string name="vault_biometric_setup_continue">Davam et</string>
+    <string name="device_owner_verify_title">Cihaz sahibini təsdiqləyin</string>
+    <string name="device_owner_verify_subtitle">Davam etmək üçün biometrik məlumat və ya cihaz PIN-i ilə təsdiqləyin. Kasa parolası tələb olunmur.</string>
+    <string name="archive_total_size_title">Arxiv saxlama sahəsi</string>
+    <string name="archive_total_size">Arxivlənmiş kasaların ümumi ölçüsü: %1$s</string>
 </resources>

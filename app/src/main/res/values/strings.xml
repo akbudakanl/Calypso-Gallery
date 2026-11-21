@@ -443,6 +443,7 @@
     <string name="vault_password_reminder_dialog_message">If you do not open the encrypted vault with your password for this long, we will remind you of it.</string>
     <string name="vault_password_reminder_setup_note">We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password.</string>
     <string name="vault_biometric_setup_password_note">If you choose to sign in with biometrics, remember that you still need to know your password.</string>
+    <string name="vault_biometric_setup_continue">Continue</string>
     <string name="vault_password_saved_title">Have you saved your password?</string>
     <string name="vault_password_saved_message">If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended.</string>
     <string name="vault_password_saved_confirm">Yes, I saved it</string>
@@ -463,6 +464,10 @@
     <string name="archive_vault">Archive vault</string>
     <string name="archive_vault_summary">Moves the old vault to the archive and creates a new one</string>
     <string name="archive_vault_confirm">The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is.</string>
+    <string name="archive_total_size_title">Archive storage</string>
+    <string name="archive_total_size">Total size of archived vaults: %1$s</string>
+    <string name="device_owner_verify_title">Verify device owner</string>
+    <string name="device_owner_verify_subtitle">Confirm with your biometric or device PIN to continue. The vault password is not required.</string>
     <string name="archive_vault_success">Vault archived. Location: %1$s</string>
     <string name="archive_vault_failed">Could not archive the vault. Nothing was changed.</string>
     <string name="select_archived_vault">Select from archived vaults</string>

@@ -684,4 +684,9 @@
 
     <string name="export_vault_different_vault">Am Zielort liegt bereits ein anderer verschlüsselter Tresor. Der Export wurde zum Schutz abgebrochen. Bitte einen leeren Ordner wählen.</string>
     <string name="export_vault_unknown_content">Am Zielort liegen verschlüsselte Dateien, aber kein Tresor-Kopf. Der Export wurde abgebrochen.</string>
+    <string name="vault_biometric_setup_continue">Weiter</string>
+    <string name="device_owner_verify_title">Gerätebesitzer bestätigen</string>
+    <string name="device_owner_verify_subtitle">Bestätigen Sie mit Ihrer Biometrie oder der Geräte-PIN, um fortzufahren. Das Tresor-Passwort ist nicht erforderlich.</string>
+    <string name="archive_total_size_title">Archivspeicher</string>
+    <string name="archive_total_size">Gesamtgröße der archivierten Tresore: %1$s</string>
 </resources>

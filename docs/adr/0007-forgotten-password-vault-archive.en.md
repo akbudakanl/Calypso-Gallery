@@ -21,7 +21,7 @@ This is a design axiom, not a preference:
 - The axiom also covers the existing **"Reset encrypted vault"** setting: it is reachable only **after entering the current password** and recreates the vault in place with a new one. No passwordless reset path is introduced.
 - The axiom covers archived vaults as well: the app may not **delete** an archived vault without its password. Deletion is performed only by the user, manually, through a file manager (§8).
 
-Biometric authentication does not change this axiom: a Class 3 biometric can unlock the vault but does not grant authority to delete it without the password (see ADR 0006).
+Biometric authentication does not change this axiom: a Class 3 biometric can unlock the vault but does not grant authority to delete or reset it without the password (see ADR 0006). The device-owner check before archiving (§3.3) is only an identity check for a non-destructive move; it never releases a vault key.
 
 ---
 
@@ -44,7 +44,7 @@ A separate row is added at the bottom of the **Encrypted vault** section, below 
 
 > **Archive vault** — *Moves the old vault to the archive and creates a new one in the default location*
 
-The row is visible **only when a vault exists**. The **"I don't remember"** button in the password reminder dialog does **not** open Settings; it opens the **About → FAQ** entry *"I forgot my encrypted vault password, what can I do?"* (§3.4). The word *archiving* in that FAQ text links back to this setting.
+The row is visible **only when a vault exists**. The **"I don't remember"** link in the password verification form (reached from the reminder dialog) opens a compact in-app recovery dialog with numbered steps and the currently selected vault path (§3.4). It does **not** open Settings. The **About → FAQ** entry *"I forgot my encrypted vault password, what can I do?"* remains available from About; the word *archiving* in that FAQ text links back to this setting.
 
 **"Vault location"** shows three options:
 
@@ -56,38 +56,38 @@ The archive list is ordered by archival time and labelled in the UI as **"1st ar
 
 ### 3.2. Question asked to the user
 
-The first dialog offers two options:
+The dialog offers a single real flow:
 
-1. **Archive and continue** (default, recommended): the old vault is preserved and a new vault is created at the default `Secrets` location.
-2. **Delete without archiving and continue**: would require a second, explicit confirmation — but it is a passwordless in-app deletion and therefore contradicts the axiom. **It is rejected.** The options actually presented are **Archive and continue / Cancel**; archiving is the default.
+1. **Archive and continue** (default): the old vault is preserved and a new vault is created at the default `Secrets` location. The alternative action is **Cancel**.
 
-> Note: §2 says the user's storage choice must be respected. Because of the axiom, the app cannot perform the deletion itself. A user who chooses deletion is shown the archive path (§8) and may copy it to the clipboard; the app never performs the delete action.
+> The rejected "delete without archiving" option and the passwordless-reset idea are recorded in §10, not here. Because of the axiom, the app cannot perform a deletion itself: a user who still wants to delete is shown the archive path (§8) and may copy it to the clipboard; the app never performs the delete action.
 
 ### 3.3. Archival flow
 
-Preconditions: the vault must be locked, no foreground file operation active, and the device unlocked.
+Preconditions: the vault must be locked and no foreground file operation may be active.
 
-1. User confirmation uses the same `DeleteSecretsDialog` as "Reset encrypted vault": **10-second countdown + confirmation checkbox + Yes/No**. **Difference: no password is asked** — the axiom forbids passwordless deletion, while archiving is a move, not a deletion (§6). The dialog also reminds: *"If you want to use the vault on another device, use Export encrypted vault"* (§9).
-2. `Calypso Gallery/Archive/` is created **if missing**, with a generic `readme.txt`. The folder **does not exist at app installation**; it is created on first archival only.
-3. A random destination name is generated (§5) and checked for collisions.
-4. The destination path is stored in private preferences (`archivedVaults`), and the old vault folder is **moved** there.
-5. If the move fails, the preference entry is rolled back and the source stays in place.
-6. Biometric vault state is cleared: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. The old vault's biometric binding is never carried over to the new one.
-7. The new-vault setup flow starts at the default location (`Calypso Gallery/Secrets`); the user chooses a new password/PIN.
-8. If new-vault creation fails, `config.vaultRootPath` is restored to the archive path so the old vault stays accessible.
-9. On success, `config.vaultRootPath` points to the new vault; the archive entry remains in private preferences.
+1. User confirmation uses the same `DeleteSecretsDialog` as "Reset encrypted vault": **10-second countdown + confirmation checkbox + Yes/No**. **Difference: no vault password is asked** — the axiom forbids passwordless deletion, while archiving is a move, not a deletion (§6). The dialog also reminds: *"If you want to use the vault on another device, use Export encrypted vault"* (§9).
+2. **Device-owner verification** follows the confirmation on devices with a secure lock screen: `BiometricPrompt` with `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` — a Class 3 biometric, falling back to the device PIN/pattern/password. This proves possession of the device, not knowledge of the vault password, and releases **no vault key**. On devices **without** any secure lock screen there is no owner signal to check, so only the 10-second confirmation applies. This closes the "unlocked phone in someone else's hands" gap without introducing a passwordless *deletion* path. Because `DEVICE_CREDENTIAL` is explicitly allowed, a failing or unavailable biometric (faulty sensor, wet finger, etc.) never blocks the flow — the system prompt still offers the device PIN/pattern/password.
+3. `Calypso Gallery/Archive/` is created **if missing**, with a generic `readme.txt`. The folder **does not exist at app installation**; it is created on first archival only.
+4. A random destination name is generated (§5) and checked for collisions.
+5. The destination path is stored in private preferences (`archivedVaults`), and the old vault folder is **moved** there.
+6. If the move fails, the preference entry is rolled back and the source stays in place.
+7. Biometric vault state is cleared: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. The old vault's biometric binding is never carried over to the new one.
+8. The new-vault setup flow starts at the default location (`Calypso Gallery/Secrets`); the user chooses a new password/PIN.
+9. If new-vault creation fails, `config.vaultRootPath` is restored to the archive path so the old vault stays accessible.
+10. On success, `config.vaultRootPath` points to the new vault; the archive entry remains in private preferences.
 
 All steps run through a **journal** following ADR 0003. If the process dies at any step, the vault is either at its source or reachable from the archive path — **never lost**.
 
 ### 3.4. FAQ entry and routing
 
-The "I don't remember" button in the reminder dialog opens `FaqActivity` directly with an extra that highlights the relevant entry. New FAQ entry:
+The "I don't remember" link on the verification form (screen 5 of the reminder flow) opens a compact themed in-app dialog (screen 6): three numbered recovery steps, the warning paragraph, the **actual path of the currently selected vault** from `CryptoManager.getVaultRoot()` / `config.vaultRootPath`, and a single **OK** button. No `FaqActivity` extra is used for this entry point any more; the FAQ entry below still exists for users who reach it from About. New FAQ entry:
 
 > **Question:** "I forgot my encrypted vault password, what can I do?"
 >
 > 1. Unlock the vault with biometrics.
 > 2. **Copy (export) your encrypted data.** This does not remove the vault from its place; the original stays where it is. You can open the copy on another device with "Use existing vault".
-> 3. Use Settings → Reset encrypted vault to set a new password and restore.
+> 3. To keep using the same location, use Settings → Encrypted vault → **Archive vault**. This moves the old vault to `Calypso Gallery/Archive/` and creates a fresh vault at the default location with a new password. **"Reset encrypted vault" requires the current password** and is therefore not available in this situation.
 >
 > **Warning:** If biometrics cannot unlock it either, the vault is inaccessible. You have three options (least destructive first):
 >
@@ -203,10 +203,9 @@ Friendly names shown to the user ("Archive 1", "Archive 2") exist **only in the 
 ## 6. Move, rollback and key state
 
 - When the source vault is under `Calypso Gallery`, the destination is on the same filesystem; `File.renameTo` is **atomic and instantaneous** and copies no data. The long foreground operation from ADR 0003 is not needed.
-- When the source is a custom/external location, the filesystems may differ. If `renameTo` fails:
-  - either perform **copy → verify → remove source** with an ADR 0003 journal (no data loss, but slow),
-  - or cancel automatic archival and inform the user that it is unsupported for this location.
-- Journal steps: write preference → rename → clear biometrics → create new vault → switch config. Every step is reversible.
+- A vault on a **custom/external storage location cannot be archived**: the archive lives on device storage and `File.renameTo` across filesystems fails. The operation is cancelled with an error; no copy is attempted and nothing is moved. User-facing note:
+  > "A vault on external storage cannot be archived. If you want to create another encrypted vault in the same location without deleting the current one, move the current vault to the device's internal storage before archiving it."
+- Implementation detail: the archive entry is written to preferences **before** the rename and rolled back if the rename fails, so a crash cannot leave an unfindable vault. There is no multi-step ADR 0003 journal; the remaining steps (clear biometrics, create new vault, switch config) happen after the single atomic rename.
 - The archived vault's `.vault` header and `.bin` files are **not path-dependent**, so keys remain intact. The archived vault can later be opened **only with its own password**.
 
 ---
@@ -216,6 +215,8 @@ Friendly names shown to the user ("Archive 1", "Archive 2") exist **only in the 
 The user is told exactly this:
 
 > "To use an archived vault again, go to **Settings → Encrypted vault → Vault location → Open from archive**. Pick the vault from the list. The chosen vault returns to the default location and the current vault is moved to the archive. **Nothing is deleted.**"
+
+Moving a vault back out of the archive uses the same device-owner verification as archiving (§3.3): Class 3 biometric with device-credential fallback, no vault password. The picker also exposes an info icon with the total size of all archived vaults.
 
 The user does not need to understand "active vault" or "archive" as separate concepts; their mental model is simply **"two vaults swap places"**.
 
@@ -263,8 +264,7 @@ To delete an archived vault with a file manager, the user must see **that vault'
 
 There is **no in-app deletion**; at most:
 
-- **Copy path** (`ClipboardManager`) — the reliable primary mechanism,
-- optional **Show folder** button — SAF `ACTION_OPEN_DOCUMENT_TREE` + `EXTRA_INITIAL_URI` (or `ACTION_VIEW` with a FileProvider URI); if no app handles it, fall back silently to "Copy path". This button **does not delete**, it only reveals the location.
+- **Copy path** (`ClipboardManager`) — the only mechanism shipped. A SAF "Show folder" button was considered but deferred to v2; it is not part of this decision.
 
 The path always comes from the archive entry / real folder, never from a hardcoded default. After a reinstall with lost preferences, `Archive/*` is scanned and the path is reconstructed (§4.4).
 
@@ -293,14 +293,17 @@ So the user never has to wonder "where did my old vault go?": **same device → 
 
 `CryptoManager.exportEncryptedVault` is a pure file copy (`copyTo`): it **does not use any key and does not decrypt anything.** The `.vault` file is already a plain file on disk, which the user can copy with a file manager or MTP anyway. Therefore the `ensureVaultUnlocked` call in `promptExportEncryptedVault` is **not a real security boundary, only unnecessary friction**. The earlier "keep the unlocked-vault requirement" decision is **reversed** for this reason.
 
-The password / biometric / unlocked-vault requirement for export is **removed**. The checks that stay:
+The **vault password / unlocked-vault** requirement for export is **removed**. The checks that stay:
 
+- **device-owner verification** on devices with a secure lock screen (Class 3 biometric, falling back to device PIN/pattern/password — §3.3). This is a local friction, not a vault-key gate: the exported files stay encrypted and no vault password is asked.
 - destination folder picker (existing `pickCustomVaultDirectory`),
 - guard against exporting the vault into itself (existing canonical-path check),
 - progress dialog,
 - explicit confirmation text: *"Encrypted files will be copied. No password is required; data stays encrypted."*
 
 In-app export has **the same security level as copying with a file manager**; the app merely makes it convenient. This does not violate the axiom (no passwordless deletion): export is a **copy**, not a deletion or invalidation.
+
+> **Offline brute-force note.** Because the vault files can be copied without a password (by the app or by any file manager), confidentiality rests entirely on the Argon2id parameters stored in `.vault` and on the length/quality of the vault password. The device-owner check above only deters casual access to an unlocked phone; it does **not** change the strength of the offline attack.
 
 Thanks to this change, FAQ step 2 ("Copy (export) your encrypted data") also works for a user who forgot the password — the vault does not need to be unlocked. The archive-vs-export distinction (§9) is preserved: same device → archive, other device → export.
 
@@ -319,12 +322,13 @@ The three verbs are now distinct: **archive = move within this device**, **expor
 
 ## 10. Rejected alternatives
 
-1. **Passwordless "Reset encrypted vault":** violates the axiom; denial-of-service risk. Rejected.
+1. **Passwordless "Reset encrypted vault" — including biometric or device-credential authorization:** violates the axiom; denial-of-service risk. Rejected. Biometrics unlock the vault and verify device ownership for the non-destructive archive move (§3.3), but never authorize a destructive reset.
 2. **In-app deletion of an archived vault:** violates the axiom. Rejected; deletion is left to the file manager.
-3. **Date/counter-based folder names:** metadata leak and collision risk. Rejected (§5).
-4. **Fake names such as `.cache`:** deceptive. Rejected.
-5. **Sending the user straight to a file manager:** hard and risky for a simple user. Rejected; archiving is automatic and in-app.
-6. **Creating the new vault as `Secrets-2`:** reduces move risk but fails the "new vault at the default location" goal. Rejected.
+3. **"Delete without archiving and continue" in the forgotten-password dialog:** a passwordless in-app deletion despite the second confirmation. Rejected; the dialog only offers Archive / Cancel (§3.2).
+4. **Date/counter-based folder names:** metadata leak and collision risk. Rejected (§5).
+5. **Fake names such as `.cache`:** deceptive. Rejected.
+6. **Sending the user straight to a file manager:** hard and risky for a simple user. Rejected; archiving is automatic and in-app.
+7. **Creating the new vault as `Secrets-2`:** reduces move risk but fails the "new vault at the default location" goal. Rejected.
 
 ---
 

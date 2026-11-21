@@ -540,10 +540,71 @@ class VaultLockPolicyTest {
             !settingsText.contains("toast(biometricUnavailableReason")
         )
 
+        val setupBody = settingsText.substringAfter("private fun setupVaultBiometric()")
+            .substringBefore("private fun setupVaultBiometricAutoReturn()")
+        assertTrue(
+            "setupVaultBiometric() must not re-hide the row with the old hardware/key gate",
+            !setupBody.contains("settingsVaultBiometricHolder.beVisibleIf") &&
+                !setupBody.contains("isBiometricHardwareAvailable")
+        )
+
+        assertTrue(
+            "The switch must be passive while no strong biometric is usable",
+            settingsText.contains("binding.settingsVaultBiometric.isEnabled = vaultExists && biometricUsable")
+        )
+
         val layoutText = locateAppFile("src/main/res/layout/activity_settings.xml").readText()
         assertTrue(
-            "The row needs a visible status label for the explanation",
-            layoutText.contains("settings_vault_biometric_status")
+            "The row needs an info icon that opens the reason dialog on demand",
+            layoutText.contains("settings_vault_biometric_info") &&
+                layoutText.contains("@drawable/ic_info_vector")
+        )
+    }
+
+    @Test
+    fun biometricOfferStaysSilentUntilAStrongBiometricIsEnrolled() {
+        val offerText = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/dialogs/VaultBiometricOfferDialog.kt"
+        ).readText()
+        assertTrue(
+            "The offer must be gated on an actually enrolled strong biometric",
+            offerText.contains("CryptoManager.ensureBiometricKeyAvailable(activity)")
+        )
+        val earlyReturn = offerText.substringAfter("if (!CryptoManager.ensureBiometricKeyAvailable(activity)) return")
+            .substringBefore("// Mark and default to off before showing")
+        assertFalse(
+            "No config may be rewritten when no strong biometric is enrolled",
+            earlyReturn.contains("isVaultBiometricEnabled = false") ||
+                earlyReturn.contains("vaultBiometricWrappedBundle = \"\"")
+        )
+    }
+
+    @Test
+    fun archiveChecksDeviceOwnerButResetStaysPasswordOnly() {
+        val settings = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt").readText()
+        assertTrue(
+            "Archiving must verify the device owner with Class 3 biometric or device credential",
+            settings.contains("private fun requireDeviceOwner") &&
+                settings.contains("keyguard?.isDeviceSecure != true") &&
+                settings.contains("BIOMETRIC_STRONG or")
+        )
+        val archiveBody = settings.substringAfter("private fun setupArchiveVault()")
+            .substringBefore("private fun requireDeviceOwner")
+        assertTrue(
+            "The archive action must run only after device-owner verification",
+            archiveBody.contains("requireDeviceOwner {")
+        )
+        val exportBody = settings.substringAfter("private fun setupExportVault()")
+            .substringBefore("private fun setupChangeVaultPassword()")
+        assertTrue(
+            "Exporting the encrypted vault must also verify the device owner",
+            exportBody.contains("requireDeviceOwner {")
+        )
+        val resetBody = settings.substringAfter("private fun setupEmptyVault()")
+            .substringBefore("private fun ")
+        assertTrue(
+            "Destructive reset must stay behind the current password, never biometrics",
+            resetBody.contains("requireVaultPassword(allowBiometrics = false)")
         )
     }
 

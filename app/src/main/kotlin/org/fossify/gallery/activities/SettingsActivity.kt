@@ -41,6 +41,7 @@ import org.fossify.gallery.helpers.*
 import org.fossify.gallery.models.AlbumCover
 import org.fossify.gallery.dialogs.ChangeLanguageDialog
 import androidx.appcompat.app.AppCompatDelegate
+import android.app.KeyguardManager
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -63,6 +64,7 @@ class SettingsActivity : SimpleActivity() {
             R.id.settings_export_vault_holder,
             R.id.settings_sync_vault_holder,
             R.id.settings_empty_vault_holder,
+            R.id.settings_archive_vault_holder,
             R.id.settings_empty_recycle_bin_holder,
             R.id.settings_clear_cache_holder,
             R.id.settings_export_favorites_holder,
@@ -820,9 +822,11 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 3) Şifreli kasaya biyometrik ile giriş — satır her zaman görünür, ancak uygun
-        // donanım/anahtar yoksa devre dışı ve nedeni açıklanır (sessizce gizlenmez).
+        // donanım/anahtar yoksa pasif ve sağındaki i ikonuyla nedeni açıklanır.
+        // onResume bu metodları yeniden çağırdığı için Android ayarlarından biyometrik
+        // açılıp kapatıldığında görünüm değişir; ek bildirim/popup gösterilmez.
         biometricStatus = CryptoManager.getBiometricAuthenticatorStatus(this)
-        biometricKeyAvailable = CryptoManager.getOrCreateBiometricKey() != null
+        biometricKeyAvailable = CryptoManager.ensureBiometricKeyAvailable(this)
         biometricUsable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS && biometricKeyAvailable
         binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
         binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
@@ -883,11 +887,17 @@ class SettingsActivity : SimpleActivity() {
      * vault is already unlocked because the person is viewing an encrypted album. The ordinary vault-session state
      * is intentionally ignored here.
      */
-    private fun requireVaultPassword(onAuthorized: () -> Unit) {
+    private fun requireVaultPassword(allowBiometrics: Boolean = true, onAuthorized: () -> Unit) {
         if (!doesVaultExist()) return
         val currentType = CryptoManager.getVaultProtectionType(this)
             ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
-        VaultSecurityDialog(this, config.hiddenPasswordHash, currentType, minimalist = false) { _, _, success ->
+        VaultSecurityDialog(
+            activity = this,
+            requiredHash = config.hiddenPasswordHash,
+            showTabIndex = currentType,
+            minimalist = false,
+            allowBiometrics = allowBiometrics,
+        ) { _, _, success ->
             if (success) onAuthorized()
         }
     }
@@ -1045,10 +1055,14 @@ class SettingsActivity : SimpleActivity() {
 
             getAlertDialogBuilder()
                 .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
-                    promptExportEncryptedVault(
-                        onlyVaultHeader = dialogBinding.exportVaultOnlyHeaderRadio.isChecked
-                    ) {
-                        setupVaultSettings()
+                    // Export is a copy, so the vault password is not needed. A device-owner check
+                    // keeps casual access to an unlocked phone from extracting the vault files.
+                    requireDeviceOwner {
+                        promptExportEncryptedVault(
+                            onlyVaultHeader = dialogBinding.exportVaultOnlyHeaderRadio.isChecked
+                        ) {
+                            setupVaultSettings()
+                        }
                     }
                 }
                 .setNegativeButton(org.fossify.commons.R.string.cancel, null)
@@ -1121,10 +1135,9 @@ class SettingsActivity : SimpleActivity() {
         org.fossify.gallery.dialogs.VaultBiometricOfferDialog.onBiometricChanged = {
             runOnUiThread { setupVaultSettings() }
         }
-        binding.settingsVaultBiometricHolder.beVisibleIf(
-            doesVaultExist() && (!isRPlus() || isExternalStorageManager()) &&
-                CryptoManager.isBiometricHardwareAvailable(this) && CryptoManager.getOrCreateBiometricKey() != null
-        )
+        //Visibility is owned by setupVaultSettings(): the row stays visible whenever a vault
+        //exists so the info icon can explain why it is passive. Do not re-apply the old hardware/key gate here.
+        binding.settingsVaultBiometricInfo.setOnClickListener { showBiometricUnavailableDialog() }
         updateVaultBiometricSwitch()
         binding.settingsVaultBiometricHolder.setOnClickListener {
             if (!doesVaultExist()) {
@@ -1147,14 +1160,7 @@ class SettingsActivity : SimpleActivity() {
                 }
             } else {
                 if (!biometricUsable) {
-                    // A toast would cut off the explanation; show it in a readable dialog.
-                    ConfirmationDialog(
-                        this,
-                        getString(R.string.vault_biometric_unavailable_title),
-                        biometricUnavailableReason(biometricStatus, biometricKeyAvailable),
-                        org.fossify.commons.R.string.ok,
-                        0
-                    ) { }
+                    showBiometricUnavailableDialog()
                     return@setOnClickListener
                 }
 
@@ -1182,59 +1188,102 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsArchiveVaultHolder.setOnClickListener {
             if (!doesVaultExist() || VaultArchiveManager.isActiveVaultArchived(this)) return@setOnClickListener
             DeleteSecretsDialog(this, getString(R.string.archive_vault_confirm)) {
-                CryptoManager.lockVault()
-                val entry = VaultArchiveManager.archiveActiveVault(this)
-                if (entry == null) {
-                    toast(R.string.archive_vault_failed)
-                    setupVaultSettings()
-                    return@DeleteSecretsDialog
-                }
-
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.archive_vault)
-                    .setMessage(getString(R.string.archive_vault_success, humanizePath(entry.path)))
-                    .setPositiveButton(R.string.copy_path) { _, _ ->
-                        val clipboard = getSystemService(ClipboardManager::class.java)
-                        clipboard?.setPrimaryClip(ClipData.newPlainText(getString(R.string.archive_vault), entry.path))
+                requireDeviceOwner {
+                    CryptoManager.lockVault()
+                    val entry = VaultArchiveManager.archiveActiveVault(this)
+                    if (entry == null) {
+                        toast(R.string.archive_vault_failed)
+                        setupVaultSettings()
+                        return@requireDeviceOwner
                     }
-                    .setNegativeButton(org.fossify.commons.R.string.ok, null)
-                    .show()
 
-                promptWhereToCreateVault(
-                    onVaultReady = { setupVaultSettings() },
-                    onBack = { setupVaultSettings() },
-                )
+                    VaultNoticeDialog(
+                        activity = this,
+                        title = getString(R.string.archive_vault),
+                        message = getString(R.string.archive_vault_success, humanizePath(entry.path)),
+                        positiveText = getString(org.fossify.commons.R.string.ok),
+                        negativeText = getString(R.string.copy_path),
+                        onPositive = {},
+                        onNegative = {
+                            val clipboard = getSystemService(ClipboardManager::class.java)
+                            clipboard?.setPrimaryClip(ClipData.newPlainText(getString(R.string.archive_vault), entry.path))
+                        },
+                    )
+
+                    promptWhereToCreateVault(
+                        onVaultReady = { setupVaultSettings() },
+                        onBack = { setupVaultSettings() },
+                    )
+                }
             }
         }
+    }
+
+    /**
+     * Archiving is a move, not a deletion, so the vault password is not required. On a device with
+     * a secure lock screen we still verify the person holding the phone: Class 3 biometric first,
+     * with the device PIN/pattern/password as a fallback. With no secure lock screen there is no
+     * owner signal to check, so the 10-second confirmation of DeleteSecretsDialog is the only gate.
+     */
+    private fun requireDeviceOwner(onConfirmed: () -> Unit) {
+        val keyguard = getSystemService(KeyguardManager::class.java)
+        if (keyguard?.isDeviceSecure != true) {
+            onConfirmed()
+            return
+        }
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(R.string.device_owner_verify_title))
+            .setSubtitle(getString(R.string.device_owner_verify_subtitle))
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+            .build()
+        BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onConfirmed()
+                }
+            }
+        ).authenticate(promptInfo)
     }
 
     private fun setupUnarchiveVault() {
         binding.settingsUnarchiveVaultHolder.setOnClickListener {
             val entry = VaultArchiveManager.activeArchivedEntry(this) ?: return@setOnClickListener
             if (!VaultArchiveManager.canUnarchive(entry)) {
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.unarchive_vault)
-                    .setMessage(R.string.unarchive_vault_blocked)
-                    .setPositiveButton(R.string.unarchive_vault_merge) { _, _ ->
-                        AlertDialog.Builder(this)
-                            .setTitle(R.string.unarchive_vault_merge)
-                            .setMessage(R.string.unarchive_vault_merge_steps)
-                            .setPositiveButton(org.fossify.commons.R.string.ok, null)
-                            .show()
-                    }
-                    .setNegativeButton(org.fossify.commons.R.string.ok, null)
-                    .show()
+                VaultNoticeDialog(
+                    activity = this,
+                    title = getString(R.string.unarchive_vault),
+                    message = getString(R.string.unarchive_vault_blocked),
+                    positiveText = getString(R.string.unarchive_vault_merge),
+                    negativeText = getString(org.fossify.commons.R.string.ok),
+                    onPositive = {
+                        VaultNoticeDialog(
+                            activity = this,
+                            title = getString(R.string.unarchive_vault_merge),
+                            message = getString(R.string.unarchive_vault_merge_steps),
+                            positiveText = getString(org.fossify.commons.R.string.ok),
+                            onPositive = {},
+                        )
+                    },
+                    onNegative = {},
+                )
                 return@setOnClickListener
             }
 
             DeleteSecretsDialog(this, getString(R.string.unarchive_vault_confirm)) {
-                val result = VaultArchiveManager.restoreArchivedVault(this, entry)
-                if (result == VaultArchiveManager.UnarchiveResult.OK) {
-                    toast(R.string.unarchive_vault_success)
-                } else {
-                    toast(R.string.archive_vault_failed)
+                requireDeviceOwner {
+                    val result = VaultArchiveManager.restoreArchivedVault(this, entry)
+                    if (result == VaultArchiveManager.UnarchiveResult.OK) {
+                        toast(R.string.unarchive_vault_success)
+                    } else {
+                        toast(R.string.archive_vault_failed)
+                    }
+                    setupVaultSettings()
                 }
-                setupVaultSettings()
             }
         }
     }
@@ -1264,13 +1313,27 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    /** Reason dialog opened from the info icon (or from a tap on the passive row). */
+    private fun showBiometricUnavailableDialog() {
+        // A toast would cut off the explanation; show it in a theme-aware dialog.
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.vault_biometric_unavailable_title),
+            message = getString(biometricUnavailableReason(biometricStatus, biometricKeyAvailable)),
+            positiveText = getString(org.fossify.commons.R.string.ok),
+            onPositive = {},
+        )
+    }
+
     private fun updateVaultBiometricSwitch() {
         val vaultExists = doesVaultExist()
         val hasStoragePermission = !isRPlus() || isExternalStorageManager()
         val biometricEnabled = vaultExists && config.isVaultBiometricEnabled
-        // Already-enabled users must still be able to turn biometrics OFF even if the device
-        // no longer has a usable strong biometric (e.g. fingerprint was removed).
-        binding.settingsVaultBiometric.isEnabled = vaultExists && (biometricUsable || biometricEnabled)
+        // Passive (grey) while no strong biometric is usable. When the user later enables one in
+        // Android settings, onResume re-evaluates this and the switch becomes active but stays
+        // off unless the user explicitly turns it on.
+        binding.settingsVaultBiometric.isEnabled = vaultExists && biometricUsable
+        binding.settingsVaultBiometric.alpha = if (biometricUsable) 1.0f else 0.5f
         binding.settingsVaultBiometricHolder.alpha = if (vaultExists) 1.0f else 0.4f
         binding.settingsVaultBiometric.isChecked = biometricEnabled
         binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
@@ -1278,14 +1341,9 @@ class SettingsActivity : SimpleActivity() {
         )
         binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
 
-        // Honest explanation for the disabled state instead of a silently missing row.
-        val showReason = vaultExists && !biometricUsable
-        binding.settingsVaultBiometricStatus.beVisibleIf(showReason)
-        if (showReason) {
-            binding.settingsVaultBiometricStatus.text = getString(
-                biometricUnavailableReason(biometricStatus, biometricKeyAvailable)
-            )
-        }
+        // Info icon replaces the always-visible explanation text. No popup is shown on state
+        // change; the user opens it deliberately.
+        binding.settingsVaultBiometricInfo.beVisibleIf(vaultExists && !biometricUsable)
     }
 
     private fun confirmDisableBiometric(onConfirmed: () -> Unit) {
@@ -1306,63 +1364,72 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun showBiometricEnrollmentPrompt(lockVaultAfter: Boolean) {
-        showBiometricPasswordNoteDialog {
-        val cipher = CryptoManager.getBiometricEncryptCipher()
-        if (cipher == null) {
-            if (lockVaultAfter) {
-                CryptoManager.lockVault()
-                applyVaultScreenProtection(false)
+        fun launchSystemPrompt() {
+            val cipher = CryptoManager.getBiometricEncryptCipher()
+            if (cipher == null) {
+                if (lockVaultAfter) {
+                    CryptoManager.lockVault()
+                    applyVaultScreenProtection(false)
+                }
+                toast(org.fossify.commons.R.string.an_error_occurred)
+                return
             }
-            toast(org.fossify.commons.R.string.an_error_occurred)
-            return@showBiometricPasswordNoteDialog
-        }
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
-            .setSubtitle(getString(R.string.biometric_setup_prompt))
-            .setNegativeButtonText(getString(org.fossify.commons.R.string.cancel))
-            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .build()
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle(getString(R.string.biometric_access_to_encrypted_vault))
+                .setSubtitle(getString(R.string.biometric_setup_prompt))
+                .setNegativeButtonText(getString(org.fossify.commons.R.string.cancel))
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .build()
 
-        val biometricPrompt = BiometricPrompt(
-            this,
-            ContextCompat.getMainExecutor(this),
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    val authCipher = result.cryptoObject?.cipher
-                    if (authCipher != null && CryptoManager.completeBiometricSetup(this@SettingsActivity, authCipher)) {
-                        updateVaultBiometricSwitch()
-                        toast(org.fossify.commons.R.string.fingerprint_setup_successfully)
-                    } else {
+            val biometricPrompt = BiometricPrompt(
+                this,
+                ContextCompat.getMainExecutor(this),
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        val authCipher = result.cryptoObject?.cipher
+                        if (authCipher != null && CryptoManager.completeBiometricSetup(this@SettingsActivity, authCipher)) {
+                            updateVaultBiometricSwitch()
+                            toast(org.fossify.commons.R.string.fingerprint_setup_successfully)
+                        } else {
+                            CryptoManager.clearBiometricKey(this@SettingsActivity)
+                            updateVaultBiometricSwitch()
+                            toast(org.fossify.commons.R.string.an_error_occurred)
+                        }
+                        if (lockVaultAfter) {
+                            CryptoManager.lockVault()
+                            applyVaultScreenProtection(false)
+                        }
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         CryptoManager.clearBiometricKey(this@SettingsActivity)
+                        if (lockVaultAfter) {
+                            CryptoManager.lockVault()
+                            applyVaultScreenProtection(false)
+                        }
                         updateVaultBiometricSwitch()
-                        toast(org.fossify.commons.R.string.an_error_occurred)
-                    }
-                    if (lockVaultAfter) {
-                        CryptoManager.lockVault()
-                        applyVaultScreenProtection(false)
                     }
                 }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    CryptoManager.clearBiometricKey(this@SettingsActivity)
-                    if (lockVaultAfter) {
-                        CryptoManager.lockVault()
-                        applyVaultScreenProtection(false)
-                    }
-                    updateVaultBiometricSwitch()
-                }
-            }
-        )
-        biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
+            )
+            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
         }
+
+        // Full explanation is shown in the themed card first (HTML screen 3b).
+        showBiometricPasswordNoteDialog(
+            title = getString(R.string.vault_biometric_offer_title),
+            message = getString(R.string.vault_biometric_offer_message),
+            note = getString(R.string.vault_biometric_setup_password_note),
+            onContinue = { launchSystemPrompt() },
+            onCancel = {},
+        )
     }
 
     private fun setupEmptyVault() {
         binding.settingsEmptyVaultHolder.setOnClickListener {
             if (!doesVaultExist()) return@setOnClickListener
 
-            requireVaultPassword {
+            requireVaultPassword(allowBiometrics = false) {
                 DeleteSecretsDialog(this, getString(R.string.empty_encrypted_vault_warning)) {
                     ensureBackgroundThread {
                         CryptoManager.deleteExistingVault(this)

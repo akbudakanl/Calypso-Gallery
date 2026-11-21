@@ -232,7 +232,8 @@ class VaultLockActivity : SimpleActivity() {
             dots = if (isPassword) null else securityBinding.vaultPinDots,
             sweep = if (isPassword) securityBinding.vaultUnlockSweepPassword else securityBinding.vaultUnlockSweep,
             panel = binding.vaultLockContainer,
-            pulseView = if (isPassword) securityBinding.vaultPasswordInputLayout else null
+            pulseView = if (isPassword) securityBinding.vaultPasswordInputLayout else null,
+            sweepColor = AppearanceManager.resolve(this, config).primary,
         )
         shutterAnimator = animator
         animator.play {

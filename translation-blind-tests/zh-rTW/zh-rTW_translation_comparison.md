@@ -17,7 +17,7 @@ Added to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`.
 | 9 | `password_strength_weak` | Fair | 普通 | Vault password strength |
 | 10 | `password_strength_good` | Strong | 強 | Vault password strength |
 | 11 | `password_strength_excellent` | Very strong | 非常強 | Vault password strength |
-| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 較長且混合各种字元的密碼較難破解。 | Shown before typing |
+| 12 | `password_strength_hint` | A longer password with mixed characters is harder to crack. | 較長且混合各種字元的密碼較難破解。 | Shown before typing |
 | 13 | `vault_unlock_time_unit` | s | 秒 | Localized seconds unit |
 | 14 | `search_in_storage` | Search in storage | 在儲存空間中搜尋 | Second option in unencrypted copy destination picker |
 | 15 | `password_must_be_at_least_4_characters` | Password must be at least 4 characters long | 密碼至少需要 4 個字元 | Alphanumeric minimum length |
@@ -941,24 +941,24 @@ Added/updated in `values-zh-rTW/strings.xml`. The reminder is shown in-app when 
 |--:|---|---|---|---|
 | 1 | `vault_password_reminder` | Remind me of my password | 定期提醒我的密碼 |  |
 | 2 | `vault_password_reminder_disabled` | Off | 關閉 |  |
-| 3 | `vault_password_reminder_weeks` | %d weeks | %d 遁 |  |
+| 3 | `vault_password_reminder_weeks` | %d weeks | %d 週 |  |
 | 4 | `vault_password_reminder_months` | %d months | %d 個月 |  |
 | 5 | `vault_password_reminder_dialog_title` | Reminder interval | 提醒間隔 |  |
-| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | 如果這段期間內没有使用密碼開啟加密保險箱，我國會提醒您。 |  |
-| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | 我國會定期傳送提醒，以免您忘記密碼。您可以在「設定 → 加密保險箱 → 定期提醒我的密碼」中關閉。 |  |
+| 6 | `vault_password_reminder_dialog_message` | If you do not open the encrypted vault with your password for this long, we will remind you of it. | 如果這段期間內沒有使用密碼開啟加密保險箱，我會提醒您。 |  |
+| 7 | `vault_password_reminder_setup_note` | We will send you periodic reminders so you do not forget your password. You can turn this off in Settings → Encrypted vault → Remind me of my password. | 我會定期傳送提醒，以免您忘記密碼。您可以在「設定 → 加密保險箱 → 定期提醒我的密碼」中關閉。 |  |
 | 8 | `vault_biometric_setup_password_note` | If you choose to sign in with biometrics, remember that you still need to know your password. | 若您選擇使用生物辨識登入，請記得您仍需要知道密碼。 |  |
 | 9 | `vault_password_saved_title` | Have you saved your password? | 您已儲存密碼了嗎？ |  |
-| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | 若忘記密碼，您將永久失去加密保險箱的存取標。請在繼續前確認已將密碼儲存在某處，建議使用密碼管理器。 |  |
+| 10 | `vault_password_saved_message` | If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended. | 若忘記密碼，您將永久失去加密保險箱的存取權。請在繼續前確認已將密碼儲存在某處，建議使用密碼管理器。 |  |
 | 11 | `vault_password_saved_confirm` | Yes, I saved it | 是，我已儲存 |  |
 | 12 | `vault_password_saved_later` | I will save it | 我會儲存 |  |
 | 13 | `vault_password_reminder_due_title` | Do you still remember your vault password? | 您還記得保險箱密碼嗎？ |  |
-| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | 這段期間內您没有使用密碼開啟加密保險箱。密碼是復原保險箱的唯一方法。 |  |
+| 14 | `vault_password_reminder_due_message` | You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault. | 這段期間內您沒有使用密碼開啟加密保險箱。密碼是復原保險箱的唯一方法。 |  |
 | 15 | `vault_password_reminder_verify_title` | Confirm your password | 確認您的密碼 |  |
-| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | 這不是解鎖保險箱，我國只是想確認您仍記得密碼。 |  |
+| 16 | `vault_password_reminder_verify_message` | This is not a vault unlock. We only want to confirm that you still know your password. | 這不是解鎖保險箱，我只是想確認您仍記得密碼。 |  |
 | 17 | `vault_password_reminder_verified` | Password confirmed | 密碼已確認 |  |
 | 18 | `vault_password_reminder_not_now` | Not now | 稍後再說 |  |
 | 19 | `vault_password_reminder_forgot_title` | Do not remember your password? | 不記得密碼了嗎？ |  |
-| 20 | `vault_password_reminder_forgot_steps` | Unlock the vault with biometrics, export your encrypted data, then use Settings → Reset encrypted vault to set a new password and restore your data. If biometrics cannot unlock it either, the vault is inaccessible. | 請先用生物辨識解鎖保險箱，汇出加密資料，然後使用「設定 → 重設加密保險箱」設定新密碼並還原資料。若生物辨識也無法解鎖，則無法存取保險箱。 |  |
+| 20 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics.\n2. Copy (export) your encrypted data — this does not move the vault.\n3. Settings → Reset encrypted vault to set a new password and restore.\n\nIf biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 使用生物辨識解鎖。\n2. 複製加密資料。\n3. 設定 → 重設加密保險箱。\n\n若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |  |
 | 21 | `vault_password_reminder_verify_action` | Verify my password | 確認我的密碼 |  |
 | 22 | `vault_password_reminder_forgot_action` | I don't remember | 我不記得了 |  |
 | 23 | `vault_password_reminder_open_settings` | Open settings | 開啟設定 |  |
@@ -1030,3 +1030,13 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 |--:|---|---|---|---|
 | 1 | `identical_files_skipped` | one: "%d identical file skipped" / other: "%d identical files skipped" | other: "已略過 %d 個相同的檔案" | Short end-of-operation toast in Smart/Automatic mode |
 | 2 | `date_tie_break_ask_info_message` | Smart dialog and Automatic mode exist for one reason: to skip files whose content is already present, so you only see the files that really need your attention — same name, different content. That is exactly the case where comparing thumbnails can reveal bit-rot.\n\nIn Smart dialog you will see two thumbnails of the very same picture, with nothing to verify, and you can decide there. Automatic (Experimental) mode never shows a dialog, so "Always ask" is not available there — selecting Automatic falls back to "Keep the existing file's date".\n\nUse this option only if you deliberately want to review every date difference, for example to fix a wrong date by hand.\n\nNote: when content is bit-identical, the EXIF capture date is identical too. A date difference means one side lost its EXIF data and fell back to the file modification date (the copy date). | 智慧對話方塊與全自動模式存在的目的只有一個：略過內容已存在的檔案，讓您只看到真正需要留意的檔案 — 名稱相同、內容不同。而這正是比較縮圖能發現位元腐壞的情況。\n\n若您在這裡選擇「一律詢問」，每個日期不同但內容相同的檔案都會再次以衝突的形式呈現。在智慧對話方塊中，您會看到同一張圖片的兩個縮圖，卻沒有任何可驗證的差異，您可以在那裡自行決定。全自動（實驗性）模式一律不顯示對話方塊，因此「一律詢問」在此模式中無法使用；選擇全自動模式時會回退到「保留現有檔案的日期（預設）」。\n\n請僅在您刻意想逐一檢視每個日期差異時才使用此選項，例如手動修正錯誤的日期。\n\n注意：當內容逐位元完全相同時，EXIF 拍攝日期也會相同。日期不同代表其中一側遺失了 EXIF 資料，轉而使用檔案修改日期（複製日期）。 | Revised: "Always ask" unavailable in Automatic; falls back to keep-target date |
+
+## New strings (biometric setup, device-owner check, archive size)
+
+| Key | Translation |
+|---|---|
+| `vault_biometric_setup_continue` | 繼續 |
+| `device_owner_verify_title` | 驗證裝置所有人 |
+| `device_owner_verify_subtitle` | 請用生物辨識或裝置 PIN 碼確認以繼續。不需要輸入保險箱密碼。 |
+| `archive_total_size_title` | 封存區儲存空間 |
+| `archive_total_size` | 已封存保險箱的總大小：%1$s |

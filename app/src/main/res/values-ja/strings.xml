@@ -684,4 +684,9 @@
 
     <string name="export_vault_different_vault">移動先に別の暗号化保管庫があります。保護するためエクスポートを中止しました。空のフォルダーを選択してください。</string>
     <string name="export_vault_unknown_content">移動先に暗号化ファイルはありますが保管庫ヘッダーがありません。エクスポートを中止しました。</string>
+    <string name="vault_biometric_setup_continue">続ける</string>
+    <string name="device_owner_verify_title">端末の所有者を確認</string>
+    <string name="device_owner_verify_subtitle">生体認証または端末のPINで確認して続行してください。金庫のパスワードは不要です。</string>
+    <string name="archive_total_size_title">アーカイブの保存領域</string>
+    <string name="archive_total_size">アーカイブ済み金庫の合計サイズ: %1$s</string>
 </resources>

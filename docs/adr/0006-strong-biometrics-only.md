@@ -5,7 +5,7 @@
 - **İlgili:** [ADR 0002](0002-operational-security-hardening.md) (operasyonel güvenlik sertleştirmesi), [ADR 0005](0005-kek-rotation.md) (anahtar hiyerarşisi ve yerel tehdit modeli)
 - **İngilizce çeviri:** [0006-strong-biometrics-only.en.md](0006-strong-biometrics-only.en.md)
 
-> **Özet Karar.** Şifreli kasanın biyometrik kilit özelliği yalnızca **Class 3 / `BIOMETRIC_STRONG`** biyometrileri kabul eder ve her doğrulama `BiometricPrompt.CryptoObject` ile donanım destekli bir Keystore anahtarına bağlanır. Class 2 / `BIOMETRIC_WEAK` (ör. Samsung Galaxy Tab S10 Lite'ın 2D yüz tanıması) **bilinçli olarak reddedilmiştir**; "sadece bu cihazlar için istisna" da dahil hiçbir yumuşatma uygulanmaz. Güçlü biyometrik olmayan cihazlarda ayar satırı gizlenmez; devre dışı olarak görünür, altında ve tıklanınca açılan pencerede nedeni açıkça anlatılır.
+> **Özet Karar.** Şifreli kasanın biyometrik kilit özelliği yalnızca **Class 3 / `BIOMETRIC_STRONG`** biyometrileri kabul eder ve her doğrulama `BiometricPrompt.CryptoObject` ile donanım destekli bir Keystore anahtarına bağlanır. Class 2 / `BIOMETRIC_WEAK` (ör. Samsung Galaxy Tab S10 Lite'ın 2D yüz tanıması) **bilinçli olarak reddedilmiştir**; "sadece bu cihazlar için istisna" da dahil hiçbir yumuşatma uygulanmaz. Kasa oluşturma / parola değiştirme sonrasındaki kayıt teklifi **yalnızca güçlü bir biyometrik sistemde kayıtlıysa** çıkar; aksi halde kurulum sessiz geçer. Kullanılabilir güçlü biyometrik olmayan cihazlarda ayar satırı gizlenmez; pasif (gri) görünür ve sağındaki **i ikonu** nedeni isteğe bağlı olarak açıklar. Android kayıt değişimi için bildirim göndermediğinden durum `SettingsActivity.onResume()` içinde yeniden sorgulanır; Ayarlar'dan çıkıp geri girmek görünümü güncellemeye yeterlidir. Biyometrik açıldığında popup çıkmaz, ayar aktifleşir ve varsayılan olarak kapalı kalır.
 
 ---
 
@@ -31,7 +31,9 @@ Bu ADR hem bu kullanıcı deneyimi hatasını hem de **arkasındaki güvenlik ka
 | Doğrulama | Kayıt ve kilit akışlarının tamamında `BiometricPrompt.CryptoObject(cipher)` |
 | Cihaz PIN/şifresi | Yalnızca biyometriği **kapatırken** onay için (`DEVICE_CREDENTIAL`); kasa açılışında yedek olarak kullanılmaz |
 | Weak biyometrik | Desteklenmez; sessiz veya açık fallback yok |
-| UI | Satır kasa varsa görünür; uygun donanım/anahtar yoksa devre dışı + kalıcı açıklama + tıklamada dialog (toast değil) |
+| UI | Satır kasa varsa görünür; kullanılabilir güçlü biyometrik/anahtar yoksa anahtar pasif (gri) ve sağında nedeni açan i ikonu (toast değil, kalıcı metin değil) |
+| Kayıt teklifi | Yalnızca `canAuthenticate(BIOMETRIC_STRONG) == SUCCESS` ve kullanılabilir donanım anahtarı varsa gösterilir; aksi halde kurulumda not yok, config yazılmaz |
+| Kayıt değişimleri | Broadcast/callback yok; `SettingsActivity.onResume()` yeniden kontrol eder. Popup yok; Ayarlar'a dönünce ayar aktifleşir ve varsayılan kapalı kalır |
 
 `CryptoManagerBiometrics.kt` ve `BiometricAvailability.kt` bu kuralların tek uygulama noktasıdır. `canAuthenticate` sonucu (`NO_HARDWARE`, `NONE_ENROLLED`, `HW_UNAVAILABLE`, `SECURITY_UPDATE_REQUIRED`, anahtar hatası) kullanıcıya özel bir mesaja dönüştürülür; 9 denetlenen dil + İngilizce/Türkçe yerelleştirilmiştir.
 
@@ -92,11 +94,22 @@ Bu fork'un farkı güvenliktir: Argon2id hedef süresi, ekran görüntüsü yasa
 Güvenlik kararından bağımsız olarak eski davranış hatalıydı: ayar satırı sessizce kayboluyor, hiçbir açıklama verilmiyordu. Yeni davranış:
 
 - Kasa varsa ve depolama izni varsa satır **her zaman görünür**;
-- güçlü biyometrik veya donanım destekli anahtar yoksa anahtar devre dışı, altında yerelleştirilmiş bir açıklama durur;
-- satıra tıklanınca aynı açıklama **`ConfirmationDialog`** içinde gösterilir (toast uzun metni kırptığı için kullanılmaz);
-- zaten etkin olan bir kullanıcı donanım kaybolmuş olsa bile biyometriği **kapatabilir** (`confirmDisableBiometric` cihaz PIN/şifresine izin verir).
+- kullanılabilir güçlü biyometrik yoksa anahtar **pasif/gri** olur ve sağında **i ikonu** çıkar; satıra kalıcı açıklama metni konmaz;
+- i ikonuna (veya pasif satıra) tıklanınca yerelleştirilmiş açıklama **`ConfirmationDialog`** içinde gösterilir (toast uzun metni kırptığı için kullanılmaz);
+- kasa oluşturma / parola değiştirme sonrasındaki kayıt notu **yalnızca Class 3 biyometrik kayıtlıysa** çıkar. Kayıt yoksa kurulum sırasında "parmak izi ekleyemezsiniz" mesajı gösterilmez; kullanıcı durumu daha sonra Ayarlar'da görür;
+- Android biyometrik kaydı değiştiğinde uygulamaya bildirim göndermez. Bu nedenle durum `onResume()` içinde yeniden okunur. **Ayarlar'dan çıkıp geri girmek yenileme tetikleyicisidir.** Kullanıcı Android ayarlarından biyometriği açarsa popup çıkmaz: i ikonu kaybolur, anahtar aktifleşir ve **varsayılan olarak kapalı** kalır;
+- hiçbir kayıt yokken üretilen anahtar, sonraki kayıt işlemiyle geçersiz kılınırdı (`setInvalidatedByBiometricEnrollment(true)`). `ensureBiometricKeyAvailable()` bunu tespit edip eski anahtarı/config'i temizler; böylece yeniden kayıt sonrası ayar kapalı ve temiz başlar.
 
 Mesajlar duruma göre değişir; özellikle "zayıf yüz tanıma kabul edilmiyor, parmak izi veya Sınıf 3 yüz tanıma kaydedin" ifadesi kullanıcıya donanım sınırını ve çözümü birlikte verir. Bu bir hata değil, **cihazın güvenlik özelliği sınırı** olarak sunulur.
+
+### 4.1. Kurulum kartı (3b) ve kapatma kuralları
+
+- Sıra kesindir: **3a (parola kaydedildi onayı) → 3b (biyometrik kurulum kartı)**. Tek seferlik teklif, 3a onayından tetiklenir; asla parola doğrulama callback'inden doğrudan çağrılmaz. Böylece 3b, 3a'dan önce çıkamaz.
+- 3b **yalnızca Class 3 biyometrik kayıtlıysa** gösterilir. Böyle bir donanım yoksa 3b hiç çıkmaz; 3a kurulumun son mesajı olur.
+- Kart, onaylanan **"İz dalgası"** ikonunu kullanır: yedi parmak izi izi 90 ms kademeyle (her biri 450 ms) çizilir, 850 ms'de %30 → tam opaklığa koyulaşır, ardından 1250–2150 ms arasında tek bir arka plan dairesi belirip glow 12 dp'ye çıkıp 4 dp'ye oturur. `ANIMATOR_DURATION_SCALE == 0` ise son hal doğrudan çizilir.
+- **Kapatma:** 3a ve kurtarma penceresi (6) **kapatılamaz** (geri tuşu / dışarı tıklama etkisizdir). Hatırlatma penceresi (4) ve 3b kartı **geri tuşuyla kapatılabilir**. Ayrı tek seferlik teklif penceresinin mevcut platform davranışı değiştirilmez.
+- **Kayıt durumu:** 3b tamamlanana kadar `isVaultBiometricEnabled` **false** kalır. 3b kapatılırsa teklif tekrar gösterilmez; kullanıcı daha sonra Ayarlar'a gidip parolasını doğrulayarak biyometriği elle açmalıdır.
+- **Hatırlatma zamanlaması 3a/3b'den bağımsızdır.** Bunlar kapatıldığında veya açıkken uygulama kapanırsa hatırlatma saati değişmez. 4/5/6 kapatıldığında veya açıkken uygulama kapanırsa değişir: 4 gösterildiğinde zaman damgası yazılmış olduğundan hatırlatma bir sonraki tam periyotta (ör. 2 hafta sonra) tekrar gelir.
 
 ---
 
@@ -122,14 +135,16 @@ Class 3 3D yüz tanıma **ve** parmak izi gibi iki güçlü biyometrik aynı cih
 1. **Weak biyometrik + uygulama seviyesi doğrulama:** Güvenlik sınırını TEE'den uygulamaya taşıdığı için reddedildi (§3.3–3.4).
 2. **Sadece Tab S10 Lite / belirli cihazlar için istisna:** Donanım istisnası, güvenlik modelini cihaz kimliğine bağlar; yeni cihazlarla genişler ve aynı zayıflığı yayar. Reddedildi.
 3. **Sessizce gizleme:** Kullanıcıyı bilgilendirmediği için reddedildi ve düzeltildi (§4).
-4. **Kısa toast ile uyarı:** Uzun açıklama okunamadığı için reddedildi; kalıcı metin + dialog benimsendi.
-5. **Genel kasa açılışında `DEVICE_CREDENTIAL` kullanımı:** Kullanıcıya ek kolaylık sağlamadığı (yine PIN girildiği) ve kapsam dışı olduğu için şimdilik reddedildi. İleride ayrı bir ADR olarak değerlendirilebilir; yine de Keystore tabanlı kalmalı, uygulama seviyesi kapı olmamalıdır.
+4. **Kısa toast / kalıcı açıklama metni:** Toast uzun metni kırpar, kalıcı metin ise satırı kalabalıklaştırır; reddedildi. İsteğe bağlı i ikonu + dialog benimsendi.
+5. **Her kasa oluşturma / parola değiştirmede kayıt notu:** Bu özelliğin ilgisiz olduğu cihazlarda kullanıcıya "biyometrik ekleyemezsiniz" denildiği için reddedildi; not artık gerçekten kayıtlı güçlü biyometriğe bağlı.
+6. **Android biyometriği açıldığında popup:** Reddedildi; kullanıcı değişimi yalnızca Ayarlar'da görsel olarak görmek istiyor. Yalnızca `onResume()` yeniden değerlendirmesi kullanılır.
+7. **Genel kasa açılışında `DEVICE_CREDENTIAL` kullanımı:** Kullanıcıya ek kolaylık sağlamadığı (yine PIN girildiği) ve kapsam dışı olduğu için şimdilik reddedildi. İleride ayrı bir ADR olarak değerlendirilebilir; yine de Keystore tabanlı kalmalı, uygulama seviyesi kapı olmamalıdır.
 
 ---
 
 ## 7. Doğrulama ve Durum
 
-- `VaultLockPolicyTest`: hata kodu → mesaj eşlemesi, satırın gizlenmediği ve açıklamanın dialog olarak gösterildiği kaynak düzeyinde doğrulanır.
+- `VaultLockPolicyTest`: hata kodu → mesaj eşlemesi, satırın `setupVaultBiometric()` tarafından yeniden gizlenmediği, kullanılamaz durumda anahtarın pasif olduğu, i ikonunun varlığı ve güçlü biyometrik kayıtlı değilse kayıt teklifinin sessiz kaldığı kaynak düzeyinde doğrulanır.
 - 9 denetlenen dilde (az, de, es, es-419, es-US, ja, nb-NO, nn, zh-TW) 7 yeni anahtarın 1:1 karşılaştırma tabloları `translation-blind-tests/` altında güncellendi.
 - `:app:testFossDebugUnitTest` başarılı; kaynak birleştirme hatasız.
 - **Test kapsamı sınırı:** Class 3 3D yüz tanıma donanımı olan bir cihaz mevcut olmadığından bu mod gerçek cihazda **test edilmedi**. §5'te anlatılan davranış Android/AOSP ve OEM dokümantasyonuna dayanır; uygun bir cihazda doğrulanması gerekir.
