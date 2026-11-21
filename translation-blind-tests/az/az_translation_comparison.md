@@ -1037,3 +1037,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | Zəif parol |
 | `weak_password_warning_message` | Bu parola zəif hesab olunur. Kasa təhlükəsizliyi üçün daha uzun və mürəkkəb parola tövsiyə olunur. Yenə də davam etmək istəyirsiniz? |
 | `weak_password_warning_continue` | Yenə də davam et |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | Azerbaijani |
+|---|---|---|
+| `appearance_title` | Appearance | Görünüş |
+| `search_settings` | Search settings | Parametrlərdə axtar |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (axınlı AEAD və HKDF kriptoqrafiyası) |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id açar törətməsi) |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (animasiyalı WebP deşifrələməsi) |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (JPEG XL dəstəyi) |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG göstərilməsi) |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended (EXIF metaməlumat işlənməsi) |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons (interfeys nişanları) |
+| `checking_password` | Checking password… | Parol yoxlanılır… |
+| `vault_same_password_title` | Same password | Eyni parol |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Yeni parol cari seyf parolu ilə eynidir. Zəhmət olmasa fərqli bir parol seçin. |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d dövr) |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Bu cihazda standart KDF sürəti ölçülür… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Brute-Force müqaviməti şifrəli seyfə tətbiq edildi |
+| `appearance_automatic` | Automatic | Avtomatik |
+| `follow_system_theme` | Follow system theme | Sistem temasını izlə |
+| `follow_system_theme_summary` | Automatically switches between light and dark | Açıq və tünd tema arasında avtomatik keçid edir |
+| `theme_midnight_blue` | Midnight Blue | Gecə Mavisi |
+| `theme_warm_paper` | Warm Paper | İsti Kağız |
+| `theme_deep_forest` | Deep Forest | Dərin Meşə |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | Uyğun kontrast · Mətn %1$.1f:1 · Düymə %2$.1f:1 |
+| `appearance_backup_section` | Backup | Ehtiyat nüsxə |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | Saxlanılmış temaların ehtiyat nüsxəsini cihaz yaddaşına çıxar |
+| `settings_group_general` | General | Ümumi |
+| `settings_group_folders_and_loading` | Folders and loading | Qovluqlar və yükləmə |
+| `settings_group_security` | Security | Təhlükəsizlik |
+| `settings_group_vault_management` | Vault management | Seyf idarəetməsi |
+| `settings_group_playback` | Playback | Oxutma |
+| `settings_group_gestures_and_tap` | Gestures and tap | Jestlər və toxunuş |
+| `settings_group_display_and_motion` | Display and motion | Görünüş və hərəkət |
+| `settings_group_thumbnail_styles` | Thumbnail styles | Miniatür üslubları |
+| `settings_group_general_behavior` | General behavior | Ümumi davranış |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | Toqquşma və şifrələmə qaydaları |
+| `settings_group_cleanup` | Cleanup | Təmizləmə |
+| `settings_group_storage` | Storage | Yaddaş |
+| `settings_group_settings_and_favorites` | Settings and favorites | Parametrlər və seçilmişlər |
+| `settings_group_vault_transfer` | Encrypted vault transfer | Şifrəli seyf köçürməsi |
+| `settings_search_results` | Search results | Axtarış nəticələri |
+| `settings_no_search_results` | No matching settings found. | Uyğun parametr tapılmadı. |

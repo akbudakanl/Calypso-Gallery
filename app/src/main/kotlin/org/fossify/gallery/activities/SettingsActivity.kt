@@ -1,6 +1,7 @@
 package org.fossify.gallery.activities
 
 import android.app.Activity
+import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -13,46 +14,61 @@ import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CompoundButton
-import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import org.fossify.commons.dialogs.*
+import org.fossify.commons.dialogs.ChangeDateTimeFormatDialog
+import org.fossify.commons.dialogs.ConfirmationDialog
+import org.fossify.commons.dialogs.FilePickerDialog
+import org.fossify.commons.dialogs.RadioGroupDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.commons.models.RadioItem
+import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.ActivitySettingsBinding
 import org.fossify.gallery.dialogs.*
 import org.fossify.gallery.extensions.*
 import org.fossify.gallery.helpers.*
 import org.fossify.gallery.models.AlbumCover
-import org.fossify.gallery.dialogs.ChangeLanguageDialog
-import androidx.appcompat.app.AppCompatDelegate
-import android.app.KeyguardManager
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.Locale
-import kotlin.system.exitProcess
 
 class SettingsActivity : SimpleActivity() {
     companion object {
+        const val EXTRA_SETTINGS_CATEGORY = "extra_settings_category"
+        const val EXTRA_HIGHLIGHT_VIEW_ID = "extra_highlight_view_id"
+
+        const val CATEGORY_APPLICATION = "application"
+        const val CATEGORY_SECURITY = "security"
+        const val CATEGORY_VIEWER = "viewer"
+        const val CATEGORY_VIDEO = "video"
+        const val CATEGORY_THUMBNAILS = "thumbnails"
+        const val CATEGORY_FILES = "files"
+        const val CATEGORY_RECYCLE = "recycle"
+        const val CATEGORY_MIGRATING = "migrating"
+
         private const val PICK_IMPORT_SOURCE_INTENT = 1
         private const val SELECT_EXPORT_FAVORITES_FILE_INTENT = 2
         private const val SELECT_IMPORT_FAVORITES_FILE_INTENT = 3
@@ -72,42 +88,121 @@ class SettingsActivity : SimpleActivity() {
             R.id.settings_export_holder,
             R.id.settings_import_holder,
         )
-
-        private val SECTION_LABEL_IDS = setOf(
-            R.id.settings_color_customization_section_label,
-            R.id.settings_general_settings_label,
-            R.id.settings_videos_label,
-            R.id.settings_thumbnails_label,
-            R.id.settings_fullscreen_media_label,
-            R.id.settings_security_label,
-            R.id.settings_file_operations_label,
-            R.id.settings_recycle_bin_label,
-            R.id.settings_migrating_label,
-            R.id.settings_vault_subheading,
-            R.id.settings_fullscreen_subheading,
-            R.id.settings_deep_zoom_subheading,
-        )
-
-        private val SECTION_ICONS = listOf(
-            R.drawable.ic_section_appearance,
-            R.drawable.ic_section_application,
-            R.drawable.ic_section_video,
-            R.drawable.ic_section_thumbnails,
-            R.drawable.ic_section_viewer,
-            R.drawable.ic_section_security,
-            R.drawable.ic_section_files,
-            R.drawable.ic_section_recycle,
-            R.drawable.ic_section_migration,
-        )
     }
+
+    private data class CategorySpec(
+        val key: String,
+        @StringRes val titleRes: Int,
+        @DrawableRes val iconRes: Int,
+        val container: LinearLayout,
+        val groups: List<Pair<LinearLayout, TextView>>,
+    )
+
+    private data class SearchResultEntry(
+        @DrawableRes val iconRes: Int,
+        val title: String,
+        val breadcrumb: String,
+        val onClick: () -> Unit,
+    )
 
     private var mRecycleBinContentSize = 0L
     private var activeSettingsSearch = ""
-    private val originalSettingsVisibility = mutableMapOf<View, Int>()
+    private var isSettingUpItems = false
+    private var pendingHighlightViewId = 0
     private var biometricStatus = BiometricManager.BIOMETRIC_STATUS_UNKNOWN
     private var biometricKeyAvailable = false
     private var biometricUsable = false
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
+
+    private val activeCategory: String?
+        get() = intent.getStringExtra(EXTRA_SETTINGS_CATEGORY)
+
+    private val categorySpecs: List<CategorySpec> by lazy {
+        listOf(
+            CategorySpec(
+                key = CATEGORY_APPLICATION,
+                titleRes = R.string.application_settings,
+                iconRes = R.drawable.ic_section_application,
+                container = binding.settingsCategoryApplication,
+                groups = listOf(
+                    binding.settingsApplicationGeneralCard to binding.settingsApplicationGeneralEyebrow,
+                    binding.settingsApplicationFoldersCard to binding.settingsApplicationFoldersEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_SECURITY,
+                titleRes = R.string.security_and_vault_settings,
+                iconRes = R.drawable.ic_section_security,
+                container = binding.settingsCategorySecurity,
+                groups = listOf(
+                    binding.settingsSecurityCard to binding.settingsSecurityEyebrow,
+                    binding.settingsVaultCard to binding.settingsVaultEyebrow,
+                    binding.settingsVaultManagementCard to binding.settingsVaultManagementEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_VIEWER,
+                titleRes = R.string.media_viewer_settings,
+                iconRes = R.drawable.ic_section_viewer,
+                container = binding.settingsCategoryViewer,
+                groups = listOf(
+                    binding.settingsFullscreenCard to binding.settingsFullscreenEyebrow,
+                    binding.settingsDeepZoomCard to binding.settingsDeepZoomEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_VIDEO,
+                titleRes = R.string.video_playback_settings,
+                iconRes = R.drawable.ic_section_video,
+                container = binding.settingsCategoryVideo,
+                groups = listOf(
+                    binding.settingsVideoPlaybackCard to binding.settingsVideoPlaybackEyebrow,
+                    binding.settingsVideoGesturesCard to binding.settingsVideoGesturesEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_THUMBNAILS,
+                titleRes = R.string.thumbnails_and_scrolling_settings,
+                iconRes = R.drawable.ic_section_thumbnails,
+                container = binding.settingsCategoryThumbnails,
+                groups = listOf(
+                    binding.settingsThumbnailsDisplayCard to binding.settingsThumbnailsDisplayEyebrow,
+                    binding.settingsThumbnailsStyleCard to binding.settingsThumbnailsStyleEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_FILES,
+                titleRes = org.fossify.commons.R.string.file_operations,
+                iconRes = R.drawable.ic_section_files,
+                container = binding.settingsCategoryFiles,
+                groups = listOf(
+                    binding.settingsFilesBehaviorCard to binding.settingsFilesBehaviorEyebrow,
+                    binding.settingsFilesConflictsCard to binding.settingsFilesConflictsEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_RECYCLE,
+                titleRes = org.fossify.commons.R.string.recycle_bin,
+                iconRes = R.drawable.ic_section_recycle,
+                container = binding.settingsCategoryRecycle,
+                groups = listOf(
+                    binding.settingsRecycleBinCard to binding.settingsRecycleBinEyebrow,
+                    binding.settingsRecycleCleanupCard to binding.settingsRecycleCleanupEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_MIGRATING,
+                titleRes = org.fossify.commons.R.string.migrating,
+                iconRes = R.drawable.ic_section_migration,
+                container = binding.settingsCategoryMigrating,
+                groups = listOf(
+                    binding.settingsMigratingStorageCard to binding.settingsMigratingStorageEyebrow,
+                    binding.settingsMigratingBackupCard to binding.settingsMigratingBackupEyebrow,
+                    binding.settingsMigratingVaultCard to binding.settingsMigratingVaultEyebrow,
+                ),
+            ),
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,8 +210,11 @@ class SettingsActivity : SimpleActivity() {
 
         setupEdgeToEdge(
             padTopSystem = listOf(binding.settingsAppbar),
-            padBottomSystem = listOf(binding.settingsNestedScrollview)
+            padBottomSystem = listOf(binding.settingsNestedScrollview),
         )
+
+        pendingHighlightViewId = intent.getIntExtra(EXTRA_HIGHLIGHT_VIEW_ID, 0)
+        applyActiveCategoryVisibility()
         setupSettingsSearch()
     }
 
@@ -127,14 +225,18 @@ class SettingsActivity : SimpleActivity() {
         setupTopAppBar(
             binding.settingsAppbar,
             NavigationIcon.Arrow,
-            topBarColor = getProperBackgroundColor()
+            topBarColor = getProperBackgroundColor(),
         )
+        binding.settingsToolbar.title = resolveToolbarTitle()
         setupSettingItems()
-        registerVaultSectionScrollRecheck()
+        if (activeCategory == CATEGORY_SECURITY) {
+            registerVaultSectionScrollRecheck()
+        }
         // Returning from Appearance recreates that activity but not this one, so the search bar
         // colors and TextViews inflated with the previous font would otherwise stay stale.
         refreshSettingsSearchColors()
         refreshSettingsFont()
+        scrollToHighlightedSettingIfNeeded()
     }
 
     override fun onPause() {
@@ -142,112 +244,119 @@ class SettingsActivity : SimpleActivity() {
         unregisterVaultSectionScrollRecheck()
     }
 
-    private fun setupSettingItems() {
-        setupCustomizeColors()
-        setupUseEnglish()
-        setupLanguage()
-        setupChangeDateTimeFormat()
-        setupFileLoadingPriority()
-        setupManageIncludedFolders()
-        setupManageExcludedFolders()
-        setupManageHiddenFolders()
-        setupHomeScreenViewOnLaunch()
-        setupShowHiddenItems()
-        setupAutoplayVideos()
-        setupRememberLastVideo()
-        setupLoopVideos()
-        setupOpenVideosOnSeparateScreen()
-        setupOnVideoTap()
-        setupVideoDoubleTapSeekDuration()
-        setupMaxBrightness()
-        setupUltraHdrRendering()
-        setupCropThumbnails()
-        setupAnimateGifs()
-        setupDarkBackground()
-        setupScrollHorizontally()
-        setupScreenRotation()
-        setupHideSystemUI()
-        setupShowBottomActionNames()
+    private fun resolveToolbarTitle(): String {
+        val cat = activeCategory ?: return getString(org.fossify.commons.R.string.settings)
+        val spec = categorySpecs.firstOrNull { it.key == cat }
+        return spec?.let { getString(it.titleRes) } ?: getString(org.fossify.commons.R.string.settings)
+    }
 
+    private fun applyActiveCategoryVisibility() {
+        val cat = activeCategory
+        binding.settingsHubContainer.isVisible = cat == null
+        for (spec in categorySpecs) {
+            spec.container.isVisible = spec.key == cat
+        }
+        binding.settingsToolbar.title = resolveToolbarTitle()
+    }
 
-        setupExcludedItemPasswordProtection()
-        setupAppPasswordProtection()
-        setupFileDeletionPasswordProtection()
-        setupVaultSettings()
-        setupConflictHandlingMode()
-        setupSkippedEncryptFilesMode()
-        setupAlbumCryptoConflictMode()
-        setupDeleteEmptyFolders()
-        setupKeepScreenOn()
-        setupAllowPhotoGestures()
-        setupAllowVideoGestures()
-        setupAllowDownGesture()
-        setupAllowRotatingWithGestures()
-        setupShowNotch()
-        setupFileThumbnailStyle()
-        setupFolderThumbnailStyle()
-        setupKeepLastModified()
-        setupAllowZoomingImages()
-        setupShowHighestQuality()
-        setupAllowOneToOneZoom()
-        setupAllowInstantChange()
-        setupShowExtendedDetails()
-        setupHideExtendedDetails()
-        setupManageExtendedDetails()
-        setupSkipDeleteConfirmation()
-        setupDeleteOriginalFromFavoritesAndVirtualAlbums()
-        setupAutoBackupFavoritesAndVirtualAlbums()
-        setupUseRecycleBin()
-        setupShowRecycleBin()
-        setupShowRecycleBinLast()
-        setupEmptyRecycleBin()
-        updateTextColors(binding.settingsHolder)
-        setupClearCache()
-        setupExportFavorites()
-        setupImportFavorites()
-        setupExportSettings()
-        setupImportSettings()
-
-        val mainLabels = listOf(
-            binding.settingsColorCustomizationSectionLabel,
-            binding.settingsGeneralSettingsLabel,
-            binding.settingsVideosLabel,
-            binding.settingsThumbnailsLabel,
-            binding.settingsFullscreenMediaLabel,
-            binding.settingsSecurityLabel,
-            binding.settingsFileOperationsLabel,
-            binding.settingsRecycleBinLabel,
-            binding.settingsMigratingLabel
-        )
-        mainLabels.zip(SECTION_ICONS).forEach { (label, iconRes) ->
-            label.setTextColor(getProperPrimaryColor())
-            label.isAllCaps = true
-            label.textSize = 13f
-            label.letterSpacing = 0.08f
-            label.setTypeface(null, android.graphics.Typeface.BOLD)
-            val density = resources.displayMetrics
-            val end = resources.getDimensionPixelSize(org.fossify.commons.R.dimen.settings_label_start_margin)
-            val top = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18f, density).toInt()
-            val bottom = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6f, density).toInt()
-            // SettingsSectionLabelStyle already applies layout_marginStart; keep start padding at 0 so the icon aligns with row labels.
-            label.setPaddingRelative(0, top, end, bottom)
-            label.compoundDrawablePadding = TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP, 8f, density,
-            ).toInt()
-            ContextCompat.getDrawable(this, iconRes)?.mutate()?.apply {
-                setTint(getProperPrimaryColor())
-                label.setCompoundDrawablesRelativeWithIntrinsicBounds(this, null, null, null)
+    private fun scrollToHighlightedSettingIfNeeded() {
+        val targetId = pendingHighlightViewId
+        if (targetId <= 0 || activeCategory == null) return
+        pendingHighlightViewId = 0
+        binding.settingsNestedScrollview.post {
+            val targetView = findViewById<View>(targetId)
+            if (targetView != null && targetView.isShown) {
+                val targetLoc = IntArray(2)
+                val scrollLoc = IntArray(2)
+                targetView.getLocationOnScreen(targetLoc)
+                binding.settingsNestedScrollview.getLocationOnScreen(scrollLoc)
+                val delta = targetLoc[1] - scrollLoc[1] - (binding.settingsNestedScrollview.height / 4)
+                binding.settingsNestedScrollview.smoothScrollBy(0, delta)
             }
         }
+    }
 
-        listOf(
-            binding.settingsVaultSubheading,
-            binding.settingsFullscreenSubheading,
-            binding.settingsDeepZoomSubheading,
-        ).forEach {
-            it.setTextColor(ColorUtils.setAlphaComponent(getProperTextColor(), 170))
-            it.setTypeface(null, android.graphics.Typeface.BOLD)
+    private fun openCategory(categoryKey: String, highlightViewId: Int = 0) {
+        hideKeyboard()
+        startActivity(
+            Intent(this, SettingsActivity::class.java).apply {
+                putExtra(EXTRA_SETTINGS_CATEGORY, categoryKey)
+                if (highlightViewId > 0) {
+                    putExtra(EXTRA_HIGHLIGHT_VIEW_ID, highlightViewId)
+                }
+            },
+        )
+    }
+
+    private fun setupSettingItems() {
+        isSettingUpItems = true
+        try {
+            setupUseEnglish()
+            setupLanguage()
+            setupChangeDateTimeFormat()
+            setupFileLoadingPriority()
+            setupManageIncludedFolders()
+            setupManageExcludedFolders()
+            setupManageHiddenFolders()
+            setupHomeScreenViewOnLaunch()
+            setupShowHiddenItems()
+            setupAutoplayVideos()
+            setupRememberLastVideo()
+            setupLoopVideos()
+            setupOpenVideosOnSeparateScreen()
+            setupOnVideoTap()
+            setupVideoDoubleTapSeekDuration()
+            setupMaxBrightness()
+            setupUltraHdrRendering()
+            setupCropThumbnails()
+            setupAnimateGifs()
+            setupDarkBackground()
+            setupScrollHorizontally()
+            setupScreenRotation()
+            setupHideSystemUI()
+            setupShowBottomActionNames()
+
+            setupExcludedItemPasswordProtection()
+            setupAppPasswordProtection()
+            setupFileDeletionPasswordProtection()
+            setupVaultSettings()
+            setupConflictHandlingMode()
+            setupSkippedEncryptFilesMode()
+            setupAlbumCryptoConflictMode()
+            setupDeleteEmptyFolders()
+            setupKeepScreenOn()
+            setupAllowPhotoGestures()
+            setupAllowVideoGestures()
+            setupAllowDownGesture()
+            setupAllowRotatingWithGestures()
+            setupShowNotch()
+            setupFileThumbnailStyle()
+            setupFolderThumbnailStyle()
+            setupKeepLastModified()
+            setupAllowZoomingImages()
+            setupShowHighestQuality()
+            setupAllowOneToOneZoom()
+            setupAllowInstantChange()
+            setupShowExtendedDetails()
+            setupHideExtendedDetails()
+            setupManageExtendedDetails()
+            setupSkipDeleteConfirmation()
+            setupDeleteOriginalFromFavoritesAndVirtualAlbums()
+            setupAutoBackupFavoritesAndVirtualAlbums()
+            setupUseRecycleBin()
+            setupShowRecycleBin()
+            setupShowRecycleBinLast()
+            setupEmptyRecycleBin()
+            updateTextColors(binding.settingsHolder)
+            setupClearCache()
+            setupExportFavorites()
+            setupImportFavorites()
+            setupExportSettings()
+            setupImportSettings()
+        } finally {
+            isSettingUpItems = false
         }
+
         refreshRowDecorations()
         applySettingsSearch()
     }
@@ -261,6 +370,9 @@ class SettingsActivity : SimpleActivity() {
                 applySettingsSearch()
             }
         })
+        binding.settingsSearchClear.setOnClickListener {
+            binding.settingsSearch.setText("")
+        }
         refreshSettingsSearchColors()
     }
 
@@ -290,16 +402,14 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun refreshSettingsSearchColors() {
-        binding.settingsSearch.setBackgroundColor(resolveCalypsoSearchBarFillColor(this))
-        binding.settingsSearch.setTextColor(getProperTextColor())
-        binding.settingsSearch.setHintTextColor(
-            ColorUtils.blendARGB(getProperTextColor(), getProperBackgroundColor(), 0.45f),
-        )
-        // Use the very same palette color as the Main/Media/Search pill bars so the magnifying
-        // glass stays black in light mode instead of falling back to Commons' accent tint.
-        binding.settingsSearch.compoundDrawablesRelative[0]?.mutate()?.setTintList(
-            ColorStateList.valueOf(resolveCalypsoSearchIconColor(this)),
-        )
+        val palette = AppearanceManager.resolve(this, config)
+        val mutedColor = SettingsCardUi.mutedTextColor(palette)
+        binding.settingsSearchContainer.background = SettingsCardUi.createSearchBackground(this, palette)
+        binding.settingsSearchContainer.clipToOutline = true
+        binding.settingsSearch.setTextColor(palette.text)
+        binding.settingsSearch.setHintTextColor(mutedColor)
+        binding.settingsSearchIcon.imageTintList = ColorStateList.valueOf(mutedColor)
+        binding.settingsSearchClear.imageTintList = ColorStateList.valueOf(mutedColor)
     }
 
     private fun viewText(view: View): String {
@@ -318,94 +428,310 @@ class SettingsActivity : SimpleActivity() {
         return result.toString()
     }
 
-    /** Filters settings rows by their visible labels; section headers follow their rows. */
-    private fun applySettingsSearch() {
-        val holder = binding.settingsHolder
-        val children = (0 until holder.childCount).map { holder.getChildAt(it) }
-        if (activeSettingsSearch.isEmpty()) {
-            originalSettingsVisibility.forEach { (view, visibility) -> view.visibility = visibility }
-            originalSettingsVisibility.clear()
-            return
-        }
-        if (originalSettingsVisibility.isEmpty()) {
-            children.forEach { originalSettingsVisibility[it] = it.visibility }
-        }
-        val query = activeSettingsSearch.lowercase()
-        val isLabel = { view: View -> view is TextView && view.id in SECTION_LABEL_IDS }
-        val isRow = { view: View ->
-            view is ViewGroup && view.id != View.NO_ID &&
-                resources.getResourceEntryName(view.id).let { it.startsWith("settings_") && it.endsWith("_holder") }
-        }
-
-        children.forEach { child ->
-            if (child === binding.settingsSearch) {
-                return@forEach
+    private fun extractRowPrimaryTitle(row: View): String {
+        var found = ""
+        fun walk(current: View) {
+            if (found.isNotEmpty()) return
+            if (current is TextView && !current.text.isNullOrBlank()) {
+                found = current.text.toString().trim()
+                return
             }
-            if (isRow(child)) {
-                child.isVisible = viewText(child).lowercase().contains(query) &&
-                    originalSettingsVisibility[child] == View.VISIBLE
-            }
-        }
-        for (index in children.indices) {
-            val label = children[index]
-            if (!isLabel(label)) {
-                continue
-            }
-            var hasVisibleRow = false
-            for (nextIndex in index + 1 until children.size) {
-                val next = children[nextIndex]
-                if (isLabel(next)) {
-                    break
-                }
-                if (isRow(next) && next.isVisible) {
-                    hasVisibleRow = true
-                    break
+            if (current is ViewGroup) {
+                for (i in 0 until current.childCount) {
+                    walk(current.getChildAt(i))
                 }
             }
-            label.isVisible = hasVisibleRow && originalSettingsVisibility[label] == View.VISIBLE
         }
-        // Dividers would be orphaned during filtering; section headers carry the grouping.
-        children.filterIsInstance<ImageView>().forEach { it.isVisible = false }
+        walk(row)
+        return found
     }
 
-    /**
-     * Fork-specific settings row language: a chevron on rows that actually open a sub-screen.
-     * Switch rows and immediate actions keep their own affordance so the chevron stays truthful.
-     * Section separation is handled by the divider views declared in the layout.
-     */
-    private fun refreshRowDecorations() {
-        val holder = binding.settingsHolder
-        for (i in holder.childCount - 1 downTo 0) {
-            val child = holder.getChildAt(i)
-            if (child.tag == ROW_DECORATION_TAG) {
-                holder.removeViewAt(i)
-            } else if (child is ViewGroup) {
-                for (j in child.childCount - 1 downTo 0) {
-                    if (child.getChildAt(j).tag == ROW_DECORATION_TAG) {
-                        child.removeViewAt(j)
+    /** Cross-category search rendered inside the Hub screen. */
+    private fun applySettingsSearch() {
+        if (activeCategory != null) return
+
+        val query = activeSettingsSearch.lowercase()
+        binding.settingsSearchClear.isVisible = query.isNotEmpty()
+        if (query.isEmpty()) {
+            binding.settingsHubCard.isVisible = true
+            binding.settingsSearchResultsEyebrow.isVisible = false
+            binding.settingsSearchResultsCard.isVisible = false
+            binding.settingsSearchEmpty.isVisible = false
+            return
+        }
+
+        binding.settingsHubCard.isVisible = false
+        val palette = AppearanceManager.resolve(this, config)
+        val results = collectSearchResults(query)
+        val card = binding.settingsSearchResultsCard
+        card.removeAllViews()
+
+        if (results.isEmpty()) {
+            binding.settingsSearchResultsEyebrow.isVisible = false
+            card.isVisible = false
+            binding.settingsSearchEmpty.setTextColor(SettingsCardUi.mutedTextColor(palette))
+            binding.settingsSearchEmpty.isVisible = true
+            return
+        }
+
+        binding.settingsSearchEmpty.isVisible = false
+        for (entry in results) {
+            card.addView(buildHubCardRow(entry.iconRes, entry.title, entry.breadcrumb, palette, entry.onClick))
+        }
+        SettingsCardUi.styleCardGroup(
+            card = card,
+            palette = palette,
+            insetStartDp = 60f,
+            eyebrow = binding.settingsSearchResultsEyebrow,
+        )
+        refreshSettingsFont()
+    }
+
+    private fun collectSearchResults(query: String): List<SearchResultEntry> {
+        val results = mutableListOf<SearchResultEntry>()
+        val aboutTitle = getString(org.fossify.commons.R.string.about)
+        val appearanceTitle = getString(R.string.appearance_title)
+
+        // 1. Top-level category matches
+        if (aboutTitle.lowercase().contains(query)) {
+            results += SearchResultEntry(R.drawable.ic_section_about, aboutTitle, aboutTitle) { launchAbout() }
+        }
+        if (appearanceTitle.lowercase().contains(query)) {
+            results += SearchResultEntry(R.drawable.ic_section_appearance, appearanceTitle, appearanceTitle) {
+                startActivity(Intent(this, AppearanceActivity::class.java))
+            }
+        }
+        for (spec in categorySpecs) {
+            val catTitle = getString(spec.titleRes)
+            if (catTitle.lowercase().contains(query)) {
+                results += SearchResultEntry(spec.iconRes, catTitle, catTitle) { openCategory(spec.key) }
+            }
+        }
+
+        // 2. External screen items (About & Appearance)
+        val aboutKeywords = listOf(
+            R.string.about_read_gpl_license to R.string.about_license_heading,
+            R.string.about_fork_source to R.string.about_source_heading,
+            R.string.about_faq to R.string.about_help_heading,
+            R.string.about_third_party_licenses to R.string.about_help_heading,
+        )
+        for ((titleRes, groupRes) in aboutKeywords) {
+            val title = getString(titleRes)
+            if (title.lowercase().contains(query)) {
+                results += SearchResultEntry(
+                    iconRes = R.drawable.ic_section_about,
+                    title = title,
+                    breadcrumb = "$aboutTitle › ${getString(groupRes)}",
+                ) { launchAbout() }
+            }
+        }
+
+        val appearanceKeywords = listOf(
+            R.string.follow_system_theme to R.string.appearance_automatic,
+            org.fossify.commons.R.string.light_theme to org.fossify.commons.R.string.theme,
+            org.fossify.commons.R.string.dark_theme to org.fossify.commons.R.string.theme,
+            R.string.theme_midnight_blue to org.fossify.commons.R.string.theme,
+            R.string.theme_warm_paper to org.fossify.commons.R.string.theme,
+            R.string.theme_deep_forest to org.fossify.commons.R.string.theme,
+            R.string.custom_colors to R.string.custom_colors,
+            R.string.saved_themes to R.string.custom_colors,
+            org.fossify.commons.R.string.app_font to org.fossify.commons.R.string.font,
+            R.string.album_type_icons to R.string.album_type_icons,
+            R.string.backup_saved_themes_to_storage to R.string.appearance_backup_section,
+        )
+        for ((titleRes, groupRes) in appearanceKeywords) {
+            val title = getString(titleRes)
+            if (title.lowercase().contains(query)) {
+                results += SearchResultEntry(
+                    iconRes = R.drawable.ic_section_appearance,
+                    title = title,
+                    breadcrumb = "$appearanceTitle › ${getString(groupRes)}",
+                ) { startActivity(Intent(this, AppearanceActivity::class.java)) }
+            }
+        }
+
+        // 3. All visible rows inside the 8 category containers
+        for (spec in categorySpecs) {
+            val catTitle = getString(spec.titleRes)
+            for ((card, eyebrow) in spec.groups) {
+                val groupTitle = eyebrow.text?.toString()?.trim().orEmpty()
+                for (i in 0 until card.childCount) {
+                    val row = card.getChildAt(i)
+                    if (!row.isVisible || !isSettingsHolderRow(row)) continue
+                    if (viewText(row).lowercase().contains(query)) {
+                        val title = extractRowPrimaryTitle(row)
+                        if (title.isNotEmpty()) {
+                            val breadcrumb = if (groupTitle.isNotEmpty()) "$catTitle › $groupTitle" else catTitle
+                            results += SearchResultEntry(spec.iconRes, title, breadcrumb) {
+                                openCategory(spec.key, highlightViewId = row.id)
+                            }
+                        }
                     }
                 }
             }
         }
 
-        val palette = AppearanceManager.resolve(this, config)
-        val visibleChildren = (0 until holder.childCount)
-            .map { holder.getChildAt(it) }
-            .filter { it.isVisible && it.tag != ROW_DECORATION_TAG }
-        val isRow = { view: View ->
-            view is ViewGroup && view.id != View.NO_ID &&
-                resources.getResourceEntryName(view.id).let { it.startsWith("settings_") && it.endsWith("_holder") }
+        return results
+    }
+
+    /**
+     * Builds a card row with a squircle icon chip, label (plus optional breadcrumb subtitle), and chevron.
+     * Shared by the main Settings hub (single-line) and cross-category search results (with breadcrumb).
+     */
+    private fun buildHubCardRow(
+        iconRes: Int,
+        title: String,
+        subtitle: String?,
+        palette: AppearancePalette,
+        onClick: () -> Unit,
+    ): View {
+        val density = resources.displayMetrics.density
+        val isCompact = subtitle == null
+        val padH = (14f * density).toInt()
+        val padV = ((if (isCompact) 10f else 11f) * density).toInt()
+        val chipSize = (34f * density).toInt()
+        val iconSize = (18f * density).toInt()
+        val gap = (12f * density).toInt()
+        val mutedColor = SettingsCardUi.mutedTextColor(palette)
+
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = ((if (isCompact) 52f else 54f) * density).toInt()
+            setPadding(padH, padV, padH, padV)
+            isClickable = true
+            isFocusable = true
+            val outValue = TypedValue()
+            theme.resolveAttribute(android.R.attr.selectableItemBackground, outValue, true)
+            setBackgroundResource(outValue.resourceId)
+            setOnClickListener { onClick() }
         }
 
-        for (current in visibleChildren) {
-            if (!isRow(current)) {
-                continue
+        val chip = FrameLayout(this).apply {
+            background = SettingsCardUi.createIconChipBackground(this@SettingsActivity, palette)
+            layoutParams = LinearLayout.LayoutParams(chipSize, chipSize).apply { marginEnd = gap }
+            addView(
+                AppCompatImageView(this@SettingsActivity).apply {
+                    setImageResource(iconRes)
+                    imageTintList = ColorStateList.valueOf(palette.primary)
+                    layoutParams = FrameLayout.LayoutParams(iconSize, iconSize, Gravity.CENTER)
+                },
+            )
+        }
+
+        val textCol = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = gap
             }
-            val row = current as ViewGroup
-            if (!hasSwitch(row) && row.id !in ACTION_ROW_IDS) {
-                row.addView(createChevron(row, palette))
+            addView(
+                MyTextView(this@SettingsActivity).apply {
+                    text = title
+                    setTextColor(palette.text)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
+                },
+            )
+            if (subtitle != null) {
+                addView(
+                    MyTextView(this@SettingsActivity).apply {
+                        text = subtitle
+                        setTextColor(mutedColor)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    },
+                )
             }
         }
+
+        val chevron = AppCompatImageView(this).apply {
+            setImageResource(R.drawable.ic_settings_chevron)
+            imageTintList = ColorStateList.valueOf(mutedColor)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
+        }
+
+        row.addView(chip)
+        row.addView(textCol)
+        row.addView(chevron)
+        return row
+    }
+
+    private fun isSettingsHolderRow(view: View): Boolean {
+        if (view !is ViewGroup || view.id == View.NO_ID) return false
+        val name = resources.getResourceEntryName(view.id)
+        return name.startsWith("settings_") && name.endsWith("_holder")
+    }
+
+    /**
+     * Styles the active screen: in Hub mode, renders the 10-row single rounded card with squircle
+     * icon chips and chevrons; in Category mode, adds truthful chevrons on sub-screen rows and
+     * renders each logical section inside its own rounded card with hairline dividers.
+     */
+    private fun refreshRowDecorations() {
+        val palette = AppearanceManager.resolve(this, config)
+        val mutedColor = SettingsCardUi.mutedTextColor(palette)
+        val chevronTint = ColorStateList.valueOf(mutedColor)
+
+        if (activeCategory == null) {
+            val hubCard = binding.settingsHubCard
+            hubCard.removeAllViews()
+            hubCard.addView(
+                buildHubCardRow(
+                    iconRes = R.drawable.ic_section_about,
+                    title = getString(org.fossify.commons.R.string.about),
+                    subtitle = null,
+                    palette = palette,
+                    onClick = { launchAbout() },
+                ),
+            )
+            hubCard.addView(
+                buildHubCardRow(
+                    iconRes = R.drawable.ic_section_appearance,
+                    title = getString(R.string.appearance_title),
+                    subtitle = null,
+                    palette = palette,
+                    onClick = { startActivity(Intent(this, AppearanceActivity::class.java)) },
+                ),
+            )
+            for (spec in categorySpecs) {
+                hubCard.addView(
+                    buildHubCardRow(
+                        iconRes = spec.iconRes,
+                        title = getString(spec.titleRes),
+                        subtitle = null,
+                        palette = palette,
+                        onClick = { openCategory(spec.key) },
+                    ),
+                )
+            }
+
+            SettingsCardUi.styleCardGroup(hubCard, palette, insetStartDp = 60f)
+            refreshSettingsFont()
+            return
+        }
+
+        val activeSpec = categorySpecs.firstOrNull { it.key == activeCategory } ?: return
+        for ((card, eyebrow) in activeSpec.groups) {
+            for (i in 0 until card.childCount) {
+                val child = card.getChildAt(i)
+                if (!isSettingsHolderRow(child)) continue
+                val row = child as ViewGroup
+                for (j in row.childCount - 1 downTo 0) {
+                    if (row.getChildAt(j).tag == ROW_DECORATION_TAG) {
+                        row.removeViewAt(j)
+                    }
+                }
+                if (row.isVisible && !hasSwitch(row) && row.id !in ACTION_ROW_IDS) {
+                    row.addView(createChevron(row, palette))
+                }
+            }
+            SettingsCardUi.styleCardGroup(card, palette, insetStartDp = 14f, eyebrow = eyebrow)
+        }
+
+        val dangerColor = SettingsCardUi.dangerColor(palette)
+        binding.settingsEmptyVault.setTextColor(dangerColor)
+        binding.settingsEmptyRecycleBinLabel.setTextColor(dangerColor)
+        binding.settingsVaultBiometricInfo.imageTintList = chevronTint
+        binding.settingsSyncVaultInfo.imageTintList = chevronTint
     }
 
     private fun hasSwitch(view: ViewGroup): Boolean {
@@ -418,30 +744,25 @@ class SettingsActivity : SimpleActivity() {
         return false
     }
 
-    private fun createChevron(row: ViewGroup, palette: org.fossify.gallery.helpers.AppearancePalette): ImageView {
+    private fun createChevron(row: ViewGroup, palette: AppearancePalette): ImageView {
         val size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 18f, resources.displayMetrics).toInt()
-        val margin = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 14f, resources.displayMetrics).toInt()
-        val tint = ColorStateList.valueOf(ColorUtils.blendARGB(palette.text, palette.background, 0.4f))
+        val tint = ColorStateList.valueOf(SettingsCardUi.mutedTextColor(palette))
         return AppCompatImageView(this).apply {
             tag = ROW_DECORATION_TAG
             setImageResource(R.drawable.ic_settings_chevron)
             imageTintList = tint
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            // Branch on the row's own type: its layoutParams describe how the row sits in the
-            // outer LinearLayout, so inspecting those would always pick the wrong LayoutParams
-            // class and drop the chevron at the top-left corner of the row.
+            // Rows inside rounded cards already carry 14dp end padding; align flush with that edge.
             layoutParams = if (row is ConstraintLayout) {
                 ConstraintLayout.LayoutParams(size, size).apply {
                     endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
                     topToTop = ConstraintLayout.LayoutParams.PARENT_ID
                     bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID
-                    rightMargin = margin
                 }
             } else {
                 RelativeLayout.LayoutParams(size, size).apply {
                     addRule(RelativeLayout.ALIGN_PARENT_END)
                     addRule(RelativeLayout.CENTER_VERTICAL)
-                    rightMargin = margin
                 }
             }
         }
@@ -458,12 +779,6 @@ class SettingsActivity : SimpleActivity() {
         } else if (requestCode == SELECT_IMPORT_FAVORITES_FILE_INTENT && resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
             val inputStream = contentResolver.openInputStream(resultData.data!!)
             importFavorites(inputStream)
-        }
-    }
-
-    private fun setupCustomizeColors() {
-        binding.settingsColorCustomizationHolder.setOnClickListener {
-            startActivity(Intent(this, AppearanceActivity::class.java))
         }
     }
 
@@ -1348,6 +1663,9 @@ class SettingsActivity : SimpleActivity() {
         // Info icon replaces the always-visible explanation text. No popup is shown on state
         // change; the user opens it deliberately.
         binding.settingsVaultBiometricInfo.beVisibleIf(vaultExists && !biometricUsable)
+        if (!isSettingUpItems) {
+            refreshRowDecorations()
+        }
     }
 
     private fun confirmDisableBiometric(onConfirmed: () -> Unit) {
@@ -1756,6 +2074,9 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsAllowRotatingWithGesturesHolder.beVisibleIf(config.allowZoomingImages)
         binding.settingsShowHighestQualityHolder.beVisibleIf(config.allowZoomingImages)
         binding.settingsAllowOneToOneZoomHolder.beVisibleIf(config.allowZoomingImages)
+        if (!isSettingUpItems) {
+            refreshRowDecorations()
+        }
     }
 
     private fun setupShowHighestQuality() {
@@ -1813,6 +2134,9 @@ class SettingsActivity : SimpleActivity() {
     private fun updateExtendedDetailsButtons() {
         binding.settingsManageExtendedDetailsHolder.beVisibleIf(config.showExtendedDetails)
         binding.settingsHideExtendedDetailsHolder.beVisibleIf(config.showExtendedDetails)
+        if (!isSettingUpItems) {
+            refreshRowDecorations()
+        }
     }
 
     private fun setupSkipDeleteConfirmation() {
@@ -1910,6 +2234,9 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsShowRecycleBinLastHolder.beVisibleIf(config.useRecycleBin && config.showRecycleBinAtFolders)
         binding.settingsEmptyRecycleBinHolder.beVisibleIf(config.useRecycleBin)
         binding.settingsShowRecycleBinHolder.beVisibleIf(config.useRecycleBin)
+        if (!isSettingUpItems) {
+            refreshRowDecorations()
+        }
     }
 
     private fun setupEmptyRecycleBin() {

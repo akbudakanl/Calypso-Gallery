@@ -24,7 +24,7 @@
     <androidx.core.widget.NestedScrollView
         android:id="@+id/settings_nested_scrollview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:fillViewport="true"
         android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
@@ -35,1452 +35,1758 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="28dp"
             app:maxWidth="@dimen/settings_max_content_width">
 
-            <EditText
-                android:id="@+id/settings_search"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="16dp"
-                android:background="@drawable/settings_search_background"
-                android:drawableStart="@drawable/ic_settings_search"
-                android:drawablePadding="10dp"
-                android:hint="@string/search_settings"
-                android:imeOptions="actionDone"
-                android:inputType="text"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
-                android:textSize="15sp" />
-
-            <TextView
-                android:id="@+id/settings_color_customization_section_label"
-                style="@style/SettingsSectionLabelStyle"
+            <!-- HUB MODE (10 categories inside a single rounded rectangle, About first) -->
+            <LinearLayout
+                android:id="@+id/settings_hub_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/color_customization" />
+                android:orientation="vertical">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_color_customization_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                <LinearLayout
+                    android:id="@+id/settings_search_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="14dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="8dp">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_color_customization_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/customize_colors"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    <ImageView
+                        android:id="@+id/settings_search_icon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_marginEnd="10dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_search" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <EditText
+                        android:id="@+id/settings_search"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="@string/search_settings"
+                        android:imeOptions="actionDone"
+                        android:inputType="text"
+                        android:singleLine="true"
+                        android:textSize="14.5sp" />
 
+                    <ImageView
+                        android:id="@+id/settings_search_clear"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/search_settings"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_settings_clear"
+                        android:visibility="gone" />
+                </LinearLayout>
 
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_general_settings_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/application_settings" />
-
-            <org.fossify.commons.views.PurchaseThankYouItem
-                android:id="@+id/settings_purchase_thank_you_holder"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <RelativeLayout
-                android:id="@+id/settings_use_english_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_use_english"
-                    style="@style/SettingsSwitchStyle"
+                <LinearLayout
+                    android:id="@+id/settings_hub_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/use_english_language" />
+                    android:orientation="vertical" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_hidden_items_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_hidden_items"
-                    style="@style/SettingsSwitchStyle"
+                <!-- Search results -->
+                <TextView
+                    android:id="@+id/settings_search_results_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/show_hidden_items" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_language_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_language_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/language" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_language"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_language_label"
-                    tools:text="English" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_change_date_time_format_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_change_date_time_format"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/change_date_and_time_format" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_file_loading_priority_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_file_loading_priority_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/file_loading_priority" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_file_loading_priority"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_file_loading_priority_label"
-                    tools:text="@string/compromise" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_manage_included_folders_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_manage_included_folders"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manage_included_folders" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_manage_excluded_folders_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_manage_excluded_folders"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manage_excluded_folders" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_manage_hidden_folders_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_manage_hidden_folders"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manage_hidden_folders" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_home_screen_view_on_launch_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_home_screen_view_on_launch_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/main_screen_view_on_launch" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_home_screen_view_on_launch"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_home_screen_view_on_launch_label"
-                    tools:text="@string/show_folders" />
-
-            </RelativeLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_videos_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/video_playback_settings" />
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_video_gestures_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_video_gestures"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_video_gestures" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_autoplay_videos_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_autoplay_videos"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/autoplay_videos" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_remember_last_video_position_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_remember_last_video_position"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/remember_last_video_position" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_loop_videos_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_loop_videos"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/loop_videos" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_open_videos_on_separate_screen_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_open_videos_on_separate_screen"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/open_videos_on_separate_screen" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_on_video_tap_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_on_video_tap_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/on_video_tap" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_on_video_tap"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_on_video_tap_label"
-                    tools:text="@string/open_in_app_player" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_video_double_tap_seek_duration_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_video_double_tap_seek_duration_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/video_double_tap_duration" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_video_double_tap_seek_duration"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_video_double_tap_seek_duration_label"
-                    tools:text="5s" />
-
-            </RelativeLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_thumbnails_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/thumbnails_and_scrolling_settings" />
-
-            <RelativeLayout
-                android:id="@+id/settings_crop_thumbnails_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_crop_thumbnails"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/crop_thumbnails" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_animate_gifs_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_animate_gifs"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/animate_gifs" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_scroll_horizontally_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_scroll_horizontally"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/scroll_thumbnails_horizontally" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_file_thumbnail_style_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_file_thumbnail_style_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/file_thumbnail_style" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_folder_thumbnail_style_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_folder_thumbnail_style_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/folder_thumbnail_style" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_folder_thumbnail_style"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_folder_thumbnail_style_label"
-                    tools:text="Default" />
-
-            </RelativeLayout>
-
-            <!-- Pull-to-refresh gesture was removed; refresh lives in the overflow menu only. -->
-            <RelativeLayout
-                android:id="@+id/settings_enable_pull_to_refresh_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_enable_pull_to_refresh"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/enable_pull_to_refresh" />
-
-            </RelativeLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_fullscreen_media_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/media_viewer_settings" />
-
-            <TextView
-                android:id="@+id/settings_fullscreen_subheading"
-                style="@style/SettingsSubHeadingStyle"
-                android:text="@string/fullscreen_media" />
-
-            <RelativeLayout
-                android:id="@+id/settings_ultra_hdr_rendering_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_ultra_hdr_rendering"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/render_ultra_hdr_photos" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_black_background_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_black_background"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/black_background_at_fullscreen" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_keep_screen_on_fullscreen_photos_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_keep_screen_on_fullscreen_photos"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/keep_screen_on_fullscreen_photos" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_down_gesture_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_down_gesture"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_down_gesture" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_notch_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_notch"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show_notch" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_bottom_action_names_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_bottom_action_names"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show_bottom_action_names" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_hide_extended_details_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_hide_extended_details"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hide_extended_details" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_max_brightness_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_max_brightness"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/max_brightness" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_hide_system_ui_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_hide_system_ui"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hide_system_ui_at_fullscreen" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_instant_change_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_instant_change"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_instant_change" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_photo_gestures_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_photo_gestures"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_photo_gestures" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_extended_details_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_extended_details"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show_extended_details" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_screen_rotation_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_screen_rotation_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/screen_rotation_by" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_screen_rotation"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_screen_rotation_label"
-                    tools:text="@string/screen_rotation_system_setting" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_manage_extended_details_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_manage_extended_details"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/manage_extended_details" />
-
-            </RelativeLayout>
-
-
-            <TextView
-                android:id="@+id/settings_deep_zoom_subheading"
-                style="@style/SettingsSubHeadingStyle"
-                android:text="@string/deep_zoomable_images" />
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_zooming_images_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_zooming_images"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_deep_zooming_images" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_rotating_with_gestures_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_rotating_with_gestures"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_rotating_gestures" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_highest_quality_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_highest_quality"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show_highest_quality" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_allow_one_to_one_zoom_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_allow_one_to_one_zoom"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/allow_one_to_one_zoom" />
-
-            </RelativeLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_security_label"
-                style="@style/SettingsSectionLabelStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/security_and_vault_settings" />
-
-            <RelativeLayout
-                android:id="@+id/settings_app_password_protection_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_app_password_protection"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/password_protect_whole_app" />
-
-            </RelativeLayout>
-
-
-
-            <RelativeLayout
-                android:id="@+id/settings_excluded_item_password_protection_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_excluded_item_password_protection"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/password_protect_excluded" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_file_deletion_password_protection_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_file_deletion_password_protection"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/password_protect_file_deletion" />
-
-            </RelativeLayout>
-
-
-            <TextView
-                android:id="@+id/settings_vault_subheading"
-                style="@style/SettingsSubHeadingStyle"
-                android:text="@string/encrypted_vault" />
-
-            <RelativeLayout
-                android:id="@+id/settings_block_vault_screenshots_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_block_vault_screenshots"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/block_vault_screenshots" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_vault_biometric_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_vault_biometric"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_toStartOf="@id/settings_vault_biometric_info"
-                    android:text="@string/biometric_access_to_encrypted_vault" />
-
-                <!-- Only visible while the setting is passive; tap it for the reason dialog. -->
-                <ImageView
-                    android:id="@+id/settings_vault_biometric_info"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/vault_biometric_unavailable_title"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_info_vector"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_search_results"
                     android:visibility="gone" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_vault_biometric_auto_return_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_vault_biometric_auto_return"
-                    style="@style/SettingsSwitchStyle"
+                <LinearLayout
+                    android:id="@+id/settings_search_results_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/auto_biometric_prompt_on_vault_return" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_vault_password_reminder_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                    android:orientation="vertical"
+                    android:visibility="gone" />
 
                 <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_vault_password_reminder_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vault_password_reminder" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_vault_password_reminder"
-                    style="@style/SettingsTextValueStyle"
+                    android:id="@+id/settings_search_empty"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/settings_vault_password_reminder_label"
-                    tools:text="@string/vault_password_reminder_disabled" />
+                    android:gravity="center"
+                    android:padding="28dp"
+                    android:text="@string/settings_no_search_results"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_unarchive_vault_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_unarchive_vault_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/unarchive_vault" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_unarchive_vault"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/settings_unarchive_vault_label"
-                    android:text="@string/unarchive_vault_summary" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_hide_vault_key_presses_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_hide_vault_key_presses"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/hide_vault_key_presses" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_vault_pin_dots_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_vault_pin_dots"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/show_pin_dots" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_argon2_profile_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_argon2_profile_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/brute_force_time_title" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_argon2_profile_value"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_argon2_profile_label"
-                    tools:text="@string/brute_force_time_title" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_vault_location_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_vault_location_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/vault_location" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_vault_location"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_vault_location_label"
-                    tools:text="@string/vault_location_standard_summary" />
-
-            </RelativeLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_create_vault_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_create_vault"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/create_encrypted_vault"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_change_vault_password_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_change_vault_password"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/change_encrypted_vault_password"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_empty_vault_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_empty_vault"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/empty_encrypted_vault"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <!-- Archive vault is the last encrypted-vault row, below Reset (summary text removed). -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_archive_vault_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_archive_vault_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/archive_vault"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_file_operations_label"
-                style="@style/SettingsSectionLabelStyle"
+            <!-- CATEGORY 1: UYGULAMA -->
+            <LinearLayout
+                android:id="@+id/settings_category_application"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/file_operations" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <RelativeLayout
-                android:id="@+id/settings_keep_last_modified_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_keep_last_modified"
-                    style="@style/SettingsSwitchStyle"
+                <TextView
+                    android:id="@+id/settings_application_general_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/keep_last_modified" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_general" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_auto_backup_favorites_and_virtual_albums_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_auto_backup_favorites_and_virtual_albums"
-                    style="@style/SettingsSwitchStyle"
+                <LinearLayout
+                    android:id="@+id/settings_application_general_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/auto_backup_favorites_and_virtual_albums" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <org.fossify.commons.views.PurchaseThankYouItem
+                        android:id="@+id/settings_purchase_thank_you_holder"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone" />
 
-            <RelativeLayout
-                android:id="@+id/settings_delete_empty_folders_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                    <RelativeLayout
+                        android:id="@+id/settings_use_english_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone">
 
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_delete_empty_folders"
-                    style="@style/SettingsSwitchStyle"
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_use_english"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/use_english_language" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_hidden_items_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_hidden_items"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_hidden_items" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_language_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_language_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/language" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_language"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_language_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="English" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_change_date_time_format_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_change_date_time_format"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/change_date_and_time_format" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_home_screen_view_on_launch_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_home_screen_view_on_launch_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/main_screen_view_on_launch" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_home_screen_view_on_launch"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_home_screen_view_on_launch_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/show_folders" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_application_folders_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/delete_empty_folders" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_folders_and_loading" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_skip_delete_confirmation_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_skip_delete_confirmation"
-                    style="@style/SettingsSwitchStyle"
+                <LinearLayout
+                    android:id="@+id/settings_application_folders_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/skip_delete_confirmation" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_file_loading_priority_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_delete_original_from_favorites_and_virtual_albums_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_file_loading_priority_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/file_loading_priority" />
 
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_delete_original_from_favorites_and_virtual_albums"
-                    style="@style/SettingsSwitchStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/delete_original_from_favorites_and_virtual_albums" />
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_file_loading_priority"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_file_loading_priority_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/compromise" />
+                    </RelativeLayout>
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_manage_included_folders_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_conflict_handling_mode_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_manage_included_folders"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/manage_included_folders" />
+                    </RelativeLayout>
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_conflict_handling_mode_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/conflict_handling_mode_label" />
+                    <RelativeLayout
+                        android:id="@+id/settings_manage_excluded_folders_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_conflict_handling_mode"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_conflict_handling_mode_label"
-                    tools:text="@string/conflict_handling_standard_dialog_summary" />
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_manage_excluded_folders"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/manage_excluded_folders" />
+                    </RelativeLayout>
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_manage_hidden_folders_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_skipped_encrypt_files_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_manage_hidden_folders"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/manage_hidden_folders" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_skipped_encrypt_files_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="36dp"
-                    android:text="@string/skipped_encrypt_files_mode_label" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_skipped_encrypt_files"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_skipped_encrypt_files_label"
-                    android:layout_marginEnd="36dp"
-                    tools:text="@string/skipped_crypto_files_ask" />
-
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_album_crypto_conflict_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_album_crypto_conflict_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/album_crypto_conflict_mode_label" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_album_crypto_conflict"
-                    style="@style/SettingsTextValueStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_album_crypto_conflict_label"
-                    tools:text="@string/album_crypto_conflict_ask" />
-
-            </RelativeLayout>
-
-
-            <include layout="@layout/divider" />
-
-            <TextView
-                android:id="@+id/settings_recycle_bin_label"
-                style="@style/SettingsSectionLabelStyle"
+            <!-- CATEGORY 2: GÜVENLİK VE ŞİFRELİ KASA -->
+            <LinearLayout
+                android:id="@+id/settings_category_security"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/recycle_bin" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <RelativeLayout
-                android:id="@+id/settings_use_recycle_bin_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_use_recycle_bin"
-                    style="@style/SettingsSwitchStyle"
+                <TextView
+                    android:id="@+id/settings_security_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/move_items_into_recycle_bin" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_security" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_show_recycle_bin_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_recycle_bin"
-                    style="@style/SettingsSwitchStyle"
+                <LinearLayout
+                    android:id="@+id/settings_security_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/show_recycle_bin" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_app_password_protection_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_show_recycle_bin_last_holder"
-                style="@style/SettingsHolderSwitchStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_app_password_protection"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/password_protect_whole_app" />
+                    </RelativeLayout>
 
-                <org.fossify.commons.views.MyMaterialSwitch
-                    android:id="@+id/settings_show_recycle_bin_last"
-                    style="@style/SettingsSwitchStyle"
+                    <RelativeLayout
+                        android:id="@+id/settings_excluded_item_password_protection_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_excluded_item_password_protection"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/password_protect_excluded" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_file_deletion_password_protection_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_file_deletion_password_protection"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/password_protect_file_deletion" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_vault_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/show_recycle_bin_last" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/encrypted_vault" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_empty_recycle_bin_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_empty_recycle_bin_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/empty_recycle_bin" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_empty_recycle_bin_size"
-                    style="@style/SettingsTextValueStyle"
+                <LinearLayout
+                    android:id="@+id/settings_vault_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_empty_recycle_bin_label"
-                    tools:text="0 B" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_block_vault_screenshots_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_block_vault_screenshots"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/block_vault_screenshots" />
+                    </RelativeLayout>
 
-            <include layout="@layout/divider" />
+                    <RelativeLayout
+                        android:id="@+id/settings_vault_biometric_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/settings_migrating_label"
-                style="@style/SettingsSectionLabelStyle"
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_vault_biometric"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_toStartOf="@id/settings_vault_biometric_info"
+                            android:text="@string/biometric_access_to_encrypted_vault" />
+
+                        <ImageView
+                            android:id="@+id/settings_vault_biometric_info"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/vault_biometric_unavailable_title"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_info_vector"
+                            android:visibility="gone" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_vault_biometric_auto_return_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_vault_biometric_auto_return"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/auto_biometric_prompt_on_vault_return" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_vault_password_reminder_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_password_reminder_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/vault_password_reminder" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_password_reminder"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/settings_vault_password_reminder_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/vault_password_reminder_disabled" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_hide_vault_key_presses_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_hide_vault_key_presses"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/hide_vault_key_presses" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_vault_pin_dots_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_vault_pin_dots"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_pin_dots" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_argon2_profile_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_argon2_profile_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/brute_force_time_title" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_argon2_profile_value"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_argon2_profile_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/brute_force_time_title" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_vault_location_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_location_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/vault_location" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_location"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_vault_location_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/vault_location_standard_summary" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_vault_management_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_vault_management" />
+
+                <LinearLayout
+                    android:id="@+id/settings_vault_management_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_create_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_create_vault"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/create_encrypted_vault"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_change_vault_password_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_change_vault_password"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/change_encrypted_vault_password"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_unarchive_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_unarchive_vault_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/unarchive_vault" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_unarchive_vault"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/settings_unarchive_vault_label"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/unarchive_vault_summary" />
+                    </RelativeLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_empty_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_empty_vault"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/empty_encrypted_vault"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_archive_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_archive_vault_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/archive_vault"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 3: MEDYA GÖRÜNTÜLEYİCİ -->
+            <LinearLayout
+                android:id="@+id/settings_category_viewer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/migrating" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <RelativeLayout
-                android:id="@+id/settings_clear_cache_holder"
-                style="@style/SettingsHolderTextViewStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_clear_cache_label"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/clear_cache" />
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_clear_cache_size"
-                    style="@style/SettingsTextValueStyle"
+                <TextView
+                    android:id="@+id/settings_fullscreen_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/settings_clear_cache_label"
-                    tools:text="0 B" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/fullscreen_media" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_export_favorites_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_export_favorites"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/settings_fullscreen_card"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/export_favorite_paths" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_ultra_hdr_rendering_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_import_favorites_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_ultra_hdr_rendering"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/render_ultra_hdr_photos" />
+                    </RelativeLayout>
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_import_favorites"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                    <RelativeLayout
+                        android:id="@+id/settings_black_background_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_black_background"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/black_background_at_fullscreen" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_keep_screen_on_fullscreen_photos_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_keep_screen_on_fullscreen_photos"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/keep_screen_on_fullscreen_photos" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_down_gesture_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_down_gesture"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_down_gesture" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_notch_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_notch"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_notch" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_bottom_action_names_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_bottom_action_names"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_bottom_action_names" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_hide_extended_details_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_hide_extended_details"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/hide_extended_details" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_max_brightness_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_max_brightness"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/max_brightness" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_hide_system_ui_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_hide_system_ui"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/hide_system_ui_at_fullscreen" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_instant_change_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_instant_change"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_instant_change" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_photo_gestures_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_photo_gestures"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_photo_gestures" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_extended_details_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_extended_details"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_extended_details" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_screen_rotation_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_screen_rotation_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/screen_rotation_by" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_screen_rotation"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_screen_rotation_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/screen_rotation_system_setting" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_manage_extended_details_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_manage_extended_details"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/manage_extended_details" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_deep_zoom_eyebrow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/import_favorite_paths" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/deep_zoomable_images" />
 
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/settings_export_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_export"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/settings_deep_zoom_card"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/export_settings" />
+                    android:orientation="vertical">
 
-            </RelativeLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_zooming_images_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
 
-            <RelativeLayout
-                android:id="@+id/settings_import_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_zooming_images"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_deep_zooming_images" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_rotating_with_gestures_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_rotating_with_gestures"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_rotating_gestures" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_highest_quality_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_highest_quality"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_highest_quality" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_one_to_one_zoom_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_one_to_one_zoom"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_one_to_one_zoom" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 4: VİDEO OYNATMA -->
+            <LinearLayout
+                android:id="@+id/settings_category_video"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_import"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/settings_video_playback_eyebrow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/import_settings" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_playback" />
 
-            </RelativeLayout>
+                <LinearLayout
+                    android:id="@+id/settings_video_playback_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_export_vault_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
+                    <RelativeLayout
+                        android:id="@+id/settings_autoplay_videos_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_autoplay_videos"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/autoplay_videos" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_remember_last_video_position_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_remember_last_video_position"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/remember_last_video_position" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_loop_videos_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_loop_videos"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/loop_videos" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_open_videos_on_separate_screen_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_open_videos_on_separate_screen"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/open_videos_on_separate_screen" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_video_gestures_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_gestures_and_tap" />
+
+                <LinearLayout
+                    android:id="@+id/settings_video_gestures_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_allow_video_gestures_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_allow_video_gestures"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/allow_video_gestures" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_on_video_tap_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_on_video_tap_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/on_video_tap" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_on_video_tap"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_on_video_tap_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/open_in_app_player" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_video_double_tap_seek_duration_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_video_double_tap_seek_duration_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/video_double_tap_duration" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_video_double_tap_seek_duration"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_video_double_tap_seek_duration_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="5s" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 5: KÜÇÜK RESİMLER VE KAYDIRMA -->
+            <LinearLayout
+                android:id="@+id/settings_category_thumbnails"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_export_vault"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/settings_thumbnails_display_eyebrow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/export_encrypted_vault"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_display_and_motion" />
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                <LinearLayout
+                    android:id="@+id/settings_thumbnails_display_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/settings_sync_vault_holder"
-                style="@style/SettingsHolderTextViewOneLinerStyle"
+                    <RelativeLayout
+                        android:id="@+id/settings_crop_thumbnails_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_crop_thumbnails"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/crop_thumbnails" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_animate_gifs_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_animate_gifs"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/animate_gifs" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_scroll_horizontally_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_scroll_horizontally"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/scroll_thumbnails_horizontally" />
+                    </RelativeLayout>
+
+                    <!-- Pull-to-refresh gesture was removed; kept GONE for ViewBinding parity. -->
+                    <RelativeLayout
+                        android:id="@+id/settings_enable_pull_to_refresh_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_enable_pull_to_refresh"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/enable_pull_to_refresh" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_thumbnails_style_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_thumbnail_styles" />
+
+                <LinearLayout
+                    android:id="@+id/settings_thumbnails_style_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_file_thumbnail_style_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_file_thumbnail_style_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/file_thumbnail_style" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_folder_thumbnail_style_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_folder_thumbnail_style_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/folder_thumbnail_style" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_folder_thumbnail_style"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_folder_thumbnail_style_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="Default" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 6: DOSYA İŞLEMLERİ -->
+            <LinearLayout
+                android:id="@+id/settings_category_files"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <org.fossify.commons.views.MyTextView
-                    android:id="@+id/settings_sync_vault"
-                    style="@style/SettingsTextLabelStyle"
-                    android:layout_width="0dp"
+                <TextView
+                    android:id="@+id/settings_files_behavior_eyebrow"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/small_margin"
-                    android:text="@string/sync_vault_from_external"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/settings_sync_vault_info"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_general_behavior" />
 
-                <ImageView
-                    android:id="@+id/settings_sync_vault_info"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/sync_vault_from_external"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_info_vector"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                <LinearLayout
+                    android:id="@+id/settings_files_behavior_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <RelativeLayout
+                        android:id="@+id/settings_keep_last_modified_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_keep_last_modified"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/keep_last_modified" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_auto_backup_favorites_and_virtual_albums_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_auto_backup_favorites_and_virtual_albums"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/auto_backup_favorites_and_virtual_albums" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_delete_empty_folders_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_delete_empty_folders"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/delete_empty_folders" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_skip_delete_confirmation_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_skip_delete_confirmation"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/skip_delete_confirmation" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_delete_original_from_favorites_and_virtual_albums_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_delete_original_from_favorites_and_virtual_albums"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/delete_original_from_favorites_and_virtual_albums" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_files_conflicts_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_conflicts_and_crypto" />
+
+                <LinearLayout
+                    android:id="@+id/settings_files_conflicts_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_conflict_handling_mode_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_conflict_handling_mode_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/conflict_handling_mode_label" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_conflict_handling_mode"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_conflict_handling_mode_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/conflict_handling_standard_dialog_summary" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_skipped_encrypt_files_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_skipped_encrypt_files_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/skipped_encrypt_files_mode_label" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_skipped_encrypt_files"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_skipped_encrypt_files_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/skipped_crypto_files_ask" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_album_crypto_conflict_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_album_crypto_conflict_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/album_crypto_conflict_mode_label" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_album_crypto_conflict"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_album_crypto_conflict_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/album_crypto_conflict_ask" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 7: GERİ DÖNÜŞÜM KUTUSU -->
+            <LinearLayout
+                android:id="@+id/settings_category_recycle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/settings_recycle_bin_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/recycle_bin" />
+
+                <LinearLayout
+                    android:id="@+id/settings_recycle_bin_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_use_recycle_bin_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_use_recycle_bin"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/move_items_into_recycle_bin" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_recycle_bin_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_recycle_bin"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_recycle_bin" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_recycle_bin_last_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_recycle_bin_last"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_recycle_bin_last" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_recycle_cleanup_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_cleanup" />
+
+                <LinearLayout
+                    android:id="@+id/settings_recycle_cleanup_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_empty_recycle_bin_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_empty_recycle_bin_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/empty_recycle_bin" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_empty_recycle_bin_size"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_empty_recycle_bin_label"
+                            tools:text="0 B" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 8: GEÇİŞ (TAŞIMA VE YEDEKLEME) -->
+            <LinearLayout
+                android:id="@+id/settings_category_migrating"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/settings_migrating_storage_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_storage" />
+
+                <LinearLayout
+                    android:id="@+id/settings_migrating_storage_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_clear_cache_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_clear_cache_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/clear_cache" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_clear_cache_size"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_clear_cache_label"
+                            tools:text="0 B" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_migrating_backup_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_settings_and_favorites" />
+
+                <LinearLayout
+                    android:id="@+id/settings_migrating_backup_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_export_favorites_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_export_favorites"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:text="@string/export_favorite_paths" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_import_favorites_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_import_favorites"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:text="@string/import_favorite_paths" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_export_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_export"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:text="@string/export_settings" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_import_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_import"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:text="@string/import_settings" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_migrating_vault_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_vault_transfer" />
+
+                <LinearLayout
+                    android:id="@+id/settings_migrating_vault_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_export_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_export_vault"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/export_encrypted_vault"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_sync_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_sync_vault"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="@dimen/small_margin"
+                            android:text="@string/sync_vault_from_external"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toStartOf="@+id/settings_sync_vault_info"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <ImageView
+                            android:id="@+id/settings_sync_vault_info"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@string/sync_vault_from_external"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_info_vector"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+                </LinearLayout>
+            </LinearLayout>
+
         </org.fossify.gallery.views.MaxWidthLinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

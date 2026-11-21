@@ -1,22 +1,26 @@
 package org.fossify.gallery.activities
 
 import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
-import org.fossify.commons.extensions.getProperPrimaryColor
-import org.fossify.commons.extensions.getProperTextColor
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.humanizePath
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.launchViewIntent
+import org.fossify.commons.extensions.updateTextColors
 import org.fossify.commons.extensions.viewBinding
-import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.helpers.NavigationIcon
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.FAQItem
 import org.fossify.gallery.BuildConfig
 import org.fossify.gallery.R
-import org.fossify.gallery.extensions.config
-import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.findVaultRoot
 import org.fossify.gallery.databinding.ActivityAboutBinding
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.SettingsCardUi
+import org.fossify.gallery.helpers.findVaultRoot
 
 class AboutActivity : SimpleActivity() {
     private val binding by viewBinding(ActivityAboutBinding::inflate)
@@ -31,7 +35,7 @@ class AboutActivity : SimpleActivity() {
             return
         }
 
-        binding.aboutToolbar.title = getString(R.string.about_title)
+        binding.aboutToolbar.title = getString(org.fossify.commons.R.string.about)
         binding.aboutVersion.text = getString(
             R.string.about_version,
             BuildConfig.VERSION_NAME,
@@ -44,32 +48,45 @@ class AboutActivity : SimpleActivity() {
             padTopSystem = listOf(binding.aboutAppbar),
             padBottomSystem = listOf(binding.aboutScrollView),
         )
-        setupMaterialScrollListener(binding.aboutScrollView, binding.aboutAppbar)
     }
 
     override fun onResume() {
         super.onResume()
-        setupTopAppBar(binding.aboutAppbar, NavigationIcon.Arrow)
+        setupTopAppBar(
+            binding.aboutAppbar,
+            NavigationIcon.Arrow,
+            topBarColor = getProperBackgroundColor(),
+        )
+        setupColors()
     }
 
     private fun setupColors() {
-        val textColor = getProperTextColor()
-        val accentColor = getProperPrimaryColor()
+        val palette = AppearanceManager.resolve(this, config)
+        val mutedColor = SettingsCardUi.mutedTextColor(palette)
+        val density = resources.displayMetrics.density
+
+        updateTextColors(binding.aboutHolder)
+
+        binding.aboutHeroCard.background = SettingsCardUi.createCardBackground(this, palette, 18f)
+        binding.aboutHeroCard.clipToOutline = true
+
+        binding.aboutEmblemBg.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 13f * density
+            setColor(palette.primary)
+        }
+        binding.aboutEmblemIcon.imageTintList = ColorStateList.valueOf(palette.onPrimary)
 
         listOf(
-            binding.aboutTitle,
+            binding.aboutVersion,
             binding.aboutDescription,
             binding.aboutModificationNotice,
             binding.aboutCopyrightNotice,
             binding.aboutLicenseNotice,
             binding.aboutSourceNotice,
-        ).forEach { it.setTextColor(textColor) }
+        ).forEach { it.setTextColor(mutedColor) }
 
-        listOf(
-            binding.aboutLicenseHeading,
-            binding.aboutSourceHeading,
-            binding.aboutHelpHeading,
-        ).forEach { it.setTextColor(accentColor) }
+        binding.aboutTitle.setTextColor(palette.text)
 
         listOf(
             binding.aboutGplLicense,
@@ -80,32 +97,48 @@ class AboutActivity : SimpleActivity() {
             binding.aboutUpstreamProject,
             binding.aboutFaq,
             binding.aboutThirdPartyLicenses,
-        ).forEach { it.setTextColor(accentColor) }
+        ).forEach { it.setTextColor(palette.text) }
+
+        val chevronTint = ColorStateList.valueOf(mutedColor)
+        listOf(
+            binding.aboutGplLicenseChevron,
+            binding.aboutForkSourceChevron,
+            binding.aboutReleaseSourcesChevron,
+            binding.aboutForkIssuesChevron,
+            binding.aboutUpstreamSourceChevron,
+            binding.aboutUpstreamProjectChevron,
+            binding.aboutFaqChevron,
+            binding.aboutThirdPartyLicensesChevron,
+        ).forEach { it.imageTintList = chevronTint }
+
+        SettingsCardUi.styleCardGroup(binding.aboutLicenseCard, palette, eyebrow = binding.aboutLicenseHeading)
+        SettingsCardUi.styleCardGroup(binding.aboutSourceCard, palette, eyebrow = binding.aboutSourceHeading)
+        SettingsCardUi.styleCardGroup(binding.aboutHelpCard, palette, eyebrow = binding.aboutHelpHeading)
     }
 
     private fun setupActions() {
-        binding.aboutGplLicense.setOnClickListener {
+        binding.aboutGplLicenseRow.setOnClickListener {
             startActivity(Intent(this, GplLicenseActivity::class.java))
         }
-        binding.aboutForkSource.setOnClickListener {
+        binding.aboutForkSourceRow.setOnClickListener {
             launchViewIntent(FORK_REPOSITORY_URL)
         }
-        binding.aboutReleaseSources.setOnClickListener {
+        binding.aboutReleaseSourcesRow.setOnClickListener {
             launchViewIntent(FORK_RELEASES_URL)
         }
-        binding.aboutForkIssues.setOnClickListener {
+        binding.aboutForkIssuesRow.setOnClickListener {
             launchViewIntent(FORK_ISSUES_URL)
         }
-        binding.aboutUpstreamSource.setOnClickListener {
+        binding.aboutUpstreamSourceRow.setOnClickListener {
             launchViewIntent(UPSTREAM_REPOSITORY_URL)
         }
-        binding.aboutUpstreamProject.setOnClickListener {
+        binding.aboutUpstreamProjectRow.setOnClickListener {
             launchViewIntent(UPSTREAM_PROJECT_URL)
         }
-        binding.aboutFaq.setOnClickListener {
+        binding.aboutFaqRow.setOnClickListener {
             launchFaqActivity()
         }
-        binding.aboutThirdPartyLicenses.setOnClickListener {
+        binding.aboutThirdPartyLicensesRow.setOnClickListener {
             launchThirdPartyLicensesActivity()
         }
     }

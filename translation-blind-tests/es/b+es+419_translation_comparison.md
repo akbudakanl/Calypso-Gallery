@@ -1037,3 +1037,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | Contraseña débil |
 | `weak_password_warning_message` | Esta contraseña se considera débil. Se recomienda una contraseña más larga y compleja para la seguridad de la bóveda. ¿Quieres continuar de todos modos? |
 | `weak_password_warning_continue` | Continuar de todos modos |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | Spanish (Latin America) |
+|---|---|---|
+| `appearance_title` | Appearance | Apariencia |
+| `search_settings` | Search settings | Buscar en configuración |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (criptografía AEAD en flujo y HKDF) |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (derivación de claves Argon2id) |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (decodificación de WebP animado) |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (compatibilidad con JPEG XL) |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (renderizado de SVG) |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended (manejo de metadatos EXIF) |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons (íconos de interfaz) |
+| `checking_password` | Checking password… | Verificando contraseña… |
+| `vault_same_password_title` | Same password | Misma contraseña |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | La nueva contraseña es idéntica a la contraseña actual de la bóveda. Elige una diferente. |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d rondas) |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Midiendo la velocidad KDF estándar en este dispositivo… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Resistencia a fuerza bruta actualizada para la bóveda cifrada |
+| `appearance_automatic` | Automatic | Automático |
+| `follow_system_theme` | Follow system theme | Seguir el tema del sistema |
+| `follow_system_theme_summary` | Automatically switches between light and dark | Cambia automáticamente entre tema claro y oscuro |
+| `theme_midnight_blue` | Midnight Blue | Azul medianoche |
+| `theme_warm_paper` | Warm Paper | Papel cálido |
+| `theme_deep_forest` | Deep Forest | Bosque profundo |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | Buen contraste · Texto %1$.1f:1 · Botón %2$.1f:1 |
+| `appearance_backup_section` | Backup | Copia de seguridad |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | Respaldar temas guardados en el almacenamiento del dispositivo |
+| `settings_group_general` | General | General |
+| `settings_group_folders_and_loading` | Folders and loading | Carpetas y carga |
+| `settings_group_security` | Security | Seguridad |
+| `settings_group_vault_management` | Vault management | Administración de la bóveda |
+| `settings_group_playback` | Playback | Reproducción |
+| `settings_group_gestures_and_tap` | Gestures and tap | Gestos y toques |
+| `settings_group_display_and_motion` | Display and motion | Pantalla y movimiento |
+| `settings_group_thumbnail_styles` | Thumbnail styles | Estilos de miniaturas |
+| `settings_group_general_behavior` | General behavior | Comportamiento general |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | Conflictos y reglas de cifrado |
+| `settings_group_cleanup` | Cleanup | Limpieza |
+| `settings_group_storage` | Storage | Almacenamiento |
+| `settings_group_settings_and_favorites` | Settings and favorites | Configuración y favoritos |
+| `settings_group_vault_transfer` | Encrypted vault transfer | Transferencia de bóveda cifrada |
+| `settings_search_results` | Search results | Resultados de búsqueda |
+| `settings_no_search_results` | No matching settings found. | No se encontraron opciones coincidentes. |

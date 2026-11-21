@@ -101,7 +101,6 @@ import org.fossify.gallery.extensions.getCachedMedia
 import org.fossify.gallery.extensions.getFolderNameFromPath
 import org.fossify.gallery.extensions.getHumanizedFilename
 import org.fossify.gallery.extensions.isDownloadsFolder
-import org.fossify.gallery.extensions.launchAbout
 import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.launchGesturePlayer
 import org.fossify.gallery.extensions.mediaDB
@@ -639,7 +638,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             findItem(R.id.empty_disable_recycle_bin).isVisible = mPath == RECYCLE_BIN
             findItem(R.id.restore_all_files).isVisible = mPath == RECYCLE_BIN || isVaultRecycleBin
 
-            findItem(R.id.about).isVisible = !mIsVaultFilesView
             findItem(R.id.create_new_folder).isVisible =
                 !mShowAll && mPath != RECYCLE_BIN && !isVaultRecycleBin && mPath != FAVORITES && !mPath.isVirtualAlbumPath()
             findItem(R.id.open_recycle_bin).isVisible =
@@ -715,7 +713,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 R.id.temporarily_show_hidden_folders, R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
                 R.id.slideshow -> startSlideshow()
                 R.id.settings -> launchSettings()
-                R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
             }
             return@setOnMenuItemClickListener true

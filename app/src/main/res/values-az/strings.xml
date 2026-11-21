@@ -763,4 +763,46 @@
     <string name="weak_password_warning_title">Zəif parol</string>
     <string name="weak_password_warning_message">Bu parola zəif hesab olunur. Kasa təhlükəsizliyi üçün daha uzun və mürəkkəb parola tövsiyə olunur. Yenə də davam etmək istəyirsiniz?</string>
     <string name="weak_password_warning_continue">Yenə də davam et</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">Görünüş</string>
+    <string name="search_settings">Parametrlərdə axtar</string>
+    <string name="license_tink_title">Google Tink (axınlı AEAD və HKDF kriptoqrafiyası)</string>
+    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id açar törətməsi)</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder (animasiyalı WebP deşifrələməsi)</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL dəstəyi)</string>
+    <string name="license_androidsvg_title">AndroidSVG (SVG göstərilməsi)</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended (EXIF metaməlumat işlənməsi)</string>
+    <string name="license_material_icons_title">Material Design Icons (interfeys nişanları)</string>
+    <string name="checking_password">Parol yoxlanılır…</string>
+    <string name="vault_same_password_title">Eyni parol</string>
+    <string name="vault_same_password_message">Yeni parol cari seyf parolu ilə eynidir. Zəhmət olmasa fərqli bir parol seçin.</string>
+    <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d dövr)</string>
+    <string name="measuring_device_kdf_speed">Bu cihazda standart KDF sürəti ölçülür…</string>
+    <string name="kdf_settings_updated_successfully">Brute-Force müqaviməti şifrəli seyfə tətbiq edildi</string>
+    <string name="appearance_automatic">Avtomatik</string>
+    <string name="follow_system_theme">Sistem temasını izlə</string>
+    <string name="follow_system_theme_summary">Açıq və tünd tema arasında avtomatik keçid edir</string>
+    <string name="theme_midnight_blue">Gecə Mavisi</string>
+    <string name="theme_warm_paper">İsti Kağız</string>
+    <string name="theme_deep_forest">Dərin Meşə</string>
+    <string name="appearance_contrast_ok">Uyğun kontrast · Mətn %1$.1f:1 · Düymə %2$.1f:1</string>
+    <string name="appearance_backup_section">Ehtiyat nüsxə</string>
+    <string name="backup_saved_themes_to_storage">Saxlanılmış temaların ehtiyat nüsxəsini cihaz yaddaşına çıxar</string>
+    <string name="settings_group_general">Ümumi</string>
+    <string name="settings_group_folders_and_loading">Qovluqlar və yükləmə</string>
+    <string name="settings_group_security">Təhlükəsizlik</string>
+    <string name="settings_group_vault_management">Seyf idarəetməsi</string>
+    <string name="settings_group_playback">Oxutma</string>
+    <string name="settings_group_gestures_and_tap">Jestlər və toxunuş</string>
+    <string name="settings_group_display_and_motion">Görünüş və hərəkət</string>
+    <string name="settings_group_thumbnail_styles">Miniatür üslubları</string>
+    <string name="settings_group_general_behavior">Ümumi davranış</string>
+    <string name="settings_group_conflicts_and_crypto">Toqquşma və şifrələmə qaydaları</string>
+    <string name="settings_group_cleanup">Təmizləmə</string>
+    <string name="settings_group_storage">Yaddaş</string>
+    <string name="settings_group_settings_and_favorites">Parametrlər və seçilmişlər</string>
+    <string name="settings_group_vault_transfer">Şifrəli seyf köçürməsi</string>
+    <string name="settings_search_results">Axtarış nəticələri</string>
+    <string name="settings_no_search_results">Uyğun parametr tapılmadı.</string>
 </resources>

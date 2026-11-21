@@ -29,10 +29,30 @@ data class AppearancePalette(
     val onSecondary: Int,
 ) {
     companion object {
+        const val LIGHT_TEXT = 0xFF18181B.toInt()
+        const val LIGHT_BACKGROUND = 0xFFFAFAFA.toInt()
+        const val LIGHT_PRIMARY = 0xFF27272A.toInt()
+
+        const val DARK_TEXT = 0xFFFAFAFA.toInt()
+        const val DARK_BACKGROUND = 0xFF000000.toInt()
+        const val DARK_PRIMARY = 0xFFE4E4E7.toInt()
+
+        const val NAVY_TEXT = 0xFFEFF6FF.toInt()
+        const val NAVY_BACKGROUND = 0xFF0B1220.toInt()
+        const val NAVY_PRIMARY = 0xFF93C5FD.toInt()
+
+        const val PAPER_TEXT = 0xFF29231E.toInt()
+        const val PAPER_BACKGROUND = 0xFFF4EFE6.toInt()
+        const val PAPER_PRIMARY = 0xFF7C5438.toInt()
+
+        const val FOREST_TEXT = 0xFFECFDF5.toInt()
+        const val FOREST_BACKGROUND = 0xFF0C1713.toInt()
+        const val FOREST_PRIMARY = 0xFF6EE7B7.toInt()
+
         val LIGHT = AppearancePalette(
-            text = Color.parseColor("#18181B"),
-            background = Color.parseColor("#FAFAFA"),
-            primary = Color.parseColor("#27272A"),
+            text = LIGHT_TEXT,
+            background = LIGHT_BACKGROUND,
+            primary = LIGHT_PRIMARY,
             secondary = Color.parseColor("#52525B"),
             // Minimalist dark launcher icon matches the neutral Calypso Gallery identity.
             appIcon = Color.parseColor("#09090B"),
@@ -43,9 +63,9 @@ data class AppearancePalette(
         )
 
         val DARK = AppearancePalette(
-            text = Color.parseColor("#FAFAFA"),
-            background = Color.BLACK,
-            primary = Color.parseColor("#E4E4E7"),
+            text = DARK_TEXT,
+            background = DARK_BACKGROUND,
+            primary = DARK_PRIMARY,
             secondary = Color.parseColor("#A1A1AA"),
             appIcon = Color.BLACK,
             surface = Color.parseColor("#18181B"),
@@ -55,25 +75,25 @@ data class AppearancePalette(
         )
 
         val NAVY = fromCustom(
-            text = Color.parseColor("#EFF6FF"),
-            background = Color.parseColor("#0B1220"),
-            primary = Color.parseColor("#93C5FD"),
+            text = NAVY_TEXT,
+            background = NAVY_BACKGROUND,
+            primary = NAVY_PRIMARY,
             secondary = 0,
             appIcon = DARK.appIcon,
         )
 
         val PAPER = fromCustom(
-            text = Color.parseColor("#29231E"),
-            background = Color.parseColor("#F4EFE6"),
-            primary = Color.parseColor("#7C5438"),
+            text = PAPER_TEXT,
+            background = PAPER_BACKGROUND,
+            primary = PAPER_PRIMARY,
             secondary = 0,
             appIcon = LIGHT.appIcon,
         )
 
         val FOREST = fromCustom(
-            text = Color.parseColor("#ECFDF5"),
-            background = Color.parseColor("#0C1713"),
-            primary = Color.parseColor("#6EE7B7"),
+            text = FOREST_TEXT,
+            background = FOREST_BACKGROUND,
+            primary = FOREST_PRIMARY,
             secondary = 0,
             appIcon = DARK.appIcon,
         )

@@ -692,4 +692,46 @@
     <string name="weak_password_warning_title">Schwaches Passwort</string>
     <string name="weak_password_warning_message">Dieses Passwort wird als schwach angesehen. Für die Sicherheit des Tresors wird ein längeres, komplexeres Passwort empfohlen. Möchten Sie dennoch fortfahren?</string>
     <string name="weak_password_warning_continue">Trotzdem fortfahren</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">Erscheinungsbild</string>
+    <string name="search_settings">Einstellungen durchsuchen</string>
+    <string name="license_tink_title">Google Tink (Streaming-AEAD- und HKDF-Kryptografie)</string>
+    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id-Schlüsselableitung)</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder (Dekodierung animierter WebP-Bilder)</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG-XL-Unterstützung)</string>
+    <string name="license_androidsvg_title">AndroidSVG (SVG-Darstellung)</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended (Verarbeitung von EXIF-Metadaten)</string>
+    <string name="license_material_icons_title">Material Design Icons (UI-Symbole)</string>
+    <string name="checking_password">Passwort wird überprüft…</string>
+    <string name="vault_same_password_title">Gleiches Passwort</string>
+    <string name="vault_same_password_message">Das neue Passwort ist mit dem aktuellen Tresor-Passwort identisch. Bitte wählen Sie ein anderes.</string>
+    <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d Runden)</string>
+    <string name="measuring_device_kdf_speed">Standard-KDF-Geschwindigkeit auf diesem Gerät wird gemessen…</string>
+    <string name="kdf_settings_updated_successfully">Brute-Force-Widerstand für den verschlüsselten Tresor aktualisiert</string>
+    <string name="appearance_automatic">Automatisch</string>
+    <string name="follow_system_theme">Systemdesign folgen</string>
+    <string name="follow_system_theme_summary">Wechselt automatisch zwischen hellem und dunklem Design</string>
+    <string name="theme_midnight_blue">Mitternachtsblau</string>
+    <string name="theme_warm_paper">Warmes Papier</string>
+    <string name="theme_deep_forest">Tiefer Wald</string>
+    <string name="appearance_contrast_ok">Guter Kontrast · Text %1$.1f:1 · Schaltfläche %2$.1f:1</string>
+    <string name="appearance_backup_section">Sicherung</string>
+    <string name="backup_saved_themes_to_storage">Gespeicherte Designs im Gerätespeicher sichern</string>
+    <string name="settings_group_general">Allgemein</string>
+    <string name="settings_group_folders_and_loading">Ordner und Laden</string>
+    <string name="settings_group_security">Sicherheit</string>
+    <string name="settings_group_vault_management">Tresorverwaltung</string>
+    <string name="settings_group_playback">Wiedergabe</string>
+    <string name="settings_group_gestures_and_tap">Gesten und Tippen</string>
+    <string name="settings_group_display_and_motion">Anzeige und Bewegung</string>
+    <string name="settings_group_thumbnail_styles">Vorschaubild-Stile</string>
+    <string name="settings_group_general_behavior">Allgemeines Verhalten</string>
+    <string name="settings_group_conflicts_and_crypto">Konflikt- und Verschlüsselungsregeln</string>
+    <string name="settings_group_cleanup">Bereinigung</string>
+    <string name="settings_group_storage">Speicher</string>
+    <string name="settings_group_settings_and_favorites">Einstellungen und Favoriten</string>
+    <string name="settings_group_vault_transfer">Übertragung des verschlüsselten Tresors</string>
+    <string name="settings_search_results">Suchergebnisse</string>
+    <string name="settings_no_search_results">Keine passenden Einstellungen gefunden.</string>
 </resources>

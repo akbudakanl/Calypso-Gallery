@@ -42,18 +42,13 @@ object SavedThemes {
 
     fun isBuiltIn(text: Int, background: Int, primary: Int, appIcon: Int): Boolean {
         val builtIns = listOf(
-            AppearancePalette.LIGHT,
-            AppearancePalette.DARK,
-            AppearancePalette.NAVY,
-            AppearancePalette.PAPER,
-            AppearancePalette.FOREST,
+            Triple(AppearancePalette.LIGHT_TEXT, AppearancePalette.LIGHT_BACKGROUND, AppearancePalette.LIGHT_PRIMARY),
+            Triple(AppearancePalette.DARK_TEXT, AppearancePalette.DARK_BACKGROUND, AppearancePalette.DARK_PRIMARY),
+            Triple(AppearancePalette.NAVY_TEXT, AppearancePalette.NAVY_BACKGROUND, AppearancePalette.NAVY_PRIMARY),
+            Triple(AppearancePalette.PAPER_TEXT, AppearancePalette.PAPER_BACKGROUND, AppearancePalette.PAPER_PRIMARY),
+            Triple(AppearancePalette.FOREST_TEXT, AppearancePalette.FOREST_BACKGROUND, AppearancePalette.FOREST_PRIMARY),
         )
-        for (preset in builtIns) {
-            if (preset.text == text && preset.background == background && preset.primary == primary) {
-                return true
-            }
-        }
-        return false
+        return builtIns.any { (t, b, p) -> t == text && b == background && p == primary }
     }
 
     fun getBackupDir(): File = File(CryptoManager.getCipherRootDirectory(), CUSTOM_THEMES_DIR_NAME)

@@ -1063,3 +1063,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | Svakt passord |
 | `weak_password_warning_message` | Dette passordet anses som svakt. Et lengre og mer komplekst passord anbefales for sikkerheten til hvelvet. Vil du fortsette likevel? |
 | `weak_password_warning_continue` | Fortsett likevel |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | Norwegian Bokmål |
+|---|---|---|
+| `appearance_title` | Appearance | Utseende |
+| `search_settings` | Search settings | Søk i innstillinger |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (strømmende AEAD- og HKDF-kryptografi) |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id-nøkkelutledning) |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (dekoding av animert WebP) |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (støtte for JPEG XL) |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG-gjengivelse) |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended (håndtering av EXIF-metadata) |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons (grensesnittikoner) |
+| `checking_password` | Checking password… | Kontrollerer passord… |
+| `vault_same_password_title` | Same password | Samme passord |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Det nye passordet er likt det nåværende passordet for hvelvet. Velg et annet. |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d runder) |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Måler standard KDF-hastighet på denne enheten… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Motstand mot brute force oppdatert for det krypterte hvelvet |
+| `appearance_automatic` | Automatic | Automatisk |
+| `follow_system_theme` | Follow system theme | Følg systemtema |
+| `follow_system_theme_summary` | Automatically switches between light and dark | Bytter automatisk mellom lyst og mørkt tema |
+| `theme_midnight_blue` | Midnight Blue | Midnattsblå |
+| `theme_warm_paper` | Warm Paper | Varmt papir |
+| `theme_deep_forest` | Deep Forest | Dyp skog |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | God kontrast · Tekst %1$.1f:1 · Knapp %2$.1f:1 |
+| `appearance_backup_section` | Backup | Sikkerhetskopi |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | Sikkerhetskopier lagrede temaer til enhetslagring |
+| `settings_group_general` | General | Generelt |
+| `settings_group_folders_and_loading` | Folders and loading | Mapper og lasting |
+| `settings_group_security` | Security | Sikkerhet |
+| `settings_group_vault_management` | Vault management | Hvelvadministrasjon |
+| `settings_group_playback` | Playback | Avspilling |
+| `settings_group_gestures_and_tap` | Gestures and tap | Bevegelser og trykk |
+| `settings_group_display_and_motion` | Display and motion | Visning og bevegelse |
+| `settings_group_thumbnail_styles` | Thumbnail styles | Minibildestiler |
+| `settings_group_general_behavior` | General behavior | Generell oppførsel |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | Konflikter og krypteringsregler |
+| `settings_group_cleanup` | Cleanup | Opprydding |
+| `settings_group_storage` | Storage | Lagring |
+| `settings_group_settings_and_favorites` | Settings and favorites | Innstillinger og favoritter |
+| `settings_group_vault_transfer` | Encrypted vault transfer | Overføring av kryptert hvelv |
+| `settings_search_results` | Search results | Søkeresultater |
+| `settings_no_search_results` | No matching settings found. | Fant ingen samsvarende innstillinger. |

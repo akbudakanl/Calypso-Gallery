@@ -735,4 +735,46 @@
     <string name="weak_password_warning_title">Contraseña débil</string>
     <string name="weak_password_warning_message">Esta contraseña se considera débil. Se recomienda una contraseña más larga y compleja para la seguridad de la bóveda. ¿Desea continuar de todos modos?</string>
     <string name="weak_password_warning_continue">Continuar de todos modos</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">Apariencia</string>
+    <string name="search_settings">Buscar en configuración</string>
+    <string name="license_tink_title">Google Tink (criptografía AEAD en flujo y HKDF)</string>
+    <string name="license_bouncycastle_title">Bouncy Castle (derivación de claves Argon2id)</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder (decodificación de WebP animado)</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide (compatibilidad con JPEG XL)</string>
+    <string name="license_androidsvg_title">AndroidSVG (renderizado de SVG)</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended (administración de metadatos EXIF)</string>
+    <string name="license_material_icons_title">Material Design Icons (íconos de la interfaz)</string>
+    <string name="checking_password">Verificando contraseña…</string>
+    <string name="vault_same_password_title">Misma contraseña</string>
+    <string name="vault_same_password_message">La nueva contraseña es idéntica a la contraseña actual de la bóveda. Seleccione una diferente.</string>
+    <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d rondas)</string>
+    <string name="measuring_device_kdf_speed">Midiendo la velocidad KDF estándar en este dispositivo…</string>
+    <string name="kdf_settings_updated_successfully">Resistencia contra fuerza bruta actualizada para la bóveda cifrada</string>
+    <string name="appearance_automatic">Automático</string>
+    <string name="follow_system_theme">Seguir tema del sistema</string>
+    <string name="follow_system_theme_summary">Cambia automáticamente entre modo claro y oscuro</string>
+    <string name="theme_midnight_blue">Azul medianoche</string>
+    <string name="theme_warm_paper">Papel cálido</string>
+    <string name="theme_deep_forest">Bosque profundo</string>
+    <string name="appearance_contrast_ok">Buen contraste · Texto %1$.1f:1 · Botón %2$.1f:1</string>
+    <string name="appearance_backup_section">Respaldo</string>
+    <string name="backup_saved_themes_to_storage">Respaldar temas guardados en el almacenamiento del dispositivo</string>
+    <string name="settings_group_general">General</string>
+    <string name="settings_group_folders_and_loading">Carpetas y carga</string>
+    <string name="settings_group_security">Seguridad</string>
+    <string name="settings_group_vault_management">Administración de la bóveda</string>
+    <string name="settings_group_playback">Reproducción</string>
+    <string name="settings_group_gestures_and_tap">Gestos y toques</string>
+    <string name="settings_group_display_and_motion">Visualización y movimiento</string>
+    <string name="settings_group_thumbnail_styles">Estilos de miniaturas</string>
+    <string name="settings_group_general_behavior">Comportamiento general</string>
+    <string name="settings_group_conflicts_and_crypto">Conflictos y reglas de cifrado</string>
+    <string name="settings_group_cleanup">Limpieza</string>
+    <string name="settings_group_storage">Almacenamiento</string>
+    <string name="settings_group_settings_and_favorites">Configuración y favoritos</string>
+    <string name="settings_group_vault_transfer">Transferencia de bóveda cifrada</string>
+    <string name="settings_search_results">Resultados de búsqueda</string>
+    <string name="settings_no_search_results">No se encontraron configuraciones coincidentes.</string>
 </resources>

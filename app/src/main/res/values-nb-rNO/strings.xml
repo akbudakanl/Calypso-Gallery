@@ -709,4 +709,46 @@
     <string name="weak_password_warning_title">Svakt passord</string>
     <string name="weak_password_warning_message">Dette passordet anses som svakt. Et lengre og mer komplekst passord anbefales for sikkerheten til hvelvet. Vil du fortsette likevel?</string>
     <string name="weak_password_warning_continue">Fortsett likevel</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">Utseende</string>
+    <string name="search_settings">Søk i innstillinger</string>
+    <string name="license_tink_title">Google Tink (strømmende AEAD- og HKDF-kryptografi)</string>
+    <string name="license_bouncycastle_title">Bouncy Castle (Argon2id-nøkkelutledning)</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder (dekoding av animert WebP)</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide (støtte for JPEG XL)</string>
+    <string name="license_androidsvg_title">AndroidSVG (SVG-gjengivelse)</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended (håndtering av EXIF-metadata)</string>
+    <string name="license_material_icons_title">Material Design Icons (grensesnittikoner)</string>
+    <string name="checking_password">Kontrollerer passord…</string>
+    <string name="vault_same_password_title">Samme passord</string>
+    <string name="vault_same_password_message">Det nye passordet er likt det nåværende passordet for hvelvet. Velg et annet.</string>
+    <string name="brute_force_time_with_params">%1$.1f s (%2$d MiB / %3$d runder)</string>
+    <string name="measuring_device_kdf_speed">Måler standard KDF-hastighet på denne enheten…</string>
+    <string name="kdf_settings_updated_successfully">Motstand mot brute force oppdatert for det krypterte hvelvet</string>
+    <string name="appearance_automatic">Automatisk</string>
+    <string name="follow_system_theme">Følg systemtema</string>
+    <string name="follow_system_theme_summary">Bytter automatisk mellom lyst og mørkt tema</string>
+    <string name="theme_midnight_blue">Midnattsblå</string>
+    <string name="theme_warm_paper">Varmt papir</string>
+    <string name="theme_deep_forest">Dyp skog</string>
+    <string name="appearance_contrast_ok">God kontrast · Tekst %1$.1f:1 · Knapp %2$.1f:1</string>
+    <string name="appearance_backup_section">Sikkerhetskopi</string>
+    <string name="backup_saved_themes_to_storage">Sikkerhetskopier lagrede temaer til enhetslagring</string>
+    <string name="settings_group_general">Generelt</string>
+    <string name="settings_group_folders_and_loading">Mapper og lasting</string>
+    <string name="settings_group_security">Sikkerhet</string>
+    <string name="settings_group_vault_management">Hvelvadministrasjon</string>
+    <string name="settings_group_playback">Avspilling</string>
+    <string name="settings_group_gestures_and_tap">Bevegelser og trykk</string>
+    <string name="settings_group_display_and_motion">Visning og bevegelse</string>
+    <string name="settings_group_thumbnail_styles">Minibildestiler</string>
+    <string name="settings_group_general_behavior">Generell oppførsel</string>
+    <string name="settings_group_conflicts_and_crypto">Konflikter og krypteringsregler</string>
+    <string name="settings_group_cleanup">Opprydding</string>
+    <string name="settings_group_storage">Lagring</string>
+    <string name="settings_group_settings_and_favorites">Innstillinger og favoritter</string>
+    <string name="settings_group_vault_transfer">Overføring av kryptert hvelv</string>
+    <string name="settings_search_results">Søkeresultater</string>
+    <string name="settings_no_search_results">Fant ingen samsvarende innstillinger.</string>
 </resources>

@@ -127,7 +127,6 @@ import org.fossify.gallery.extensions.isEncryptedVaultAlbum
 import org.fossify.gallery.extensions.isPathHiddenOrEncrypted
 import org.fossify.gallery.extensions.isVirtualAlbum
 import org.fossify.gallery.extensions.isVirtualAlbumPath
-import org.fossify.gallery.extensions.launchAbout
 import org.fossify.gallery.extensions.launchCamera
 import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.mediaDB
@@ -968,7 +967,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 R.id.create_new_folder -> createNewFolder()
                 R.id.open_recycle_bin -> openRecycleBin()
                 R.id.settings -> launchSettings()
-                R.id.about -> launchAbout()
                 else -> return@setOnMenuItemClickListener false
             }
             return@setOnMenuItemClickListener true

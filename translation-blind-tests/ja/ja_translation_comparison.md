@@ -1040,3 +1040,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | 弱いパスワード |
 | `weak_password_warning_message` | このパスワードは弱いと判定されました。金庫の安全性のため、より長く複雑なパスワードを推奨します。それでも続けますか？ |
 | `weak_password_warning_continue` | それでも続ける |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | Japanese |
+|---|---|---|
+| `appearance_title` | Appearance | 外観 |
+| `search_settings` | Search settings | 設定を検索 |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink（ストリーミング AEAD および HKDF 暗号） |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle（Argon2id 鍵導出） |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder（アニメーション WebP デコード） |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide（JPEG XL 対応） |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG（SVG レンダリング） |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended（EXIF メタデータ処理） |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons（UI アイコン） |
+| `checking_password` | Checking password… | パスワードを確認中… |
+| `vault_same_password_title` | Same password | 同じパスワード |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | 新しいパスワードが現在の保管庫のパスワードと同じです。別のパスワードを指定してください。 |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f 秒（%2$d MiB / %3$d ラウンド） |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | この端末の標準 KDF 速度を測定しています… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | 暗号化された保管庫のブルートフォース耐性を更新しました |
+| `appearance_automatic` | Automatic | 自動 |
+| `follow_system_theme` | Follow system theme | システムのテーマに従う |
+| `follow_system_theme_summary` | Automatically switches between light and dark | ライトテーマとダークテーマを自動的に切り替えます |
+| `theme_midnight_blue` | Midnight Blue | ミッドナイトブルー |
+| `theme_warm_paper` | Warm Paper | ウォームペーパー |
+| `theme_deep_forest` | Deep Forest | ディープフォレスト |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | 良好なコントラスト · テキスト %1$.1f:1 · ボタン %2$.1f:1 |
+| `appearance_backup_section` | Backup | バックアップ |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | 保存済みテーマを端末ストレージにバックアップ |
+| `settings_group_general` | General | 全般 |
+| `settings_group_folders_and_loading` | Folders and loading | フォルダーと読み込み |
+| `settings_group_security` | Security | セキュリティ |
+| `settings_group_vault_management` | Vault management | 保管庫の管理 |
+| `settings_group_playback` | Playback | 再生 |
+| `settings_group_gestures_and_tap` | Gestures and tap | ジェスチャーとタップ |
+| `settings_group_display_and_motion` | Display and motion | 表示とモーション |
+| `settings_group_thumbnail_styles` | Thumbnail styles | サムネイルのスタイル |
+| `settings_group_general_behavior` | General behavior | 全般の動作 |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | 競合と暗号化のルール |
+| `settings_group_cleanup` | Cleanup | クリーンアップ |
+| `settings_group_storage` | Storage | ストレージ |
+| `settings_group_settings_and_favorites` | Settings and favorites | 設定とお気に入り |
+| `settings_group_vault_transfer` | Encrypted vault transfer | 暗号化された保管庫の移行 |
+| `settings_search_results` | Search results | 検索結果 |
+| `settings_no_search_results` | No matching settings found. | 一致する設定が見つかりません。 |

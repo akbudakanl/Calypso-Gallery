@@ -29,7 +29,7 @@
     <string name="theme_already_saved">This theme is already saved</string>
     <string name="custom_theme_name">Custom theme</string>
     <string name="no_saved_themes">No saved themes yet</string>
-    <string name="search_settings">Ayarlarda ara</string>
+    <string name="search_settings">Search settings</string>
     <string name="video_playback_settings">Video playback</string>
     <string name="thumbnails_and_scrolling_settings">Thumbnails &amp; scrolling</string>
     <string name="media_viewer_settings">Media viewer</string>

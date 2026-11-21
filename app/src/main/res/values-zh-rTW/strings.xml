@@ -689,4 +689,46 @@
     <string name="weak_password_warning_title">弱式密碼</string>
     <string name="weak_password_warning_message">這組密碼被判定為弱式。為了保險箱安全，建議使用更長且更複雜的密碼。仍要繼續嗎？</string>
     <string name="weak_password_warning_continue">仍要繼續</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">外觀</string>
+    <string name="search_settings">搜尋設定</string>
+    <string name="license_tink_title">Google Tink（串流 AEAD 與 HKDF 加密技術）</string>
+    <string name="license_bouncycastle_title">Bouncy Castle（Argon2id 金鑰衍生）</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder（動態 WebP 解碼）</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide（JPEG XL 支援）</string>
+    <string name="license_androidsvg_title">AndroidSVG（SVG 算繪）</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended（EXIF 中繼資料處理）</string>
+    <string name="license_material_icons_title">Material Design Icons（介面圖示）</string>
+    <string name="checking_password">正在檢查密碼…</string>
+    <string name="vault_same_password_title">密碼相同</string>
+    <string name="vault_same_password_message">新密碼與目前的保險箱密碼相同。請選擇其他密碼。</string>
+    <string name="brute_force_time_with_params">%1$.1f 秒（%2$d MiB / %3$d 回合）</string>
+    <string name="measuring_device_kdf_speed">正在測量此裝置的標準 KDF 速度…</string>
+    <string name="kdf_settings_updated_successfully">已為加密保險箱更新暴力破解防護強度</string>
+    <string name="appearance_automatic">自動</string>
+    <string name="follow_system_theme">跟隨系統主題</string>
+    <string name="follow_system_theme_summary">在淺色與深色主題之間自動切換</string>
+    <string name="theme_midnight_blue">午夜藍</string>
+    <string name="theme_warm_paper">暖色紙張</string>
+    <string name="theme_deep_forest">深邃森林</string>
+    <string name="appearance_contrast_ok">對比度良好 · 文字 %1$.1f:1 · 按鈕 %2$.1f:1</string>
+    <string name="appearance_backup_section">備份</string>
+    <string name="backup_saved_themes_to_storage">將已儲存的主題備份至裝置儲存空間</string>
+    <string name="settings_group_general">一般</string>
+    <string name="settings_group_folders_and_loading">資料夾與載入</string>
+    <string name="settings_group_security">安全性</string>
+    <string name="settings_group_vault_management">保險箱管理</string>
+    <string name="settings_group_playback">播放</string>
+    <string name="settings_group_gestures_and_tap">手勢與點按</string>
+    <string name="settings_group_display_and_motion">顯示與動態</string>
+    <string name="settings_group_thumbnail_styles">縮圖樣式</string>
+    <string name="settings_group_general_behavior">一般行為</string>
+    <string name="settings_group_conflicts_and_crypto">衝突與加密規則</string>
+    <string name="settings_group_cleanup">清理</string>
+    <string name="settings_group_storage">儲存空間</string>
+    <string name="settings_group_settings_and_favorites">設定與最愛</string>
+    <string name="settings_group_vault_transfer">加密保險箱傳輸</string>
+    <string name="settings_search_results">搜尋結果</string>
+    <string name="settings_no_search_results">找不到符合的設定。</string>
 </resources>

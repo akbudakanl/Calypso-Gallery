@@ -1048,3 +1048,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | 弱式密碼 |
 | `weak_password_warning_message` | 這組密碼被判定為弱式。為了保險箱安全，建議使用更長且更複雜的密碼。仍要繼續嗎？ |
 | `weak_password_warning_continue` | 仍要繼續 |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | Traditional Chinese (Taiwan) |
+|---|---|---|
+| `appearance_title` | Appearance | 外觀 |
+| `search_settings` | Search settings | 搜尋設定 |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink（串流 AEAD 與 HKDF 加密技術） |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle（Argon2id 金鑰衍生） |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder（動態 WebP 解碼） |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide（JPEG XL 支援） |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG（SVG 算繪） |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended（EXIF 中繼資料處理） |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons（介面圖示） |
+| `checking_password` | Checking password… | 正在檢查密碼… |
+| `vault_same_password_title` | Same password | 密碼相同 |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | 新密碼與目前的保險箱密碼相同。請選擇其他密碼。 |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f 秒（%2$d MiB / %3$d 回合） |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | 正在測量此裝置的標準 KDF 速度… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | 已為加密保險箱更新暴力破解防護強度 |
+| `appearance_automatic` | Automatic | 自動 |
+| `follow_system_theme` | Follow system theme | 跟隨系統主題 |
+| `follow_system_theme_summary` | Automatically switches between light and dark | 在淺色與深色主題之間自動切換 |
+| `theme_midnight_blue` | Midnight Blue | 午夜藍 |
+| `theme_warm_paper` | Warm Paper | 暖色紙張 |
+| `theme_deep_forest` | Deep Forest | 深邃森林 |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | 對比度良好 · 文字 %1$.1f:1 · 按鈕 %2$.1f:1 |
+| `appearance_backup_section` | Backup | 備份 |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | 將已儲存的主題備份至裝置儲存空間 |
+| `settings_group_general` | General | 一般 |
+| `settings_group_folders_and_loading` | Folders and loading | 資料夾與載入 |
+| `settings_group_security` | Security | 安全性 |
+| `settings_group_vault_management` | Vault management | 保險箱管理 |
+| `settings_group_playback` | Playback | 播放 |
+| `settings_group_gestures_and_tap` | Gestures and tap | 手勢與點按 |
+| `settings_group_display_and_motion` | Display and motion | 顯示與動態 |
+| `settings_group_thumbnail_styles` | Thumbnail styles | 縮圖樣式 |
+| `settings_group_general_behavior` | General behavior | 一般行為 |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | 衝突與加密規則 |
+| `settings_group_cleanup` | Cleanup | 清理 |
+| `settings_group_storage` | Storage | 儲存空間 |
+| `settings_group_settings_and_favorites` | Settings and favorites | 設定與最愛 |
+| `settings_group_vault_transfer` | Encrypted vault transfer | 加密保險箱傳輸 |
+| `settings_search_results` | Search results | 搜尋結果 |
+| `settings_no_search_results` | No matching settings found. | 找不到符合的設定。 |

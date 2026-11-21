@@ -32,208 +32,429 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingStart="@dimen/big_margin"
-            android:paddingTop="@dimen/activity_margin"
-            android:paddingEnd="@dimen/big_margin"
-            android:paddingBottom="@dimen/big_margin"
+            android:paddingStart="16dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="28dp"
             app:maxWidth="@dimen/settings_max_content_width">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_title"
+            <!-- Hero Card -->
+            <LinearLayout
+                android:id="@+id/about_hero_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/app_name"
-                android:textSize="24sp" />
+                android:orientation="vertical"
+                android:paddingStart="16dp"
+                android:paddingTop="18dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="16dp">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_version"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:textSize="14sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/big_margin"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/about_fork_description" />
+                    <FrameLayout
+                        android:id="@+id/about_emblem_bg"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_modification_notice"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/activity_margin"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/about_modification_notice" />
+                        <ImageView
+                            android:id="@+id/about_emblem_icon"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_calypso_logo_mark" />
+                    </FrameLayout>
 
-            <org.fossify.commons.views.MyTextView
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/about_title"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:text="@string/app_name"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/about_version"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/about_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:lineSpacingExtra="3dp"
+                    android:text="@string/about_fork_description"
+                    android:textSize="12.5sp" />
+
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/about_modification_notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="3dp"
+                    android:text="@string/about_modification_notice"
+                    android:textSize="12.5sp" />
+            </LinearLayout>
+
+            <!-- License -->
+            <TextView
                 android:id="@+id/about_license_heading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/big_margin"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/about_license_heading"
-                android:textSize="18sp" />
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/about_license_heading" />
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_copyright_notice"
+            <LinearLayout
+                android:id="@+id/about_license_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/about_copyright_notice" />
+                android:orientation="vertical">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_license_notice"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/small_margin"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/about_gpl_notice" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="15dp"
+                    android:paddingTop="13dp"
+                    android:paddingEnd="15dp"
+                    android:paddingBottom="13dp">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_gpl_license"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_read_gpl_license" />
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_copyright_notice"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="3dp"
+                        android:text="@string/about_copyright_notice"
+                        android:textSize="12.5sp" />
 
-            <org.fossify.commons.views.MyTextView
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_license_notice"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:lineSpacingExtra="3dp"
+                        android:text="@string/about_gpl_notice"
+                        android:textSize="12.5sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/about_gpl_license_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_gpl_license"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_read_gpl_license"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_gpl_license_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Source code -->
+            <TextView
                 android:id="@+id/about_source_heading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/big_margin"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/about_source_heading"
-                android:textSize="18sp" />
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/about_source_heading" />
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_source_notice"
+            <LinearLayout
+                android:id="@+id/about_source_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/tiny_margin"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/about_corresponding_source_notice" />
+                android:orientation="vertical">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_fork_source"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_fork_source" />
+                <org.fossify.commons.views.MyTextView
+                    android:id="@+id/about_source_notice"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:lineSpacingExtra="3dp"
+                    android:paddingStart="15dp"
+                    android:paddingTop="13dp"
+                    android:paddingEnd="15dp"
+                    android:paddingBottom="13dp"
+                    android:text="@string/about_corresponding_source_notice"
+                    android:textSize="12.5sp" />
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_release_sources"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_release_sources" />
+                <LinearLayout
+                    android:id="@+id/about_fork_source_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_fork_issues"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_fork_issues" />
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_fork_source"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_fork_source"
+                        android:textSize="14.5sp" />
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_upstream_source"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_upstream_source" />
+                    <ImageView
+                        android:id="@+id/about_fork_source_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_upstream_project"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_upstream_project" />
+                <LinearLayout
+                    android:id="@+id/about_release_sources_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
 
-            <org.fossify.commons.views.MyTextView
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_release_sources"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_release_sources"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_release_sources_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/about_fork_issues_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_fork_issues"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_fork_issues"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_fork_issues_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/about_upstream_source_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_upstream_source"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_upstream_source"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_upstream_source_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/about_upstream_project_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_upstream_project"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_upstream_project"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_upstream_project_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Help & Legal -->
+            <TextView
                 android:id="@+id/about_help_heading"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/big_margin"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/about_help_heading"
-                android:textSize="18sp" />
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="4dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/about_help_heading" />
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_faq"
+            <LinearLayout
+                android:id="@+id/about_help_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_faq" />
+                android:orientation="vertical">
 
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/about_third_party_licenses"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingTop="@dimen/small_margin"
-                android:paddingBottom="@dimen/small_margin"
-                android:text="@string/about_third_party_licenses" />
+                <LinearLayout
+                    android:id="@+id/about_faq_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_faq"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_faq"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_faq_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/about_third_party_licenses_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="54dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="12dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="12dp">
+
+                    <org.fossify.commons.views.MyTextView
+                        android:id="@+id/about_third_party_licenses"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/about_third_party_licenses"
+                        android:textSize="14.5sp" />
+
+                    <ImageView
+                        android:id="@+id/about_third_party_licenses_chevron"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_settings_chevron" />
+                </LinearLayout>
+            </LinearLayout>
 
         </org.fossify.gallery.views.MaxWidthLinearLayout>
-
     </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -692,4 +692,46 @@
     <string name="weak_password_warning_title">弱いパスワード</string>
     <string name="weak_password_warning_message">このパスワードは弱いと判定されました。金庫の安全性のため、より長く複雑なパスワードを推奨します。それでも続けますか？</string>
     <string name="weak_password_warning_continue">それでも続ける</string>
+
+    <!-- Minimalist Settings, Appearance Redesign & Recent Fork Strings -->
+    <string name="appearance_title">外観</string>
+    <string name="search_settings">設定を検索</string>
+    <string name="license_tink_title">Google Tink（ストリーミング AEAD および HKDF 暗号）</string>
+    <string name="license_bouncycastle_title">Bouncy Castle（Argon2id 鍵導出）</string>
+    <string name="license_webpdecoder_title">GlideWebpDecoder（アニメーション WebP デコード）</string>
+    <string name="license_jxl_coder_title">JXL Coder Glide（JPEG XL 対応）</string>
+    <string name="license_androidsvg_title">AndroidSVG（SVG レンダリング）</string>
+    <string name="license_exif_extended_title">Android-Exif-Extended（EXIF メタデータ処理）</string>
+    <string name="license_material_icons_title">Material Design Icons（UI アイコン）</string>
+    <string name="checking_password">パスワードを確認中…</string>
+    <string name="vault_same_password_title">同じパスワード</string>
+    <string name="vault_same_password_message">新しいパスワードが現在の保管庫のパスワードと同じです。別のパスワードを指定してください。</string>
+    <string name="brute_force_time_with_params">%1$.1f 秒（%2$d MiB / %3$d ラウンド）</string>
+    <string name="measuring_device_kdf_speed">この端末の標準 KDF 速度を測定しています…</string>
+    <string name="kdf_settings_updated_successfully">暗号化された保管庫のブルートフォース耐性を更新しました</string>
+    <string name="appearance_automatic">自動</string>
+    <string name="follow_system_theme">システムのテーマに従う</string>
+    <string name="follow_system_theme_summary">ライトテーマとダークテーマを自動的に切り替えます</string>
+    <string name="theme_midnight_blue">ミッドナイトブルー</string>
+    <string name="theme_warm_paper">ウォームペーパー</string>
+    <string name="theme_deep_forest">ディープフォレスト</string>
+    <string name="appearance_contrast_ok">良好なコントラスト · テキスト %1$.1f:1 · ボタン %2$.1f:1</string>
+    <string name="appearance_backup_section">バックアップ</string>
+    <string name="backup_saved_themes_to_storage">保存済みテーマを端末ストレージにバックアップ</string>
+    <string name="settings_group_general">全般</string>
+    <string name="settings_group_folders_and_loading">フォルダーと読み込み</string>
+    <string name="settings_group_security">セキュリティ</string>
+    <string name="settings_group_vault_management">保管庫の管理</string>
+    <string name="settings_group_playback">再生</string>
+    <string name="settings_group_gestures_and_tap">ジェスチャーとタップ</string>
+    <string name="settings_group_display_and_motion">表示とモーション</string>
+    <string name="settings_group_thumbnail_styles">サムネイルのスタイル</string>
+    <string name="settings_group_general_behavior">全般の動作</string>
+    <string name="settings_group_conflicts_and_crypto">競合と暗号化のルール</string>
+    <string name="settings_group_cleanup">クリーンアップ</string>
+    <string name="settings_group_storage">ストレージ</string>
+    <string name="settings_group_settings_and_favorites">設定とお気に入り</string>
+    <string name="settings_group_vault_transfer">暗号化された保管庫の移行</string>
+    <string name="settings_search_results">検索結果</string>
+    <string name="settings_no_search_results">一致する設定が見つかりません。</string>
 </resources>

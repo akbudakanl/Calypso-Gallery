@@ -999,3 +999,48 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `weak_password_warning_title` | Schwaches Passwort |
 | `weak_password_warning_message` | Dieses Passwort wird als schwach angesehen. Für die Sicherheit des Tresors wird ein längeres, komplexeres Passwort empfohlen. Möchten Sie dennoch fortfahren? |
 | `weak_password_warning_continue` | Trotzdem fortfahren |
+
+## Minimalist Settings, Appearance Redesign & Recent Fork Strings (this revision)
+
+| Key | English | German |
+|---|---|---|
+| `appearance_title` | Appearance | Erscheinungsbild |
+| `search_settings` | Search settings | Einstellungen durchsuchen |
+| `license_tink_title` | Google Tink (streaming AEAD and HKDF cryptography) | Google Tink (Streaming-AEAD- und HKDF-Kryptografie) |
+| `license_bouncycastle_title` | Bouncy Castle (Argon2id key derivation) | Bouncy Castle (Argon2id-Schlüsselableitung) |
+| `license_webpdecoder_title` | GlideWebpDecoder (animated WebP decoding) | GlideWebpDecoder (Dekodierung animierter WebP-Bilder) |
+| `license_jxl_coder_title` | JXL Coder Glide (JPEG XL support) | JXL Coder Glide (JPEG-XL-Unterstützung) |
+| `license_androidsvg_title` | AndroidSVG (SVG rendering) | AndroidSVG (SVG-Darstellung) |
+| `license_exif_extended_title` | Android-Exif-Extended (EXIF metadata handling) | Android-Exif-Extended (Verarbeitung von EXIF-Metadaten) |
+| `license_material_icons_title` | Material Design Icons (UI icons) | Material Design Icons (UI-Symbole) |
+| `checking_password` | Checking password… | Passwort wird überprüft… |
+| `vault_same_password_title` | Same password | Gleiches Passwort |
+| `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Das neue Passwort ist mit dem aktuellen Tresor-Passwort identisch. Bitte wählen Sie ein anderes. |
+| `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d Runden) |
+| `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Standard-KDF-Geschwindigkeit auf diesem Gerät wird gemessen… |
+| `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Brute-Force-Widerstand für den verschlüsselten Tresor aktualisiert |
+| `appearance_automatic` | Automatic | Automatisch |
+| `follow_system_theme` | Follow system theme | Systemdesign folgen |
+| `follow_system_theme_summary` | Automatically switches between light and dark | Wechselt automatisch zwischen hellem und dunklem Design |
+| `theme_midnight_blue` | Midnight Blue | Mitternachtsblau |
+| `theme_warm_paper` | Warm Paper | Warmes Papier |
+| `theme_deep_forest` | Deep Forest | Tiefer Wald |
+| `appearance_contrast_ok` | Good contrast · Text %1$.1f:1 · Button %2$.1f:1 | Guter Kontrast · Text %1$.1f:1 · Schaltfläche %2$.1f:1 |
+| `appearance_backup_section` | Backup | Sicherung |
+| `backup_saved_themes_to_storage` | Back up saved themes to device storage | Gespeicherte Designs im Gerätespeicher sichern |
+| `settings_group_general` | General | Allgemein |
+| `settings_group_folders_and_loading` | Folders and loading | Ordner und Laden |
+| `settings_group_security` | Security | Sicherheit |
+| `settings_group_vault_management` | Vault management | Tresorverwaltung |
+| `settings_group_playback` | Playback | Wiedergabe |
+| `settings_group_gestures_and_tap` | Gestures and tap | Gesten und Tippen |
+| `settings_group_display_and_motion` | Display and motion | Anzeige und Bewegung |
+| `settings_group_thumbnail_styles` | Thumbnail styles | Vorschaubild-Stile |
+| `settings_group_general_behavior` | General behavior | Allgemeines Verhalten |
+| `settings_group_conflicts_and_crypto` | Conflicts and encryption rules | Konflikt- und Verschlüsselungsregeln |
+| `settings_group_cleanup` | Cleanup | Bereinigung |
+| `settings_group_storage` | Storage | Speicher |
+| `settings_group_settings_and_favorites` | Settings and favorites | Einstellungen und Favoriten |
+| `settings_group_vault_transfer` | Encrypted vault transfer | Übertragung des verschlüsselten Tresors |
+| `settings_search_results` | Search results | Suchergebnisse |
+| `settings_no_search_results` | No matching settings found. | Keine passenden Einstellungen gefunden. |
