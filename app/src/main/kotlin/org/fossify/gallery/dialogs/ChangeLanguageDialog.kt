@@ -284,6 +284,7 @@ class ChangeLanguageDialog(
         }
 
         val builder = activity.getAlertDialogBuilder()
+            .setNegativeButton(org.fossify.commons.R.string.cancel, null)
 
         activity.setupDialogStuff(binding.root, builder, R.string.language) { alertDialog ->
             dialog = alertDialog

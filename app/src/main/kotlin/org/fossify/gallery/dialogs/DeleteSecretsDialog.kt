@@ -16,6 +16,7 @@ import org.fossify.gallery.helpers.AppearanceManager
 class DeleteSecretsDialog(
     private val activity: BaseSimpleActivity,
     private val messageText: String? = null,
+    private val titleId: Int = 0,
     private val onConfirmed: () -> Unit
 ) {
     private var dialog: AlertDialog? = null
@@ -94,7 +95,7 @@ class DeleteSecretsDialog(
                 countDownTimer?.cancel()
             }
 
-        activity.setupDialogStuff(binding.root, builder) { alertDialog ->
+        activity.setupDialogStuff(binding.root, builder, titleId = titleId) { alertDialog ->
             dialog = alertDialog
             binding.secretsConfirmCheckbox.setTextColor(
                 ColorStateList(
