@@ -137,6 +137,7 @@ import org.fossify.gallery.extensions.shareMediumPath
 import org.fossify.gallery.extensions.showFileOnMap
 import org.fossify.gallery.extensions.showSystemUI
 import org.fossify.gallery.extensions.toggleFileVisibility
+import org.fossify.gallery.extensions.tryAddFilesToVirtualAlbum
 import org.fossify.gallery.extensions.tryCopyMoveFilesTo
 import org.fossify.gallery.extensions.tryDecryptFilesTo
 import org.fossify.gallery.extensions.tryDeleteFileDirItem
@@ -440,6 +441,13 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 findItem(R.id.menu_move_to).isVisible =
                     visibleBottomActions and BOTTOM_ACTION_MOVE == 0 &&
                     CopyMovePolicy.canMoveFrom(mDirectory, isInRecycleBin, isVaultRecycleBin)
+                findItem(R.id.menu_add_to_virtual_album).isVisible =
+                    CopyMovePolicy.canAddToVirtualAlbum(
+                        directoryPath = mDirectory,
+                        isMixedEncryption = false,
+                        isInRecycleBin = isInRecycleBin,
+                        isVaultRecycleBin = isVaultRecycleBin
+                    )
                 findItem(R.id.menu_save_as).isVisible = rotationDegrees != 0
                 findItem(R.id.menu_print).isVisible = currentMedium.isImage() || currentMedium.isRaw()
                 findItem(R.id.menu_resize).isVisible = visibleBottomActions and BOTTOM_ACTION_RESIZE == 0 && currentMedium.isImage()
@@ -523,6 +531,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 R.id.menu_slideshow -> initSlideshow()
                 R.id.menu_copy_to -> checkMediaManagementAndCopy(true)
                 R.id.menu_move_to -> moveFileTo()
+                R.id.menu_add_to_virtual_album -> addCurrentToVirtualAlbum()
                 R.id.menu_open_with -> openPath(getCurrentPath(), true)
                 R.id.menu_hide -> toggleFileVisibility(true)
                 R.id.menu_unhide -> toggleFileVisibility(false)
@@ -1026,6 +1035,30 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             mAreSlideShowMediaVisible = true
             true
         }
+    }
+
+    private fun addCurrentToVirtualAlbum() {
+        val currentMedium = getCurrentMedium() ?: return
+        val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this, mDirectory) ||
+            CryptoManager.isVaultRecycleBinPath(currentMedium.path)
+        val isInRecycleBin = currentMedium.getIsInRecycleBin() || mDirectory == RECYCLE_BIN || isVaultRecycleBin
+        if (!CopyMovePolicy.canAddToVirtualAlbum(
+                directoryPath = mDirectory,
+                isMixedEncryption = false,
+                isInRecycleBin = isInRecycleBin,
+                isVaultRecycleBin = isVaultRecycleBin
+            )
+        ) {
+            return
+        }
+
+        val currPath = getCurrentPath()
+        if (currPath.startsWith(recycleBinPath)) {
+            return
+        }
+
+        val fileDirItems = arrayListOf(FileDirItem(currPath, currPath.getFilenameFromPath()))
+        tryAddFilesToVirtualAlbum(fileDirItems, currentDirectoryPath = mDirectory) {}
     }
 
     private fun moveFileTo() {

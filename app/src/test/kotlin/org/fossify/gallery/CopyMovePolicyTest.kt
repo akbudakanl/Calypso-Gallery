@@ -56,10 +56,10 @@ class CopyMovePolicyTest {
     }
 
     @Test
-    fun unencryptedCopyAllowsOnlyUnencryptedRealAndVirtualAlbums() {
+    fun unencryptedCopyAllowsOnlyUnencryptedRealAlbums() {
         assertTrue(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = false, isEncrypted = false))
-        assertTrue(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = true, isEncrypted = false))
 
+        assertFalse(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = true, isEncrypted = false))
         assertFalse(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = false, isEncrypted = true))
         assertFalse(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = true, isEncrypted = true))
         assertFalse(allowed(PickDirectoryMode.UNENCRYPTED_COPY, isVirtual = false, isEncrypted = false, isRecycleBin = true))
@@ -76,12 +76,26 @@ class CopyMovePolicyTest {
     }
 
     @Test
-    fun encryptedCopyAllowsOnlyEncryptedRealAndEncryptedVirtualAlbums() {
+    fun encryptedCopyAllowsOnlyEncryptedRealAlbums() {
         assertTrue(allowed(PickDirectoryMode.ENCRYPTED_COPY, isVirtual = false, isEncrypted = true))
-        assertTrue(allowed(PickDirectoryMode.ENCRYPTED_COPY, isVirtual = true, isEncrypted = true))
 
+        assertFalse(allowed(PickDirectoryMode.ENCRYPTED_COPY, isVirtual = true, isEncrypted = true))
         assertFalse(allowed(PickDirectoryMode.ENCRYPTED_COPY, isVirtual = false, isEncrypted = false))
         assertFalse(allowed(PickDirectoryMode.ENCRYPTED_COPY, isVirtual = true, isEncrypted = false))
+    }
+
+    @Test
+    fun addToVirtualAlbumAllowedExceptMixedEncryptionAndRecycleBin() {
+        assertTrue(CopyMovePolicy.canAddToVirtualAlbum(realAlbum))
+        assertTrue(CopyMovePolicy.canAddToVirtualAlbum(encryptedRealAlbum))
+        assertTrue(CopyMovePolicy.canAddToVirtualAlbum(virtualAlbum))
+        assertTrue(CopyMovePolicy.canAddToVirtualAlbum(FAVORITES))
+        assertTrue(CopyMovePolicy.canAddToVirtualAlbum(""))
+
+        assertFalse(CopyMovePolicy.canAddToVirtualAlbum(realAlbum, isMixedEncryption = true))
+        assertFalse(CopyMovePolicy.canAddToVirtualAlbum(RECYCLE_BIN))
+        assertFalse(CopyMovePolicy.canAddToVirtualAlbum(realAlbum, isInRecycleBin = true))
+        assertFalse(CopyMovePolicy.canAddToVirtualAlbum(encryptedRealAlbum, isVaultRecycleBin = true))
     }
 
     @Test

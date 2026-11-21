@@ -107,32 +107,18 @@ class AppearanceActivity : SimpleActivity() {
             val isCurrentlySystem = config.appearanceMode == Config.APPEARANCE_SYSTEM
             if (!isCurrentlySystem) {
                 confirmUnsavedChanges {
-                    config.lastManualAppearanceMode = config.appearanceMode
+                    val previousPalette = AppearanceManager.resolve(this, config)
                     config.appearanceMode = Config.APPEARANCE_SYSTEM
-                    applyAndRefresh()
+                    binding.appearanceFollowSystem.isChecked = true
+                    applyThemeChange(previousPalette)
                 }
             } else {
-                val restoredMode = resolveManualFallbackMode()
-                config.appearanceMode = restoredMode
-                applyAndRefresh()
+                val previousPalette = AppearanceManager.resolve(this, config)
+                config.appearanceMode = AppearanceManager.resolveSystemMatchedMode(isSystemInDarkMode())
+                binding.appearanceFollowSystem.isChecked = false
+                applyThemeChange(previousPalette)
             }
         }
-    }
-
-    private fun resolveManualFallbackMode(): Int {
-        val candidate = config.lastManualAppearanceMode
-        val validModes = setOf(
-            Config.APPEARANCE_LIGHT,
-            Config.APPEARANCE_DARK,
-            Config.APPEARANCE_NAVY,
-            Config.APPEARANCE_PAPER,
-            Config.APPEARANCE_FOREST,
-            Config.APPEARANCE_CUSTOM,
-        )
-        if (candidate in validModes) {
-            return candidate
-        }
-        return if (isSystemInDarkMode()) Config.APPEARANCE_DARK else Config.APPEARANCE_LIGHT
     }
 
     private fun setupThemeRows() {
@@ -146,7 +132,7 @@ class AppearanceActivity : SimpleActivity() {
         )
         for ((row, mode) in rows) {
             row.setOnClickListener {
-                if (isRefreshing) return@setOnClickListener
+                if (isRefreshing || config.appearanceMode == Config.APPEARANCE_SYSTEM) return@setOnClickListener
                 if (mode != Config.APPEARANCE_CUSTOM && hasUnsavedChanges()) {
                     confirmUnsavedChanges {
                         selectManualTheme(mode)
@@ -159,12 +145,14 @@ class AppearanceActivity : SimpleActivity() {
     }
 
     private fun selectManualTheme(mode: Int) {
+        if (config.appearanceMode == Config.APPEARANCE_SYSTEM) return
+        val previousPalette = AppearanceManager.resolve(this, config)
         if (mode == Config.APPEARANCE_CUSTOM && config.appearanceMode != Config.APPEARANCE_CUSTOM) {
             seedCustomColorsFromActivePalette()
         }
         config.lastManualAppearanceMode = mode
         config.appearanceMode = mode
-        applyAndRefresh()
+        applyThemeChange(previousPalette)
     }
 
     private fun setupCustomColorRows() {
@@ -251,7 +239,10 @@ class AppearanceActivity : SimpleActivity() {
             val (entryPalette, radioAndMode) = paletteAndRadio
             val (radioView, entryMode) = radioAndMode
             val selected = !isSystem && mode == entryMode
-            row.alpha = if (isSystem) 0.65f else 1f
+            row.isEnabled = !isSystem
+            row.isClickable = !isSystem
+            row.isFocusable = !isSystem
+            row.alpha = if (isSystem) 0.45f else 1f
             swatches.first.background = SettingsCardUi.createSwatchDrawable(this, entryPalette.background, palette.border, 5f)
             swatches.second.background = SettingsCardUi.createSwatchDrawable(this, entryPalette.primary, palette.border, 5f)
             radioView.background = SettingsCardUi.createRadioCircleDrawable(this, selected, palette)
@@ -326,6 +317,15 @@ class AppearanceActivity : SimpleActivity() {
         recreate()
     }
 
+    private fun applyThemeChange(previousPalette: AppearancePalette) {
+        val newPalette = AppearanceManager.apply(this, config)
+        if (newPalette == previousPalette) {
+            refreshUi()
+        } else {
+            recreate()
+        }
+    }
+
     private fun pickCustomColor(initialColor: Int, save: (Int) -> Unit) {
         ColorPickerDialog(
             this,
@@ -335,13 +335,15 @@ class AppearanceActivity : SimpleActivity() {
             { },
             { positive, color ->
                 if (positive) {
+                    val previousPalette = AppearanceManager.resolve(this, config)
                     if (config.appearanceMode != Config.APPEARANCE_CUSTOM) {
                         seedCustomColorsFromActivePalette()
                     }
                     config.lastManualAppearanceMode = Config.APPEARANCE_CUSTOM
                     config.appearanceMode = Config.APPEARANCE_CUSTOM
                     save(color)
-                    applyAndRefresh()
+                    config.customAccentColor = 0
+                    applyThemeChange(previousPalette)
                 }
             },
         )
@@ -432,13 +434,15 @@ class AppearanceActivity : SimpleActivity() {
     }
 
     private fun applySavedTheme(theme: SavedTheme) {
+        val previousPalette = AppearanceManager.resolve(this, config)
         config.lastManualAppearanceMode = Config.APPEARANCE_CUSTOM
         config.appearanceMode = Config.APPEARANCE_CUSTOM
         config.customTextColor = theme.textColor
         config.customBackgroundColor = theme.backgroundColor
         config.customPrimaryColor = theme.primaryColor
+        config.customAccentColor = 0
         config.customAppIconColor = theme.appIconColor
-        applyAndRefresh()
+        applyThemeChange(previousPalette)
     }
 
     private fun buildThemedDialogListView(items: List<String>, onItemClick: (Int) -> Unit): ListView {

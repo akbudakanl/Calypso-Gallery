@@ -9,8 +9,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.FilePickerDialog
-import org.fossify.commons.dialogs.RadioGroupDialog
-import org.fossify.commons.models.RadioItem
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beInvisible
 import org.fossify.commons.extensions.beVisibleIf
@@ -101,7 +99,7 @@ class PickDirectoryDialog(
         if (showOtherFolderButton) {
             // The neutral button has to stay short enough, otherwise the dialog stacks its
             // buttons vertically instead of showing them in a single row.
-            val neutralTextRes = if (effectiveMode == PickDirectoryMode.ENCRYPTED_MOVE) {
+            val neutralTextRes = if (CopyMovePolicy.isEncryptedTargetMode(effectiveMode)) {
                 R.string.new_album
             } else {
                 R.string.other_folder
@@ -244,15 +242,10 @@ class PickDirectoryDialog(
 
     private fun fetchDirectories(forceShowHiddenAndExcluded: Boolean) {
         val isEncryptedMode = CopyMovePolicy.isEncryptedTargetMode(effectiveMode)
-        val includeVirtual = when (effectiveMode) {
-            PickDirectoryMode.UNENCRYPTED_COPY, PickDirectoryMode.ENCRYPTED_COPY -> true
-            PickDirectoryMode.DEFAULT -> isPickingCopyMoveDestination && isCopyOperation
-            else -> false
-        }
         activity.getCachedDirectories(
             forceShowHidden = forceShowHiddenAndExcluded || isEncryptedMode,
             forceShowExcluded = forceShowHiddenAndExcluded,
-            includeVirtualAlbums = includeVirtual,
+            includeVirtualAlbums = false,
             isSecretVaultView = isEncryptedMode
         ) {
             val allDirs = ArrayList(it)
@@ -369,36 +362,7 @@ class PickDirectoryDialog(
     private fun showOtherFolder() {
         activity.hideKeyboard(searchEditText)
         when (effectiveMode) {
-            PickDirectoryMode.ENCRYPTED_COPY -> {
-                ensureBackgroundThread {
-                    val effectiveSource = activity.resolveEffectiveSourcePhysicalPath(sourcePath)
-                    activity.runOnUiThread {
-                        val items = arrayListOf(
-                            RadioItem(1, activity.getString(R.string.create_new_encrypted_virtual_album)),
-                            RadioItem(2, activity.getString(R.string.create_new_hidden_album))
-                        )
-                        RadioGroupDialog(activity, items) { selected ->
-                            if (selected == 1) {
-                                dialog?.dismiss()
-                                CreateVirtualAlbumDialog(
-                                    activity = activity,
-                                    isHidden = true,
-                                    parentPhysicalPath = effectiveSource
-                                ) { albumId ->
-                                    callback(getVirtualAlbumPath(albumId))
-                                }
-                            } else {
-                                dialog?.dismiss()
-                                CreateEncryptedAlbumDialog(activity) { targetFolder, _ ->
-                                    callback(targetFolder.absolutePath)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            PickDirectoryMode.ENCRYPTED_MOVE -> {
+            PickDirectoryMode.ENCRYPTED_COPY, PickDirectoryMode.ENCRYPTED_MOVE -> {
                 dialog?.dismiss()
                 CreateEncryptedAlbumDialog(activity) { targetFolder, _ ->
                     callback(targetFolder.absolutePath)
@@ -409,24 +373,7 @@ class PickDirectoryDialog(
                 ensureBackgroundThread {
                     val effectiveSource = activity.resolveEffectiveSourcePhysicalPath(sourcePath)
                     activity.runOnUiThread {
-                        val items = arrayListOf(
-                            RadioItem(1, activity.getString(R.string.create_virtual_album)),
-                            RadioItem(2, activity.getString(R.string.search_in_storage))
-                        )
-                        RadioGroupDialog(activity, items) { selected ->
-                            if (selected == 1) {
-                                dialog?.dismiss()
-                                CreateVirtualAlbumDialog(
-                                    activity = activity,
-                                    isHidden = false,
-                                    parentPhysicalPath = effectiveSource
-                                ) { albumId ->
-                                    callback(getVirtualAlbumPath(albumId))
-                                }
-                            } else {
-                                openPhysicalFolderPicker(effectiveSource)
-                            }
-                        }
+                        openPhysicalFolderPicker(effectiveSource)
                     }
                 }
             }
@@ -497,15 +444,9 @@ class PickDirectoryDialog(
                     return@filter false
                 }
 
-                if (isPickingCopyMoveDestination && isCopyMode) {
-                    if (dir.isVirtualAlbum()) {
-                        // A virtual album may hold items from any number of folders, so it is
-                        // offered as a destination regardless of where the source files live.
-                        return@filter dir.path != sourcePath
-                    } else if (sourcePath.isVirtualAlbumPath()) {
-                        if (effectiveSource.isNotEmpty() && dir.path.trimEnd('/').equals(effectiveSource.trimEnd('/'), ignoreCase = true)) {
-                            return@filter false
-                        }
+                if (isPickingCopyMoveDestination && isCopyMode && sourcePath.isVirtualAlbumPath()) {
+                    if (effectiveSource.isNotEmpty() && dir.path.trimEnd('/').equals(effectiveSource.trimEnd('/'), ignoreCase = true)) {
+                        return@filter false
                     }
                 }
 
@@ -529,16 +470,7 @@ class PickDirectoryDialog(
                         return@DirectoryAdapter
                     }
                     if (clickedDir.isVirtualAlbum()) {
-                        if (!isCopyMode) {
-                            activity.toast(R.string.virtual_album_cannot_be_modified)
-                            return@DirectoryAdapter
-                        }
-                        if (isPickingCopyMoveDestination && path.trimEnd('/') == sourcePath.trimEnd('/')) {
-                            activity.toast(org.fossify.commons.R.string.source_and_destination_same)
-                            return@DirectoryAdapter
-                        }
-                        callback(path)
-                        dialog?.dismiss()
+                        activity.toast(R.string.virtual_album_cannot_be_modified)
                         return@DirectoryAdapter
                     }
 

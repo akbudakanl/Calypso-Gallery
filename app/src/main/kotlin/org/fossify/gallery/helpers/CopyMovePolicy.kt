@@ -13,7 +13,7 @@ enum class PickDirectoryMode {
 }
 
 /**
- * Centralizes visibility and destination filtering rules for Copy to, Move to, Encrypt, and Decrypt.
+ * Centralizes visibility and destination filtering rules for Copy to, Move to, Add to virtual album, Encrypt, and Decrypt.
  */
 object CopyMovePolicy {
     fun isVirtualOrFavoritesPath(directoryPath: String): Boolean {
@@ -41,6 +41,18 @@ object CopyMovePolicy {
             isInRecycleBin = isInRecycleBin,
             isVaultRecycleBin = isVaultRecycleBin
         )
+    }
+
+    fun canAddToVirtualAlbum(
+        directoryPath: String,
+        isMixedEncryption: Boolean = false,
+        isInRecycleBin: Boolean = false,
+        isVaultRecycleBin: Boolean = false
+    ): Boolean {
+        return !isMixedEncryption &&
+            directoryPath != RECYCLE_BIN &&
+            !isInRecycleBin &&
+            !isVaultRecycleBin
     }
 
     fun canEncryptFrom(
@@ -101,9 +113,9 @@ object CopyMovePolicy {
 
         return when (mode) {
             PickDirectoryMode.DEFAULT -> true
-            PickDirectoryMode.UNENCRYPTED_COPY -> !isEncryptedAlbum
+            PickDirectoryMode.UNENCRYPTED_COPY -> !isEncryptedAlbum && !isVirtualAlbum
             PickDirectoryMode.UNENCRYPTED_MOVE -> !isEncryptedAlbum && !isVirtualAlbum
-            PickDirectoryMode.ENCRYPTED_COPY -> isEncryptedAlbum
+            PickDirectoryMode.ENCRYPTED_COPY -> isEncryptedAlbum && !isVirtualAlbum
             PickDirectoryMode.ENCRYPTED_MOVE -> isEncryptedAlbum && !isVirtualAlbum
             PickDirectoryMode.DECRYPT_MOVE -> !isEncryptedAlbum && !isVirtualAlbum
         }

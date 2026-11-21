@@ -113,6 +113,7 @@ import org.fossify.gallery.extensions.removeNoMedia
 import org.fossify.gallery.extensions.rescanFolderMedia
 import org.fossify.gallery.extensions.resolveCryptoTransferConflicts
 import org.fossify.gallery.extensions.showRecycleBinEmptyingDialog
+import org.fossify.gallery.extensions.tryAddFilesToVirtualAlbum
 import org.fossify.gallery.extensions.tryCopyMoveFilesTo
 import org.fossify.gallery.extensions.isHiddenVirtualAlbumPath
 import org.fossify.gallery.extensions.tryDecryptFolders
@@ -303,6 +304,7 @@ class DirectoryAdapter(
             findItem(R.id.cab_create_shortcut).isVisible = isOneItemSelected
             findItem(R.id.cab_copy_to).isVisible = canCopyMove
             findItem(R.id.cab_move_to).isVisible = canCopyMove
+            findItem(R.id.cab_add_to_virtual_album).isVisible = canCopyMove
 
             checkHideBtnVisibility(this, selectedPaths)
             checkPinBtnVisibility(this, selectedPaths)
@@ -318,6 +320,7 @@ class DirectoryAdapter(
                 findItem(R.id.cab_unhide_folder).isVisible = false
                 findItem(R.id.cab_copy_to).isVisible = false
                 findItem(R.id.cab_move_to).isVisible = false
+                findItem(R.id.cab_add_to_virtual_album).isVisible = false
                 findItem(R.id.cab_create_shortcut).isVisible = false
                 findItem(R.id.cab_properties).isVisible = false
             }
@@ -327,6 +330,7 @@ class DirectoryAdapter(
                 findItem(R.id.cab_unhide).isVisible = false
                 findItem(R.id.cab_copy_to).isVisible = false
                 findItem(R.id.cab_move_to).isVisible = false
+                findItem(R.id.cab_add_to_virtual_album).isVisible = false
                 findItem(R.id.cab_exclude).isVisible = false
                 findItem(R.id.cab_unexclude).isVisible = false
                 findItem(R.id.cab_hide_folder).isVisible = false
@@ -373,6 +377,7 @@ class DirectoryAdapter(
             R.id.cab_unlock -> unlockFolder()
             R.id.cab_copy_to -> copyFilesTo()
             R.id.cab_move_to -> moveFilesTo()
+            R.id.cab_add_to_virtual_album -> addFoldersToVirtualAlbum()
             R.id.cab_select_all -> selectAll()
             R.id.cab_create_shortcut -> tryCreateShortcut()
             R.id.cab_delete -> askConfirmDelete()
@@ -1203,7 +1208,23 @@ class DirectoryAdapter(
         }
     }
 
-    private fun copyMoveTo(selectedPaths: Collection<String>, isCopyOperation: Boolean) {
+    private fun addFoldersToVirtualAlbum() {
+        handleLockedFolderOpeningForFolders(getSelectedPaths()) { selectedPaths ->
+            val validPaths = filterValidRealFolders(selectedPaths) ?: return@handleLockedFolderOpeningForFolders
+            val fileDirItems = collectMediaItemsFromFolders(validPaths)
+            if (fileDirItems.isEmpty()) {
+                activity.toast(org.fossify.commons.R.string.no_items_found)
+                return@handleLockedFolderOpeningForFolders
+            }
+            val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
+            activity.tryAddFilesToVirtualAlbum(fileDirItems, currentDirectoryPath = sourceDirectoryPath) {
+                listener?.refreshPaths(validPaths)
+                finishActMode()
+            }
+        }
+    }
+
+    private fun filterValidRealFolders(selectedPaths: Collection<String>): List<String>? {
         val validPaths = selectedPaths.filter {
             !it.isVirtualAlbumPath() &&
                 it != FAVORITES &&
@@ -1211,32 +1232,39 @@ class DirectoryAdapter(
                 !CryptoManager.isVaultRecycleBinPath(activity, it)
         }
         if (validPaths.isEmpty()) {
-            return
+            return null
         }
         val hasEncrypted = validPaths.any { CryptoManager.isEncryptedFolderPath(activity, it) }
         val hasUnencrypted = validPaths.any { !CryptoManager.isEncryptedFolderPath(activity, it) }
         if (hasEncrypted && hasUnencrypted) {
             activity.toast(R.string.cannot_mix_encrypted_and_unencrypted)
-            return
+            return null
         }
+        return validPaths
+    }
 
+    private fun collectMediaItemsFromFolders(validPaths: List<String>): ArrayList<FileDirItem> {
         val paths = ArrayList<String>()
         val showHidden = config.shouldShowHidden || config.temporarilyShowHiddenFolders
-        validPaths.forEach {
-            val filter = config.filterMedia
-            File(it).listFiles()?.filter {
-                !File(it.absolutePath).isDirectory &&
-                    (CryptoManager.isEncryptedFile(it.name) ||
-                        (it.absolutePath.isMediaFile() && (showHidden || !it.name.startsWith('.')) &&
-                            ((it.isImageFast() && filter and TYPE_IMAGES != 0) ||
-                                (it.isVideoFast() && filter and TYPE_VIDEOS != 0) ||
-                                (it.isGif() && filter and TYPE_GIFS != 0) ||
-                                (it.isRawFast() && filter and TYPE_RAWS != 0) ||
-                                (it.isSvg() && filter and TYPE_SVGS != 0))))
+        val filter = config.filterMedia
+        validPaths.forEach { folderPath ->
+            File(folderPath).listFiles()?.filter { file ->
+                !file.isDirectory &&
+                    (CryptoManager.isEncryptedFile(file.name) ||
+                        (file.absolutePath.isMediaFile() && (showHidden || !file.name.startsWith('.')) &&
+                            ((file.isImageFast() && filter and TYPE_IMAGES != 0) ||
+                                (file.isVideoFast() && filter and TYPE_VIDEOS != 0) ||
+                                (file.isGif() && filter and TYPE_GIFS != 0) ||
+                                (file.isRawFast() && filter and TYPE_RAWS != 0) ||
+                                (file.isSvg() && filter and TYPE_SVGS != 0))))
             }?.mapTo(paths) { it.absolutePath }
         }
+        return paths.mapTo(ArrayList(paths.size)) { FileDirItem(it, it.getFilenameFromPath()) }
+    }
 
-        val fileDirItems = paths.map { FileDirItem(it, it.getFilenameFromPath()) } as ArrayList<FileDirItem>
+    private fun copyMoveTo(selectedPaths: Collection<String>, isCopyOperation: Boolean) {
+        val validPaths = filterValidRealFolders(selectedPaths) ?: return
+        val fileDirItems = collectMediaItemsFromFolders(validPaths)
         val selectedFolderDirs = validPaths.map { File(it) }
         val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
         activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = sourceDirectoryPath) { destinationPath ->

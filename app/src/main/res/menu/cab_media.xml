@@ -68,6 +68,11 @@
         android:title="@string/move_to"
         app:showAsAction="never" />
     <item
+        android:id="@+id/cab_add_to_virtual_album"
+        android:showAsAction="never"
+        android:title="@string/add_to_virtual_album"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/cab_create_shortcut"
         android:showAsAction="never"
         android:title="@string/create_shortcut"

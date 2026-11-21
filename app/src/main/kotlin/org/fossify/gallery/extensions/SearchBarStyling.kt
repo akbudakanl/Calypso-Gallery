@@ -2,7 +2,6 @@ package org.fossify.gallery.extensions
 
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.View
 import android.widget.EditText
@@ -12,20 +11,14 @@ import com.google.android.material.appbar.AppBarLayout
 import org.fossify.commons.views.MySearchMenu
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.AppearanceManager
-import org.fossify.gallery.helpers.AppearancePalette
-
-private val DARK_SEARCH_BAR_FILL = Color.parseColor("#18181B")
-private val DARK_SEARCH_BAR_BORDER = Color.parseColor("#27272A")
 
 /**
  * Shared Calypso search bar fill color across Main, Media, Search, Directory Picker, and Settings:
- * exact #18181B neutral gray in dark mode (matching 01-gallery) and [AppearancePalette.surface] in light mode.
+ * uses [AppearancePalette.surface] so every theme (Dark, Light, Midnight Blue, Warm Paper, Deep
+ * Forest, Custom) renders a matching elevated search container.
  */
 fun resolveCalypsoSearchBarFillColor(context: Context): Int {
-    val palette = AppearanceManager.resolve(context, context.config)
-    val isDark = AppearancePalette.contrastRatio(palette.background, Color.WHITE) >
-        AppearancePalette.contrastRatio(palette.background, Color.BLACK)
-    return if (isDark) DARK_SEARCH_BAR_FILL else palette.surface
+    return AppearanceManager.resolve(context, context.config).surface
 }
 
 /**
@@ -41,15 +34,14 @@ fun resolveCalypsoSearchIconColor(context: Context, isSearchOpen: Boolean = true
 
 /**
  * Applies Calypso Gallery's refined pill search bar styling:
- * seamless [AppearancePalette.background] behind the bar, exact #18181B dark fill (or light surface)
- * with a crisp 1dp border, and subtle secondary tint on the magnifying glass and hint text.
+ * seamless [AppearancePalette.background] behind the bar, [AppearancePalette.surface] fill with a
+ * crisp 1dp [AppearancePalette.border] stroke, and subtle secondary tint on the magnifying glass
+ * and hint text.
  */
 fun MySearchMenu.applyCalypsoSearchBarStyle() {
     val palette = AppearanceManager.resolve(context, context.config)
-    val isDark = AppearancePalette.contrastRatio(palette.background, Color.WHITE) >
-        AppearancePalette.contrastRatio(palette.background, Color.BLACK)
-    val fillColor = if (isDark) DARK_SEARCH_BAR_FILL else palette.surface
-    val borderColor = if (isDark) DARK_SEARCH_BAR_BORDER else palette.border
+    val fillColor = palette.surface
+    val borderColor = palette.border
     val density = context.resources.displayMetrics.density
     val strokeWidth = (1f * density).toInt().coerceAtLeast(1)
 

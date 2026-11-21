@@ -3,19 +3,18 @@ package org.fossify.gallery.helpers
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Color
-import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAppIconColors
 import org.fossify.commons.helpers.appIconColorStrings
 import org.fossify.commons.extensions.isSystemInDarkMode
 import org.fossify.gallery.extensions.config
 
 /**
- * The two brand palettes plus the derivation rules used by the Custom mode.
+ * Brand palettes plus the derivation rules used by Custom mode.
  *
- * `onPrimary` / `onSecondary` are explicit on-color roles: the Dark primary is a light
- * indigo, so white text on it would only have ~2:1 contrast. Surface and Border are
- * derived in Custom mode so a user-picked background never leaves a mismatched card.
+ * `onPrimary` / `onSecondary` are explicit on-color roles so bright primaries (such as Dark,
+ * Midnight Blue, or Deep Forest) get dark foregrounds instead of unreadable white text. Preset
+ * surfaces, borders, and secondary detail hues are hand-tuned per theme family so cards, dividers,
+ * subtitles, and icons harmonize with their palette.
  */
 data class AppearancePalette(
     val text: Int,
@@ -29,6 +28,9 @@ data class AppearancePalette(
     val onSecondary: Int,
 ) {
     companion object {
+        private const val PURE_WHITE = 0xFFFFFFFF.toInt()
+        private const val PURE_BLACK = 0xFF000000.toInt()
+
         const val LIGHT_TEXT = 0xFF18181B.toInt()
         const val LIGHT_BACKGROUND = 0xFFFAFAFA.toInt()
         const val LIGHT_PRIMARY = 0xFF27272A.toInt()
@@ -53,74 +55,93 @@ data class AppearancePalette(
             text = LIGHT_TEXT,
             background = LIGHT_BACKGROUND,
             primary = LIGHT_PRIMARY,
-            secondary = Color.parseColor("#52525B"),
+            secondary = 0xFF52525B.toInt(),
             // Minimalist dark launcher icon matches the neutral Calypso Gallery identity.
-            appIcon = Color.parseColor("#09090B"),
-            surface = Color.parseColor("#FFFFFF"),
-            border = Color.parseColor("#E4E4E7"),
-            onPrimary = Color.WHITE,
-            onSecondary = Color.WHITE,
+            appIcon = 0xFF09090B.toInt(),
+            surface = PURE_WHITE,
+            border = 0xFFE4E4E7.toInt(),
+            onPrimary = PURE_WHITE,
+            onSecondary = PURE_WHITE,
         )
 
         val DARK = AppearancePalette(
             text = DARK_TEXT,
             background = DARK_BACKGROUND,
             primary = DARK_PRIMARY,
-            secondary = Color.parseColor("#A1A1AA"),
-            appIcon = Color.BLACK,
-            surface = Color.parseColor("#18181B"),
-            border = Color.parseColor("#27272A"),
-            onPrimary = Color.BLACK,
-            onSecondary = Color.BLACK,
+            secondary = 0xFFA1A1AA.toInt(),
+            appIcon = PURE_BLACK,
+            surface = 0xFF18181B.toInt(),
+            border = 0xFF27272A.toInt(),
+            onPrimary = PURE_BLACK,
+            onSecondary = PURE_BLACK,
         )
 
-        val NAVY = fromCustom(
+        val NAVY = AppearancePalette(
             text = NAVY_TEXT,
             background = NAVY_BACKGROUND,
             primary = NAVY_PRIMARY,
-            secondary = 0,
+            secondary = 0xFF8BA7CC.toInt(),
             appIcon = DARK.appIcon,
+            surface = 0xFF131D31.toInt(),
+            border = 0xFF243451.toInt(),
+            onPrimary = PURE_BLACK,
+            onSecondary = PURE_BLACK,
         )
 
-        val PAPER = fromCustom(
+        val PAPER = AppearancePalette(
             text = PAPER_TEXT,
             background = PAPER_BACKGROUND,
             primary = PAPER_PRIMARY,
-            secondary = 0,
+            secondary = 0xFF6E5B4B.toInt(),
             appIcon = LIGHT.appIcon,
+            surface = 0xFFFAF7F2.toInt(),
+            border = 0xFFDDD5C9.toInt(),
+            onPrimary = PURE_WHITE,
+            onSecondary = PURE_WHITE,
         )
 
-        val FOREST = fromCustom(
+        val FOREST = AppearancePalette(
             text = FOREST_TEXT,
             background = FOREST_BACKGROUND,
             primary = FOREST_PRIMARY,
-            secondary = 0,
+            secondary = 0xFF86B5A1.toInt(),
             appIcon = DARK.appIcon,
+            surface = 0xFF13241E.toInt(),
+            border = 0xFF243D34.toInt(),
+            onPrimary = PURE_BLACK,
+            onSecondary = PURE_BLACK,
         )
 
         fun isLightBackground(color: Int): Boolean = isLight(color)
 
         /** Build a coherent palette from the four user-editable Custom colors. */
         fun fromCustom(text: Int, background: Int, primary: Int, secondary: Int, appIcon: Int): AppearancePalette {
-            // Seeding Custom from a built-in mode copies the preset's final colors into the raw
+            // Seeding Custom from a built-in mode copies the preset's primary colors into the raw
             // custom fields. Deriving surface/border/secondary from those values would NOT reproduce
-            // the hand-tuned preset (dark mode got a low-contrast button because of this), so return
-            // the preset verbatim. Any real edit falls through to the derived palette below and is
-            // then correctly reported as an unsaved change.
-            if (secondary == 0 || secondary == LIGHT.secondary) {
-                if (text == LIGHT.text && background == LIGHT.background && primary == LIGHT.primary) return LIGHT
-            }
-            if (secondary == 0 || secondary == DARK.secondary) {
-                if (text == DARK.text && background == DARK.background && primary == DARK.primary) return DARK
+            // the hand-tuned preset, so return the matching preset verbatim. Any real edit falls
+            // through to the derived palette below and is reported as an unsaved change.
+            val builtInPresets = listOf(LIGHT, DARK, NAVY, PAPER, FOREST)
+            for (preset in builtInPresets) {
+                if ((secondary == 0 || secondary == preset.secondary) &&
+                    text == preset.text &&
+                    background == preset.background &&
+                    primary == preset.primary
+                ) {
+                    return preset
+                }
             }
 
             val surface = if (isLight(background)) {
-                ColorUtils.blendARGB(background, Color.WHITE, 0.55f)
+                blendArgb(background, PURE_WHITE, 0.55f)
             } else {
-                ColorUtils.blendARGB(background, Color.WHITE, 0.08f)
+                blendArgb(background, PURE_WHITE, 0.08f)
             }
-            val border = ColorUtils.blendARGB(surface, text, 0.16f)
-            val effectiveSecondary = if (secondary != 0) secondary else shiftHue(primary, 35f)
+            val border = blendArgb(surface, text, 0.16f)
+            val effectiveSecondary = if (secondary != 0) {
+                secondary
+            } else {
+                deriveSecondary(text, background, primary)
+            }
             return AppearancePalette(
                 text = text,
                 background = background,
@@ -148,35 +169,51 @@ data class AppearancePalette(
                 val c = value / 255.0
                 if (c <= 0.03928) c / 12.92 else Math.pow((c + 0.055) / 1.055, 2.4)
             }
-            return 0.2126 * channelLuminance(Color.red(color)) +
-                0.7152 * channelLuminance(Color.green(color)) +
-                0.0722 * channelLuminance(Color.blue(color))
+            val red = (color ushr 16) and 0xFF
+            val green = (color ushr 8) and 0xFF
+            val blue = color and 0xFF
+            return 0.2126 * channelLuminance(red) +
+                0.7152 * channelLuminance(green) +
+                0.0722 * channelLuminance(blue)
         }
 
         private fun isLight(color: Int): Boolean =
-            contrastRatio(color, Color.WHITE) < contrastRatio(color, Color.BLACK)
+            contrastRatio(color, PURE_WHITE) < contrastRatio(color, PURE_BLACK)
 
         private fun contrastText(background: Int): Int = if (
-            contrastRatio(Color.WHITE, background) >= contrastRatio(Color.BLACK, background)
+            contrastRatio(PURE_WHITE, background) >= contrastRatio(PURE_BLACK, background)
         ) {
-            Color.WHITE
+            PURE_WHITE
         } else {
-            Color.BLACK
+            PURE_BLACK
         }
 
-        private fun shiftHue(color: Int, degrees: Float): Int {
-            val hsv = FloatArray(3)
-            Color.colorToHSV(color, hsv)
-            hsv[0] = (hsv[0] + degrees) % 360f
-            return Color.HSVToColor(hsv)
+        private fun deriveSecondary(text: Int, background: Int, primary: Int): Int {
+            val mutedText = blendArgb(text, background, 0.34f)
+            return blendArgb(mutedText, primary, 0.25f)
+        }
+
+        private fun blendArgb(from: Int, to: Int, ratio: Float): Int {
+            val inverse = 1f - ratio
+            val a = (((from ushr 24) and 0xFF) * inverse + ((to ushr 24) and 0xFF) * ratio).toInt()
+            val r = (((from ushr 16) and 0xFF) * inverse + ((to ushr 16) and 0xFF) * ratio).toInt()
+            val g = (((from ushr 8) and 0xFF) * inverse + ((to ushr 8) and 0xFF) * ratio).toInt()
+            val b = ((from and 0xFF) * inverse + (to and 0xFF) * ratio).toInt()
+            return (a shl 24) or (r shl 16) or (g shl 8) or b
         }
     }
 }
 
 /** Resolves the active palette and writes it into Commons' config keys. */
 object AppearanceManager {
+    fun resolveSystemMatchedMode(isSystemDark: Boolean): Int =
+        if (isSystemDark) Config.APPEARANCE_DARK else Config.APPEARANCE_LIGHT
+
     fun resolve(context: Context, config: Config): AppearancePalette = when (config.appearanceMode) {
-        Config.APPEARANCE_SYSTEM -> if (context.isSystemInDarkMode()) AppearancePalette.DARK else AppearancePalette.LIGHT
+        Config.APPEARANCE_SYSTEM -> when (resolveSystemMatchedMode(context.isSystemInDarkMode())) {
+            Config.APPEARANCE_DARK -> AppearancePalette.DARK
+            else -> AppearancePalette.LIGHT
+        }
         Config.APPEARANCE_LIGHT -> AppearancePalette.LIGHT
         Config.APPEARANCE_DARK -> AppearancePalette.DARK
         Config.APPEARANCE_NAVY -> AppearancePalette.NAVY
@@ -217,11 +254,14 @@ object AppearanceManager {
         if (candidates.isEmpty()) {
             return target
         }
+        val targetRed = (target ushr 16) and 0xFF
+        val targetGreen = (target ushr 8) and 0xFF
+        val targetBlue = target and 0xFF
         return candidates.minWithOrNull(
             compareBy { candidate ->
-                val dr = Color.red(candidate) - Color.red(target)
-                val dg = Color.green(candidate) - Color.green(target)
-                val db = Color.blue(candidate) - Color.blue(target)
+                val dr = ((candidate ushr 16) and 0xFF) - targetRed
+                val dg = ((candidate ushr 8) and 0xFF) - targetGreen
+                val db = (candidate and 0xFF) - targetBlue
                 dr * dr + dg * dg + db * db
             },
         ) ?: target

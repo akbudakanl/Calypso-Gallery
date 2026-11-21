@@ -103,6 +103,7 @@ import org.fossify.gallery.extensions.shareMediaPaths
 import org.fossify.gallery.extensions.shareMediumPath
 import org.fossify.gallery.extensions.showRestoreConfirmationDialog
 import org.fossify.gallery.extensions.toggleFileVisibility
+import org.fossify.gallery.extensions.tryAddFilesToVirtualAlbum
 import org.fossify.gallery.extensions.tryCopyMoveFilesTo
 import org.fossify.gallery.extensions.tryDecryptFilesTo
 import org.fossify.gallery.extensions.updateDBMediaPath
@@ -393,6 +394,8 @@ class MediaAdapter(
             findItem(R.id.cab_copy_to).isVisible = !isMixedEncryption
             findItem(R.id.cab_move_to).isVisible =
                 !isMixedEncryption && CopyMovePolicy.canMoveFrom(path, isInRecycleBin, isVaultRecycleBin)
+            findItem(R.id.cab_add_to_virtual_album).isVisible =
+                CopyMovePolicy.canAddToVirtualAlbum(path, isMixedEncryption, isInRecycleBin, isVaultRecycleBin)
             findItem(R.id.cab_open_with).isVisible = isOneItemSelected
             findItem(R.id.cab_edit).isVisible = isOneItemSelected
             findItem(R.id.cab_set_as).isVisible = isOneItemSelected
@@ -448,6 +451,12 @@ class MediaAdapter(
             R.id.cab_rotate_one_eighty -> rotateSelection(180)
             R.id.cab_copy_to -> checkMediaManagementAndCopy(true)
             R.id.cab_move_to -> if (CopyMovePolicy.canMoveFrom(path, isInRecycleBin, isVaultRecycleBin)) moveFilesTo()
+            R.id.cab_add_to_virtual_album -> {
+                val hasUnencrypted = selectedItems.any { !CryptoManager.isVaultMediaPath(activity, it.path) }
+                if (CopyMovePolicy.canAddToVirtualAlbum(path, hasEncrypted && hasUnencrypted, isInRecycleBin, isVaultRecycleBin)) {
+                    addToVirtualAlbum()
+                }
+            }
             R.id.cab_create_shortcut -> createShortcut()
             R.id.cab_select_all -> selectAll()
             R.id.cab_open_with -> openPath()
@@ -1293,6 +1302,30 @@ class MediaAdapter(
             }
         } else {
             handleRotate(paths, degrees)
+        }
+    }
+
+    private fun addToVirtualAlbum() {
+        val paths = getSelectedPaths()
+        val hasEncrypted = paths.any { CryptoManager.isVaultMediaPath(activity, it) }
+        val hasUnencrypted = paths.any { !CryptoManager.isVaultMediaPath(activity, it) }
+        if (hasEncrypted && hasUnencrypted) {
+            activity.toast(R.string.cannot_mix_encrypted_and_unencrypted)
+            return
+        }
+
+        val recycleBinPath = activity.recycleBinPath
+        val fileDirItems = paths.asSequence()
+            .filter { !it.startsWith(recycleBinPath) && !CryptoManager.isVaultRecycleBinPath(activity, it) }
+            .map { FileDirItem(it, it.getFilenameFromPath()) }
+            .toCollection(ArrayList())
+        if (fileDirItems.isEmpty()) {
+            return
+        }
+
+        activity.tryAddFilesToVirtualAlbum(fileDirItems, currentDirectoryPath = path) {
+            listener?.refreshItems()
+            finishActMode()
         }
     }
 

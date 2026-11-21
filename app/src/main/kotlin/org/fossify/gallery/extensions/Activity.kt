@@ -53,6 +53,7 @@ import org.fossify.gallery.dialogs.resolveAlbumCryptoOptions
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.dialogs.PickDirectoryDialog
 import org.fossify.gallery.dialogs.PickVaultAlbumDialog
+import org.fossify.gallery.dialogs.PickVirtualAlbumDialog
 import org.fossify.gallery.dialogs.ResizeMultipleImagesDialog
 import org.fossify.gallery.dialogs.ResizeWithPathDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
@@ -128,6 +129,7 @@ import org.fossify.gallery.helpers.isEncryptedFolder
 import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isSupportedMediaName
 import org.fossify.gallery.helpers.isVaultMediaPath
+import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.listExternalStorageVolumeRoots
 import org.fossify.gallery.helpers.previewDecryptAlbumConflict
 import org.fossify.gallery.helpers.resolveExistingVaultInDirectory
@@ -2629,6 +2631,60 @@ private fun BaseSimpleActivity.confirmAndDecryptFolders(
     }
 }
 
+fun BaseSimpleActivity.tryAddFilesToVirtualAlbum(
+    fileDirItems: ArrayList<FileDirItem>,
+    currentDirectoryPath: String = "",
+    callback: (destinationPath: String) -> Unit
+) {
+    if (fileDirItems.isEmpty()) {
+        toast(org.fossify.commons.R.string.unknown_error_occurred)
+        return
+    }
+
+    val hasEncrypted = fileDirItems.any { CryptoManager.isVaultMediaPath(this, it.path) }
+    val hasUnencrypted = fileDirItems.any { !CryptoManager.isVaultMediaPath(this, it.path) }
+    if (hasEncrypted && hasUnencrypted) {
+        toast(R.string.cannot_mix_encrypted_and_unencrypted)
+        return
+    }
+
+    val validItems = fileDirItems.filterTo(ArrayList()) {
+        !it.path.startsWith(recycleBinPath) && !CryptoManager.isVaultRecycleBinPath(this, it.path)
+    }
+    if (validItems.isEmpty()) {
+        return
+    }
+
+    val source = currentDirectoryPath.ifEmpty { validItems[0].getParentPath() }
+    val isHiddenSource = CryptoManager.isVaultMediaPath(this, source) ||
+        (source.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(source)) ||
+        hasEncrypted
+    val excludedAlbumId = currentDirectoryPath.getVirtualAlbumId()
+    val sourceHint = if (currentDirectoryPath.isNotEmpty() &&
+        currentDirectoryPath != FAVORITES &&
+        currentDirectoryPath != RECYCLE_BIN
+    ) {
+        currentDirectoryPath
+    } else {
+        validItems[0].getParentPath()
+    }
+
+    PickVirtualAlbumDialog(
+        activity = this,
+        excludedAlbumId = excludedAlbumId,
+        isHiddenSource = isHiddenSource,
+        sourcePath = sourceHint
+    ) { albumId, albumName ->
+        val destination = getVirtualAlbumPath(albumId)
+        VirtualAlbumConflictHelper.add(this, albumId, validItems, isHiddenSource) { added ->
+            val resolvedName = albumName.ifEmpty { getVirtualAlbumName(destination) ?: "" }
+            val msgRes = if (added > 0) R.string.added_to_virtual_album else R.string.already_in_virtual_album
+            toast(getString(msgRes, resolvedName))
+            callback(destination)
+        }
+    }
+}
+
 fun BaseSimpleActivity.tryCopyMoveFilesTo(
     fileDirItems: ArrayList<FileDirItem>,
     isCopyOperation: Boolean,
@@ -2671,20 +2727,7 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
     ) {
         val destination = it
         if (destination.isVirtualAlbumPath()) {
-            if (!isCopyOperation) {
-                toast(R.string.virtual_album_cannot_be_modified)
-                return@PickDirectoryDialog
-            }
-            val albumId = destination.getVirtualAlbumId() ?: return@PickDirectoryDialog
-            // Only vault content makes the album hidden. A file coming from a hidden folder is
-            // explicitly referenced by the user, so it does not hide the album.
-            val hasVaultSource = fileDirItems.any { CryptoManager.isVaultMediaPath(this, it.path) }
-            VirtualAlbumConflictHelper.add(this, albumId, fileDirItems, hasVaultSource) { added ->
-                val albumName = getVirtualAlbumName(destination) ?: ""
-                val msgRes = if (added > 0) R.string.added_to_virtual_album else R.string.already_in_virtual_album
-                toast(getString(msgRes, albumName))
-                callback(destination)
-            }
+            toast(R.string.virtual_album_cannot_be_modified)
             return@PickDirectoryDialog
         }
 
