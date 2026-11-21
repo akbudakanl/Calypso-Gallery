@@ -21,6 +21,9 @@ class Config(context: Context) : BaseConfig(context) {
         const val APPEARANCE_LIGHT = 1
         const val APPEARANCE_DARK = 2
         const val APPEARANCE_CUSTOM = 3
+        const val APPEARANCE_NAVY = 4
+        const val APPEARANCE_PAPER = 5
+        const val APPEARANCE_FOREST = 6
 
         const val MIN_UNLOCK_TARGET_MS = 100
         const val SWEET_SPOT_UNLOCK_TARGET_MS = 1_000
@@ -33,7 +36,9 @@ class Config(context: Context) : BaseConfig(context) {
         private const val DEFAULT_STD_ITERATIONS = 3
 
         private const val APPEARANCE_MODE = "appearance_mode"
+        private const val LAST_MANUAL_APPEARANCE_MODE = "last_manual_appearance_mode"
         private const val SAVED_APPEARANCE_THEMES = "saved_appearance_themes"
+        private const val AUTO_BACKUP_SAVED_THEMES = "auto_backup_saved_themes"
         private const val VAULT_PIN_LENGTH = "vault_pin_length"
         private const val SHOW_VAULT_PIN_DOTS = "show_vault_pin_dots"
 
@@ -43,6 +48,20 @@ class Config(context: Context) : BaseConfig(context) {
     var savedThemesJson: String
         get() = prefs.getString(SAVED_APPEARANCE_THEMES, "[]") ?: "[]"
         set(value) = prefs.edit().putString(SAVED_APPEARANCE_THEMES, value).apply()
+
+    var lastManualAppearanceMode: Int
+        get() = prefs.getInt(LAST_MANUAL_APPEARANCE_MODE, APPEARANCE_LIGHT).let {
+            if (it == APPEARANCE_SYSTEM) APPEARANCE_LIGHT else it
+        }
+        set(value) {
+            if (value != APPEARANCE_SYSTEM) {
+                prefs.edit().putInt(LAST_MANUAL_APPEARANCE_MODE, value).apply()
+            }
+        }
+
+    var autoBackupSavedThemes: Boolean
+        get() = prefs.getBoolean(AUTO_BACKUP_SAVED_THEMES, true)
+        set(value) = prefs.edit().putBoolean(AUTO_BACKUP_SAVED_THEMES, value).apply()
 
     /**
      * Digit count of the vault PIN, written when credentials are created or changed. The lock
@@ -86,11 +105,23 @@ class Config(context: Context) : BaseConfig(context) {
                     customAccentColor = accentColor
                     customAppIconColor = appIconColor
                 }
-                prefs.edit().putInt(APPEARANCE_MODE, initial).apply()
+                prefs.edit().apply {
+                    putInt(APPEARANCE_MODE, initial)
+                    if (initial != APPEARANCE_SYSTEM) {
+                        putInt(LAST_MANUAL_APPEARANCE_MODE, initial)
+                    }
+                }.apply()
             }
             return prefs.getInt(APPEARANCE_MODE, APPEARANCE_SYSTEM)
         }
-        set(value) = prefs.edit().putInt(APPEARANCE_MODE, value).apply()
+        set(value) {
+            prefs.edit().apply {
+                putInt(APPEARANCE_MODE, value)
+                if (value != APPEARANCE_SYSTEM) {
+                    putInt(LAST_MANUAL_APPEARANCE_MODE, value)
+                }
+            }.apply()
+        }
 
     var directorySorting: Int
         get(): Int = prefs.getInt(DIRECTORY_SORT_ORDER, SORT_BY_DATE_MODIFIED or SORT_DESCENDING)

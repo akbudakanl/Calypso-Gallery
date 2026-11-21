@@ -32,7 +32,7 @@ import org.fossify.commons.dialogs.ConfirmationDialog
 import org.fossify.commons.dialogs.FileConflictDialog
 import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
-import org.fossify.commons.dialogs.SecurityDialog
+import org.fossify.gallery.dialogs.AppSecurityDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.extensions.getCurrentFormattedDateTime
 import org.fossify.commons.extensions.internalStoragePath
@@ -3820,7 +3820,7 @@ fun Activity.showFileOnMap(path: String) {
 
 fun Activity.handleExcludedFolderPasswordProtection(callback: () -> Unit) {
     if (config.isExcludedPasswordProtectionOn) {
-        SecurityDialog(this, config.excludedPasswordHash, config.excludedProtectionType) { _, _, success ->
+        AppSecurityDialog(this, config.excludedPasswordHash, config.excludedProtectionType) { _, _, success ->
             if (success) {
                 callback()
             }

@@ -1,6 +1,12 @@
 <resources>
 
-    <style name="AppTheme" parent="AppTheme.Base" />
+    <style name="AppTheme" parent="AppTheme.Base">
+        <!-- Commons' theme tints text-selection handles green. Use the same theme-aware
+             colour as the caret so handles match light and dark palettes everywhere. -->
+        <item name="android:textSelectHandle">@drawable/calypso_text_select_handle_middle</item>
+        <item name="android:textSelectHandleLeft">@drawable/calypso_text_select_handle_left</item>
+        <item name="android:textSelectHandleRight">@drawable/calypso_text_select_handle_right</item>
+    </style>
 
     <!-- Applied to password fields so the caret uses the theme text colour instead of the library's green accent. -->
     <style name="VaultCursorTheme">

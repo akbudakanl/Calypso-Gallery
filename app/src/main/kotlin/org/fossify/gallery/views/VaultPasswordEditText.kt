@@ -15,6 +15,8 @@ import android.view.inputmethod.InputConnection
 import android.view.textclassifier.TextClassifier
 import androidx.core.view.ViewCompat
 import com.google.android.material.textfield.TextInputEditText
+import org.fossify.gallery.extensions.applyThemedSelectionHandles
+import org.fossify.gallery.extensions.themeTextColor
 
 /**
  * Hardened password field for vault credentials.
@@ -43,6 +45,11 @@ class VaultPasswordEditText : TextInputEditText {
 
     private fun hardenClipboardAndSelection() {
         isLongClickable = false
+        // No text selection UI (handles, magnifier) in a credential field. The theme's
+        // textSelectHandle drawables otherwise show up as a green handle when a character
+        // is selected, even though the caret itself is tinted correctly.
+        setTextIsSelectable(false)
+        applyThemedSelectionHandles(themeTextColor())
         customSelectionActionModeCallback = NO_OP_ACTION_MODE_CALLBACK
         customInsertionActionModeCallback = NO_OP_ACTION_MODE_CALLBACK
         setTextClassifier(TextClassifier.NO_OP)

@@ -16,7 +16,9 @@ import org.fossify.commons.views.MySeekBar
 import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.applyThemedCursor
+import org.fossify.gallery.extensions.applyThemedSelectionHandles
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.themeTextColor
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.CryptoManager
@@ -129,6 +131,7 @@ object BruteForceDialog {
             background = null
             setText(formatted(initialTenths))
             applyThemedCursor(activity.config.let { AppearanceManager.resolve(activity, it) }.primary)
+            applyThemedSelectionHandles(themeTextColor())
         }
         val seek = MySeekBar(activity).apply {
             max = (MAX_TENTHS - minTenths).coerceAtLeast(0)

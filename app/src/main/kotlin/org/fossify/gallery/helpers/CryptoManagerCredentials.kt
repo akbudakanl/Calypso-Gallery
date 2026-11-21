@@ -955,6 +955,25 @@ fun CryptoManager.unlockWithSecret(context: Context, secret: String): Boolean {
 }
 
 /**
+ * Authenticates [secret] against the current `.vault` header without touching the
+ * in-memory unlocked keys. Used to reject a "new" password identical to the current one.
+ * Runs the same (potentially slow) KDF, so callers must use a background thread.
+ */
+fun CryptoManager.isCurrentVaultSecret(context: Context, secret: CharArray): Boolean {
+    val vaultRoot = locateVaultRootOnDisk(context) ?: return false
+    val headerFile = File(vaultRoot, VAULT_HEADER_FILE)
+    if (!isValidVaultHeader(headerFile)) return false
+    val keys = try {
+        unwrapVaultKeysEphemeral(headerFile, secret, context) ?: return false
+    } catch (_: Throwable) {
+        return false
+    }
+    keys.vmk.fill(0)
+    keys.kek.fill(0)
+    return true
+}
+
+/**
  * Authenticates [secret] against the current `.vault` header under the existing KDF and
  * atomically re-wraps the same VMK/KEK under a newly derived PDK using current KDF settings.
  */

@@ -2,11 +2,19 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
-## [1.1.3] - 2026-11-21
+## [1.1.4] - 2026-11-21
 
 ### Güvenlik ve kararlılık düzeltmeleri
 
 - Android 12 (API 31) uyumluluğu: şifreli kasa oluştururken konum seçildiğinde açılan parola penceresi çöküyordu. Parola alanı, platformun reddettiği `*/*` MIME tipi yerine geçerli kategori tipleri (`text/*`, `image/*`, `video/*`, `audio/*`, `application/*`) ile kaydediliyor; pano ve içeriği yapıştırma engellemesi korunuyor.
+- Parola alanlarında metin seçimi tamamen kapatıldı; temadan gelen yeşil seçim tutamacı artık görünmüyor. İmleç rengi ve karakter girişi etkilenmiyor.
+- Şifreli kasa parolası değiştirilirken zayıf parola uyarısı artık gösteriliyor ve mevcut parolayla aynı bir parola seçilmesi açıkça uyarıyla reddediliyor.
+
+### İyileştirmeler
+
+- Ekran yönü değiştiğinde parola pencerelerinin ve uygulama pencerelerinin kapanmasına yol açan davranış giderildi: ilgili activity'ler yön değişikliğinde yeniden oluşturulmuyor, parola pencereleri de dışarı dokunma/Geri tuşuyla sessizce kapatılamıyor.
+- Otomatik oynatma açıkken, video ölçüleriyle ekran yönü uyuşmadığında önbelleğe alınan önizleme karesinin en-boy oranı bozuluyordu. Kare artık tek ölçek faktörüyle alınıyor; oynatma başlamadan önceki kısa önizleme videonun oranlarını koruyor.
+- Uygulamanın orijinal parola korumaları (albüm kilidi, uygulama kilidi, hariç tutulan klasörler, taşıma/silme koruması) için kullanılan parola penceresinde Desen ve PIN sekmeleri geri geldi; dikey tablette desenin son satırı kesilmiyordu, artık görünür.
 
 ## [1.1.2] - 2026-11-21
 
@@ -85,7 +93,7 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 - Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
 - Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
 
-[1.1.3]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.3
+[1.1.4]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.4
 [1.1.2]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.2
 [1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.1
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0

@@ -618,6 +618,9 @@
     <string name="weak_password_warning_title">Zayıf parola</string>
     <string name="weak_password_warning_message">Bu parola zayıf olarak değerlendiriliyor. Kasa güvenliği için daha uzun ve karmaşık bir parola önerilir. Yine de devam etmek istiyor musunuz?</string>
     <string name="weak_password_warning_continue">Yine de devam et</string>
+    <string name="checking_password">Parola kontrol ediliyor…</string>
+    <string name="vault_same_password_title">Aynı parola</string>
+    <string name="vault_same_password_message">Yeni parola mevcut kasa parolasıyla aynı. Lütfen farklı bir parola seçin.</string>
     <string name="password_strength_hint">Uzun ve farklı karakter türleri içeren bir parolanın kırılması daha zordur.</string>
     <string name="vault_unlock_time_unit">s</string>
     <string name="search_in_storage">Depolama alanında ara</string>
@@ -702,4 +705,32 @@
     <string name="use_biometrics">Biyometrik kullan</string>
     <string name="hide_vault_key_presses">Kasa parolası girerken tuş basımlarını gizle</string>
     <string name="show_pin_dots">PIN girilirken her basamağı bir nokta ile göster</string>
+
+    <!-- Minimalist Ayarlar & Görünüm Yenilemesi -->
+    <string name="appearance_automatic">Otomatik</string>
+    <string name="follow_system_theme">Sistem temasını takip et</string>
+    <string name="follow_system_theme_summary">Açık ve koyu tema arasında otomatik geçer</string>
+    <string name="theme_midnight_blue">Gece Mavisi</string>
+    <string name="theme_warm_paper">Sıcak Kağıt</string>
+    <string name="theme_deep_forest">Derin Orman</string>
+    <string name="appearance_contrast_ok">Kontrast uygun · Metin %1$.1f:1 · Düğme %2$.1f:1</string>
+    <string name="appearance_backup_section">Yedekleme</string>
+    <string name="backup_saved_themes_to_storage">Kayıtlı temaları cihaz hafızasında yedekle</string>
+
+    <string name="settings_group_general">Genel</string>
+    <string name="settings_group_folders_and_loading">Klasörler ve yükleme</string>
+    <string name="settings_group_security">Güvenlik</string>
+    <string name="settings_group_vault_management">Kasa yönetimi</string>
+    <string name="settings_group_playback">Oynatma</string>
+    <string name="settings_group_gestures_and_tap">Hareketler ve dokunma</string>
+    <string name="settings_group_display_and_motion">Görünüm ve hareket</string>
+    <string name="settings_group_thumbnail_styles">Küçük resim stilleri</string>
+    <string name="settings_group_general_behavior">Genel davranış</string>
+    <string name="settings_group_conflicts_and_crypto">Çakışma ve şifreleme kuralları</string>
+    <string name="settings_group_cleanup">Temizleme</string>
+    <string name="settings_group_storage">Depolama</string>
+    <string name="settings_group_settings_and_favorites">Ayarlar ve favoriler</string>
+    <string name="settings_group_vault_transfer">Şifreli kasa aktarımı</string>
+    <string name="settings_search_results">Arama sonuçları</string>
+    <string name="settings_no_search_results">Eşleşen ayar bulunamadı.</string>
 </resources>

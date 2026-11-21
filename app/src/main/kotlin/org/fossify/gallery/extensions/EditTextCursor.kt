@@ -1,9 +1,12 @@
 package org.fossify.gallery.extensions
 
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.ColorUtils
+import org.fossify.gallery.R
 
 /** Replaces the library's green text cursor with one drawn in the active palette color. */
 fun TextView.applyThemedCursor(color: Int) {
@@ -43,3 +46,25 @@ fun TextView.applyThemedCursor(color: Int) {
 
     highlightColor = ColorUtils.setAlphaComponent(color, 60)
 }
+
+/**
+ * The platform's text-selection handles are tinted with colorControlActivated, which is the
+ * library's green accent in this fork. Replace them explicitly with theme-coloured copies.
+ */
+fun TextView.applyThemedSelectionHandles(color: Int) {
+    if (Build.VERSION.SDK_INT < 29) return
+    fun handle(resId: Int) = AppCompatResources.getDrawable(context, resId)?.mutate()?.apply {
+        setTint(color)
+    }
+    handle(R.drawable.calypso_text_select_handle_middle)?.let { setTextSelectHandle(it) }
+    handle(R.drawable.calypso_text_select_handle_left)?.let { setTextSelectHandleLeft(it) }
+    handle(R.drawable.calypso_text_select_handle_right)?.let { setTextSelectHandleRight(it) }
+}
+
+/** Resolves the theme's text colour, matching [applyThemedCursor] in light and dark modes. */
+fun TextView.themeTextColor(): Int = runCatching {
+    val attrs = context.obtainStyledAttributes(intArrayOf(android.R.attr.textColorPrimary))
+    val resolved = attrs.getColor(0, Color.WHITE)
+    attrs.recycle()
+    resolved
+}.getOrDefault(Color.WHITE)

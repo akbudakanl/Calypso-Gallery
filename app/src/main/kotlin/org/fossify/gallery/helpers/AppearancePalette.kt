@@ -54,6 +54,32 @@ data class AppearancePalette(
             onSecondary = Color.BLACK,
         )
 
+        val NAVY = fromCustom(
+            text = Color.parseColor("#EFF6FF"),
+            background = Color.parseColor("#0B1220"),
+            primary = Color.parseColor("#93C5FD"),
+            secondary = 0,
+            appIcon = DARK.appIcon,
+        )
+
+        val PAPER = fromCustom(
+            text = Color.parseColor("#29231E"),
+            background = Color.parseColor("#F4EFE6"),
+            primary = Color.parseColor("#7C5438"),
+            secondary = 0,
+            appIcon = LIGHT.appIcon,
+        )
+
+        val FOREST = fromCustom(
+            text = Color.parseColor("#ECFDF5"),
+            background = Color.parseColor("#0C1713"),
+            primary = Color.parseColor("#6EE7B7"),
+            secondary = 0,
+            appIcon = DARK.appIcon,
+        )
+
+        fun isLightBackground(color: Int): Boolean = isLight(color)
+
         /** Build a coherent palette from the four user-editable Custom colors. */
         fun fromCustom(text: Int, background: Int, primary: Int, secondary: Int, appIcon: Int): AppearancePalette {
             // Seeding Custom from a built-in mode copies the preset's final colors into the raw
@@ -133,6 +159,9 @@ object AppearanceManager {
         Config.APPEARANCE_SYSTEM -> if (context.isSystemInDarkMode()) AppearancePalette.DARK else AppearancePalette.LIGHT
         Config.APPEARANCE_LIGHT -> AppearancePalette.LIGHT
         Config.APPEARANCE_DARK -> AppearancePalette.DARK
+        Config.APPEARANCE_NAVY -> AppearancePalette.NAVY
+        Config.APPEARANCE_PAPER -> AppearancePalette.PAPER
+        Config.APPEARANCE_FOREST -> AppearancePalette.FOREST
         Config.APPEARANCE_CUSTOM -> AppearancePalette.fromCustom(
             text = config.customTextColor,
             background = config.customBackgroundColor,

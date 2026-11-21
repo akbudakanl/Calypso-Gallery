@@ -1452,7 +1452,7 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsExcludedItemPasswordProtection.isChecked = config.isExcludedPasswordProtectionOn
         binding.settingsExcludedItemPasswordProtectionHolder.setOnClickListener {
             val tabToShow = if (config.isExcludedPasswordProtectionOn) config.excludedProtectionType else SHOW_ALL_TABS
-            SecurityDialog(this, config.excludedPasswordHash, tabToShow) { hash, type, success ->
+            AppSecurityDialog(this, config.excludedPasswordHash, tabToShow) { hash, type, success ->
                 if (success) {
                     val hasPasswordProtection = config.isExcludedPasswordProtectionOn
                     binding.settingsExcludedItemPasswordProtection.isChecked = !hasPasswordProtection
@@ -1474,7 +1474,7 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsAppPasswordProtection.isChecked = config.isAppPasswordProtectionOn
         binding.settingsAppPasswordProtectionHolder.setOnClickListener {
             val tabToShow = if (config.isAppPasswordProtectionOn) config.appProtectionType else SHOW_ALL_TABS
-            SecurityDialog(this, config.appPasswordHash, tabToShow) { hash, type, success ->
+            AppSecurityDialog(this, config.appPasswordHash, tabToShow) { hash, type, success ->
                 if (success) {
                     val hasPasswordProtection = config.isAppPasswordProtectionOn
                     binding.settingsAppPasswordProtection.isChecked = !hasPasswordProtection
@@ -1496,7 +1496,7 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsFileDeletionPasswordProtection.isChecked = config.isDeletePasswordProtectionOn
         binding.settingsFileDeletionPasswordProtectionHolder.setOnClickListener {
             val tabToShow = if (config.isDeletePasswordProtectionOn) config.deleteProtectionType else SHOW_ALL_TABS
-            SecurityDialog(this, config.deletePasswordHash, tabToShow) { hash, type, success ->
+            AppSecurityDialog(this, config.deletePasswordHash, tabToShow) { hash, type, success ->
                 if (success) {
                     val hasPasswordProtection = config.isDeletePasswordProtectionOn
                     binding.settingsFileDeletionPasswordProtection.isChecked = !hasPasswordProtection

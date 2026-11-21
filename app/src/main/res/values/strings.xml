@@ -698,6 +698,9 @@
     <string name="weak_password_warning_title">Weak password</string>
     <string name="weak_password_warning_message">This password is considered weak. A longer, more complex password is recommended for the vault\'s security. Do you still want to continue?</string>
     <string name="weak_password_warning_continue">Continue anyway</string>
+    <string name="checking_password">Checking password…</string>
+    <string name="vault_same_password_title">Same password</string>
+    <string name="vault_same_password_message">The new password is identical to the current vault password. Please choose a different one.</string>
     <string name="password_strength_hint">A longer password with mixed characters is harder to crack.</string>
     <string name="vault_unlock_time_unit">s</string>
     <string name="search_in_storage">Search in storage</string>
@@ -752,4 +755,32 @@
     <string name="use_biometrics">Use biometrics</string>
     <string name="hide_vault_key_presses">Hide key presses when entering vault password</string>
     <string name="show_pin_dots">Show a dot for each PIN digit</string>
+
+    <!-- Minimalist Settings & Appearance Redesign -->
+    <string name="appearance_automatic">Automatic</string>
+    <string name="follow_system_theme">Follow system theme</string>
+    <string name="follow_system_theme_summary">Automatically switches between light and dark</string>
+    <string name="theme_midnight_blue">Midnight Blue</string>
+    <string name="theme_warm_paper">Warm Paper</string>
+    <string name="theme_deep_forest">Deep Forest</string>
+    <string name="appearance_contrast_ok">Good contrast · Text %1$.1f:1 · Button %2$.1f:1</string>
+    <string name="appearance_backup_section">Backup</string>
+    <string name="backup_saved_themes_to_storage">Back up saved themes to device storage</string>
+
+    <string name="settings_group_general">General</string>
+    <string name="settings_group_folders_and_loading">Folders and loading</string>
+    <string name="settings_group_security">Security</string>
+    <string name="settings_group_vault_management">Vault management</string>
+    <string name="settings_group_playback">Playback</string>
+    <string name="settings_group_gestures_and_tap">Gestures and tap</string>
+    <string name="settings_group_display_and_motion">Display and motion</string>
+    <string name="settings_group_thumbnail_styles">Thumbnail styles</string>
+    <string name="settings_group_general_behavior">General behavior</string>
+    <string name="settings_group_conflicts_and_crypto">Conflicts and encryption rules</string>
+    <string name="settings_group_cleanup">Cleanup</string>
+    <string name="settings_group_storage">Storage</string>
+    <string name="settings_group_settings_and_favorites">Settings and favorites</string>
+    <string name="settings_group_vault_transfer">Encrypted vault transfer</string>
+    <string name="settings_search_results">Search results</string>
+    <string name="settings_no_search_results">No matching settings found.</string>
 </resources>

@@ -48,6 +48,7 @@ import org.fossify.gallery.helpers.getVaultProtectionType
 import org.fossify.gallery.helpers.hasExistingVault
 import org.fossify.gallery.helpers.isDeviceLocked
 import org.fossify.gallery.helpers.VaultPasswordStrength
+import org.fossify.gallery.helpers.isCurrentVaultSecret
 import org.fossify.gallery.helpers.setupOrUpdateCredentials
 
 class VaultSecurityDialog(
@@ -319,6 +320,10 @@ class VaultSecurityDialog(
         // for its button panel and system insets, which left a strip of the unlocked gallery
         // visible along the bottom/navigation bar.
         val credentialDialog = Dialog(activity, android.R.style.Theme_Black_NoTitleBar_Fullscreen).apply {
+            // A password prompt must be finished or cancelled with the explicit back button;
+            // neither the hardware Back key nor tapping outside should silently drop it.
+            setCancelable(false)
+            setCanceledOnTouchOutside(false)
             setOnCancelListener { cancelDialog() }
             setOnDismissListener {
                 clearAutoPromptFocusListener()
@@ -489,48 +494,88 @@ class VaultSecurityDialog(
         }
     }
 
+    /** Warns about a weak first entry, then stores it and asks for confirmation. */
+    private fun handleWeakFirstEntry(secret: CharArray) {
+        val weak = isSetupMode &&
+            VaultPasswordStrength.evaluate(secret, currentType == PROTECTION_PIN).level.isWeak
+        val acceptFirstEntry: (CharArray) -> Unit = { candidate ->
+            clearFirstStepSecret()
+            firstStepSecret = candidate.copyOf()
+            inputHelper.clearInputs()
+            updateStatusLabel()
+        }
+        if (weak) {
+            val pending = secret.copyOf()
+            weakWarningInFlight = true
+            val dismissWeakWarning = {
+                weakWarningInFlight = false
+                inputHelper.clearInputs()
+                updateStatusLabel()
+                pending.fill('\u0000')
+            }
+            VaultNoticeDialog(
+                activity = activity,
+                title = activity.getString(R.string.weak_password_warning_title),
+                message = activity.getString(R.string.weak_password_warning_message),
+                positiveText = activity.getString(R.string.weak_password_warning_continue),
+                negativeText = activity.getString(org.fossify.commons.R.string.cancel),
+                cancelable = true,
+                onPositive = {
+                    weakWarningInFlight = false
+                    try {
+                        acceptFirstEntry(pending)
+                    } finally {
+                        pending.fill('\u0000')
+                    }
+                },
+                onNegative = dismissWeakWarning,
+                onCancel = dismissWeakWarning,
+            )
+        } else {
+            acceptFirstEntry(secret)
+        }
+    }
+
     private fun handleSetupSubmission(secret: CharArray) {
         val savedFirst = firstStepSecret
         if (savedFirst == null || savedFirst.isEmpty()) {
-            // During first-time vault creation, warn about weak secrets before asking for the
-            // confirmation entry. Password change is excluded: the user already owns the vault.
-            val weak = isSetupMode && !isChangePasswordMode &&
-                VaultPasswordStrength.evaluate(secret, currentType == PROTECTION_PIN).level.isWeak
-            val acceptFirstEntry: (CharArray) -> Unit = { candidate ->
-                clearFirstStepSecret()
-                firstStepSecret = candidate.copyOf()
-                inputHelper.clearInputs()
-                updateStatusLabel()
-            }
-            if (weak) {
-                val pending = secret.copyOf()
+            if (isChangePasswordMode) {
+                // Reject a "new" password that is identical to the current one. This runs the
+                // real KDF, so it must stay off the UI thread.
+                val newSecret = secret.copyOf()
+                val candidate = newSecret.copyOf()
                 weakWarningInFlight = true
-                val dismissWeakWarning = {
-                    weakWarningInFlight = false
-                    inputHelper.clearInputs()
-                    updateStatusLabel()
-                    pending.fill('\u0000')
-                }
-                VaultNoticeDialog(
-                    activity = activity,
-                    title = activity.getString(R.string.weak_password_warning_title),
-                    message = activity.getString(R.string.weak_password_warning_message),
-                    positiveText = activity.getString(R.string.weak_password_warning_continue),
-                    negativeText = activity.getString(org.fossify.commons.R.string.cancel),
-                    cancelable = true,
-                    onPositive = {
+                binding.vaultStatusLabel.beVisible()
+                binding.vaultStatusLabel.setText(R.string.checking_password)
+                ensureBackgroundThread {
+                    val same = try {
+                        CryptoManager.isCurrentVaultSecret(activity, candidate)
+                    } catch (_: Throwable) {
+                        false
+                    } finally {
+                        candidate.fill('\u0000')
+                    }
+                    activity.runOnUiThread {
+                        if (activity.isFinishing || activity.isDestroyed) return@runOnUiThread
                         weakWarningInFlight = false
-                        try {
-                            acceptFirstEntry(pending)
-                        } finally {
-                            pending.fill('\u0000')
+                        binding.vaultStatusLabel.beGone()
+                        if (same) {
+                            VaultNoticeDialog(
+                                activity = activity,
+                                title = activity.getString(R.string.vault_same_password_title),
+                                message = activity.getString(R.string.vault_same_password_message),
+                                positiveText = activity.getString(org.fossify.commons.R.string.ok),
+                                onPositive = {},
+                            )
+                            inputHelper.clearInputs()
+                            return@runOnUiThread
                         }
-                    },
-                    onNegative = dismissWeakWarning,
-                    onCancel = dismissWeakWarning,
-                )
+                        handleWeakFirstEntry(newSecret)
+                        newSecret.fill('\u0000')
+                    }
+                }
             } else {
-                acceptFirstEntry(secret)
+                handleWeakFirstEntry(secret)
             }
             return
         }

@@ -1090,8 +1090,15 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         if (!ended && mPositionAtPause > 0L && mTextureView.isAvailable && mTextureView.width > 0 && mTextureView.height > 0) {
             try {
-                val scaleWidth = (mTextureView.width / 2).coerceIn(360, 1080)
-                val scaleHeight = (mTextureView.height / 2).coerceIn(360, 1920)
+                // Use ONE scale factor for both axes: clamping width and height independently
+                // distorted the cached frame whenever the screen orientation did not match the
+                // video orientation (e.g. a landscape video on a portrait tablet). The distorted
+                // bitmap was briefly shown before autoplay rendered the first frame.
+                val sourceWidth = mTextureView.width
+                val sourceHeight = mTextureView.height
+                val scale = minOf(1f, 1080f / sourceWidth, 1920f / sourceHeight)
+                val scaleWidth = maxOf(1, (sourceWidth * scale).toInt())
+                val scaleHeight = maxOf(1, (sourceHeight * scale).toInt())
                 val bmp = mTextureView.getBitmap(scaleWidth, scaleHeight)
                 if (bmp != null) {
                     sVideoFrameCache.put(mMedium.path, bmp)

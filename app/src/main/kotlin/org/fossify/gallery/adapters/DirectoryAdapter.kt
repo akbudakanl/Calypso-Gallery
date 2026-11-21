@@ -28,7 +28,7 @@ import org.fossify.commons.dialogs.FolderLockingNoticeDialog
 import org.fossify.commons.dialogs.PropertiesDialog
 import org.fossify.commons.dialogs.RenameItemDialog
 import org.fossify.commons.dialogs.RenameItemsDialog
-import org.fossify.commons.dialogs.SecurityDialog
+import org.fossify.gallery.dialogs.AppSecurityDialog
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
@@ -1099,7 +1099,7 @@ class DirectoryAdapter(
     }
 
     private fun lockFolder() {
-        SecurityDialog(activity, "", SHOW_ALL_TABS) { hash, type, success ->
+        AppSecurityDialog(activity, "", SHOW_ALL_TABS) { hash, type, success ->
             if (success) {
                 getSelectedPaths().filter {
                     !config.isFolderProtected(it) &&
@@ -1139,7 +1139,7 @@ class DirectoryAdapter(
 
             val (credential, paths) = credentialGroups.next()
             val (tabToShow, hashToCheck) = credential
-            SecurityDialog(activity, hashToCheck, tabToShow) { _, _, success ->
+            AppSecurityDialog(activity, hashToCheck, tabToShow) { _, _, success ->
                 if (success) {
                     unlockedAny = true
                     paths.forEach {
