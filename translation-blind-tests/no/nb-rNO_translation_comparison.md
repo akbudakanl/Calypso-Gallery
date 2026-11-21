@@ -1055,3 +1055,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | Bekreft med biometri eller enhets-PIN for å fortsette. Hvelvpassordet er ikke nødvendig. |
 | `archive_total_size_title` | Arkivlagring |
 | `archive_total_size` | Samlet størrelse på arkiverte hvelv: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | Svakt passord |
+| `weak_password_warning_message` | Dette passordet anses som svakt. Et lengre og mer komplekst passord anbefales for sikkerheten til hvelvet. Vil du fortsette likevel? |
+| `weak_password_warning_continue` | Fortsett likevel |

@@ -689,4 +689,7 @@
     <string name="device_owner_verify_subtitle">生体認証または端末のPINで確認して続行してください。金庫のパスワードは不要です。</string>
     <string name="archive_total_size_title">アーカイブの保存領域</string>
     <string name="archive_total_size">アーカイブ済み金庫の合計サイズ: %1$s</string>
+    <string name="weak_password_warning_title">弱いパスワード</string>
+    <string name="weak_password_warning_message">このパスワードは弱いと判定されました。金庫の安全性のため、より長く複雑なパスワードを推奨します。それでも続けますか？</string>
+    <string name="weak_password_warning_continue">それでも続ける</string>
 </resources>

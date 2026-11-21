@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.fossify.gallery.views.MaxWidthLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/vault_security_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="@dimen/normal_margin">
+    android:padding="@dimen/normal_margin"
+    app:maxWidth="@dimen/vault_security_max_width">
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/vault_tabs"
@@ -391,4 +393,4 @@
         android:text="@string/use_biometrics"
         android:textSize="14sp"
         android:visibility="gone" />
-</LinearLayout>
+</org.fossify.gallery.views.MaxWidthLinearLayout>

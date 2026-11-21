@@ -16,15 +16,17 @@
         android:overScrollMode="ifContentScrolls"
         android:scrollbars="none">
 
-        <LinearLayout
+        <org.fossify.gallery.views.MaxWidthLinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:gravity="center_vertical"
             android:orientation="vertical"
             android:paddingStart="24dp"
             android:paddingTop="24dp"
             android:paddingEnd="24dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="16dp"
+            app:maxWidth="@dimen/onboarding_max_content_width">
 
             <!-- Emblem -->
             <FrameLayout
@@ -270,18 +272,20 @@
                 android:paddingEnd="8dp"
                 android:text="@string/onboarding_media_required_hint"
                 android:textSize="12.5sp" />
-        </LinearLayout>
+        </org.fossify.gallery.views.MaxWidthLinearLayout>
     </ScrollView>
 
-    <LinearLayout
+    <org.fossify.gallery.views.MaxWidthLinearLayout
         android:id="@+id/onboarding_media_footer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingStart="24dp"
         android:paddingTop="10dp"
         android:paddingEnd="24dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="16dp"
+        app:maxWidth="@dimen/onboarding_max_content_width">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/onboarding_media_settings_btn"
@@ -311,5 +315,5 @@
             android:textAllCaps="false"
             android:textSize="14sp"
             app:cornerRadius="22dp" />
-    </LinearLayout>
+    </org.fossify.gallery.views.MaxWidthLinearLayout>
 </LinearLayout>

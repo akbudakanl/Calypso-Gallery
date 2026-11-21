@@ -2,6 +2,17 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
+## [1.1.1] - 2026-11-21
+
+### Eklendi
+
+- Tablet ve büyük ekran uyumu: karşılama ve izin ekranları, şifreli kasa giriş/kilit ekranı ile Ayarlar, Görünüm ve Hakkında ekranlarında maksimum içerik genişliği ve ortalama eklendi. Yatay tabletlerde karşılama ekranı iki sütunlu düzene geçer; şifreli kasa formu tabletlerde yarı saydam buzlu cam kart içinde ortalanır.
+- Şifreli kasa oluşturma: ilk kez kasa kurulurken zayıf parola veya PIN seçildiğinde onay adımından önce uyarı penceresi gösterilir.
+
+### İyileştirmeler
+
+- Kasa bildirim pencerelerinde geri tuşu ile kapatma davranışı tutarlı hale getirildi; dışarı dokunarak yanlışlıkla kapanma engellendi.
+
 ## [1.1.0] - 2026-11-21
 
 ### Eklendi
@@ -57,5 +68,6 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 - Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
 - Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
 
+[1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.1
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0

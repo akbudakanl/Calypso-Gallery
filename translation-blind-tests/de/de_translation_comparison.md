@@ -991,3 +991,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | Bestätigen Sie mit Ihrer Biometrie oder der Geräte-PIN, um fortzufahren. Das Tresor-Passwort ist nicht erforderlich. |
 | `archive_total_size_title` | Archivspeicher |
 | `archive_total_size` | Gesamtgröße der archivierten Tresore: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | Schwaches Passwort |
+| `weak_password_warning_message` | Dieses Passwort wird als schwach angesehen. Für die Sicherheit des Tresors wird ein längeres, komplexeres Passwort empfohlen. Möchten Sie dennoch fortfahren? |
+| `weak_password_warning_continue` | Trotzdem fortfahren |

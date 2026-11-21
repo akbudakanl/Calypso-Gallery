@@ -692,4 +692,7 @@
     <string name="device_owner_verify_subtitle">Confirme con su biometría o el PIN del dispositivo para continuar. No se requiere la contraseña de la bóveda.</string>
     <string name="archive_total_size_title">Almacenamiento del archivo</string>
     <string name="archive_total_size">Tamaño total de las bóvedas archivadas: %1$s</string>
+    <string name="weak_password_warning_title">Contraseña débil</string>
+    <string name="weak_password_warning_message">Esta contraseña se considera débil. Se recomienda una contraseña más larga y compleja para la seguridad de la bóveda. ¿Desea continuar de todos modos?</string>
+    <string name="weak_password_warning_continue">Continuar de todos modos</string>
 </resources>

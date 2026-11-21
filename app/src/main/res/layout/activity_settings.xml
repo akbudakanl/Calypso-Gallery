@@ -29,11 +29,13 @@
         android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <org.fossify.gallery.views.MaxWidthLinearLayout
             android:id="@+id/settings_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_gravity="center_horizontal"
+            android:orientation="vertical"
+            app:maxWidth="@dimen/settings_max_content_width">
 
             <EditText
                 android:id="@+id/settings_search"
@@ -1479,6 +1481,6 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
-        </LinearLayout>
+        </org.fossify.gallery.views.MaxWidthLinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1203,6 +1203,7 @@ class SettingsActivity : SimpleActivity() {
                         message = getString(R.string.archive_vault_success, humanizePath(entry.path)),
                         positiveText = getString(org.fossify.commons.R.string.ok),
                         negativeText = getString(R.string.copy_path),
+                        cancelable = true,
                         onPositive = {},
                         onNegative = {
                             val clipboard = getSystemService(ClipboardManager::class.java)
@@ -1260,12 +1261,14 @@ class SettingsActivity : SimpleActivity() {
                     message = getString(R.string.unarchive_vault_blocked),
                     positiveText = getString(R.string.unarchive_vault_merge),
                     negativeText = getString(org.fossify.commons.R.string.ok),
+                    cancelable = true,
                     onPositive = {
                         VaultNoticeDialog(
                             activity = this,
                             title = getString(R.string.unarchive_vault_merge),
                             message = getString(R.string.unarchive_vault_merge_steps),
                             positiveText = getString(org.fossify.commons.R.string.ok),
+                            cancelable = true,
                             onPositive = {},
                         )
                     },
@@ -1321,6 +1324,7 @@ class SettingsActivity : SimpleActivity() {
             title = getString(R.string.vault_biometric_unavailable_title),
             message = getString(biometricUnavailableReason(biometricStatus, biometricKeyAvailable)),
             positiveText = getString(org.fossify.commons.R.string.ok),
+            cancelable = true,
             onPositive = {},
         )
     }

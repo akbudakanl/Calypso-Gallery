@@ -1029,3 +1029,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | Confirme con su biometría o el PIN del dispositivo para continuar. No se requiere la contraseña de la bóveda. |
 | `archive_total_size_title` | Almacenamiento del archivo |
 | `archive_total_size` | Tamaño total de las bóvedas archivadas: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | Contraseña débil |
+| `weak_password_warning_message` | Esta contraseña se considera débil. Se recomienda una contraseña más larga y compleja para la seguridad de la bóveda. ¿Desea continuar de todos modos? |
+| `weak_password_warning_continue` | Continuar de todos modos |

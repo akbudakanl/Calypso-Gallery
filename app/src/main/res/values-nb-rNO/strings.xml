@@ -706,4 +706,7 @@
     <string name="device_owner_verify_subtitle">Bekreft med biometri eller enhets-PIN for å fortsette. Hvelvpassordet er ikke nødvendig.</string>
     <string name="archive_total_size_title">Arkivlagring</string>
     <string name="archive_total_size">Samlet størrelse på arkiverte hvelv: %1$s</string>
+    <string name="weak_password_warning_title">Svakt passord</string>
+    <string name="weak_password_warning_message">Dette passordet anses som svakt. Et lengre og mer komplekst passord anbefales for sikkerheten til hvelvet. Vil du fortsette likevel?</string>
+    <string name="weak_password_warning_continue">Fortsett likevel</string>
 </resources>

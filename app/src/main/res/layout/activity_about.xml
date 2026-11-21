@@ -26,15 +26,17 @@
         android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <org.fossify.gallery.views.MaxWidthLinearLayout
             android:id="@+id/about_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingStart="@dimen/big_margin"
             android:paddingTop="@dimen/activity_margin"
             android:paddingEnd="@dimen/big_margin"
-            android:paddingBottom="@dimen/big_margin">
+            android:paddingBottom="@dimen/big_margin"
+            app:maxWidth="@dimen/settings_max_content_width">
 
             <org.fossify.commons.views.MyTextView
                 android:id="@+id/about_title"
@@ -230,7 +232,7 @@
                 android:paddingBottom="@dimen/small_margin"
                 android:text="@string/about_third_party_licenses" />
 
-        </LinearLayout>
+        </org.fossify.gallery.views.MaxWidthLinearLayout>
 
     </androidx.core.widget.NestedScrollView>
 

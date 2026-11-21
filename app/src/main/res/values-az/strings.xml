@@ -760,4 +760,7 @@
     <string name="device_owner_verify_subtitle">Davam etmək üçün biometrik məlumat və ya cihaz PIN-i ilə təsdiqləyin. Kasa parolası tələb olunmur.</string>
     <string name="archive_total_size_title">Arxiv saxlama sahəsi</string>
     <string name="archive_total_size">Arxivlənmiş kasaların ümumi ölçüsü: %1$s</string>
+    <string name="weak_password_warning_title">Zəif parol</string>
+    <string name="weak_password_warning_message">Bu parola zəif hesab olunur. Kasa təhlükəsizliyi üçün daha uzun və mürəkkəb parola tövsiyə olunur. Yenə də davam etmək istəyirsiniz?</string>
+    <string name="weak_password_warning_continue">Yenə də davam et</string>
 </resources>

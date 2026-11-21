@@ -28,12 +28,14 @@
         android:scrollbars="none"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <org.fossify.gallery.views.MaxWidthLinearLayout
             android:id="@+id/appearance_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingBottom="24dp">
+            android:paddingBottom="24dp"
+            app:maxWidth="@dimen/settings_max_content_width">
 
             <TextView
                 android:id="@+id/appearance_theme_section_label"
@@ -324,6 +326,6 @@
                     android:text="@string/hidden_folders_album" />
             </RelativeLayout>
 
-        </LinearLayout>
+        </org.fossify.gallery.views.MaxWidthLinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

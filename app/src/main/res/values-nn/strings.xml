@@ -763,4 +763,7 @@
     <string name="device_owner_verify_subtitle">Stadfest med biometri eller PIN-kode for eininga for å halde fram. Kvelvpassordet er ikkje nødvendig.</string>
     <string name="archive_total_size_title">Arkivlager</string>
     <string name="archive_total_size">Samla storleik på arkiverte kvelv: %1$s</string>
+    <string name="weak_password_warning_title">Veikt passord</string>
+    <string name="weak_password_warning_message">Dette passordet blir rekna som veikt. Eit lengre og meir komplekst passord er tilrådd for tryggleiken til kvelvet. Vil du halde fram likevel?</string>
+    <string name="weak_password_warning_continue">Hald fram likevel</string>
 </resources>

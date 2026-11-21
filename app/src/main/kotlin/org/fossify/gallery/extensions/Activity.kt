@@ -624,6 +624,7 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
                 message = getString(R.string.archived_vault_invalid_message, humanizePath(entry.path)),
                 positiveText = getString(org.fossify.commons.R.string.ok),
                 negativeText = getString(R.string.copy_path),
+                cancelable = true,
                 onPositive = {},
                 onNegative = {
                     val clipboard = getSystemService(android.content.ClipboardManager::class.java)
@@ -670,6 +671,7 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
                 android.text.format.Formatter.formatFileSize(this, totalBytes)
             ),
             positiveText = getString(org.fossify.commons.R.string.ok),
+            cancelable = true,
             onPositive = {},
         )
     }
@@ -927,7 +929,9 @@ private fun BaseSimpleActivity.showVaultLocationNoticeDialog(messageResId: Int, 
         title = getString(R.string.vault_location),
         message = getString(messageResId),
         positiveText = getString(org.fossify.commons.R.string.ok),
+        cancelable = true,
         onPositive = onDone,
+        onCancel = onDone,
     )
 }
 
@@ -3309,13 +3313,16 @@ fun BaseSimpleActivity.emptyAndDisableTheRecycleBin(callback: () -> Unit) {
 
 /** Shown right after vault creation / password change, before any biometric offer. */
 fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
-    // Non-cancelable: the whole acknowledgement (including the reminder explanation) must be read.
+    // Back dismisses it; tapping outside does not. Dismissing with Back still completes the
+    // vault setup (onDone) but skips the biometric offer — biometrics stay off until enabled
+    // explicitly in Settings.
     VaultNoticeDialog(
         activity = this,
         title = getString(R.string.vault_password_saved_title),
         message = getString(R.string.vault_password_saved_message) +
             "\n\n" + getString(R.string.vault_password_reminder_setup_note),
         positiveText = getString(R.string.vault_password_saved_confirm),
+        cancelable = true,
         onPositive = {
             // HTML: 3a is acknowledged first, then the one-time biometric offer (3b) may appear.
             onDone()
@@ -3324,6 +3331,7 @@ fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
                 VaultBiometricOfferDialog.showIfNeeded(this)
             }
         },
+        onCancel = { onDone() },
     )
 }
 
@@ -3350,6 +3358,7 @@ fun BaseSimpleActivity.showBiometricPasswordNoteDialog(
         showBiometricGlyph = true,
         onPositive = onContinue,
         onNegative = onCancel ?: {},
+        onCancel = onCancel ?: {},
     )
 }
 

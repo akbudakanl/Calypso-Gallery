@@ -257,6 +257,25 @@ class VaultAuthInputHelper(
         // was overriding our runtime cursor drawable with the library's green accent.
         binding.vaultPasswordInputLayout.setCursorColor(ColorStateList.valueOf(palette.primary))
         binding.vaultPasswordInput.applyThemedCursor(palette.primary)
+
+        // On tablets (sw600dp+), frame the centered vault form in a translucent frosted card so
+        // the ambient backdrop acts as a deliberate focus frame rather than empty space.
+        if (activity.resources.configuration.smallestScreenWidthDp >= 600) {
+            val cardBase = ColorUtils.blendARGB(palette.background, palette.surface, 0.65f)
+            val cardAlpha = if (isLightBg) 230 else 210
+            val cardBgColor = ColorUtils.setAlphaComponent(cardBase, cardAlpha)
+            val frameBorderColor = ColorUtils.blendARGB(palette.border, palette.text, 0.08f)
+            binding.vaultSecurityRoot.background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = 26f * density
+                setColor(cardBgColor)
+                setStroke(strokePx, frameBorderColor)
+            }
+            val padH = (28f * density).toInt()
+            val padTop = (28f * density).toInt()
+            val padBottom = (24f * density).toInt()
+            binding.vaultSecurityRoot.setPadding(padH, padTop, padH, padBottom)
+        }
     }
 
     fun applyTouchFilter() {

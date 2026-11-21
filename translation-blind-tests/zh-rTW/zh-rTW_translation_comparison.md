@@ -1040,3 +1040,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | 請用生物辨識或裝置 PIN 碼確認以繼續。不需要輸入保險箱密碼。 |
 | `archive_total_size_title` | 封存區儲存空間 |
 | `archive_total_size` | 已封存保險箱的總大小：%1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | 弱式密碼 |
+| `weak_password_warning_message` | 這組密碼被判定為弱式。為了保險箱安全，建議使用更長且更複雜的密碼。仍要繼續嗎？ |
+| `weak_password_warning_continue` | 仍要繼續 |

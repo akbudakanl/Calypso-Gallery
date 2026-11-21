@@ -30,9 +30,11 @@ class VaultNoticeDialog(
     negativeText: String? = null,
     noteText: String? = null,
     cancelable: Boolean = false,
+    canceledOnTouchOutside: Boolean = false,
     showBiometricGlyph: Boolean = false,
     onPositive: () -> Unit,
     onNegative: (() -> Unit)? = null,
+    onCancel: (() -> Unit)? = null,
 ) {
     private var dialog: AlertDialog? = null
 
@@ -112,6 +114,8 @@ class VaultNoticeDialog(
 
         activity.setupDialogStuff(binding.root, builder) { alertDialog ->
             dialog = alertDialog
+            alertDialog.setCanceledOnTouchOutside(canceledOnTouchOutside)
+            alertDialog.setOnCancelListener { onCancel?.invoke() }
             alertDialog.window?.setLayout(dialogWidth, WindowManager.LayoutParams.WRAP_CONTENT)
         }
     }

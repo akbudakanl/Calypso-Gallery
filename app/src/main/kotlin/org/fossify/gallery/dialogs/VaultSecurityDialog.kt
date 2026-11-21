@@ -481,10 +481,47 @@ class VaultSecurityDialog(
     private fun handleSetupSubmission(secret: CharArray) {
         val savedFirst = firstStepSecret
         if (savedFirst == null || savedFirst.isEmpty()) {
-            clearFirstStepSecret()
-            firstStepSecret = secret.copyOf()
-            inputHelper.clearInputs()
-            updateStatusLabel()
+            // During first-time vault creation, warn about weak secrets before asking for the
+            // confirmation entry. Password change is excluded: the user already owns the vault.
+            val weak = isSetupMode && !isChangePasswordMode &&
+                VaultPasswordStrength.evaluate(secret, currentType == PROTECTION_PIN).level.let {
+                    it == VaultPasswordStrength.Level.BAD ||
+                        it == VaultPasswordStrength.Level.POOR ||
+                        it == VaultPasswordStrength.Level.WEAK
+                }
+            val acceptFirstEntry = {
+                clearFirstStepSecret()
+                firstStepSecret = secret.copyOf()
+                inputHelper.clearInputs()
+                updateStatusLabel()
+            }
+            if (weak) {
+                val pending = secret.copyOf()
+                VaultNoticeDialog(
+                    activity = activity,
+                    title = activity.getString(R.string.weak_password_warning_title),
+                    message = activity.getString(R.string.weak_password_warning_message),
+                    positiveText = activity.getString(R.string.weak_password_warning_continue),
+                    negativeText = activity.getString(org.fossify.commons.R.string.cancel),
+                    cancelable = true,
+                    onPositive = {
+                        acceptFirstEntry()
+                        pending.fill('\u0000')
+                    },
+                    onNegative = {
+                        inputHelper.clearInputs()
+                        updateStatusLabel()
+                        pending.fill('\u0000')
+                    },
+                    onCancel = {
+                        inputHelper.clearInputs()
+                        updateStatusLabel()
+                        pending.fill('\u0000')
+                    },
+                )
+            } else {
+                acceptFirstEntry()
+            }
             return
         }
         if (!savedFirst.contentEquals(secret)) {

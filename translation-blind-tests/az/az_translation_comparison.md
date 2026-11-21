@@ -1029,3 +1029,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | Davam etmək üçün biometrik məlumat və ya cihaz PIN-i ilə təsdiqləyin. Kasa parolası tələb olunmur. |
 | `archive_total_size_title` | Arxiv saxlama sahəsi |
 | `archive_total_size` | Arxivlənmiş kasaların ümumi ölçüsü: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | Zəif parol |
+| `weak_password_warning_message` | Bu parola zəif hesab olunur. Kasa təhlükəsizliyi üçün daha uzun və mürəkkəb parola tövsiyə olunur. Yenə də davam etmək istəyirsiniz? |
+| `weak_password_warning_continue` | Yenə də davam et |

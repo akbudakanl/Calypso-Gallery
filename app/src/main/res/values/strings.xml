@@ -695,6 +695,9 @@
     <string name="password_strength_weak">Fair</string>
     <string name="password_strength_good">Strong</string>
     <string name="password_strength_excellent">Very strong</string>
+    <string name="weak_password_warning_title">Weak password</string>
+    <string name="weak_password_warning_message">This password is considered weak. A longer, more complex password is recommended for the vault\'s security. Do you still want to continue?</string>
+    <string name="weak_password_warning_continue">Continue anyway</string>
     <string name="password_strength_hint">A longer password with mixed characters is harder to crack.</string>
     <string name="vault_unlock_time_unit">s</string>
     <string name="search_in_storage">Search in storage</string>

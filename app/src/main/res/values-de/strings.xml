@@ -689,4 +689,7 @@
     <string name="device_owner_verify_subtitle">Bestätigen Sie mit Ihrer Biometrie oder der Geräte-PIN, um fortzufahren. Das Tresor-Passwort ist nicht erforderlich.</string>
     <string name="archive_total_size_title">Archivspeicher</string>
     <string name="archive_total_size">Gesamtgröße der archivierten Tresore: %1$s</string>
+    <string name="weak_password_warning_title">Schwaches Passwort</string>
+    <string name="weak_password_warning_message">Dieses Passwort wird als schwach angesehen. Für die Sicherheit des Tresors wird ein längeres, komplexeres Passwort empfohlen. Möchten Sie dennoch fortfahren?</string>
+    <string name="weak_password_warning_continue">Trotzdem fortfahren</string>
 </resources>

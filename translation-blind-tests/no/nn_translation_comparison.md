@@ -1047,3 +1047,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | Stadfest med biometri eller PIN-kode for eininga for å halde fram. Kvelvpassordet er ikkje nødvendig. |
 | `archive_total_size_title` | Arkivlager |
 | `archive_total_size` | Samla storleik på arkiverte kvelv: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | Veikt passord |
+| `weak_password_warning_message` | Dette passordet blir rekna som veikt. Eit lengre og meir komplekst passord er tilrådd for tryggleiken til kvelvet. Vil du halde fram likevel? |
+| `weak_password_warning_continue` | Hald fram likevel |

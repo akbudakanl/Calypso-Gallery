@@ -615,6 +615,9 @@
     <string name="password_strength_weak">Orta</string>
     <string name="password_strength_good">Güçlü</string>
     <string name="password_strength_excellent">Çok güçlü</string>
+    <string name="weak_password_warning_title">Zayıf parola</string>
+    <string name="weak_password_warning_message">Bu parola zayıf olarak değerlendiriliyor. Kasa güvenliği için daha uzun ve karmaşık bir parola önerilir. Yine de devam etmek istiyor musunuz?</string>
+    <string name="weak_password_warning_continue">Yine de devam et</string>
     <string name="password_strength_hint">Uzun ve farklı karakter türleri içeren bir parolanın kırılması daha zordur.</string>
     <string name="vault_unlock_time_unit">s</string>
     <string name="search_in_storage">Depolama alanında ara</string>

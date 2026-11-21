@@ -1032,3 +1032,11 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `device_owner_verify_subtitle` | 生体認証または端末のPINで確認して続行してください。金庫のパスワードは不要です。 |
 | `archive_total_size_title` | アーカイブの保存領域 |
 | `archive_total_size` | アーカイブ済み金庫の合計サイズ: %1$s |
+
+## Weak password confirmation
+
+| Key | Translation |
+|---|---|
+| `weak_password_warning_title` | 弱いパスワード |
+| `weak_password_warning_message` | このパスワードは弱いと判定されました。金庫の安全性のため、より長く複雑なパスワードを推奨します。それでも続けますか？ |
+| `weak_password_warning_continue` | それでも続ける |
