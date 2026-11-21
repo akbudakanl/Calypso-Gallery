@@ -2,6 +2,17 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
+## [1.1.5] - 2026-11-21
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- Eski Reprint parmak izi kütüphanesi tamamen kaldırıldı ve uygulama/klasör kilidi AndroidX Biometric'e geçirildi; Android 15/16 çalışma zamanı sertleştirmeleri (foreground service zaman aşımı, display cutout/IME kenar boşlukları, güvenli alıcı kaydı) uygulandı.
+
+### İyileştirmeler
+
+- Şifreli kasa anahtar türetme motoru (Argon2id v1.3), yerel Rust JNI katmanına (`rust/calypso-argon2`, `RustCrypto/argon2` + `zeroize`) taşındı ve Bouncy Castle APK'dan çıkarıldı (~7,3 MB boyut azalması, 16 KB ELF sayfa hizalamalı 4 ABI, gerçek cihazda ~8,6–9,5× hız artışı). Fiziksel RAM + 64-bit kontrolüyle `64 → 128 → 256 MiB` (`>= 3,0 sn`) kademeli kalibrasyon ve 2 GB ve altı RAM cihazlar için yol gösterici uyarı eklendi (mevcut kasalarla bit-birebir uyumlu; bkz. [ADR 0004 §11.1](docs/adr/0004-argon2-memory-and-cross-device-kdf.md#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented)).
+- Minimalist Ayarlar düzeni, yeni görünüm temaları ve 9 dilde tam çeviri güncellemeleri.
+
 ## [1.1.4] - 2026-11-21
 
 ### Güvenlik ve kararlılık düzeltmeleri
