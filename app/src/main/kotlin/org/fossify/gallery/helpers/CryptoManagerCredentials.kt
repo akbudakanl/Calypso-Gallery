@@ -1,5 +1,6 @@
 package org.fossify.gallery.helpers
 
+import android.app.ActivityManager
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
@@ -7,8 +8,6 @@ import com.bumptech.glide.Glide
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator
-import org.bouncycastle.crypto.params.Argon2Parameters
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.gallery.extensions.config
@@ -33,6 +32,10 @@ import javax.crypto.spec.SecretKeySpec
 
 internal const val ARGON2_MIN_MEMORY_KB = 64 * 1024
 internal const val ARGON2_HIGH_MEMORY_KB = 128 * 1024
+internal const val ARGON2_ULTRA_MEMORY_KB = 256 * 1024
+internal const val ARGON2_ULTRA_MIN_TARGET_MS = 3_000
+internal const val ARGON2_128_MIN_TOTAL_RAM_MIB = 1_536L
+internal const val ARGON2_256_MIN_TOTAL_RAM_MIB = 5_120L
 internal const val ARGON2_MIN_ITERATIONS = 3
 internal const val ARGON2_MAX_CALIBRATED_ITERATIONS = 100
 internal const val ARGON2_HEADER_MIN_MEMORY_KB = 8_192
@@ -45,14 +48,22 @@ private const val ARGON2_MAX_SALT_LEN = 256
 private const val ARGON2_MAX_WRAPPED_LEN = 65_536
 private const val ARGON2_MAX_KEYRING_LEN = 4_096
 private const val ARGON2_KEYRING_MIN_SIZE = 34
-private const val ARGON2_MIN_MEASURED_MS = 100
+internal const val ARGON2_MIN_MEASURED_MS = 20
 private const val ARGON2_MAX_CACHED_MS = 30_000
 private const val ARGON2_DEFAULT_FALLBACK_STD_MS = 2_400
-private const val ARGON2_MIN_TARGET_MS = 100
 private const val ARGON2_MAX_TARGET_MS = 10_000
 private const val GLIDE_TRIM_TIMEOUT_MS = 500L
-private const val BYTES_PER_KIB = 1024L
+private const val BYTES_PER_MIB = 1024L * 1024L
 private const val NS_PER_MS = 1_000_000L
+private const val TIER_256_STD_MULTIPLIER = 4
+
+internal fun ensureKdfEngineFresh(config: Config) {
+    if (config.kdfEngineVersion != KDF_ENGINE_RUST_V1) {
+        config.cachedStdArgon2Ms = 0
+        config.vaultUnlockMeasuredMs = 0
+        config.kdfEngineVersion = KDF_ENGINE_RUST_V1
+    }
+}
 
 private fun trimGlideMemoryCache(context: Context) {
     val appContext = context.applicationContext ?: return
@@ -95,30 +106,34 @@ fun CryptoManager.deriveKeyArgon2id(
     iterations: Int = ARGON2_ITERATIONS,
     parallelism: Int = ARGON2_PARALLELISM
 ): SecretKeySpec {
-    val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
-        .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-        .withSalt(salt)
-        .withIterations(iterations)
-        .withMemoryAsKB(memoryKb)
-        .withParallelism(parallelism)
-        .build()
-    val keyBytes = ByteArray(ARGON2_KEY_BYTES)
     val secretBytes = charsToUtf8Bytes(secret)
-    try {
+    val keyBytes = try {
         try {
-            val generator = Argon2BytesGenerator()
-            generator.init(params)
-            generator.generateBytes(secretBytes, keyBytes, 0, keyBytes.size)
+            NativeArgon2.deriveKeyArgon2idNative(
+                secretBytes,
+                salt,
+                memoryKb,
+                iterations,
+                parallelism,
+                ARGON2_KEY_BYTES
+            )
         } catch (_: OutOfMemoryError) {
-            keyBytes.fill(0)
             System.gc()
-            val retryGenerator = Argon2BytesGenerator()
-            retryGenerator.init(params)
-            retryGenerator.generateBytes(secretBytes, keyBytes, 0, keyBytes.size)
+            NativeArgon2.deriveKeyArgon2idNative(
+                secretBytes,
+                salt,
+                memoryKb,
+                iterations,
+                parallelism,
+                ARGON2_KEY_BYTES
+            )
         }
-        return SecretKeySpec(keyBytes, "AES")
     } finally {
         secretBytes.fill(0)
+    }
+    return try {
+        SecretKeySpec(keyBytes, "AES")
+    } finally {
         keyBytes.fill(0)
     }
 }
@@ -538,6 +553,7 @@ fun CryptoManager.effectiveVaultUnlockMs(
     context: Context,
     knownParams: VaultKdfParams? = null
 ): Int {
+    ensureKdfEngineFresh(context.config)
     val measured = context.config.vaultUnlockMeasuredMs
     if (measured > 0) return measured
     val std64Ms = context.config.cachedStdArgon2Ms
@@ -549,7 +565,7 @@ fun CryptoManager.effectiveVaultUnlockMs(
 
 /**
  * Initializes or updates the user's hidden item password/PIN/pattern credentials.
- * Uses Argon2id (32 MB, 3 iterations, 2 threads) + AES-256-GCM.
+ * Uses calibrated Argon2id (64-256 MiB floor-to-tier, >= 3 iterations, 2 parallelism) + AES-256-GCM.
  * The master bundle (MasterKey + PrivateKey) is written directly to .vault in the root folder.
  */
 fun CryptoManager.setupOrUpdateCredentials(
@@ -606,28 +622,65 @@ private fun CryptoManager.deriveKeyArgon2idWithTrim(
     }
 }
 
+internal data class DeviceMemoryCapabilities(
+    val totalRamMib: Long,
+    val is64Bit: Boolean
+) {
+    val canAllocate128Mib: Boolean get() = totalRamMib >= ARGON2_128_MIN_TOTAL_RAM_MIB
+    val canAllocate256Mib: Boolean get() = is64Bit && totalRamMib >= ARGON2_256_MIN_TOTAL_RAM_MIB
+}
+
+internal fun deviceMemoryCapabilities(context: Context): DeviceMemoryCapabilities {
+    val totalRamMib = runCatching {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+            ?: return@runCatching 0L
+        val info = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(info)
+        info.totalMem / BYTES_PER_MIB
+    }.getOrDefault(0L)
+    val is64Bit = Build.SUPPORTED_64_BIT_ABIS.isNotEmpty()
+    return DeviceMemoryCapabilities(totalRamMib = totalRamMib, is64Bit = is64Bit)
+}
+
 internal fun calculateTieredArgon2Params(
     targetMs: Int,
     std64Ms: Int,
-    maxHeapKb: Long,
-    measure128Ms: (() -> Long)? = null
+    capabilities: DeviceMemoryCapabilities,
+    measure128Ms: (() -> Long)? = null,
+    measure256Ms: (() -> Long)? = null
 ): Triple<Int, Int, Boolean> {
     val safeStd64Ms = std64Ms.coerceAtLeast(ARGON2_MIN_MEASURED_MS)
     val maxTarget = maxOf(safeStd64Ms, ARGON2_MAX_TARGET_MS)
     val effectiveTargetMs = targetMs.coerceIn(safeStd64Ms, maxTarget)
-    val canAllocate128Mib = (maxHeapKb / 2) >= ARGON2_HIGH_MEMORY_KB
     val estimated128FloorMs = safeStd64Ms * 2
+    val estimated256FloorMs = safeStd64Ms * TIER_256_STD_MULTIPLIER
+    val ultraTierThresholdMs = maxOf(estimated256FloorMs, ARGON2_ULTRA_MIN_TARGET_MS)
 
     var memoryKb = ARGON2_MIN_MEMORY_KB
     var rawIter = Math.round(effectiveTargetMs / (safeStd64Ms.toDouble() / ARGON2_MIN_ITERATIONS)).toInt()
-    var memoryClamped = effectiveTargetMs >= estimated128FloorMs && !canAllocate128Mib
+    var memoryClamped = false
 
-    if (canAllocate128Mib && effectiveTargetMs >= estimated128FloorMs) {
-        val measured128 = measure128Ms?.invoke() ?: estimated128FloorMs.toLong()
-        if (measured128 > 0L) {
-            memoryKb = ARGON2_HIGH_MEMORY_KB
-            val perIter128Ms = measured128.toDouble() / ARGON2_MIN_ITERATIONS
-            rawIter = Math.round(effectiveTargetMs / perIter128Ms).toInt()
+    if (effectiveTargetMs >= ultraTierThresholdMs && capabilities.canAllocate256Mib) {
+        val measured256 = measure256Ms?.invoke() ?: estimated256FloorMs.toLong()
+        if (measured256 > 0L) {
+            memoryKb = ARGON2_ULTRA_MEMORY_KB
+            val perIter256Ms = measured256.toDouble() / ARGON2_MIN_ITERATIONS
+            rawIter = Math.round(effectiveTargetMs / perIter256Ms).toInt()
+        } else {
+            memoryClamped = true
+        }
+    }
+
+    if (memoryKb == ARGON2_MIN_MEMORY_KB && effectiveTargetMs >= estimated128FloorMs) {
+        if (capabilities.canAllocate128Mib) {
+            val measured128 = measure128Ms?.invoke() ?: estimated128FloorMs.toLong()
+            if (measured128 > 0L) {
+                memoryKb = ARGON2_HIGH_MEMORY_KB
+                val perIter128Ms = measured128.toDouble() / ARGON2_MIN_ITERATIONS
+                rawIter = Math.round(effectiveTargetMs / perIter128Ms).toInt()
+            } else {
+                memoryClamped = true
+            }
         } else {
             memoryClamped = true
         }
@@ -642,6 +695,7 @@ internal fun calculateTieredArgon2Params(
 }
 
 fun CryptoManager.measureStandardArgon2Ms(context: Context, force: Boolean = false): Int {
+    ensureKdfEngineFresh(context.config)
     val cached = context.config.cachedStdArgon2Ms
     if (!force && cached in ARGON2_MIN_MEASURED_MS..ARGON2_MAX_CACHED_MS) {
         return cached
@@ -658,7 +712,7 @@ fun CryptoManager.measureStandardArgon2Ms(context: Context, force: Boolean = fal
             ARGON2_MIN_ITERATIONS,
             ARGON2_PARALLELISM
         )
-        ((System.nanoTime() - t0) / NS_PER_MS).toInt().coerceIn(ARGON2_MIN_TARGET_MS, ARGON2_MAX_TARGET_MS)
+        ((System.nanoTime() - t0) / NS_PER_MS).toInt().coerceIn(ARGON2_MIN_MEASURED_MS, ARGON2_MAX_TARGET_MS)
     } catch (_: OutOfMemoryError) {
         ARGON2_DEFAULT_FALLBACK_STD_MS
     } finally {
@@ -666,11 +720,11 @@ fun CryptoManager.measureStandardArgon2Ms(context: Context, force: Boolean = fal
     }
     context.config.cachedStdArgon2Ms = measured
     if (!isVaultUnlocked) {
-        val maxHeapKb = (Runtime.getRuntime().maxMemory() / BYTES_PER_KIB).coerceAtLeast(1L)
+        val capabilities = deviceMemoryCapabilities(context)
         val (memKb, iters, clamped) = calculateTieredArgon2Params(
             targetMs = context.config.unlockTargetMs,
             std64Ms = measured,
-            maxHeapKb = maxHeapKb
+            capabilities = capabilities
         )
         context.config.lastCalibratedMemoryKb = memKb
         context.config.lastCalibratedIterations = iters
@@ -679,7 +733,7 @@ fun CryptoManager.measureStandardArgon2Ms(context: Context, force: Boolean = fal
     return measured
 }
 
-private fun CryptoManager.measureHighMemoryArgon2Ms(context: Context): Long {
+private fun CryptoManager.measureMemoryTierArgon2Ms(context: Context, memoryKb: Int): Long {
     val salt = ByteArray(ARGON2_SALT_LENGTH)
     val probeChars = "cipher-calibration".toCharArray()
     return try {
@@ -688,7 +742,7 @@ private fun CryptoManager.measureHighMemoryArgon2Ms(context: Context): Long {
             context,
             probeChars,
             salt,
-            ARGON2_HIGH_MEMORY_KB,
+            memoryKb,
             ARGON2_MIN_ITERATIONS,
             ARGON2_PARALLELISM
         )
@@ -701,18 +755,25 @@ private fun CryptoManager.measureHighMemoryArgon2Ms(context: Context): Long {
     }
 }
 
+private fun CryptoManager.measureHighMemoryArgon2Ms(context: Context): Long =
+    measureMemoryTierArgon2Ms(context, ARGON2_HIGH_MEMORY_KB)
+
+private fun CryptoManager.measureUltraMemoryArgon2Ms(context: Context): Long =
+    measureMemoryTierArgon2Ms(context, ARGON2_ULTRA_MEMORY_KB)
+
 /**
- * Standart (64 MiB / 3 tur) tabanindan yukari kademeli (64->128 MiB) kalibrasyon yapar.
+ * Standart (64 MiB / 3 tur) tabanindan yukari kademeli (64->128->256 MiB) kalibrasyon yapar.
  * NOT: Agir is oldugu icin arka planda cagrilmalidir.
  */
 internal fun CryptoManager.resolveArgon2Params(context: Context): Triple<Int, Int, Int> {
-    val maxHeapKb = (Runtime.getRuntime().maxMemory() / BYTES_PER_KIB).coerceAtLeast(1L)
+    val capabilities = deviceMemoryCapabilities(context)
     val std64Ms = measureStandardArgon2Ms(context)
     val (memoryKb, iterations, clamped) = calculateTieredArgon2Params(
         targetMs = context.config.unlockTargetMs,
         std64Ms = std64Ms,
-        maxHeapKb = maxHeapKb,
-        measure128Ms = { measureHighMemoryArgon2Ms(context) }
+        capabilities = capabilities,
+        measure128Ms = { measureHighMemoryArgon2Ms(context) },
+        measure256Ms = { measureUltraMemoryArgon2Ms(context) }
     )
     context.config.argon2CalibrationClamped = clamped
     context.config.lastCalibratedMemoryKb = memoryKb

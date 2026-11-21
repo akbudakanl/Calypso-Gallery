@@ -3,7 +3,9 @@ package org.fossify.gallery
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.helpers.ARGON2_HIGH_MEMORY_KB
 import org.fossify.gallery.helpers.ARGON2_MIN_MEMORY_KB
+import org.fossify.gallery.helpers.ARGON2_ULTRA_MEMORY_KB
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.DeviceMemoryCapabilities
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
 import org.fossify.gallery.helpers.deriveKeyArgon2id
@@ -75,84 +77,108 @@ class VaultHeaderFormatTest {
     }
 
     @Test
-    fun tieredCalibration_fastDevice_allowsSubSecondAndCapsMemoryAt128Mib() {
-        val maxHeapKb = 512L * 1024L
+    fun tieredCalibration_flagship64BitDevice_steps64To128To256Mib() {
+        val flagship = DeviceMemoryCapabilities(totalRamMib = 7_600L, is64Bit = true)
         val std64Ms = 450
 
-        val atFloor = calculateTieredArgon2Params(450, std64Ms, maxHeapKb)
+        val atFloor = calculateTieredArgon2Params(450, std64Ms, flagship)
         assertEquals(ARGON2_MIN_MEMORY_KB, atFloor.first)
         assertEquals(3, atFloor.second)
         assertFalse(atFloor.third)
 
-        val atSubSecond = calculateTieredArgon2Params(750, std64Ms, maxHeapKb)
+        val atSubSecond = calculateTieredArgon2Params(750, std64Ms, flagship)
         assertEquals(ARGON2_MIN_MEMORY_KB, atSubSecond.first)
         assertEquals(5, atSubSecond.second)
         assertFalse(atSubSecond.third)
 
-        val atHighTier = calculateTieredArgon2Params(1_500, std64Ms, maxHeapKb)
+        val atHighTier = calculateTieredArgon2Params(1_500, std64Ms, flagship)
         assertEquals(ARGON2_HIGH_MEMORY_KB, atHighTier.first)
         assertEquals(5, atHighTier.second)
         assertFalse(atHighTier.third)
 
-        val atMaxTarget = calculateTieredArgon2Params(7_000, std64Ms, maxHeapKb)
-        assertEquals(ARGON2_HIGH_MEMORY_KB, atMaxTarget.first)
-        assertEquals(23, atMaxTarget.second)
-        assertFalse(atMaxTarget.third)
+        val belowUltraThreshold = calculateTieredArgon2Params(2_900, std64Ms, flagship)
+        assertEquals(ARGON2_HIGH_MEMORY_KB, belowUltraThreshold.first)
+        assertEquals(10, belowUltraThreshold.second)
+        assertFalse(belowUltraThreshold.third)
 
-        val atTenSeconds = calculateTieredArgon2Params(10_000, std64Ms, maxHeapKb)
-        assertEquals(ARGON2_HIGH_MEMORY_KB, atTenSeconds.first)
-        assertEquals(33, atTenSeconds.second)
+        val atUltraThreshold = calculateTieredArgon2Params(3_000, std64Ms, flagship)
+        assertEquals(ARGON2_ULTRA_MEMORY_KB, atUltraThreshold.first)
+        assertEquals(5, atUltraThreshold.second)
+        assertFalse(atUltraThreshold.third)
+
+        val atUltraTier = calculateTieredArgon2Params(7_200, std64Ms, flagship)
+        assertEquals(ARGON2_ULTRA_MEMORY_KB, atUltraTier.first)
+        assertEquals(12, atUltraTier.second)
+        assertFalse(atUltraTier.third)
+
+        val atTenSeconds = calculateTieredArgon2Params(10_000, std64Ms, flagship)
+        assertEquals(ARGON2_ULTRA_MEMORY_KB, atTenSeconds.first)
+        assertEquals(17, atTenSeconds.second)
         assertFalse(atTenSeconds.third)
     }
 
     @Test
-    fun tieredCalibration_midRangeDevice_enforcesRfc9106FloorAndStepsTo128Mib() {
-        val maxHeapKb = 512L * 1024L
+    fun tieredCalibration_4GbAnd6Gb32BitDevices_capAutoMemoryAt128Mib() {
+        val fourGb64Bit = DeviceMemoryCapabilities(totalRamMib = 3_800L, is64Bit = true)
+        val sixGb32Bit = DeviceMemoryCapabilities(totalRamMib = 6_144L, is64Bit = false)
         val std64Ms = 2_400
 
-        val belowFloor = calculateTieredArgon2Params(1_000, std64Ms, maxHeapKb)
+        val belowFloor = calculateTieredArgon2Params(1_000, std64Ms, fourGb64Bit)
         assertEquals(ARGON2_MIN_MEMORY_KB, belowFloor.first)
         assertEquals(3, belowFloor.second)
         assertTrue(belowFloor.third)
 
-        val atMaxTarget = calculateTieredArgon2Params(7_000, std64Ms, maxHeapKb)
-        assertEquals(ARGON2_HIGH_MEMORY_KB, atMaxTarget.first)
-        assertEquals(4, atMaxTarget.second)
-        assertFalse(atMaxTarget.third)
+        val fourGbAtTenSec = calculateTieredArgon2Params(10_000, std64Ms, fourGb64Bit)
+        assertEquals(ARGON2_HIGH_MEMORY_KB, fourGbAtTenSec.first)
+        assertEquals(6, fourGbAtTenSec.second)
+        assertFalse(fourGbAtTenSec.third)
 
-        val atTenSeconds = calculateTieredArgon2Params(10_000, std64Ms, maxHeapKb)
-        assertEquals(ARGON2_HIGH_MEMORY_KB, atTenSeconds.first)
-        assertEquals(6, atTenSeconds.second)
-        assertFalse(atTenSeconds.third)
+        val thirtyTwoBitAtTenSec = calculateTieredArgon2Params(10_000, 450, sixGb32Bit)
+        assertEquals(ARGON2_HIGH_MEMORY_KB, thirtyTwoBitAtTenSec.first)
+        assertEquals(33, thirtyTwoBitAtTenSec.second)
+        assertFalse(thirtyTwoBitAtTenSec.third)
     }
 
     @Test
-    fun tieredCalibration_constrainedHeapOrOom_staysAt64MibAndScalesIterations() {
-        val constrainedHeapKb = 192L * 1024L
+    fun tieredCalibration_lowRamAndOomProbeFallback_stepsDown256To128To64Mib() {
+        val lowRam32Bit = DeviceMemoryCapabilities(totalRamMib = 1_024L, is64Bit = false)
+        val flagship = DeviceMemoryCapabilities(totalRamMib = 7_600L, is64Bit = true)
         val std64Ms = 450
 
-        val constrained = calculateTieredArgon2Params(7_000, std64Ms, constrainedHeapKb)
-        assertEquals(ARGON2_MIN_MEMORY_KB, constrained.first)
-        assertEquals(47, constrained.second)
-        assertTrue(constrained.third)
+        val lowRamTenSec = calculateTieredArgon2Params(10_000, std64Ms, lowRam32Bit)
+        assertEquals(ARGON2_MIN_MEMORY_KB, lowRamTenSec.first)
+        assertEquals(67, lowRamTenSec.second)
+        assertTrue(lowRamTenSec.third)
 
-        val constrainedTenSeconds = calculateTieredArgon2Params(10_000, std64Ms, constrainedHeapKb)
-        assertEquals(ARGON2_MIN_MEMORY_KB, constrainedTenSeconds.first)
-        assertEquals(67, constrainedTenSeconds.second)
-        assertTrue(constrainedTenSeconds.third)
+        val ultraOomFallback = calculateTieredArgon2Params(
+            targetMs = 10_000,
+            std64Ms = std64Ms,
+            capabilities = flagship,
+            measure128Ms = { 900L },
+            measure256Ms = { -1L }
+        )
+        assertEquals(ARGON2_HIGH_MEMORY_KB, ultraOomFallback.first)
+        assertEquals(33, ultraOomFallback.second)
+        assertTrue(ultraOomFallback.third)
 
-        val oomFallback = calculateTieredArgon2Params(10_000, std64Ms, 512L * 1024L) { -1L }
-        assertEquals(ARGON2_MIN_MEMORY_KB, oomFallback.first)
-        assertEquals(67, oomFallback.second)
-        assertTrue(oomFallback.third)
+        val fullOomFallback = calculateTieredArgon2Params(
+            targetMs = 10_000,
+            std64Ms = std64Ms,
+            capabilities = flagship,
+            measure128Ms = { -1L },
+            measure256Ms = { -1L }
+        )
+        assertEquals(ARGON2_MIN_MEMORY_KB, fullOomFallback.first)
+        assertEquals(67, fullOomFallback.second)
+        assertTrue(fullOomFallback.third)
     }
 
     @Test
     fun estimateVaultUnlockMs_roundTripsCalibratedParamsAndHandlesSlowerDevice() {
         val fastStd64Ms = 450
-        val maxHeapKb = 512L * 1024L
+        val flagship = DeviceMemoryCapabilities(totalRamMib = 7_600L, is64Bit = true)
 
-        val subSecond = calculateTieredArgon2Params(750, fastStd64Ms, maxHeapKb)
+        val subSecond = calculateTieredArgon2Params(750, fastStd64Ms, flagship)
         assertEquals(
             750,
             estimateVaultUnlockMs(
@@ -161,7 +187,7 @@ class VaultHeaderFormatTest {
             )
         )
 
-        val highTier = calculateTieredArgon2Params(1_500, fastStd64Ms, maxHeapKb)
+        val highTier = calculateTieredArgon2Params(1_500, fastStd64Ms, flagship)
         assertEquals(
             1_500,
             estimateVaultUnlockMs(
@@ -170,7 +196,16 @@ class VaultHeaderFormatTest {
             )
         )
 
-        // Same portable vault params, but the new device is ~5x slower at the 64 MiB floor.
+        val ultraTier = calculateTieredArgon2Params(7_200, fastStd64Ms, flagship)
+        assertEquals(
+            7_200,
+            estimateVaultUnlockMs(
+                fastStd64Ms,
+                VaultKdfParams(ARGON2_ULTRA_MEMORY_KB, ultraTier.second, 2)
+            )
+        )
+
+        // Same portable vault params, but the new device is slower at the 64 MiB floor.
         val slowDeviceEstimate = estimateVaultUnlockMs(
             2_400,
             VaultKdfParams(ARGON2_HIGH_MEMORY_KB, highTier.second, 2)
@@ -182,6 +217,7 @@ class VaultHeaderFormatTest {
     fun highIterationVaultHeader_roundTripsAboveTenIterations() {
         verifyHeaderRoundTrip(memoryKb = ARGON2_MIN_MEMORY_KB, iterations = 45)
         verifyHeaderRoundTrip(memoryKb = ARGON2_HIGH_MEMORY_KB, iterations = 15)
+        verifyHeaderRoundTrip(memoryKb = ARGON2_ULTRA_MEMORY_KB, iterations = 4)
     }
 
     private fun verifyHeaderRoundTrip(memoryKb: Int, iterations: Int) {

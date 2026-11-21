@@ -142,9 +142,9 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             R.string.license_tink_url,
         ),
         ThirdPartyLicenseItem(
-            R.string.license_bouncycastle_title,
-            R.string.license_bouncycastle_text,
-            R.string.license_bouncycastle_url,
+            R.string.license_rustcrypto_argon2_title,
+            R.string.license_rustcrypto_argon2_text,
+            R.string.license_rustcrypto_argon2_url,
         ),
         ThirdPartyLicenseItem(
             org.fossify.commons.R.string.subsampling_title,
@@ -180,11 +180,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.pattern_title,
             org.fossify.commons.R.string.pattern_text,
             org.fossify.commons.R.string.pattern_url,
-        ),
-        ThirdPartyLicenseItem(
-            org.fossify.commons.R.string.reprint_title,
-            org.fossify.commons.R.string.reprint_text,
-            org.fossify.commons.R.string.reprint_url,
         ),
         ThirdPartyLicenseItem(
             org.fossify.commons.R.string.gif_drawable_title,

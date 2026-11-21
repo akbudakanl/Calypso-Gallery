@@ -250,6 +250,11 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(CACHED_STD_ARGON2_MS, 0)
         set(value) = prefs.edit().putInt(CACHED_STD_ARGON2_MS, value.coerceAtLeast(0)).apply()
 
+    /** Active KDF engine version (0 = legacy BouncyCastle, 1 = Rust native Argon2id). */
+    var kdfEngineVersion: Int
+        get() = prefs.getInt(KDF_ENGINE_VERSION, 0)
+        set(value) = prefs.edit().putInt(KDF_ENGINE_VERSION, value).apply()
+
     /**
      * Mevcut kasanin BU cihazda gercek unlock sirasinda olculen KDF suresi (ms).
      * Cihaza/oturuma ozgudur; ayar disa aktarimina dahil edilmez, yeniden yukleme veya

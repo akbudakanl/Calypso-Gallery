@@ -21,6 +21,7 @@ const val ARGON2_CALIBRATION_CLAMPED = "argon2_calibration_clamped"
 const val LAST_CALIBRATED_MEMORY_KB = "last_calibrated_memory_kb"
 const val LAST_CALIBRATED_ITERATIONS = "last_calibrated_iterations"
 const val CACHED_STD_ARGON2_MS = "cached_std_argon2_ms"
+const val KDF_ENGINE_VERSION = "kdf_engine_version"
 const val VAULT_UNLOCK_MEASURED_MS = "vault_unlock_measured_ms"
 const val HAS_SHOWN_VAULT_IMPORT_INFO = "has_shown_vault_import_info"
 const val VAULT_EXIT_DOUBLE_BACK_WINDOW_MS = 2000L

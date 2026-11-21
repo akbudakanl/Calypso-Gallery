@@ -17,3 +17,4 @@ fastlane/report.xml
 .kotlin/
 __pycache__/
 *.pyc
+rust/*/target/

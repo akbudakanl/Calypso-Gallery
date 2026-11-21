@@ -5,6 +5,21 @@ import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationParameters
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.api.variant.FilterConfiguration
+import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.properties.Properties
@@ -16,6 +31,7 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.TypePath
 import java.io.FileInputStream
+import javax.inject.Inject
 
 plugins {
     alias(libs.plugins.android)
@@ -114,6 +130,9 @@ android {
 
     sourceSets {
         getByName("main").java.directories.add("src/main/kotlin")
+        getByName("main").jniLibs.directories.add(
+            layout.buildDirectory.dir("generated/rustJniLibs").get().asFile.absolutePath
+        )
     }
 
     compileOptions {
@@ -230,8 +249,8 @@ dependencies {
     implementation(libs.avif)
     implementation(libs.avif.integration)
     implementation(libs.jxl.integration)
-    implementation(libs.bouncycastle.bcprov)
     implementation(libs.tink.android)
+    testImplementation(libs.bouncycastle.bcprov)
 
     ksp(libs.glide.compiler)
     implementation(libs.zjupure.webpdecoder)
@@ -240,6 +259,216 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     detektPlugins(libs.compose.detekt)
     testImplementation("junit:junit:4.13.2")
+}
+
+fun resolveCargoExecutable(): String {
+    val exeName = if (Os.isFamily(Os.FAMILY_WINDOWS)) "cargo.exe" else "cargo"
+    val pathEntries = System.getenv("PATH").orEmpty().split(File.pathSeparator)
+    for (entry in pathEntries) {
+        if (entry.isBlank()) continue
+        val candidate = File(entry, exeName)
+        if (candidate.isFile) return candidate.absolutePath
+    }
+    val userCargo = File(System.getProperty("user.home"), ".cargo/bin/$exeName")
+    if (userCargo.isFile) return userCargo.absolutePath
+    error("Cargo executable not found in PATH or ${userCargo.absolutePath}")
+}
+
+fun resolveNdkPrebuiltBinDir(rootDir: File): String {
+    val hostTag = when {
+        Os.isFamily(Os.FAMILY_WINDOWS) -> "windows-x86_64"
+        Os.isFamily(Os.FAMILY_MAC) -> "darwin-x86_64"
+        else -> "linux-x86_64"
+    }
+    fun prebuiltBin(ndkDir: File): File = File(ndkDir, "toolchains/llvm/prebuilt/$hostTag/bin")
+
+    val envNdk = listOf("ANDROID_NDK_HOME", "ANDROID_NDK_ROOT")
+        .mapNotNull { System.getenv(it)?.takeIf(String::isNotBlank) }
+        .map(::File)
+        .firstOrNull { prebuiltBin(it).isDirectory }
+    if (envNdk != null) return prebuiltBin(envNdk).absolutePath
+
+    val localPropsFile = File(rootDir, "local.properties")
+    val localSdk = if (localPropsFile.isFile) {
+        Properties().apply { FileInputStream(localPropsFile).use(::load) }.getProperty("sdk.dir")
+    } else {
+        null
+    }
+    val sdkDir = listOfNotNull(
+        localSdk,
+        System.getenv("ANDROID_HOME"),
+        System.getenv("ANDROID_SDK_ROOT")
+    ).map(::File).firstOrNull { it.isDirectory }
+        ?: error("Android SDK directory not found; cannot locate Android NDK.")
+
+    val ndkRoot = File(sdkDir, "ndk")
+    val selectedNdk = ndkRoot.listFiles()
+        ?.filter { it.isDirectory && prebuiltBin(it).isDirectory }
+        ?.maxWithOrNull(compareBy { dir ->
+            dir.name.split('.').map { it.toIntOrNull() ?: 0 }.let { parts ->
+                val major = parts.getOrElse(0) { 0 }.toLong()
+                val minor = parts.getOrElse(1) { 0 }.toLong()
+                val patch = parts.getOrElse(2) { 0 }.toLong()
+                (major shl 32) or (minor shl 16) or patch
+            }
+        })
+        ?: error("No Android NDK found under ${ndkRoot.absolutePath} (expected prebuilt/$hostTag).")
+    return prebuiltBin(selectedNdk).absolutePath
+}
+
+abstract class BuildRustArgon2AndroidTask : DefaultTask() {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val rustSources: ConfigurableFileCollection
+
+    @get:Input
+    abstract val rustProjectPath: Property<String>
+
+    @get:Input
+    abstract val cargoExecutable: Property<String>
+
+    @get:Input
+    abstract val ndkPrebuiltBinDir: Property<String>
+
+    @get:Input
+    abstract val clangSuffix: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun build() {
+        val cargo = cargoExecutable.get()
+        val cargoBinDir = File(cargo).parentFile?.absolutePath
+        val ndkBin = File(ndkPrebuiltBinDir.get())
+        val suffix = clangSuffix.get()
+        val rustDir = File(rustProjectPath.get())
+        val outRoot = outputDir.get().asFile
+        outRoot.deleteRecursively()
+        outRoot.mkdirs()
+
+        val abiTargets = listOf(
+            Triple("arm64-v8a", "aarch64-linux-android", "aarch64-linux-android26-clang"),
+            Triple("armeabi-v7a", "armv7-linux-androideabi", "armv7a-linux-androideabi26-clang"),
+            Triple("x86", "i686-linux-android", "i686-linux-android26-clang"),
+            Triple("x86_64", "x86_64-linux-android", "x86_64-linux-android26-clang")
+        )
+
+        for ((abi, triple, clangName) in abiTargets) {
+            val clangFile = File(ndkBin, "$clangName$suffix")
+            check(clangFile.exists()) {
+                "Android NDK clang wrapper not found at ${clangFile.absolutePath}"
+            }
+            val envKey = triple.uppercase().replace('-', '_')
+            execOperations.exec {
+                workingDir = rustDir
+                commandLine(cargo, "build", "--release", "--locked", "--target", triple)
+                environment.remove("CARGO_BUILD_TARGET")
+                if (!cargoBinDir.isNullOrBlank()) {
+                    val curPath = System.getenv("PATH").orEmpty()
+                    environment("PATH", "$cargoBinDir${File.pathSeparator}$curPath")
+                }
+                environment("CARGO_TARGET_${envKey}_LINKER", clangFile.absolutePath)
+                environment("CARGO_TARGET_${envKey}_RUSTFLAGS", "-C link-arg=-Wl,-z,max-page-size=16384")
+            }
+            val builtSo = File(rustDir, "target/$triple/release/libcalypso_argon2.so")
+            check(builtSo.exists()) {
+                "Expected Rust library not produced at ${builtSo.absolutePath}"
+            }
+            val destDir = File(outRoot, abi).apply { mkdirs() }
+            builtSo.copyTo(File(destDir, "libcalypso_argon2.so"), overwrite = true)
+        }
+    }
+}
+
+abstract class BuildRustArgon2HostTask : DefaultTask() {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val rustSources: ConfigurableFileCollection
+
+    @get:Input
+    abstract val rustProjectPath: Property<String>
+
+    @get:Input
+    abstract val cargoExecutable: Property<String>
+
+    @get:Input
+    abstract val windowsHost: Property<Boolean>
+
+    @get:OutputFile
+    abstract val outputLib: RegularFileProperty
+
+    @TaskAction
+    fun build() {
+        val cargo = cargoExecutable.get()
+        val cargoBinDir = File(cargo).parentFile?.absolutePath
+        val rustDir = File(rustProjectPath.get())
+        execOperations.exec {
+            workingDir = rustDir
+            commandLine(cargo, "build", "--release", "--locked")
+            environment.remove("CARGO_BUILD_TARGET")
+            if (!cargoBinDir.isNullOrBlank()) {
+                val curPath = System.getenv("PATH").orEmpty()
+                environment("PATH", "$cargoBinDir${File.pathSeparator}$curPath")
+            }
+            if (windowsHost.get()) {
+                environment("CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUSTFLAGS", "-C link-arg=-static-libgcc")
+            }
+        }
+        check(outputLib.get().asFile.exists()) {
+            "Expected host Rust library not produced at ${outputLib.get().asFile.absolutePath}"
+        }
+    }
+}
+
+val rustArgon2Dir = rootProject.file("rust/calypso-argon2")
+val rustArgon2Sources = files(
+    File(rustArgon2Dir, "Cargo.toml"),
+    File(rustArgon2Dir, "Cargo.lock"),
+    fileTree(File(rustArgon2Dir, "src"))
+)
+
+val buildRustArgon2Android = tasks.register<BuildRustArgon2AndroidTask>("buildRustArgon2Android") {
+    rustSources.from(rustArgon2Sources)
+    rustProjectPath.set(rustArgon2Dir.absolutePath)
+    cargoExecutable.set(providers.provider { resolveCargoExecutable() })
+    ndkPrebuiltBinDir.set(providers.provider { resolveNdkPrebuiltBinDir(rootProject.rootDir) })
+    clangSuffix.set(if (Os.isFamily(Os.FAMILY_WINDOWS)) ".cmd" else "")
+    outputDir.set(layout.buildDirectory.dir("generated/rustJniLibs"))
+}
+
+val hostRustLibName = when {
+    Os.isFamily(Os.FAMILY_WINDOWS) -> "calypso_argon2.dll"
+    Os.isFamily(Os.FAMILY_MAC) -> "libcalypso_argon2.dylib"
+    else -> "libcalypso_argon2.so"
+}
+
+val buildRustArgon2Host = tasks.register<BuildRustArgon2HostTask>("buildRustArgon2Host") {
+    rustSources.from(rustArgon2Sources)
+    rustProjectPath.set(rustArgon2Dir.absolutePath)
+    cargoExecutable.set(providers.provider { resolveCargoExecutable() })
+    windowsHost.set(Os.isFamily(Os.FAMILY_WINDOWS))
+    outputLib.set(File(rustArgon2Dir, "target/release/$hostRustLibName"))
+}
+
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
+    dependsOn(buildRustArgon2Android)
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(buildRustArgon2Host)
+    val hostLibDir = File(rustArgon2Dir, "target/release").absolutePath
+    val existingPath = System.getProperty("java.library.path")
+    systemProperty(
+        "java.library.path",
+        if (existingPath.isNullOrBlank()) hostLibDir else "$hostLibDir${File.pathSeparator}$existingPath"
+    )
 }
 
 abstract class NeutralizeCommonsFakeChecksVisitorFactory :
