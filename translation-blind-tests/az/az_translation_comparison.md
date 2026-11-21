@@ -135,7 +135,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 32 | 32 | `secret_vault` | Encrypted Vault |  |
 | 33 | 33 | `secret_vault_empty` | Encrypted Vault is empty |  |
 | - | - | `press_back_again_to_exit_vault` | Press back again to exit | Toast shown on first back press in hidden vault |
-| - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
+| - | - | `block_vault_screenshots` | Block screenshots in encrypted vault | Settings switch (default ON) blocking screenshots in encrypted vault |
 | 34 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? |  |
 | 35 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. |  |
 | 36 | 44 | `open_system_language_settings` | Open system language settings |  |
@@ -521,7 +521,7 @@ Following the previous audit, 22 additional keys were localized in `values-az/st
 | 295 | `secret_vault` | Encrypted Vault | Şifrəli Seyf |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | Şifrəli Seyf boşdur |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | Çıxmaq üçün geri düyməsini yenidən basın |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | Gizli seyfdə ekran görüntüsü çəkməyi qadağan et |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | Şifrəli seyfdə ekran görüntüsü çəkməyi qadağan et |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Gizli faylın(ların) şifrəsini açmaq istədiyinizə əminsiniz? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Təhlükəsizlik məqsədilə seyf açıq olarkən mübadilə buferinə kopyalama deaktiv edilib. |
 | 299 | `stop_showing_hidden` | Stop showing encrypted media | Şifrələnmiş medianı göstərməyi dayandır |
@@ -959,7 +959,7 @@ Added/updated in `values-az/strings.xml`. Archive moves the old vault; export co
 
 | # | Key (`name`) | English | Azerbaijani |
 |--:|---|---|---|
-| 1 | `archive_vault` | Archive vault | Kasayı arşivle |
+| 1 | `archive_vault` | Archive encrypted vault | Şifrəli seyfi arşivlə |
 | 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur |
 | 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | Mevcut kasa arşive taşınacak, varsayılan konumda yeni kasa oluşturulacak. Hiçbir şey silinmez. Kasayı başka cihazda kullanmak için Şifreli kasayı dışa aktar seçeneğini kullanın; bu kopyalar, mevcut kasa yerinde kalır. |
 | 4 | `archive_vault_success` | Vault archived. Location: %1$s | Kasa arşivlendi. Konum: %1$s |

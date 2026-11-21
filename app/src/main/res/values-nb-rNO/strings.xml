@@ -397,7 +397,7 @@
     <string name="change_encrypted_vault_password">Endre passord for kryptert hvelv</string>
     <string name="biometric_access_to_encrypted_vault">Biometrisk tilgang til kryptert hvelv</string>
     <string name="auto_biometric_prompt_on_vault_return">Vis biometrisk bekreftelse automatisk når du går tilbake til appen</string>
-    <string name="block_vault_screenshots">Blokker skjermbilder i det skjulte hvelvet</string>
+    <string name="block_vault_screenshots">Blokker skjermbilder i det krypterte hvelvet</string>
     <string name="empty_encrypted_vault">Nullstill kryptert hvelv</string>
     <string name="enter_new_pin">Skriv inn ny PIN</string>
     <string name="repeat_new_pin">Gjenta ny PIN</string>
@@ -679,7 +679,7 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av hvelvpassord</string>
     <string name="show_pin_dots">Vis én prikk for hvert siffer når PIN-koden tastes inn</string>
-<string name="archive_vault">Arkiver hvelv</string>
+<string name="archive_vault">Arkiver kryptert hvelv</string>
     <string name="archive_vault_summary">Flytter det gamle hvelvet til arkivet og lager et nytt</string>
     <string name="archive_vault_confirm">Det nåværende hvelvet flyttes til arkivet og et nytt opprettes på standardstedet. Ingenting slettes. For bruk på en annen enhet, bruk Eksporter kryptert hvelv — det kopierer og hvelvet blir liggende.</string>
     <string name="archive_vault_success">Hvelvet er arkivert. Plassering: %1$s</string>

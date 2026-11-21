@@ -386,7 +386,7 @@
     <string name="change_encrypted_vault_password">Cambiar contraseña de la bóveda cifrada</string>
     <string name="biometric_access_to_encrypted_vault">Acceso biométrico a la bóveda cifrada</string>
     <string name="auto_biometric_prompt_on_vault_return">Mostrar automáticamente la solicitud biométrica al volver a la aplicación</string>
-    <string name="block_vault_screenshots">Bloquear capturas de pantalla en la bóveda oculta</string>
+    <string name="block_vault_screenshots">Bloquear capturas de pantalla en la bóveda cifrada</string>
     <string name="empty_encrypted_vault">Restablecer bóveda cifrada</string>
     <string name="enter_new_pin">Ingrese el nuevo PIN</string>
     <string name="repeat_new_pin">Repita el nuevo PIN</string>
@@ -665,7 +665,7 @@
     <string name="use_biometrics">Usar biometría</string>
     <string name="hide_vault_key_presses">Ocultar las pulsaciones al introducir la contraseña de la bóveda</string>
     <string name="show_pin_dots">Mostrar un punto por cada dígito al introducir el PIN</string>
-<string name="archive_vault">Archivar bóveda</string>
+<string name="archive_vault">Archivar bóveda cifrada</string>
     <string name="archive_vault_summary">Mueve la bóveda antigua al archivo y crea una nueva</string>
     <string name="archive_vault_confirm">La bóveda actual se moverá al archivo y se creará una nueva en la ubicación predeterminada. No se elimina nada. Para usarla en otro dispositivo, use Exportar bóveda cifrada: copia los archivos y la bóveda actual permanece.</string>
     <string name="archive_vault_success">Bóveda archivada. Ubicación: %1$s</string>

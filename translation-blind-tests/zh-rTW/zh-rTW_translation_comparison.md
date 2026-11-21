@@ -107,7 +107,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 32 | `secret_vault` | Encrypted Vault | 加密保險箱 | Vault feature title |
 | 33 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 | Empty state placeholder for Encrypted Vault |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | 再按一次返回鍵即可離開 | Toast shown on first back press in hidden vault |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 | Settings switch (default ON) blocking screenshots in hidden vault |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | 禁止在加密保險箱中擷取螢幕截圖 | Settings switch (default ON) blocking screenshots in encrypted vault |
 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ | Confirmation prompt for decrypting hidden file(s) |
 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 | Security notice using `剪貼簿` matching `fossify-commons` |
 | 36 | `open_system_language_settings` | Open system language settings | 開啟系統語言設定 | Neutral dialog button in language picker |
@@ -538,7 +538,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 295 | `secret_vault` | Encrypted Vault | 加密保險箱 |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | 加密保險箱為空 |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | 再按一次返回鍵即可離開 |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | 禁止在隱藏保險箱中擷取螢幕截圖 |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | 禁止在加密保險箱中擷取螢幕截圖 |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | 確定要解密隱藏的檔案嗎？ |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | 基於安全考量，保險箱解鎖期間已停用複製到剪貼簿功能。 |
 | 299 | `stop_showing_hidden` | Stop showing encrypted media | 停止顯示已加密媒體 |
@@ -970,7 +970,7 @@ Added/updated in `values-zh-rTW/strings.xml`. Archive moves the old vault; expor
 
 | # | Key (`name`) | English | Traditional Chinese (Taiwan) |
 |--:|---|---|---|
-| 1 | `archive_vault` | Archive vault | 封存保險箱 |
+| 1 | `archive_vault` | Archive encrypted vault | 封存加密保險箱 |
 | 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | 將舊保險箱移至封存區並建立新保險箱 |
 | 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | 目前保險箱將移至封存區，並在預設位置建立新保險箱。不會刪除任何內容。若要在其他裝置使用，請使用「匯出加密保險箱」；該操作會複製檔案，原保險箱仍保留。 |
 | 4 | `archive_vault_success` | Vault archived. Location: %1$s | 保險箱已封存。位置：%1$s |

@@ -384,7 +384,7 @@
     <string name="change_encrypted_vault_password">Passwort des verschlüsselten Tresors ändern</string>
     <string name="biometric_access_to_encrypted_vault">Biometrischer Zugriff auf den verschlüsselten Tresor</string>
     <string name="auto_biometric_prompt_on_vault_return">Biometrische Abfrage bei Rückkehr zur App automatisch anzeigen</string>
-    <string name="block_vault_screenshots">Screenshots im versteckten Tresor blockieren</string>
+    <string name="block_vault_screenshots">Screenshots im verschlüsselten Tresor blockieren</string>
     <string name="empty_encrypted_vault">Verschlüsselten Tresor zurücksetzen</string>
     <string name="enter_new_pin">Neue PIN eingeben</string>
     <string name="repeat_new_pin">Neue PIN wiederholen</string>
@@ -662,7 +662,7 @@
     <string name="use_biometrics">Biometrie verwenden</string>
     <string name="hide_vault_key_presses">Tastendrücke bei der Tresor-Passworteingabe ausblenden</string>
     <string name="show_pin_dots">Bei der PIN-Eingabe für jede Ziffer einen Punkt anzeigen</string>
-<string name="archive_vault">Tresor archivieren</string>
+<string name="archive_vault">Verschlüsselten Tresor archivieren</string>
     <string name="archive_vault_summary">Verschiebt den alten Tresor ins Archiv und erstellt einen neuen</string>
     <string name="archive_vault_confirm">Der aktuelle Tresor wird ins Archiv verschoben und ein neuer am Standardort erstellt. Nichts wird gelöscht. Für ein anderes Gerät nutzen Sie „Verschlüsselten Tresor exportieren“ — dabei wird kopiert, der aktuelle Tresor bleibt.</string>
     <string name="archive_vault_success">Tresor archiviert. Speicherort: %1$s</string>

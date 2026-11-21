@@ -408,7 +408,7 @@
     <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — bu işlem kasayı yerinden çıkarmaz.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturup geri yükleyin.\n\nBiyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni bir kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki kasa klasörünü dosya yöneticisiyle silebilirsiniz (geri alınamaz).</string>
 
     <!-- Kasa arşivleme (ADR 0007): arşivleme taşır, dışa aktarma kopyalar, silme dosya yöneticisindedir. -->
-    <string name="archive_vault">Kasayı arşivle</string>
+    <string name="archive_vault">Şifreli kasayı arşivle</string>
     <string name="archive_vault_summary">Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur</string>
     <string name="archive_total_size_title">Arşiv depolama alanı</string>
     <string name="archive_total_size">Arşivlenen kasaların toplam boyutu: %1$s</string>
@@ -539,7 +539,7 @@
     <string name="change_encrypted_vault_password">Şifreli kasa parolasını değiştir</string>
     <string name="biometric_access_to_encrypted_vault">Şifreli kasaya biyometrik ile giriş</string>
     <string name="auto_biometric_prompt_on_vault_return">Uygulamaya dönerken biyometrik doğrulamayı otomatik aç</string>
-    <string name="block_vault_screenshots">Gizli kasada ekran görüntüsü almayı yasakla</string>
+    <string name="block_vault_screenshots">Şifreli kasada ekran görüntüsü almayı yasakla</string>
     <string name="empty_encrypted_vault">Şifreli kasayı sıfırla</string>
     <string name="enter_new_pin">Yeni PIN\'i girin</string>
     <string name="repeat_new_pin">Yeni PIN\'i tekrarlayın</string>

@@ -150,7 +150,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 32 | 32 | `secret_vault` | Encrypted Vault |  |
 | 33 | 33 | `secret_vault_empty` | Encrypted Vault is empty |  |
 | - | - | `press_back_again_to_exit_vault` | Press back again to exit | Toast shown on first back press in hidden vault |
-| - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
+| - | - | `block_vault_screenshots` | Block screenshots in encrypted vault | Settings switch (default ON) blocking screenshots in encrypted vault |
 | 34 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? |  |
 | 35 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. |  |
 | 36 | 44 | `open_system_language_settings` | Open system language settings |  |
@@ -536,7 +536,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 295 | `secret_vault` | Encrypted Vault | Kryptert kvelv |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | Det krypterte kvelvet er tomt |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | Trykk tilbake igjen for å avslutta |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | Blokker skjermbilete i det skjulte kvelvet |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | Blokker skjermbilete i det krypterte kvelvet |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Er du sikker på at du vil dekryptera den/dei skjulte fila/filene? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Kopiering til utklippstavla er deaktivert av tryggleiksomsyn medan kvelvet er låst opp. |
 | 299 | `stop_showing_hidden` | Stop showing encrypted media | Slutt å syna krypterte medium |
@@ -977,7 +977,7 @@ Added/updated in `values-nn/strings.xml`. Archive moves the old vault; export co
 
 | # | Key (`name`) | English | Norwegian Nynorsk |
 |--:|---|---|---|
-| 1 | `archive_vault` | Archive vault | Arkiver kvelv |
+| 1 | `archive_vault` | Archive encrypted vault | Arkiver kryptert kvelv |
 | 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | Flyttar det gamle kvelvet til arkivet og lagar eit nytt |
 | 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | Det noverande kvelvet blir flytta til arkivet og eit nytt blir laga på standardstaden. Ingenting blir sletta. For bruk på ein annan eining, bruk Eksporter kryptert kvelv — det kopierer og kvelvet blir liggjande. |
 | 4 | `archive_vault_success` | Vault archived. Location: %1$s | Kvelvet er arkivert. Plassering: %1$s |

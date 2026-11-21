@@ -450,7 +450,7 @@
     <string name="change_encrypted_vault_password">Şifrəli seyfin parolunu dəyiş</string>
     <string name="biometric_access_to_encrypted_vault">Şifrəli seyfə biometrik ilə giriş</string>
     <string name="auto_biometric_prompt_on_vault_return">Tətbiqə qayıdarkən biometrik doğrulamanı avtomatik aç</string>
-    <string name="block_vault_screenshots">Gizli seyfdə ekran görüntüsü çəkməyi qadağan et</string>
+    <string name="block_vault_screenshots">Şifrəli seyfdə ekran görüntüsü çəkməyi qadağan et</string>
     <string name="empty_encrypted_vault">Şifrəli seyfi sıfırla</string>
     <string name="enter_new_pin">Yeni PIN daxil edin</string>
     <string name="repeat_new_pin">Yeni PIN-i təkrarlayın</string>
@@ -733,7 +733,7 @@
     <string name="use_biometrics">Biometriyadan istifadə et</string>
     <string name="hide_vault_key_presses">Kassa parolunu daxil edərkən düymə basışlarını gizlət</string>
     <string name="show_pin_dots">PIN daxil edərkən hər rəqəm üçün bir nöqtə göstər</string>
-<string name="archive_vault">Kasayı arşivle</string>
+<string name="archive_vault">Şifrəli seyfi arşivlə</string>
     <string name="archive_vault_summary">Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur</string>
     <string name="archive_vault_confirm">Mevcut kasa arşive taşınacak, varsayılan konumda yeni kasa oluşturulacak. Hiçbir şey silinmez. Kasayı başka cihazda kullanmak için Şifreli kasayı dışa aktar seçeneğini kullanın; bu kopyalar, mevcut kasa yerinde kalır.</string>
     <string name="archive_vault_success">Kasa arşivlendi. Konum: %1$s</string>

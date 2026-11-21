@@ -463,7 +463,7 @@
     <string name="vault_password_reminder_forgot_steps">1. Unlock the vault with biometrics.\n2. Copy (export) your encrypted data — this does not move the vault.\n3. Settings → Reset encrypted vault to set a new password and restore.\n\nIf biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone).</string>
 
     <!-- Vault archival (ADR 0007): archive moves, export copies, deletion is file-manager only. -->
-    <string name="archive_vault">Archive vault</string>
+    <string name="archive_vault">Archive encrypted vault</string>
     <string name="archive_vault_summary">Moves the old vault to the archive and creates a new one</string>
     <string name="archive_vault_confirm">The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is.</string>
     <string name="archive_total_size_title">Archive storage</string>
@@ -595,7 +595,7 @@
     <string name="change_encrypted_vault_password">Change encrypted vault password</string>
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>
     <string name="auto_biometric_prompt_on_vault_return">Automatically show biometric prompt when returning to app</string>
-    <string name="block_vault_screenshots">Block screenshots in hidden vault</string>
+    <string name="block_vault_screenshots">Block screenshots in encrypted vault</string>
     <string name="empty_encrypted_vault">Reset encrypted vault</string>
     <string name="enter_new_pin">Enter new PIN</string>
     <string name="repeat_new_pin">Repeat new PIN</string>

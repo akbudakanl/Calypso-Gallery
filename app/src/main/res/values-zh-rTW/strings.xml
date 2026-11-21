@@ -382,7 +382,7 @@
     <string name="change_encrypted_vault_password">變更加密保險箱密碼</string>
     <string name="biometric_access_to_encrypted_vault">透過生物辨識存取加密保險箱</string>
     <string name="auto_biometric_prompt_on_vault_return">返回應用程式時自動顯示生物辨識提示</string>
-    <string name="block_vault_screenshots">禁止在隱藏保險箱中擷取螢幕截圖</string>
+    <string name="block_vault_screenshots">禁止在加密保險箱中擷取螢幕截圖</string>
     <string name="empty_encrypted_vault">重設加密保險箱</string>
     <string name="enter_new_pin">輸入新 PIN</string>
     <string name="repeat_new_pin">再次輸入新 PIN</string>
@@ -659,7 +659,7 @@
     <string name="use_biometrics">使用生物辨識</string>
     <string name="hide_vault_key_presses">輸入保險庫密碼時隱藏按鍵回饋</string>
     <string name="show_pin_dots">輸入 PIN 時，每位數字顯示一個圓點</string>
-    <string name="archive_vault">封存保險箱</string>
+    <string name="archive_vault">封存加密保險箱</string>
     <string name="archive_vault_summary">將舊保險箱移至封存區並建立新保險箱</string>
     <string name="archive_vault_confirm">目前保險箱將移至封存區，並在預設位置建立新保險箱。不會刪除任何內容。若要在其他裝置使用，請使用「匯出加密保險箱」；該操作會複製檔案，原保險箱仍保留。</string>
     <string name="archive_vault_success">保險箱已封存。位置：%1$s</string>

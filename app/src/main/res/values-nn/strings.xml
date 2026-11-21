@@ -451,7 +451,7 @@
     <string name="change_encrypted_vault_password">Endre passord for kryptert kvelv</string>
     <string name="biometric_access_to_encrypted_vault">Biometrisk tilgang til kryptert kvelv</string>
     <string name="auto_biometric_prompt_on_vault_return">Vis biometrisk stadfesting automatisk når du går tilbake til appen</string>
-    <string name="block_vault_screenshots">Blokker skjermbilete i det skjulte kvelvet</string>
+    <string name="block_vault_screenshots">Blokker skjermbilete i det krypterte kvelvet</string>
     <string name="empty_encrypted_vault">Nullstill kryptert kvelv</string>
     <string name="enter_new_pin">Skriv inn ny PIN</string>
     <string name="repeat_new_pin">Gjenta ny PIN</string>
@@ -736,7 +736,7 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av kvelvpassord</string>
     <string name="show_pin_dots">Vis ein prikk for kvart siffer når PIN-koden blir skriven inn</string>
-<string name="archive_vault">Arkiver kvelv</string>
+<string name="archive_vault">Arkiver kryptert kvelv</string>
     <string name="archive_vault_summary">Flyttar det gamle kvelvet til arkivet og lagar eit nytt</string>
     <string name="archive_vault_confirm">Det noverande kvelvet blir flytta til arkivet og eit nytt blir laga på standardstaden. Ingenting blir sletta. For bruk på ein annan eining, bruk Eksporter kryptert kvelv — det kopierer og kvelvet blir liggjande.</string>
     <string name="archive_vault_success">Kvelvet er arkivert. Plassering: %1$s</string>

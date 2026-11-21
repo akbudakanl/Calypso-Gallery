@@ -120,7 +120,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 32 | `secret_vault` | Encrypted Vault | Bóveda cifrada | Vault section title |
 | 33 | `secret_vault_empty` | Encrypted Vault is empty | La bóveda cifrada está vacía | Empty state message |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | Pulsa atrás de nuevo para salir | Toast shown on first back press in hidden vault |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | Bloquear capturas de pantalla en la bóveda oculta | Settings switch (default ON) blocking screenshots in hidden vault |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | Bloquear capturas de pantalla en la bóveda cifrada | Settings switch (default ON) blocking screenshots in encrypted vault |
 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | ¿Está seguro de que desea descifrar los archivos ocultos? | Decryption confirmation (`usted` register) |
 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada. | Clipboard security notice |
 | 36 | `open_system_language_settings` | Open system language settings | Abrir ajustes de idioma del sistema | Uses `ajustes` for `es` |
@@ -538,7 +538,7 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 295 | `secret_vault` | Encrypted Vault | Bóveda cifrada |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | La bóveda cifrada está vacía |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | Pulsa atrás de nuevo para salir |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | Bloquear capturas de pantalla en la bóveda oculta |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | Bloquear capturas de pantalla en la bóveda cifrada |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | ¿Está seguro de que desea descifrar los archivos ocultos? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Por seguridad, copiar al portapapeles está deshabilitado mientras la bóveda está desbloqueada. |
 | 299 | `stop_showing_hidden` | Stop showing encrypted media | Dejar de mostrar medios cifrados |
@@ -959,7 +959,7 @@ Added/updated in `values-es/strings.xml`. Archive moves the old vault; export co
 
 | # | Key (`name`) | English | Spanish (Standard) |
 |--:|---|---|---|
-| 1 | `archive_vault` | Archive vault | Archivar bóveda |
+| 1 | `archive_vault` | Archive encrypted vault | Archivar bóveda cifrada |
 | 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | Mueve la bóveda antigua al archivo y crea una nueva |
 | 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | La bóveda actual se moverá al archivo y se creará una nueva en la ubicación predeterminada. No se elimina nada. Para usarla en otro dispositivo, use Exportar bóveda cifrada: copia los archivos y la bóveda actual permanece. |
 | 4 | `archive_vault_success` | Vault archived. Location: %1$s | Bóveda archivada. Ubicación: %1$s |

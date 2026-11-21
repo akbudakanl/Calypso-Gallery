@@ -480,30 +480,6 @@
                     </RelativeLayout>
 
                     <RelativeLayout
-                        android:id="@+id/settings_vault_password_reminder_holder"
-                        style="@style/CalypsoCardRowStyle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/settings_vault_password_reminder_label"
-                            style="@style/SettingsTextLabelStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="28dp"
-                            android:text="@string/vault_password_reminder" />
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/settings_vault_password_reminder"
-                            style="@style/SettingsTextValueStyle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_below="@id/settings_vault_password_reminder_label"
-                            android:layout_marginEnd="28dp"
-                            tools:text="@string/vault_password_reminder_disabled" />
-                    </RelativeLayout>
-
-                    <RelativeLayout
                         android:id="@+id/settings_hide_vault_key_presses_holder"
                         style="@style/CalypsoCardRowStyle"
                         android:layout_width="match_parent"
@@ -553,6 +529,30 @@
                             android:layout_below="@+id/settings_argon2_profile_label"
                             android:layout_marginEnd="28dp"
                             tools:text="@string/brute_force_time_title" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_vault_password_reminder_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_password_reminder_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/vault_password_reminder" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_vault_password_reminder"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@id/settings_vault_password_reminder_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/vault_password_reminder_disabled" />
                     </RelativeLayout>
 
                     <RelativeLayout
@@ -658,24 +658,6 @@
                     </RelativeLayout>
 
                     <androidx.constraintlayout.widget.ConstraintLayout
-                        android:id="@+id/settings_empty_vault_holder"
-                        style="@style/CalypsoCardRowStyle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyTextView
-                            android:id="@+id/settings_empty_vault"
-                            style="@style/SettingsTextLabelStyle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:text="@string/empty_encrypted_vault"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
-                    </androidx.constraintlayout.widget.ConstraintLayout>
-
-                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/settings_archive_vault_holder"
                         style="@style/CalypsoCardRowStyle"
                         android:layout_width="match_parent"
@@ -687,6 +669,24 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:text="@string/archive_vault"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/settings_empty_vault_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_empty_vault"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:text="@string/empty_encrypted_vault"
                             app:layout_constraintBottom_toBottomOf="parent"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"

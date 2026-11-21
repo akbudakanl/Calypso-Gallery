@@ -77,6 +77,7 @@ class SettingsActivity : SimpleActivity() {
         /** Rows that perform an immediate action instead of opening a sub-screen. */
         private val ACTION_ROW_IDS = setOf(
             R.id.settings_create_vault_holder,
+            R.id.settings_change_vault_password_holder,
             R.id.settings_export_vault_holder,
             R.id.settings_sync_vault_holder,
             R.id.settings_empty_vault_holder,
@@ -1157,7 +1158,7 @@ class SettingsActivity : SimpleActivity() {
             hasStoragePermission && vaultExists && activeArchived
         )
 
-        // 4) Gizli kasada ekran görüntüsü almayı yasakla
+        // 4) Şifreli kasada ekran görüntüsü almayı yasakla
         binding.settingsBlockVaultScreenshotsHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         // 4b) Tuş basımlarını gizleme yalnızca PIN kullanan kasalarda anlamlı

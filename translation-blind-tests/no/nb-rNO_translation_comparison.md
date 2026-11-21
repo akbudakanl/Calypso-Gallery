@@ -92,7 +92,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 41 | 32 | `secret_vault` | Encrypted Vault | Vault feature title ("Kryptert hvelv") |
 | 42 | 33 | `secret_vault_empty` | Encrypted Vault is empty | Empty state placeholder for Encrypted Vault |
 | - | - | `press_back_again_to_exit_vault` | Press back again to exit | Toast shown on first back press in hidden vault |
-| - | - | `block_vault_screenshots` | Block screenshots in hidden vault | Settings switch (default ON) blocking screenshots in hidden vault |
+| - | - | `block_vault_screenshots` | Block screenshots in encrypted vault | Settings switch (default ON) blocking screenshots in encrypted vault |
 | 43 | 34 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Confirmation prompt for singular/plural file(s) |
 | 44 | 35 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Security notice while vault is unlocked |
 | 45 | 63 | `open_system_language_settings` | Open system language settings | Fork-only addition: opens the device language picker (not in the original Fossify Gallery) |
@@ -557,7 +557,7 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 295 | `secret_vault` | Encrypted Vault | Kryptert hvelv |
 | 296 | `secret_vault_empty` | Encrypted Vault is empty | Det krypterte hvelvet er tomt |
 | - | `press_back_again_to_exit_vault` | Press back again to exit | Trykk tilbake igjen for å avslutte |
-| - | `block_vault_screenshots` | Block screenshots in hidden vault | Blokker skjermbilder i det skjulte hvelvet |
+| - | `block_vault_screenshots` | Block screenshots in encrypted vault | Blokker skjermbilder i det krypterte hvelvet |
 | 297 | `confirm_decrypt_hidden_file` | Are you sure you want to decrypt the hidden file(s)? | Er du sikker på at du vil dekryptere de(n) skjulte filen(e)? |
 | 298 | `copy_to_clipboard_disabled_in_vault` | Copying to clipboard is disabled while vault is unlocked for security. | Kopiering til utklippstavlen er deaktivert av sikkerhetshensyn mens hvelvet er låst opp. |
 | 299 | `stop_showing_hidden` | Stop showing encrypted media | Slutt å vise krypterte medier |
@@ -985,7 +985,7 @@ Added/updated in `values-nb-rNO/strings.xml`. Archive moves the old vault; expor
 
 | # | Key (`name`) | English | Norwegian Bokmål |
 |--:|---|---|---|
-| 1 | `archive_vault` | Archive vault | Arkiver hvelv |
+| 1 | `archive_vault` | Archive encrypted vault | Arkiver kryptert hvelv |
 | 2 | `archive_vault_summary` | Moves the old vault to the archive and creates a new one | Flytter det gamle hvelvet til arkivet og lager et nytt |
 | 3 | `archive_vault_confirm` | The current vault will be moved to the archive and a new vault will be created in the default location. Nothing is deleted. To use the vault on another device, use Export encrypted vault — it copies the files and the current vault stays where it is. | Det nåværende hvelvet flyttes til arkivet og et nytt opprettes på standardstedet. Ingenting slettes. For bruk på en annen enhet, bruk Eksporter kryptert hvelv — det kopierer og hvelvet blir liggende. |
 | 4 | `archive_vault_success` | Vault archived. Location: %1$s | Hvelvet er arkivert. Plassering: %1$s |

@@ -382,7 +382,7 @@
     <string name="change_encrypted_vault_password">暗号化された保管庫のパスワードを変更</string>
     <string name="biometric_access_to_encrypted_vault">生体認証で暗号化された保管庫にアクセス</string>
     <string name="auto_biometric_prompt_on_vault_return">アプリに戻ったときに生体認証を自動で表示する</string>
-    <string name="block_vault_screenshots">隠し保管庫でのスクリーンショットを禁止する</string>
+    <string name="block_vault_screenshots">暗号化保管庫でのスクリーンショットを禁止する</string>
     <string name="empty_encrypted_vault">暗号化保管庫をリセット</string>
     <string name="enter_new_pin">新しいPINを入力</string>
     <string name="repeat_new_pin">新しいPINを再入力</string>
@@ -662,7 +662,7 @@
     <string name="use_biometrics">生体認証を使用</string>
     <string name="hide_vault_key_presses">保管庫のパスワード入力時にキー押下を非表示にする</string>
     <string name="show_pin_dots">PIN入力時に各桁をドットで表示する</string>
-<string name="archive_vault">保管庫をアーカイブ</string>
+<string name="archive_vault">暗号化保管庫をアーカイブ</string>
     <string name="archive_vault_summary">古い保管庫をアーカイブし、新しい保管庫を作成します</string>
     <string name="archive_vault_confirm">現在の保管庫はアーカイブに移動され、既定の場所に新しい保管庫が作成されます。削除はされません。別のデバイスで使う場合は「暗号化保管庫をエクスポート」を使用してください。コピーであり、元の保管庫は残ります。</string>
     <string name="archive_vault_success">保管庫をアーカイブしました。場所: %1$s</string>
