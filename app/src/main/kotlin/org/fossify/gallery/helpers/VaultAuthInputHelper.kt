@@ -678,6 +678,8 @@ class VaultAuthInputHelper(
     }
 
     companion object {
+        /** Temporarily unavailable back arrow; matches DISABLED_TEXT_ALPHA (~0.38). Colour stays theme-driven. */
+        const val DISABLED_BACK_ALPHA = 0.4f
         private const val DISABLED_TEXT_ALPHA = 0x61
         private const val BUTTON_RIPPLE_ALPHA = 0x1F
         private const val PIN_BUTTON_RIPPLE_RADIUS_DP = 12f

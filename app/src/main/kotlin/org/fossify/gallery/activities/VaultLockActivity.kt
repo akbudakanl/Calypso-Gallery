@@ -131,7 +131,10 @@ class VaultLockActivity : SimpleActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                moveTaskToBack(true)
+                // Consume the system back gesture/key without leaving this gate. The only in-app
+                // exit is the top-left arrow (exitVaultToNormalGallery), which locks the vault and
+                // returns to the gallery. The arrow is disabled while the KDF runs, so there is no
+                // window in which the person can leave and still have a late unlock applied.
             }
         })
     }
@@ -180,8 +183,17 @@ class VaultLockActivity : SimpleActivity() {
         inputHelper.unlockWithSecretAsync(
             secret = secret,
             currentType = currentType,
-            onPreExecute = { binding.vaultLockBackBtn.isEnabled = false },
-            onPostExecute = { binding.vaultLockBackBtn.isEnabled = true }
+            onPreExecute = {
+                binding.vaultLockBackBtn.isEnabled = false
+                // Arrow colour is set from palette.text in onCreate; only its availability changes.
+                binding.vaultLockBackBtn.alpha = VaultAuthInputHelper.DISABLED_BACK_ALPHA
+                binding.vaultLockBackBtn.contentDescription = getString(R.string.unlocking_encrypted_vault)
+            },
+            onPostExecute = {
+                binding.vaultLockBackBtn.isEnabled = true
+                binding.vaultLockBackBtn.alpha = 1f
+                binding.vaultLockBackBtn.contentDescription = getString(org.fossify.commons.R.string.back)
+            }
         ) { success ->
             if (success) {
                 onAuthenticated()

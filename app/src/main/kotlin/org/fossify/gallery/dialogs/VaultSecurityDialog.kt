@@ -70,6 +70,7 @@ class VaultSecurityDialog(
     private val callback: (hash: String, type: Int, success: Boolean) -> Unit
 ) {
     private var dialog: Dialog? = null
+    private lateinit var hostBinding: DialogVaultSecurityHostBinding
     private var dialogSucceeded = false
     private var cancelNotified = false
     private var setupInFlight = false
@@ -283,7 +284,7 @@ class VaultSecurityDialog(
 
         // Host the security form on the same ambient frosted backdrop as the full-screen lock
         // gate, so every credential prompt has the blurred gallery depth instead of flat black.
-        val hostBinding = DialogVaultSecurityHostBinding.inflate(activity.layoutInflater)
+        hostBinding = DialogVaultSecurityHostBinding.inflate(activity.layoutInflater)
         hostBinding.vaultSecurityBackdrop.applyPalette(palette)
 
         if (isSetupMode) {
@@ -467,7 +468,22 @@ class VaultSecurityDialog(
 
     private fun setDialogBusy(busy: Boolean) {
         inputHelper.setInputsEnabled(!busy)
-        dialog?.setCancelable(!busy)
+        // The top-left arrow is the only way out of a credential prompt, but it must never be
+        // usable while a KDF/setup/rewrap is running - a late result would otherwise be applied
+        // after the caller has already been told the prompt was cancelled.
+        hostBinding.vaultSecurityBack.isEnabled = !busy
+        // Only alpha/accessibility text change here. The arrow's colour comes from
+        // applyColorFilter(palette.text) in setupDialog, so it keeps following the theme.
+        hostBinding.vaultSecurityBack.alpha = if (busy) VaultAuthInputHelper.DISABLED_BACK_ALPHA else 1f
+        hostBinding.vaultSecurityBack.contentDescription = if (busy) {
+            activity.getString(R.string.unlocking_encrypted_vault)
+        } else {
+            activity.getString(org.fossify.commons.R.string.back)
+        }
+        // Hardware Back stays a no-op for the whole lifetime of the prompt, not just while busy.
+        // setDialogBusy(false) used to re-enable it after a failed attempt, which made the exit
+        // behaviour depend on whether the person had tried a wrong password first.
+        dialog?.setCancelable(false)
     }
 
     private fun handleSecretSubmission(secret: CharArray) {
