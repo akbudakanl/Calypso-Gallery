@@ -12,7 +12,22 @@ import kotlin.math.roundToInt
  * the real offline brute-force resistance comes from Argon2 and the chosen unlock-time target.
  */
 object VaultPasswordStrength {
-    enum class Level { BAD, POOR, WEAK, GOOD, EXCELLENT }
+    enum class Level {
+        /** Displayed as "Very weak" / "Çok zayıf". */
+        BAD,
+        /** Displayed as "Weak" / "Zayıf". */
+        POOR,
+        /** Displayed as "Fair" / "Orta" (score 40..59). */
+        WEAK,
+        /** Displayed as "Strong" / "Güçlü". */
+        GOOD,
+        /** Displayed as "Very strong" / "Çok güçlü". */
+        EXCELLENT;
+
+        /** True only for tiers the strength bar presents as weak (Very weak / Weak). */
+        val isWeak: Boolean
+            get() = this == BAD || this == POOR
+    }
 
     data class Result(val score: Int, val level: Level)
 

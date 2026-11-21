@@ -72,6 +72,7 @@ class VaultSecurityDialog(
     private var dialogSucceeded = false
     private var cancelNotified = false
     private var setupInFlight = false
+    private var weakWarningInFlight = false
     private var autoPromptDecorView: View? = null
     private var autoPromptFocusListener: ViewTreeObserver.OnWindowFocusChangeListener? = null
     private var shutterAnimator: VaultShutterAnimator? = null
@@ -211,13 +212,23 @@ class VaultSecurityDialog(
                     }
                 )
             }
-            inputHelper.onPinChanged = { pin -> refreshStrength(pin, true) }
+            inputHelper.onPinChanged = { pin ->
+                try {
+                    refreshStrength(pin, true)
+                } finally {
+                    pin.fill('\u0000')
+                }
+            }
             binding.vaultPasswordInput.addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
                 override fun afterTextChanged(s: android.text.Editable?) {
                     val chars = CharArray(s?.length ?: 0).also { s?.getChars(0, it.size, it, 0) }
-                    refreshStrength(chars, false)
+                    try {
+                        refreshStrength(chars, false)
+                    } finally {
+                        chars.fill('\u0000')
+                    }
                 }
             })
             binding.vaultTabs.apply {
@@ -455,7 +466,7 @@ class VaultSecurityDialog(
     }
 
     private fun handleSecretSubmission(secret: CharArray) {
-        if (setupInFlight) return
+        if (setupInFlight || weakWarningInFlight) return
         if (isSetupMode) {
             handleSetupSubmission(secret)
         } else {
@@ -484,19 +495,22 @@ class VaultSecurityDialog(
             // During first-time vault creation, warn about weak secrets before asking for the
             // confirmation entry. Password change is excluded: the user already owns the vault.
             val weak = isSetupMode && !isChangePasswordMode &&
-                VaultPasswordStrength.evaluate(secret, currentType == PROTECTION_PIN).level.let {
-                    it == VaultPasswordStrength.Level.BAD ||
-                        it == VaultPasswordStrength.Level.POOR ||
-                        it == VaultPasswordStrength.Level.WEAK
-                }
-            val acceptFirstEntry = {
+                VaultPasswordStrength.evaluate(secret, currentType == PROTECTION_PIN).level.isWeak
+            val acceptFirstEntry: (CharArray) -> Unit = { candidate ->
                 clearFirstStepSecret()
-                firstStepSecret = secret.copyOf()
+                firstStepSecret = candidate.copyOf()
                 inputHelper.clearInputs()
                 updateStatusLabel()
             }
             if (weak) {
                 val pending = secret.copyOf()
+                weakWarningInFlight = true
+                val dismissWeakWarning = {
+                    weakWarningInFlight = false
+                    inputHelper.clearInputs()
+                    updateStatusLabel()
+                    pending.fill('\u0000')
+                }
                 VaultNoticeDialog(
                     activity = activity,
                     title = activity.getString(R.string.weak_password_warning_title),
@@ -505,22 +519,18 @@ class VaultSecurityDialog(
                     negativeText = activity.getString(org.fossify.commons.R.string.cancel),
                     cancelable = true,
                     onPositive = {
-                        acceptFirstEntry()
-                        pending.fill('\u0000')
+                        weakWarningInFlight = false
+                        try {
+                            acceptFirstEntry(pending)
+                        } finally {
+                            pending.fill('\u0000')
+                        }
                     },
-                    onNegative = {
-                        inputHelper.clearInputs()
-                        updateStatusLabel()
-                        pending.fill('\u0000')
-                    },
-                    onCancel = {
-                        inputHelper.clearInputs()
-                        updateStatusLabel()
-                        pending.fill('\u0000')
-                    },
+                    onNegative = dismissWeakWarning,
+                    onCancel = dismissWeakWarning,
                 )
             } else {
-                acceptFirstEntry()
+                acceptFirstEntry(secret)
             }
             return
         }
@@ -613,6 +623,7 @@ class VaultSecurityDialog(
     }
 
     private fun cancelDialog() {
+        weakWarningInFlight = false
         haloPulseAnimator?.cancel()
         haloPulseAnimator = null
         shutterAnimator?.cancel()
