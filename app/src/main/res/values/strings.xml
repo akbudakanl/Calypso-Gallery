@@ -688,7 +688,7 @@
     <!-- Third-party licenses -->
     <string name="license_tink_title">Google Tink (streaming AEAD and HKDF cryptography)</string>
     <string name="license_tink_url" translatable="false">https://github.com/tink-crypto/tink-java</string>
-    <string name="license_tink_text" translatable="false">Copyright 2022 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+    <string name="license_tink_text" translatable="false">Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
 
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (native Argon2id key derivation)</string>
     <string name="license_rustcrypto_argon2_url" translatable="false">https://github.com/RustCrypto/password-hashes</string>
@@ -713,6 +713,24 @@
     <string name="license_material_icons_title">Material Design Icons (UI icons)</string>
     <string name="license_material_icons_url" translatable="false">https://github.com/google/material-design-icons</string>
     <string name="license_material_icons_text" translatable="false">Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_fast_scroller_title" translatable="false">RecyclerView-FastScroller (section scrollbar)</string>
+    <string name="license_fast_scroller_url" translatable="false">https://github.com/tibbi/RecyclerView-FastScroller</string>
+    <string name="license_fast_scroller_text" translatable="false">Copyright © Tibor Kaputa\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_animated_decoders_title" translatable="false">Animated image decoders (APNG, AWebP, AVIF)</string>
+
+    <string name="license_material_components_title" translatable="false">Material Components for Android (UI components)</string>
+    <string name="license_material_components_url" translatable="false">https://github.com/material-components/material-components-android</string>
+    <string name="license_material_components_text" translatable="false">Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_androidx_biometric_title" translatable="false">AndroidX Biometric (biometric prompt)</string>
+    <string name="license_androidx_biometric_url" translatable="false">https://developer.android.com/jetpack/androidx/releases/biometric</string>
+    <string name="license_androidx_biometric_text" translatable="false">Copyright The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+
+    <string name="license_androidx_exifinterface_title" translatable="false">AndroidX ExifInterface (EXIF metadata)</string>
+    <string name="license_androidx_exifinterface_url" translatable="false">https://developer.android.com/jetpack/androidx/releases/exifinterface</string>
+    <string name="license_androidx_exifinterface_text" translatable="false">Copyright The Android Open Source Project\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
 
     <string name="argon2_profile_title">Brute-Force resistance</string>
     <string name="brute_force_time_title">Targeted vault unlock time</string>

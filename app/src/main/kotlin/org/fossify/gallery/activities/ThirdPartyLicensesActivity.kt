@@ -137,6 +137,21 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             R.string.license_fossify_commons_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_material_components_title,
+            R.string.license_material_components_text,
+            R.string.license_material_components_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_androidx_biometric_title,
+            R.string.license_androidx_biometric_text,
+            R.string.license_androidx_biometric_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_androidx_exifinterface_title,
+            R.string.license_androidx_exifinterface_text,
+            R.string.license_androidx_exifinterface_url,
+        ),
+        ThirdPartyLicenseItem(
             R.string.license_tink_title,
             R.string.license_tink_text,
             R.string.license_tink_url,
@@ -187,6 +202,11 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.gif_drawable_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_fast_scroller_title,
+            R.string.license_fast_scroller_text,
+            R.string.license_fast_scroller_url,
+        ),
+        ThirdPartyLicenseItem(
             org.fossify.commons.R.string.exoplayer_title,
             org.fossify.commons.R.string.exoplayer_text,
             org.fossify.commons.R.string.exoplayer_url,
@@ -217,7 +237,7 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.gesture_views_url,
         ),
         ThirdPartyLicenseItem(
-            org.fossify.commons.R.string.apng_title,
+            R.string.license_animated_decoders_title,
             org.fossify.commons.R.string.apng_text,
             org.fossify.commons.R.string.apng_url,
         ),
