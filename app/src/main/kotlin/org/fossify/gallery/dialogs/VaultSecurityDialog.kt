@@ -686,12 +686,17 @@ class VaultSecurityDialog(
         haloPulseAnimator?.cancel()
         haloPulseAnimator = null
         val isPassword = currentType == PROTECTION_PASSWORD
+        val sweepView = when {
+            isPassword -> binding.vaultUnlockSweepPassword
+            activity.config.showVaultPinDots -> null
+            else -> binding.vaultUnlockSweep
+        }
         binding.vaultUnlockSweep.visibility = View.INVISIBLE
         binding.vaultUnlockSweepPassword.visibility = View.INVISIBLE
         val animator = VaultShutterAnimator(
             lock = binding.vaultUnlockEmblem,
             dots = if (isPassword) null else binding.vaultPinDots,
-            sweep = if (isPassword) binding.vaultUnlockSweepPassword else binding.vaultUnlockSweep,
+            sweep = sweepView,
             panel = binding.root,
             pulseView = if (isPassword) binding.vaultPasswordInputLayout else null,
             sweepColor = AppearanceManager.resolve(activity, activity.config).primary,

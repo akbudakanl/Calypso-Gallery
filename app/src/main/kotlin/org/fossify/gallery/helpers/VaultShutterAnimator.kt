@@ -25,7 +25,7 @@ import org.fossify.gallery.views.VaultShutterLockView
 class VaultShutterAnimator(
     private val lock: VaultShutterLockView,
     private val dots: VaultPinDotsView?,
-    private val sweep: View,
+    private val sweep: View?,
     private val panel: View,
     private val pulseView: View? = null,
     /** The gradient drawable is white in XML; tint it so the sweep stays visible in light themes. */
@@ -77,19 +77,22 @@ class VaultShutterAnimator(
 
         // 3 — light sweep across the dots (380-900 ms). The XML gradient is white, so light
         // themes need the active primary colour to keep it visible on a light input field.
-        sweep.background?.mutate()?.setColorFilter(sweepColor, PorterDuff.Mode.SRC_ATOP)
-        sweep.alpha = 0f
-        sweep.visibility = View.VISIBLE
-        val sweepDistance = (sweep.parent as? View)?.measuredWidth?.toFloat() ?: sweep.width * 3f
-        track(ObjectAnimator.ofFloat(sweep, "translationX", 0f, sweepDistance).apply {
-            duration = 520L
-            startDelay = 380L
-            interpolator = DecelerateInterpolator()
-        })
-        track(ObjectAnimator.ofFloat(sweep, "alpha", 0f, 1f, 0f).apply {
-            duration = 520L
-            startDelay = 380L
-        })
+        // Omitted when the PIN per-digit dot rectangle is shown so the line doesn't cross the box.
+        sweep?.let { sweepView ->
+            sweepView.background?.mutate()?.setColorFilter(sweepColor, PorterDuff.Mode.SRC_ATOP)
+            sweepView.alpha = 0f
+            sweepView.visibility = View.VISIBLE
+            val sweepDistance = (sweepView.parent as? View)?.measuredWidth?.toFloat() ?: sweepView.width * 3f
+            track(ObjectAnimator.ofFloat(sweepView, "translationX", 0f, sweepDistance).apply {
+                duration = 520L
+                startDelay = 380L
+                interpolator = DecelerateInterpolator()
+            })
+            track(ObjectAnimator.ofFloat(sweepView, "alpha", 0f, 1f, 0f).apply {
+                duration = 520L
+                startDelay = 380L
+            })
+        }
 
         // 4 — panel exits upward, then the vault is opened (620-1460 ms)
         post(SETTLE_DELAY_MS) {

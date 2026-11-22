@@ -248,12 +248,17 @@ class VaultLockActivity : SimpleActivity() {
         binding.vaultLockBackBtn.isEnabled = false
         val securityBinding = binding.vaultSecurityContent
         val isPassword = currentType == PROTECTION_PASSWORD
+        val sweepView = when {
+            isPassword -> securityBinding.vaultUnlockSweepPassword
+            config.showVaultPinDots -> null
+            else -> securityBinding.vaultUnlockSweep
+        }
         securityBinding.vaultUnlockSweep.visibility = View.INVISIBLE
         securityBinding.vaultUnlockSweepPassword.visibility = View.INVISIBLE
         val animator = VaultShutterAnimator(
             lock = securityBinding.vaultUnlockEmblem,
             dots = if (isPassword) null else securityBinding.vaultPinDots,
-            sweep = if (isPassword) securityBinding.vaultUnlockSweepPassword else securityBinding.vaultUnlockSweep,
+            sweep = sweepView,
             panel = binding.vaultLockContainer,
             pulseView = if (isPassword) securityBinding.vaultPasswordInputLayout else null,
             sweepColor = AppearanceManager.resolve(this, config).primary,
