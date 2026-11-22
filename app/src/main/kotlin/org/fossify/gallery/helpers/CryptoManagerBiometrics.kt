@@ -130,7 +130,7 @@ fun CryptoManager.canUnlockWithBiometrics(context: Context): Boolean {
 }
 
 
-fun CryptoManager.getOrCreateBiometricKey(): SecretKey? {
+fun CryptoManager.getOrCreateBiometricKey(context: Context): SecretKey? {
     return try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)
@@ -141,7 +141,12 @@ fun CryptoManager.getOrCreateBiometricKey(): SecretKey? {
         when (checkBiometricKeyHardwareBacking(key)) {
             BiometricHardwareBacking.HARDWARE_BACKED -> key
             BiometricHardwareBacking.SOFTWARE_ONLY -> {
-                keyStore.deleteEntry(BIOMETRIC_KEYSTORE_ALIAS)
+                // Never destroy a key because of a transient probe. While the keyguard is up,
+                // KeyInfo can be unreadable and a wrong SOFTWARE_ONLY verdict would make the
+                // wrapped vault key unrecoverable. Deletion is only safe when the device is open.
+                if (!isDeviceLocked(context)) {
+                    keyStore.deleteEntry(BIOMETRIC_KEYSTORE_ALIAS)
+                }
                 null
             }
             BiometricHardwareBacking.TRANSIENT_ERROR -> null
@@ -192,8 +197,8 @@ internal fun CryptoManager.generateBiometricKeyInternal(keyStore: KeyStore) {
 }
 
 
-fun CryptoManager.getBiometricEncryptCipher(): Cipher? {
-    val key = getOrCreateBiometricKey() ?: return null
+fun CryptoManager.getBiometricEncryptCipher(context: Context): Cipher? {
+    val key = getOrCreateBiometricKey(context) ?: return null
     return try {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key)

@@ -66,7 +66,7 @@ object VaultBiometricOfferDialog {
         }
 
         fun launchSystemPrompt() {
-            val cipher = CryptoManager.getBiometricEncryptCipher()
+            val cipher = CryptoManager.getBiometricEncryptCipher(activity)
             if (cipher == null) {
                 notifyFinishedOnce()
                 return

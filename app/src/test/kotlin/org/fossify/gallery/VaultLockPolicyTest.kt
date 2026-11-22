@@ -901,6 +901,38 @@ class VaultLockPolicyTest {
         }
     }
 
+    @Test
+    fun biometricProbeDefersWhileLockedAndNeverDeletesTheAliasOnTransientErrors() {
+        val availability = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/BiometricAvailability.kt"
+        ).readText()
+        assertTrue(
+            "Locked or transient Keystore failures must be deferred, not reported as missing keys",
+            availability.contains("enum class BiometricKeyProbe") &&
+                availability.contains("BiometricKeyProbe.DEFERRED")
+        )
+        val biometrics = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerBiometrics.kt"
+        ).readText()
+        val deletionBlock = biometrics
+            .substringAfter("BiometricHardwareBacking.SOFTWARE_ONLY -> {")
+            .substringBefore("BiometricHardwareBacking.TRANSIENT_ERROR")
+        assertTrue(
+            "Alias deletion must require an unlocked device and a confirmed software-only key",
+            deletionBlock.contains("if (!isDeviceLocked(context))") &&
+                deletionBlock.contains("keyStore.deleteEntry")
+        )
+        val settings = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt"
+        ).readText()
+        assertTrue(
+            "Settings must re-probe when the keyguard is dismissed",
+            settings.contains("Intent.ACTION_USER_PRESENT") &&
+                settings.contains("BiometricKeyProbe.DEFERRED -> Unit") &&
+                settings.contains("BiometricKeyProbe.READY -> biometricKeyAvailable = true")
+        )
+    }
+
     private class FakeContext(private val root: File) : ContextWrapper(null) {
         private val prefs = InMemoryPrefs()
         override fun getApplicationContext(): Context = this

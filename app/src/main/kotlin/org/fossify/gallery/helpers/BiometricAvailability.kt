@@ -16,29 +16,60 @@ fun CryptoManager.getBiometricAuthenticatorStatus(context: Context): Int {
 }
 
 /**
+ * Three-way result of probing the vault biometric key.
+ *
+ * Boolean-only probing conflated "device locked / transient Keystore error" with "no hardware
+ * key", which made the Settings row randomly turn passive on screen-on. [DEFERRED] keeps the
+ * last known good UI state until the keyguard is gone; only [UNAVAILABLE] flips it.
+ */
+internal enum class BiometricKeyProbe {
+    READY,
+    DEFERRED,
+    UNAVAILABLE
+}
+
+/**
  * Returns a usable hardware-backed key only when a strong biometric is actually enrolled.
  * A key created while no credential was enrolled is invalidated by that later enrollment
  * (`setInvalidatedByBiometricEnrollment(true)`), so it is cleared here to allow a clean setup
  * once the user adds a fingerprint / Class 3 face in Android settings. Clearing also resets
  * `isVaultBiometricEnabled`, which keeps the setting default-off after re-enrollment.
  */
-internal fun CryptoManager.ensureBiometricKeyAvailable(context: Context): Boolean {
+internal fun CryptoManager.probeBiometricKey(context: Context): BiometricKeyProbe {
     if (getBiometricAuthenticatorStatus(context) != BiometricManager.BIOMETRIC_SUCCESS) {
-        return false
+        return BiometricKeyProbe.UNAVAILABLE
     }
-    val key = getOrCreateBiometricKey() ?: return false
+    if (isDeviceLocked(context)) return BiometricKeyProbe.DEFERRED
+
+    val key = getOrCreateBiometricKey(context) ?: return if (isDeviceLocked(context)) {
+        BiometricKeyProbe.DEFERRED
+    } else {
+        BiometricKeyProbe.UNAVAILABLE
+    }
+
     return try {
         Cipher.getInstance("AES/GCM/NoPadding").init(Cipher.ENCRYPT_MODE, key)
-        true
+        BiometricKeyProbe.READY
     } catch (e: Throwable) {
-        if (classifyBiometricCipherFailure(e, isDeviceLocked(context)) == BiometricCipherResult.KeyInvalidated) {
-            clearBiometricKey(context)
-            getOrCreateBiometricKey() != null
-        } else {
-            false
+        when (classifyBiometricCipherFailure(e, isDeviceLocked(context))) {
+            BiometricCipherResult.KeyInvalidated -> {
+                clearBiometricKey(context)
+                if (getOrCreateBiometricKey(context) != null) {
+                    BiometricKeyProbe.READY
+                } else {
+                    BiometricKeyProbe.UNAVAILABLE
+                }
+            }
+            BiometricCipherResult.DeviceLocked,
+            BiometricCipherResult.TransientError -> BiometricKeyProbe.DEFERRED
+            else -> BiometricKeyProbe.UNAVAILABLE
         }
     }
 }
+
+/** Kept for existing callers that only need a boolean verdict. */
+internal fun CryptoManager.ensureBiometricKeyAvailable(context: Context): Boolean =
+    probeBiometricKey(context) == BiometricKeyProbe.READY
 
 /**
  * Maps the unavailability cause to an honest, user-facing explanation. The app only accepts

@@ -3,9 +3,12 @@ package org.fossify.gallery.activities
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.ColorStateList
 import android.graphics.Typeface
 import android.os.Build
@@ -113,6 +116,7 @@ class SettingsActivity : SimpleActivity() {
     private var pendingHighlightViewId = 0
     private var biometricStatus = BiometricManager.BIOMETRIC_STATUS_UNKNOWN
     private var biometricKeyAvailable = false
+    private var userPresentReceiver: BroadcastReceiver? = null
     private var biometricUsable = false
     private val binding by viewBinding(ActivitySettingsBinding::inflate)
 
@@ -241,6 +245,7 @@ class SettingsActivity : SimpleActivity() {
         )
         binding.settingsToolbar.title = resolveToolbarTitle()
         setupSettingItems()
+        registerBiometricStateReceiver()
         if (activeCategory == CATEGORY_SECURITY) {
             registerVaultSectionScrollRecheck()
         }
@@ -253,7 +258,38 @@ class SettingsActivity : SimpleActivity() {
 
     override fun onPause() {
         super.onPause()
+        unregisterBiometricStateReceiver()
         unregisterVaultSectionScrollRecheck()
+    }
+
+    /**
+     * Android does not notify apps when a biometric is enrolled or removed. `onResume` covers
+     * leaving and re-entering Settings; this receiver covers screen-off/on while Settings stays
+     * in the foreground, which does not necessarily trigger `onResume`.
+     */
+    private fun registerBiometricStateReceiver() {
+        if (userPresentReceiver != null) return
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent?) {
+                if (intent?.action == Intent.ACTION_USER_PRESENT && !isFinishing && !isDestroyed) {
+                    setupVaultSettings()
+                }
+            }
+        }
+        runCatching {
+            ContextCompat.registerReceiver(
+                this,
+                receiver,
+                IntentFilter(Intent.ACTION_USER_PRESENT),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+            userPresentReceiver = receiver
+        }
+    }
+
+    private fun unregisterBiometricStateReceiver() {
+        userPresentReceiver?.let { runCatching { unregisterReceiver(it) } }
+        userPresentReceiver = null
     }
 
     private fun resolveToolbarTitle(): String {
@@ -1164,7 +1200,13 @@ class SettingsActivity : SimpleActivity() {
         // onResume bu metodları yeniden çağırdığı için Android ayarlarından biyometrik
         // açılıp kapatıldığında görünüm değişir; ek bildirim/popup gösterilmez.
         biometricStatus = CryptoManager.getBiometricAuthenticatorStatus(this)
-        biometricKeyAvailable = CryptoManager.ensureBiometricKeyAvailable(this)
+        // Keep the last known good value while the device is locked or the Keystore is busy:
+        // a transient probe failure must not make the row look permanently unavailable.
+        when (CryptoManager.probeBiometricKey(this)) {
+            BiometricKeyProbe.READY -> biometricKeyAvailable = true
+            BiometricKeyProbe.UNAVAILABLE -> biometricKeyAvailable = false
+            BiometricKeyProbe.DEFERRED -> Unit
+        }
         biometricUsable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS && biometricKeyAvailable
         binding.settingsVaultBiometricHolder.beVisibleIf(hasStoragePermission && vaultExists)
         binding.settingsVaultBiometricAutoReturnHolder.beVisibleIf(
@@ -1817,7 +1859,7 @@ class SettingsActivity : SimpleActivity() {
 
     private fun showBiometricEnrollmentPrompt(lockVaultAfter: Boolean) {
         fun launchSystemPrompt() {
-            val cipher = CryptoManager.getBiometricEncryptCipher()
+            val cipher = CryptoManager.getBiometricEncryptCipher(this@SettingsActivity)
             if (cipher == null) {
                 if (lockVaultAfter) {
                     CryptoManager.lockVault(this@SettingsActivity)
