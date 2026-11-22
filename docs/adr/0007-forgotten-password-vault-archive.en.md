@@ -2,8 +2,7 @@
 
 - **Status:** Accepted — **Axiom: the app never deletes a vault without its password (2026-11-21)**
 - **Date:** 2026-11-21
-- **Related:** [ADR 0002](0002-operational-security-hardening.md) (operational security), [ADR 0003](0003-resumable-file-operations.md) (durable operations), [ADR 0006](0006-strong-biometrics-only.md) (strong-biometric decision)
-- **Turkish original:** [0007-forgotten-password-vault-archive.md](0007-forgotten-password-vault-archive.md)
+- **Related:** [ADR 0002](0002-operational-security-hardening.md) (operational security), [ADR 0003](0003-resumable-file-operations.md) (durable operations), [ADR 0006](0006-strong-biometrics-only.en.md) (strong-biometric decision)
 
 > **Summary Decision.** When a user forgets the vault password, the app **never** performs a passwordless deletion. Instead it **moves** the existing vault into `Calypso Gallery/Archive/`, creates a new vault at the default location, and keeps the old one restorable with its password. The Archive folder is created only on the first archival and uses a random name with no date or counter. Freeing disk space is left to the user, with the exact path shown; there is no in-app archive deletion.
 

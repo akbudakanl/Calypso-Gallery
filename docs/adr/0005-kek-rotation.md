@@ -1,116 +1,118 @@
-# ADR 0005 — KEK rotasyonu
+# ADR 0005 — KEK rotation
 
-- **Durum:** Rejected — **Bireysel / yerel kullanım modeli için gerekli görülmedi; kurumsal ihtiyaçlar için referans tasarım olarak korundu (2026-11-18)**
-- **Tarih:** 2026-11-18
-- **İlgili:** [ADR 0001](0001-tink-streaming-aead-migration.md) (kanonik konteyner formatı), [ADR 0002](0002-operational-security-hardening.md) (operasyonel güvenlik), [ADR 0003](0003-resumable-file-operations.md) (kesintiye dayanıklı işlemler), [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md) (KDF kalibrasyonu ve `.vault` yeniden sarma)
+- **Status:** Rejected — **Not required for the personal/local usage model; kept as a reference design for enterprise needs (2026-11-18)**
+- **Date:** 2026-11-18
+- **Related:** [ADR 0001](0001-tink-streaming-aead-migration.md) (canonical container format), [ADR 0002](0002-operational-security-hardening.md) (operational security), [ADR 0003](0003-resumable-file-operations.md) (resumable operations), [ADR 0004](0004-argon2-memory-and-cross-device-kdf.md) (KDF calibration and `.vault` rewrapping)
 
-> **Özet Karar.** Calypso Gallery'nin bireysel/yerel mobil kasa mimarisinde KEK (Key Encryption Key) rotasyonu **reddedilmiştir (Rejected)**. Mevcut anahtar hiyerarşisi zaten dosya başına benzersiz türetilmiş anahtarlar kullandığından tekil KEK altında kriptografik aşınma oluşmaz; buna karşın toplu KEK rotasyonu yüksek veri/metadata/senkronizasyon kaybı riski doğurmaktadır. Aşağıdaki §2 bölümü reddedilme gerekçelerini, §3 bölümü mevcut formatın ileriye dönük uyumluluğunu, §4–§5 bölümleri ise ileride kurumsal/uyumluluk (PCI DSS, ISO 27001, NIST SP 800-57) gereksinimleri doğarsa uygulanacak referans mimariyi belgeler.
+> **Decision summary.** KEK (Key Encryption Key) rotation has been **rejected (Rejected)** for Calypso Gallery's personal/local mobile vault architecture. The current key hierarchy already uses unique per-file derived keys, so there is no cryptographic wear-out under a single KEK, while bulk KEK rotation would introduce a high risk of data, metadata and synchronization loss. Section 2 below documents the reasons for rejection, section 3 the forward compatibility of the current format, and sections 4–5 the reference architecture to apply if enterprise/compliance requirements (PCI DSS, ISO 27001, NIST SP 800-57) arise later.
 
 ---
 
-## 1. Mevcut Anahtar Hiyerarşisi
+## 1. Current key hierarchy
 
 ```
-parola / PIN ──► Argon2id(salt, params) ──► PDK   (.vault içinde VMK'yı sarar)
-                                             │
-                                       AES-256-GCM
-                                             ▼
-                                            VMK   (.vault içinde keyring'i sarar)
-                                             │
-                                       AES-256-GCM
-                                             ▼
-                                      Keyring { keyId = 1 → KEK }
-                                             │
-        ┌────────────────────────────────────┴────────────────────────────────────┐
-        ▼                                                                         ▼
-  HKDF-SHA256(KEK[keyId],                                             HKDF-SHA256(KEK[keyId],
-    "CalypsoGallery:Header:AES256GCM" ‖ hex(fileId))                   "CalypsoGallery:Metadata:AESGCM|CalypsoGallery:Metadata:AESGCM|" ‖ purpose)
-        │                                                                         │
-        ▼                                                                         ▼
-  headerKey ──► AES-256-GCM(DEK + dosya başlığı)                    metadataKey ──► AES-256-GCM(FVSTR: kaydı)
-                     │
-                     ▼
-        DEK ──► Tink AesGcmHkdfStreaming(DEK, AAD = fileId) ──► Şifreli Medya Gövdesi
+password / PIN ──► Argon2id(salt, params) ──► PDK   (wraps the VMK in .vault)
+                                              │
+                                        AES-256-GCM
+                                              ▼
+                                             VMK   (wraps the keyring in .vault)
+                                              │
+                                        AES-256-GCM
+                                              ▼
+                                       Keyring { keyId = 1 → KEK }
+                                              │
+         ┌────────────────────────────────────┴────────────────────────────────────┐
+         ▼                                                                         ▼
+   HKDF-SHA256(KEK[keyId],                                             HKDF-SHA256(KEK[keyId],
+     "CalypsoGallery:Header:AES256GCM" ‖ hex(fileId))                   "CalypsoGallery:Metadata:AESGCM|CalypsoGallery:Metadata:AESGCM|" ‖ purpose)
+         │                                                                         │
+         ▼                                                                         ▼
+   headerKey ──► AES-256-GCM(DEK + file header)                      metadataKey ──► AES-256-GCM(FVSTR: record)
+                      │
+                      ▼
+         DEK ──► Tink AesGcmHkdfStreaming(DEK, AAD = fileId) ──► Encrypted media payload
 ```
 
 ---
 
-## 2. KEK Rotasyonunun Neden Gerekli Görülmediği (Reddedilme Gerekçeleri)
+## 2. Why KEK rotation is not considered necessary (rejection rationale)
 
-### 2.1. Tek KEK Altında Anahtar Aşınması (Key Wear-Out / Nonce Reuse) Riski Yoktur
-- Bir KEK rotasyonunun kriptografik açıdan en yaygın sebebi, aynı simetrik anahtar altında şifrelenen blok/mesaj sayısı arttıkça AES-GCM nonce çakışması veya doğum günü sınırı ($2^{32}$) riskinin büyümesidir.
-- Calypso Gallery mimarisinde **`KEK` hiçbir zaman doğrudan AES-GCM şifrelemesinde kullanılmaz**:
-  - Her `.bin` dosyası oluşturulurken rastgele 16 baytlık değişmez `fileId` ve 32 baytlık bağımsız bir **`DEK`** üretilir.
-  - Başlık anahtarı `HKDF-SHA256(KEK[keyId], "CalypsoGallery:Header:AES256GCM|" || hex(fileId))` ile dosya başına ayrı türetilir; yani her dosya kendi benzersiz `headerKey` değerini alır.
-  - Medya gövdesi ise Tink `AesGcmHkdfStreaming` içinde `DEK` ve 32 baytlık rastgele akış tuzu (`salt`) ile türetilen alt anahtarlarla şifrelenir.
-- Bu nedenle tek bir `KEK` (`keyId = 1`) altında milyonlarca dosya şifrelense dahi anahtar/nonce aşınması oluşmaz.
+### 2.1. No key wear-out / nonce reuse risk under a single KEK
+- The most common cryptographic reason for KEK rotation is the growing risk of AES-GCM nonce collisions or the birthday bound ($2^{32}$) as the number of blocks/messages encrypted under the same symmetric key increases.
+- In the Calypso Gallery architecture the **`KEK` is never used directly for AES-GCM encryption**:
+  - Every `.bin` file is created with a random immutable 16-byte `fileId` and an independent 32-byte **`DEK`**.
+  - The header key is derived per file with `HKDF-SHA256(KEK[keyId], "CalypsoGallery:Header:AES256GCM|" || hex(fileId))`, so each file gets its own unique `headerKey`.
+  - The media payload is encrypted with subkeys derived from the `DEK` and a random 32-byte stream salt (`salt`) inside Tink `AesGcmHkdfStreaming`.
+- Therefore, even if millions of files are encrypted under a single `KEK` (`keyId = 1`), no key/nonce wear-out occurs.
 
-### 2.2. Yerel Mobil Tehdit Modelinde `VMK` ve `KEK` Aynı Güvenlik Sınırındadır
-- Çok kiracılı sunucu veya HSM (Hardware Security Module) sistemlerinde anahtar hiyerarşisi katmanları farklı fiziksel/mantıksal güvenlik sınırlarında yaşar ve bir alt katman anahtarının tek başına sızması mümkündür.
-- Yerel bir mobil kasa uygulamasında ise kasa açıldığında `VMK` ve `KEK` **aynı uygulama sürecinin RAM alanında birlikte bulunur** (`unlockedMasterKey` ve `unlockedKek`).
-- `VMK` veya cihaz ele geçirilmeden yalnızca `KEK`'in izole olarak sızdığı gerçekçi bir bireysel saldırı senaryosu yoktur.
-- Parolanın veya kasa kilidinin sızdığından şüphelenildiğinde **parola değiştirmek** (veya ADR 0004 ile KDF maliyetini güncellemek), `.vault` başlığındaki `PDK -> VMK` sarmasını yeni `salt` ve `IV` ile yenileyerek erişim güvenliğini zaten yeniden tesis eder.
+### 2.2. In the local mobile threat model `VMK` and `KEK` share one security boundary
+- On multi-tenant servers or HSM (Hardware Security Module) systems, the layers of the key hierarchy live in different physical/logical security boundaries and a lower-layer key can realistically leak on its own.
+- In a local mobile vault application, when the vault is unlocked the `VMK` and `KEK` **reside together in the same application process RAM** (`unlockedMasterKey` and `unlockedKek`).
+- There is no realistic individual attack scenario in which only the `KEK` leaks in isolation without the `VMK` or the device being compromised.
+- If the password or vault lock is suspected to have leaked, **changing the password** (or updating the KDF cost as in ADR 0004) already re-establishes access security by renewing the `PDK -> VMK` wrap in the `.vault` header with a new `salt` and `IV`.
 
-### 2.3. Geçmişte Kopyalanmış Veriye Karşı Koruma Sağlamaz
-- KEK rotasyonu yalnızca `.bin` başlıklarındaki `DEK` sarmasını değiştirir; dosya gövdesini şifreleyen **`DEK` ve Tink ciphertext'i bit-bit aynı kalır**.
-- Saldırgan daha önce `.vault` dosyasının ve şifreli `.bin` dosyalarının bir kopyasını aldıysa, cihazda yapılan KEK rotasyonu o eski kopyaları geçersiz kılmaz. Bu tür bir sızıntıyı gidermenin tek yolu tüm dosyaların düz metinden yepyeni `DEK`'lerle baştan şifrelenmesi (yeni bir kasa açılıp taşınması) ve eski kopyaların imha edilmesidir.
+### 2.3. It provides no protection against previously copied data
+- KEK rotation only changes the `DEK` wrap in `.bin` headers; the **`DEK` and the Tink ciphertext that encrypt the file body remain bit-for-bit identical**.
+- If an attacker previously copied the `.vault` file and the encrypted `.bin` files, rotating the KEK on the device does not invalidate those old copies. The only way to remedy such a leak is to re-encrypt every file from plaintext with brand-new `DEK`s (create a new vault and migrate) and destroy the old copies.
 
-### 2.4. Bireysel Kullanımda Risk / Fayda Oranı Olumsuzdur (Veri Kaybı ve Senkronizasyon Kırılması)
-Bireysel kullanıcılar için KEK rotasyonunun getirdiği mühendislik ve operasyonel riskler, sağladığı marjinal kurumsal uyumluluk faydasından çok daha büyüktür:
-1. **Toplu Yeniden Yazma Sırasında Veri ve Küçük Resim (Thumbnail) Kaybı Riski:** Kasadaki tüm `.bin` dosyalarının başlıklarının yerinde (in-place) yeniden yazılması sırasında pil bitmesi, OS tarafından sürecin öldürülmesi (`SIGKILL`), depolama dolması veya OTG bağlantısının kopması yarım kalmış durumlar yaratır; ayrıca başlıktaki gömülü küçük resim (`thumbnail`) baytlarının yanlışlıkla düşürülmesi riski taşır.
-2. **Metadata (`FVSTR:`) Kayıtlarının Okunamaz Hale Gelme Riski:** Mevcut `decryptStringFromVault` implementasyonu kayıttaki `keyId` alanını okuyup kullanmaz ve her zaman aktif KEK'e (`activeKek()`) başvurur. Rotasyondan sonra eski KEK ile yazılmış Room SQLite gizli sanal albüm adları, `JSON/` dışa aktarımları, geri yükleme manifestleri ve resume kayıtları çözülemez hale gelir.
-3. **Harici Disk / Masaüstü CLI (`calypso_vault.py`) "Split-Brain" Riski:** CLI **yalnızca şifreleme (encrypt-only)** aracıdır; hibir `.bin` dosyasını açıp çözmez. Eski `.vault` ile PC tarafında şifrelenen yeni `.bin` dosyaları eski KEK ve sabit `ACTIVE_KEY_ID = 1` ile yazılır (eski KEK emekli edilirse senkronizasyon bozulur). Ayrı bir Android cihazda ise yeni `keyId`'li `.bin` dosyaları eski `.vault` başlığıyla **açılamaz**. Güncel `.vault` başlığını eski dışa aktarım klasörüne yazmak `checkVaultExportTarget` (`VaultExportHeaderCheck`) bayt eşitliği kontrolü nedeniyle `DIFFERENT_VAULT` hatasıyla engellenir; yeni bir klasöre dışa aktarım gerekir.
+### 2.4. For personal use the risk/benefit ratio is unfavourable (data loss and broken synchronization)
+For individual users, the engineering and operational risks of KEK rotation far outweigh its marginal enterprise compliance benefit:
 
----
-
-## 3. İleriye Dönük Format Uyumluluğu (`1.x`, güncel sürüm `1.0.0`)
-
-KEK rotasyonu `1.x` boyunca uygulanmamış olsa da kanonik kapsayıcı biçimi (`FGVLTENC` v1) ileride geriye dönük uyumluluğu bozmadan eklenebilecek şekilde tasarlanmıştır:
-- **`.bin` başlıkları (`FGVLTENC` v1):** 9. baytta 2 baytlık açık `keyId` (`u16`, şu an `1`) alanını zaten taşır.
-- **`FVSTR:` metadata kayıtları:** 1 bayt sürümün hemen ardından 2 baytlık `keyId` (`u16`, şu an `1`) alanını zaten yazar.
-- **`.vault` keyring yapısı:** Uzunluk ön-ekli (`keyringLen`) olarak saklanır.
-  - `keyringLen == 34` → `1.0.0` tekil anahtar formatı: `activeKeyId(u16) | KEK(32)`.
-  - `keyringLen > 34` → İlerideki çoklu anahtar formatı: `activeKeyId(u16) | keyCount(u16) | [keyId(u16) | KEK(32)] × keyCount`.
+1. **Risk of data and thumbnail loss during bulk rewriting:** In-place rewriting of the headers of every `.bin` file in the vault can be interrupted by battery depletion, OS process kill (`SIGKILL`), full storage or a dropped OTG connection, leaving partial states; it also risks accidentally dropping the embedded thumbnail bytes from the header.
+2. **Risk of making metadata (`FVSTR:`) records unreadable:** The current `decryptStringFromVault` implementation does not read or use the `keyId` field in the record and always refers to the active KEK (`activeKek()`). After rotation, Room SQLite hidden virtual-album names, `JSON/` exports, restore manifests and resume records written with the old KEK become undecryptable.
+3. **"Split-brain" risk with external disk / desktop CLI (`calypso_vault.py`):** The CLI is an **encrypt-only** tool; it never opens or decrypts a `.bin` file. New `.bin` files created on the PC with an old `.vault` are written with the old KEK and the fixed `ACTIVE_KEY_ID = 1` (retiring the old KEK would break synchronization). On a separate Android device, `.bin` files with the new `keyId` **cannot be opened** with the old `.vault` header. Writing the current `.vault` header into an old export folder is blocked by the `checkVaultExportTarget` (`VaultExportHeaderCheck`) byte-equality check with a `DIFFERENT_VAULT` error; a new folder is required.
 
 ---
 
-## 4. İleride Kurumsal İhtiyaçlar İçin Eklenirse Kullanılacak Mimari Yaklaşım
+## 3. Forward format compatibility (`1.x`, current version `1.0.0`)
 
-Bu özellik bireysel kullanımdan ziyade **kurumsal uyumluluk** (ör. PCI DSS 3.6/12.3, ISO 27001 A.8.24, NIST SP 800-57 anahtar ömrü politikaları veya personel/cihaz devri sonrası zorunlu anahtar yenileme) sebebiyle gündeme gelirse aşağıdaki mimari uygulanmalıdır:
+Even though KEK rotation is not implemented during `1.x`, the canonical container format (`FGVLTENC` v1) is designed so it can be added later without breaking backward compatibility:
 
-### 4.1. Çoklu Keyring ve `kekFor(keyId)` Altyapısı (Android + Python CLI)
-- `CryptoManager` ve `tools/calypso-cli/calypso_vault.py` tek bir `unlockedKek` yerine bellek içi anahtar halkası haritası (`unlockedKeyring: Map<Short, ByteArray>`) ve `activeKeyId: Short` tutmalıdır.
-- `.vault` okuyucuları `keyringLen == 34` ise tekil anahtar olarak yüklemeli; `keyringLen > 34` ise `keyCount` kadar `(keyId, KEK)` çiftini okumalıdır.
-- **Kritik Ön Koşul (`FVSTR:`):** `decryptStringFromVault` kayıttaki `keyId` değerini okuyarak doğrudan `kekFor(keyId)` ile anahtar türetmelidir; yeni yazılan her `FVSTR:` kaydı `activeKeyId` ve `activeKek()` kullanmalıdır.
-- **Kritik Ön Koşul (`VaultContainer`):** Gerçek API `CryptoManager.readMetadata(file, includeThumbnail, cacheResult)` + `CryptoManagerStreams.readContainerMetadata(dis, kek, version, includeThumbnail)`dır; `VaultContainer.readMetadata` diye bir metod yoktur. Başlıktaki `keyId` alanına göre `kekFor(keyId)` seçilmeli; yalnızca yeni/güncellenmiş başlıklar `activeKeyId` ile yazılmalıdır. `renameEncryptedFile` bugün `meta.keyId`'yi eşleştirmeden `activeKek()` kullanır.
-- `clearKeys(context)` çağrısında keyring haritasındaki **tüm** KEK dizileri `fill(0)` ile sıfırlanmalıdır.
-
-### 4.2. Önce-Keyring (Keyring-First) ve ADR 0003 Dayanıklı İşlem Mimarisi
-1. **Ön Koşul:** Kasa açık olmalı ve aktif bir dosya işlemi bulunmamalıdır; rotasyon boyunca diğer tüm kullanıcı/senkronizasyon dosya işlemleri kilitlenmelidir.
-2. **Yeni KEK Üretimi ve Önce `.vault` Yazımı:**
-   - `newId = max(mevcut keyId) + 1` ve rastgele 32 bayt `newKek` üretilir (`keyCount <= 256` sınırı kontrol edilir).
-   - **Eski KEK'ler silinmeden**, yeni `(newId, newKek)` keyring'e eklenip `activeKeyId = newId` ile `.vault` başlığına **önce atomik olarak yazılır** (`.vault.tmp` + `fsync` + `rename`). Böylece işlem yarıda kesilse bile hem eski hem yeni `keyId`'li dosyalar okunabilir kalır.
-3. **ADR 0003 Foreground Service + Durable Journal ile Başlık Dönüşümü:**
-   - Rotasyon, ADR 0003 ve ADR 0002 §7 kapsamında kayıtlı bir **`ForegroundOperationRegistry.withOperation` + `FileOperationService`** olarak çalıştırılmalı (`PARTIAL_WAKE_LOCK` + bildirim + işlem bitiminde arka plandaysa otomatik `clearKeys`), kalıcı bir `.kek_rotation_journal` dosyası tutmalıdır.
-   - Her `.bin` dosyası için:
-     - Başlıktaki `keyId == newId` ise atlanır (kesinti sonrası tam idempotent devamlılık).
-     - `CryptoManager.readMetadata(..., includeThumbnail = true)` ile mevcut DEK, `fileId`, metadata ve **gömülü küçük resim (`thumbnailBytes`) eksiksiz okunur**.
-     - `VaultContainerWriter.rewriteContainer(...)` ile geçici dosya `.tmp` üzerinde yalnızca başlık `newId / newKek` altında yeniden şifrelenir (`DEK`, `fileId` ve Tink ciphertext baytları aynen korunur).
-     - Geçici dosya üzerinde Tink bütünlük doğrulaması (`verifyFileIntegrity`) çalıştırıldıktan sonra atomik olarak asıl dosyanın üzerine taşınır ve `metadataCache` girdisi güncellenir/temizlenir.
-4. **Opsiyonel Metadata (`FVSTR:`) Yeniden Şifrelemesi:** Room SQLite, `JSON/` ve kasa çöp kutusu `.restore_info` dosyalarındaki aktif `FVSTR:` kayıtları yeni `activeKeyId` ile yeniden şifrelenir (ancak eski yedeklerin açılabilmesi için eski KEK'ler keyring'de tutulmaya devam eder).
-5. **Harici Kasa / CLI Eşitleme Bildirimi:** Rotasyon tamamlandığında kullanıcıya harici disk / PC CLI için dışa aktarılmış eski `.vault` dosyalarının güncellenmesi gerektiği açıkça bildirilir.
-
-### 4.3. Eski Anahtarların Emekli Edilmesi (Kripto-İmha / Re-Encryption)
-- Keyring sınırı (`256` anahtar) dolduğunda veya kurumsal politika gereği eski bir KEK'in tamamen devre dışı bırakılması (crypto-shredding) gerektiğinde, yalnızca başlık rotasyonu yetmez: ilgili dosyaların yeni `DEK` ile düz metinden yeniden şifrelenip eski KEK'lerin keyring'den çıkarılması ve eski şifreli yedeklerin güvenli silinmesi gerekir.
+- **`.bin` headers (`FGVLTENC` v1):** already carry a 2-byte plain `keyId` field (`u16`, currently `1`) at byte offset 9.
+- **`FVSTR:` metadata records:** already write a 2-byte `keyId` field (`u16`, currently `1`) immediately after the 1-byte version.
+- **`.vault` keyring structure:** stored with a length prefix (`keyringLen`).
+  - `keyringLen == 34` → `1.0.0` single-key format: `activeKeyId(u16) | KEK(32)`.
+  - `keyringLen > 34` → future multi-key format: `activeKeyId(u16) | keyCount(u16) | [keyId(u16) | KEK(32)] × keyCount`.
 
 ---
 
-## 5. Zorunlu Doğrulama Kriterleri (İleride Uygulanırsa)
+## 4. Architectural approach if added later for enterprise needs
 
-Kurumsal sürümde KEK rotasyonu açılmadan önce şu testlerin tamamı geçmelidir:
-- Payload baytları rotasyon öncesi ve sonrası bit-bit aynı kalır; eski KEK ile yeni başlık açılamaz.
-- `FVSTR:` kayıtları (albüm adları, `JSON/`, restore manifestleri, resume blob'ları) rotasyon öncesi ve sonrası tüm anahtar dönemlerinde okunabilir.
-- Gömülü küçük resimler (`thumbnailBytes`) rotasyon sonrası %100 korunur.
-- Kesinti simülasyonu: `N` dosya dönüştürüldükten sonra süreç öldürülür (`SIGKILL`), yeniden başlatmada kalan dosyalar kaldığı yerden tamamlanır ve hiçbir dosya okunamaz kalmaz.
-- Eşzamanlı silme/taşıma/şifreleme istekleri rotasyon kilidi tarafından güvenli şekilde engellenir veya sıraya alınır.
-- Android ↔ Python CLI (`calypso_vault.py`) çoklu keyring okuma/yazma uyumluluğu testlerle doğrulanır.
+If this feature is requested for **enterprise compliance** rather than personal use (e.g. PCI DSS 3.6/12.3, ISO 27001 A.8.24, NIST SP 800-57 key-lifetime policies, or mandatory key renewal after staff/device handover), the following architecture should be applied:
+
+### 4.1. Multi-keyring and `kekFor(keyId)` infrastructure (Android + Python CLI)
+- `CryptoManager` and `tools/calypso-cli/calypso_vault.py` should hold an in-memory keyring map (`unlockedKeyring: Map<Short, ByteArray>`) and an `activeKeyId: Short` instead of a single `unlockedKek`.
+- `.vault` readers should load `keyringLen == 34` as a single key; for `keyringLen > 34` they should read `keyCount` `(keyId, KEK)` pairs.
+- **Critical prerequisite (`FVSTR:`):** `decryptStringFromVault` must read the `keyId` value from the record and derive the key directly through `kekFor(keyId)`; every newly written `FVSTR:` record must use `activeKeyId` and `activeKek()`.
+- **Critical prerequisite (`VaultContainer`):** the real API is `CryptoManager.readMetadata(file, includeThumbnail, cacheResult)` + `CryptoManagerStreams.readContainerMetadata(dis, kek, version, includeThumbnail)`; there is no `VaultContainer.readMetadata` method. `kekFor(keyId)` must be selected according to the `keyId` field in the header; only new/updated headers should be written with `activeKeyId`. `renameEncryptedFile` currently uses `activeKek()` without matching `meta.keyId`.
+- In `clearKeys(context)`, **all** KEK arrays in the keyring map must be zeroed with `fill(0)`.
+
+### 4.2. Keyring-first rotation with ADR 0003 durable operation architecture
+1. **Prerequisites:** the vault must be unlocked and no file operation active; all other user/synchronization file operations must be locked during rotation.
+2. **New KEK generation and `.vault` write first:**
+   - Generate `newId = max(existing keyId) + 1` and a random 32-byte `newKek` (checking the `keyCount <= 256` limit).
+   - **Without deleting old KEKs**, add the new `(newId, newKek)` to the keyring and write the `.vault` header with `activeKeyId = newId` **atomically first** (`.vault.tmp` + `fsync` + `rename`). This keeps files with both old and new `keyId` readable even if the operation is interrupted.
+3. **Header conversion with ADR 0003 foreground service + durable journal:**
+   - Run the rotation as a registered **`ForegroundOperationRegistry.withOperation` + `FileOperationService`** under ADR 0003 and ADR 0002 §7 (`PARTIAL_WAKE_LOCK` + notification + automatic `clearKeys` when finishing in the background), keeping a durable `.kek_rotation_journal` file.
+   - For every `.bin` file:
+     - Skip if the header `keyId == newId` (fully idempotent continuation after interruption).
+     - Read the existing DEK, `fileId`, metadata and **embedded thumbnail (`thumbnailBytes`) in full** via `CryptoManager.readMetadata(..., includeThumbnail = true)`.
+     - Re-encrypt only the header under `newId / newKek` into a temporary `.tmp` file via `VaultContainerWriter.rewriteContainer(...)` (`DEK`, `fileId` and Tink ciphertext bytes are preserved unchanged).
+     - After Tink integrity verification (`verifyFileIntegrity`) on the temporary file, atomically move it over the original and update/clear the `metadataCache` entry.
+4. **Optional metadata (`FVSTR:`) re-encryption:** re-encrypt active `FVSTR:` records in Room SQLite, `JSON/` and vault recycle-bin `.restore_info` files with the new `activeKeyId` (old KEKs remain in the keyring so old backups stay readable).
+5. **External vault / CLI sync notice:** when rotation completes, clearly inform the user that older `.vault` files exported for external disk / PC CLI must be updated.
+
+### 4.3. Retiring old keys (crypto-shredding / re-encryption)
+- When the keyring limit (`256` keys) is reached or enterprise policy requires a KEK to be fully disabled (crypto-shredding), header rotation alone is insufficient: the affected files must be re-encrypted from plaintext with a new `DEK`, old KEKs removed from the keyring, and old encrypted backups securely deleted.
+
+---
+
+## 5. Mandatory verification criteria (if implemented in the future)
+
+Before enabling KEK rotation in an enterprise build, all of the following tests must pass:
+- Payload bytes remain bit-for-bit identical before and after rotation; the new header cannot be opened with the old KEK.
+- `FVSTR:` records (album names, `JSON/`, restore manifests, resume blobs) are readable across all key periods before and after rotation.
+- Embedded thumbnails (`thumbnailBytes`) are preserved 100% after rotation.
+- Interruption simulation: after `N` files are converted the process is killed (`SIGKILL`); on restart the remaining files continue from where they stopped and no file becomes unreadable.
+- Concurrent delete/move/encrypt requests are safely blocked or queued by the rotation lock.
+- Android ↔ Python CLI (`calypso_vault.py`) multi-keyring read/write compatibility is verified by tests.

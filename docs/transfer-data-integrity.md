@@ -1,431 +1,431 @@
-# Aktarım sırasında veri bütünlüğü — mevcut davranış, önerilen değişiklikler ve kalan riskler
+# Data integrity during transfer — current behavior, proposed changes, and remaining risks
 
-Kapsam: kopyalama, taşıma, şifreleme ve şifre çözme işlemlerinin yarıda kalması
-(harici disk çıkarılması, uygulamanın kapatılması, reboot, arka plana alınıp Android tarafından
-sürecin öldürülmesi) sırasında verilerin ne olduğu. Referanslar: `DOCS.md` §2.4/§2.5,
+Scope: what happens to data when copying, moving, encryption, and decryption operations are interrupted
+(external disk removal, the app being closed, reboot, or being backgrounded and the process being
+killed by Android). References: `DOCS.md` §2.4/§2.5,
 [ADR 0001](adr/0001-tink-streaming-aead-migration.md),
 [ADR 0002](adr/0002-operational-security-hardening.md),
-[ADR 0003](adr/0003-resumable-file-operations.md) ve
+[ADR 0003](adr/0003-resumable-file-operations.md), and
 [crypto-design-review.md](crypto-design-review.md).
 
-> **Belge durumu:** §1–§3 ve §6.1, değişiklik öncesi (*upstream/fork başlangıç*) davranışının
-> tarihsel analizini ve tasarım önerisini korur. [ADR 0003](adr/0003-resumable-file-operations.md)
-> kabul edilmiş ve temel fazları uygulanmıştır; **kodda şu an çalışan güncel durum** §5, §8
-> ve ADR 0003 §11'de belgelenmektedir. §6.4 bir tasarım önerisidir; kapsamı §8'deki gerçek
-> kod durumuyla sınırlıdır.
+> **Document status:** §1–§3 and §6.1 retain the historical analysis and design proposal of the
+> pre-change (*upstream/fork baseline*) behavior. [ADR 0003](adr/0003-resumable-file-operations.md)
+> has been accepted and its core phases have been implemented; **the current state actually in the
+> code** is documented in §5, §8, and ADR 0003 §11. §6.4 is a design proposal; its scope is limited
+> to the actual code state in §8.
 >
-> **Bağımsız kriptografik denetim yapılmamıştır.** Konteyner yerleşimi proje özgüdür; iyi bilinen
-> primitiflerin kullanılması tasarım hatası olmadığını kanıtlamaz.
+> **No independent cryptographic audit has been performed.** The container layout is project-specific;
+> the use of well-known primitives does not prove the absence of design flaws.
 
 ---
 
-## 1. Başlangıçta uygulamanın davranışı (değişiklik öncesi tarihsel analiz)
+## 1. Initial app behavior (pre-change historical analysis)
 
-### 1.1 Temel güvenlik invariant'ı
+### 1.1 Core security invariant
 
-Mevcut kodda dört işlem ailesi de aynı deseni izler:
+In the current code, all four operation families follow the same pattern:
 
 ```
-sağlam kaynaktan oku  →  YENİ bir hedef dosyaya yaz  →  (başarılıysa) kaynağı sil
+read from intact source  →  write to a NEW destination file  →  (on success) delete the source
 ```
 
-Kaynak hiçbir zaman yerinde truncat edilmez, üzerine yazılmaz veya ikiye bölünmez. Kaynak silme
-her zaman yazma başarısından sonraya ertelenir. Bu nedenle **"yarı kaynak + yarı hedef" durumu
-kodda yoktur** ve süreç ölümünde kalıcı veri kaybı oluşmaz.
+The source is never truncated in place, overwritten, or split in two. Source deletion is always
+deferred until after a successful write. Therefore, the **"half source + half destination" state
+does not exist in the code**, and process death does not cause permanent data loss.
 
-### 1.2 İşlem bazında davranış
+### 1.2 Behavior per operation
 
-| İşlem | Yazma yolu | Kopma anında hedef | Kopma anında kaynak |
+| Operation | Write path | Destination at interruption | Source at interruption |
 |---|---|---|---|
-| Düz kopya / stream move (SD, OTG, SAF veya copy) | `getFileOutputStreamSync(dest.path, …)` → doğrudan nihai yol (`CopyMoveHelper.kt:912-918`) | **Yarım dosya kalır**; `catch` rollback yapmaz, `finally` yalnızca stream kapatır (`:923-928`) | Sağlam; silme `transferSuccess` sonrası (`:930-945`) |
-| Aynı FS içi move | `srcFile.renameTo(dstFile)` (`CopyMoveHelper.kt:729`) | Atomik, yarım dosya yok | Atomik |
-| Şifreli `.bin` kopyalama/taşıma | Aynı FS'de `renameTo`, değilse doğrudan `destBin`'e stream (`CryptoManagerConflict.kt:503-525`) | Stream yolunda yarım `.bin` | Sağlam; `sourceBin.delete()` başarı sonrası (`:523-525`) |
-| Encrypt | `VaultContainerWriter.writeContainer(target = randomHex.bin)` (`CryptoManagerFileCrypto.kt:246-259`, `VaultContainerWriter.kt:99-125`) | Yarım `.bin` (geçerli header + kesik payload) | Sağlam; `secureWipeAndDeleteFile` yazım sonrası (`:285-300`) |
-| Decrypt / export | `FileOutputStream(outFile)` (`CryptoManagerFileCrypto.kt:548-562`) | Yarım düz dosya | Önce `verifyFileIntegrity` (`:473`); silme yazım sonrası (`:568-578`) |
-| Albüm encrypt | Tüm dosyalar `wipeSource = false` ile şifrelenir, sonra kaynaklar silinir (`CryptoManagerFolderCrypto.kt:108-191`) | Kısmi çıktı + rastgele alt klasör | Dönüştürme fazında tüm kaynaklar sağlam |
-| Albüm decrypt | Tüm dosyalar çözülür, sonra `.bin`'ler silinir (`CryptoManagerFolderCrypto.kt:399-465`) | Kısmi düz dosyalar | Dönüştürme fazında tüm `.bin`'ler sağlam |
+| Plain copy / stream move (SD, OTG, SAF, or copy) | `getFileOutputStreamSync(dest.path, …)` → directly to the final path (`CopyMoveHelper.kt:912-918`) | **A partial file remains**; `catch` does not roll back, `finally` only closes the stream (`:923-928`) | Intact; deletion after `transferSuccess` (`:930-945`) |
+| Same-FS move | `srcFile.renameTo(dstFile)` (`CopyMoveHelper.kt:729`) | Atomic, no partial file | Atomic |
+| Encrypted `.bin` copy/move | `renameTo` on the same FS, otherwise stream directly to `destBin` (`CryptoManagerConflict.kt:503-525`) | Partial `.bin` on the stream path | Intact; `sourceBin.delete()` after success (`:523-525`) |
+| Encrypt | `VaultContainerWriter.writeContainer(target = randomHex.bin)` (`CryptoManagerFileCrypto.kt:246-259`, `VaultContainerWriter.kt:99-125`) | Partial `.bin` (valid header + truncated payload) | Intact; `secureWipeAndDeleteFile` after write (`:285-300`) |
+| Decrypt / export | `FileOutputStream(outFile)` (`CryptoManagerFileCrypto.kt:548-562`) | Partial plain file | First `verifyFileIntegrity` (`:473`); deletion after write (`:568-578`) |
+| Album encrypt | All files are encrypted with `wipeSource = false`, then sources are deleted (`CryptoManagerFolderCrypto.kt:108-191`) | Partial output + random subfolder | All sources intact during the conversion phase |
+| Album decrypt | All files are decrypted, then `.bin`s are deleted (`CryptoManagerFolderCrypto.kt:399-465`) | Partial plain files | All `.bin`s intact during the conversion phase |
 
-İstisna (disk çıkarılması, yazma hatası) ile **süreç ölümü** arasındaki fark: istisnada `catch`
-blokları kısmen temizlik yapar (`encryptedFile.delete()`, `outFile.delete()`, `destBin.delete()`);
-süreç ölümünde hiçbir `catch`/`finally`/rollback çalışmaz ve yarım dosya kesinlikle kalır.
+The difference between an exception (disk removal, write error) and **process death**: on an exception,
+`catch` blocks perform partial cleanup (`encryptedFile.delete()`, `outFile.delete()`, `destBin.delete()`);
+on process death, no `catch`/`finally`/rollback runs, and the partial file definitely remains.
 
-### 1.3 A — B — C senaryosu
+### 1.3 The A — B — C scenario
 
-B aktarımı sırasında kopma:
+Interruption during transfer of B:
 
-- **A:** Tamamlanmış ve commit edilmiş; kaynağı silinmiş olabilir ama hedefi tam. Etkilenmez.
-- **C:** Hiç I/O başlamadı; dokunulmaz.
-- **B:** Kaynağın yarısı hedefe gitmez — kaynak sağlam kalır. Ancak **hedefte yarım dosya oluşur**
-  ve hiçbir mekanizma bunu temizlemez veya yeniden denemez. `KEEP_BOTH` ile yeniden denemede yarım
-  dosya `(1)` sonekiyle kalıcı çöp olabilir.
+- **A:** Completed and committed; its source may have been deleted, but its destination is complete. Unaffected.
+- **C:** No I/O started; untouched.
+- **B:** Half of the source does not reach the destination — the source remains intact. However,
+  **a partial file is created at the destination**, and no mechanism cleans it up or retries. On a
+  retry with `KEEP_BOTH`, the partial file can become permanent junk with a `(1)` suffix.
 
-Kayıp olan şey **B'ye harcanan ilerlemedir**; veri değil.
+What is lost is **the progress spent on B**; not the data.
 
-### 1.4 Bozulmanın tespiti
+### 1.4 Detection of corruption
 
-Yarım `.bin` sessizce kabul edilmez: header'daki `ciphertextLength` tam boyutu bildirir,
-`verifyFileIntegrity` dosya uzunluğunu kontrol edip reddeder (`CryptoManagerStreams.kt:177`);
-görüntüleme yolu Tink segment doğrulama hatasını `IOException` / `GeneralSecurityException` olarak
-fırlatır ve yükleme başarısız olur; sarı `!` rozeti, `allowUnverified` ve
-`vault_corruption_reports` tablosu **uygulanmamıştır** (bkz. ADR 0001 fail-closed kararı). Yani
-bozulma **tespit edilir, gösterilmez ve kullanıcıya resume seçeneği sunulmaz.**
+A partial `.bin` is not silently accepted: the `ciphertextLength` in the header reports the full size,
+`verifyFileIntegrity` checks the file length and rejects it (`CryptoManagerStreams.kt:177`); the viewing
+path throws the Tink segment verification error as `IOException` / `GeneralSecurityException` and
+loading fails; the yellow `!` badge, `allowUnverified`, and the `vault_corruption_reports` table
+**have not been implemented** (see ADR 0001 fail-closed decision). So corruption is **detected, not
+shown, and no resume option is offered to the user.**
 
-### 1.5 Mevcut kodda gerçek (dar) açıklar
+### 1.5 Real (narrow) gaps in the current code
 
-- Encrypt yolunda yaz sonrası **read-back doğrulaması yoktur**; `writeContainer` dönüp sync yaptıktan
-  sonra kaynak secure-wipe edilir. Sessiz yazma bozulması halinde doğrulanmamış `.bin` üzerinden iyi
-  kaynak silinebilir. Bu, süreç ölümü değil **sessiz bozulma** senaryosudur.
-- Düz kopyada "doğrulama" yalnızca `source.size == bytesCopied` + dosya varlığıdır
-  (`CopyMoveHelper.kt:920`); içerik hash'i karşılaştırılmaz.
+- On the encrypt path there is **no post-write read-back verification**; after `writeContainer` returns
+  and syncs, the source is secure-wiped. In the event of silent write corruption, the good source could
+  be deleted based on an unverified `.bin`. This is a **silent corruption** scenario, not process death.
+- In a plain copy, "verification" is only `source.size == bytesCopied` + file existence
+  (`CopyMoveHelper.kt:920`); the content hash is not compared.
 
 ---
 
-## 2. Fork'ta zaten var olan değişiklikler
+## 2. Changes already present in the fork
 
-Bu proje (Fossify Gallery fork'u) veri bütünlüğü açısından aşağıdakileri **zaten içerir**:
+This project (a Fossify Gallery fork) **already includes** the following with respect to data integrity:
 
-- **Kanonik konteyner:** `FGVLTENC` v1; AES-256-GCM ile authenticate edilmiş header +
-  dosyaya özel DEK ile Tink `AES256_GCM_HKDF` akışı (256 KiB segment), AAD = `fileId`
+- **Canonical container:** `FGVLTENC` v1; authenticated header with AES-256-GCM + Tink
+  `AES256_GCM_HKDF` stream with a per-file DEK (256 KiB segments), AAD = `fileId`
   (ADR 0001, DOCS §2.5, `TinkStreamSpec.kt`).
-- **Fail-closed doğrulama:** bozuk segment görüntülemede de yükleme hatası verir (sıfır ikamesi
-  yoktur); dedup, conflict ve pre-wipe kararları `verifyFileIntegrity()` ile doğrulanmış baytlar
-  üzerinden alınır. Tolerant görüntüleme tasarımı (sarı `!` rozeti, corruption raporu,
-  `allowUnverified`) ADR 0001 §7.3'te **reddedilmiştir**, kodda yoktur (DOCS §2.4 güncel durumu
-  yansıtır).
-- **Kısmi atomik yazma desenleri:** `renameEncryptedFile` `.tmp_<rand>.bin` + `Files.move(REPLACE_EXISTING)`
-  (`CryptoManagerFileCrypto.kt:640-683`);External sync `.sync_tmp_*.bin` + `verifyFileIntegrity` + move
-  (`CryptoManagerExportSync.kt:276-330`); sanal albüm ve favorites manifest'leri `*.tmp` + `renameTo`
-  (`VirtualAlbumSyncManager.kt:271-294`, `ReferenceBackupManager.kt:113`). Bu desenler **bazı**
-  yollarda yarım dosya oluşumunu zaten engeller — ama ana kopyalama/şifreleme yollarında yoktur.
-- **İlerleme bildirimi (uygulama öncesi):** `OperationProgressNotifier` + `CryptoProgressDialog`
-  (foreground *service* olmadan yalnızca bildirim; güncel foreground servisi için bkz. §8.2).
-- **Tasarım ve uygulama durumu:** ADR 0002 ve ADR 0003'ün güncel kod karşılığı §8'dedir.
+- **Fail-closed verification:** a corrupt segment also causes a load error during viewing (no zero
+  substitution); dedup, conflict, and pre-wipe decisions are made over bytes verified with
+  `verifyFileIntegrity()`. The tolerant-viewing design (yellow `!` badge, corruption report,
+  `allowUnverified`) was **rejected** in ADR 0001 §7.3 and is not in the code (DOCS §2.4 reflects
+  the current state).
+- **Partially atomic write patterns:** `renameEncryptedFile` `.tmp_<rand>.bin` + `Files.move(REPLACE_EXISTING)`
+  (`CryptoManagerFileCrypto.kt:640-683`); External sync `.sync_tmp_*.bin` + `verifyFileIntegrity` + move
+  (`CryptoManagerExportSync.kt:276-330`); virtual album and favorites manifests `*.tmp` + `renameTo`
+  (`VirtualAlbumSyncManager.kt:271-294`, `ReferenceBackupManager.kt:113`). These patterns already
+  prevent partial-file creation on **some** paths — but are absent from the main copy/encrypt paths.
+- **Progress notification (pre-implementation):** `OperationProgressNotifier` + `CryptoProgressDialog`
+  (notification only, without a foreground *service*; for the current foreground service see §8.2).
+- **Design and implementation status:** The current code counterparts of ADR 0002 and ADR 0003 are in §8.
 
 ---
 
-## 3. Önerilen değişiklikler (uygulama özeti için bkz. §8)
+## 3. Proposed changes (see §8 for implementation summary)
 
-Aşağıdaki maddeler başlangıç analizinde önerilen hedeflerdir; güncel kod durumu §8'de ve ADR 0003 §11'de izlenmektedir.
+The following items are the goals proposed in the initial analysis; the current code status is tracked in §8 and ADR 0003 §11.
 
-1. **Staging + atomik commit (yarım dosyanın asıl çözümü).** Her öğe, nihai dosyayla **aynı
-   dizinde** bir `.stage_<operationId>_<itemIndex>` dosyasına yazılır; `fd.sync()` + dizin fsync
-   sonrası `Files.move(..., ATOMIC_MOVE)` ile nihai isme taşınır. Nihai isim yalnızca commit
-   sonrası görünür olur. `ATOMIC_MOVE` desteklenmeyen FS/SAF'ta **non-atomic fallback yapılmaz**;
-   öğe `FAILED` sayılır (bkz. §5, risk 1).
-2. **`pending_operations` journal'ı.** ADR 0003 §3 şemasına ek olarak `stagingPath` ve batch
-   (operationId, kök yollar, conflict kararları, albüm merge hedefi) kaydı. `PENDING/IN_FLIGHT`
-   ilk bayttan **önce**, `VERIFIED` rename+sync'den **sonra**, `SOURCE_DELETED` kaynak silindikten
-   sonra yazılır. Böylece ölü süreçten kalan staging dosyası tanım gereği orphan olur.
-3. **Read-back doğrulaması.** Encrypt sonrası `verifyFileIntegrity`, `.bin` kopyasında tam
-   boyut+AEAD kontrolü vardır. `Activity.tryCopyMoveFilesTo` düz→düz dalı ve
-   `OperationRecovery.resumePlainCopy` de kaynak/hedef boyut + parmak izini karşılaştırır;
-   uyuşmazlıkta doğrulanmamış hedef güvenli silinir ve kaynak korunur. Bozuk kaynak `.bin`
-   kopyalanmaz (`verifyFileIntegrity` başta reddeder); corruption kaydı taşıma özelliği yoktur.
-4. **Startup reconciliation.** Çalışan işlem yokken journal'da referansı olmayan staging dosyaları
-   temizlenir. **Düz metin tutan staging dosyaları normal `delete()` değil secure wipe ile silinir**
-   (ADR 0002 §7). `VERIFIED` öğeler disk karşılaştırması, `IN_FLIGHT` öğeler kaynaktan yeniden yazım.
-   Sanal albüm manifest'i, MediaStore ve Room DB kayıtları de kapsanır.
-5. **Foreground operation registry.** Wake lock, tek owner token, transient-wait ve iptal akışı
-   (ADR 0002 §7 + ADR 0003 §7). Süreç ölümü sonrası şifreli işlemler için kasa yeniden açılır;
-   journal asla anahtar veya düz metin tutmaz.
-6. **Depolama kontrolünün uyarlanması** (bkz. §6).
-
----
-
-## 4. Veri kaybı: pratikte sıfırlama hedefi
-
-Süreç ölümü kaynaklı kalıcı veri kaybının **pratikte sıfırlanması hedeflenir**, çünkü tek iyi kopya
-her zaman ya sağlam kaynakta ya da atomik commit edilmiş hedefte bulunur. "B dosyası birleştirilemez
-parçalara ayrılıp kayboldu" senaryosu mevcut kodda da yoktur, önerilen kodda da olmaz.
-
-Bu hedef şu varsayımlara dayanır:
-
-- staging dosyası nihai hedefle **aynı dizinde** ve aynı FS'te tutulur,
-- `ATOMIC_MOVE` başarısızlığında sessizce non-atomic yola düşülmez,
-- read-back doğrulaması gerçekten uygulanır ve `VERIFIED` kaydı kaynak silmeden önce gelir,
-- journal kaybı durumunda en kötü sonuç **duplicate/orphan dosya** ve isim/albüm kaymasıdır,
-  veri kaybı değildir,
-- kullanıcıya gösterilecek mesaj "verileriniz kayboldu" **değil**, ADR 0003'teki gibi
-  "önceki işlem yarıda kaldı, veri kaybı yok, devam edilsin mi?" olur.
+1. **Staging + atomic commit (the real fix for the partial file).** Each item is written to a
+   `.stage_<operationId>_<itemIndex>` file **in the same directory** as the final file; after
+   `fd.sync()` + directory fsync it is moved to the final name with `Files.move(..., ATOMIC_MOVE)`.
+   The final name becomes visible only after the commit. On FS/SAF that do not support `ATOMIC_MOVE`,
+   **no non-atomic fallback is performed**; the item is counted as `FAILED` (see §5, risk 1).
+2. **`pending_operations` journal.** In addition to the ADR 0003 §3 schema, record `stagingPath` and
+   batch information (operationId, root paths, conflict decisions, album merge target).
+   `PENDING/IN_FLIGHT` is written **before** the first byte, `VERIFIED` **after** the rename+sync,
+   `SOURCE_DELETED` after the source is deleted. Thus a staging file left by a dead process is an orphan by definition.
+3. **Read-back verification.** After encrypt, `verifyFileIntegrity` performs a full size+AEAD check on
+   the `.bin` copy. The `Activity.tryCopyMoveFilesTo` plain→plain branch and
+   `OperationRecovery.resumePlainCopy` also compare source/destination size + fingerprint; on a
+   mismatch the unverified destination is securely deleted and the source is preserved. A corrupt
+   source `.bin` is not copied (`verifyFileIntegrity` rejects it up front); there is no corruption-reporting capability.
+4. **Startup reconciliation.** When no operation is running, staging files with no journal reference
+   are cleaned up. **Staging files holding plaintext are deleted with a secure wipe, not a normal
+   `delete()`** (ADR 0002 §7). `VERIFIED` items are checked against disk, `IN_FLIGHT` items are
+   rewritten from the source. Virtual album manifests, MediaStore, and Room DB records are also covered.
+5. **Foreground operation registry.** Wake lock, single owner token, transient-wait and cancellation
+   flow (ADR 0002 §7 + ADR 0003 §7). After process death, the vault is reopened for encrypted
+   operations; the journal never holds keys or plaintext.
+6. **Adaptation of the storage check** (see §6).
 
 ---
 
-## 5. Kalan riskler (değişikliklerden sonra)
+## 4. Data loss: the practical-zero target
 
-| # | Risk | Açıklama / önlem |
+Permanent data loss due to process death is **targeted at practically zero**, because the single good
+copy is always either in the intact source or in the atomically committed destination. The "file B was
+split into irreconcilable pieces and lost" scenario does not exist in the current code or the proposed code.
+
+This target relies on the following assumptions:
+
+- the staging file is kept **in the same directory** as the final destination and on the same FS,
+- on `ATOMIC_MOVE` failure there is no silent fallback to a non-atomic path,
+- read-back verification is actually implemented and the `VERIFIED` record comes before source deletion,
+- in the event of journal loss, the worst outcome is a **duplicate/orphan file** and a name/album
+  shift, not data loss,
+- the message shown to the user is **not** "your data was lost", but, as in ADR 0003, "the previous
+  operation was interrupted, no data loss, continue?"
+
+---
+
+## 5. Remaining risks (after the changes)
+
+| # | Risk | Description / mitigation |
 |---|---|---|
-| 1 | **Atomik rename garantisi yok (kısmen giderildi)** | Copy/move, SAF ve external sync yolları artık staging + atomik commit kullanıyor: doğrudan `File` hedeflerde `Files.move(ATOMIC_MOVE)`, SAF hedeflerde kardeş `DocumentFile` ile `DocumentFile.renameTo()`, `CryptoManagerExportSync`'te önce `ATOMIC_MOVE`; desteklenmezse yalnızca **aynı file store** üzerinde rename'e izin verilir, aksi halde öğe `FAILED`. Cross-store kopyala-sil fallback yok. **Kalan:** bazı SAF sağlayıcıları rename'i hiç desteklemez; o durumda işlem güvenli biçimde reddedilir. |
-| 2 | **Doğrulama kapsamı/maliyeti** | Şifreli `.bin` kopyada (`copyOrMoveEncryptedFileToDirectory`), encrypt sonrası ve external sync yolunda tam `verifyFileIntegrity` yapılır (çakışma ön taramasında `allowFastSampling = true` yalnızca aday dedup kontrolü içindir). Düz kopyada yalnızca boyut + `MediaIdentity` fingerprint (SAF'ta tam akış SHA-256), decrypt'te çıktı uzunluk doğrulaması yapılır. Tam doğrulama büyük videolarda 2x okuma maliyeti getirir; bu maliyet kabul edilmelidir. |
-| 3 | **Journal kaybı / reddi** | Journal app-private; app verisi silinirse veya expire olursa (ADR §10 açık soru) ya da kullanıcı resume'u reddederse: commit edilmiş ama kaynağı silinmemiş öğeler **duplicate** kalır; `resolvedDestName` gider → `(1)/(2)` kayar; albüm batch kaydı gider → yeni rastgele alt klasör (`CryptoManagerFolderCrypto.kt`). |
-| 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar; temizlenmiş işlemlerin eski anahtarları prefs'ten budanır. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
-| 5 | **Foreground service sınırları** | Force-stop `onDestroy` çağırmadan öldürür (journal `IN_FLIGHT` kalır — resume halleder). `FileOperationService` + `ForegroundOperationRegistry` tüm işlem yollarını kapsar ve `ACTION_CANCEL` bildirim iptali ile `TransientOperationWaiter` (120 sn zaman aşımı) içerir; ancak OEM battery optimizer / Doze servisi yine de duraklatabilir veya harici birim geri gelmeyebilir. |
-| 6 | **Plaintext staging izi** | Decrypt ve düz kopya staging dosyaları düz metin tutar; `delete()` ile silinirse flash'te iz kalır. Secure wipe şart (ADR 0002 §7). Ciphertext staging için normal `delete()` yeterli. |
-| 7 | **Öğe başı ve batch alan kontrolü (kısmen giderildi)** | `SpaceEstimator` yalnızca stream copy/move + albüm encrypt/decrypt yollarında batch kontrolü yapar. `TransientOperationWaiter.awaitDestinationReady` öğe başı kontrol eder, ancak `StatFs` fallback `verifiable = false` döndürdüğü için bu öğe kontrolü atlanır. Yazma ortası `IOException` için `runWithTransientRetry` **vardır** (encrypt/decrypt/.bin kopya + `CopyMoveHelper` direct-file; `maxAttempts = 2`, SAF'ta 1); düz→düz `tryCopyMoveFilesTo` ve `resumePlainCopy` bu kapsam dışındadır. |
-| 8 | **Eşzamanlılık (giderildi)** | `ForegroundOperationRegistry` aynı anda çalışan farklı thread'lerdeki işlemleri tek owner token ile serileştirir (aynı thread içi çağrılar re-entrant'tır). Staging isimleri `operationId + itemIndex` ile benzersizdir. |
+| 1 | **No atomic rename guarantee (partially addressed)** | Copy/move, SAF, and external sync paths now use staging + atomic commit: `Files.move(ATOMIC_MOVE)` on direct `File` destinations, `DocumentFile.renameTo()` with a sibling `DocumentFile` on SAF destinations, and `ATOMIC_MOVE` first in `CryptoManagerExportSync`; if unsupported, a rename is allowed only on the **same file store**, otherwise the item is `FAILED`. There is no cross-store copy-delete fallback. **Remaining:** some SAF providers do not support rename at all; in that case the operation is safely rejected. |
+| 2 | **Verification scope/cost** | Full `verifyFileIntegrity` is performed on encrypted `.bin` copy (`copyOrMoveEncryptedFileToDirectory`), after encrypt, and on the external sync path (`allowFastSampling = true` in the conflict pre-scan is only for checking candidate dedup). On a plain copy, only size + `MediaIdentity` fingerprint (full-stream SHA-256 on SAF) is checked, and on decrypt only output-length verification is done. Full verification incurs a 2x read cost on large videos; this cost must be accepted. |
+| 3 | **Journal loss / rejection** | The journal is app-private; if app data is deleted or expires (ADR §10 open question), or the user declines resume: committed items whose source was not deleted remain as **duplicates**; `resolvedDestName` is lost → `(1)/(2)` shifts; the album batch record is lost → a new random subfolder (`CryptoManagerFolderCrypto.kt`). |
+| 4 | **Non-file stores are not atomic (partially addressed)** | `MetadataReconciler` at startup performs `updateDBMediaPath` for committed items (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), fixes the virtual album `parentPhysicalPath`, and rescans MediaStore for plain files. Marking is done **per item** (`operationId:itemIndex`), so a second process death during resume ensures newly completed items are also reconciled; stale keys of cleaned-up operations are pruned from prefs. **Remaining:** folder config and thumbnail cache consistency (see §8.3.2 — intentionally out of scope). |
+| 5 | **Foreground service limits** | Force-stop kills without calling `onDestroy` (the journal remains `IN_FLIGHT` — resume handles it). `FileOperationService` + `ForegroundOperationRegistry` cover all operation paths and include `ACTION_CANCEL` notification cancellation and `TransientOperationWaiter` (120 s timeout); however, OEM battery optimizer / Doze can still pause the service, or the external volume may not come back. |
+| 6 | **Plaintext staging trace** | Decrypt and plain-copy staging files hold plaintext; if deleted with `delete()`, a trace remains on flash. Secure wipe is required (ADR 0002 §7). For ciphertext staging, a normal `delete()` is sufficient. |
+| 7 | **Per-item and batch space check (partially addressed)** | `SpaceEstimator` performs a batch check only on stream copy/move + album encrypt/decrypt paths. `TransientOperationWaiter.awaitDestinationReady` checks per item, but because the `StatFs` fallback returns `verifiable = false`, this per-item check is skipped. For mid-write `IOException`, `runWithTransientRetry` **exists** (encrypt/decrypt/.bin copy + `CopyMoveHelper` direct-file; `maxAttempts = 2`, 1 on SAF); plain→plain `tryCopyMoveFilesTo` and `resumePlainCopy` are out of scope. |
+| 8 | **Concurrency (addressed)** | `ForegroundOperationRegistry` serializes operations running concurrently on different threads with a single owner token (calls within the same thread are re-entrant). Staging names are unique via `operationId + itemIndex`. |
 
-Bu risklerin **hiçbiri** "kaynak ve hedefin yarısı kalıp birleştirilemez veri kaybı" şeklinde
-değildir; hepsi "kirli durum, askıda işlem, duplicate, yanlış doğrulama veya gizlilik izi"
-kategorisindedir.
+**None** of these risks is of the form "half of the source and destination remain, causing
+irreconcilable data loss"; they are all in the category of "dirty state, pending operation,
+duplicate, incorrect verification, or privacy trace".
 
 ---
 
-## 6. Düşük depolama alanı ve "depolama yeterliliği" özelliği
+## 6. Low storage space and the "storage sufficiency" feature
 
-### 6.1 Başlangıç (uygulama öncesi) kontrolü
+### 6.1 Initial (pre-implementation) check
 
-ADR 0003 §3a öncesinde uygulamadaki depolama yeterliliği kontrolü **yalnızca** `CopyMoveHelper.prepareAndRunCopyMove` içinde bulunuyordu:
+Before ADR 0003 §3a, the storage sufficiency check in the app existed **only** inside `CopyMoveHelper.prepareAndRunCopyMove`:
 
-- Yalnızca `useStreamCopy == true` ise çalışır (SD/OTG/SAF veya copy). Aynı FS içi move'da
-  `renameTo` kullanıldığı için kontrol atlanır — doğrudur, rename ek alan istemez.
+- It runs only if `useStreamCopy == true` (SD/OTG/SAF or copy). On a same-FS move, `renameTo` is used,
+  so the check is skipped — correct, since rename requires no extra space.
 - `availableSpace = destination.getAvailableStorageB()`; `sumToCopy = Σ item.size`.
-- `sumToCopy >= availableSpace` ise işlem engellenir ve `no_space` toast'u gösterilir
-  (eşitlik de engellenir — mevcut muhafazakâr davranış).
-- `getAvailableStorageB()` `-1` döndürürse (SAF/OTG'de olabilir) kontrol **tamamen atlanır**.
+- If `sumToCopy >= availableSpace`, the operation is blocked and a `no_space` toast is shown
+  (equality is also blocked — current conservative behavior).
+- If `getAvailableStorageB()` returns `-1` (which can happen on SAF/OTG), the check is **skipped entirely**.
 
-**Kritik bulgu:** `getAvailableStorageB` için yapılan arama kodda yalnızca bu dosyada sonuç veriyor.
-Yani **encrypt, decrypt, albüm işlemleri ve düz→şifreli kasa kopyalama hiçbir alan kontrolüne tabi
-değildir.** "Depolama ayarı yeterliliği" özelliği kapsamı bakımından zaten eksiktir.
+**Critical finding:** a search for `getAvailableStorageB` in the code returns results only in this
+file. That is, **encrypt, decrypt, album operations, and plain→encrypted vault copying are subject
+to no space check at all.** The "storage setting sufficiency" feature is already incomplete in scope.
 
-### 6.2 Staging gerçekten daha mı fazla yer kullanıyor?
+### 6.2 Does staging actually use more space?
 
-**Hayır — doğru uygulandığında hayır.** Tek öğe için tepe kullanım karşılaştırması:
+**No — not when implemented correctly.** Peak usage comparison for a single item:
 
 ```
-Doğrudan yazma : kaynak(dolu) + nihai_dosya(0→boyut) + önceki öğeler
-Staging + rename: kaynak(dolu) + staging(0→boyut)    + önceki öğeler   → rename ücretsiz (metadata)
+Direct write    : source(full) + final_file(0→size) + previous items
+Staging + rename: source(full) + staging(0→size)     + previous items   → rename is free (metadata)
 ```
 
-Aynı dizinde rename veri kopyalamadığı için staging, doğrudan yazmaya göre **ek bir tam kopya
-oluşturmaz.** Önceki bir notta geçen "2x tepe kullanım" ifadesi yanlıştır; doğru olan şudur:
-her iki yöntem de transfer sırasında *kaynak + bir çıktı dosyası* tutar, fark yalnızca çıktının
-görünür olup olmamasıdır.
+Because a rename within the same directory does not copy data, staging does **not create an
+additional full copy** compared with direct writing. The "2x peak usage" statement in a previous
+note is wrong; the correct picture is: both methods hold *source + one output file* during the
+transfer, the only difference being whether the output is visible.
 
-### 6.3 Yine de kalan alan riski
+### 6.3 Remaining space risks nevertheless
 
-1. **Ciphertext genişlemesi.** Tink 256 KiB segment başına 16 baytlık GCM tag'i yazar
-   (`TinkStreamSpec.kt:44,78-84`) ve konteyner header'ı DEK, ad, tarih ve **5 MiB'a kadar thumbnail**
-   içerir. Payload genişleme katsayısı ≈ `262144/262128 ≈ 1.000061` (~1 MB başına 64 bayt) + header.
-   Kaynak boyutlarının toplamı bu farkı **azımsar**; düşük alan ve `>=` eşiği birlikte "yeterli"
-  yanıtı üretebilir ama yazma ortada ENOSPC alabilir. Veri kaybı yok (kaynak sağlam) ama işlem iptal.
-2. **Staging farklı FS'e konursa gerçek 2x.** Eğer staging app-private cache'e, nihai dosya harici
-   kasa dizinine yazılırsa "atomik" move kopyala-sil'e dönüşür ve o öğe için geçici olarak iki tam
-   kopya oluşur. Bu yüzden staging **mutlaka nihai dizinde** olmalıdır (§3/1).
-3. **Kapsam eksikliği.** Encrypt/decrypt yollarında kontrol hiç yok (§6.1). Önerilen journal şeması
-   alan tahminini de tutmalı: `expectedCiphertextSize(originalSize) + header + thumbnail` toplamı.
-4. **Bayat kontrol.** Batch başındaki tek kontrol, uzun işlem sırasında değişen boş alanı görmez
-   (§5, risk 7).
-5. **Orphan staging dosyaları.** Önceki ölü işlemlerden kalan staging dosyaları gerçek boş alanı
-   azaltır; runtime kontrolü bunu doğru görür ama kullanıcı "neden yer kalmadı" şeklinde algılayabilir.
-   Startup cleanup bunları temizlemelidir.
-6. **Aşırı tahmin.** `copyMediaOnly` açıkken medya dışı dosyalar atlanır ama `sumToCopy` onları da
-   sayar → gereksiz `no_space` uyarısı (mevcut davranış).
+1. **Ciphertext expansion.** Tink writes a 16-byte GCM tag per 256 KiB segment (`TinkStreamSpec.kt:44,78-84`)
+   and the container header contains the DEK, name, date, and **a thumbnail of up to 5 MiB**. The
+   payload expansion factor is ≈ `262144/262128 ≈ 1.000061` (~64 bytes per 1 MB) + header. The sum of
+   source sizes **underestimates** this difference; low space with the `>=` threshold can produce a
+   "sufficient" answer while the write hits ENOSPC midway. No data loss (source intact), but the operation is cancelled.
+2. **Real 2x if staging is placed on a different FS.** If staging is written to the app-private cache
+   and the final file to the external vault directory, the "atomic" move becomes a copy-delete and
+   temporarily creates two full copies for that item. Therefore staging **must be in the final directory** (§3/1).
+3. **Scope gap.** There is no check at all on encrypt/decrypt paths (§6.1). The proposed journal
+   schema should also hold the space estimate: `expectedCiphertextSize(originalSize) + header + thumbnail` total.
+4. **Stale check.** A single check at batch start does not see free space changing during a long
+   operation (§5, risk 7).
+5. **Orphan staging files.** Staging files left by previous dead operations reduce actual free
+   space; the runtime check sees this correctly, but the user may perceive it as "why is there no
+   space left". Startup cleanup should remove them.
+6. **Overestimation.** When `copyMediaOnly` is enabled, non-media files are skipped but `sumToCopy`
+   counts them too → unnecessary `no_space` warning (current behavior).
 
-### 6.4 Uygulama planı (ADR 0003 §3a — kabul edildi)
+### 6.4 Implementation plan (ADR 0003 §3a — accepted)
 
-Alan kontrolü, ADR 0003'ün bir parçası olarak **"Decision — space budgeting"** bölümünde
-(§3a) ve §9 checklist maddesinde tanımlandı. Özet:
+The space check was defined as part of ADR 0003 in the **"Decision — space budgeting"** section
+(§3a) and in a §9 checklist item. Summary:
 
-1. **Estimator (sınırlı kapsam):** `SpaceEstimator` + saf `VaultContainerWriter.estimateEncryptedSize(...)`;
-   yalnızca `CopyMoveHelper` stream kopyası, `encryptFolderRegistered` ve `decryptFolderRegistered`
-   içinde kullanılır. `tryCopyMoveFilesTo`, tekli/çoklu dosya crypto, `encryptStreamToDirectory`,
-   `exportEncryptedVault` ve `syncVaultFromExternalDirectory` kapsam dışıdır. `forDecrypt` /
-   `forEncryptedCopy` çağrılmaz; `decryptFolder` gerçek `meta.originalSize` yerine `.bin` uzunluklarını
-   kullanır. Encrypt formülü: `143 + UTF8(ad) + thumbnail + expectedCiphertextSize(boyut)`
-   (143 = 43 sabit prefix + 84 sabit header alanı + 16 GCM tag).
-2. **Albüm tepe kullanımı:** `encryptFolder`/`decryptFolder` tüm çıktıları yazıp ancak sonra
-   kaynakları sildiği için `peakBytes = Σ(tüm çıktılar)` — tek dosya değil tüm batch.
-3. **Zamanlama:** batch başında (kapsam içi yollarda) + öğe bazında `TransientOperationWaiter`
-   kontrolü; resume sırasında `estimatedRequiredBytes` / `peakBytes` **yeniden kontrol edilmez**.
-4. **`-1` / doğrulanamayan alan politikası:** `SpaceEstimator.probe` `StatFs` fallback'inde bile
-   `verifiable = false` döndürür; `SpaceConfirmation` her `!verifiable` durumunda açık onay ister ve
-   SAF'ta kullanıcı onayı olmadan otomatik devam edilmez. Doğrulanabilir alan yetersizliğinde hâlâ
-   yalnızca `no_space` toast'u gösterilir (gereken/mevcut diyaloğu yoktur).
-5. **Eşik:** `required + max(64 MiB, %1) > available` ise engelle veya `WAITING_FOR_SPACE` durumuna
-   geç (ADR §2 transient-wait katmanı, bildirim ve iptal akışıyla).
-6. **Staging:** dört çekirdek yazma yolunda `AtomicStaging` + `ATOMIC_MOVE` kullanılır;
-   `syncVaultFromExternalDirectory` `.sync_tmp_*.bin` + `renameTo` fallback'i kullanır;
-   `exportEncryptedVault` ve `encryptStreamToDirectory` staging kullanmaz.
-7. **Journal/UI:** `estimatedRequiredBytes` yalnızca albüm encrypt/decrypt kayıtlarında yazılır;
-   resume bu alanları okumaz ve gereken/mevcut bilgisi göstermez. `no_space` toast'u marjsız
-   `peakBytes` değerini yazar.
+1. **Estimator (limited scope):** `SpaceEstimator` + pure `VaultContainerWriter.estimateEncryptedSize(...)`;
+   used only inside `CopyMoveHelper` stream copy, `encryptFolderRegistered`, and
+   `decryptFolderRegistered`. `tryCopyMoveFilesTo`, single/multi-file crypto,
+   `encryptStreamToDirectory`, `exportEncryptedVault`, and `syncVaultFromExternalDirectory` are out
+   of scope. `forDecrypt` / `forEncryptedCopy` are not called; `decryptFolder` uses `.bin` lengths
+   instead of the real `meta.originalSize`. Encrypt formula:
+   `143 + UTF8(name) + thumbnail + expectedCiphertextSize(size)` (143 = 43 fixed prefix + 84 fixed header fields + 16 GCM tag).
+2. **Album peak usage:** because `encryptFolder`/`decryptFolder` write all outputs and only then
+   delete the sources, `peakBytes = Σ(all outputs)` — not a single file but the whole batch.
+3. **Timing:** at batch start (on in-scope paths) + per-item `TransientOperationWaiter` check;
+   during resume, `estimatedRequiredBytes` / `peakBytes` are **not re-checked**.
+4. **`-1` / unverifiable-space policy:** `SpaceEstimator.probe` returns `verifiable = false` even in
+   the `StatFs` fallback; `SpaceConfirmation` asks for explicit confirmation on every `!verifiable`
+   case, and on SAF there is no automatic continuation without user approval. On verifiable
+   insufficient space, still only a `no_space` toast is shown (there is no required/available dialog).
+5. **Threshold:** if `required + max(64 MiB, 1%) > available`, block or transition to
+   `WAITING_FOR_SPACE` (ADR §2 transient-wait layer, with notification and cancellation flow).
+6. **Staging:** `AtomicStaging` + `ATOMIC_MOVE` are used on the four core write paths;
+   `syncVaultFromExternalDirectory` uses `.sync_tmp_*.bin` + `renameTo` fallback;
+   `exportEncryptedVault` and `encryptStreamToDirectory` do not use staging.
+7. **Journal/UI:** `estimatedRequiredBytes` is written only in album encrypt/decrypt records;
+   resume does not read these fields and does not show required/available information. The
+   `no_space` toast prints the `peakBytes` value without margin.
 
-Test kapsamı: tam eşik, N dosyalı albüm tepe kullanımı, maksimum thumbnail, SAF `-1`, orphan
-birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, force-stop sonrası resume.
+Test coverage: exact threshold, N-file album peak usage, maximum thumbnail, SAF `-1`, orphan
+accumulation, disk removal and reinsertion, `KEEP_BOTH`, mid-write ENOSPC, resume after force-stop.
 
 ---
 
-## 7. Sorumluluk reddi (disclaimer)
+## 7. Disclaimer
 
-- Bu belge **garanti değildir.** Yazılım "olduğu gibi" sağlanır; hiçbir veri kaybı, bozulma veya
-  gizlilik ihlali olmayacağına dair açık veya zımni taahhüt verilmez.
-- ADR 0003 uygulama ilerledikçe bu belge güncellenir; kod ile belge çelişirse **kod geçerlidir.**
-- Flash depolamada CSPRNG overwrite + `fsync` en iyi çabadır; FTL wear-leveling ve journal
-  metadata nedeniyle uygulama düzeyinde "forensik olarak iz bırakmayan silme" mümkün değildir
-  (DOCS §2, §2.4.7).
-- Tink/AES-256-GCM/Argon2id bilinen primitiflerdir; ancak konteyner yerleşimi, AAD yapısı ve anahtar
-  hiyerarşisi proje özgüdür ve **bağımsız harici denetimden geçmemiştir.**
-- Yedekleme kullanıcının sorumluluğundadır. Bozuk bir şifreli segmentin orijinal bitleri
-  kriptografik olarak geri getirilemez; yalnızca mevcut bir yedek geri yükleyebilir (DOCS §2.4.6).
-- "Pratikte sıfır veri kaybı" ifadesi §4'teki varsayımların **tamamı** yerine getirildiğinde geçerli
-  bir hedeftir; garanti edilmiş bir sonuç değildir.
+- This document **is not a guarantee.** The software is provided "as is"; no express or implied
+  commitment is made that no data loss, corruption, or privacy breach will occur.
+- This document is updated as ADR 0003 implementation progresses; if code and document conflict, **the code prevails.**
+- On flash storage, CSPRNG overwrite + `fsync` is best-effort; due to FTL wear-leveling and journal
+  metadata, application-level "forensically traceless deletion" is not possible (DOCS §2, §2.4.7).
+- Tink/AES-256-GCM/Argon2id are well-known primitives; however, the container layout, AAD
+  structure, and key hierarchy are project-specific and **have not undergone independent external
+  audit.**
+- Backups are the user's responsibility. The original bits of a corrupted encrypted segment
+  cannot be recovered cryptographically; only an existing backup can restore them (DOCS §2.4.6).
+- The phrase "practically zero data loss" is a valid target when **all** of the assumptions in §4
+  are met; it is not a guaranteed outcome.
 
 ---
 
-## 8. Uygulama durumu (Faz 1–3) ve opsiyonel gerçek cihaz testleri
+## 8. Implementation status (Phases 1–3) and optional real-device tests
 
-### 8.1 Faz 1'de kodlananlar
+### 8.1 Coded in Phase 1
 
-- Ayrı Room DB (`pending_operations.db`), `PendingOperation` entity'si ve DAO (`upsertAll` toplu
-  işlemi ve `findItem` tekli indeksli sorgusu ile).
-- `OperationJournal` API'si (`PENDING → IN_FLIGHT → VERIFIED → SOURCE_DELETED`; `FAILED/SKIPPED`),
-  tek atomik transaction içinde batch yazımı ve `COPY` vs `MOVE/wipe/delete` ayrımıyla
-  `requiresSourceDeletion` / `needsResume` kuralları.
-- `AtomicStaging`: aynı dizinde `.stage_<operationId>_<index>.tmp` dosyası, `fd.sync()` + dizin
-  fsync (arayan önceden sync ettiyse `alreadyFileSynced = true` ile çift sync'ten kaçınır) +
-  `ATOMIC_MOVE`; desteklenmezse `FAILED` (kopyala-sil fallback'i yok).
-- Dört çekirdek yazma yolu staging + doğrulama + journal ile güncellendi:
-  `CopyMoveHelper.copyFile` (düz kopya/taşıma, 256 KiB tampon ve SAF akışı sırasında tek geçişli
-  SHA-256), `encryptFileToDirectory` (encrypt sonrası tam `verifyFileIntegrity`),
-  `decryptFileToDirectory` (uzunluk doğrulaması), `copyOrMoveEncryptedFileToDirectory`
-  (kopya sonrası tam `verifyFileIntegrity`).
-- Düz kopyada kaynak/hedef fingerprint karşılaştırması; plaintext staging hatalarda secure wipe.
-- `SpaceEstimator` + saf `VaultContainerWriter.estimateEncryptedSize(...)`; düz kopya alan kontrolü
-  yeni estimator'a bağlandı ve SAF `-1` için açıklayıcı uyarı eklendi (`space_unverified_warning`).
-- Debug-only `OperationFaults` hook'u ve saf JUnit testleri (`ResumableOperationsTest`).
+- A separate Room DB (`pending_operations.db`), `PendingOperation` entity, and DAO (with `upsertAll`
+  bulk operation and a single indexed `findItem` query).
+- `OperationJournal` API (`PENDING → IN_FLIGHT → VERIFIED → SOURCE_DELETED`; `FAILED/SKIPPED`),
+  batch writes within a single atomic transaction, and `requiresSourceDeletion` / `needsResume`
+  rules with the `COPY` vs `MOVE/wipe/delete` distinction.
+- `AtomicStaging`: `.stage_<operationId>_<index>.tmp` file in the same directory, `fd.sync()` +
+  directory fsync (avoids double sync via `alreadyFileSynced = true` if the caller already synced) +
+  `ATOMIC_MOVE`; `FAILED` if unsupported (no copy-delete fallback).
+- Four core write paths updated with staging + verification + journal: `CopyMoveHelper.copyFile`
+  (plain copy/move, 256 KiB buffer and single-pass SHA-256 during SAF streaming),
+  `encryptFileToDirectory` (full `verifyFileIntegrity` after encrypt),
+  `decryptFileToDirectory` (length verification), `copyOrMoveEncryptedFileToDirectory`
+  (full `verifyFileIntegrity` after copy).
+- Source/destination fingerprint comparison on plain copy; secure wipe of plaintext staging on errors.
+- `SpaceEstimator` + pure `VaultContainerWriter.estimateEncryptedSize(...)`; plain-copy space check
+  wired to the new estimator and an explanatory warning added for SAF `-1` (`space_unverified_warning`).
+- Debug-only `OperationFaults` hook and pure JUnit tests (`ResumableOperationsTest`).
 
-**Albüm/Activity batch hook'ları da bağlandı:**
+**Album/Activity batch hooks were also wired up:**
 
-- `encryptFolder` / `decryptFolder`: batch journal, `peakBytes = Σ çıktılar` alan kontrolü, öğe
-  başına item context, fault injection, başarı/tam geri alma sonrası journal temizliği, `wipeSource` /
-  `deleteSource` kaynak silme adımlarında `SOURCE_DELETED` / `SKIPPED_CONFLICT` kaydı. Mevcut
-  `.bin` dosyalarının taşınması da ayrı item olarak journal'lanır.
-- `tryCopyMoveFilesTo` (Activity): şifreli kasa içi/dışı karma batch için tek journal, her öğeye
-  item context, duplicate'ler `SKIPPED_CONFLICT`, karışık düz→düz kopyada staging + fingerprint
-  doğrulaması, başarıda journal temizliği.
+- `encryptFolder` / `decryptFolder`: batch journal, `peakBytes = Σ outputs` space check, per-item
+  item context, fault injection, journal cleanup after success/full rollback, `SOURCE_DELETED` /
+  `SKIPPED_CONFLICT` recording at the `wipeSource` / `deleteSource` source-deletion steps. Moving
+  existing `.bin` files is also journaled as a separate item.
+- `tryCopyMoveFilesTo` (Activity): a single journal for mixed batches inside/outside the encrypted
+  vault, item context per element, duplicates `SKIPPED_CONFLICT`, staging + fingerprint verification
+  in mixed plain→plain copies, journal cleanup on success.
 
-### 8.2 Faz 2 — süreç ölümü kurtarma
+### 8.2 Phase 2 — process-death recovery
 
-- `OperationRecovery.reconcile()`: startup'ta `ForegroundOperationRegistry.isActive` ise erken
-  çıkar; aksi halde orphan `.stage_*` dosyalarını temizler (vault magic'i olmayanları secure wipe),
-  `MetadataReconciler.reconcile()` çalıştırır, `IN_FLIGHT/COPIED_UNVERIFIED/WAITING_FOR_SPACE`
-  kayıtlarını `PENDING`'e sıfırlar ve yalnızca `needsResume` öğesi kalmayan tamamlanmış batch'leri
-  temizler.
-- `OperationRecovery.resume()`: journal'daki batch bayraklarını (`isMove`, `wipeSource`,
-  `deleteSource`, per-item `conflictResolution`) kullanarak dört işlem türünü arka plan thread'inde
-  (`CryptoProgressDialog` ile) öğe öğe yeniden çalıştırır; hedefe kopyası/şifrelemesi doğrulanıp
-  (`STATE_VERIFIED`) kaynak silmesi yarım kalan öğeleri `completePendingSourceDeletion` ile
-  tamamlar ve gerekirse `finalizeAlbumRootsIfEmpty` ile boş albüm klasörlerini temizler.
-- **Tek ve kesin diyalog:** `MainActivity.onResume` (`promptToResumeVault` / `enterSecretVault` dahil)
-  ve kasa açıkken `MediaActivity.onResume` içinde çağrılır; `reconcile` arka plan thread'inde
-  çalıştırılır. Düz `COPY/MOVE` uygulamaya girişte, şifreli/kasa işlemleri ise yalnızca kasa
-  kilidi açıldığında ayrı ayrı sorulur (`selectPromptBatch`).
-  - Standart şifrelemede `.bin` doğrulaması tamamlanıp (`STATE_VERIFIED` `KIND_ENCRYPT`) orijinal
-    düz dosyalar silinmeden uygulama kapandıysa, kasa açılışında kullanıcıya sormadan arka planda
-    otomatik olarak güvenli silme tamamlanır (`resumeSilentPhase2EncryptWipes`).
-  - Aktarım sırasında atlanan dosyalar için `SkippedCryptoFilesDialog` açıkken (`ASK` modunda karar
-    verilmeden) uygulama kapanırsa kasa açılışında aynı onay kutusu yeniden açılır; ayar `DELETE`
-    ise veya kullanıcı silmeyi onaylayıp kesildiyse silme arka planda sormadan tamamlanır
-    (`processPendingSkippedCryptoWork`).
-  - Yarım kalan Faz-1 işlemlerinde sağdaki buton **Evet** (devam et), soldaki buton **Hayır**
-    (kalıcı olarak iptal et) şeklindedir. **Hayır** seçilirse journal kalıcı olarak silinir,
-    atlanan dosya Secure Erase istemi açılmaz ve yalnızca `<İşlem> işlemi yarıda bırakıldı`
-    (`Tamam`) bilgilendirmesi gösterilir.
-- `FileOperationService` + `ForegroundOperationRegistry`: aynı thread içi re-entrant sahiplik
-  sayacı (`depth` + `ownerThread`), kalıcı bildirim (`FOREGROUND_SERVICE_TYPE_DATA_SYNC`),
-  `ACTION_CANCEL` iptal desteği, `PARTIAL_WAKE_LOCK` ve aktif işlem boyunca `VaultSessionManager`
-  tarafından RAM kasa anahtarının silinmesini engelleme koruması. Düz copy/move, `resume`,
-  `encryptFolder`/`decryptFolder` ve `Activity`/`DirectoryAdapter`/`MediaAdapter` girişlerinin
-  tamamı kayıtlıdır; aktif işlem varken `reconcile`/orphan temizliği atlanır.
+- `OperationRecovery.reconcile()`: exits early at startup if `ForegroundOperationRegistry.isActive`;
+  otherwise cleans up orphan `.stage_*` files (secure-wiping those without vault magic), runs
+  `MetadataReconciler.reconcile()`, resets `IN_FLIGHT/COPIED_UNVERIFIED/WAITING_FOR_SPACE`
+  records to `PENDING`, and cleans up only
+  completed batches with no `needsResume` item left.
+- `OperationRecovery.resume()`: uses the journal's batch flags (`isMove`, `wipeSource`,
+  `deleteSource`, per-item `conflictResolution`) to rerun the four operation types item by item on a
+  background thread (with `CryptoProgressDialog`); items whose copy/encryption to the destination was
+  verified (`STATE_VERIFIED`) but whose source deletion was interrupted are completed with
+  `completePendingSourceDeletion`, and empty album folders are cleaned up with `finalizeAlbumRootsIfEmpty` if needed.
+- **Single and definitive dialog:** called in `MainActivity.onResume` (including
+  `promptToResumeVault` / `enterSecretVault`) and in `MediaActivity.onResume` while the vault is
+  open; `reconcile` runs on a background thread. Plain `COPY/MOVE` operations are asked about on
+  app entry, while encrypted/vault operations are asked about separately only once the vault is unlocked (`selectPromptBatch`).
+  - In standard encryption, if the app was closed after `.bin` verification completed
+    (`STATE_VERIFIED` `KIND_ENCRYPT`) but before the original plain files were deleted, the secure
+    wipe completes automatically in the background at vault open without asking the user (`resumeSilentPhase2EncryptWipes`).
+  - If the app is closed while `SkippedCryptoFilesDialog` is open for files skipped during
+    transfer (no decision made in `ASK` mode), the same confirmation box reopens at vault open;
+    if the setting is `DELETE`, or the user approved deletion but was interrupted, deletion
+    completes in the background without asking (`processPendingSkippedCryptoWork`).
+  - For interrupted Phase-1 operations, the right-hand button is **Evet** (Yes — continue) and the
+    left-hand button is **Hayır** (No — cancel permanently). If **Hayır** is chosen, the journal is
+    permanently deleted, the skipped-file Secure Erase prompt does not open, and only the
+    `<İşlem> işlemi yarıda bırakıldı` ("<Operation> was interrupted") (`Tamam` / "OK") notification is shown.
+- `FileOperationService` + `ForegroundOperationRegistry`: re-entrant ownership counter within the
+  same thread (`depth` + `ownerThread`), persistent notification (`FOREGROUND_SERVICE_TYPE_DATA_SYNC`),
+  `ACTION_CANCEL` cancellation support, `PARTIAL_WAKE_LOCK`, and protection preventing
+  `VaultSessionManager` from wiping the in-RAM vault key during an active operation. All plain
+  copy/move, `resume`, `encryptFolder`/`decryptFolder`, and `Activity`/`DirectoryAdapter`/`MediaAdapter`
+  entry points are registered; while an operation is active, `reconcile`/orphan cleanup is skipped.
 
-### 8.3 SAF atomik commit (Faz 3/1)
+### 8.3 SAF atomic commit (Phase 3/1)
 
-- `CopyMoveHelper.copyFile`: SAF hedefi için kardeş `DocumentFile` staging dosyası oluşturulur
-  (`.stage_<op>_<index>.tmp`), tamamı yazılıp `DocumentFile.renameTo()` ile nihai isme taşınır.
-  Rename başarısızsa öğe `FAILED`, staging silinir ve **kaynak korunur** — kopyala-sil fallback'i yok.
-- Doğrulama: SAF'ta `File` yolu olmadığı için tam akış SHA-256 (`AtomicStaging.streamFingerprint`)
-  kullanılır; direct-File yolunda `MediaIdentity` (ilk/son 64 KB) devam eder.
-- `OperationRecovery.cleanupOrphanStaging`: journal'daki `content://` staging URI'larını da siler.
-- `CryptoManagerExportSync` de artık önce `ATOMIC_MOVE` deniyor; yalnızca aynı file store üzerinde
-  `renameTo` fallback'ine izin veriliyor, farklı store ise öğe `FAILED` (kaynak korunur).
-- Kalan SAF notu: bazı sağlayıcılar rename'i hiç desteklemez; o durumda işlem güvenli biçimde
-  reddedilir, yarım dosya oluşmaz.
+- `CopyMoveHelper.copyFile`: a sibling `DocumentFile` staging file is created for a SAF destination
+  (`.stage_<op>_<index>.tmp`), fully written, then moved to the final name with `DocumentFile.renameTo()`.
+  If the rename fails, the item is `FAILED`, the staging file is deleted, and the **source is preserved** — no copy-delete fallback.
+- Verification: because there is no `File` path on SAF, full-stream SHA-256 (`AtomicStaging.streamFingerprint`)
+  is used; on the direct-File path `MediaIdentity` (first/last 64 KB) continues.
+- `OperationRecovery.cleanupOrphanStaging`: also deletes `content://` staging URIs in the journal.
+- `CryptoManagerExportSync` now also tries `ATOMIC_MOVE` first; a `renameTo` fallback is allowed
+  only on the same file store; on a different store the item is `FAILED` (source preserved).
+- Remaining SAF note: some providers do not support rename at all; in that case the operation is
+  safely rejected and no partial file is created.
 
-### 8.3.1 Metadata reconciliation (Faz 3/2)
+### 8.3.1 Metadata reconciliation (Phase 3/2)
 
-- `MetadataReconciler`: süreç ölümü sonrası startup'ta (`OperationRecovery.reconcile` içinden) commit
-  edilmiş (`VERIFIED` / `SOURCE_DELETED`) öğelerin path referanslarını onarır.
-- `MOVE/ENCRYPT/DECRYPT` için mevcut `Context.updateDBMediaPath` çağrılır: Room
-  `media`/`date_takens`/`favorites`/`virtual_albums` ve ilgili JSON manifest'leri tek seferde güncellenir.
-  `COPY` için kaynak korunduğundan yalnızca yeni hedefin kimliği kaydedilir.
-- Sanal albümün kendi `parentPhysicalPath` değeri eski klasöre işaret ediyorsa düzeltilip manifest
-  yeniden yazılır; düz dosyalar için MediaStore rescan yapılır.
-- **Idempotency ve temizlik:** işlenen **öğeler** (`operationId:itemIndex`) app-private
-  SharedPreferences'da tutulur; UPDATE-by-old-path semantics'i sayesinde ikinci çağrı satır
-  çoğaltmaz. Bu sayede resume sırasında ikinci bir süreç ölümü olursa, ilk turda `PENDING` olan
-  ve sonradan tamamlanan öğeler bir sonraki startup'ta yeniden reconcile edilir.
-  `reconciled_items_v2` anahtarı, eski operasyon-bazlı işaretleyiciden gelen kayıtları geçersiz
-  kılar ve artık `OperationJournal.operationIds()` içinde yer almayan tamamlanmış/silinmiş
-  operasyonların kayıtlarını otomatik olarak budar.
-- Reconcile yalnızca commit edilmiş öğeleri kapsar; yarım kalan öğeler resume sırasında kendi yazma
-  yollarında güncellenir.
+- `MetadataReconciler`: at startup after process death (from within `OperationRecovery.reconcile`)
+  repairs the path references of committed (`VERIFIED` / `SOURCE_DELETED`) items.
+- For `MOVE/ENCRYPT/DECRYPT`, the existing `Context.updateDBMediaPath` is called: Room
+  `media`/`date_takens`/`favorites`/`virtual_albums` and the related JSON manifests are updated in
+  one shot. For `COPY`, since the source is preserved, only the new destination's identity is recorded.
+- If the virtual album's own `parentPhysicalPath` still points to the old folder, it is corrected and
+  the manifest rewritten; a MediaStore rescan is performed for plain files.
+- **Idempotency and cleanup:** processed **items** (`operationId:itemIndex`) are held in
+  app-private SharedPreferences; thanks to UPDATE-by-old-path semantics, a second call does not
+  duplicate rows. Thus, if a second process death occurs during resume, items that were `PENDING`
+  in the first pass and later completed are reconciled again at the next startup. The
+  `reconciled_items_v2` key invalidates records from the old operation-based marker and
+  automatically prunes records of completed/deleted operations that are no longer in
+  `OperationJournal.operationIds()`.
+- Reconcile covers only committed items; interrupted items are updated in their own write paths
+  during resume.
 
-### 8.3.2 Kasıtlı kapsam dışı: klasör config ve thumbnail cache
+### 8.3.2 Intentionally out of scope: folder config and thumbnail cache
 
-`included/excluded/encrypted` klasör listeleri (`config`) ve thumbnail önbelleği, dosya işlemlerinin
-yanında güncellenen ikincil store'lardır. Bir süreç ölümü bu listeleri geçici olarak eski yolda
-bırakabilir; ancak **bu belge kapsamında bunlar için kod değişikliği planlanmamıştır.** Gerekçe:
+The `included/excluded/encrypted` folder lists (`config`) and the thumbnail cache are secondary
+stores updated alongside file operations. A process death may temporarily leave these lists at the
+old paths; however, **no code changes for them are planned within the scope of this document.** Rationale:
 
-- klasör listeleri mevcut işlem sonu hook'larıyla (`config.addEncryptedFolder` /
-  `removeEncryptedFolder` / `replaceExactExcludedFolder`) zaten güncellenir ve bir sonraki tam
-  işlemde kendini düzeltebilir;
-- thumbnail cache'i zaten yeniden üretilebilir bir türev veridir, kalıcı doğruluk kaynağı değildir;
-- bunları journal'a dahil etmek, ADR 0003'ün "source paths remain intact" güvenlik modeline ek bir
-  bağımlılık ekler ve faydası veri bütünlüğü açısından marjinaldir.
+- folder lists are already updated by the existing post-operation hooks
+  (`config.addEncryptedFolder` / `removeEncryptedFolder` / `replaceExactExcludedFolder`) and can
+  self-correct on the next successful operation;
+- the thumbnail cache is already reproducible derived data, not a persistent source of truth;
+- including them in the journal would add another dependency to ADR 0003's "source paths remain
+  intact" security model, and the benefit is marginal in terms of data integrity.
 
-Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okunması gerekir.
+This is a conscious limitation; ADR 0003 must be read together with 0001/0002.
 
-### 8.3.3 Açık alan onayı (Faz 3/3) ve geçici kesinti beklemesi
+### 8.3.3 Explicit space confirmation (Phase 3/3) and transient-interruption waiting
 
-- `SpaceConfirmation.askAsync`: düz kopya/taşıma akışında, `-1` (SAF/OTG) durumunda "boş alan
-  doğrulanamadı" başlıklı diyalog gösterir; gereken boyut ve neden açıklayıcı mesajda yer alır.
-  Onaylanırsa işlem başlar, reddedilirse ilerleme diyaloğu kapanır.
-- `SpaceConfirmation.confirmBlocking`: albüm encrypt/decrypt gibi senkron arka plan işlemlerinde
-  aynı onayı alır; ana thread'de asla bloklamaz (orada `false` döner).
-- `TransientOperationWaiter`: geçici hedef yolu ulaşılmazlığı veya yetersiz boş alan durumunda
-  aktif foreground işlem varken öğeyi `WAITING_FOR_SPACE` durumuna alıp yerel bildirim metniyle
-  (`waiting_for_free_space_or_storage`) 1 saniyelik aralıklarla en fazla 120 saniye bekler
-  (`isCancelled` ile erken iptal edilebilir); ayrıca tüm dört yazma yolunda akış ortası `IOException`
-  hatalarında `runWithTransientRetry` kısmi staging'i temizleyip depolama geri gelince öğeyi
-  yeniden dener.
-- Yeni metinler (alan uyarısı, bekleme bildirimi ve işlem bazlı iptal metinleri) **11 aktif locale
-  kaynağına** eklendi (diğer diller İngilizceye düşer). Faz-2 şifreleme silmeleri sessiz yürür;
-  "Faz-2 güvenli silme istemi" diye bir metin yoktur.
+- `SpaceConfirmation.askAsync`: in the plain copy/move flow, when the result is `-1` (SAF/OTG),
+  shows a dialog titled "free space could not be verified"; the required size and the reason are in
+  the explanatory message. If confirmed, the operation starts; if declined, the progress dialog closes.
+- `SpaceConfirmation.confirmBlocking`: obtains the same confirmation for synchronous background
+  operations such as album encrypt/decrypt; never blocks on the main thread (returns `false` there).
+- `TransientOperationWaiter`: on temporary destination-path unreachability or insufficient free
+  space, while an active foreground operation exists, puts the item into `WAITING_FOR_SPACE` and
+  waits up to 120 seconds at 1-second intervals with local notification text
+  (`waiting_for_free_space_or_storage`) (can be cancelled early via `isCancelled`); additionally,
+  on all four write paths, for mid-stream `IOException` errors `runWithTransientRetry` cleans up
+  partial staging and retries the item once storage returns.
+- New strings (space warning, waiting notification, and operation-specific cancellation texts) were
+  added to **11 active locale resources** (other languages fall back to English). Phase-2 encryption
+  wipes run silently; there is no such thing as a "Phase-2 secure-wipe prompt".
 
-**Tamamlanan Faz 3/4 kalemleri:** Albüm ve Activity batch işlemlerinin `ForegroundOperationRegistry`
-kaydı, `resolvedDestName` çakışma soneki sabitleme, commit edilmiş hedefin boyut + parmak iziyle
-yeniden kullanımı, albüm birleştirme `mergeTargetRoot` / `foldedSourceRoots` takibi, tek seferlik
-Evet/Hayır kurtarma kararı, otomatik Faz-2 şifreleme güvenli silmesi, `SkippedCryptoFilesDialog`
-karar kalıcılığı ve akış ortası `IOException` yeniden denemesi tamamlanmıştır. Durum özeti
-[ADR 0003 §11](adr/0003-resumable-file-operations.md#11-implementation-status)
-altında yer alır.
+**Completed Phase 3/4 items:** `ForegroundOperationRegistry` registration of album and Activity
+batch operations, `resolvedDestName` conflict-suffix pinning, reuse of a committed destination by
+size + fingerprint, album-merge `mergeTargetRoot` / `foldedSourceRoots` tracking, one-time Yes/No
+recovery decision, automatic Phase-2 encryption secure wipe, `SkippedCryptoFilesDialog`
+decision persistence, and mid-stream `IOException` retry are completed.
+The status summary is under
+[ADR 0003 §11](adr/0003-resumable-file-operations.md#11-implementation-status).
 
-### 8.4 Opsiyonel gerçek cihaz testleri (otomasyon yok)
+### 8.4 Optional real-device tests (no automation)
 
-Aşağıdakiler JUnit ile simüle edilemez; gerçek cihazda elle doğrulanmalıdır:
+The following cannot be simulated with JUnit; they must be verified manually on a real device:
 
-1. **Kopma simülasyonu — dosya kopyalama:** 20 büyük dosyayı SD karta kopyala; 5. dosya sırasında
-   Ayarlar → Uygulamalar → **Force stop**. Yeniden aç: kaynak dosyaların sağlam olduğunu, hedefte
-   yarım dosya bulunmadığını (yalnızca `.stage_*.tmp` orphan'ı olabileceğini) kontrol et.
-2. **Harici disk çıkarma:** aktarım sırasında SD/USB'yi çıkar, tak ve işlemi yeniden dene; kaynağın
-   silinmediğini ve yeniden denemenin tamamlandığını doğrula.
-3. **Encrypt sırasında ölüm:** büyük bir videoyu şifrelerken force-stop; düz kaynağın açıldığını,
-   kasada bozuk `.bin` yerine orphan staging kalmadığını doğrula.
-4. **Decrypt sırasında ölüm:** aynı şekilde; `.bin` kaynağının sağlam kaldığını doğrula.
-5. **Düşük alan:** hedefi neredeyse doldur; marjın işlemi engellediğini veya SAF'ta açıklayıcı
-   uyarı gösterip devam ettiğini gözlemle.
-6. **Albüm işlemleri:** çok dosyalı albümü şifrelerken öldür; tüm kaynakların sağlam kaldığını ve
-   `peakBytes = Σ çıktılar` kuralının doğru hesaplandığını kontrol et.
+1. **Interruption simulation — file copying:** copy 20 large files to an SD card; during the 5th file,
+   go to Settings → Apps → **Force stop**. Reopen: check that the source files are intact and that no
+   partial file exists at the destination (only a `.stage_*.tmp` orphan may remain).
+2. **External disk removal:** during transfer, remove the SD/USB, reinsert it, and retry the
+   operation; verify that the source was not deleted and the retry completed.
+3. **Death during encrypt:** force-stop while encrypting a large video; verify that the plain source
+   opens and that no orphan staging is left in the vault (rather than a corrupt `.bin`).
+4. **Death during decrypt:** same; verify that the `.bin` source remains intact.
+5. **Low space:** nearly fill the destination; observe that the margin blocks the operation or, on
+   SAF, shows an explanatory warning and continues.
+6. **Album operations:** kill the app while encrypting a multi-file album; check that all sources
+   remain intact and that the `peakBytes = Σ outputs` rule was calculated correctly.
 
-> `OperationFaults` yalnızca JVM sistem özelliği okur (`cipher.failAfterItem`); Android `setprop`
-> ile ayarlanamaz. Cihaz üstü senaryolar yukarıdaki elle adımlarla, enstrümante testler ise
-> süreç içinde özelliği ayarlayarak koşulabilir.
+> `OperationFaults` reads only a JVM system property (`cipher.failAfterItem`); it cannot be set via
+> Android `setprop`. On-device scenarios can be run with the manual steps above, and instrumented
+> tests by setting the property in-process.

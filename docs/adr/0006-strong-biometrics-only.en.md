@@ -3,7 +3,6 @@
 - **Status:** Accepted — **Class 2 (weak) biometrics are not supported; no device-specific exception will be defined (2026-11-20)**
 - **Date:** 2026-11-20
 - **Related:** [ADR 0002](0002-operational-security-hardening.md) (operational security hardening), [ADR 0005](0005-kek-rotation.md) (key hierarchy and local threat model)
-- **Language:** Turkish original: [0006-strong-biometrics-only.md](0006-strong-biometrics-only.md)
 
 > **Summary Decision.** The encrypted vault's biometric lock accepts only **Class 3 / `BIOMETRIC_STRONG`** biometrics, and every authentication is bound to a hardware-backed Keystore key via `BiometricPrompt.CryptoObject`. Class 2 / `BIOMETRIC_WEAK` (e.g. the 2D face unlock on the Samsung Galaxy Tab S10 Lite) is **deliberately rejected**; no relaxation is applied, including an "exception for these devices only". The enrollment offer after vault creation / password change appears **only when a strong biometric is actually enrolled**; otherwise setup stays silent. On devices without a usable strong biometric the settings row is not hidden: it stays visible but passive (grey), with an **info icon** that opens the reason dialog on demand. Android sends no broadcast for enrollment changes, so the state is re-evaluated in `SettingsActivity.onResume()`; leaving and re-entering Settings is enough to update the appearance. No popup is shown when biometrics become available, and the switch stays off by default.
 
