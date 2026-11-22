@@ -385,7 +385,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
     ): View {
         val padH = (13f * density).toInt()
         val padV = (10f * density).toInt()
-        val iconSize = (20f * density).toInt()
+        val iconSize = (18f * density).toInt()
 
         return LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -439,7 +439,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
     ): View {
         val padH = (13f * density).toInt()
         val padV = (10.5f * density).toInt()
-        val iconSize = (20f * density).toInt()
+        val iconSize = (18f * density).toInt()
         val iconTint = if (isSettingsFooter) palette.primary else palette.secondary
 
         return LinearLayout(activity).apply {
@@ -644,7 +644,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                 R.id.show_all -> R.drawable.ic_files_vector
                 R.id.show_albums -> R.drawable.ic_folders_vector
                 R.id.refresh_menu -> R.drawable.ic_refresh_calypso_vector
-                R.id.filter -> org.fossify.commons.R.drawable.ic_filter_vector
+                R.id.filter -> R.drawable.ic_filter_funnel_calypso_vector
                 R.id.toggle_filename -> R.drawable.ic_filename_calypso_vector
                 R.id.change_view_type -> R.drawable.ic_view_type_calypso_vector
                 R.id.group -> R.drawable.ic_group_calypso_vector
@@ -661,7 +661,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                 R.id.restore_all_files -> org.fossify.commons.R.drawable.ic_reset_vector
                 R.id.slideshow,
                 R.id.menu_slideshow -> R.drawable.ic_slideshow_vector
-                R.id.settings -> org.fossify.commons.R.drawable.ic_settings_cog_vector
+                R.id.settings -> R.drawable.ic_settings_tune
 
                 // ViewPager (Fullscreen viewer) menu
                 R.id.menu_save_as -> org.fossify.commons.R.drawable.ic_check_vector

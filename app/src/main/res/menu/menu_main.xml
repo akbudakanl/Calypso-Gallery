@@ -22,7 +22,7 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/filter"
-        android:icon="@drawable/ic_filter_vector"
+        android:icon="@drawable/ic_filter_funnel_calypso_vector"
         android:showAsAction="never"
         android:title="@string/filter_media"
         app:showAsAction="never" />
@@ -82,7 +82,7 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/settings"
-        android:icon="@drawable/ic_settings_cog_vector"
+        android:icon="@drawable/ic_settings_tune"
         android:showAsAction="never"
         android:title="@string/settings"
         app:showAsAction="never" />

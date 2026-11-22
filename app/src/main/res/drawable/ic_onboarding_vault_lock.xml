@@ -3,23 +3,23 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Icon proportions, 104-unit art scaled to a 24-unit viewport:
-         wide dome, short legs, rounded body, pill keyhole. Stroke matched to sibling actions (1.9). -->
+    <!-- Artwork normalized to the 24-unit viewport so it visually matches the
+         sibling onboarding icons at the same 20dp ImageView size. -->
     <path
         android:fillColor="#00000000"
-        android:pathData="M8.31,8.54V6.46a3.69,3.69 0 0,1 7.38,0v2.08"
+        android:pathData="M7.2,8.62V5.92a4.8,4.8 0 0,1 9.59,0v2.7"
         android:strokeWidth="1.9"
         android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:fillColor="#00000000"
-        android:pathData="M8.77,8.31H15.23A2.31,2.31 0 0,1 17.54,10.62V16.15A2.31,2.31 0 0,1 15.23,18.46H8.77A2.31,2.31 0 0,1 6.46,16.15V10.62A2.31,2.31 0 0,1 8.77,8.31Z"
+        android:pathData="M7.8,8.32H16.2A3,3 0 0,1 19.2,11.33V18.52A3,3 0 0,1 16.2,21.52H7.8A3,3 0 0,1 4.8,18.52V11.33A3,3 0 0,1 7.8,8.32Z"
         android:strokeWidth="1.9"
         android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
         android:strokeLineJoin="round" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M12,11.23a1,1 0 1,0 0,2a1,1 0 1,0 0,-2z M11.58,13.1H12.42V15A0.42,0.42 0 0,1 11.58,15Z" />
+        android:pathData="M12,12.12a1.3,1.3 0 1,0 0,2.6a1.3,1.3 0 1,0 0,-2.6z M11.45,14.55H12.55V17.02A0.55,0.55 0 0,1 11.45,17.02Z" />
 </vector>

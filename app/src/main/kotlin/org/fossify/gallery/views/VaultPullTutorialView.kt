@@ -367,7 +367,7 @@ class VaultPullTutorialView @JvmOverloads constructor(
     }
 
     private fun drawLockGlyph(canvas: Canvas, cx: Float, cy: Float, sizePx: Float, color: Int) {
-        // 24-unit viewport matching ic_onboarding_vault_lock.xml
+        // 24-unit viewport matching ic_onboarding_vault_lock.xml (normalized artwork)
         val u = sizePx / 24f
         val ox = cx - 12f * u
         val oy = cy - 12f * u
@@ -375,28 +375,28 @@ class VaultPullTutorialView @JvmOverloads constructor(
         strokePaint.strokeWidth = 1.9f * u
         strokePaint.color = color
 
-        // Shackle: M8.31,8.54 V6.46 a3.69,3.69 0 0,1 7.38,0 v2.08
+        // Shackle: M7.2,8.62 V5.92 a4.8,4.8 0 0,1 9.59,0 v2.7
         lockShacklePath.reset()
-        lockShacklePath.moveTo(ox + 8.31f * u, oy + 8.54f * u)
-        lockShacklePath.lineTo(ox + 8.31f * u, oy + 6.46f * u)
+        lockShacklePath.moveTo(ox + 7.2f * u, oy + 8.62f * u)
+        lockShacklePath.lineTo(ox + 7.2f * u, oy + 5.92f * u)
         lockArcRect.set(
-            ox + 8.31f * u,
-            oy + (6.46f - 3.69f) * u,
-            ox + (8.31f + 7.38f) * u,
-            oy + (6.46f + 3.69f) * u,
+            ox + 7.2f * u,
+            oy + (5.92f - 4.8f) * u,
+            ox + (7.2f + 9.59f) * u,
+            oy + (5.92f + 4.8f) * u,
         )
         lockShacklePath.arcTo(lockArcRect, 180f, 180f, false)
-        lockShacklePath.lineTo(ox + 15.69f * u, oy + 8.54f * u)
+        lockShacklePath.lineTo(ox + 16.79f * u, oy + 8.62f * u)
         canvas.drawPath(lockShacklePath, strokePaint)
 
-        // Body: 6.46..17.54 x 8.31..18.46, rx 2.31
-        lockBodyRect.set(ox + 6.46f * u, oy + 8.31f * u, ox + 17.54f * u, oy + 18.46f * u)
-        canvas.drawRoundRect(lockBodyRect, 2.31f * u, 2.31f * u, strokePaint)
+        // Body: 4.8..19.2 x 8.32..21.52, rx 3
+        lockBodyRect.set(ox + 4.8f * u, oy + 8.32f * u, ox + 19.2f * u, oy + 21.52f * u)
+        canvas.drawRoundRect(lockBodyRect, 3f * u, 3f * u, strokePaint)
 
         // Keyhole dot + stem
         fillPaint.color = color
-        canvas.drawCircle(ox + 12f * u, oy + 12.23f * u, 1.0f * u, fillPaint)
-        canvas.drawLine(ox + 12f * u, oy + 13.0f * u, ox + 12f * u, oy + 15.0f * u, strokePaint)
+        canvas.drawCircle(ox + 12f * u, oy + 13.42f * u, 1.3f * u, fillPaint)
+        canvas.drawLine(ox + 12f * u, oy + 14.55f * u, ox + 12f * u, oy + 17.02f * u, strokePaint)
     }
 
     private companion object {
