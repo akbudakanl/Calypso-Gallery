@@ -1082,14 +1082,13 @@ class SettingsActivity : SimpleActivity() {
     // Use a ViewTreeObserver listener: setOnScrollChangeListener() is intentionally left free
     // (setting up the material scroll listener would tint the top bar on scroll).
     private val vaultSectionScrollListener = android.view.ViewTreeObserver.OnScrollChangedListener {
-        // The section header was merged into "Security & encrypted vault"; the always-visible
-        // vault location row is now the anchor for the deferred on-disk vault check.
-        val anchor = binding.settingsVaultLocationHolder
-        val scroll = binding.settingsNestedScrollview
-        if (!anchor.isShown) {
-            isVaultSectionNearViewport = false
-            return@OnScrollChangedListener
+        // Use whichever vault section row is currently visible as the viewport anchor.
+        val anchor = when {
+            binding.settingsVaultLocationHolder.isShown -> binding.settingsVaultLocationHolder
+            binding.settingsCreateVaultHolder.isShown -> binding.settingsCreateVaultHolder
+            else -> return@OnScrollChangedListener
         }
+        val scroll = binding.settingsNestedScrollview
 
         val anchorLoc = IntArray(2)
         val scrollLoc = IntArray(2)
@@ -1135,8 +1134,9 @@ class SettingsActivity : SimpleActivity() {
         // 0) Kasa konumu yalnızca kasa varsa görünür (birden fazla kasa arasında geçiş için).
         binding.settingsVaultLocationHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 1) Şifreli kasa oluştur (bu sadece şifreli kasa oluşturulmamış ise gösterilir)
-        binding.settingsCreateVaultHolder.beVisibleIf(hasStoragePermission && !vaultExists)
+        // 1) Şifreli kasa oluştur (bu sadece şifreli kasa oluşturulmamış ise gösterilir;
+        // Tüm Dosyalara erişim izni yoksa da görünür, dokunulduğunda tema uyumlu izin ekranı açılır)
+        binding.settingsCreateVaultHolder.beVisibleIf(!vaultExists || !hasStoragePermission)
 
         // 1b) Harici diskten kasayı eşitle
         binding.settingsSyncVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
@@ -1189,6 +1189,10 @@ class SettingsActivity : SimpleActivity() {
 
         // 6) Şifreli kasayı dışa aktar
         binding.settingsExportVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
+
+        // 7) Şifreleme çakışma ve atlanan dosya ayarları yalnızca şifreli kasa oluşturulduysa görünür
+        binding.settingsSkippedEncryptFilesHolder.beVisibleIf(hasStoragePermission && vaultExists)
+        binding.settingsAlbumCryptoConflictHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
         setupArgon2Profile()
         setupVaultLocation()
@@ -1275,8 +1279,9 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupArgon2Profile() {
-        // Bu ayar yalnızca kasa mevcutsa ve bu cihaz için bir süre kaydedilmişse görünür.
-        binding.settingsArgon2ProfileHolder.beVisibleIf(doesVaultExist())
+        // Bu ayar yalnızca kasa mevcutsa ve tüm dosyalara erişim izni varsa görünür.
+        val hasStoragePermission = !isRPlus() || isExternalStorageManager()
+        binding.settingsArgon2ProfileHolder.beVisibleIf(hasStoragePermission && doesVaultExist())
         fun refreshSummary() {
             val summary = org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
             binding.settingsArgon2ProfileValue.text = summary
@@ -1355,6 +1360,10 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupCreateVault() {
         binding.settingsCreateVaultHolder.setOnClickListener {
+            if (isRPlus() && !isExternalStorageManager()) {
+                GrantAllFilesDialog(this)
+                return@setOnClickListener
+            }
             if (doesVaultExist()) return@setOnClickListener
             promptCreateVault(
                 onCreated = {

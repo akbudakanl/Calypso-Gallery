@@ -395,6 +395,10 @@
     <string name="vault_password_saved_message">Parolanızı unutursanız şifreli kasanıza erişiminizi kalıcı olarak kaybedersiniz. Devam etmeden önce parolanızı bir yere kaydettiğinizden emin olun. Parola yöneticisi kullanmanız önerilir.</string>
     <string name="vault_password_saved_confirm">Evet, kaydettim</string>
     <string name="vault_password_saved_later">Kaydedeceğim</string>
+    <string name="vault_pull_tutorial_title">Şifreli kasanız hazır</string>
+    <string name="vault_pull_tutorial_message">Ana sayfada listenin en üstündeyken ekranı &lt;b&gt;yukarıdan aşağı doğru çekip&lt;/b&gt; kilit simgesi yerleşene kadar bekleyin, ardından bırakın.</string>
+    <string name="vault_pull_tutorial_note">Kasanız gizliliğiniz için ana ekranda ayrı bir klasör veya simge olarak görünmez; yalnızca bu hareketle açılır.</string>
+    <string name="vault_pull_tutorial_confirm">Anladım</string>
     <string name="vault_password_reminder_due_title">Parolanızı hâlâ hatırlıyor musunuz?</string>
     <string name="vault_password_reminder_due_message">Bu süre boyunca şifreli kasaya parolanızla giriş yapmadınız. Parolanız kasayı kurtarmanın tek yoludur.</string>
     <string name="vault_password_reminder_verify_action">Parolamı doğrula</string>

@@ -2,10 +2,14 @@ package org.fossify.gallery.dialogs
 
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.beGone
+import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.gallery.databinding.DialogManageBottomActionsBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.isLargeScreen
 import org.fossify.gallery.helpers.*
 
@@ -30,6 +34,9 @@ class ManageBottomActionsDialog(val activity: BaseSimpleActivity, val callback: 
             manageBottomActionsSlideshow.isChecked = actions and BOTTOM_ACTION_SLIDESHOW != 0
             manageBottomActionsShowOnMap.isChecked = actions and BOTTOM_ACTION_SHOW_ON_MAP != 0
             manageBottomActionsToggleVisibility.isChecked = actions and BOTTOM_ACTION_TOGGLE_VISIBILITY != 0
+            manageBottomActionsToggleVisibility.beVisibleIf(
+                (!isRPlus() || isExternalStorageManager()) && activity.hasVaultCreated()
+            )
             manageBottomActionsRename.isChecked = actions and BOTTOM_ACTION_RENAME != 0
             manageBottomActionsSetAs.isChecked = actions and BOTTOM_ACTION_SET_AS != 0
             manageBottomActionsCopy.isChecked = actions and BOTTOM_ACTION_COPY != 0

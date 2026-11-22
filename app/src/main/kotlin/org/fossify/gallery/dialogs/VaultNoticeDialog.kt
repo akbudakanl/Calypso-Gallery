@@ -32,6 +32,9 @@ class VaultNoticeDialog(
     cancelable: Boolean = false,
     canceledOnTouchOutside: Boolean = false,
     showBiometricGlyph: Boolean = false,
+    showPullTutorial: Boolean = false,
+    filledPositiveButton: Boolean = false,
+    alignSingleActionEnd: Boolean = false,
     onPositive: () -> Unit,
     onNegative: (() -> Unit)? = null,
     onCancel: (() -> Unit)? = null,
@@ -48,6 +51,7 @@ class VaultNoticeDialog(
             shape = GradientDrawable.RECTANGLE
             cornerRadius = dp(20f).toFloat()
             setColor(palette.surface)
+            setStroke(dp(1f).coerceAtLeast(1), palette.border)
         }
         binding.noticeTitle.apply {
             text = title
@@ -73,6 +77,14 @@ class VaultNoticeDialog(
             }
         }
 
+        if (showPullTutorial) {
+            binding.noticePullTutorial.beVisible()
+            binding.noticePullTutorial.applyPalette(palette)
+            binding.noticePullTutorial.post {
+                binding.noticePullTutorial.start()
+            }
+        }
+
         if (noteText != null) {
             binding.noticeNote.apply {
                 text = noteText
@@ -86,7 +98,11 @@ class VaultNoticeDialog(
             }
         }
 
-        binding.noticeActions.gravity = if (negativeText == null) Gravity.START else Gravity.END
+        binding.noticeActions.gravity = if (negativeText == null && !alignSingleActionEnd) {
+            Gravity.START
+        } else {
+            Gravity.END
+        }
         if (negativeText != null) {
             binding.noticeNegative.apply {
                 text = negativeText
@@ -100,7 +116,17 @@ class VaultNoticeDialog(
         }
         binding.noticePositive.apply {
             text = positiveText
-            setTextColor(palette.primary)
+            if (filledPositiveButton) {
+                setTextColor(palette.onPrimary)
+                setPadding(dp(16f), dp(8f), dp(16f), dp(8f))
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    cornerRadius = dp(999f).toFloat()
+                    setColor(palette.primary)
+                }
+            } else {
+                setTextColor(palette.primary)
+            }
             setOnClickListener {
                 dialog?.dismiss()
                 onPositive()

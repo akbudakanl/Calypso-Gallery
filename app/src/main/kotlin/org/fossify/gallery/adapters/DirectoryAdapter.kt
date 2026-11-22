@@ -438,6 +438,7 @@ class DirectoryAdapter(
         }
         menu.findItem(R.id.cab_hide).isVisible =
             (!isRPlus() || isExternalStorageManager()) &&
+            activity.hasVaultCreated() &&
             !hasForbidden &&
             realUnencryptedPaths.isNotEmpty()
 

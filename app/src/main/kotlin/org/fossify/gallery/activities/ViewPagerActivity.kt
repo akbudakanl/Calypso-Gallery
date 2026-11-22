@@ -105,6 +105,7 @@ import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.applyBottomActionLabelVisibility
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.promptVaultUnlock
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.extensions.deleteDBPath
@@ -422,6 +423,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         val isInRecycleBin = currentMedium.getIsInRecycleBin() || mDirectory == RECYCLE_BIN || isVaultRecycleBin
         val isVaultMedium = CryptoManager.isVaultMediaPath(this@ViewPagerActivity, currentMedium.path) ||
             isCurrentDirectoryHiddenVirtualAlbum()
+        val vaultCreated = hasVaultCreated()
 
         runOnUiThread {
             val rotationDegrees = getCurrentPhotoFragment()?.mCurrentRotationDegrees ?: 0
@@ -453,6 +455,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 findItem(R.id.menu_resize).isVisible = visibleBottomActions and BOTTOM_ACTION_RESIZE == 0 && currentMedium.isImage()
                 findItem(R.id.menu_hide).isVisible =
                     (!isRPlus() || isExternalStorageManager()) &&
+                    vaultCreated &&
                     visibleBottomActions and BOTTOM_ACTION_TOGGLE_VISIBILITY == 0 &&
                     CopyMovePolicy.canEncryptFrom(mDirectory, isVaultMedium || currentMedium.isHidden(), isInRecycleBin, isVaultRecycleBin)
 
@@ -1421,9 +1424,11 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         val isInRecycleBin = currentMedium?.getIsInRecycleBin() == true || mDirectory == RECYCLE_BIN || isVaultRecycleBin
         val isRealAlbumSource = CopyMovePolicy.isRealAlbumSource(mDirectory, isInRecycleBin, isVaultRecycleBin)
 
-        // Without All Files access encryption cannot run, so the Encrypt action is not shown at
-        // all (the bar drops to three icons). Decrypt stays available for already-encrypted media.
-        val canEncrypt = !isRPlus() || isExternalStorageManager() || currentMedium?.isHidden() == true
+        // Without All Files access or before the encrypted vault has been created in Settings,
+        // the Encrypt action is not shown at all (the bar drops to three icons). Decrypt stays
+        // available for already-encrypted media.
+        val hasStorageAccess = !isRPlus() || isExternalStorageManager()
+        val canEncrypt = (hasStorageAccess && hasVaultCreated()) || currentMedium?.isHidden() == true
         binding.bottomActions.bottomToggleFileVisibility.beVisibleIf(
             visibleBottomActions and BOTTOM_ACTION_TOGGLE_VISIBILITY != 0 && isRealAlbumSource && canEncrypt
         )

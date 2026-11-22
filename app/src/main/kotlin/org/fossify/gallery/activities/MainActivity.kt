@@ -115,6 +115,7 @@ import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.openSecretVaultPrompt
 import org.fossify.gallery.extensions.promptVaultUnlock
 import org.fossify.gallery.extensions.restoreScrollOffset
+import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.hasExcludedNormalFolders
 import org.fossify.gallery.extensions.hasHiddenNormalFolders
 import org.fossify.gallery.extensions.isDirectoryExcludedForBadge
@@ -146,6 +147,7 @@ import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.markPasswordReminderShown
 import org.fossify.gallery.helpers.markVaultPasswordEntered
 import org.fossify.gallery.helpers.shouldShowPasswordReminder
+import org.fossify.gallery.helpers.isConfiguredVaultTemporarilyUnavailable
 import org.fossify.gallery.helpers.verifyVaultOnDisk
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
@@ -339,6 +341,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mHiddenDisplayMode = DISPLAY_NONE
     private val mVaultBackHelper = VaultExitBackHelper()
     private var mNormalDirsSnapshot: ArrayList<Directory>? = null
+    @Volatile
+    private var mIsVaultPullAllowed = false
 
     // "Continue where I left off" after the vault keys were wiped (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted one to apply.
@@ -620,6 +624,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         binding.vaultPullIndicator.bringToFront()
 
         val hasAllFilesAccessNow = !isRPlus() || isExternalStorageManager()
+        mIsVaultPullAllowed = hasAllFilesAccessNow &&
+            (hasVaultCreated() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
         if (InitialFolderDiscoveryPolicy.shouldForceFullReloadOnAccessChange(mLastKnownAllFilesAccess, hasAllFilesAccessNow)) {
             mLoadedInitialPhotos = false
             mHasRestoredFavoritesBackup = false
@@ -1336,9 +1342,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        // Keep the pull gesture active even with horizontal scrolling: it drives both
-        // pull-to-refresh and pull-to-open-vault in the folders view.
-        if (!mIsVaultDialogShowing && !mIsSecretVaultView) {
+        // Keep the pull gesture active even with horizontal scrolling: it drives
+        // pull-to-open-vault in the folders view only when a vault has been created.
+        if (mIsVaultPullAllowed && !mIsVaultDialogShowing && !mIsSecretVaultView) {
             if (vaultPullGesture.handleTouchEvent(ev)) {
                 return true
             }
@@ -1364,12 +1370,15 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         openSecretVaultPrompt(
             onDialogShowingChanged = { mIsVaultDialogShowing = it },
             onMissingVaultReset = {
+                mIsVaultPullAllowed = (!isRPlus() || isExternalStorageManager()) &&
+                    (hasVaultCreated() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
                 if (mIsSecretVaultView || mHiddenDisplayMode != DISPLAY_NONE) {
                     mIsSecretVaultView = false
                     mHiddenDisplayMode = DISPLAY_NONE
                 }
             },
             onVaultReady = { alreadyUnlocked ->
+                mIsVaultPullAllowed = true
                 enterSecretVault(alreadyUnlocked = alreadyUnlocked)
             }
         )

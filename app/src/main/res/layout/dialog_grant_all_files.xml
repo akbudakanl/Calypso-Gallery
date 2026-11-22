@@ -1,31 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/grant_all_files_holder"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="center_horizontal">
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:orientation="vertical"
+    android:padding="22dp">
 
-    <ImageView
-        android:id="@+id/grant_all_files_image"
-        android:layout_width="@dimen/fab_size"
-        android:layout_height="@dimen/fab_size"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="@dimen/bigger_margin"
-        android:src="@drawable/ic_folder_vector" />
+    <!-- Animated folder + check emblem matching the onboarding & vault emblem language -->
+    <FrameLayout
+        android:id="@+id/grant_all_files_emblem"
+        android:layout_width="82dp"
+        android:layout_height="82dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp">
+
+        <View
+            android:id="@+id/grant_all_files_halo"
+            android:layout_width="82dp"
+            android:layout_height="82dp"
+            android:layout_gravity="center" />
+
+        <FrameLayout
+            android:id="@+id/grant_all_files_emblem_core"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_gravity="center">
+
+            <ImageView
+                android:id="@+id/grant_all_files_image"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_onboarding_folder" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/grant_all_files_badge_dot"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="end|bottom"
+            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:id="@+id/grant_all_files_badge_icon"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_onboarding_check" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/grant_all_files_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:letterSpacing="-0.01"
+        android:text="@string/onboarding_all_files_title"
+        android:textSize="17sp"
+        android:textStyle="bold" />
 
     <org.fossify.commons.views.MyTextView
         android:id="@+id/grant_all_files_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/grant_all_files_image"
+        android:layout_marginTop="8dp"
         android:gravity="center"
-        android:lineSpacingExtra="1sp"
-        android:paddingStart="@dimen/bigger_margin"
-        android:paddingTop="@dimen/normal_margin"
-        android:paddingEnd="@dimen/bigger_margin"
-        android:paddingBottom="@dimen/normal_margin"
+        android:lineSpacingMultiplier="1.28"
         android:text="@string/hidden_all_files"
-        android:textColorHighlight="@color/disabled_text_color_highlight"
-        android:textSize="@dimen/bigger_text_size" />
+        android:textSize="13.5sp" />
 
-</RelativeLayout>
+    <org.fossify.commons.views.MyTextView
+        android:id="@+id/grant_all_files_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:lineSpacingMultiplier="1.25"
+        android:padding="12dp"
+        android:text="@string/onboarding_all_files_offline_desc"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/grant_all_files_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal">
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/grant_all_files_negative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="12dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="8dp"
+            android:text="@string/cancel"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
+
+        <org.fossify.commons.views.MyTextView
+            android:id="@+id/grant_all_files_positive"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/onboarding_grant_access"
+            android:textSize="13.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

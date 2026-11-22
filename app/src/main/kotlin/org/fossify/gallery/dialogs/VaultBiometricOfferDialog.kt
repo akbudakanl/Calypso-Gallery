@@ -24,16 +24,21 @@ object VaultBiometricOfferDialog {
     /** Set by Settings so the toggle reflects enrolment immediately. */
     var onBiometricChanged: (() -> Unit)? = null
 
-    fun showIfNeeded(activity: Activity) {
+    fun showIfNeeded(activity: Activity, onFinished: () -> Unit = {}) {
         val config = activity.config
-        if (config.vaultBiometricOfferShown) return
-        if (CryptoManager.readVaultKdfParams(activity) == null) return
+        if (config.vaultBiometricOfferShown || CryptoManager.readVaultKdfParams(activity) == null) {
+            onFinished()
+            return
+        }
 
         // Only offer enrollment when a strong biometric is actually enrolled and a hardware key
         // can be created. Otherwise say nothing during setup: no note, no config change. The
         // user can discover the state later in Settings (passive row + info icon). The offer is
         // not marked as shown, so a later creation re-checks.
-        if (!CryptoManager.ensureBiometricKeyAvailable(activity)) return
+        if (!CryptoManager.ensureBiometricKeyAvailable(activity)) {
+            onFinished()
+            return
+        }
 
         // Mark and default to off before showing: exiting without an answer counts as a decline.
         config.vaultBiometricOfferShown = true
@@ -42,14 +47,30 @@ object VaultBiometricOfferDialog {
 
         // Go straight to the themed 3b card — the old platform "offer" dialog duplicated the
         // same explanation and is no longer shown.
-        startEnrollment(activity)
+        startEnrollment(activity, onFinished)
     }
 
-    private fun startEnrollment(activity: Activity) {
-        val host = activity as? FragmentActivity ?: return
+    private fun startEnrollment(activity: Activity, onFinished: () -> Unit) {
+        val host = activity as? FragmentActivity
+        if (host == null) {
+            onFinished()
+            return
+        }
+
+        var finishedNotified = false
+        fun notifyFinishedOnce() {
+            if (!finishedNotified) {
+                finishedNotified = true
+                onFinished()
+            }
+        }
 
         fun launchSystemPrompt() {
-            val cipher = CryptoManager.getBiometricEncryptCipher() ?: return
+            val cipher = CryptoManager.getBiometricEncryptCipher()
+            if (cipher == null) {
+                notifyFinishedOnce()
+                return
+            }
             val promptInfo = BiometricPrompt.PromptInfo.Builder()
                 .setTitle(activity.getString(R.string.vault_biometric_offer_title))
                 .setDescription(activity.getString(R.string.vault_biometric_offer_message))
@@ -61,10 +82,15 @@ object VaultBiometricOfferDialog {
                 ContextCompat.getMainExecutor(activity),
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        val authCipher = result.cryptoObject?.cipher ?: return
-                        if (CryptoManager.completeBiometricSetup(activity, authCipher)) {
+                        val authCipher = result.cryptoObject?.cipher
+                        if (authCipher != null && CryptoManager.completeBiometricSetup(activity, authCipher)) {
                             onBiometricChanged?.invoke()
                         }
+                        notifyFinishedOnce()
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        notifyFinishedOnce()
                     }
                 }
             )
@@ -79,7 +105,7 @@ object VaultBiometricOfferDialog {
                 message = activity.getString(R.string.vault_biometric_offer_message),
                 note = activity.getString(R.string.vault_biometric_setup_password_note),
                 onContinue = { launchSystemPrompt() },
-                onCancel = {},
+                onCancel = { notifyFinishedOnce() },
             )
         } else {
             launchSystemPrompt()

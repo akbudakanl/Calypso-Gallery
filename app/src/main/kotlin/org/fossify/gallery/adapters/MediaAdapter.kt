@@ -515,9 +515,11 @@ class MediaAdapter(
         isMixedEncryption: Boolean
     ) {
         val hasPermission = !isRPlus() || isExternalStorageManager()
+        val vaultCreated = activity.hasVaultCreated()
         val hasHiddenOrEncrypted = selectedItems.any { it.isHidden() || CryptoManager.isEncryptedFile(it.path) }
         menu.findItem(R.id.cab_hide).isVisible =
             hasPermission &&
+            vaultCreated &&
             !isMixedEncryption &&
             CopyMovePolicy.canEncryptFrom(path, hasEncrypted, isInRecycleBin, isVaultRecycleBin) &&
             selectedItems.any { !it.isHidden() }

@@ -59,6 +59,7 @@ import org.fossify.gallery.dialogs.ResizeWithPathDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.dialogs.SmartFileConflictDialog
 import org.fossify.gallery.dialogs.VaultBiometricOfferDialog
+import org.fossify.gallery.dialogs.VaultChoiceDialog
 import org.fossify.gallery.dialogs.VaultNoticeDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
@@ -558,11 +559,11 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
         items.add(RadioItem(VAULT_ACTION_ARCHIVED, getString(R.string.select_archived_vault)))
     }
 
-    RadioGroupDialog(
+    VaultChoiceDialog(
         activity = this,
+        title = getString(R.string.vault_setup_action_title),
         items = items,
         checkedItemId = -1,
-        titleId = R.string.vault_setup_action_title,
         cancelCallback = {
             onCancelled()
         }
@@ -570,7 +571,7 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
         val reopenStage1 = {
             promptVaultSetupChoice(confirmBeforeCreatingNew, onCreated, onCancelled)
         }
-        when (selected as Int) {
+        when (selected) {
             VAULT_ACTION_CREATE_NEW -> {
                 promptWhereToCreateVault(
                     confirmBeforeCreatingNew = confirmBeforeCreatingNew,
@@ -678,36 +679,18 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
         )
     }
 
-    val density = resources.displayMetrics.density
-    fun dp(value: Float) = (value * density).toInt()
-    val primary = org.fossify.gallery.helpers.AppearanceManager.resolve(this, config).primary
-    val titleView = android.widget.LinearLayout(this).apply {
-        orientation = android.widget.LinearLayout.HORIZONTAL
-        gravity = android.view.Gravity.CENTER_VERTICAL
-        setPadding(dp(20f), dp(16f), dp(8f), dp(4f))
-        addView(org.fossify.commons.views.MyTextView(context).apply {
-            text = getString(R.string.select_archived_vault)
-            textSize = 18f
-            setTextColor(getProperTextColor())
-            layoutParams = android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        })
-        addView(android.widget.ImageView(context).apply {
-            setImageResource(org.fossify.commons.R.drawable.ic_info_vector)
-            applyColorFilter(primary)
-            layoutParams = android.widget.LinearLayout.LayoutParams(dp(40f), dp(40f))
-            setOnClickListener { showArchiveSizeInfo() }
-        })
+    VaultChoiceDialog(
+        activity = this,
+        title = getString(R.string.select_archived_vault),
+        items = items,
+        checkedItemId = -1,
+        infoIconRes = org.fossify.commons.R.drawable.ic_info_vector,
+        infoContentDescription = getString(R.string.archive_total_size_title),
+        onInfoClick = { showArchiveSizeInfo() },
+        cancelCallback = { onBack() },
+    ) { selectedId ->
+        handleSelection(selectedId)
     }
-
-    AlertDialog.Builder(this)
-        .setCustomTitle(titleView)
-        .setSingleChoiceItems(labels.toTypedArray(), -1) { dialog, which ->
-            dialog.dismiss()
-            handleSelection(items[which].id)
-        }
-        .setNegativeButton(org.fossify.commons.R.string.cancel, null)
-        .setOnCancelListener { onBack() }
-        .show()
 }
 
 fun BaseSimpleActivity.promptWhereToCreateVault(
@@ -720,11 +703,11 @@ fun BaseSimpleActivity.promptWhereToCreateVault(
         RadioItem(VAULT_LOCATION_OPTION_CUSTOM, getString(R.string.vault_location_custom_short))
     )
 
-    RadioGroupDialog(
+    VaultChoiceDialog(
         activity = this,
+        title = getString(R.string.where_to_create_vault_title),
         items = items,
         checkedItemId = -1,
-        titleId = R.string.where_to_create_vault_title,
         cancelCallback = {
             onBack()
         }
@@ -732,7 +715,7 @@ fun BaseSimpleActivity.promptWhereToCreateVault(
         val reopenStage2 = {
             promptWhereToCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack)
         }
-        when (selected as Int) {
+        when (selected) {
             VAULT_LOCATION_OPTION_STANDARD -> {
                 handleCreateTargetSelected(
                     targetDir = null,
@@ -820,27 +803,17 @@ private fun BaseSimpleActivity.showNoExistingVaultDialog(
     onRetryPick: () -> Unit,
     onBack: () -> Unit
 ) {
-    val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-    messageView.findViewById<TextView>(org.fossify.commons.R.id.message).setText(R.string.no_existing_vault_at_location)
-    var buttonHandled = false
-    getAlertDialogBuilder()
-        .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
-            buttonHandled = true
-            onRetryPick()
-        }
-        .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ ->
-            buttonHandled = true
-            onBack()
-        }
-        .apply {
-            setupDialogStuff(messageView, this) { alertDialog ->
-                alertDialog.setOnDismissListener {
-                    if (!buttonHandled) {
-                        onBack()
-                    }
-                }
-            }
-        }
+    VaultNoticeDialog(
+        activity = this,
+        title = getString(R.string.vault_setup_action_title),
+        message = getString(R.string.no_existing_vault_at_location),
+        positiveText = getString(org.fossify.commons.R.string.ok),
+        negativeText = getString(org.fossify.commons.R.string.cancel),
+        cancelable = true,
+        onPositive = { onRetryPick() },
+        onNegative = { onBack() },
+        onCancel = { onBack() },
+    )
 }
 
 private fun BaseSimpleActivity.defaultCustomVaultPickerPath(): String {
@@ -1021,32 +994,23 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
     val lookupDir = targetDir ?: CryptoManager.getDefaultVaultRoot()
     val existingVault = CryptoManager.resolveExistingVaultInDirectory(lookupDir)
     if (existingVault != null) {
-        val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-        messageView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
-            getString(R.string.unlock_existing_vault_at_location_prompt, humanizePath(existingVault.absolutePath))
-        var buttonHandled = false
-        getAlertDialogBuilder()
-            .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
-                buttonHandled = true
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.vault_setup_action_title),
+            message = getString(R.string.unlock_existing_vault_at_location_prompt, humanizePath(existingVault.absolutePath)),
+            positiveText = getString(org.fossify.commons.R.string.yes),
+            negativeText = getString(org.fossify.commons.R.string.no),
+            cancelable = true,
+            onPositive = {
                 unlockCandidateVault(
                     existingVault = existingVault,
                     onVaultReady = onVaultReady,
                     onBack = onPickAnother
                 )
-            }
-            .setNegativeButton(org.fossify.commons.R.string.no) { _, _ ->
-                buttonHandled = true
-                onPickAnother()
-            }
-            .apply {
-                setupDialogStuff(messageView, this) { alertDialog ->
-                    alertDialog.setOnDismissListener {
-                        if (!buttonHandled) {
-                            onBack()
-                        }
-                    }
-                }
-            }
+            },
+            onNegative = { onPickAnother() },
+            onCancel = { onBack() },
+        )
         return
     }
 
@@ -1075,7 +1039,7 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
                     VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
                     runOnUiThread {
                         toast(org.fossify.commons.R.string.protection_setup_successfully)
-                        showVaultPasswordSavedDialog { onVaultReady() }
+                        showVaultPasswordSavedDialog(isInitialCreation = true) { onVaultReady() }
                     }
                 }
             }
@@ -1091,28 +1055,17 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
     }
 
     if (confirmBeforeCreatingNew && switchingFromAnotherVault) {
-        val messageView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-        messageView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
-            getString(R.string.create_new_vault_at_location_prompt, humanizePath(targetDisplayDir.absolutePath))
-        var buttonHandled = false
-        getAlertDialogBuilder()
-            .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
-                buttonHandled = true
-                startCreationDialog()
-            }
-            .setNegativeButton(org.fossify.commons.R.string.no) { _, _ ->
-                buttonHandled = true
-                onBack()
-            }
-            .apply {
-                setupDialogStuff(messageView, this) { alertDialog ->
-                    alertDialog.setOnDismissListener {
-                        if (!buttonHandled) {
-                            onBack()
-                        }
-                    }
-                }
-            }
+        VaultNoticeDialog(
+            activity = this,
+            title = getString(R.string.vault_setup_action_title),
+            message = getString(R.string.create_new_vault_at_location_prompt, humanizePath(targetDisplayDir.absolutePath)),
+            positiveText = getString(org.fossify.commons.R.string.yes),
+            negativeText = getString(org.fossify.commons.R.string.no),
+            cancelable = true,
+            onPositive = { startCreationDialog() },
+            onNegative = { onBack() },
+            onCancel = { onBack() },
+        )
     } else {
         startCreationDialog()
     }
@@ -3355,10 +3308,21 @@ fun BaseSimpleActivity.emptyAndDisableTheRecycleBin(callback: () -> Unit) {
 }
 
 /** Shown right after vault creation / password change, before any biometric offer. */
-fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
+fun BaseSimpleActivity.showVaultPasswordSavedDialog(
+    isInitialCreation: Boolean = false,
+    onDone: () -> Unit,
+) {
     // Back dismisses it; tapping outside does not. Dismissing with Back still completes the
     // vault setup (onDone) but skips the biometric offer — biometrics stay off until enabled
     // explicitly in Settings.
+    val finishSetup: () -> Unit = {
+        if (isInitialCreation && !isFinishing && !isDestroyed) {
+            showVaultPullTutorialDialog { onDone() }
+        } else {
+            onDone()
+        }
+    }
+
     VaultNoticeDialog(
         activity = this,
         title = getString(R.string.vault_password_saved_title),
@@ -3367,14 +3331,41 @@ fun BaseSimpleActivity.showVaultPasswordSavedDialog(onDone: () -> Unit) {
         positiveText = getString(R.string.vault_password_saved_confirm),
         cancelable = true,
         onPositive = {
-            // HTML: 3a is acknowledged first, then the one-time biometric offer (3b) may appear.
-            onDone()
+            // HTML: 3a is acknowledged first, then the one-time biometric offer (3b) may appear,
+            // followed by the 3c top-scroll gesture tutorial when creating a vault.
             if (!isFinishing && !isDestroyed) {
                 config.vaultBiometricOfferShown = false
-                VaultBiometricOfferDialog.showIfNeeded(this)
+                VaultBiometricOfferDialog.showIfNeeded(this) {
+                    finishSetup()
+                }
+            } else {
+                onDone()
             }
         },
-        onCancel = { onDone() },
+        onCancel = { finishSetup() },
+    )
+}
+
+/**
+ * Screen 3c (Template A): Live mini gallery & top-scroll pull tutorial shown at the end of the
+ * vault creation flow so the user discovers how to open the hidden encrypted vault.
+ */
+fun BaseSimpleActivity.showVaultPullTutorialDialog(onDone: () -> Unit = {}) {
+    VaultNoticeDialog(
+        activity = this,
+        title = getString(R.string.vault_pull_tutorial_title),
+        message = android.text.Html.fromHtml(
+            getString(R.string.vault_pull_tutorial_message),
+            android.text.Html.FROM_HTML_MODE_LEGACY,
+        ),
+        noteText = getString(R.string.vault_pull_tutorial_note),
+        positiveText = getString(R.string.vault_pull_tutorial_confirm),
+        cancelable = true,
+        showPullTutorial = true,
+        filledPositiveButton = true,
+        alignSingleActionEnd = true,
+        onPositive = onDone,
+        onCancel = onDone,
     )
 }
 

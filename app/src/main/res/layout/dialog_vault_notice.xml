@@ -27,6 +27,14 @@
             android:layout_height="48dp" />
     </FrameLayout>
 
+    <!-- 3c only: Template A live mini gallery & top-scroll pull tutorial animation. -->
+    <org.fossify.gallery.views.VaultPullTutorialView
+        android:id="@+id/notice_pull_tutorial"
+        android:layout_width="match_parent"
+        android:layout_height="176dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
     <org.fossify.commons.views.MyTextView
         android:id="@+id/notice_title"
         android:layout_width="match_parent"

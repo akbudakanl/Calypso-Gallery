@@ -450,6 +450,10 @@
     <string name="vault_password_saved_message">If you forget your password, you will permanently lose access to your encrypted vault. Make sure you have saved it somewhere before continuing. Using a password manager is recommended.</string>
     <string name="vault_password_saved_confirm">Yes, I saved it</string>
     <string name="vault_password_saved_later">I will save it</string>
+    <string name="vault_pull_tutorial_title">Your encrypted vault is ready</string>
+    <string name="vault_pull_tutorial_message">While at the top of the list on the main screen, &lt;b&gt;pull down from the top&lt;/b&gt; and hold until the lock icon settles, then release.</string>
+    <string name="vault_pull_tutorial_note">For your privacy, the vault never appears as a separate folder or icon on the home screen; it only opens with this gesture.</string>
+    <string name="vault_pull_tutorial_confirm">Got it</string>
     <string name="vault_password_reminder_due_title">Do you still remember your vault password?</string>
     <string name="vault_password_reminder_due_message">You have not opened the encrypted vault with your password for this long. Your password is the only way to recover the vault.</string>
     <string name="vault_password_reminder_verify_action">Verify my password</string>

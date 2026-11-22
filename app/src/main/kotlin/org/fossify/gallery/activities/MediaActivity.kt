@@ -77,6 +77,7 @@ import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
 import org.fossify.gallery.extensions.handleExcludedFolderPasswordProtection
 import org.fossify.gallery.extensions.hasExcludedNormalFolders
 import org.fossify.gallery.extensions.hasHiddenNormalFolders
+import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
 import org.fossify.gallery.extensions.applyVaultScreenProtection
@@ -160,6 +161,7 @@ import java.io.IOException
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.emptyVaultRecycleBin
 import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
+import org.fossify.gallery.helpers.isConfiguredVaultTemporarilyUnavailable
 import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
@@ -204,6 +206,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mIsVaultOpening = false
     private var mIsVaultFilesView = false
     private var mIsSwitchingVaultView = false
+    @Volatile
+    private var mIsVaultPullAllowed = false
     private val mVaultBackHelper = VaultExitBackHelper()
     private var mLastRandomSessionGeneration = RandomOrderManager.getSessionGeneration()
     private var mHasNormalExcludedFolders = false
@@ -364,6 +368,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         binding.mediaFastscroller.updateColors(primaryColor)
         mIsVaultOpening = false
+        mIsVaultPullAllowed = (!isRPlus() || isExternalStorageManager()) &&
+            (hasVaultCreated() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
         binding.mediaRefreshLayout.isEnabled = false // pull-to-refresh kaldırıldı; refresh taşma menüsünde
         getMediaAdapter()?.apply {
             dateFormat = config.dateFormat
@@ -1942,9 +1948,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         val isVaultFolder = (mPath.isNotEmpty() && !mPath.isVirtualAlbumPath() && CryptoManager.isEncryptedFolderPath(this, mPath)) ||
             CryptoManager.isVaultRecycleBinPath(this, mPath)
 
-        // The gesture must also run with horizontal scrolling enabled; it provides
-        // pull-to-refresh in the all-files view and pull-to-open-vault here.
-        if (mShowAll && !mIsVaultFilesView && !mIsVaultOpening && !isVaultFolder) {
+        // The gesture runs with horizontal scrolling enabled too, but only once a vault has been created.
+        if (mIsVaultPullAllowed && mShowAll && !mIsVaultFilesView && !mIsVaultOpening && !isVaultFolder) {
             if (vaultPullGesture.handleTouchEvent(ev)) {
                 return true
             }
@@ -1954,8 +1959,13 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun triggerSecretVaultMenu() {
         openSecretVaultPrompt(
+            onMissingVaultReset = {
+                mIsVaultPullAllowed = (!isRPlus() || isExternalStorageManager()) &&
+                    (hasVaultCreated() || CryptoManager.isConfiguredVaultTemporarilyUnavailable(this))
+            },
             onCancelled = { mIsVaultOpening = false },
             onVaultReady = {
+                mIsVaultPullAllowed = true
                 if (VaultViewPolicy.shouldOpenVaultInFilesView(isFromFilesView = true)) {
                     openVaultFilesView()
                 } else {
