@@ -11,6 +11,7 @@ import org.fossify.commons.interfaces.RefreshRecyclerViewListener
 import org.fossify.commons.views.MyRecyclerView
 import org.fossify.gallery.databinding.ItemManageFolderBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.CalypsoActionModeController
 
 class ManageFoldersAdapter(
     activity: BaseSimpleActivity, var folders: ArrayList<String>, val isShowingExcludedFolders: Boolean, val listener: RefreshRecyclerViewListener?,
@@ -18,6 +19,11 @@ class ManageFoldersAdapter(
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
 
     private val config = activity.config
+    private val calypsoActionMode = CalypsoActionModeController(
+        activity = activity,
+        adapter = this,
+        barActionIds = CalypsoActionModeController.MANAGE_FOLDERS_BAR_ACTION_IDS
+    )
 
     init {
         setupDragListener(true)
@@ -25,7 +31,9 @@ class ManageFoldersAdapter(
 
     override fun getActionMenuId() = org.fossify.commons.R.menu.cab_remove_only
 
-    override fun prepareActionMode(menu: Menu) {}
+    override fun prepareActionMode(menu: Menu) {
+        calypsoActionMode.onPrepareActionMode(menu)
+    }
 
     override fun actionItemPressed(id: Int) {
         when (id) {
@@ -41,9 +49,13 @@ class ManageFoldersAdapter(
 
     override fun getItemKeyPosition(key: Int) = folders.indexOfFirst { it.hashCode() == key }
 
-    override fun onActionModeCreated() {}
+    override fun onActionModeCreated() {
+        calypsoActionMode.onActionModeCreated(actMode)
+    }
 
-    override fun onActionModeDestroyed() {}
+    override fun onActionModeDestroyed() {
+        calypsoActionMode.onActionModeDestroyed()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return createViewHolder(ItemManageFolderBinding.inflate(layoutInflater, parent, false).root)

@@ -23,6 +23,7 @@ import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.isThisOrParentFolderHidden
 import org.fossify.gallery.extensions.removeNoMedia
+import org.fossify.gallery.helpers.CalypsoActionModeController
 import org.fossify.gallery.helpers.HiddenFoldersPolicy
 
 class ManageHiddenFoldersAdapter(
@@ -33,13 +34,21 @@ class ManageHiddenFoldersAdapter(
     itemClick: (Any) -> Unit
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
 
+    private val calypsoActionMode = CalypsoActionModeController(
+        activity = activity,
+        adapter = this,
+        barActionIds = CalypsoActionModeController.HIDDEN_FOLDERS_BAR_ACTION_IDS
+    )
+
     init {
         setupDragListener(true)
     }
 
     override fun getActionMenuId() = R.menu.cab_hidden_folders
 
-    override fun prepareActionMode(menu: Menu) {}
+    override fun prepareActionMode(menu: Menu) {
+        calypsoActionMode.onPrepareActionMode(menu)
+    }
 
     override fun actionItemPressed(id: Int) {
         when (id) {
@@ -55,9 +64,13 @@ class ManageHiddenFoldersAdapter(
 
     override fun getItemKeyPosition(key: Int) = folders.indexOfFirst { it.hashCode() == key }
 
-    override fun onActionModeCreated() {}
+    override fun onActionModeCreated() {
+        calypsoActionMode.onActionModeCreated(actMode)
+    }
 
-    override fun onActionModeDestroyed() {}
+    override fun onActionModeDestroyed() {
+        calypsoActionMode.onActionModeDestroyed()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         return createViewHolder(ItemManageFolderBinding.inflate(layoutInflater, parent, false).root)

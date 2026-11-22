@@ -121,6 +121,7 @@ import org.fossify.gallery.extensions.updateReferencesForFolderRename
 import org.fossify.gallery.helpers.AlbumTypeIcon
 import org.fossify.gallery.helpers.AlbumTypeIconPolicy
 import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.CalypsoActionModeController
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
@@ -194,6 +195,11 @@ class DirectoryAdapter(
     private var lockedFolderPaths = ArrayList<String>()
     private var isDragAndDropping = false
     private var startReorderDragListener: StartReorderDragListener? = null
+    private val calypsoActionMode = CalypsoActionModeController(
+        activity = activity,
+        adapter = this,
+        barActionIds = CalypsoActionModeController.DIRECTORY_BAR_ACTION_IDS
+    )
 
     private var showMediaCount = config.showFolderMediaCount
     private var folderStyle = config.folderStyle
@@ -276,6 +282,7 @@ class DirectoryAdapter(
         val canCopyMove = !hasVirtualAlbum && !hasFavorites && !hasRecycleBin && !hasVaultRecycleBin && !isMixedEncryption
 
         menu.apply {
+            findItem(R.id.cab_properties).isVisible = true
             findItem(R.id.cab_move_to_top).isVisible = isDragAndDropping
             findItem(R.id.cab_move_to_bottom).isVisible = isDragAndDropping
 
@@ -349,6 +356,7 @@ class DirectoryAdapter(
                 findItem(R.id.cab_create_shortcut).isVisible = false
             }
         }
+        calypsoActionMode.onPrepareActionMode(menu)
     }
 
     override fun actionItemPressed(id: Int) {
@@ -393,9 +401,12 @@ class DirectoryAdapter(
 
     override fun getItemKeyPosition(key: Int) = dirs.indexOfFirst { it.path.hashCode() == key }
 
-    override fun onActionModeCreated() {}
+    override fun onActionModeCreated() {
+        calypsoActionMode.onActionModeCreated(actMode)
+    }
 
     override fun onActionModeDestroyed() {
+        calypsoActionMode.onActionModeDestroyed()
         if (isDragAndDropping) {
             notifyDataSetChanged()
 

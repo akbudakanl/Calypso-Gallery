@@ -10,12 +10,6 @@
         android:title="@string/delete"
         app:showAsAction="always" />
     <item
-        android:id="@+id/cab_properties"
-        android:icon="@drawable/ic_info_vector"
-        android:showAsAction="always"
-        android:title="@string/properties"
-        app:showAsAction="always" />
-    <item
         android:id="@+id/cab_pin"
         android:icon="@drawable/ic_pin_filled_vector"
         android:showAsAction="always"
@@ -38,101 +32,128 @@
         android:title="@string/move_to_bottom"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/cab_properties"
+        android:icon="@drawable/ic_info_vector"
+        android:showAsAction="never"
+        android:title="@string/properties"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/cab_change_order"
         android:icon="@drawable/ic_drag_handle_vector"
+        android:showAsAction="never"
         android:title="@string/reorder_by_dragging"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/cab_rename"
+        android:icon="@drawable/ic_rename_vector"
+        android:showAsAction="never"
         android:title="@string/rename"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_hide"
-        android:icon="@drawable/ic_hide_vector"
+        android:icon="@drawable/ic_encrypt_calypso_vector"
+        android:showAsAction="never"
         android:title="@string/encrypt_album"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/cab_unhide"
         android:icon="@drawable/ic_unhide_vector"
+        android:showAsAction="never"
         android:title="@string/decrypt_album"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
     <item
         android:id="@+id/cab_copy_to"
+        android:icon="@drawable/ic_copy_vector"
         android:showAsAction="never"
         android:title="@string/copy_to"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_move_to"
+        android:icon="@drawable/ic_move_vector"
         android:showAsAction="never"
         android:title="@string/move_to"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_add_to_virtual_album"
+        android:icon="@drawable/ic_album_virtual_vector"
         android:showAsAction="never"
         android:title="@string/add_to_virtual_album"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_create_shortcut"
+        android:icon="@drawable/ic_link_vector"
         android:showAsAction="never"
         android:title="@string/create_shortcut"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_empty_recycle_bin"
+        android:icon="@drawable/ic_delete_calypso_vector"
         android:showAsAction="never"
         android:title="@string/empty_recycle_bin"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_empty_disable_recycle_bin"
+        android:icon="@drawable/ic_delete_calypso_vector"
         android:showAsAction="never"
         android:title="@string/empty_and_disable_recycle_bin"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_exclude"
+        android:icon="@drawable/ic_album_excluded_vector"
         android:showAsAction="never"
         android:title="@string/exclude"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_unexclude"
+        android:icon="@drawable/ic_album_excluded_vector"
         android:showAsAction="never"
         android:title="@string/unexclude"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_hide_folder"
+        android:icon="@drawable/ic_album_hidden_vector"
         android:showAsAction="never"
         android:title="@string/hide_folder"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_unhide_folder"
+        android:icon="@drawable/ic_unhide_vector"
         android:showAsAction="never"
         android:title="@string/unhide_folder"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_lock"
+        android:icon="@drawable/ic_lock_outlined_vector"
         android:showAsAction="never"
         android:title="@string/lock_album"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_unlock"
+        android:icon="@drawable/ic_lock_vector"
         android:showAsAction="never"
         android:title="@string/unlock_album"
         app:showAsAction="never" />
     <item
         android:id="@+id/cab_change_cover_image"
+        android:icon="@drawable/ic_edit_calypso_vector"
         android:showAsAction="never"
         android:title="@string/change_cover_image"
         app:showAsAction="never">
         <menu>
             <item
                 android:id="@+id/cab_select_photo"
+                android:icon="@drawable/ic_album_virtual_vector"
                 android:title="@string/select_photo" />
             <item
                 android:id="@+id/cab_use_default"
+                android:icon="@drawable/ic_reset_vector"
                 android:title="@string/use_default" />
         </menu>
     </item>
     <item
         android:id="@+id/cab_select_all"
         android:icon="@drawable/ic_select_all_vector"
+        android:showAsAction="never"
         android:title="@string/select_all"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
 </menu>

@@ -109,6 +109,7 @@ import org.fossify.gallery.extensions.tryDecryptFilesTo
 import org.fossify.gallery.extensions.updateDBMediaPath
 import org.fossify.gallery.extensions.updateFavorite
 import org.fossify.gallery.extensions.updateFavoritePaths
+import org.fossify.gallery.helpers.CalypsoActionModeController
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
@@ -177,6 +178,11 @@ class MediaAdapter(
     private var rotatedImagePaths = ArrayList<String>()
     private var currentMediaHash = MediaUpdatePolicy.computeMediaContentHash(media)
     private var lastLongPressedSelectionKey: Int? = null
+    private val calypsoActionMode = CalypsoActionModeController(
+        activity = activity,
+        adapter = this,
+        barActionIds = CalypsoActionModeController.MEDIA_BAR_ACTION_IDS
+    )
 
     /**
      * Shared selection-preservation and NO_POSITION-safe click/long-click helpers
@@ -286,7 +292,9 @@ class MediaAdapter(
                 } else {
                     val selectableCount = adapter.getSelectableItemCount()
                     val selectedCount = minOf(selectedKeysCount, selectableCount)
-                    (actMode?.customView as? TextView)?.text = "$selectedCount / $selectableCount"
+                    val titleView = (actMode?.customView as? TextView)
+                        ?: actMode?.customView?.findViewById(org.fossify.commons.R.id.actionbar_title)
+                    titleView?.text = "$selectedCount / $selectableCount"
                     actMode?.invalidate()
                 }
             } else if (!samePaths) {
@@ -387,6 +395,8 @@ class MediaAdapter(
         val hasUnencrypted = selectedItems.any { !CryptoManager.isVaultMediaPath(activity, it.path) }
         val isMixedEncryption = hasEncrypted && hasUnencrypted
         menu.apply {
+            findItem(R.id.cab_properties).isVisible = true
+            findItem(R.id.cab_share).isVisible = !hasEncrypted
             findItem(R.id.cab_rotate).isVisible = selectedItems.all { it.isImage() }
             findItem(R.id.cab_rename).isVisible = !isInRecycleBin && (isOneItemSelected || config.allowBatchRenaming)
             findItem(R.id.cab_add_to_favorites).isVisible = !isInRecycleBin
@@ -422,6 +432,7 @@ class MediaAdapter(
                 findItem(R.id.cab_remove_from_favorites).isVisible = false
             }
         }
+        calypsoActionMode.onPrepareActionMode(menu)
     }
 
     override fun actionItemPressed(id: Int) {
@@ -474,9 +485,13 @@ class MediaAdapter(
 
     override fun getItemKeyPosition(key: Int) = media.indexOfFirst { (it as? Medium)?.path?.hashCode() == key }
 
-    override fun onActionModeCreated() {}
+    override fun onActionModeCreated() {
+        calypsoActionMode.onActionModeCreated(actMode)
+    }
 
-    override fun onActionModeDestroyed() {}
+    override fun onActionModeDestroyed() {
+        calypsoActionMode.onActionModeDestroyed()
+    }
 
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
