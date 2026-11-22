@@ -1,80 +1,60 @@
 <p align="center">
-  <img src="docs/store-screenshots/out/github-banner.png" alt="Calypso Gallery — offline-first photo management with a Tink-encrypted vault and zero-footprint virtual albums" width="100%" />
+  <img src="docs/store-screenshots/out/github-banner.png" alt="Calypso Gallery — private, offline-first photo management" width="100%" />
 </p>
 
 # Calypso Gallery
 
-Calypso Gallery is a security-hardened, independently maintained personal fork of [Fossify Gallery](https://github.com/FossifyOrg/Gallery). It was forked from upstream commit [`2688360242468f1d591eddf23740c879616bb828`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (v1.14.2) on **07-11-2026**. Thanks to the original authors and contributors of Fossify Gallery. It is an unofficial project and is not affiliated with, endorsed by, or supported by the Fossify organization.
+A private, offline-first gallery with an encrypted vault and zero-footprint virtual albums.
 
-Unleash memories, not personal data. Calypso Gallery is a powerful and private photo and video app with no ads, no Internet permission, and no unnecessary permissions.
+## Why this fork
 
-> **Versioning and upstream policy:** Calypso Gallery `1.0.0` is the first release. It was originally forked from upstream Fossify Gallery `1.14.2`; this release does not map one-to-one to any upstream version. Relevant upstream fixes and improvements are selectively backported and recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
+Calypso Gallery is an independently maintained fork of [Fossify Gallery](https://github.com/FossifyOrg/Gallery), based on upstream commit [`268836024`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (`v1.14.2`, 07-11-2026). It keeps the familiar gallery experience while replacing the parts that matter for private, local-only use: network access is removed, media can be stored in a cryptographic vault, and albums can reference files without copying them.
 
-## Project status and attribution
+The upstream project and its contributors retain their copyright in the inherited code. This is an unofficial fork and is not affiliated with, endorsed by, or supported by the Fossify organization. Version `1.0.0` is the first public release; it does not map one-to-one to any upstream version. Fork changes are recorded in [FORK_CHANGELOG.md](FORK_CHANGELOG.md), while [CHANGELOG.md](CHANGELOG.md) preserves the upstream-only release history.
 
-- **Fork source and corresponding source:** <https://github.com/akbudakanl/Gallery-Cipher>
-- **Fork releases:** <https://github.com/akbudakanl/Gallery-Cipher/releases>
-- **Fork issue tracker:** <https://github.com/akbudakanl/Gallery-Cipher/issues>
-- **Upstream project:** <https://github.com/FossifyOrg/Gallery>
-- **Exact upstream base commit:** [`2688360242468f1d591eddf23740c879616bb828`](https://github.com/FossifyOrg/Gallery/commit/2688360242468f1d591eddf23740c879616bb828) (`1.14.2`)
+## Highlights
 
-This distribution is a modified version of Fossify Gallery. The upstream project, its original authors, and its copyright holders are retained as the origin of the inherited source code. Fork-specific changes are tracked in [FORK_CHANGELOG.md](FORK_CHANGELOG.md), while [CHANGELOG.md](CHANGELOG.md) is retained as the upstream-only release history.
+- **Encrypted vault** — Tink streaming AEAD with Argon2id key derivation, biometric unlock, password changes, export/import and archive recovery.
+- **Zero-footprint virtual albums** — group media by reference; no duplicate files and no extra storage. Albums backed by vault items stay hidden and encrypted.
+- **Offline by design** — the `INTERNET` and `ACCESS_NETWORK_STATE` permissions are removed from the merged manifest. No cloud, no telemetry, no ads.
+- **Resumable file operations** — copy, move, encrypt, decrypt and delete run as one tracked foreground operation with progress, staging, atomic replacement and recovery after interruption.
+- **Smart conflict handling** — byte-by-byte comparison with side-by-side previews, plus automatic deduplication and album merge modes.
+- **Local password strength** — an on-device estimator guides vault password creation; nothing is uploaded or sent anywhere.
+- **Tablet-ready layouts** — responsive grids, large-screen dialogs and landscape corrections across the app.
+- **Desktop tooling** — a companion CLI for encrypting media and syncing an external vault, including Tails OS usage.
 
-## License and corresponding source
+## How it differs from Fossify Gallery
 
-Calypso Gallery is licensed under the **GNU General Public License, version 3 (GPLv3)**. The complete license text is available in [LICENSE](LICENSE), and the same text is bundled in the app and shown in **About → Read the GNU GPL v3 license**.
+| Area | Calypso Gallery |
+| --- | --- |
+| Network | Network permissions removed; the app runs offline only |
+| Storage | Vault data under `Secrets`; automatic favorites and album backups in app storage |
+| Albums | Stable file identity survives folder renames and moves; hidden/public vault isolation |
+| Security | Tink AEAD vault, Argon2id KDF, `FLAG_SECURE`, RAM zeroization, clipboard and overlay leak hardening |
+| Appearance | Local appearance screen with light, dark and custom palettes; settings search |
+| Biometrics | Class 3 / `BIOMETRIC_STRONG` only, tied to hardware-backed keystore keys |
+| Upstream prompts | Donation, rating, "Thank You" and modded-app checks removed |
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.
+## Quick start
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+Requires Android 8.0 (API 26) or newer. Build the FOSS variant with:
 
-The complete corresponding source for this fork is available in the [fork repository](https://github.com/akbudakanl/Gallery-Cipher). The repository contains the Android application, CLI tooling, build scripts, dependency declarations, test fixtures, and complete fork history needed to inspect and rebuild the project. Tagged fork releases also provide matching source archives on the [releases page](https://github.com/akbudakanl/Gallery-Cipher/releases); GitHub exposes each archive under the release's **Source code** links.
+```sh
+./gradlew assembleFossRelease
+```
 
-The inherited upstream source remains available from [FossifyOrg/Gallery](https://github.com/FossifyOrg/Gallery). Fork changes are identified in the fork history and [FORK_CHANGELOG.md](FORK_CHANGELOG.md).
-
-## Third-party cryptographic components
-
-The Android application bundles [Tink Java](https://github.com/tink-crypto/tink-java) 1.24.0 (Apache License, Version 2.0) for streaming AEAD and HKDF, and native Rust crates compiled into `libcalypso_argon2.so` via JNI ([RustCrypto `argon2`](https://github.com/RustCrypto/password-hashes) 0.5.3, [`zeroize`](https://github.com/RustCrypto/utils) 1.8.1, and [`jni`](https://github.com/jni-rs/jni-rs) 0.21.1 — dual-licensed Apache-2.0 / MIT) for `Argon2id` key derivation ([Bouncy Castle](https://www.bouncycastle.org/) `bcprov-jdk18on` 1.78.1 is used solely as a `testImplementation` cross-verification dependency and is not packaged in the APK). The companion CLI declares the [Tink Python](https://github.com/tink-crypto/tink-py) (`tink>=1.16.1,<2`, Apache 2.0), [`cryptography`](https://github.com/pyca/cryptography) (Apache 2.0 / BSD-3-Clause), [`argon2-cffi`](https://github.com/hynek/argon2-cffi) (MIT), and [`Pillow`](https://github.com/python-pillow/Pillow) (MIT-CMU) packages in [tools/calypso-cli/requirements.txt](tools/calypso-cli/requirements.txt). In-app third-party attributions and licenses (including Tink, RustCrypto Argon2 / zeroize / jni-rs, Gson, image decoders, and Material Design Icons) are shown under **About → Third-party licenses**; the full raw Tink attribution and Apache 2.0 license text also remains in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt).
-
-## Android package identity
-
-The release application ID is `com.calypso.gallery`; the Kotlin namespace remains `org.fossify.gallery` to retain compatibility with the inherited Fossify code and resources. Debug builds use `com.calypso.gallery.debug`.
-
-## Features
-
-**🖼️ PHOTO EDITING AT YOUR FINGERTIPS:**  
-Enhance your photos with the built-in editor. Crop, resize, rotate, flip, draw, and apply filters without compromising your privacy.
-
-**🌐 PRIVACY FIRST, ALWAYS:**  
-The app is offline-only and does not request Internet access. Strip EXIF metadata such as GPS coordinates and camera details to keep your memories yours.
-
-**🔐 TINK-BASED ENCRYPTED VAULT:**  
-Go beyond simple folder hiding with an isolated, offline-only cryptographic vault stored in the `Secrets` folder. The canonical vault container format uses Tink `AES256_GCM_HKDF` stream encryption, `Argon2id` key derivation, randomly generated DEKs, a KEK key ring, and `CalypsoGallery` domain separation. Full bit-by-bit verification, `FLAG_SECURE` screen protection, and automatic RAM zeroization reduce the risk of exposing decrypted keys and frames.
-
-**🔗 ZERO-FOOTPRINT VIRTUAL ALBUMS:**  
-Organize media into Virtual Albums without duplicating files or consuming extra storage space. Albums created from encrypted vault items become **Stealth Virtual Albums**, with HMAC-obfuscated filenames and `AES-256-GCM` encrypted titles and paths.
-
-**🔄 RECOVER WITH EASE:**  
-Recover deleted photos and videos with the built-in recycle bin.
-
-**🎨 YOUR GALLERY, YOUR STYLE:**  
-Customize themes, colors, and behavior to match your preferences.
-
-**📷 UNIVERSAL FORMAT FREEDOM:**  
-JPEG, JPEG XL, PNG, MP4, MKV, RAW, SVG, GIF, AVIF, videos, and more.
-
-**✨ MATERIAL DESIGN WITH DYNAMIC THEMES:**  
-Use the Material Design interface with dynamic color and theme support.
+Release builds use the application ID `com.calypso.gallery`; the Kotlin namespace stays `org.fossify.gallery` for compatibility with inherited sources. Debug builds use `com.calypso.gallery.debug`. See [tools/calypso-cli/README.md](tools/calypso-cli/README.md) for the desktop CLI.
 
 ## Documentation
 
-- [DOCS.md](DOCS.md) — architecture, cryptography specifications, vault design, and user documentation
-- [FORK_CHANGELOG.md](FORK_CHANGELOG.md) — fork-only change and modification record
-- [CHANGELOG.md](CHANGELOG.md) — upstream-only Fossify Gallery release history
+- [DOCS.md](DOCS.md) — architecture, cryptography, vault design and user guide
+- [FORK_CHANGELOG.md](FORK_CHANGELOG.md) — fork changes, grouped by release
+- [CHANGELOG.md](CHANGELOG.md) — upstream Fossify Gallery release history
+- [docs/adr](docs/adr) — architecture decision records
 - [tools/calypso-cli/README.md](tools/calypso-cli/README.md) — command-line vault tooling
 
-### Fork release process
+## License and attribution
 
-The release workflow reads, updates, and publishes release notes exclusively from `FORK_CHANGELOG.md`; it never consumes or rewrites the upstream-only `CHANGELOG.md`. This release is tagged `1.0.0`.
+Calypso Gallery is free software licensed under the **GNU General Public License, version 3**. The full text is in [LICENSE](LICENSE) and bundled in the app under **About → Read the GNU GPL v3 license**. The complete corresponding source for every release is available in this repository and in the source archives attached to each release.
 
-Each release creates a version-specific source tag and GitHub release with the complete fork release section and a corresponding source archive. Setting `RELEASE_TARGET=gplay` additionally deploys to Google Play after the GitHub source release succeeds; otherwise the release is published to GitHub only. Fastlane changelog entries are deterministic summaries capped at Play Console's 500-character limit and link to both the complete release notes and the version-specific source archive.
+The upstream Fossify Gallery source remains available at [FossifyOrg/Gallery](https://github.com/FossifyOrg/Gallery). Bundled third-party components include Tink Java (Apache-2.0), RustCrypto Argon2 / zeroize / jni (Apache-2.0 or MIT) and Material Design Icons (Apache-2.0); the complete in-app list is under **About → Third-party licenses**, and the raw Tink attribution is in [app/src/main/res/raw/tink_license.txt](app/src/main/res/raw/tink_license.txt).
