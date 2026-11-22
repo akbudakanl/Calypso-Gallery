@@ -79,7 +79,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 4 | `new_virtual_album` | New album… | 新增相簿… | Action label for creating a new virtual album |
 | 5 | `rename_virtual_album` | Rename album | 重新命名相簿 | Action label to rename a virtual album |
 | 6 | `album_name` | Album name | 相簿名稱 | Input hint / label for album name |
-| 7 | `virtual_folder_name` | Virtual folder name | 虛擬資料夾名稱 | Input hint / label for virtual folder |
+| 7 | `virtual_folder_name` | Virtual album name | 虛擬相簿名稱 | Input hint / label for virtual album |
 | 8 | `virtual_album_name_empty` | The album name cannot be empty | 相簿名稱不可為空 | Validation error when album name is empty |
 | 9 | `virtual_album_exists` | An album with this name already exists | 已存在相同名稱的相簿 | Validation error when album name already exists |
 | 10 | `add_to_virtual_album` | Add to virtual album | 加入虛擬相簿 | Menu action to add items to a virtual album |
@@ -505,7 +505,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 262 | `new_virtual_album` | New album… | 新增相簿… |
 | 263 | `rename_virtual_album` | Rename album | 重新命名相簿 |
 | 264 | `album_name` | Album name | 相簿名稱 |
-| 265 | `virtual_folder_name` | Virtual folder name | 虛擬資料夾名稱 |
+| 265 | `virtual_folder_name` | Virtual album name | 虛擬相簿名稱 |
 | 266 | `virtual_album_name_empty` | The album name cannot be empty | 相簿名稱不可為空 |
 | 267 | `virtual_album_exists` | An album with this name already exists | 已存在相同名稱的相簿 |
 | 268 | `add_to_virtual_album` | Add to album | 加入相簿 |
@@ -744,7 +744,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 499 | `smart_conflict_meta_date_taken` | Taken: %s | 拍攝日期：%s |
 | 500 | `smart_conflict_meta_date_modified` | Modified: %s | 修改日期：%s |
 | 501 | `album_type_icons` | Album type icons | 相簿類型圖示 |
-| 502 | `virtual_folders` | Virtual folders | 虛擬資料夾 |
+| 502 | `virtual_folders` | Virtual albums | 虛擬相簿 |
 | 503 | `favorites_album` | Favorites | 我的最愛 |
 | 504 | `excluded_folders_album` | Excluded folders | 已排除的資料夾 |
 | 505 | `hidden_folders_album` | Hidden folders | 隱藏資料夾 |

@@ -373,7 +373,7 @@
     <string name="new_virtual_album">New album…</string>
     <string name="rename_virtual_album">Rename album</string>
     <string name="album_name">Album name</string>
-    <string name="virtual_folder_name">Virtual folder name</string>
+    <string name="virtual_folder_name">Virtual album name</string>
     <string name="virtual_album_name_empty">The album name cannot be empty</string>
     <string name="virtual_album_exists">An album with this name already exists</string>
     <string name="add_to_virtual_album">Add to virtual album</string>
@@ -630,7 +630,7 @@
     <string name="exporting_vault_progress">Exporting encrypted vault…</string>
     <string name="vault_export_same_folder_error">The export destination cannot be the active vault folder or inside it.</string>
     <string name="album_type_icons">Album type icons</string>
-    <string name="virtual_folders">Virtual folders</string>
+    <string name="virtual_folders">Virtual albums</string>
     <string name="favorites_album">Favorites</string>
     <string name="excluded_folders_album">Excluded folders</string>
     <string name="hidden_folders_album">Hidden folders</string>

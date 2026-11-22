@@ -325,7 +325,7 @@
     <string name="new_virtual_album">Yeni albom…</string>
     <string name="rename_virtual_album">Albomun adını dəyiş</string>
     <string name="album_name">Albom adı</string>
-    <string name="virtual_folder_name">Virtual qovluq adı</string>
+    <string name="virtual_folder_name">Virtual albom adı</string>
     <string name="virtual_album_name_empty">Albom adı boş ola bilməz</string>
     <string name="virtual_album_exists">Bu adda albom artıq mövcuddur</string>
     <string name="add_to_virtual_album">Virtual alboma əlavə et</string>
@@ -610,7 +610,7 @@
     <string name="smart_conflict_meta_date_taken">Çəkilib: %s</string>
     <string name="smart_conflict_meta_date_modified">Dəyişdirilib: %s</string>
     <string name="album_type_icons">Albom növü nişanları</string>
-    <string name="virtual_folders">Virtual qovluqlar</string>
+    <string name="virtual_folders">Virtual albomlar</string>
     <string name="favorites_album">Sevimlilər</string>
     <string name="excluded_folders_album">İstisna edilmiş qovluqlar</string>
     <string name="hidden_folders_album">Gizli qovluqlar</string>

@@ -293,7 +293,7 @@
     <string name="new_virtual_album">Nuevo álbum…</string>
     <string name="rename_virtual_album">Renombrar álbum</string>
     <string name="album_name">Nombre del álbum</string>
-    <string name="virtual_folder_name">Nombre de la carpeta virtual</string>
+    <string name="virtual_folder_name">Nombre del álbum virtual</string>
     <string name="virtual_album_name_empty">El nombre del álbum no puede estar vacío</string>
     <string name="virtual_album_exists">Ya existe un álbum con este nombre</string>
     <string name="add_to_virtual_album">Añadir al álbum virtual</string>
@@ -546,7 +546,7 @@
     <string name="smart_conflict_meta_date_taken">Tomada: %s</string>
     <string name="smart_conflict_meta_date_modified">Modificada: %s</string>
     <string name="album_type_icons">Iconos de tipo de álbum</string>
-    <string name="virtual_folders">Carpetas virtuales</string>
+    <string name="virtual_folders">Álbumes virtuales</string>
     <string name="favorites_album">Favoritos</string>
     <string name="excluded_folders_album">Carpetas excluidas</string>
     <string name="hidden_folders_album">Carpetas ocultas</string>

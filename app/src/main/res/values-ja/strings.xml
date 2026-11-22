@@ -289,7 +289,7 @@
     <string name="new_virtual_album">新しいアルバム…</string>
     <string name="rename_virtual_album">アルバム名を変更</string>
     <string name="album_name">アルバム名</string>
-    <string name="virtual_folder_name">仮想フォルダー名</string>
+    <string name="virtual_folder_name">仮想アルバム名</string>
     <string name="virtual_album_name_empty">アルバム名は空にできません</string>
     <string name="virtual_album_exists">この名前のアルバムはすでに存在します</string>
     <string name="add_to_virtual_album">仮想アルバムに追加</string>
@@ -543,7 +543,7 @@
     <string name="smart_conflict_meta_date_taken">撮影日時: %s</string>
     <string name="smart_conflict_meta_date_modified">更新日時: %s</string>
     <string name="album_type_icons">アルバムの種類のアイコン</string>
-    <string name="virtual_folders">仮想フォルダー</string>
+    <string name="virtual_folders">仮想アルバム</string>
     <string name="favorites_album">お気に入り</string>
     <string name="excluded_folders_album">除外されたフォルダー</string>
     <string name="hidden_folders_album">非表示フォルダー</string>

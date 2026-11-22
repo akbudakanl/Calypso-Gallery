@@ -289,7 +289,7 @@
     <string name="new_virtual_album">新增相簿…</string>
     <string name="rename_virtual_album">重新命名相簿</string>
     <string name="album_name">相簿名稱</string>
-    <string name="virtual_folder_name">虛擬資料夾名稱</string>
+    <string name="virtual_folder_name">虛擬相簿名稱</string>
     <string name="virtual_album_name_empty">相簿名稱不可為空</string>
     <string name="virtual_album_exists">已存在相同名稱的相簿</string>
     <string name="add_to_virtual_album">加入虛擬相簿</string>
@@ -540,7 +540,7 @@
     <string name="smart_conflict_meta_date_taken">拍攝日期：%s</string>
     <string name="smart_conflict_meta_date_modified">修改日期：%s</string>
     <string name="album_type_icons">相簿類型圖示</string>
-    <string name="virtual_folders">虛擬資料夾</string>
+    <string name="virtual_folders">虛擬相簿</string>
     <string name="favorites_album">我的最愛</string>
     <string name="excluded_folders_album">已排除的資料夾</string>
     <string name="hidden_folders_album">隱藏資料夾</string>

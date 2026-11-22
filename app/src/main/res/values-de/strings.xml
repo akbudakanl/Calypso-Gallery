@@ -291,7 +291,7 @@
     <string name="new_virtual_album">Neues Album…</string>
     <string name="rename_virtual_album">Album umbenennen</string>
     <string name="album_name">Albumname</string>
-    <string name="virtual_folder_name">Name des virtuellen Ordners</string>
+    <string name="virtual_folder_name">Name des virtuellen Albums</string>
     <string name="virtual_album_name_empty">Der Albumname darf nicht leer sein</string>
     <string name="virtual_album_exists">Ein Album mit diesem Namen existiert bereits</string>
     <string name="add_to_virtual_album">Zu virtuellem Album hinzufügen</string>
@@ -543,7 +543,7 @@
     <string name="smart_conflict_meta_date_taken">Aufnahmedatum: %s</string>
     <string name="smart_conflict_meta_date_modified">Änderungsdatum: %s</string>
     <string name="album_type_icons">Symbole für Albumtypen</string>
-    <string name="virtual_folders">Virtuelle Ordner</string>
+    <string name="virtual_folders">Virtuelle Alben</string>
     <string name="favorites_album">Favoriten</string>
     <string name="excluded_folders_album">Ausgeschlossene Ordner</string>
     <string name="hidden_folders_album">Versteckte Ordner</string>

@@ -92,7 +92,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 4 | `new_virtual_album` | New album… | Nuevo álbum… | Action label for creating a virtual album |
 | 5 | `rename_virtual_album` | Rename album | Renombrar álbum | Action label to rename a virtual album |
 | 6 | `album_name` | Album name | Nombre del álbum | Input hint/label |
-| 7 | `virtual_folder_name` | Virtual folder name | Nombre de la carpeta virtual | Input hint/label |
+| 7 | `virtual_folder_name` | Virtual album name | Nombre del álbum virtual | Input hint/label |
 | 8 | `virtual_album_name_empty` | The album name cannot be empty | El nombre del álbum no puede estar vacío | Validation error |
 | 9 | `virtual_album_exists` | An album with this name already exists | Ya existe un álbum con este nombre | Validation error |
 | 10 | `add_to_virtual_album` | Add to virtual album | Añadir al álbum virtual | Menu action (`añadir` in `es`) |
@@ -505,7 +505,7 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 262 | `new_virtual_album` | New album… | Nuevo álbum… |
 | 263 | `rename_virtual_album` | Rename album | Renombrar álbum |
 | 264 | `album_name` | Album name | Nombre del álbum |
-| 265 | `virtual_folder_name` | Virtual folder name | Nombre de la carpeta virtual |
+| 265 | `virtual_folder_name` | Virtual album name | Nombre del álbum virtual |
 | 266 | `virtual_album_name_empty` | The album name cannot be empty | El nombre del álbum no puede estar vacío |
 | 267 | `virtual_album_exists` | An album with this name already exists | Ya existe un álbum con este nombre |
 | 268 | `add_to_virtual_album` | Add to album | Añadir al álbum |
@@ -733,7 +733,7 @@ Following the previous audit, 22 additional keys were localized in `values-es/st
 | 488 | `smart_conflict_meta_date_taken` | Taken: %s | Tomada: %s |
 | 489 | `smart_conflict_meta_date_modified` | Modified: %s | Modificada: %s |
 | 490 | `album_type_icons` | Album type icons | Iconos de tipo de álbum |
-| 491 | `virtual_folders` | Virtual folders | Carpetas virtuales |
+| 491 | `virtual_folders` | Virtual albums | Álbumes virtuales |
 | 492 | `favorites_album` | Favorites | Favoritos |
 | 493 | `excluded_folders_album` | Excluded folders | Carpetas excluidas |
 | 494 | `hidden_folders_album` | Hidden folders | Carpetas ocultas |

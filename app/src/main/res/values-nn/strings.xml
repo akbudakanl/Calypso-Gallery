@@ -325,7 +325,7 @@
     <string name="new_virtual_album">Nytt album…</string>
     <string name="rename_virtual_album">Gje albumet nytt namn</string>
     <string name="album_name">Albumnamn</string>
-    <string name="virtual_folder_name">Namn på virtuell mappe</string>
+    <string name="virtual_folder_name">Namn på virtuelt album</string>
     <string name="virtual_album_name_empty">Albumnamnet kan ikkje vera tomt</string>
     <string name="virtual_album_exists">Eit album med dette namnet finst alt</string>
     <string name="add_to_virtual_album">Legg til i virtuelt album</string>
@@ -611,7 +611,7 @@
     <string name="smart_conflict_meta_date_taken">Teke: %s</string>
     <string name="smart_conflict_meta_date_modified">Endra: %s</string>
     <string name="album_type_icons">Ikon for albumtype</string>
-    <string name="virtual_folders">Virtuelle mapper</string>
+    <string name="virtual_folders">Virtuelle album</string>
     <string name="favorites_album">Favorittar</string>
     <string name="excluded_folders_album">Ekskluderte mapper</string>
     <string name="hidden_folders_album">Skjulte mapper</string>

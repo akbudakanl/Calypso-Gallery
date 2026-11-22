@@ -111,7 +111,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 |   4 | 4            | `new_virtual_album`                         | New album…                                                                                  |                                                                             |
 |   5 | 5            | `rename_virtual_album`                      | Rename album                                                                                |                                                                             |
 |   6 | 6            | `album_name`                                | Album name                                                                                  |                                                                             |
-|   7 | 7            | `virtual_folder_name`                       | Virtual folder name                                                                         |                                                                             |
+|   7 | 7            | `virtual_folder_name`                       | Virtual album name                                                                         |                                                                             |
 |   8 | 8            | `virtual_album_name_empty`                  | The album name cannot be empty                                                              |                                                                             |
 |   9 | 9            | `virtual_album_exists`                      | An album with this name already exists                                                      |                                                                             |
 |  10 | 10           | `add_to_virtual_album`                      | Add to virtual album                                                                        | Agregar al álbum virtual                                                    |
@@ -492,7 +492,7 @@ Following the previous audit, 22 additional keys were localized in `values-b+es+
 | 262 | `new_virtual_album` | New album… | Nuevo álbum… |
 | 263 | `rename_virtual_album` | Rename album | Renombrar álbum |
 | 264 | `album_name` | Album name | Nombre del álbum |
-| 265 | `virtual_folder_name` | Virtual folder name | Nombre de la carpeta virtual |
+| 265 | `virtual_folder_name` | Virtual album name | Nombre del álbum virtual |
 | 266 | `virtual_album_name_empty` | The album name cannot be empty | El nombre del álbum no puede estar vacío |
 | 267 | `virtual_album_exists` | An album with this name already exists | Ya existe un álbum con este nombre |
 | 268 | `add_to_virtual_album` | Add to album | Agregar al álbum |
@@ -733,7 +733,7 @@ Following the previous audit, 22 additional keys were localized in `values-b+es+
 | 501 | `smart_conflict_meta_date_taken` | Taken: %s | Fecha de la toma: %s |
 | 502 | `smart_conflict_meta_date_modified` | Modified: %s | Modificado: %s |
 | 503 | `album_type_icons` | Album type icons | Íconos de tipo de álbum |
-| 504 | `virtual_folders` | Virtual folders | Carpetas virtuales |
+| 504 | `virtual_folders` | Virtual albums | Álbumes virtuales |
 | 505 | `favorites_album` | Favorites | Favoritos |
 | 506 | `excluded_folders_album` | Excluded folders | Carpetas excluidas |
 | 507 | `hidden_folders_album` | Hidden folders | Carpetas ocultas |

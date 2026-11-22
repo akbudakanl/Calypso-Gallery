@@ -122,7 +122,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 4 | 4 | `new_virtual_album` | New album… |  |
 | 5 | 5 | `rename_virtual_album` | Rename album |  |
 | 6 | 6 | `album_name` | Album name |  |
-| 7 | 7 | `virtual_folder_name` | Virtual folder name |  |
+| 7 | 7 | `virtual_folder_name` | Virtual album name |  |
 | 8 | 8 | `virtual_album_name_empty` | The album name cannot be empty |  |
 | 9 | 9 | `virtual_album_exists` | An album with this name already exists |  |
 | 10 | 10 | `add_to_virtual_album` | Add to virtual album | Legg til i virtuelt album |
@@ -503,7 +503,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 262 | `new_virtual_album` | New album… | Nytt album… |
 | 263 | `rename_virtual_album` | Rename album | Gje albumet nytt namn |
 | 264 | `album_name` | Album name | Albumnamn |
-| 265 | `virtual_folder_name` | Virtual folder name | Namn på virtuell mappe |
+| 265 | `virtual_folder_name` | Virtual album name | Namn på virtuelt album |
 | 266 | `virtual_album_name_empty` | The album name cannot be empty | Albumnamnet kan ikkje vera tomt |
 | 267 | `virtual_album_exists` | An album with this name already exists | Eit album med dette namnet finst alt |
 | 268 | `add_to_virtual_album` | Add to album | Legg til i album |
@@ -745,7 +745,7 @@ Following the previous audit, 22 additional keys were localized in `values-nn/st
 | 502 | `smart_conflict_meta_date_taken` | Taken: %s | Teke: %s |
 | 503 | `smart_conflict_meta_date_modified` | Modified: %s | Endra: %s |
 | 504 | `album_type_icons` | Album type icons | Ikon for albumtype |
-| 505 | `virtual_folders` | Virtual folders | Virtuelle mapper |
+| 505 | `virtual_folders` | Virtual albums | Virtuelle album |
 | 506 | `favorites_album` | Favorites | Favorittar |
 | 507 | `excluded_folders_album` | Excluded folders | Ekskluderte mapper |
 | 508 | `hidden_folders_album` | Hidden folders | Skjulte mapper |

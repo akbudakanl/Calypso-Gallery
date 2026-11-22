@@ -64,7 +64,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 13 | 4 | `new_virtual_album` | New album… | Action label for creating a new virtual album |
 | 14 | 5 | `rename_virtual_album` | Rename album | Action label to rename a virtual album |
 | 15 | 6 | `album_name` | Album name | Input hint / label for album name |
-| 16 | 7 | `virtual_folder_name` | Virtual folder name | Input hint / label for virtual folder |
+| 16 | 7 | `virtual_folder_name` | Virtual album name | Input hint / label for virtual album |
 | 17 | 8 | `virtual_album_name_empty` | The album name cannot be empty | Validation error when album name is empty |
 | 18 | 9 | `virtual_album_exists` | An album with this name already exists | Validation error when album name already exists |
 | 19 | 10 | `add_to_virtual_album` | Add to virtual album | Menu action to add items to a virtual album |
@@ -524,7 +524,7 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 262 | `new_virtual_album` | New album… | Nytt album… |
 | 263 | `rename_virtual_album` | Rename album | Gi albumet nytt navn |
 | 264 | `album_name` | Album name | Albumnavn |
-| 265 | `virtual_folder_name` | Virtual folder name | Navn på virtuell mappe |
+| 265 | `virtual_folder_name` | Virtual album name | Navn på virtuelt album |
 | 266 | `virtual_album_name_empty` | The album name cannot be empty | Albumnavnet kan ikke være tomt |
 | 267 | `virtual_album_exists` | An album with this name already exists | Et album med dette navnet finnes allerede |
 | 268 | `add_to_virtual_album` | Add to album | Legg til i album |
@@ -756,7 +756,7 @@ Following the previous audit, 22 additional keys were localized in `values-nb-rN
 | 492 | `smart_conflict_meta_date_taken` | Taken: %s | Opptatt: %s |
 | 493 | `smart_conflict_meta_date_modified` | Modified: %s | Endret: %s |
 | 494 | `album_type_icons` | Album type icons | Ikoner for albumtype |
-| 495 | `virtual_folders` | Virtual folders | Virtuelle mapper |
+| 495 | `virtual_folders` | Virtual albums | Virtuelle album |
 | 496 | `favorites_album` | Favorites | Favoritter |
 | 497 | `excluded_folders_album` | Excluded folders | Ekskluderte mapper |
 | 498 | `hidden_folders_album` | Hidden folders | Skjulte mapper |

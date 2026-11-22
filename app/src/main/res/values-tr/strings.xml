@@ -318,7 +318,7 @@
     <string name="new_virtual_album">Yeni albüm…</string>
     <string name="rename_virtual_album">Albümü yeniden adlandır</string>
     <string name="album_name">Albüm adı</string>
-    <string name="virtual_folder_name">Sanal klasör adı</string>
+    <string name="virtual_folder_name">Sanal albüm adı</string>
     <string name="virtual_album_name_empty">Albüm adı boş olamaz</string>
     <string name="virtual_album_exists">Bu adda bir albüm zaten var</string>
     <string name="add_to_virtual_album">Sanal albüme ekle</string>
@@ -598,7 +598,7 @@
     <string name="exporting_vault_progress">Şifreli kasa dışa aktarılıyor…</string>
     <string name="vault_export_same_folder_error">Dışa aktarma hedefi aktif kasa klasörü veya onun alt klasörü olamaz.</string>
     <string name="album_type_icons">Albüm türü ikonları</string>
-    <string name="virtual_folders">Sanal klasörler</string>
+    <string name="virtual_folders">Sanal albümler</string>
     <string name="favorites_album">Favoriler</string>
     <string name="excluded_folders_album">Hariç tutulan klasörler</string>
     <string name="hidden_folders_album">Gizli klasörler</string>
