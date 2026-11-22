@@ -13,6 +13,7 @@ import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.interfaces.HashListener
 import org.fossify.commons.interfaces.SecurityTab
 import org.fossify.commons.views.MyScrollView
+import org.fossify.gallery.extensions.styleBiometricIdTab
 
 /**
  * Pure-Kotlin replacement for Commons' PasswordTypesAdapter.
@@ -33,6 +34,9 @@ class AppPasswordTypesAdapter(
 
     override fun instantiateItem(container: ViewGroup, position: Int): Any {
         val view = LayoutInflater.from(context).inflate(layoutSelection(position), container, false)
+        if (position == PROTECTION_FINGERPRINT) {
+            styleBiometricIdTab(view, context)
+        }
         container.addView(view)
         val tab = view as SecurityTab
         tabs.put(position, tab)

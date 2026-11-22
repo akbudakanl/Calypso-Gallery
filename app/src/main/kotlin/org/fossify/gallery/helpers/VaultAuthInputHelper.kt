@@ -1,5 +1,6 @@
 package org.fossify.gallery.helpers
 
+import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
@@ -12,6 +13,7 @@ import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
+import android.widget.TextView
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -210,26 +212,13 @@ class VaultAuthInputHelper(
         binding.vaultNoRecoveryWarning.setTextColor(palette.secondary)
 
         // Sleek pill biometric button with fingerprint icon
-        binding.vaultBiometricBtn.setTextColor(palette.text)
-        val bioRadius = 24f * density
-        val bioContent = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = bioRadius
-            setColor(surfaceColor)
-            setStroke(strokePx, cardBorderColor)
-        }
-        val bioMask = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = bioRadius
-            setColor(Color.WHITE)
-        }
-        binding.vaultBiometricBtn.background = RippleDrawable(rippleColor, bioContent, bioMask)
-        val fpIcon = ContextCompat.getDrawable(activity, R.drawable.ic_onboarding_fingerprint)?.mutate()?.apply {
-            val size = (20f * density).toInt()
-            setBounds(0, 0, size, size)
-            setTint(palette.text)
-        }
-        binding.vaultBiometricBtn.setCompoundDrawablesRelative(fpIcon, null, null, null)
+        applyBiometricButtonStyle(
+            context = activity,
+            button = binding.vaultBiometricBtn,
+            palette = palette,
+            surfaceColor = surfaceColor,
+            borderColor = cardBorderColor,
+        )
 
         binding.vaultPasswordInputLayout.setColors(palette.text, palette.primary, palette.background)
         val selStart = binding.vaultPasswordInput.selectionStart
@@ -693,5 +682,45 @@ class VaultAuthInputHelper(
         private const val INITIAL_PIN_CAPACITY = 16
         private const val MIN_PIN_LENGTH = 4
         private const val MIN_PASSWORD_LENGTH = 4
+
+        /**
+         * Styles a biometric trigger button with the encrypted vault's pill appearance:
+         * theme surface fill, 1dp border, 24dp pill corners, subtle ripple, and 20dp
+         * tinted fingerprint icon. Shared between vault unlock and Fossify password flows.
+         */
+        fun applyBiometricButtonStyle(
+            context: Context,
+            button: TextView,
+            palette: AppearancePalette,
+            surfaceColor: Int = palette.surface,
+            borderColor: Int = palette.border,
+        ) {
+            val density = context.resources.displayMetrics.density
+            val strokePx = (1f * density).toInt().coerceAtLeast(1)
+            val rippleColor = ColorStateList.valueOf(
+                ColorUtils.setAlphaComponent(palette.text, BUTTON_RIPPLE_ALPHA)
+            )
+            val bioRadius = 24f * density
+            val bioContent = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = bioRadius
+                setColor(surfaceColor)
+                setStroke(strokePx, borderColor)
+            }
+            val bioMask = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                cornerRadius = bioRadius
+                setColor(Color.WHITE)
+            }
+            button.setTextColor(palette.text)
+            button.backgroundTintList = null
+            button.background = RippleDrawable(rippleColor, bioContent, bioMask)
+            val fpIcon = ContextCompat.getDrawable(context, R.drawable.ic_onboarding_fingerprint)?.mutate()?.apply {
+                val size = (20f * density).toInt()
+                setBounds(0, 0, size, size)
+                setTint(palette.text)
+            }
+            button.setCompoundDrawablesRelative(fpIcon, null, null, null)
+        }
     }
 }

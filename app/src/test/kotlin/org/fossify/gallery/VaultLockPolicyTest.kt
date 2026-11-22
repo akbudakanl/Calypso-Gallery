@@ -933,6 +933,45 @@ class VaultLockPolicyTest {
         )
     }
 
+    @Test
+    fun fossifyBiometricFlowsReuseVaultBiometricPillButtonCentered() {
+        val unlockActivity = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/activities/AppUnlockActivity.kt"
+        ).readText()
+        val adapter = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/adapters/AppPasswordTypesAdapter.kt"
+        ).readText()
+        val extensions = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/extensions/AppSecurityExtensions.kt"
+        ).readText()
+        val authHelper = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/VaultAuthInputHelper.kt"
+        ).readText()
+
+        assertTrue(
+            "AppUnlockActivity must restyle the biometric tab with styleBiometricIdTab",
+            unlockActivity.contains("styleBiometricIdTab(tabView, this)")
+        )
+        assertTrue(
+            "AppPasswordTypesAdapter must restyle the biometric tab with styleBiometricIdTab",
+            adapter.contains("styleBiometricIdTab(view, context)")
+        )
+        assertTrue(
+            "styleBiometricIdTab must reuse VaultAuthInputHelper.applyBiometricButtonStyle, set use_biometrics label, and keep centered constraints",
+            extensions.contains("VaultAuthInputHelper.applyBiometricButtonStyle(") &&
+                extensions.contains("R.string.use_biometrics") &&
+                extensions.contains("params.topToTop = ConstraintLayout.LayoutParams.PARENT_ID") &&
+                extensions.contains("params.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID") &&
+                extensions.contains("params.startToStart = ConstraintLayout.LayoutParams.PARENT_ID") &&
+                extensions.contains("params.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID")
+        )
+        assertTrue(
+            "VaultAuthInputHelper must share applyBiometricButtonStyle with vaultBiometricBtn",
+            authHelper.contains("fun applyBiometricButtonStyle(") &&
+                authHelper.contains("button = binding.vaultBiometricBtn")
+        )
+    }
+
     private class FakeContext(private val root: File) : ContextWrapper(null) {
         private val prefs = InMemoryPrefs()
         override fun getApplicationContext(): Context = this

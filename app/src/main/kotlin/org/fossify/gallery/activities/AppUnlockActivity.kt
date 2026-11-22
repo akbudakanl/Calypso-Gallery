@@ -3,6 +3,7 @@ package org.fossify.gallery.activities
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
@@ -20,6 +21,7 @@ import org.fossify.commons.interfaces.HashListener
 import org.fossify.commons.interfaces.SecurityTab
 import org.fossify.gallery.App
 import org.fossify.gallery.databinding.ActivityAppUnlockBinding
+import org.fossify.gallery.extensions.styleBiometricIdTab
 
 /**
  * Pure-Kotlin replacement for Commons' AppLockActivity.
@@ -30,6 +32,7 @@ import org.fossify.gallery.databinding.ActivityAppUnlockBinding
 class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
 
     private lateinit var binding: ActivityAppUnlockBinding
+    private var biometricTabView: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // No fade: the privacy curtain must stay opaque until this lock screen is fully drawn.
@@ -63,6 +66,7 @@ class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
         super.onResume()
         if (appLockManager.isLocked()) {
             setupTheme()
+            biometricTabView?.let { styleBiometricIdTab(it, this) }
         } else {
             finish()
         }
@@ -99,6 +103,10 @@ class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
             else -> org.fossify.commons.R.layout.tab_pin
         }
         val tabView = LayoutInflater.from(this).inflate(layoutId, binding.appUnlockContainer, false)
+        if (protectionType == PROTECTION_FINGERPRINT) {
+            biometricTabView = tabView
+            styleBiometricIdTab(tabView, this)
+        }
         binding.appUnlockContainer.addView(
             tabView,
             ViewGroup.LayoutParams(
