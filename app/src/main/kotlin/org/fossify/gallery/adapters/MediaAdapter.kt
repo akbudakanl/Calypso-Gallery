@@ -1242,8 +1242,13 @@ class MediaAdapter(
     private fun removeFromVirtualAlbum() {
         val albumId = path.getVirtualAlbumId() ?: return
         val paths = getSelectedPaths()
+        val owner = "virtual-album-remove"
         ensureBackgroundThread {
-            activity.removePathsFromVirtualAlbum(albumId, paths)
+            ForegroundOperationRegistry.withOperation(activity, owner) {
+                ForegroundOperationRegistry.updateProgress(activity, 0, paths.size, null)
+                activity.removePathsFromVirtualAlbum(albumId, paths)
+                ForegroundOperationRegistry.updateProgress(activity, paths.size, paths.size, null)
+            }
             activity.runOnUiThread {
                 activity.toast(R.string.removed_from_virtual_album)
                 listener?.refreshItems()

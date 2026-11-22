@@ -41,7 +41,10 @@
     <string name="notify_crypto">Encrypt and decrypt</string>
     <string name="notify_delete">Delete and recycle bin</string>
     <string name="notify_virtual_album">Virtual album updates</string>
-    <string name="notifications_info">Android requires a persistent notification while a background file operation runs. These settings control whether its detailed progress (file name and percentage) is shown.</string>
+    <string name="notifications_info">Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications.</string>
+    <string name="notification_permission_label">Notification permission</string>
+    <string name="notification_permission_granted">Granted</string>
+    <string name="notification_permission_request">Tap to allow</string>
     <string name="custom_colors">Custom colors</string>
     <string name="font_system_default">System default</string>
     <string name="appearance_preview">Preview</string>

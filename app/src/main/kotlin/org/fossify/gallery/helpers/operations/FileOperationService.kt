@@ -11,12 +11,18 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import org.fossify.gallery.App
 import org.fossify.gallery.R
+import org.fossify.gallery.helpers.OperationNotificationCategory
 
 /**
  * ADR 0002 §7 / ADR 0003 §7: keeps the process alive for the duration of a registered file
  * operation. Keys stay in RAM while this service runs; it is released as soon as the operation
  * ends so the normal "background → lock vault" rule applies again.
+ *
+ * This is also the single user-facing notification for *all* file operations. Progress is posted
+ * here (instead of a second, independent progress notification) so copy/move, encrypt/decrypt,
+ * delete and album updates all share one channel, one notification id and one cancel action.
  */
 class FileOperationService : Service() {
 
@@ -26,6 +32,7 @@ class FileOperationService : Service() {
         private const val EXTRA_LABEL = "label"
         private const val ACTION_CANCEL = "org.fossify.gallery.action.CANCEL_FILE_OPERATION"
         private const val WAKE_LOCK_TIMEOUT_MS = 10 * 60 * 1000L
+        private val COUNT_SUMMARY_REGEX = Regex("""^\d+ / \d+ \(\d+%\)$""")
 
         @Volatile
         private var shouldRun = false
@@ -36,12 +43,28 @@ class FileOperationService : Service() {
         @Volatile
         private var currentLabel: String = ""
 
-        fun start(context: Context, label: String) {
+        @Volatile
+        private var progressEnabled = true
+
+        @Volatile
+        private var progressCurrent = 0
+
+        @Volatile
+        private var progressMax = 0
+
+        @Volatile
+        private var progressText: String? = null
+
+        fun start(context: Context, label: String, showProgress: Boolean = true) {
             shouldRun = true
             currentLabel = label
+            progressEnabled = showProgress
+            progressCurrent = 0
+            progressMax = 0
+            progressText = null
             val instance = activeInstance
             if (instance != null) {
-                instance.updateNotification(label)
+                instance.refreshNotification()
                 return
             }
             runCatching {
@@ -56,7 +79,23 @@ class FileOperationService : Service() {
 
         fun updateStatus(context: Context, label: String) {
             currentLabel = label
-            activeInstance?.updateNotification(label)
+            activeInstance?.refreshNotification()
+        }
+
+        /** Re-renders the notification when the app moves between foreground and background. */
+        fun refreshVisibility(context: Context) {
+            activeInstance?.refreshNotification()
+        }
+
+        /** Publishes progress for the currently registered operation. */
+        fun updateProgress(current: Int, max: Int, text: String?) {
+            if (!progressEnabled) return
+            progressCurrent = current.coerceAtLeast(0)
+            progressMax = max.coerceAtLeast(0)
+            // Defense in depth: only the anonymous "n / total (x%)" summary may reach a
+            // notification. Even if a future caller passes a file name, it is dropped here.
+            progressText = text?.takeIf { COUNT_SUMMARY_REGEX.matches(it) }
+            activeInstance?.refreshNotification()
         }
 
         fun stop(context: Context) {
@@ -86,6 +125,7 @@ class FileOperationService : Service() {
         val label = intent?.getStringExtra(EXTRA_LABEL)
             ?: currentLabel.takeIf { it.isNotEmpty() }
             ?: getString(R.string.resume_operations_title)
+        currentLabel = label
         ensureChannel()
         val notification = buildNotification(label)
         val started = try {
@@ -123,11 +163,27 @@ class FileOperationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                getString(R.string.resume_operations_title),
+                getString(R.string.file_operations_notifications),
                 NotificationManager.IMPORTANCE_LOW
-            )
+            ).apply {
+                enableLights(false)
+                enableVibration(false)
+            }
             getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
         }
+    }
+
+    private fun titleFor(label: String): String {
+        val category = OperationNotificationCategory.fromOwner(label)
+        return getString(
+            when (category) {
+                OperationNotificationCategory.COPY_MOVE -> R.string.file_operation_copy_move
+                OperationNotificationCategory.CRYPTO -> R.string.file_operation_crypto
+                OperationNotificationCategory.DELETE -> R.string.file_operation_delete
+                OperationNotificationCategory.VIRTUAL_ALBUM -> R.string.file_operation_virtual_album
+                else -> R.string.file_operation_generic
+            }
+        )
     }
 
     private fun buildNotification(label: String): Notification {
@@ -140,32 +196,37 @@ class FileOperationService : Service() {
             cancelPending
         ).build()
 
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.stat_sys_download)
-                .setContentTitle(label)
-                .setOngoing(true)
-                .setOnlyAlertOnce(true)
-                .addAction(cancelAction)
-                .build()
         } else {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
-                .setSmallIcon(android.R.drawable.stat_sys_download)
-                .setContentTitle(label)
-                .setOngoing(true)
-                .addAction(cancelAction)
-                .build()
         }
+        builder.setSmallIcon(android.R.drawable.stat_sys_download)
+            .setContentTitle(titleFor(label))
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .addAction(cancelAction)
+
+        // Android requires a foreground-service notification for the whole operation, so it cannot
+        // be removed while the app is in the foreground. What we *can* do is keep it minimal there
+        // (the on-screen progress dialog is already visible) and only show detailed progress after
+        // the user actually backgrounds the app. No file names or paths are ever posted.
+        if (progressEnabled && !App.isAppInForeground) {
+            val max = progressMax
+            builder.setProgress(max, progressCurrent.coerceAtMost(maxOf(max, 1)), max <= 0)
+            progressText?.let { builder.setContentText(it) }
+        }
+        return builder.build()
     }
 
-    private fun updateNotification(label: String) {
+    private fun refreshNotification() {
         if (!foregroundStarted) return
         if (shouldRun) {
             acquireOrRefreshWakeLock()
         }
         runCatching {
-            getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotification(label))
+            getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotification(currentLabel))
         }
     }
 

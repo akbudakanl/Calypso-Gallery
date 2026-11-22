@@ -3,6 +3,19 @@
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
 ## [Unreleased]
+### Eklendi
+
+- Ayarlara **Bildirimler** kategorisi eklendi: ana anahtar ile Kopyalama/Taşıma, Şifreleme/Çözme, Silme/Geri dönüşüm ve Sanal albüm güncellemeleri için ayrı anahtarlar (varsayılan açık). Android 13+ için izin verilmemişse listenin üstünde bildirim izni isteyen bir satır gösterilir. Android arka plan dosya işlemleri için kalıcı bildirim zorunlu kıldığından ayarlar ayrıntılı ilerlemenin (dosya adı ve yüzde) gösterilmesini kontrol eder.
+- Toplu silme işlemlerinde ilerleme diyaloğu ve bildirim ilerlemesi gösteriliyor; büyük albüm silmelerinde arka planda bir şey olup olmadığı artık görülebiliyor.
+
+### Değiştirildi
+
+- Dosya işlemi bildirimleri tek bir sistemde birleştirildi: `FileOperationService` artık tüm işlemler için ilerleme çubuklu tek bildirim yayınlıyor; bağımsız `OperationProgressNotifier` kaldırıldı. Kopyalama/taşıma, şifreleme/çözme ve kasa içe/dışa aktarma aynı kanal ve bildirim kimliğini kullanıyor.
+- Kopyalama/taşıma öncesindeki bit-bit karşılaştırma/çakışma kontrolü artık ayrı "Dosyalar aktarım öncesi kontrol ediliyor" diyaloğunda gösteriliyor; gerçek aktarım diyaloğu yalnızca kontrol tamamlandığında açılıyor. Böylece ilerleme %0'da takılı görünmüyor.
+- İşlem başlatılmadan önce `POST_NOTIFICATIONS` izin istemi kaldırıldı (foreground servis bildirimi Android 13+'ta bu izinden muaf). Önceki tek kullanımlık "izin soruldu" kilidi de kaldırıldı; bir kez vazgeçmek sonraki işlemlerin bildirimini sessizce kapatmıyordu.
+- Sanal albüme ekleme/çıkarma işlemleri de kayıtlı foreground işlemi olarak ilerleme bildirimi üretiyor.
+- Bildirim ayrıntıları yalnızca uygulama arka plandayken gösteriliyor: uygulama açıkken ekrandaki ilerleme diyaloğu yeterli olduğundan bildirim sade başlıkta kalıyor, arka plana geçilince ilerleme çubuğu ve yüzde ekleniyor. Android çalışan foreground servis için bildirimi zorunlu kıldığından bildirim tamamen kaldırılamıyor.
+- Gizlilik: bildirimlere dosya adı, yol, albüm adı veya kasa içeriği hiçbir zaman yazılmıyor; servis katmanı yalnızca anonim `n / toplam (yüzde)` desenini kabul ediyor, diğer tüm metinleri filtreliyor.
 
 
 ## [1.3.0] - 2026-11-22

@@ -136,6 +136,15 @@ class SettingsActivity : SimpleActivity() {
                 ),
             ),
             CategorySpec(
+                key = CATEGORY_NOTIFICATIONS,
+                titleRes = R.string.notifications_settings,
+                iconRes = R.drawable.ic_section_notifications,
+                container = binding.settingsCategoryNotifications,
+                groups = listOf(
+                    binding.settingsNotificationsCard to binding.settingsNotificationsEyebrow,
+                ),
+            ),
+            CategorySpec(
                 key = CATEGORY_SECURITY,
                 titleRes = R.string.security_and_vault_settings,
                 iconRes = R.drawable.ic_section_security,
@@ -206,15 +215,6 @@ class SettingsActivity : SimpleActivity() {
                     binding.settingsMigratingStorageCard to binding.settingsMigratingStorageEyebrow,
                     binding.settingsMigratingBackupCard to binding.settingsMigratingBackupEyebrow,
                     binding.settingsMigratingVaultCard to binding.settingsMigratingVaultEyebrow,
-                ),
-            ),
-            CategorySpec(
-                key = CATEGORY_NOTIFICATIONS,
-                titleRes = R.string.notifications_settings,
-                iconRes = R.drawable.ic_section_notifications,
-                container = binding.settingsCategoryNotifications,
-                groups = listOf(
-                    binding.settingsNotificationsCard to binding.settingsNotificationsEyebrow,
                 ),
             ),
         )
@@ -2173,6 +2173,19 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupNotifications() {
+        fun refreshNotificationPermissionRow() {
+            val needsPermission = isTiramisuPlus() && !hasPermission(PERMISSION_POST_NOTIFICATIONS)
+            binding.settingsNotificationPermissionHolder.isVisible = needsPermission
+            binding.settingsNotificationPermissionAction.setText(
+                if (needsPermission) R.string.notification_permission_request else R.string.notification_permission_granted
+            )
+        }
+
+        refreshNotificationPermissionRow()
+        binding.settingsNotificationPermissionHolder.setOnClickListener {
+            handleNotificationPermission { refreshNotificationPermissionRow() }
+        }
+
         fun bindSwitch(
             holder: android.view.View,
             switch: org.fossify.commons.views.MyMaterialSwitch,

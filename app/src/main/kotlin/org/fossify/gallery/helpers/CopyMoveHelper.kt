@@ -37,6 +37,7 @@ import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.FileDirItem
+import org.fossify.gallery.R
 import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.helpers.operations.AtomicStaging
@@ -158,11 +159,13 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
     } else {
         org.fossify.commons.R.string.moving
     }
+    // Pre-flight phase: conflict detection / byte comparison can take a long time. Show a
+    // dedicated dialog so the user never sees the real transfer stuck at 0%.
     val initialProgressDialog = CryptoProgressDialog(
         activity = this,
         max = 0,
-        titleId = titleId,
-        notificationChannelId = OperationProgressNotifier.CHANNEL_COPY_MOVE,
+        titleId = R.string.checking_files_before_transfer,
+        notificationChannelId = OperationNotificationCategory.CHANNEL_COPY_MOVE,
         notificationIconRes = org.fossify.commons.R.drawable.ic_copy_vector,
         enableNotification = false
     )
@@ -177,7 +180,7 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                 activity = this,
                 max = fileDirItems.size,
                 titleId = titleId,
-                notificationChannelId = OperationProgressNotifier.CHANNEL_COPY_MOVE,
+                notificationChannelId = OperationNotificationCategory.CHANNEL_COPY_MOVE,
                 notificationIconRes = org.fossify.commons.R.drawable.ic_copy_vector,
                 enableNotification = false
             )
@@ -265,7 +268,8 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                         }
                     } else {
                         runOnUiThread {
-                            proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), initialProgressDialog)
+                            initialProgressDialog.dismiss()
+                            proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), null)
                         }
                     }
                 }
@@ -369,13 +373,15 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                         }
                     } else {
                         runOnUiThread {
-                            proceedAfterConflicts(LinkedHashMap(), precheckedIdenticalPaths, precheckedNonIdenticalPaths, initialProgressDialog)
+                            initialProgressDialog.dismiss()
+                            proceedAfterConflicts(LinkedHashMap(), precheckedIdenticalPaths, precheckedNonIdenticalPaths, null)
                         }
                     }
                 }
             }
             else -> {
-                proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), initialProgressDialog)
+                initialProgressDialog.dismiss()
+                proceedAfterConflicts(LinkedHashMap(), emptySet(), emptySet(), null)
             }
         }
     }
@@ -418,7 +424,10 @@ private fun BaseSimpleActivity.prepareAndRunCopyMove(
                         onRejected = { initialProgressDialog.dismiss() }
                     )
                 }
-                else -> startAfterSpaceCheck()
+                else -> {
+                    initialProgressDialog.dismiss()
+                    startAfterSpaceCheck()
+                }
             }
         }
     }

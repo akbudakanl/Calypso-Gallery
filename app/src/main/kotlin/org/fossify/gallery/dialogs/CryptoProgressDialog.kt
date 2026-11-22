@@ -9,28 +9,29 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogCryptoProgressBinding
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.OperationProgressFormatter
-import org.fossify.gallery.helpers.OperationProgressNotifier
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
+/**
+ * Progress dialog for file operations. Progress is mirrored into the single foreground-service
+ * notification through [ForegroundOperationRegistry]; the old independent progress notification
+ * has been removed so users no longer see two competing notifications for one operation.
+ */
 class CryptoProgressDialog(
     private val activity: Activity,
     private val max: Int,
     private val titleId: Int = R.string.encrypting_folder,
-    private val notificationChannelId: String = OperationProgressNotifier.CHANNEL_CRYPTO,
+    private val notificationChannelId: String = OperationNotificationCategory.CHANNEL_CRYPTO,
     private val notificationIconRes: Int = defaultNotificationIcon(titleId),
-    enableNotification: Boolean = true
+    @Suppress("UNUSED_PARAMETER") enableNotification: Boolean = true
 ) {
+    private val category: String = OperationNotificationCategory.fromChannel(notificationChannelId)
     private var dialog: AlertDialog? = null
 
     @Volatile
     private var isDismissed = false
     private val binding = DialogCryptoProgressBinding.inflate(activity.layoutInflater)
-    private var notifier: OperationProgressNotifier? = null
-    private var lastCurrent = 0
-    private var lastTotal = max
-    private var lastBarCurrent = 0
-    private var lastBarMax = max
-    private var lastNotificationText: String? = null
 
     init {
         binding.cryptoProgressMessage.setText(titleId)
@@ -39,10 +40,6 @@ class CryptoProgressDialog(
         binding.cryptoProgressBar.isIndeterminate = max <= 0
         val initialSummary = OperationProgressFormatter.formatCountSummary(current = 0, total = max)
         binding.cryptoProgressCount.text = initialSummary
-
-        if (enableNotification) {
-            ensureNotificationStarted(true)
-        }
 
         activity.getAlertDialogBuilder().apply {
             setCancelable(false)
@@ -69,40 +66,8 @@ class CryptoProgressDialog(
         }
     }
 
-    fun ensureNotificationStarted(enable: Boolean) {
-        if (!enable || isDismissed || notifier != null) {
-            return
-        }
-        val title = activity.getString(titleId)
-        val channelName = if (notificationChannelId == OperationProgressNotifier.CHANNEL_COPY_MOVE) {
-            OperationProgressNotifier.CHANNEL_COPY_MOVE
-        } else {
-            activity.getString(R.string.encrypt_decrypt_notifications)
-        }
-        val isIndeterminate = lastBarMax <= 0 && lastTotal <= 0
-        val safeBarMax = maxOf(lastBarMax, 1)
-        val clampedBarCurrent = lastBarCurrent.coerceIn(0, safeBarMax)
-        val summary = OperationProgressFormatter.formatCountSummary(
-            current = lastCurrent,
-            total = lastTotal,
-            barCurrent = clampedBarCurrent,
-            barMax = lastBarMax
-        )
-        notifier = OperationProgressNotifier(
-            context = activity.applicationContext,
-            channelId = notificationChannelId,
-            channelName = channelName,
-            title = title,
-            smallIconRes = notificationIconRes
-        ).apply {
-            update(
-                current = clampedBarCurrent,
-                max = if (isIndeterminate) 0 else safeBarMax,
-                contentText = lastNotificationText ?: summary
-            )
-            start()
-        }
-    }
+    /** Kept for call-site compatibility; progress is always published to the foreground service. */
+    fun ensureNotificationStarted(enable: Boolean) = Unit
 
     fun updateProgress(
         current: Int,
@@ -114,18 +79,9 @@ class CryptoProgressDialog(
         if (isDismissed) {
             return
         }
-        lastCurrent = current
-        lastTotal = total
-        lastBarCurrent = barCurrent
-        lastBarMax = barMax
-        lastNotificationText = notificationText
-
         val isIndeterminate = barMax <= 0 && total <= 0
         val safeBarMax = maxOf(barMax, 1)
         val clampedBarCurrent = barCurrent.coerceIn(0, safeBarMax)
-        binding.cryptoProgressBar.isIndeterminate = isIndeterminate
-        binding.cryptoProgressBar.max = safeBarMax
-        binding.cryptoProgressBar.progress = clampedBarCurrent
 
         val countSummary = OperationProgressFormatter.formatCountSummary(
             current = current,
@@ -133,21 +89,42 @@ class CryptoProgressDialog(
             barCurrent = clampedBarCurrent,
             barMax = barMax
         )
-        binding.cryptoProgressCount.text = countSummary
-        notifier?.update(
+        // Privacy: only an anonymous count is ever sent to the notification. File names, paths,
+        // album names and vault contents stay inside the on-screen dialog.
+        val text = countSummary
+
+        // Callers may publish progress from a background thread (e.g. delete loops).
+        // Views must only ever be touched on the main thread; the notification is safe
+        // to post directly and gives immediate feedback even before the UI catches up.
+        ForegroundOperationRegistry.updateProgress(
+            context = activity.applicationContext,
+            category = category,
             current = clampedBarCurrent,
             max = if (isIndeterminate) 0 else safeBarMax,
-            contentText = notificationText ?: countSummary
+            text = text
         )
+        activity.runOnUiThread {
+            if (isDismissed) return@runOnUiThread
+            binding.cryptoProgressBar.isIndeterminate = isIndeterminate
+            binding.cryptoProgressBar.max = safeBarMax
+            binding.cryptoProgressBar.progress = clampedBarCurrent
+            binding.cryptoProgressCount.text = countSummary
+        }
     }
 
-    fun updateNotifierOnly(current: Int, max: Int, contentText: String) {
-        notifier?.update(current = current, max = max, contentText = contentText)
+    fun updateNotifierOnly(current: Int, max: Int, @Suppress("UNUSED_PARAMETER") contentText: String) {
+        // contentText is a file name in practice — never expose it on the lock screen / shade.
+        ForegroundOperationRegistry.updateProgress(
+            context = activity.applicationContext,
+            category = category,
+            current = current,
+            max = max,
+            text = null
+        )
     }
 
     fun dismiss() {
         isDismissed = true
-        notifier?.finish()
         try {
             dialog?.dismiss()
         } catch (_: Exception) {

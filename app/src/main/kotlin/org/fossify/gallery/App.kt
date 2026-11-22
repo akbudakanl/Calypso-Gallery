@@ -59,6 +59,11 @@ class App : FossifyApp() {
         @Volatile
         private var appBackgroundElapsedMs = -1L
 
+        /** True while at least one of our activities is started (app in foreground). */
+        @Volatile
+        var isAppInForeground: Boolean = false
+            private set
+
         /** True while our own lock gate is drawing, so Commons must not open a second one. */
         @Volatile
         var appLockGateLaunched = false
@@ -138,6 +143,8 @@ class App : FossifyApp() {
             override fun onActivityStarted(activity: Activity) {
                 trackedActivities.add(activity)
                 startedActivities++
+                isAppInForeground = true
+                ForegroundOperationRegistry.onAppVisibilityChanged(this@App)
                 if (startedActivities == 1) {
                     // Back in the foreground: expire session only if the 30 minute background deadline passed.
                     VaultSessionManager.onAppForegrounded(this@App)
@@ -167,6 +174,8 @@ class App : FossifyApp() {
                 startedActivities--
                 if (startedActivities <= 0) {
                     startedActivities = 0
+                    isAppInForeground = false
+                    ForegroundOperationRegistry.onAppVisibilityChanged(this@App)
                     if (!activity.isChangingConfigurations) {
                         if (config.isAppPasswordProtectionOn) {
                             appBackgroundElapsedMs = SystemClock.elapsedRealtime()

@@ -381,6 +381,38 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(WAS_NOTIFICATION_PERMISSION_ASKED, false)
         set(asked) = prefs.edit().putBoolean(WAS_NOTIFICATION_PERMISSION_ASKED, asked).apply()
 
+    var notificationsEnabled: Boolean
+        get() = prefs.getBoolean(NOTIFICATIONS_ENABLED, true)
+        set(enabled) = prefs.edit().putBoolean(NOTIFICATIONS_ENABLED, enabled).apply()
+
+    var notifyCopyMove: Boolean
+        get() = prefs.getBoolean(NOTIFY_COPY_MOVE, true)
+        set(enabled) = prefs.edit().putBoolean(NOTIFY_COPY_MOVE, enabled).apply()
+
+    var notifyCrypto: Boolean
+        get() = prefs.getBoolean(NOTIFY_CRYPTO, true)
+        set(enabled) = prefs.edit().putBoolean(NOTIFY_CRYPTO, enabled).apply()
+
+    var notifyDelete: Boolean
+        get() = prefs.getBoolean(NOTIFY_DELETE, true)
+        set(enabled) = prefs.edit().putBoolean(NOTIFY_DELETE, enabled).apply()
+
+    var notifyVirtualAlbum: Boolean
+        get() = prefs.getBoolean(NOTIFY_VIRTUAL_ALBUM, true)
+        set(enabled) = prefs.edit().putBoolean(NOTIFY_VIRTUAL_ALBUM, enabled).apply()
+
+    /** Whether detailed progress should be published for the given foreground operation category. */
+    fun shouldShowOperationProgress(category: String): Boolean {
+        if (!notificationsEnabled) return false
+        return when (category) {
+            OperationNotificationCategory.COPY_MOVE -> notifyCopyMove
+            OperationNotificationCategory.CRYPTO -> notifyCrypto
+            OperationNotificationCategory.DELETE -> notifyDelete
+            OperationNotificationCategory.VIRTUAL_ALBUM -> notifyVirtualAlbum
+            else -> true
+        }
+    }
+
     var isThirdPartyIntent: Boolean
         get() = prefs.getBoolean(IS_THIRD_PARTY_INTENT, false)
         set(isThirdPartyIntent) = prefs.edit().putBoolean(IS_THIRD_PARTY_INTENT, isThirdPartyIntent).apply()
@@ -665,7 +697,7 @@ class Config(context: Context) : BaseConfig(context) {
         }
 
     var fastLargeDuplicateCheck: Boolean
-        get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, false)
+        get() = prefs.getBoolean(FAST_LARGE_DUPLICATE_CHECK, true)
         set(enabled) = prefs.edit().putBoolean(FAST_LARGE_DUPLICATE_CHECK, enabled).apply()
 
     var dateTieBreakMode: Int

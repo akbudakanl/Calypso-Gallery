@@ -72,6 +72,7 @@ import org.fossify.gallery.databinding.ActivityMediaBinding
 import org.fossify.gallery.dialogs.ChangeGroupingDialog
 import org.fossify.gallery.dialogs.ChangeSortingDialog
 import org.fossify.gallery.dialogs.ChangeViewTypeDialog
+import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.FilterMediaDialog
 import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.canAccessHiddenVirtualAlbums
@@ -118,6 +119,7 @@ import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateWidgets
 import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
@@ -1804,6 +1806,14 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             )
             toast(movingItems)
 
+            val progressDialog = CryptoProgressDialog(
+                activity = this,
+                max = filtered.size,
+                titleId = R.string.deleting_files_progress,
+                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
+            )
+            val processed = java.util.concurrent.atomic.AtomicInteger(0)
+
             val encItems = filtered.filter { CryptoManager.isEncryptedFile(it.path) }
             val plainItems = filtered.filter { !CryptoManager.isEncryptedFile(it.path) }
 
@@ -1811,6 +1821,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 ForegroundOperationRegistry.withOperation(this, "delete") {
                     if (encItems.isNotEmpty()) {
                         CryptoManager.moveEncryptedFilesToVaultRecycleBin(this, encItems.map { it.path })
+                        progressDialog.updateProgress(processed.addAndGet(encItems.size), filtered.size)
                     }
 
                     if (plainItems.isNotEmpty()) {
@@ -1825,6 +1836,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                                         try { File(it.path).delete() } catch (_: Exception) {}
                                         deleteDBPath(it.path)
                                         CryptoManager.purgeTracesForFile(this, it.path)
+                                        progressDialog.updateProgress(
+                                            processed.incrementAndGet(),
+                                            filtered.size,
+                                            notificationText = it.name
+                                        )
                                     }
                                 }
                             }
@@ -1835,6 +1851,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                                 movePathsInRecycleBin(normalPlain.map { it.path } as ArrayList<String>) {
                                     if (it) {
                                         deleteFilteredFiles(ArrayList(normalPlain))
+                                        progressDialog.updateProgress(
+                                            processed.addAndGet(normalPlain.size),
+                                            filtered.size
+                                        )
                                     } else {
                                         toast(org.fossify.commons.R.string.unknown_error_occurred)
                                     }
@@ -1844,6 +1864,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     }
 
                     runOnUiThread {
+                        progressDialog.updateProgress(filtered.size, filtered.size)
+                        progressDialog.dismiss()
                         mMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
                         getMediaAdapter()?.updateMedia(mMedia)
                         if (mPath.isVirtualAlbumPath()) {
@@ -1866,6 +1888,14 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             )
             toast(deletingItems)
 
+            val progressDialog = CryptoProgressDialog(
+                activity = this,
+                max = filtered.size,
+                titleId = R.string.deleting_files_progress,
+                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
+            )
+            val processed = java.util.concurrent.atomic.AtomicInteger(0)
+
             val encItems = filtered.filter { CryptoManager.isEncryptedFile(it.path) }
             val plainItems = filtered.filter { !CryptoManager.isEncryptedFile(it.path) }
 
@@ -1877,6 +1907,11 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                             val f = File(item.path)
                             CryptoManager.secureWipeAndDeleteFile(this, f)
                             deleteDBPath(item.path)
+                            progressDialog.updateProgress(
+                                processed.incrementAndGet(),
+                                filtered.size,
+                                notificationText = item.name
+                            )
                         }
                     }
 
@@ -1890,17 +1925,28 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                                 try { File(item.path).delete() } catch (_: Exception) {}
                                 deleteDBPath(item.path)
                                 CryptoManager.purgeTracesForFile(this, item.path)
+                                progressDialog.updateProgress(
+                                    processed.incrementAndGet(),
+                                    filtered.size,
+                                    notificationText = item.name
+                                )
                             }
                         }
 
                         if (normalPlain.isNotEmpty()) {
                             runOnUiThread {
                                 deleteFilteredFiles(ArrayList(normalPlain), isPermanentDelete = true)
+                                progressDialog.updateProgress(
+                                    processed.addAndGet(normalPlain.size),
+                                    filtered.size
+                                )
                             }
                         }
                     }
 
                     runOnUiThread {
+                        progressDialog.updateProgress(filtered.size, filtered.size)
+                        progressDialog.dismiss()
                         mMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
                         getMediaAdapter()?.updateMedia(mMedia)
                         if (mPath.isVirtualAlbumPath()) {

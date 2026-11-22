@@ -1,6 +1,8 @@
 package org.fossify.gallery.helpers.operations
 
 import android.content.Context
+import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.OperationNotificationCategory
 
 /**
  * ADR 0003 §7: a single owner token for long-running file operations. Two concurrent operations
@@ -40,7 +42,8 @@ object ForegroundOperationRegistry {
         ownerThread = thread
         depth = 1
         cancelRequested = false
-        FileOperationService.start(context, owner)
+        val category = OperationNotificationCategory.fromOwner(owner)
+        FileOperationService.start(context, owner, context.config.shouldShowOperationProgress(category))
         runCatching { onStateChanged?.invoke(true) }
         return true
     }
@@ -53,6 +56,25 @@ object ForegroundOperationRegistry {
         if (isActive) {
             FileOperationService.updateStatus(context, label)
         }
+    }
+
+    /** Called by App on foreground/background transitions to refresh notification detail level. */
+    fun onAppVisibilityChanged(context: Context) {
+        if (isActive) {
+            FileOperationService.refreshVisibility(context)
+        }
+    }
+
+    /** Publishes progress using the category of the currently registered operation. */
+    fun updateProgress(context: Context, current: Int, max: Int, text: String?) {
+        val owner = currentOwner ?: return
+        updateProgress(context, OperationNotificationCategory.fromOwner(owner), current, max, text)
+    }
+
+    /** Publishes progress for an explicit category (used by the pre-flight check dialog). */
+    fun updateProgress(context: Context, category: String, current: Int, max: Int, text: String?) {
+        if (!isActive || !context.config.shouldShowOperationProgress(category)) return
+        FileOperationService.updateProgress(current, max, text)
     }
 
     @Synchronized
