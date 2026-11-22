@@ -16,6 +16,7 @@ import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isPiePlus
+import org.fossify.gallery.App
 import org.fossify.gallery.R
 import org.fossify.gallery.dialogs.StoragePermissionRequiredDialog
 import org.fossify.gallery.extensions.addPathToDB
@@ -238,6 +239,10 @@ open class SimpleActivity : BaseSimpleActivity() {
     @Suppress("DEPRECATION")
     override fun startActivityForResult(intent: Intent, requestCode: Int, options: Bundle?) {
         if (intent.component?.className == "org.fossify.commons.activities.AppLockActivity") {
+            // App.maybeLaunchAppUnlockScreen() already raised the gate before onResume drew content.
+            // Commons still tries to open its own lock activity at the end of onResume; suppress it
+            // so the user never sees a second prompt fade in over the first one.
+            if (App.shouldSuppressAppUnlockLaunch()) return
             val replacement = Intent(intent).setClass(this, AppUnlockActivity::class.java)
             super.startActivityForResult(replacement, requestCode, options)
             return

@@ -8,12 +8,15 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import org.fossify.commons.FossifyApp
+import org.fossify.commons.extensions.appLockManager
 import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.gallery.activities.AppUnlockActivity
 import org.fossify.gallery.activities.SplashActivity
 import org.fossify.gallery.activities.VaultLockActivity
 import org.fossify.gallery.extensions.config
@@ -47,6 +50,38 @@ class App : FossifyApp() {
 
     companion object {
         private const val PRIVACY_CURTAIN_TAG = "vault_privacy_curtain"
+
+        /**
+         * Elapsed-realtime stamp taken when the app last went to background.
+         * -1 = cold start while protected, 0 = freshly unlocked.
+         */
+        @Volatile
+        private var appBackgroundElapsedMs = -1L
+
+        /** True while our own lock gate is drawing, so Commons must not open a second one. */
+        @Volatile
+        var appLockGateLaunched = false
+            private set
+
+        fun shouldSuppressAppUnlockLaunch(): Boolean = appLockGateLaunched
+
+        fun markAppUnlocked() {
+            appLockGateLaunched = false
+            appBackgroundElapsedMs = 0L
+        }
+    }
+
+    /**
+     * True once the app-password grace window has elapsed (or the app was cold-started locked).
+     * We keep Commons' 30s tolerance untouched; this only decides when the privacy curtain and
+     * our zero-transition lock gate must be in place *before* any content can be drawn.
+     */
+    private fun isAppPasswordLockExpired(): Boolean {
+        if (!config.isAppPasswordProtectionOn) return false
+        if (appLockManager.isLocked()) return true
+        if (appBackgroundElapsedMs == 0L) return false // just unlocked, grace window running
+        if (appBackgroundElapsedMs < 0L) return true // cold start while protected
+        return SystemClock.elapsedRealtime() - appBackgroundElapsedMs >= config.unlockTimeoutDurationMs
     }
 
     override fun onCreate() {
@@ -114,6 +149,7 @@ class App : FossifyApp() {
                 syncPrivacyCurtain(activity)
                 syncKeepScreenOn(activity, ForegroundOperationRegistry.isActive)
                 maybeLaunchVaultLockScreen(activity)
+                maybeLaunchAppUnlockScreen(activity)
             }
             override fun onActivityResumed(activity: Activity) {
                 if (config.appearanceMode == Config.APPEARANCE_SYSTEM) {
@@ -122,6 +158,7 @@ class App : FossifyApp() {
                 syncPrivacyCurtain(activity)
                 syncKeepScreenOn(activity, ForegroundOperationRegistry.isActive)
                 maybeLaunchVaultLockScreen(activity)
+                maybeLaunchAppUnlockScreen(activity)
             }
             override fun onActivityPaused(activity: Activity) {}
             override fun onActivityStopped(activity: Activity) {
@@ -129,6 +166,9 @@ class App : FossifyApp() {
                 if (startedActivities <= 0) {
                     startedActivities = 0
                     if (!activity.isChangingConfigurations) {
+                        if (config.isAppPasswordProtectionOn) {
+                            appBackgroundElapsedMs = SystemClock.elapsedRealtime()
+                        }
                         // Immediately wipe RAM keys (unless a foreground operation is running) while keeping
                         // the UI session resumable behind VaultLockActivity for VAULT_AUTO_LOCK_TIMEOUT_MS.
                         VaultSessionManager.onAppBackgrounded(this@App)
@@ -179,13 +219,13 @@ class App : FossifyApp() {
      */
     private fun syncPrivacyCurtain(activity: Activity) {
         if (activity.isFinishing || activity.isDestroyed) return
-        if (activity is VaultLockActivity || activity is SplashActivity) return
+        if (activity is VaultLockActivity || activity is AppUnlockActivity || activity is SplashActivity) return
 
         val decorView = activity.window?.decorView as? ViewGroup ?: return
         val contentView = activity.findViewById<View>(android.R.id.content)
         val existingCurtain = decorView.findViewWithTag<View>(PRIVACY_CURTAIN_TAG)
 
-        if (VaultSessionManager.isReauthPending()) {
+        if (VaultSessionManager.isReauthPending() || isAppPasswordLockExpired()) {
             if (contentView != null && contentView.visibility != View.INVISIBLE) {
                 contentView.visibility = View.INVISIBLE
             }
@@ -229,6 +269,24 @@ class App : FossifyApp() {
             @Suppress("DEPRECATION")
             activity.overridePendingTransition(0, 0)
         }
+    }
+
+    /**
+     * Raises the app-password gate in `onActivityStarted`, i.e. before the activity's `onResume`
+     * can draw anything. The 30-second grace period is untouched: we only act once it has elapsed.
+     * The vault gate wins when both are pending, so the two lock screens never stack.
+     */
+    private fun maybeLaunchAppUnlockScreen(activity: Activity) {
+        if (activity.isFinishing || activity.isDestroyed) return
+        if (activity is AppUnlockActivity || activity is VaultLockActivity || activity is SplashActivity) return
+        if (VaultSessionManager.isReauthPending()) return
+        if (appLockGateLaunched || !isAppPasswordLockExpired()) return
+
+        appLockGateLaunched = true
+        val intent = Intent(activity, AppUnlockActivity::class.java)
+        activity.startActivity(intent)
+        @Suppress("DEPRECATION")
+        activity.overridePendingTransition(0, 0)
     }
 
     /**

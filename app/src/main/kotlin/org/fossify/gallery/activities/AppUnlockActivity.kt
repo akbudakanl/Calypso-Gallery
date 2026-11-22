@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.activity.OnBackPressedCallback
 import androidx.biometric.auth.AuthPromptHost
 import org.fossify.commons.activities.EdgeToEdgeActivity
@@ -17,6 +18,7 @@ import org.fossify.commons.helpers.PROTECTION_PATTERN
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.interfaces.HashListener
 import org.fossify.commons.interfaces.SecurityTab
+import org.fossify.gallery.App
 import org.fossify.gallery.databinding.ActivityAppUnlockBinding
 
 /**
@@ -30,13 +32,15 @@ class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
     private lateinit var binding: ActivityAppUnlockBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        overrideActivityTransition(
-            org.fossify.commons.R.anim.fadein,
-            org.fossify.commons.R.anim.fadeout,
-            false
-        )
+        // No fade: the privacy curtain must stay opaque until this lock screen is fully drawn.
+        overrideActivityTransition(0, 0, false)
         setupTheme()
         super.onCreate(savedInstanceState)
+
+        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            setRecentsScreenshotEnabled(false)
+        }
 
         binding = ActivityAppUnlockBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -66,24 +70,17 @@ class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        overrideActivityTransition(
-            org.fossify.commons.R.anim.fadein,
-            org.fossify.commons.R.anim.fadeout,
-            false
-        )
+        overrideActivityTransition(0, 0, false)
     }
 
     override fun finish() {
         super.finish()
-        overrideActivityTransition(
-            org.fossify.commons.R.anim.fadein,
-            org.fossify.commons.R.anim.fadeout,
-            true
-        )
+        overrideActivityTransition(0, 0, true)
     }
 
     override fun receivedHash(hash: String, type: Int) {
         appLockManager.unlock()
+        App.markAppUnlocked()
         setResult(RESULT_OK)
         finish()
     }

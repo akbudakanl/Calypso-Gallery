@@ -3999,7 +3999,11 @@ fun Activity.proposeNewFilePath(uri: Uri): Pair<String, Boolean> {
 
 fun Activity.applyVaultScreenProtection(enable: Boolean, force: Boolean = false) {
     // The lock screen is always protected; other screens honour the user's preference.
-    val shouldProtect = enable && (force || config.blockVaultScreenshots)
+    // While the whole-app password is enabled we always suppress task snapshots and screenshots:
+    // the system captures the Recents preview when the app is left, which happens *before* the
+    // 30-second grace window expires, so deciding at lock time would be too late.
+    val shouldProtect = (enable && (force || config.blockVaultScreenshots)) ||
+        config.isAppPasswordProtectionOn
     try {
         if (shouldProtect) {
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
