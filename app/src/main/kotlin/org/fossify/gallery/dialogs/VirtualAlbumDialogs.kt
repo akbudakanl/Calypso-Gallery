@@ -258,6 +258,10 @@ class PickVirtualAlbumDialog(
                 activity.isHiddenVirtualAlbumPath(dir.path) == isHiddenSource
             }
             val sorted = activity.getSortedDirectories(ArrayList(filtered))
+            // DirectoryAdapter renders subfoldersMediaCount (not mediaCnt). Virtual albums have no
+            // real subfolders, so mirror the resolved media count as PickDirectoryDialog does;
+            // otherwise every album would be shown with a stale 0 in this picker.
+            sorted.forEach { it.subfoldersMediaCount = it.mediaCnt }
 
             activity.runOnUiThread {
                 if (activity.isFinishing || activity.isDestroyed) {
