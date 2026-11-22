@@ -1,10 +1,13 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.drawable.ClipDrawable
+import android.graphics.LinearGradient
+import android.graphics.Paint
+import android.graphics.Shader
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.text.Editable
 import android.text.InputType
@@ -146,6 +149,51 @@ object BruteForceDialog {
         }
     }
 
+    /**
+     * The bar is drawn directly on a Canvas. Commons' themed SeekBar tints its progress drawable,
+     * which flattens a multi-stop gradient into one solid colour. Only long-lived, low-API calls are
+     * used here (LinearGradient with int[] and drawRoundRect) so it works on every supported device.
+     * The real SeekBar is layered on top with alpha 0 and keeps all touch/keyboard interaction.
+     */
+    private class DialBarView(context: Context) : View(context) {
+        var trackColor: Int = Color.GRAY
+        var ramp: IntArray = intArrayOf()
+        var knobColor: Int = Color.WHITE
+        var knobEdgeColor: Int = Color.GRAY
+        var fraction: Float = 0f
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        override fun onDraw(canvas: Canvas) {
+            val total = (width - paddingLeft - paddingRight).toFloat()
+            if (total <= 0f) return
+            val density = resources.displayMetrics.density
+            val barHeight = 6f * density
+            val left = paddingLeft.toFloat()
+            val cy = paddingTop + (height - paddingTop - paddingBottom) / 2f
+            val top = cy - barHeight / 2f
+            val bottom = cy + barHeight / 2f
+            val radius = barHeight / 2f
+
+            paint.shader = null
+            paint.color = trackColor
+            canvas.drawRoundRect(left, top, left + total, bottom, radius, radius, paint)
+
+            val fillWidth = total * fraction.coerceIn(0f, 1f)
+            if (fillWidth > 1f && ramp.size >= 2) {
+                paint.shader = LinearGradient(left, 0f, left + total, 0f, ramp, null, Shader.TileMode.CLAMP)
+                canvas.drawRoundRect(left, top, left + fillWidth, bottom, radius, radius, paint)
+                paint.shader = null
+            }
+
+            val kx = left + fillWidth
+            val kr = 9f * density
+            paint.color = knobEdgeColor
+            canvas.drawCircle(kx, cy, kr + 2f * density, paint)
+            paint.color = knobColor
+            canvas.drawCircle(kx, cy, kr, paint)
+        }
+    }
+
     private fun parseTargetMsOrNull(
         raw: CharSequence?,
         unit: String,
@@ -245,7 +293,7 @@ object BruteForceDialog {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(18f) }
-            minimumHeight = dp(84f)
+            minimumHeight = dp(92f)
         }
 
         val levelLabel = MyTextView(activity).apply {
@@ -259,45 +307,31 @@ object BruteForceDialog {
             Gravity.TOP or Gravity.CENTER_HORIZONTAL
         ).apply { topMargin = dp(2f) })
 
-        val seek = MySeekBar(activity).apply {
-            max = (MAX_TENTHS - minTenths).coerceAtLeast(0)
-            progress = (initialTenths - minTenths).coerceAtLeast(0)
-            isEnabled = MAX_TENTHS > minTenths
-        }
-        val barRadius = dp(4f).toFloat()
-        val track = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = barRadius
-            setColor(ColorUtils.blendARGB(palette.background, palette.text, 0.14f))
-        }
-        val fill = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = barRadius
-            // Same left-to-right ramp as the HTML concept: deep theme colour -> primary -> light.
-            // All stops derive from the active palette, so a blue theme gives a blue dial.
-            orientation = GradientDrawable.Orientation.LEFT_RIGHT
-            colors = intArrayOf(
+        val barView = DialBarView(activity).apply {
+            trackColor = ColorUtils.blendARGB(palette.background, palette.text, 0.14f)
+            // Deep theme colour -> primary -> light, derived from the active palette.
+            ramp = intArrayOf(
                 ColorUtils.blendARGB(primary, palette.background, 0.45f),
                 primary,
                 ColorUtils.blendARGB(primary, Color.WHITE, 0.38f)
             )
+            knobColor = primary
+            knobEdgeColor = ColorUtils.blendARGB(primary, palette.background, 0.45f)
         }
-        seek.progressDrawable = LayerDrawable(
-            arrayOf(track, ClipDrawable(fill, Gravity.START, ClipDrawable.HORIZONTAL))
-        ).apply {
-            setId(0, android.R.id.background)
-            setId(1, android.R.id.progress)
-        }
-        seek.thumb = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setSize(dp(20f), dp(20f))
-            setColor(primary)
-            setStroke(dp(2f), palette.surface)
-        }
-        dial.addView(seek, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT,
+        fun barParams() = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT, dp(32f),
             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-        ).apply { bottomMargin = dp(12f) })
+        ).apply { bottomMargin = dp(10f) }
+        dial.addView(barView, barParams())
+
+        // Invisible SeekBar on top: all touch and keyboard handling, no drawable for the theme to tint.
+        val seek = MySeekBar(activity).apply {
+            max = (MAX_TENTHS - minTenths).coerceAtLeast(0)
+            progress = (initialTenths - minTenths).coerceAtLeast(0)
+            isEnabled = MAX_TENTHS > minTenths
+            alpha = 0f
+        }
+        dial.addView(seek, barParams())
 
         val unit = activity.getString(R.string.vault_unlock_time_unit)
         val valueInput = MyEditText(ContextThemeWrapper(activity, R.style.VaultCursorTheme)).apply {
@@ -319,19 +353,7 @@ object BruteForceDialog {
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        val unitLabel = MyTextView(activity).apply {
-            text = unit
-            setTextColor(palette.secondary)
-            textSize = 12f
-            setPadding(dp(2f), 0, 0, 0)
-        }
-        val editHint = MyTextView(activity).apply {
-            text = "✎"
-            setTextColor(palette.secondary)
-            textSize = 10f
-            alpha = 0.75f
-            setPadding(dp(4f), 0, 0, 0)
-        }
+        // The badge holds only the number: no "s", no pencil icon.
         val bubble = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -341,21 +363,21 @@ object BruteForceDialog {
                 setColor(ColorUtils.blendARGB(palette.surface, primary, 0.10f))
                 setStroke(dp(1f), ColorUtils.blendARGB(palette.surface, primary, 0.55f))
             }
-            setPadding(dp(8f), dp(3f), dp(7f), dp(3f))
+            setPadding(dp(10f), dp(4f), dp(10f), dp(4f))
         }
         bubble.addView(valueInput)
-        bubble.addView(unitLabel)
-        bubble.addView(editHint)
         dial.addView(bubble, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        ).apply { topMargin = dp(20f) })
+        ).apply { topMargin = dp(28f) })
 
         fun positionBubble() {
             seek.post {
                 if (dial.width <= 0 || bubble.width <= 0) return@post
                 val range = (MAX_TENTHS - minTenths).coerceAtLeast(1)
                 val fraction = seek.progress.toFloat() / range
+                barView.fraction = fraction
+                barView.invalidate()
                 val usable = (seek.width - seek.paddingLeft - seek.paddingRight)
                     .toFloat().coerceAtLeast(1f)
                 val center = seek.left + seek.paddingLeft + usable * fraction
@@ -389,16 +411,6 @@ object BruteForceDialog {
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         ))
 
-        val levelDescription = MyTextView(activity).apply {
-            text = levelDescriptionForTarget(activity, initialTenths * MS_PER_TENTH)
-            textSize = 11f
-            setTextColor(palette.secondary)
-            gravity = Gravity.CENTER
-        }
-        view.addView(levelDescription, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        ).apply { topMargin = dp(6f) })
-
         // The warning frame follows the active theme, never a fixed yellow.
         val highMemoryWarning = MyTextView(activity).apply {
             setText(R.string.brute_force_high_memory_warning)
@@ -423,7 +435,6 @@ object BruteForceDialog {
         updateWarningForTarget(initialTenths * MS_PER_TENTH)
         attachTargetControls(valueInput, seek, minTenths, unit, minSec, ::updateWarningForTarget) { targetMs ->
             levelLabel.text = levelForTarget(activity, targetMs)
-            levelDescription.text = levelDescriptionForTarget(activity, targetMs)
             positionBubble()
         }
         view.addView(highMemoryWarning, LinearLayout.LayoutParams(
