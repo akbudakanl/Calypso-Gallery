@@ -5,6 +5,33 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 ## [Unreleased]
 
 
+## [1.3.0] - 2026-11-22
+### Eklendi
+
+- Ana galeri, albüm ve tam ekran görüntüleyici taşma menüleri Calypso açılır menüsüyle modernize edildi: doğrulanmış eylem sırası, albüm arama ipucu, yerel ölçekleme ve temalı Ayarlar altbilgisi; menü grupları arasında ayırıcı çizgiler eklendi.
+- Tam ekran görüntüleyicide hangi eylemlerin gösterileceğini seçmek için isteğe bağlı "Ek görüntüleyici eylemleri" ayarı ve yöneticisi eklendi.
+- Dosya adlarını göster/gizle seçeneği ile albüm içi arama metinleri uygulamaya alındı.
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- `FVSTR:` kayıtları (albüm adı, albüm JSON'u, geri yükleme bildirimi, kasa durumu) artık okuyucunun beklediği amaçla bağlanıyor; geçerli bir kaydın kategori değiştirilerek başka yerde okunması engellendi.
+- Akış şifrelemesinde başlık yerinde güncellenirken IV'nin 27. ofset yerine 43. ofsete yazılması düzeltildi; bozulan konteyner başlığı için regresyon testi eklendi.
+- Parola değişikliğinden sonraki biyometrik kayıt akışı, anahtar RAM'den çok erken silindiği için sessizce başarısız oluyordu; anahtar artık 3a → 3b akışı tamamlandıktan sonra siliniyor.
+- Parolasını unutan kullanıcıya "Şifreli kasayı sıfırla" öneren hatırlatma ve SSS metni 11 dilde "Şifreli kasayı arşivle" olarak düzeltildi (sıfırlama mevcut parolayı gerektiriyordu).
+- Kasa içeriği gösteren diyalog pencereleri kendi `FLAG_SECURE` bayrağını alıyor; kilit ekranı, "ekran görüntülerini engelle" ayarı kapalıyken de korunuyor.
+- Tek seferlik Ayarlar doğrulamaları oturum anahtarını RAM'e almadan yapılıyor; biyometri kaydı iptalinde anahtar temizleniyor, PIN tamponu büyütülürken sıfırlanıyor ve kasa kaynaklı pano içeriği kilitlenince siliniyor.
+- Düz kopyalama ve kopya kurtarma yollarında kaynak/hedef boyut ve parmak izi karşılaştırılmadan kaynak siliniyordu; read-back doğrulaması eklendi ve doğrulanmamış çıktı güvenli siliniyor. Şifre çözme geri alma yollarındaki düz metin çıktılar artık güvenli siliniyor.
+
+### İyileştirmeler
+
+- Görünüm paleti düğmelerinin kontrastı temalı diyalogda korundu.
+- Taşma menüsü eylem sırası, simgeler ve ölçek için regresyon testleri eklendi.
+- Dokümantasyon denetimi bulguları kodla hizalandı: geçersiz ADR kararları "superseded" olarak işaretlendi; arşiv geri yükleme modeli, biyometri akışları, HKDF bilgi dizeleri ve test kapsamı iddiaları gerçek davranışa getirildi.
+
+### Çeviriler
+
+- Dosya adı gösterme, albüm arama ve ek görüntüleyici eylemlerinin metinleri 9 dilde çevrildi; kör çeviri karşılaştırma raporları güncellendi.
+
 ## [1.2.2] - 2026-11-22
 ### Eklendi
 
@@ -175,7 +202,8 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.2...HEAD
+[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.3.0...HEAD
 [1.2.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.5...1.2.0
 [1.2.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...1.2.1
 [1.2.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.1...1.2.2
+[1.3.0]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.2.2...1.3.0
