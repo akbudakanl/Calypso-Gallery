@@ -6,33 +6,33 @@
     android:clipChildren="false"
     android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="22dp">
+    android:padding="@dimen/compact_dialog_padding">
 
     <!-- Animated folder + check emblem matching the onboarding & vault emblem language -->
     <FrameLayout
         android:id="@+id/grant_all_files_emblem"
-        android:layout_width="82dp"
-        android:layout_height="82dp"
+        android:layout_width="@dimen/compact_dialog_emblem_size"
+        android:layout_height="@dimen/compact_dialog_emblem_size"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="16dp">
 
         <View
             android:id="@+id/grant_all_files_halo"
-            android:layout_width="82dp"
-            android:layout_height="82dp"
+            android:layout_width="@dimen/compact_dialog_emblem_size"
+            android:layout_height="@dimen/compact_dialog_emblem_size"
             android:layout_gravity="center" />
 
         <FrameLayout
             android:id="@+id/grant_all_files_emblem_core"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="@dimen/compact_dialog_emblem_core_size"
+            android:layout_height="@dimen/compact_dialog_emblem_core_size"
             android:layout_gravity="center">
 
             <ImageView
                 android:id="@+id/grant_all_files_image"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="@dimen/compact_dialog_emblem_icon_size"
+                android:layout_height="@dimen/compact_dialog_emblem_icon_size"
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_onboarding_folder" />
@@ -40,16 +40,16 @@
 
         <FrameLayout
             android:id="@+id/grant_all_files_badge_dot"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="@dimen/compact_dialog_emblem_badge_size"
+            android:layout_height="@dimen/compact_dialog_emblem_badge_size"
             android:layout_gravity="end|bottom"
             android:layout_marginEnd="4dp"
             android:layout_marginBottom="4dp">
 
             <ImageView
                 android:id="@+id/grant_all_files_badge_icon"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="@dimen/compact_dialog_emblem_badge_icon_size"
+                android:layout_height="@dimen/compact_dialog_emblem_badge_icon_size"
                 android:layout_gravity="center"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_onboarding_check" />
@@ -65,7 +65,7 @@
         android:gravity="center"
         android:letterSpacing="-0.01"
         android:text="@string/onboarding_all_files_title"
-        android:textSize="17sp"
+        android:textSize="@dimen/compact_dialog_title_text_size"
         android:textStyle="bold" />
 
     <TextView
@@ -76,7 +76,7 @@
         android:gravity="center"
         android:lineSpacingMultiplier="1.28"
         android:text="@string/hidden_all_files"
-        android:textSize="13.5sp" />
+        android:textSize="@dimen/compact_dialog_body_medium_text_size" />
 
     <TextView
         android:id="@+id/grant_all_files_note"
@@ -84,9 +84,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:lineSpacingMultiplier="1.25"
-        android:padding="12dp"
+        android:padding="@dimen/compact_dialog_note_padding"
         android:text="@string/onboarding_all_files_offline_desc"
-        android:textSize="12sp" />
+        android:textSize="@dimen/compact_dialog_note_text_size" />
 
     <LinearLayout
         android:id="@+id/grant_all_files_actions"
@@ -108,7 +108,7 @@
             android:paddingEnd="12dp"
             android:paddingBottom="8dp"
             android:text="@string/cancel"
-            android:textSize="13.5sp"
+            android:textSize="@dimen/compact_dialog_action_medium_text_size"
             android:textStyle="bold" />
 
         <TextView
@@ -122,7 +122,7 @@
             android:paddingEnd="16dp"
             android:paddingBottom="8dp"
             android:text="@string/onboarding_grant_access"
-            android:textSize="13.5sp"
+            android:textSize="@dimen/compact_dialog_action_medium_text_size"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>

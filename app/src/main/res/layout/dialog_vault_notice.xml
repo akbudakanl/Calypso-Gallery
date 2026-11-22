@@ -8,9 +8,9 @@
     android:clipChildren="false"
     android:clipToPadding="false"
     android:orientation="vertical"
-    android:padding="22dp">
+    android:padding="@dimen/compact_dialog_padding">
 
-    <!-- 3b only: preserve horizontal offset (22dp + 10dp) while centering vertically between top edge and title. -->
+    <!-- 3b only: preserve horizontal offset (padding + 10dp) while centering vertically between top edge and title. -->
     <FrameLayout
         android:id="@+id/notice_glyph_host"
         android:layout_width="wrap_content"
@@ -23,15 +23,15 @@
 
         <org.fossify.gallery.views.VaultBiometricGlyphView
             android:id="@+id/notice_biometric_glyph"
-            android:layout_width="48dp"
-            android:layout_height="48dp" />
+            android:layout_width="@dimen/compact_dialog_biometric_glyph_size"
+            android:layout_height="@dimen/compact_dialog_biometric_glyph_size" />
     </FrameLayout>
 
     <!-- 3c only: Template A live mini gallery & top-scroll pull tutorial animation. -->
     <org.fossify.gallery.views.VaultPullTutorialView
         android:id="@+id/notice_pull_tutorial"
         android:layout_width="match_parent"
-        android:layout_height="176dp"
+        android:layout_height="@dimen/compact_dialog_pull_tutorial_height"
         android:layout_marginBottom="8dp"
         android:visibility="gone" />
 
@@ -42,14 +42,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:textSize="17sp"
+        android:textSize="@dimen/compact_dialog_title_text_size"
         android:textStyle="bold" />
 
     <!-- ADR 0008: Side-by-side live comparison of default PIN bullets vs per-digit PIN dot slots. -->
     <org.fossify.gallery.views.VaultPinDotsPreviewView
         android:id="@+id/notice_pin_dots_preview"
         android:layout_width="match_parent"
-        android:layout_height="236dp"
+        android:layout_height="@dimen/compact_dialog_pin_dots_preview_height"
         android:layout_marginTop="14dp"
         android:visibility="gone" />
 
@@ -65,7 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:lineSpacingMultiplier="1.25"
-            android:textSize="13sp" />
+            android:textSize="@dimen/compact_dialog_body_text_size" />
     </ScrollView>
 
     <LinearLayout
@@ -75,13 +75,13 @@
         android:layout_marginTop="12dp"
         android:gravity="top"
         android:orientation="horizontal"
-        android:padding="12dp"
+        android:padding="@dimen/compact_dialog_note_padding"
         android:visibility="gone">
 
         <ImageView
             android:id="@+id/notice_note_icon"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="@dimen/compact_dialog_note_icon_size"
+            android:layout_height="@dimen/compact_dialog_note_icon_size"
             android:layout_marginTop="2dp"
             android:layout_marginEnd="10dp"
             android:importantForAccessibility="no"
@@ -94,7 +94,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:lineSpacingMultiplier="1.22"
-            android:textSize="12sp" />
+            android:textSize="@dimen/compact_dialog_note_text_size" />
     </LinearLayout>
 
     <LinearLayout
@@ -115,7 +115,7 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="8dp"
-            android:textSize="13sp"
+            android:textSize="@dimen/compact_dialog_action_text_size"
             android:textStyle="bold"
             android:visibility="gone" />
 
@@ -127,7 +127,7 @@
             android:clickable="true"
             android:focusable="true"
             android:padding="8dp"
-            android:textSize="13sp"
+            android:textSize="@dimen/compact_dialog_action_text_size"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>

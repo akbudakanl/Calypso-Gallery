@@ -6,4 +6,33 @@
     <dimen name="selection_check_size">38dp</dimen>
     <dimen name="tmb_shadow_height">70dp</dimen>
     <dimen name="lock_padding">80dp</dimen>
+
+    <!-- Enlarged compact card dialogs on tablets and unfolded dual-screen foldables (sw600dp+). -->
+    <dimen name="compact_dialog_max_width">480dp</dimen>
+    <dimen name="compact_dialog_scroll_max_height">520dp</dimen>
+    <dimen name="compact_dialog_choice_scroll_max_height">480dp</dimen>
+    <dimen name="compact_dialog_padding">28dp</dimen>
+    <dimen name="compact_dialog_padding_top">26dp</dimen>
+    <dimen name="compact_dialog_padding_bottom">22dp</dimen>
+    <dimen name="compact_dialog_corner_radius">24dp</dimen>
+    <dimen name="compact_dialog_title_text_size">22sp</dimen>
+    <dimen name="compact_dialog_body_text_size">16.5sp</dimen>
+    <dimen name="compact_dialog_body_medium_text_size">16.5sp</dimen>
+    <dimen name="compact_dialog_choice_text_size">17sp</dimen>
+    <dimen name="compact_dialog_note_text_size">15sp</dimen>
+    <dimen name="compact_dialog_action_text_size">16sp</dimen>
+    <dimen name="compact_dialog_action_medium_text_size">16sp</dimen>
+    <dimen name="compact_dialog_note_padding">16dp</dimen>
+    <dimen name="compact_dialog_note_icon_size">20dp</dimen>
+    <dimen name="compact_dialog_biometric_glyph_size">64dp</dimen>
+    <dimen name="compact_dialog_pull_tutorial_height">250dp</dimen>
+    <dimen name="compact_dialog_pin_dots_preview_height">336dp</dimen>
+    <dimen name="compact_dialog_choice_row_min_height">58dp</dimen>
+    <dimen name="compact_dialog_choice_radio_size">24dp</dimen>
+    <dimen name="compact_dialog_choice_info_button_size">42dp</dimen>
+    <dimen name="compact_dialog_emblem_size">102dp</dimen>
+    <dimen name="compact_dialog_emblem_core_size">80dp</dimen>
+    <dimen name="compact_dialog_emblem_icon_size">36dp</dimen>
+    <dimen name="compact_dialog_emblem_badge_size">30dp</dimen>
+    <dimen name="compact_dialog_emblem_badge_icon_size">15dp</dimen>
 </resources>

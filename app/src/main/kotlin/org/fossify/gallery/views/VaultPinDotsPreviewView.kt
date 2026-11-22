@@ -124,7 +124,11 @@ class VaultPinDotsPreviewView @JvmOverloads constructor(
         if (w <= 0f || h <= 0f) return
 
         val density = resources.displayMetrics.density
-        fun dp(v: Float) = v * density
+        val scale = minOf(
+            w / (BASELINE_WIDTH_DP * density),
+            h / (BASELINE_HEIGHT_DP * density),
+        ).coerceAtLeast(1f)
+        fun dp(v: Float) = v * density * scale
 
         val gap = dp(10f)
         val cardW = (w - gap) / 2f
@@ -468,6 +472,8 @@ class VaultPinDotsPreviewView @JvmOverloads constructor(
     }
 
     private companion object {
+        const val BASELINE_WIDTH_DP = 286f
+        const val BASELINE_HEIGHT_DP = 236f
         val PIN_SEQ = arrayOf("2", "5", "8", "0", "4", "9")
         val KEYPAD_LABELS = arrayOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "✓")
 

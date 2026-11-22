@@ -140,7 +140,11 @@ class VaultPullTutorialView @JvmOverloads constructor(
         if (w <= 0f || h <= 0f) return
 
         val density = resources.displayMetrics.density
-        fun dp(v: Float) = v * density
+        val scale = minOf(
+            w / (BASELINE_WIDTH_DP * density),
+            h / (BASELINE_HEIGHT_DP * density),
+        ).coerceAtLeast(1f)
+        fun dp(v: Float) = v * density * scale
 
         val cornerRadius = dp(14f)
         val strokePx = dp(1f).coerceAtLeast(1f)
@@ -396,6 +400,8 @@ class VaultPullTutorialView @JvmOverloads constructor(
     }
 
     private companion object {
+        const val BASELINE_WIDTH_DP = 286f
+        const val BASELINE_HEIGHT_DP = 176f
         const val CYCLE_DURATION_MS = 4200L
     }
 }

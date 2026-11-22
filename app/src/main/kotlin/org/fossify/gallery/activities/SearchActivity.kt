@@ -1,6 +1,7 @@
 package org.fossify.gallery.activities
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.ViewGroup
 import android.widget.RelativeLayout
@@ -165,7 +166,7 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
                 binding.searchGrid.removeItemDecorationAt(0)
             }
 
-            val spanCount = config.mediaColumnCnt
+            val spanCount = config.getMediaColumnCount(resources)
             val spacing = config.thumbnailSpacing
             val decoration = GridSpacingItemDecoration(spanCount, spacing, config.scrollHorizontally, config.fileRoundedCorners, media, true)
             binding.searchGrid.addItemDecoration(decoration)
@@ -216,6 +217,24 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val viewType = config.getFolderViewType(SHOW_ALL)
+        if (viewType == VIEW_TYPE_GRID) {
+            val layoutManager = binding.searchGrid.layoutManager as? MyGridLayoutManager ?: return
+            val newSpanCount = config.getMediaColumnCount(resources)
+            if (layoutManager.spanCount != newSpanCount) {
+                layoutManager.spanCount = newSpanCount
+                layoutManager.spanSizeLookup?.invalidateSpanIndexCache()
+                val currentMedia = getMediaAdapter()?.media ?: mAllMedia
+                handleGridSpacing(currentMedia)
+                getMediaAdapter()?.apply {
+                    notifyItemRangeChanged(0, media.size)
+                }
+            }
+        }
+    }
+
     private fun setupGridLayoutManager() {
         val layoutManager = binding.searchGrid.layoutManager as MyGridLayoutManager
         if (config.scrollHorizontally) {
@@ -226,7 +245,7 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
             binding.searchGrid.layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
 
-        layoutManager.spanCount = config.mediaColumnCnt
+        layoutManager.spanCount = config.getMediaColumnCount(resources)
         val adapter = getMediaAdapter()
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int {

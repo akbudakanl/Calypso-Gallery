@@ -3,6 +3,7 @@ package org.fossify.gallery.activities
 import android.app.WallpaperManager
 import android.content.Intent
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
@@ -1463,6 +1464,25 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
+        if (viewType == VIEW_TYPE_GRID) {
+            val layoutManager = binding.mediaGrid.layoutManager as? MyGridLayoutManager ?: return
+            val newSpanCount = config.getMediaColumnCount(resources)
+            if (layoutManager.spanCount != newSpanCount) {
+                layoutManager.spanCount = newSpanCount
+                layoutManager.spanSizeLookup?.invalidateSpanIndexCache()
+                val currentMedia = getMediaAdapter()?.media ?: mMedia
+                handleGridSpacing(currentMedia)
+                refreshMenuItems()
+                getMediaAdapter()?.apply {
+                    notifyItemRangeChanged(0, media.size)
+                }
+            }
+        }
+    }
+
     private fun setupGridLayoutManager() {
         val layoutManager = binding.mediaGrid.layoutManager as MyGridLayoutManager
         if (config.scrollHorizontally) {
@@ -1479,7 +1499,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             )
         }
 
-        layoutManager.spanCount = config.mediaColumnCnt
+        layoutManager.spanCount = config.getMediaColumnCount(resources)
         val adapter = getMediaAdapter()
         layoutManager.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
             override fun getSpanSize(position: Int): Int {
@@ -1506,7 +1526,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun handleGridSpacing(media: ArrayList<ThumbnailItem> = mMedia) {
         val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
         if (viewType == VIEW_TYPE_GRID) {
-            val spanCount = config.mediaColumnCnt
+            val spanCount = config.getMediaColumnCount(resources)
             val spacing = config.thumbnailSpacing
             val useGridPosition = media.firstOrNull() is ThumbnailSection
 
@@ -1559,18 +1579,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun increaseColumnCount() {
-        config.mediaColumnCnt += 1
+        config.setMediaColumnCount(config.getMediaColumnCount(resources) + 1, resources)
         columnCountChanged()
     }
 
     private fun reduceColumnCount() {
-        config.mediaColumnCnt -= 1
+        config.setMediaColumnCount(config.getMediaColumnCount(resources) - 1, resources)
         columnCountChanged()
     }
 
     private fun columnCountChanged() {
-        (binding.mediaGrid.layoutManager as MyGridLayoutManager).spanCount = config.mediaColumnCnt
-        handleGridSpacing()
+        val layoutManager = binding.mediaGrid.layoutManager as MyGridLayoutManager
+        layoutManager.spanCount = config.getMediaColumnCount(resources)
+        layoutManager.spanSizeLookup?.invalidateSpanIndexCache()
+        handleGridSpacing(getMediaAdapter()?.media ?: mMedia)
         refreshMenuItems()
         getMediaAdapter()?.apply {
             notifyItemRangeChanged(0, media.size)

@@ -5,17 +5,18 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
-import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogGrantAllFilesBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.launchGrantAllFilesIntent
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.AppearancePalette
+import org.fossify.gallery.helpers.CompactDialogSizing
 import org.fossify.gallery.helpers.VaultLockEmblemHelper
 
 /**
@@ -41,9 +42,10 @@ class GrantAllFilesDialog(
         val strokePx = dp(1f).coerceAtLeast(1)
 
         val binding = DialogGrantAllFilesBinding.inflate(activity.layoutInflater)
+        val cardRadiusPx = activity.resources.getDimension(R.dimen.compact_dialog_corner_radius)
         binding.grantAllFilesHolder.background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(20f).toFloat()
+            cornerRadius = cardRadiusPx
             setColor(palette.surface)
             setStroke(strokePx, palette.border)
         }
@@ -125,7 +127,6 @@ class GrantAllFilesDialog(
 
         haloAnimator = VaultLockEmblemHelper.startHaloPulse(binding.grantAllFilesHalo)
 
-        val dialogWidth = minOf(dp(330f), activity.resources.displayMetrics.widthPixels - dp(32f))
         val builder = activity.getAlertDialogBuilder()
             .setView(binding.root)
             .setCancelable(true)
@@ -136,11 +137,14 @@ class GrantAllFilesDialog(
             alertDialog.setOnCancelListener {
                 onCancelled?.invoke()
             }
-            alertDialog.setOnDismissListener {
-                haloAnimator?.cancel()
-                haloAnimator = null
-            }
-            alertDialog.window?.setLayout(dialogWidth, WindowManager.LayoutParams.WRAP_CONTENT)
+            CompactDialogSizing.applyResponsiveWidth(
+                activity = activity,
+                dialog = alertDialog,
+                onDismissExtra = {
+                    haloAnimator?.cancel()
+                    haloAnimator = null
+                },
+            )
         }
     }
 }

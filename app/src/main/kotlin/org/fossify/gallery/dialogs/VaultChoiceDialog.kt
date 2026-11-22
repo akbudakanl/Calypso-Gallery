@@ -10,7 +10,6 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -22,9 +21,11 @@ import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.models.RadioItem
+import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.AppearancePalette
+import org.fossify.gallery.helpers.CompactDialogSizing
 import org.fossify.gallery.helpers.SettingsCardUi
 
 /**
@@ -52,15 +53,27 @@ class VaultChoiceDialog(
 
     init {
         val palette = AppearanceManager.resolve(activity, activity.config)
-        val density = activity.resources.displayMetrics.density
+        val res = activity.resources
+        val density = res.displayMetrics.density
         fun dp(value: Float) = (value * density).toInt()
+
+        val padH = res.getDimensionPixelSize(R.dimen.compact_dialog_padding)
+        val padTop = res.getDimensionPixelSize(R.dimen.compact_dialog_padding_top)
+        val padBottom = res.getDimensionPixelSize(R.dimen.compact_dialog_padding_bottom)
+        val cardRadiusPx = res.getDimension(R.dimen.compact_dialog_corner_radius)
+        val titleTextPx = res.getDimension(R.dimen.compact_dialog_title_text_size)
+        val choiceTextPx = res.getDimension(R.dimen.compact_dialog_choice_text_size)
+        val actionTextPx = res.getDimension(R.dimen.compact_dialog_action_medium_text_size)
+        val rowMinHeightPx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_row_min_height)
+        val radioSizePx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_radio_size)
+        val infoBtnSizePx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_info_button_size)
 
         val root = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(22f), dp(20f), dp(22f), dp(16f))
+            setPadding(padH, padTop, padH, padBottom)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(20f).toFloat()
+                cornerRadius = cardRadiusPx
                 setColor(palette.surface)
                 setStroke(dp(1f).coerceAtLeast(1), palette.border)
             }
@@ -81,7 +94,7 @@ class VaultChoiceDialog(
         val titleView = TextView(activity).apply {
             text = title
             setTextColor(palette.text)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, titleTextPx)
             setTypeface(typeface, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
@@ -97,7 +110,7 @@ class VaultChoiceDialog(
                 background = createCircularRipple(palette)
                 isClickable = true
                 isFocusable = true
-                layoutParams = LinearLayout.LayoutParams(dp(36f), dp(36f)).apply {
+                layoutParams = LinearLayout.LayoutParams(infoBtnSizePx, infoBtnSizePx).apply {
                     marginStart = dp(8f)
                 }
                 setOnClickListener { onInfoClick.invoke() }
@@ -125,7 +138,7 @@ class VaultChoiceDialog(
             val row = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                minimumHeight = dp(48f)
+                minimumHeight = rowMinHeightPx
                 setPadding(dp(14f), dp(12f), dp(14f), dp(12f))
                 background = createRowRipple(palette, density)
                 isClickable = true
@@ -134,7 +147,7 @@ class VaultChoiceDialog(
 
             val radioIndicator = ImageView(activity).apply {
                 setImageDrawable(SettingsCardUi.createRadioCircleDrawable(activity, isSelected, palette))
-                layoutParams = LinearLayout.LayoutParams(dp(20f), dp(20f)).apply {
+                layoutParams = LinearLayout.LayoutParams(radioSizePx, radioSizePx).apply {
                     marginEnd = dp(12f)
                 }
             }
@@ -142,7 +155,7 @@ class VaultChoiceDialog(
             val labelView = TextView(activity).apply {
                 text = item.title
                 setTextColor(palette.text)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+                setTextSize(TypedValue.COMPLEX_UNIT_PX, choiceTextPx)
                 if (isSelected) {
                     setTypeface(typeface, Typeface.BOLD)
                 }
@@ -212,7 +225,7 @@ class VaultChoiceDialog(
         val cancelBtn = TextView(activity).apply {
             text = activity.getString(org.fossify.commons.R.string.cancel)
             setTextColor(palette.primary)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
+            setTextSize(TypedValue.COMPLEX_UNIT_PX, actionTextPx)
             setTypeface(typeface, Typeface.BOLD)
             setPadding(dp(12f), dp(8f), dp(12f), dp(8f))
             background = createRowRipple(palette, density, cornerRadiusDp = 999f)
@@ -228,15 +241,22 @@ class VaultChoiceDialog(
         actionsRow.addView(cancelBtn)
         root.addView(actionsRow)
 
-        scrollView.post {
-            val maxHeight = dp(340f)
-            if (scrollView.height > maxHeight) {
-                scrollView.layoutParams.height = maxHeight
-                scrollView.requestLayout()
+        fun clampScrollHeight() {
+            scrollView.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            scrollView.requestLayout()
+            scrollView.post {
+                val maxHeight = CompactDialogSizing.resolveScrollMaxHeightPx(
+                    activity,
+                    R.dimen.compact_dialog_choice_scroll_max_height,
+                )
+                if (scrollView.height > maxHeight) {
+                    scrollView.layoutParams.height = maxHeight
+                    scrollView.requestLayout()
+                }
             }
         }
+        clampScrollHeight()
 
-        val dialogWidth = minOf(dp(330f), activity.resources.displayMetrics.widthPixels - dp(32f))
         val builder = activity.getAlertDialogBuilder()
             .setView(root)
             .setCancelable(true)
@@ -249,7 +269,11 @@ class VaultChoiceDialog(
                     cancelCallback?.invoke()
                 }
             }
-            alertDialog.window?.setLayout(dialogWidth, WindowManager.LayoutParams.WRAP_CONTENT)
+            CompactDialogSizing.applyResponsiveWidth(
+                activity = activity,
+                dialog = alertDialog,
+                onConfigurationChangedExtra = { clampScrollHeight() },
+            )
         }
     }
 

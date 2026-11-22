@@ -7,16 +7,18 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
-import android.view.WindowManager
+import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
+import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogVaultNoticeBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
+import org.fossify.gallery.helpers.CompactDialogSizing
 
 /**
  * Compact rounded dialog used by the periodic password reminder flow (HTML screens 3a, 3b, 4, 6).
@@ -53,9 +55,10 @@ class VaultNoticeDialog(
         fun dp(value: Float) = (value * density).toInt()
 
         val binding = DialogVaultNoticeBinding.inflate(activity.layoutInflater)
+        val cardRadiusPx = activity.resources.getDimension(R.dimen.compact_dialog_corner_radius)
         binding.noticeRoot.background = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = dp(20f).toFloat()
+            cornerRadius = cardRadiusPx
             setColor(palette.surface)
             setStroke(dp(1f).coerceAtLeast(1), palette.border)
         }
@@ -164,24 +167,36 @@ class VaultNoticeDialog(
         }
 
         // Very long recovery text must stay inside the card; let the message area scroll.
-        binding.noticeScroll.post {
-            val maxHeight = dp(360f)
-            if (binding.noticeScroll.height > maxHeight) {
-                binding.noticeScroll.layoutParams.height = maxHeight
-                binding.noticeScroll.requestLayout()
+        fun clampScrollHeight() {
+            binding.noticeScroll.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+            binding.noticeScroll.requestLayout()
+            binding.noticeScroll.post {
+                val maxHeight = CompactDialogSizing.resolveScrollMaxHeightPx(
+                    activity,
+                    R.dimen.compact_dialog_scroll_max_height,
+                )
+                if (binding.noticeScroll.height > maxHeight) {
+                    binding.noticeScroll.layoutParams.height = maxHeight
+                    binding.noticeScroll.requestLayout()
+                }
             }
         }
+        clampScrollHeight()
 
-        val dialogWidth = minOf(dp(330f), activity.resources.displayMetrics.widthPixels - dp(32f))
         val builder = activity.getAlertDialogBuilder()
             .setView(binding.root)
             .setCancelable(cancelable)
 
-        activity.setupDialogStuff(binding.root, builder) { alertDialog -> alertDialog.secureVaultWindow()
+        activity.setupDialogStuff(binding.root, builder) { alertDialog ->
+            alertDialog.secureVaultWindow()
             dialog = alertDialog
             alertDialog.setCanceledOnTouchOutside(canceledOnTouchOutside)
             alertDialog.setOnCancelListener { onCancel?.invoke() }
-            alertDialog.window?.setLayout(dialogWidth, WindowManager.LayoutParams.WRAP_CONTENT)
+            CompactDialogSizing.applyResponsiveWidth(
+                activity = activity,
+                dialog = alertDialog,
+                onConfigurationChangedExtra = { clampScrollHeight() },
+            )
         }
     }
 }

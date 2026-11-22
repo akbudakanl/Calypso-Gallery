@@ -2,6 +2,7 @@ package org.fossify.gallery.activities
 
 import android.content.ClipData
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -1701,6 +1702,21 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             .addRule(RelativeLayout.BELOW, R.id.directories_switch_searching)
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (config.viewTypeFolders == VIEW_TYPE_GRID) {
+            val layoutManager = binding.directoriesGrid.layoutManager as? MyGridLayoutManager ?: return
+            val newSpanCount = config.getDirColumnCount(resources)
+            if (layoutManager.spanCount != newSpanCount) {
+                layoutManager.spanCount = newSpanCount
+                refreshMenuItems()
+                getRecyclerAdapter()?.apply {
+                    notifyItemRangeChanged(0, dirs.size)
+                }
+            }
+        }
+    }
+
     private fun setupGridLayoutManager() {
         val layoutManager = binding.directoriesGrid.layoutManager as MyGridLayoutManager
         // The refresh layout must always fill the viewport, otherwise it collapses to 0px while the
@@ -1712,7 +1728,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
 
-        layoutManager.spanCount = config.dirColumnCnt
+        layoutManager.spanCount = config.getDirColumnCount(resources)
     }
 
     private fun setupListLayoutManager() {
@@ -1778,25 +1794,25 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         RadioGroupDialog(this, items, currentColumnCount) {
             val newColumnCount = it as Int
             if (currentColumnCount != newColumnCount) {
-                config.dirColumnCnt = newColumnCount
+                config.setDirColumnCount(newColumnCount, resources)
                 columnCountChanged()
             }
         }
     }
 
     private fun increaseColumnCount() {
-        config.dirColumnCnt += 1
+        config.setDirColumnCount(config.getDirColumnCount(resources) + 1, resources)
         columnCountChanged()
     }
 
     private fun reduceColumnCount() {
-        config.dirColumnCnt -= 1
+        config.setDirColumnCount(config.getDirColumnCount(resources) - 1, resources)
         columnCountChanged()
     }
 
     private fun columnCountChanged() {
         (binding.directoriesGrid.layoutManager as MyGridLayoutManager).spanCount =
-            config.dirColumnCnt
+            config.getDirColumnCount(resources)
         refreshMenuItems()
         getRecyclerAdapter()?.apply {
             notifyItemRangeChanged(0, dirs.size)

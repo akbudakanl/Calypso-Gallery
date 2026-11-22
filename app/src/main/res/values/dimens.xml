@@ -32,4 +32,34 @@
     <dimen name="onboarding_max_content_width">520dp</dimen>
     <dimen name="vault_security_max_width">420dp</dimen>
     <dimen name="settings_max_content_width">680dp</dimen>
+
+    <!-- Compact themed card dialogs (VaultNoticeDialog, VaultChoiceDialog, GrantAllFilesDialog).
+         Phone baselines below; enlarged in values-sw600dp/dimens.xml for tablets and unfolded foldables. -->
+    <dimen name="compact_dialog_max_width">330dp</dimen>
+    <dimen name="compact_dialog_scroll_max_height">360dp</dimen>
+    <dimen name="compact_dialog_choice_scroll_max_height">340dp</dimen>
+    <dimen name="compact_dialog_padding">22dp</dimen>
+    <dimen name="compact_dialog_padding_top">20dp</dimen>
+    <dimen name="compact_dialog_padding_bottom">16dp</dimen>
+    <dimen name="compact_dialog_corner_radius">20dp</dimen>
+    <dimen name="compact_dialog_title_text_size">17sp</dimen>
+    <dimen name="compact_dialog_body_text_size">13sp</dimen>
+    <dimen name="compact_dialog_body_medium_text_size">13.5sp</dimen>
+    <dimen name="compact_dialog_choice_text_size">14sp</dimen>
+    <dimen name="compact_dialog_note_text_size">12sp</dimen>
+    <dimen name="compact_dialog_action_text_size">13sp</dimen>
+    <dimen name="compact_dialog_action_medium_text_size">13.5sp</dimen>
+    <dimen name="compact_dialog_note_padding">12dp</dimen>
+    <dimen name="compact_dialog_note_icon_size">16dp</dimen>
+    <dimen name="compact_dialog_biometric_glyph_size">48dp</dimen>
+    <dimen name="compact_dialog_pull_tutorial_height">176dp</dimen>
+    <dimen name="compact_dialog_pin_dots_preview_height">236dp</dimen>
+    <dimen name="compact_dialog_choice_row_min_height">48dp</dimen>
+    <dimen name="compact_dialog_choice_radio_size">20dp</dimen>
+    <dimen name="compact_dialog_choice_info_button_size">36dp</dimen>
+    <dimen name="compact_dialog_emblem_size">82dp</dimen>
+    <dimen name="compact_dialog_emblem_core_size">64dp</dimen>
+    <dimen name="compact_dialog_emblem_icon_size">28dp</dimen>
+    <dimen name="compact_dialog_emblem_badge_size">24dp</dimen>
+    <dimen name="compact_dialog_emblem_badge_icon_size">12dp</dimen>
 </resources>
