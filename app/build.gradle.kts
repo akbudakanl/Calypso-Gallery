@@ -476,7 +476,8 @@ abstract class NeutralizeCommonsFakeChecksVisitorFactory :
 
     private enum class ReplacementKind {
         VOID_NOOP,
-        BOOLEAN_FALSE
+        BOOLEAN_FALSE,
+        OBJECT_INIT_NOOP
     }
 
     override fun isInstrumentable(classData: ClassData): Boolean {
@@ -550,13 +551,28 @@ abstract class NeutralizeCommonsFakeChecksVisitorFactory :
         override fun visitCode() {
             emitted = true
             target.visitCode()
-            if (replacement == ReplacementKind.BOOLEAN_FALSE) {
-                target.visitInsn(Opcodes.ICONST_0)
-                target.visitInsn(Opcodes.IRETURN)
-                target.visitMaxs(1, maxLocals)
-            } else {
-                target.visitInsn(Opcodes.RETURN)
-                target.visitMaxs(0, maxLocals)
+            when (replacement) {
+                ReplacementKind.BOOLEAN_FALSE -> {
+                    target.visitInsn(Opcodes.ICONST_0)
+                    target.visitInsn(Opcodes.IRETURN)
+                    target.visitMaxs(1, maxLocals)
+                }
+                ReplacementKind.OBJECT_INIT_NOOP -> {
+                    target.visitVarInsn(Opcodes.ALOAD, 0)
+                    target.visitMethodInsn(
+                        Opcodes.INVOKESPECIAL,
+                        "java/lang/Object",
+                        "<init>",
+                        "()V",
+                        false
+                    )
+                    target.visitInsn(Opcodes.RETURN)
+                    target.visitMaxs(1, maxLocals)
+                }
+                ReplacementKind.VOID_NOOP -> {
+                    target.visitInsn(Opcodes.RETURN)
+                    target.visitMaxs(0, maxLocals)
+                }
             }
             target.visitEnd()
         }
@@ -570,6 +586,20 @@ abstract class NeutralizeCommonsFakeChecksVisitorFactory :
 
     companion object {
         private const val ACTIVITY_KT = "org.fossify.commons.extensions.ActivityKt"
+        private const val CONTEXT_KT = "org.fossify.commons.extensions.ContextKt"
+        private const val CONTEXT_STYLING_KT = "org.fossify.commons.extensions.Context_stylingKt"
+        private const val SUPPORT_PROMPT_KT = "org.fossify.commons.extensions.SupportPromptKt"
+        private const val DONATE_DIALOG = "org.fossify.commons.dialogs.DonateDialog"
+        private const val DONATE_DIALOG_KT = "org.fossify.commons.dialogs.DonateDialogKt"
+        private const val RATE_APP_DIALOG = "org.fossify.commons.dialogs.RateAppDialog"
+        private const val PURCHASE_THANK_YOU_DIALOG =
+            "org.fossify.commons.dialogs.PurchaseThankYouDialog"
+        private const val PURCHASE_THANK_YOU_DIALOG_KT =
+            "org.fossify.commons.dialogs.PurchaseThankYouDialogKt"
+        private const val APP_SIDELOADED_DIALOG =
+            "org.fossify.commons.dialogs.AppSideloadedDialog"
+        private const val APP_SIDELOADED_DIALOG_KT =
+            "org.fossify.commons.dialogs.AppSideloadedDialogKt"
         private const val COMPOSE_ACTIVITY_EXTENSIONS =
             "org.fossify.commons.compose.extensions.ActivityExtensionsKt"
         private const val COMPOSE_ACTIVITY_UI_EXTENSIONS =
@@ -577,6 +607,16 @@ abstract class NeutralizeCommonsFakeChecksVisitorFactory :
 
         private val TARGET_CLASSES = setOf(
             ACTIVITY_KT,
+            CONTEXT_KT,
+            CONTEXT_STYLING_KT,
+            SUPPORT_PROMPT_KT,
+            DONATE_DIALOG,
+            DONATE_DIALOG_KT,
+            RATE_APP_DIALOG,
+            PURCHASE_THANK_YOU_DIALOG,
+            PURCHASE_THANK_YOU_DIALOG_KT,
+            APP_SIDELOADED_DIALOG,
+            APP_SIDELOADED_DIALOG_KT,
             COMPOSE_ACTIVITY_EXTENSIONS,
             COMPOSE_ACTIVITY_UI_EXTENSIONS
         )
@@ -600,6 +640,90 @@ abstract class NeutralizeCommonsFakeChecksVisitorFactory :
                     name == "isAppSideloaded" &&
                         descriptor == "(Landroid/app/Activity;)Z" ->
                         ReplacementKind.BOOLEAN_FALSE
+                    name == "launchPurchaseThankYouIntent" &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    name == "launchMoreAppsFromUsIntent" &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    name == "launchAppRatingPage" &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    else -> null
+                }
+                CONTEXT_KT -> when {
+                    name == "isThankYouInstalled" &&
+                        descriptor == "(Landroid/content/Context;)Z" ->
+                        ReplacementKind.BOOLEAN_FALSE
+                    name == "isThankYouFontsSupported" &&
+                        descriptor == "(Landroid/content/Context;)Z" ->
+                        ReplacementKind.BOOLEAN_FALSE
+                    name == "canAccessGlobalConfig" &&
+                        descriptor == "(Landroid/content/Context;)Z" ->
+                        ReplacementKind.BOOLEAN_FALSE
+                    name == "hasThankYouUnlock" &&
+                        descriptor == "(Landroid/content/Context;)Z" ->
+                        ReplacementKind.BOOLEAN_FALSE
+                    else -> null
+                }
+                CONTEXT_STYLING_KT -> when {
+                    name == "checkAppIconColor" &&
+                        descriptor == "(Landroid/content/Context;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    name == "toggleAppIconColor" &&
+                        descriptor == "(Landroid/content/Context;Ljava/lang/String;IIZ)V" ->
+                        ReplacementKind.VOID_NOOP
+                    else -> null
+                }
+                SUPPORT_PROMPT_KT -> when {
+                    name == "showAutomaticSupportPromptIfEligible" &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    else -> null
+                }
+                DONATE_DIALOG -> when {
+                    name == "<init>" &&
+                        descriptor == "(Landroid/app/Activity;Lkotlin/jvm/functions/Function0;)V" ->
+                        ReplacementKind.OBJECT_INIT_NOOP
+                    else -> null
+                }
+                DONATE_DIALOG_KT -> when {
+                    name == "DonateAlertDialog" &&
+                        descriptor == "(Lorg/fossify/commons/compose/alert_dialog/AlertDialogState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V" ->
+                        ReplacementKind.VOID_NOOP
+                    (name == "openDonationOptions" || name == "access\$openDonationOptions") &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.VOID_NOOP
+                    else -> null
+                }
+                RATE_APP_DIALOG -> when {
+                    name == "<init>" &&
+                        descriptor == "(Landroid/app/Activity;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V" ->
+                        ReplacementKind.OBJECT_INIT_NOOP
+                    else -> null
+                }
+                PURCHASE_THANK_YOU_DIALOG -> when {
+                    name == "<init>" &&
+                        descriptor == "(Landroid/app/Activity;)V" ->
+                        ReplacementKind.OBJECT_INIT_NOOP
+                    else -> null
+                }
+                PURCHASE_THANK_YOU_DIALOG_KT -> when {
+                    name == "PurchaseThankYouAlertDialog" &&
+                        descriptor == "(Lorg/fossify/commons/compose/alert_dialog/AlertDialogState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V" ->
+                        ReplacementKind.VOID_NOOP
+                    else -> null
+                }
+                APP_SIDELOADED_DIALOG -> when {
+                    name == "<init>" &&
+                        descriptor == "(Landroid/app/Activity;Lkotlin/jvm/functions/Function0;)V" ->
+                        ReplacementKind.OBJECT_INIT_NOOP
+                    else -> null
+                }
+                APP_SIDELOADED_DIALOG_KT -> when {
+                    name == "AppSideLoadedAlertDialog" &&
+                        descriptor == "(Lorg/fossify/commons/compose/alert_dialog/AlertDialogState;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V" ->
+                        ReplacementKind.VOID_NOOP
                     else -> null
                 }
                 COMPOSE_ACTIVITY_EXTENSIONS -> when {

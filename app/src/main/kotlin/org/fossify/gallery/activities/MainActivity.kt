@@ -20,13 +20,11 @@ import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.dialogs.CreateNewFolderDialog
 import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.dialogs.RadioGroupDialog
-import org.fossify.commons.extensions.appLaunched
 import org.fossify.commons.extensions.appLockManager
 import org.fossify.commons.extensions.areSystemAnimationsEnabled
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.checkWhatsNew
 import org.fossify.commons.extensions.deleteFiles
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFileCount
@@ -62,6 +60,7 @@ import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toFileDirItem
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.underlineText
+import org.fossify.commons.extensions.updateSDCardPath
 import org.fossify.commons.extensions.viewBinding
 import org.fossify.commons.helpers.DAY_SECONDS
 import org.fossify.commons.helpers.FAVORITES
@@ -80,7 +79,6 @@ import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.FileDirItem
 import org.fossify.commons.models.RadioItem
-import org.fossify.commons.models.Release
 import org.fossify.commons.views.MyGridLayoutManager
 import org.fossify.commons.views.MyRecyclerView
 import org.fossify.gallery.BuildConfig
@@ -395,7 +393,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
-        appLaunched(BuildConfig.APPLICATION_ID)
+        initAppLaunchState()
         mLastKnownAllFilesAccess = !isRPlus() || isExternalStorageManager()
 
         val preserveVaultOnSwitch = VaultSessionManager.consumePreserveVaultOnSwitch()
@@ -447,7 +445,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             getDirectories(forceRepair = true)
         }
         storeStateVariables()
-        checkWhatsNewDialog()
         setupLatestMediaId()
 
         if (!config.wereFavoritesPinned) {
@@ -2932,9 +2929,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
     }
 
-    private fun checkWhatsNewDialog() {
-        arrayListOf<Release>().apply {
-            checkWhatsNew(this, BuildConfig.VERSION_CODE)
-        }
+    private fun initAppLaunchState() {
+        config.internalStoragePath = internalStoragePath
+        updateSDCardPath()
+        config.appId = BuildConfig.APPLICATION_ID
+        config.appRunCount++
+        config.lastVersion = BuildConfig.VERSION_CODE
     }
 }
