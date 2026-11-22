@@ -198,8 +198,9 @@ object CryptoManager {
     }
 
 
-    fun lockVault() {
-        clearKeys(context = null)
+    /** Pass the current context so vault-derived clipboard content can be cleared on lock. */
+    fun lockVault(context: android.content.Context? = null) {
+        clearKeys(context = context)
     }
 
     /**

@@ -301,7 +301,9 @@ class VaultAuthInputHelper(
         for ((btn, digit) in digitButtons) {
             btn.setOnClickListener {
                 if (pinLength == currentPin.size) {
-                    currentPin = currentPin.copyOf(currentPin.size * 2)
+                    val expanded = currentPin.copyOf(currentPin.size * 2)
+                    currentPin.fill('\u0000')
+                    currentPin = expanded
                 }
                 currentPin[pinLength++] = digit
                 updatePinDots()

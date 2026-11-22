@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
@@ -175,7 +177,7 @@ class VaultNoticeDialog(
             .setView(binding.root)
             .setCancelable(cancelable)
 
-        activity.setupDialogStuff(binding.root, builder) { alertDialog ->
+        activity.setupDialogStuff(binding.root, builder) { alertDialog -> alertDialog.secureVaultWindow()
             dialog = alertDialog
             alertDialog.setCanceledOnTouchOutside(canceledOnTouchOutside)
             alertDialog.setOnCancelListener { onCancel?.invoke() }

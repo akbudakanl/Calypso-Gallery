@@ -539,7 +539,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             config.temporarilyShowHidden = false
             config.temporarilyShowVaultExcluded = false
             config.resetTempDeleteConfirmation()
-            CryptoManager.lockVault()
+            CryptoManager.lockVault(this@MediaActivity)
             VaultSessionManager.onVaultExited()
         }
 
@@ -603,7 +603,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         config.temporarilyShowHidden = false
         config.temporarilyShowVaultExcluded = false
         config.resetTempDeleteConfirmation()
-        CryptoManager.lockVault()
+        CryptoManager.lockVault(this@MediaActivity)
         CryptoManager.clearAppImageCaches(this)
         VaultSessionManager.onVaultExited()
 
@@ -1394,7 +1394,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         config.temporarilyShowHidden = show
         if (!show) {
             config.temporarilyShowVaultExcluded = false
-            CryptoManager.lockVault()
+            CryptoManager.lockVault(this@MediaActivity)
             VaultSessionManager.onVaultExited()
             if ((mPath.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(mPath)) ||
                 (mPath.isNotEmpty() && !mPath.isVirtualAlbumPath() && CryptoManager.isEncryptedFolderPath(this, mPath))

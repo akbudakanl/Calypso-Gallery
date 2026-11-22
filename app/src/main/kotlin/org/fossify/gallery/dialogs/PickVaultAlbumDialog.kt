@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.app.Activity
 import android.graphics.drawable.ColorDrawable
 import android.view.View
@@ -85,7 +87,7 @@ class PickVaultAlbumDialog(
                 }
             }
             .apply {
-                activity.setupDialogStuff(listView, this, R.string.select_hidden_album) { alertDialog ->
+                activity.setupDialogStuff(listView, this, R.string.select_hidden_album) { alertDialog -> alertDialog.secureVaultWindow()
                     dialog = alertDialog
                 }
             }

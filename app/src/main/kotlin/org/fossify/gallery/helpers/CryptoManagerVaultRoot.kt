@@ -292,7 +292,7 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
     val targetPath = normalizeVaultPath(newVaultRoot?.absolutePath ?: "")
     val switchingToDifferentVault = previousPath.isNotEmpty() && !previousPath.equals(targetPath, ignoreCase = true)
 
-    lockVault()
+    lockVault(context)
     cachedVaultRoot = newVaultRoot
     encryptedFolderCache.clear()
     folderNameCache.clear()
@@ -481,7 +481,7 @@ fun CryptoManager.hasStaleVaultState(context: Context): Boolean {
  * clears every cache and removes all credentials and the biometric key.
  */
 fun CryptoManager.resetStaleVaultState(context: Context) {
-    lockVault()
+    lockVault(context)
     cachedVaultRoot = null
     encryptedFolderCache.clear()
     folderNameCache.clear()
@@ -512,7 +512,7 @@ fun CryptoManager.verifyVaultOnDisk(context: Context): Boolean {
         return context.config.vaultWrappedKeyData.isNotEmpty()
     }
     if (isConfiguredVaultTemporarilyUnavailable(context)) {
-        lockVault()
+        lockVault(context)
         cachedVaultRoot = null
         encryptedFolderCache.clear()
         folderNameCache.clear()

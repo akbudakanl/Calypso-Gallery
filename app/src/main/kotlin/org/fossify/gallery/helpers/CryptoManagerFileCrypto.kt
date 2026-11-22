@@ -729,7 +729,8 @@ fun CryptoManager.decryptFileToDirectory(
         outFile
     } catch (e: Exception) {
         AtomicStaging.discard(staging, containsPlaintext = true, context = context)
-        outFile.delete()
+        // A post-commit failure can leave a plaintext output behind: wipe it, do not just unlink it.
+        runCatching { secureWipeAndDeleteFile(outFile, context, syncParentDir = false, purgeTraces = false) }
         OperationJournal.markFailed(operation, e.message ?: "decrypt failed")
         null
     }

@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import org.fossify.commons.activities.BaseSimpleActivity
@@ -41,7 +43,7 @@ class PickMediumDialog(val activity: BaseSimpleActivity, val path: String, val c
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .setNeutralButton(R.string.other_folder) { dialogInterface, i -> showOtherFolder() }
             .apply {
-                activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.select_photo) { alertDialog ->
+                activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.select_photo) { alertDialog -> alertDialog.secureVaultWindow()
                     dialog = alertDialog
                 }
             }

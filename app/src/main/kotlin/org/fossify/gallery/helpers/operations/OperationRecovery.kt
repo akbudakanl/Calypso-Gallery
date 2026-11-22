@@ -542,18 +542,27 @@ object OperationRecovery {
             candidateDest
         }
         val staging = AtomicStaging.fileFor(dest, ctx)
+        val sourceFingerprint = item.sourceFingerprint.ifEmpty { MediaIdentity.computeFingerprint(source) }
+        val sourceLength = source.length()
         OperationJournal.markInFlight(
             ctx = ctx,
             stagingPath = staging.absolutePath,
             resolvedDestName = dest.name,
             actualDestPath = dest.absolutePath,
-            sourceFingerprint = item.sourceFingerprint.ifEmpty { MediaIdentity.computeFingerprint(source) }
+            sourceFingerprint = sourceFingerprint
         )
         return try {
             destDir.mkdirs()
             source.copyTo(staging, overwrite = true, bufferSize = 256 * 1024)
             AtomicStaging.commit(staging, dest)
-            OperationJournal.markVerified(ctx, MediaIdentity.computeFingerprint(dest), dest.absolutePath)
+            val destFingerprint = MediaIdentity.computeFingerprint(dest)
+            if (sourceFingerprint.isEmpty() || destFingerprint.isEmpty() ||
+                dest.length() != sourceLength || destFingerprint != sourceFingerprint
+            ) {
+                runCatching { CryptoManager.secureWipeAndDeleteFile(file = dest, context = context) }
+                throw java.io.IOException("resume plain copy verification failed")
+            }
+            OperationJournal.markVerified(ctx, destFingerprint, dest.absolutePath)
             if (batch?.isMove == true || item.kind == OperationJournal.KIND_MOVE) {
                 runCatching { context.updateDBMediaPath(source.absolutePath, dest.absolutePath) }
                 source.delete()

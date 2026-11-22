@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.graphics.Color
 import android.os.Environment
 import android.view.inputmethod.EditorInfo
@@ -108,7 +110,7 @@ class PickDirectoryDialog(
         }
 
         builder.apply {
-            activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.select_destination) { alertDialog ->
+            activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.select_destination) { alertDialog -> alertDialog.secureVaultWindow()
                 dialog = alertDialog
                 binding.directoriesShowHidden.beGone()
 

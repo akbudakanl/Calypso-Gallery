@@ -1220,7 +1220,11 @@ class SettingsActivity : SimpleActivity() {
      * vault is already unlocked because the person is viewing an encrypted album. The ordinary vault-session state
      * is intentionally ignored here.
      */
-    private fun requireVaultPassword(allowBiometrics: Boolean = true, onAuthorized: () -> Unit) {
+    private fun requireVaultPassword(
+        allowBiometrics: Boolean = true,
+        verifyOnly: Boolean = false,
+        onAuthorized: () -> Unit
+    ) {
         if (!doesVaultExist()) return
         val currentType = CryptoManager.getVaultProtectionType(this)
             ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
@@ -1230,6 +1234,7 @@ class SettingsActivity : SimpleActivity() {
             showTabIndex = currentType,
             minimalist = false,
             allowBiometrics = allowBiometrics,
+            verifyOnly = verifyOnly,
         ) { _, _, success ->
             if (success) onAuthorized()
         }
@@ -1238,7 +1243,7 @@ class SettingsActivity : SimpleActivity() {
     private fun setupBlockVaultScreenshots() {
         binding.settingsBlockVaultScreenshots.isChecked = config.blockVaultScreenshots
         binding.settingsBlockVaultScreenshotsHolder.setOnClickListener {
-            requireVaultPassword {
+            requireVaultPassword(verifyOnly = true) {
                 binding.settingsBlockVaultScreenshots.toggle()
                 config.blockVaultScreenshots = binding.settingsBlockVaultScreenshots.isChecked
             }
@@ -1248,7 +1253,7 @@ class SettingsActivity : SimpleActivity() {
     private fun setupHideVaultKeyPresses() {
         binding.settingsHideVaultKeyPresses.isChecked = config.hideVaultKeyPresses
         binding.settingsHideVaultKeyPressesHolder.setOnClickListener {
-            requireVaultPassword {
+            requireVaultPassword(verifyOnly = true) {
                 binding.settingsHideVaultKeyPresses.toggle()
                 config.hideVaultKeyPresses = binding.settingsHideVaultKeyPresses.isChecked
             }
@@ -1262,7 +1267,7 @@ class SettingsActivity : SimpleActivity() {
             val proceedWithAuth = {
                 // Ayar açılırken PIN uzunluğunu öğrenmek için biyometrik yerine PIN girişi zorunlu tutulur;
                 // ayar kapatılırken biyometrik doğrulama da kullanılabilir ve uzunluk diskten silinir.
-                requireVaultPassword(allowBiometrics = !enabling) {
+                requireVaultPassword(allowBiometrics = !enabling, verifyOnly = true) {
                     if (enabling) {
                         config.showVaultPinDots = true
                         val enteredLen = VaultAuthInputHelper.lastAuthenticatedPinLength
@@ -1500,11 +1505,17 @@ class SettingsActivity : SimpleActivity() {
                 VaultSessionManager.lockVaultIfOutsideSession(this)
             }
         ) { _, _, changeSuccess ->
-            VaultSessionManager.lockVaultIfOutsideSession(this)
             if (changeSuccess) {
                 updateVaultBiometricSwitch()
                 toast(R.string.password_changed_successfully)
-                showVaultPasswordSavedDialog {}
+                // 3a → 3b akışı unlockedMasterKey'i kullanır. Anahtarı ancak teklif
+                // tamamlandıktan (veya Geri ile atlandıktan) sonra RAM'den sil; aksi
+                // halde completeBiometricSetup() sessizce false döner.
+                showVaultPasswordSavedDialog {
+                    VaultSessionManager.lockVaultIfOutsideSession(this)
+                }
+            } else {
+                VaultSessionManager.lockVaultIfOutsideSession(this)
             }
         }
     }
@@ -1530,7 +1541,7 @@ class SettingsActivity : SimpleActivity() {
                     CryptoManager.clearBiometricKey(this)
                     config.temporarilyShowHidden = false
                     config.temporarilyShowVaultExcluded = false
-                    CryptoManager.lockVault()
+                    CryptoManager.lockVault(this@SettingsActivity)
                     CryptoManager.clearAppImageCaches(this)
                     VaultSessionManager.onVaultExited()
                     applyVaultScreenProtection(false)
@@ -1571,7 +1582,7 @@ class SettingsActivity : SimpleActivity() {
                     getString(R.string.archive_vault_confirm),
                     titleId = R.string.archive_vault,
                 ) {
-                    CryptoManager.lockVault()
+                    CryptoManager.lockVault(this@SettingsActivity)
                     val entry = VaultArchiveManager.archiveActiveVault(this)
                     if (entry == null) {
                         toast(R.string.archive_vault_failed)
@@ -1590,6 +1601,8 @@ class SettingsActivity : SimpleActivity() {
                         onNegative = {
                             val clipboard = getSystemService(ClipboardManager::class.java)
                             clipboard?.setPrimaryClip(ClipData.newPlainText(getString(R.string.archive_vault), entry.path))
+                            // Vault-derived path: clearKeys(context) must wipe it on lock.
+                            CryptoManager.vaultClipboardTouched = true
                         },
                     )
 
@@ -1765,7 +1778,7 @@ class SettingsActivity : SimpleActivity() {
             val cipher = CryptoManager.getBiometricEncryptCipher()
             if (cipher == null) {
                 if (lockVaultAfter) {
-                    CryptoManager.lockVault()
+                    CryptoManager.lockVault(this@SettingsActivity)
                     applyVaultScreenProtection(false)
                 }
                 toast(org.fossify.commons.R.string.an_error_occurred)
@@ -1794,7 +1807,7 @@ class SettingsActivity : SimpleActivity() {
                             toast(org.fossify.commons.R.string.an_error_occurred)
                         }
                         if (lockVaultAfter) {
-                            CryptoManager.lockVault()
+                            CryptoManager.lockVault(this@SettingsActivity)
                             applyVaultScreenProtection(false)
                         }
                     }
@@ -1802,7 +1815,7 @@ class SettingsActivity : SimpleActivity() {
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         CryptoManager.clearBiometricKey(this@SettingsActivity)
                         if (lockVaultAfter) {
-                            CryptoManager.lockVault()
+                            CryptoManager.lockVault(this@SettingsActivity)
                             applyVaultScreenProtection(false)
                         }
                         updateVaultBiometricSwitch()
@@ -1818,7 +1831,11 @@ class SettingsActivity : SimpleActivity() {
             message = getString(R.string.vault_biometric_offer_message),
             note = getString(R.string.vault_biometric_setup_password_note),
             onContinue = { launchSystemPrompt() },
-            onCancel = {},
+            onCancel = {
+                // The key was promoted for enrollment; do not leave it in session RAM on cancel.
+                VaultSessionManager.lockVaultIfOutsideSession(this@SettingsActivity)
+                applyVaultScreenProtection(false)
+            },
         )
     }
 

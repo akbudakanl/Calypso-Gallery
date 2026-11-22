@@ -629,7 +629,8 @@ private fun CryptoManager.decryptFolderRegistered(
     val expectedProcessed = filesToDecrypt.size - skippedConflictFiles.size
     if (failed || decryptedPairs.size != expectedProcessed) {
         newlyCreatedPlainFiles.forEach { decryptedFile ->
-            try { decryptedFile.delete() } catch (_: Exception) {}
+            // These files were just decrypted: rollback must securely wipe them, not plain delete().
+            try { secureWipeAndDeleteFile(decryptedFile, context, syncParentDir = false, purgeTraces = false) } catch (_: Exception) {}
         }
         if (!targetExistedBefore && targetFolder.listFiles().isNullOrEmpty()) {
             try { targetFolder.deleteRecursively() } catch (_: Exception) {}

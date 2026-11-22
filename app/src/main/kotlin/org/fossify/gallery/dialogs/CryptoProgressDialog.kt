@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.app.Activity
 import android.view.KeyEvent
 import androidx.appcompat.app.AlertDialog
@@ -49,7 +51,7 @@ class CryptoProgressDialog(
                 dialog = this,
                 titleId = titleId,
                 cancelOnTouchOutside = false
-            ) { alertDialog ->
+            ) { alertDialog -> alertDialog.secureVaultWindow()
                 if (isDismissed || activity.isFinishing || activity.isDestroyed) {
                     try {
                         alertDialog.dismiss()

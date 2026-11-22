@@ -414,7 +414,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             mHiddenDisplayMode = DISPLAY_NONE
             if (!preserveVaultOnSwitch) {
                 config.temporarilyShowHidden = false
-                CryptoManager.lockVault()
+                CryptoManager.lockVault(this@MainActivity)
             }
             config.temporarilyShowExcluded = false
             config.temporarilyShowHiddenFolders = false
@@ -780,7 +780,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 mIsSecretVaultView = false
                 mHiddenDisplayMode = DISPLAY_NONE
                 config.temporarilyShowHidden = false
-                CryptoManager.lockVault()
+                CryptoManager.lockVault(this@MainActivity)
                 CryptoManager.clearAppImageCaches(this)
                 VaultSessionManager.onVaultExited()
             }
@@ -855,7 +855,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mHiddenDisplayMode = DISPLAY_NONE
         config.temporarilyShowHidden = false
         config.resetTempDeleteConfirmation()
-        CryptoManager.lockVault()
+        CryptoManager.lockVault(this@MainActivity)
         CryptoManager.clearAppImageCaches(this)
         VaultSessionManager.onVaultExited()
         updateVaultModeUi()
@@ -1485,7 +1485,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         if (!show) {
             mIsSecretVaultView = false
             mHiddenDisplayMode = DISPLAY_NONE
-            CryptoManager.lockVault()
+            CryptoManager.lockVault(this@MainActivity)
             CryptoManager.clearAppImageCaches(this)
             VaultSessionManager.onVaultExited()
         }

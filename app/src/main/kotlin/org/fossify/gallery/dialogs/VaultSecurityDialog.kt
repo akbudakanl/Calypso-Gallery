@@ -63,6 +63,8 @@ class VaultSecurityDialog(
     private val rewrapKdfOnUnlock: Boolean = false,
     /** HTML screen 5: explain that this is a password check, not a vault unlock. */
     private val showVerificationMessage: Boolean = false,
+    /** Verify against .vault with an ephemeral key only; never promote keys to session RAM. */
+    private val verifyOnly: Boolean = false,
     /** HTML screen 5: bottom-right "I forgot my password" link to the recovery dialog. */
     private val showForgotPasswordLink: Boolean = false,
     private val onForgotPassword: (() -> Unit)? = null,
@@ -497,6 +499,25 @@ class VaultSecurityDialog(
         if (setupInFlight || weakWarningInFlight) return
         if (isSetupMode) {
             handleSetupSubmission(secret)
+        } else if (verifyOnly) {
+            setDialogBusy(true)
+            ensureBackgroundThread {
+                val success = CryptoManager.isCurrentVaultSecret(activity, secret)
+                secret.fill('\u0000')
+                activity.runOnUiThread {
+                    setDialogBusy(false)
+                    if (success) {
+                        // PIN-dot settings need the entered length without promoting a session key.
+                        VaultAuthInputHelper.lastAuthenticatedPinLength =
+                            if (currentType == PROTECTION_PIN) secret.size else 0
+                        markVaultPasswordEntered(activity.config)
+                        dialogSucceeded = true
+                        completeUnlockSuccess()
+                    } else {
+                        updateStatusLabel()
+                    }
+                }
+            }
         } else {
             inputHelper.unlockWithSecretAsync(
                 secret = secret,
@@ -681,7 +702,7 @@ class VaultSecurityDialog(
      * rewrap flows keep their immediate behaviour - the motion is only for entering the vault.
      */
     private fun completeUnlockSuccess() {
-        if (isSetupMode || isChangePasswordMode || rewrapKdfOnUnlock ||
+        if (isSetupMode || isChangePasswordMode || rewrapKdfOnUnlock || verifyOnly ||
             !android.animation.ValueAnimator.areAnimatorsEnabled()
         ) {
             dialog?.dismiss()

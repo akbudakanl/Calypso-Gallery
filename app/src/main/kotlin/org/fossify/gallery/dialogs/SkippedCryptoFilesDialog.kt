@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.app.Activity
 import android.content.Context
 import android.graphics.Color
@@ -106,7 +108,7 @@ fun showDeleteSkippedFilesConfirmation(
                 view = messageView,
                 dialog = this,
                 titleId = R.string.delete_skipped_files_confirm_title
-            ) { alertDialog ->
+            ) { alertDialog -> alertDialog.secureVaultWindow()
                 alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setTextColor(activity.getDestructiveRedColor())
             }
         }
@@ -233,7 +235,7 @@ fun showSkippedCryptoFilesSettingsDialog(
                 view = binding.root,
                 dialog = this,
                 titleId = 0
-            ) { alertDialog ->
+            ) { alertDialog -> alertDialog.secureVaultWindow()
                 val redColor = activity.getDestructiveRedColor()
                 val deleteRadio: RadioButton = binding.skippedCryptoFilesModeDelete
                 deleteRadio.setTextColor(redColor)
@@ -378,7 +380,7 @@ fun BaseSimpleActivity.resolveSkippedCryptoFiles(
             }
         }
         .apply {
-            setupDialogStuff(binding.root, this) { alertDialog ->
+            setupDialogStuff(binding.root, this) { alertDialog -> alertDialog.secureVaultWindow()
                 val deleteBtn = alertDialog.getButton(AlertDialog.BUTTON_NEGATIVE)
                 deleteBtn?.setTextColor(getDestructiveRedColor())
                 deleteBtn?.setOnClickListener {

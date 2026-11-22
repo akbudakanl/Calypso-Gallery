@@ -634,6 +634,8 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
                     clipboard?.setPrimaryClip(
                         android.content.ClipData.newPlainText(getString(R.string.archived_vault_invalid), entry.path)
                     )
+                    // Vault-derived path: clearKeys(context) must wipe it on lock.
+                    CryptoManager.vaultClipboardTouched = true
                 },
             )
             return
@@ -932,7 +934,7 @@ private fun BaseSimpleActivity.unlockCandidateVault(
     val switchingToDifferentVault = snapshot.vaultRootPath.isNotEmpty() &&
         !snapshot.vaultRootPath.trimEnd('/', '\\').equals(existingVault.absolutePath.trimEnd('/', '\\'), ignoreCase = true)
 
-    CryptoManager.lockVault()
+    CryptoManager.lockVault(this)
     CryptoManager.setVaultRootLocation(this, existingVault)
     if (switchingToDifferentVault) {
         // Keep previous biometric bundle out of the unlock prompt for the candidate vault;
@@ -951,7 +953,7 @@ private fun BaseSimpleActivity.unlockCandidateVault(
         showTabIndex = initialType,
         minimalist = false,
         onCancelCallback = {
-            CryptoManager.lockVault()
+            CryptoManager.lockVault(this)
             config.vaultRootPath = snapshot.vaultRootPath
             config.vaultWrappedKeyData = snapshot.wrappedKeyData
             config.hiddenPasswordHash = snapshot.hiddenPasswordHash
@@ -2959,13 +2961,30 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                                             continue
                                         }
                                         val plainStaging = AtomicStaging.fileFor(targetFile, itemOperation)
-                                        OperationJournal.markInFlight(itemOperation, plainStaging.absolutePath)
+                                        val sourceFingerprint = MediaIdentity.computeFingerprint(srcFile)
+                                        val sourceLength = srcFile.length()
+                                        OperationJournal.markInFlight(
+                                            itemOperation,
+                                            plainStaging.absolutePath,
+                                            resolvedDestName = targetFile.name,
+                                            actualDestPath = targetFile.absolutePath,
+                                            sourceFingerprint = sourceFingerprint
+                                        )
                                         try {
                                             srcFile.copyTo(plainStaging, overwrite = true, bufferSize = 256 * 1024)
                                             AtomicStaging.commit(plainStaging, targetFile)
+                                            val destFingerprint = MediaIdentity.computeFingerprint(targetFile)
+                                            if (sourceFingerprint.isEmpty() || destFingerprint.isEmpty() ||
+                                                targetFile.length() != sourceLength || destFingerprint != sourceFingerprint
+                                            ) {
+                                                // Read-back verification failed: keep the source, remove the
+                                                // unverified plaintext destination with a secure wipe.
+                                                CryptoManager.secureWipeAndDeleteFile(this, targetFile)
+                                                throw java.io.IOException("plain copy verification failed")
+                                            }
                                             OperationJournal.markVerified(
                                                 itemOperation,
-                                                MediaIdentity.computeFingerprint(targetFile),
+                                                destFingerprint,
                                                 targetFile.absolutePath
                                             )
                                             targetFile.setLastModified(srcFile.lastModified())
@@ -3978,8 +3997,9 @@ fun Activity.proposeNewFilePath(uri: Uri): Pair<String, Boolean> {
     return Pair(newPath, shouldAppendFilename)
 }
 
-fun Activity.applyVaultScreenProtection(enable: Boolean) {
-    val shouldProtect = enable && config.blockVaultScreenshots
+fun Activity.applyVaultScreenProtection(enable: Boolean, force: Boolean = false) {
+    // The lock screen is always protected; other screens honour the user's preference.
+    val shouldProtect = enable && (force || config.blockVaultScreenshots)
     try {
         if (shouldProtect) {
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)

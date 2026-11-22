@@ -1,5 +1,7 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.secureVaultWindow
+
 import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -465,7 +467,7 @@ class SmartFileConflictDialog(
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
             .apply {
-                activity.setupDialogStuff(container, this, titleText = title) { alertDialog ->
+                activity.setupDialogStuff(container, this, titleText = title) { alertDialog -> alertDialog.secureVaultWindow()
                     previewDialog = alertDialog
                 }
             }

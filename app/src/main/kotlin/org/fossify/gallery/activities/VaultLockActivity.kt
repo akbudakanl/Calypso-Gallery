@@ -144,7 +144,9 @@ class VaultLockActivity : SimpleActivity() {
     override fun onResume() {
         super.onResume()
         inputHelper.resetBiometricPromptState()
-        applyVaultScreenProtection(true)
+        // The lock screen must never be screenshot-able, even if the user disabled the
+        // general blockVaultScreenshots preference.
+        applyVaultScreenProtection(true, force = true)
         maybeAutoPromptBiometricUnlock()
     }
 
@@ -208,7 +210,7 @@ class VaultLockActivity : SimpleActivity() {
         config.temporarilyShowHidden = false
         config.temporarilyShowVaultExcluded = false
         config.resetTempDeleteConfirmation()
-        CryptoManager.lockVault()
+        CryptoManager.lockVault(this@VaultLockActivity)
         CryptoManager.clearAppImageCaches(this)
         VaultSessionManager.onVaultExited()
         VaultSessionManager.markUnlockDeclined()
