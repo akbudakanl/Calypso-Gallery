@@ -156,9 +156,11 @@ class CalypsoOverflowMenuTest {
 
     @Test
     fun settingsFooterDoesNotRenderATrailingChevron() {
-        val source = File(
-            "app/src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt"
-        ).readText()
+        val candidates = listOf(
+            File("src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt"),
+            File("app/src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt")
+        )
+        val source = candidates.first { it.exists() }.readText()
         assertFalse(source.contains("if (item.hasSubMenu() || isSettingsFooter)"))
         assertTrue(source.contains("if (item.hasSubMenu())"))
     }
