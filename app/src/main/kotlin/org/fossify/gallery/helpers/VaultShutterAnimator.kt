@@ -75,9 +75,11 @@ class VaultShutterAnimator(
             }
         }
 
-        // 3 — light sweep across the dots (380-900 ms). The XML gradient is white, so light
-        // themes need the active primary colour to keep it visible on a light input field.
-        // Omitted when the PIN per-digit dot rectangle is shown so the line doesn't cross the box.
+        // 3 — light sweep in the corridor ABOVE the PIN characters (380-900 ms). The XML gradient
+        // is white, so light themes need the active primary colour to keep it visible. It is
+        // omitted when the PIN per-digit dot rectangle is shown, and for legacy bullets it sits
+        // above the text (dialog_vault_security.xml, layout_gravity="top") so it never crosses
+        // the dots.
         sweep?.let { sweepView ->
             sweepView.background?.mutate()?.setColorFilter(sweepColor, PorterDuff.Mode.SRC_ATOP)
             sweepView.alpha = 0f

@@ -864,6 +864,26 @@ class VaultLockPolicyTest {
         )
     }
 
+    @Test
+    fun shutterSweepStaysAboveLegacyPinBullets() {
+        val layout = locateAppFile("src/main/res/layout/dialog_vault_security.xml").readText()
+        val sweepBlock = layout
+            .substringAfter("android:id=\"@+id/vault_unlock_sweep\"")
+            .substringBefore("/>")
+        assertTrue(
+            "Sweep must travel in the corridor above the bullets, not through them",
+            sweepBlock.contains("android:layout_gravity=\"top\"") &&
+                !sweepBlock.contains("center_vertical")
+        )
+        val legacyBlock = layout
+            .substringAfter("android:id=\"@+id/vault_pin_dots_legacy\"")
+            .substringBefore("/>")
+        assertTrue(
+            "Legacy bullets stay vertically centered inside their own text view",
+            legacyBlock.contains("android:gravity=\"center\"")
+        )
+    }
+
     private class FakeContext(private val root: File) : ContextWrapper(null) {
         private val prefs = InMemoryPrefs()
         override fun getApplicationContext(): Context = this

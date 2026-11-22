@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Kasa kilit ekranı — shutter sweep konumu</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--accent:#d9af76;--bad:#f87171;--good:#4ade80;--surface:#18181b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:27px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:1060px;font-size:14px;line-height:1.6;margin:0 0 24px}
+.grid{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;width:340px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:10px}
+.tag.new{background:rgba(74,222,128,.14);color:var(--good)}
+.tag.oldtag{background:rgba(248,113,113,.14);color:var(--bad)}
+.tag.info{background:rgba(217,175,118,.14);color:var(--accent)}
+
+/* lock panel mockup */
+.screen{background:var(--surface);border:1px solid #34343c;border-radius:18px;height:250px;position:relative;overflow:hidden;padding:14px}
+.emblem{position:absolute;top:18px;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:12px;background:#4a3d2c;border:1.5px solid var(--accent)}
+.emblem::before{content:"";position:absolute;left:11px;top:6px;width:20px;height:16px;border:2px solid var(--accent);border-bottom:0;border-radius:10px 10px 0 0}
+.emblem::after{content:"";position:absolute;left:14px;top:18px;width:14px;height:13px;border:2px solid var(--accent);border-radius:3px}
+.label{position:absolute;top:70px;left:0;right:0;text-align:center;font-size:11px;color:var(--sec)}
+.sweep{position:absolute;height:4px;border-radius:4px;background:linear-gradient(90deg,transparent,var(--accent),transparent);box-shadow:0 0 12px rgba(217,175,118,.5)}
+.bullets{position:absolute;left:0;right:0;text-align:center;font-size:24px;letter-spacing:8px;color:var(--text)}
+.gapline{position:absolute;left:50%;width:1px;border-left:1px dashed #6b7280}
+.gapnote{position:absolute;font-size:10px;color:var(--sec);white-space:nowrap}
+.dotbox{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:10px;padding:10px 14px;border:1px solid var(--accent);border-radius:14px;background:rgba(217,175,118,.06)}
+.dotbox i{width:11px;height:11px;border-radius:50%;border:1.6px solid #8b8b93;display:block}
+.dotbox i.f{background:var(--accent);border-color:var(--accent)}
+.dotbox i.p{box-shadow:0 0 0 5px rgba(217,175,118,.18)}
+.caption{font-size:11px;color:var(--sec);text-align:center;margin-top:12px;line-height:1.5}
+.caption b{color:var(--text)} .caption .r{color:var(--bad)} .caption .g{color:var(--good)}
+
+.code{background:#0a0a0c;border:1px solid var(--border);border-radius:16px;overflow:hidden;width:100%;max-width:1060px;margin-top:22px}
+.code .bar{background:#141417;border-bottom:1px solid var(--border);padding:11px 16px;font-size:12.5px;color:var(--sec)}
+.code .bar b{color:var(--text)}
+.code pre{margin:0;padding:16px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.65;color:#d4d4d8;overflow:auto}
+.del{color:var(--bad)} .add{color:var(--good)} .cmt{color:#6b7280} .hl{background:rgba(248,113,113,.10)}
+.note{background:rgba(217,175,118,.06);border:1px solid rgba(217,175,118,.25);border-radius:12px;padding:12px 16px;font-size:12.5px;color:var(--sec);line-height:1.6;max-width:1060px;margin-top:14px}
+.note b{color:var(--accent)}
+code{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+</style></head><body>
+
+<h1>Kasa kilit ekranı — shutter sweep çizgisinin konumu</h1>
+<p class="lead">Senaryo: koruma tipi <b>PIN</b> ve <b>"PIN girilirken her basamağı bir nokta ile göster"</b> ayarı <b>kapalı</b>. Bu durumda kilit açma animasyonundaki ışık çizgisi (shutter sweep), noktaların <b>üzerindeki boş koridorda</b> ilerlemesi gerekirken mevcut XML'de noktalarla <b>aynı dikey merkeze</b> yerleştirildiği için doğrudan içinden geçiyor.</p>
+
+<div class="grid">
+  <div class="card">
+    <span class="tag new">BEKLENEN — onaylanan prototip</span>
+    <h2>Çizgi noktaların üstünde</h2>
+    <p class="sub"><code>VaultPinDotsPreviewView.kt:262-292</code> — sweep, amblemin 7.5 dp altında; noktalar ise <code>sweepY + 20dp</code>'de.</p>
+    <div class="screen">
+      <div class="emblem"></div>
+      <div class="label">Kasayı aç</div>
+      <div class="sweep" style="top:100px;left:0;right:0"></div>
+      <div class="bullets" style="top:118px">• • • • •</div>
+      <div class="gapline" style="top:104px;height:14px"></div>
+      <div class="gapnote" style="top:108px;left:62%">20 dp boşluk</div>
+    </div>
+    <p class="caption"><b>Koridor:</b> amblem → <span style="color:var(--accent)">sweep</span> → 20 dp → noktalar. Çizgi noktalara <b>değmez</b>.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag oldtag">MEVCUT — hatalı</span>
+    <h2>Çizgi noktaların içinden geçiyor</h2>
+    <p class="sub"><code>dialog_vault_security.xml:113-119</code> — sweep, 44 dp'lik legacy nokta metniyle aynı FrameLayout'ta ve <code>center_vertical</code>.</p>
+    <div class="screen">
+      <div class="emblem"></div>
+      <div class="label">Kasayı aç</div>
+      <div class="bullets" style="top:109px">• • • • •</div>
+      <div class="sweep" style="top:119px;left:0;right:0;opacity:.95"></div>
+      <div class="gapnote" style="top:140px;left:50%;transform:translateX(-50%);color:var(--bad)">aynı dikey merkez → kesişiyor</div>
+    </div>
+    <p class="caption"><span class="r">Sorun:</span> sweep'in dikey merkezi, <code>vault_pin_dots_legacy</code> metninin dikey merkeziyle <b>aynı</b>.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag info">KARŞILAŞTIRMA — noktalar AÇIK</span>
+    <h2>Bu modda sorun yok</h2>
+    <p class="sub"><code>VaultLockActivity.kt:253-257</code> ayar açıkken sweep'i <code>null</code> yapıyor; yerine noktalar sırayla nabız atıyor.</p>
+    <div class="screen">
+      <div class="emblem"></div>
+      <div class="label">Kasayı aç</div>
+      <div class="dotbox" style="top:105px">
+        <i class="f"></i><i class="f"></i><i class="f p"></i><i></i><i></i><i></i>
+      </div>
+      <div class="gapnote" style="top:150px;left:50%;transform:translateX(-50%);color:var(--good)">sweep yok · sıralı pulse</div>
+    </div>
+    <p class="caption">Alfanümerik şifrede de sweep ayrı <b>24 dp'lik koridorda</b> (satır 251-263), input alanının üstünde — orada da kesişme yok.</p>
+  </div>
+</div>
+
+<div class="code">
+  <div class="bar"><b>Neden oluyor?</b> <span>app/src/main/res/layout/dialog_vault_security.xml — PIN bloğu</span></div>
+<pre><span class="cmt">&lt;!-- PIN noktaları ile aynı kutu, aynı dikey merkez --&gt;</span>
+&lt;FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="54dp" ...&gt;
+
+    &lt;org.fossify.gallery.views.VaultPinDotsView ... /&gt;
+
+    &lt;MyTextView
+        android:id="@+id/<span class="hl">vault_pin_dots_legacy</span>"
+        android:layout_height="44dp"
+        android:gravity="center" ... /&gt;   <span class="cmt">← noktalar burada</span>
+
+    &lt;View
+        android:id="@+id/<span class="hl">vault_unlock_sweep</span>"
+        android:layout_width="64dp"
+        android:layout_height="4dp"
+        android:layout_gravity="<span class="hl">center_vertical</span>" ... /&gt;
+        <span class="cmt">← sweep de aynı merkezde = noktaların içinden geçiyor</span>
+&lt;/FrameLayout&gt;</pre>
+</div>
+
+<div class="code">
+  <div class="bar"><b>Referans</b> <span>VaultPinDotsPreviewView.kt — onaylanan hareket</span></div>
+<pre><span class="cmt">// 2. Amblem ile PIN karakterleri arasındaki açık koridor (sweep burada)</span>
+val sweepY = emblemCenterY + coreSize / 2f + dp(7.5f)
+<span class="cmt">// 3. PIN gösterge koridoru — sweep'in 20 dp altında</span>
+val corridorCenterY = <span class="add">sweepY + dp(20f)</span></pre>
+</div>
+
+<div class="code">
+  <div class="bar"><b>Önerilen düzeltme</b> <span>PIN bloğunu alfanümerik blokla aynı düzene getir</span></div>
+<pre><span class="del">- // sweep, legacy nokta metniyle aynı FrameLayout içinde center_vertical</span>
+<span class="add">+ // sweep için noktaların üstünde ayrı 24dp koridor (password bloğundaki gibi)</span>
+<span class="add">+ &lt;FrameLayout android:layout_height="24dp" android:layout_marginBottom="..."&gt;</span>
+<span class="add">+     &lt;View android:id="@+id/vault_unlock_sweep"</span>
+<span class="add">+         android:layout_width="match_parent" android:layout_height="4dp"</span>
+<span class="add">+         android:layout_gravity="center_vertical" ... /&gt;</span>
+<span class="add">+ &lt;/FrameLayout&gt;</span>
+<span class="add">+ &lt;FrameLayout android:layout_height="54dp"&gt; ... vault_pin_dots_legacy ... &lt;/FrameLayout&gt;</span>
+
+<span class="cmt">// VaultShutterAnimator.kt:80 yorumu da güncellenmeli:</span>
+<span class="cmt">// "Nokta kutusu gösterildiğinde sweep hiç çizilmez; legacy modda ise çizgi</span>
+<span class="cmt">//  noktaların üzerindeki koridorda ilerler, asla içinden geçmez."</span>
+
+<span class="cmt">// sweepDistance = sweepView.parent.measuredWidth olduğu için yeni koridor match_parent olmalı.</span></pre>
+</div>
+
+<p class="note"><b>Özet:</b> Ayar <b>AÇIK</b>ken sweep zaten iptal ediliyor (<code>VaultLockActivity.kt:255</code>) — sorun yok. Alfanümerik modda sweep kendi koridorunda — sorun yok. <b>Yalnızca PIN + noktalar KAPALI</b> kombinasyonunda, XML'deki <code>center_vertical</code> yerleşimi yüzünden çizgi noktaların içinden geçiyor. Düzeltme, sweep'i legacy nokta satırının üstüne ayrı bir koridora taşımak; animasyonun zamanlama/renk/hareket parametrelerine dokunmaya gerek yok.</p>
+
+</body></html>
