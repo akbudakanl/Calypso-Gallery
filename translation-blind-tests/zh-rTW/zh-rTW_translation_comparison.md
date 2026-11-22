@@ -1163,3 +1163,15 @@ Added the six strings introduced by the vault setup-tutorial and PIN-dot live-pr
 | 4 | `vault_pull_tutorial_confirm` | Got it | 知道了 | Positive button |
 | 5 | `pin_dots_notice_title` | Alternative PIN appearance | 替代 PIN 外觀 | One-time preview dialog before enabling PIN dots |
 | 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | 任何看到您螢幕的人都能藉由計算空心圓圈的數量得知您的 PIN 長度。這會讓需要嘗試的密碼數量減少約 10%。如果您認為從安全角度來看，讓他人知道 PIN 長度是可以接受的，便可以使用此檢視模式。 | `10%` kept literal |
+
+## Filename toggle, album search hint & extra viewer actions (this revision)
+
+Added the five strings introduced by the dynamic filename toggle, album search hint, and extra fullscreen viewer actions updates (`e79197d7f`) to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_filenames` | Show filenames | 顯示檔案名稱 | Media-view overflow toggle label when filenames are hidden |
+| 2 | `hide_filenames` | Hide filenames | 隱藏檔案名稱 | Media-view overflow toggle label when filenames are visible |
+| 3 | `search_in_album` | Search in album | 在相簿中搜尋 | Album-view search hint |
+| 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | 在全螢幕媒體上顯示額外動作 | Settings switch label |
+| 5 | `manage_extra_viewer_actions` | Manage extra actions | 管理額外動作 | Settings row label and extra-actions dialog title |

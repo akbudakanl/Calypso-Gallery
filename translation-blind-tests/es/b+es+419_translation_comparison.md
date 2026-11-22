@@ -1152,3 +1152,15 @@ Added the six strings introduced by the vault setup-tutorial and PIN-dot live-pr
 | 4 | `vault_pull_tutorial_confirm` | Got it | Entendido | Positive button |
 | 5 | `pin_dots_notice_title` | Alternative PIN appearance | Apariencia alternativa del PIN | One-time preview dialog before enabling PIN dots |
 | 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | Cualquiera que vea tu pantalla puede contar los círculos vacíos para conocer la longitud de tu PIN. Esto reduce aproximadamente en un 10 % la cantidad de contraseñas que hay que probar. Si consideras aceptable desde el punto de vista de la seguridad que se conozca la longitud de tu PIN, puedes usar esta vista. | `10 %` kept with Spanish spacing |
+
+## Filename toggle, album search hint & extra viewer actions (this revision)
+
+Added the five strings introduced by the dynamic filename toggle, album search hint, and extra fullscreen viewer actions updates (`e79197d7f`) to `values-b+es+419/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish, Latin America (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_filenames` | Show filenames | Mostrar nombres de archivo | Media-view overflow toggle label when filenames are hidden |
+| 2 | `hide_filenames` | Hide filenames | Ocultar nombres de archivo | Media-view overflow toggle label when filenames are visible |
+| 3 | `search_in_album` | Search in album | Buscar en el álbum | Album-view search hint |
+| 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | Mostrar acciones adicionales en medios a pantalla completa | Settings switch label |
+| 5 | `manage_extra_viewer_actions` | Manage extra actions | Administrar acciones adicionales | Settings row label and extra-actions dialog title |

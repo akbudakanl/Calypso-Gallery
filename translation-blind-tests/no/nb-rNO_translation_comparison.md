@@ -1178,3 +1178,15 @@ Added the six strings introduced by the vault setup-tutorial and PIN-dot live-pr
 | 4 | `vault_pull_tutorial_confirm` | Got it | Forstått | Positive button |
 | 5 | `pin_dots_notice_title` | Alternative PIN appearance | Alternativ PIN-visning | One-time preview dialog before enabling PIN dots |
 | 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | Alle som ser skjermen din kan telle de tomme sirklene for å finne PIN-lengden din. Dette reduserer antall passord som må prøves med omtrent 10 %. Hvis du anser det som akseptabelt fra et sikkerhetsperspektiv at PIN-lengden din er kjent, kan du bruke denne visningen. | `10 %` kept with Norwegian spacing |
+
+## Filename toggle, album search hint & extra viewer actions (this revision)
+
+Added the five strings introduced by the dynamic filename toggle, album search hint, and extra fullscreen viewer actions updates (`e79197d7f`) to `values-nb-rNO/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_filenames` | Show filenames | Vis filnavn | Media-view overflow toggle label when filenames are hidden |
+| 2 | `hide_filenames` | Hide filenames | Skjul filnavn | Media-view overflow toggle label when filenames are visible |
+| 3 | `search_in_album` | Search in album | Søk i album | Album-view search hint |
+| 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | Vis ekstra handlinger på fullskjermsmedier | Settings switch label |
+| 5 | `manage_extra_viewer_actions` | Manage extra actions | Administrer ekstra handlinger | Settings row label and extra-actions dialog title |

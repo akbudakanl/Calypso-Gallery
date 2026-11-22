@@ -1155,3 +1155,15 @@ Added the six strings introduced by the vault setup-tutorial and PIN-dot live-pr
 | 4 | `vault_pull_tutorial_confirm` | Got it | 了解しました | Positive button |
 | 5 | `pin_dots_notice_title` | Alternative PIN appearance | 代替 PIN 表示 | One-time preview dialog before enabling PIN dots |
 | 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | 画面を見た人は、空の丸の数を数えることで PIN の長さを把握できます。これにより、試す必要のあるパスワードの数が約 10% 減少します。セキュリティ上、PIN の長さが知られることを許容できる場合は、この表示を使用できます。 | `10%` kept literal |
+
+## Filename toggle, album search hint & extra viewer actions (this revision)
+
+Added the five strings introduced by the dynamic filename toggle, album search hint, and extra fullscreen viewer actions updates (`e79197d7f`) to `values-ja/strings.xml`. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `show_filenames` | Show filenames | ファイル名を表示 | Media-view overflow toggle label when filenames are hidden |
+| 2 | `hide_filenames` | Hide filenames | ファイル名を非表示 | Media-view overflow toggle label when filenames are visible |
+| 3 | `search_in_album` | Search in album | アルバム内を検索 | Album-view search hint |
+| 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | 全画面メディアで追加の操作を表示 | Settings switch label |
+| 5 | `manage_extra_viewer_actions` | Manage extra actions | 追加の操作を管理 | Settings row label and extra-actions dialog title |
