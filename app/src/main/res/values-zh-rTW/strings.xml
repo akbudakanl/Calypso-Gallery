@@ -359,6 +359,10 @@
     <string name="vault_password_saved_message">若忘記密碼，您將永久失去加密保險箱的存取權。請在繼續前確認已將密碼儲存在某處，建議使用密碼管理器。</string>
     <string name="vault_password_saved_confirm">是，我已儲存</string>
     <string name="vault_password_saved_later">我會儲存</string>
+    <string name="vault_pull_tutorial_title">您的加密保險箱已準備就緒</string>
+    <string name="vault_pull_tutorial_message">在主畫面清單頂端時，&lt;b&gt;從上方往下滑動&lt;/b&gt;並按住，直到鎖頭圖示穩定後再放開。</string>
+    <string name="vault_pull_tutorial_note">為了您的隱私，保險箱不會以獨立資料夾或圖示的形式出現在主畫面上；只能透過此手勢開啟。</string>
+    <string name="vault_pull_tutorial_confirm">知道了</string>
     <string name="vault_password_reminder_due_title">您還記得保險箱密碼嗎？</string>
     <string name="vault_password_reminder_due_message">這段期間內您沒有使用密碼開啟加密保險箱。密碼是復原保險箱的唯一方法。</string>
     <string name="vault_password_reminder_verify_title">確認您的密碼</string>
@@ -659,6 +663,8 @@
     <string name="use_biometrics">使用生物辨識</string>
     <string name="hide_vault_key_presses">輸入保險庫密碼時隱藏按鍵回饋</string>
     <string name="show_pin_dots">輸入 PIN 時，每位數字顯示一個圓點</string>
+    <string name="pin_dots_notice_title">替代 PIN 外觀</string>
+    <string name="pin_dots_notice_note">任何看到您螢幕的人都能藉由計算空心圓圈的數量得知您的 PIN 長度。這會讓需要嘗試的密碼數量減少約 10%。如果您認為從安全角度來看，讓他人知道 PIN 長度是可以接受的，便可以使用此檢視模式。</string>
     <string name="archive_vault">封存加密保險箱</string>
     <string name="archive_vault_summary">將舊保險箱移至封存區並建立新保險箱</string>
     <string name="archive_vault_confirm">目前保險箱將移至封存區，並在預設位置建立新保險箱。不會刪除任何內容。若要在其他裝置使用，請使用「匯出加密保險箱」；該操作會複製檔案，原保險箱仍保留。</string>

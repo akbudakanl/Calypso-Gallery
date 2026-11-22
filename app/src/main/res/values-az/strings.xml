@@ -427,6 +427,10 @@
     <string name="vault_password_saved_message">Parolanızı unutsanız, şifrəli seyfə girişi daimi olaraq itirəcəksiniz. Davam etməzdən əvvəl parolanızı bir yerə qeyd etdiyinizdən əmin olun. Parola menecerindən istifadə etmək tövsiyə olunur.</string>
     <string name="vault_password_saved_confirm">Bəli, qeyd etdim</string>
     <string name="vault_password_saved_later">Qeyd edəcəyəm</string>
+    <string name="vault_pull_tutorial_title">Şifrəli seyfiniz hazırdır</string>
+    <string name="vault_pull_tutorial_message">Ana ekranda siyahının ən üstündəykən &lt;b&gt;yuxarıdan aşağı doğru çəkin&lt;/b&gt; və kilid ikonası sabitləşənə qədər basılı tutun, ardından buraxın.</string>
+    <string name="vault_pull_tutorial_note">Gizliliyiniz üçün seyf ana ekranda ayrıca qovluq və ya ikon olaraq heç vaxt görünməz; yalnız bu hərəkətlə açılır.</string>
+    <string name="vault_pull_tutorial_confirm">Anladım</string>
     <string name="vault_password_reminder_due_title">Seyf parolanızı hələ də xatırlayırsınız?</string>
     <string name="vault_password_reminder_due_message">Bu müddət ərzində şifrəli seyfə parolanızla daxil olmadınız. Parolanız seyfi bərpa etməyin yeganə yoludur.</string>
     <string name="vault_password_reminder_verify_title">Parolanızı təsdiqləyin</string>
@@ -733,6 +737,8 @@
     <string name="use_biometrics">Biometriyadan istifadə et</string>
     <string name="hide_vault_key_presses">Kassa parolunu daxil edərkən düymə basışlarını gizlət</string>
     <string name="show_pin_dots">PIN daxil edərkən hər rəqəm üçün bir nöqtə göstər</string>
+    <string name="pin_dots_notice_title">Alternativ PIN görünüşü</string>
+    <string name="pin_dots_notice_note">Ekranınızı görən hər kəs boş halqaları sayaraq PIN uzunluğunuzu müəyyən edə bilər. Bu, sınanmalı parolaların sayını təxminən 10% azaldır. PIN uzunluğunuzun bilinməsini təhlükəsizlik baxımından məqbul hesab edirsinizsə, bu görünüşdən istifadə edə bilərsiniz.</string>
 <string name="archive_vault">Şifrəli seyfi arşivlə</string>
     <string name="archive_vault_summary">Eski kasayı arşive taşır, varsayılan konumda yeni kasa oluşturur</string>
     <string name="archive_vault_confirm">Mevcut kasa arşive taşınacak, varsayılan konumda yeni kasa oluşturulacak. Hiçbir şey silinmez. Kasayı başka cihazda kullanmak için Şifreli kasayı dışa aktar seçeneğini kullanın; bu kopyalar, mevcut kasa yerinde kalır.</string>

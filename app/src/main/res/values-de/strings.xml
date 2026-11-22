@@ -361,6 +361,10 @@
     <string name="vault_password_saved_message">Wenn du dein Passwort vergisst, verlierst du dauerhaft den Zugriff auf deinen verschlüsselten Tresor. Stelle sicher, dass du es vor dem Fortfahren irgendwo gespeichert hast. Die Verwendung eines Passwortmanagers wird empfohlen.</string>
     <string name="vault_password_saved_confirm">Ja, ich habe es gespeichert</string>
     <string name="vault_password_saved_later">Ich werde es speichern</string>
+    <string name="vault_pull_tutorial_title">Dein verschlüsselter Tresor ist bereit</string>
+    <string name="vault_pull_tutorial_message">Wenn du dich oben in der Liste auf dem Hauptbildschirm befindest, &lt;b&gt;ziehe von oben nach unten&lt;/b&gt; und halte, bis das Schloss-Symbol einrastet, dann lasse los.</string>
+    <string name="vault_pull_tutorial_note">Aus Datenschutzgründen erscheint der Tresor nie als eigener Ordner oder Icon auf dem Startbildschirm; er öffnet sich nur mit dieser Geste.</string>
+    <string name="vault_pull_tutorial_confirm">Verstanden</string>
     <string name="vault_password_reminder_due_title">Weißt du dein Tresorpasswort noch?</string>
     <string name="vault_password_reminder_due_message">Du hast den verschlüsselten Tresor so lange nicht mit deinem Passwort geöffnet. Dein Passwort ist der einzige Weg, den Tresor wiederherzustellen.</string>
     <string name="vault_password_reminder_verify_title">Passwort bestätigen</string>
@@ -662,6 +666,8 @@
     <string name="use_biometrics">Biometrie verwenden</string>
     <string name="hide_vault_key_presses">Tastendrücke bei der Tresor-Passworteingabe ausblenden</string>
     <string name="show_pin_dots">Bei der PIN-Eingabe für jede Ziffer einen Punkt anzeigen</string>
+    <string name="pin_dots_notice_title">Alternative PIN-Darstellung</string>
+    <string name="pin_dots_notice_note">Wer deinen Bildschirm sieht, kann anhand der leeren Kreise deine PIN-Länge abschätzen. Dadurch verringert sich die Zahl der auszuprobierenden Passwörter um etwa 10 %. Wenn du es aus Sicherheitsgründen für akzeptabel hältst, dass deine PIN-Länge bekannt ist, kannst du diese Ansicht verwenden.</string>
 <string name="archive_vault">Verschlüsselten Tresor archivieren</string>
     <string name="archive_vault_summary">Verschiebt den alten Tresor ins Archiv und erstellt einen neuen</string>
     <string name="archive_vault_confirm">Der aktuelle Tresor wird ins Archiv verschoben und ein neuer am Standardort erstellt. Nichts wird gelöscht. Für ein anderes Gerät nutzen Sie „Verschlüsselten Tresor exportieren“ — dabei wird kopiert, der aktuelle Tresor bleibt.</string>

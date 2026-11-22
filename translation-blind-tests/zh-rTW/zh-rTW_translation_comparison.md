@@ -1150,3 +1150,16 @@ The following strings were added after the base commit `2688360` (7 November) an
 | 47 | `vault_no_recovery_warning` | Offline encryption is used. If you forget your password or PIN, there is no way to recover your vault. | 本系統採用離線加密。如果您忘記密碼或 PIN 碼，將無法復原您的保險箱。 | |
 | 48 | `vault_not_created_prompt` | You haven\'t created a vault yet. Do you want to create a vault? | 您尚未建立保險箱。是否要建立保險箱？ | |
 | 49 | `waiting_for_free_space_or_storage` | Waiting for free space or destination storage… | 正在等待可用空間或目標儲存裝置… | |
+
+## Vault setup tutorial & PIN-dot preview notice (this revision)
+
+Added the six strings introduced by the vault setup-tutorial and PIN-dot live-preview design updates (`dba5068f0`, `4ea5b1f8f`) to `values-zh-rTW/strings.xml`. English source: `values/strings.xml`. The `&lt;b&gt;…&lt;/b&gt;` emphasis in `vault_pull_tutorial_message` and the literal `10%` in `pin_dots_notice_note` are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_pull_tutorial_title` | Your encrypted vault is ready | 您的加密保險箱已準備就緒 | One-time tutorial shown after vault creation |
+| 2 | `vault_pull_tutorial_message` | While at the top of the list on the main screen, &lt;b&gt;pull down from the top&lt;/b&gt; and hold until the lock icon settles, then release. | 在主畫面清單頂端時，&lt;b&gt;從上方往下滑動&lt;/b&gt;並按住，直到鎖頭圖示穩定後再放開。 | `&lt;b&gt;` emphasis preserved |
+| 3 | `vault_pull_tutorial_note` | For your privacy, the vault never appears as a separate folder or icon on the home screen; it only opens with this gesture. | 為了您的隱私，保險箱不會以獨立資料夾或圖示的形式出現在主畫面上；只能透過此手勢開啟。 | Privacy note |
+| 4 | `vault_pull_tutorial_confirm` | Got it | 知道了 | Positive button |
+| 5 | `pin_dots_notice_title` | Alternative PIN appearance | 替代 PIN 外觀 | One-time preview dialog before enabling PIN dots |
+| 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | 任何看到您螢幕的人都能藉由計算空心圓圈的數量得知您的 PIN 長度。這會讓需要嘗試的密碼數量減少約 10%。如果您認為從安全角度來看，讓他人知道 PIN 長度是可以接受的，便可以使用此檢視模式。 | `10%` kept literal |

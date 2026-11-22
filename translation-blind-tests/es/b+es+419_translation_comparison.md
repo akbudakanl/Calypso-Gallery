@@ -1139,3 +1139,16 @@ The following strings were added after the base commit `2688360` (7 November) an
 | 47 | `vault_no_recovery_warning` | Offline encryption is used. If you forget your password or PIN, there is no way to recover your vault. | Se usa cifrado sin conexión. Si olvidas tu contraseña o PIN, no hay forma de recuperar tu bóveda. | |
 | 48 | `vault_not_created_prompt` | You haven\'t created a vault yet. Do you want to create a vault? | Aún no has creado una bóveda. ¿Deseas crear una bóveda? | |
 | 49 | `waiting_for_free_space_or_storage` | Waiting for free space or destination storage… | Esperando espacio libre o almacenamiento de destino… | |
+
+## Vault setup tutorial & PIN-dot preview notice (this revision)
+
+Added the six strings introduced by the vault setup-tutorial and PIN-dot live-preview design updates (`dba5068f0`, `4ea5b1f8f`) to `values-b+es+419/strings.xml`. English source: `values/strings.xml`. The `&lt;b&gt;…&lt;/b&gt;` emphasis in `vault_pull_tutorial_message` and the literal `10 %` in `pin_dots_notice_note` are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Spanish, Latin America (`values-b+es+419/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_pull_tutorial_title` | Your encrypted vault is ready | Tu bóveda cifrada está lista | One-time tutorial shown after vault creation; informal register |
+| 2 | `vault_pull_tutorial_message` | While at the top of the list on the main screen, &lt;b&gt;pull down from the top&lt;/b&gt; and hold until the lock icon settles, then release. | Mientras estés en la parte superior de la lista en la pantalla principal, &lt;b&gt;desliza hacia abajo desde la parte superior&lt;/b&gt; y mantén presionado hasta que el ícono de candado se estabilice; luego suelta. | `&lt;b&gt;` emphasis preserved |
+| 3 | `vault_pull_tutorial_note` | For your privacy, the vault never appears as a separate folder or icon on the home screen; it only opens with this gesture. | Por tu privacidad, la bóveda nunca aparece como una carpeta o un ícono independiente en la pantalla de inicio; solo se abre con este gesto. | Privacy note |
+| 4 | `vault_pull_tutorial_confirm` | Got it | Entendido | Positive button |
+| 5 | `pin_dots_notice_title` | Alternative PIN appearance | Apariencia alternativa del PIN | One-time preview dialog before enabling PIN dots |
+| 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | Cualquiera que vea tu pantalla puede contar los círculos vacíos para conocer la longitud de tu PIN. Esto reduce aproximadamente en un 10 % la cantidad de contraseñas que hay que probar. Si consideras aceptable desde el punto de vista de la seguridad que se conozca la longitud de tu PIN, puedes usar esta vista. | `10 %` kept with Spanish spacing |

@@ -1101,3 +1101,16 @@ The following strings were added after the base commit `2688360` (7 November) an
 | 47 | `vault_no_recovery_warning` | Offline encryption is used. If you forget your password or PIN, there is no way to recover your vault. | Es wird Offline-Verschlüsselung verwendet. Wenn Sie Ihr Passwort oder Ihre PIN vergessen, gibt es keine Möglichkeit, Ihren Tresor wiederherzustellen. | |
 | 48 | `vault_not_created_prompt` | You haven\'t created a vault yet. Do you want to create a vault? | Sie haben noch keinen Tresor erstellt. Möchten Sie einen Tresor erstellen? | |
 | 49 | `waiting_for_free_space_or_storage` | Waiting for free space or destination storage… | Warten auf freien Speicherplatz oder Zielspeicher… | |
+
+## Vault setup tutorial & PIN-dot preview notice (this revision)
+
+Added the six strings introduced by the vault setup-tutorial and PIN-dot live-preview design updates (`dba5068f0`, `4ea5b1f8f`) to `values-de/strings.xml`. English source: `values/strings.xml`. The `&lt;b&gt;…&lt;/b&gt;` emphasis in `vault_pull_tutorial_message` and the literal `10 %` in `pin_dots_notice_note` are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `vault_pull_tutorial_title` | Your encrypted vault is ready | Dein verschlüsselter Tresor ist bereit | One-time tutorial shown after vault creation |
+| 2 | `vault_pull_tutorial_message` | While at the top of the list on the main screen, &lt;b&gt;pull down from the top&lt;/b&gt; and hold until the lock icon settles, then release. | Wenn du dich oben in der Liste auf dem Hauptbildschirm befindest, &lt;b&gt;ziehe von oben nach unten&lt;/b&gt; und halte, bis das Schloss-Symbol einrastet, dann lasse los. | `&lt;b&gt;` emphasis preserved; informal register matches existing vault strings |
+| 3 | `vault_pull_tutorial_note` | For your privacy, the vault never appears as a separate folder or icon on the home screen; it only opens with this gesture. | Aus Datenschutzgründen erscheint der Tresor nie als eigener Ordner oder Icon auf dem Startbildschirm; er öffnet sich nur mit dieser Geste. | Privacy note |
+| 4 | `vault_pull_tutorial_confirm` | Got it | Verstanden | Positive button |
+| 5 | `pin_dots_notice_title` | Alternative PIN appearance | Alternative PIN-Darstellung | One-time preview dialog before enabling PIN dots |
+| 6 | `pin_dots_notice_note` | Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view. | Wer deinen Bildschirm sieht, kann anhand der leeren Kreise deine PIN-Länge abschätzen. Dadurch verringert sich die Zahl der auszuprobierenden Passwörter um etwa 10 %. Wenn du es aus Sicherheitsgründen für akzeptabel hältst, dass deine PIN-Länge bekannt ist, kannst du diese Ansicht verwenden. | `10 %` kept with German spacing |

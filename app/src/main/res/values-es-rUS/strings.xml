@@ -396,6 +396,10 @@
     <string name="vault_password_saved_message">Si olvidas tu contraseña, perderás permanentemente el acceso a tu bóveda cifrada. Asegúrate de guardarla en algún lugar antes de continuar. Se recomienda usar un gestor de contraseñas.</string>
     <string name="vault_password_saved_confirm">Sí, la guardé</string>
     <string name="vault_password_saved_later">La guardaré</string>
+    <string name="vault_pull_tutorial_title">Tu bóveda cifrada está lista</string>
+    <string name="vault_pull_tutorial_message">Mientras estés en la parte superior de la lista en la pantalla principal, &lt;b&gt;desliza hacia abajo desde la parte superior&lt;/b&gt; y mantén presionado hasta que el ícono de candado se estabilice; luego suelta.</string>
+    <string name="vault_pull_tutorial_note">Por tu privacidad, la bóveda nunca aparece como una carpeta o un ícono independiente en la pantalla de inicio; solo se abre con este gesto.</string>
+    <string name="vault_pull_tutorial_confirm">Entendido</string>
     <string name="vault_password_reminder_due_title">¿Todavía recuerdas la contraseña de tu bóveda?</string>
     <string name="vault_password_reminder_due_message">No has abierto la bóveda cifrada con tu contraseña durante este tiempo. Tu contraseña es la única forma de recuperar la bóveda.</string>
     <string name="vault_password_reminder_verify_title">Confirma tu contraseña</string>
@@ -705,6 +709,8 @@
     <string name="use_biometrics">Usar biometría</string>
     <string name="hide_vault_key_presses">Ocultar las pulsaciones al ingresar la contraseña de la bóveda</string>
     <string name="show_pin_dots">Mostrar un punto por cada dígito al ingresar el PIN</string>
+    <string name="pin_dots_notice_title">Apariencia alternativa del PIN</string>
+    <string name="pin_dots_notice_note">Cualquiera que vea tu pantalla puede contar los círculos vacíos para conocer la longitud de tu PIN. Esto reduce aproximadamente en un 10 % la cantidad de contraseñas que hay que probar. Si consideras aceptable desde el punto de vista de la seguridad que se conozca la longitud de tu PIN, puedes usar esta vista.</string>
 <string name="archive_vault">Archivar bóveda cifrada</string>
     <string name="archive_vault_summary">Mueve la bóveda antigua al archivo y crea una nueva</string>
     <string name="archive_vault_confirm">La bóveda actual se moverá al archivo y se creará una nueva en la ubicación predeterminada. No se elimina nada. Para usarla en otro dispositivo, use Exportar bóveda cifrada: copia los archivos y la bóveda actual permanece.</string>

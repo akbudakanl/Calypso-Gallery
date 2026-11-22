@@ -359,6 +359,10 @@
     <string name="vault_password_saved_message">パスワードを忘れると、暗号化保管庫へのアクセスを完全に失います。継絊する前にパスワードをどこかに保存したことを確認してください。パスワードマネージャーの使用をお勧めします。</string>
     <string name="vault_password_saved_confirm">はい、保存しました</string>
     <string name="vault_password_saved_later">保存します</string>
+    <string name="vault_pull_tutorial_title">暗号化保管庫の準備ができました</string>
+    <string name="vault_pull_tutorial_message">ホーム画面のリストの一番上にいるときに、&lt;b&gt;上から下へ引っ張って&lt;/b&gt;ロックアイコンが安定するまで押さえたままにし、離してください。</string>
+    <string name="vault_pull_tutorial_note">プライバシーのため、保管庫はホーム画面に別のフォルダーやアイコンとして表示されることはなく、このジェスチャーでのみ開きます。</string>
+    <string name="vault_pull_tutorial_confirm">了解しました</string>
     <string name="vault_password_reminder_due_title">保管庫のパスワードをまだ覚えていますか？</string>
     <string name="vault_password_reminder_due_message">この期間中にパスワードで暗号化保管庫を開けていません。パスワードは保管庫を復旧する唯一の方法です。</string>
     <string name="vault_password_reminder_verify_title">パスワードを確認</string>
@@ -662,6 +666,8 @@
     <string name="use_biometrics">生体認証を使用</string>
     <string name="hide_vault_key_presses">保管庫のパスワード入力時にキー押下を非表示にする</string>
     <string name="show_pin_dots">PIN入力時に各桁をドットで表示する</string>
+    <string name="pin_dots_notice_title">代替 PIN 表示</string>
+    <string name="pin_dots_notice_note">画面を見た人は、空の丸の数を数えることで PIN の長さを把握できます。これにより、試す必要のあるパスワードの数が約 10% 減少します。セキュリティ上、PIN の長さが知られることを許容できる場合は、この表示を使用できます。</string>
 <string name="archive_vault">暗号化保管庫をアーカイブ</string>
     <string name="archive_vault_summary">古い保管庫をアーカイブし、新しい保管庫を作成します</string>
     <string name="archive_vault_confirm">現在の保管庫はアーカイブに移動され、既定の場所に新しい保管庫が作成されます。削除はされません。別のデバイスで使う場合は「暗号化保管庫をエクスポート」を使用してください。コピーであり、元の保管庫は残ります。</string>

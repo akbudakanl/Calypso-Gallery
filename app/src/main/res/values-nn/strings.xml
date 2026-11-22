@@ -428,6 +428,10 @@
     <string name="vault_password_saved_message">Om du gløymer passordet ditt, mister du permanent tilgang til det krypterte kvelvet ditt. Sørg for at du har lagra det ein stad før du held fram. Bruk av ein passordbehandlar blir tilrådd.</string>
     <string name="vault_password_saved_confirm">Ja, eg har lagra det</string>
     <string name="vault_password_saved_later">Eg skal lagre det</string>
+    <string name="vault_pull_tutorial_title">Det krypterte kvelvet ditt er klart</string>
+    <string name="vault_pull_tutorial_message">Når du er øvst i lista på hovudskjermen, &lt;b&gt;dra ned frå toppen&lt;/b&gt; og hald til låseikonet har stabilisert seg, slepp deretter.</string>
+    <string name="vault_pull_tutorial_note">Av personvernomsyn blir kvelvet aldri vist som ei eiga mappe eller eit ikon på heimeskjermen; det opnar berre med denne rørsla.</string>
+    <string name="vault_pull_tutorial_confirm">Forstått</string>
     <string name="vault_password_reminder_due_title">Hugsar du framleis kvelvpassordet ditt?</string>
     <string name="vault_password_reminder_due_message">Du har ikkje opna det krypterte kvelvet med passordet ditt på så lang tid. Passordet ditt er den einaste måten å gjenopprette kvelvet på.</string>
     <string name="vault_password_reminder_verify_title">Stadfest passordet ditt</string>
@@ -736,6 +740,8 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av kvelvpassord</string>
     <string name="show_pin_dots">Vis ein prikk for kvart siffer når PIN-koden blir skriven inn</string>
+    <string name="pin_dots_notice_title">Alternativ PIN-vising</string>
+    <string name="pin_dots_notice_note">Alle som ser skjermen din kan telje dei tomme sirklane for å finne PIN-lengda di. Dette reduserer talet på passord som må prøvast med omtrent 10 %. Om du reknar det som akseptabelt frå eit tryggleiksperspektiv at PIN-lengda di er kjend, kan du bruke denne visa.</string>
 <string name="archive_vault">Arkiver kryptert kvelv</string>
     <string name="archive_vault_summary">Flyttar det gamle kvelvet til arkivet og lagar eit nytt</string>
     <string name="archive_vault_confirm">Det noverande kvelvet blir flytta til arkivet og eit nytt blir laga på standardstaden. Ingenting blir sletta. For bruk på ein annan eining, bruk Eksporter kryptert kvelv — det kopierer og kvelvet blir liggjande.</string>

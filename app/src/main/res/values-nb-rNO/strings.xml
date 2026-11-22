@@ -374,6 +374,10 @@
     <string name="vault_password_saved_message">Hvis du glemmer passordet ditt, mister du permanent tilgang til det krypterte hvelvet ditt. Sørg for at du har lagret det et sted før du fortsetter. Bruk av en passordbehandler anbefales.</string>
     <string name="vault_password_saved_confirm">Ja, jeg har lagret det</string>
     <string name="vault_password_saved_later">Jeg skal lagre det</string>
+    <string name="vault_pull_tutorial_title">Det krypterte hvelvet ditt er klart</string>
+    <string name="vault_pull_tutorial_message">Når du er øverst i listen på hovedskjermen, &lt;b&gt;dra ned fra toppen&lt;/b&gt; og hold til låseikonet har stabilisert seg, og slipp deretter.</string>
+    <string name="vault_pull_tutorial_note">Av personvernhensyn vises aldri hvelvet som en egen mappe eller et ikon på hjemskjermen; det åpnes bare med denne bevegelsen.</string>
+    <string name="vault_pull_tutorial_confirm">Forstått</string>
     <string name="vault_password_reminder_due_title">Husker du fortsatt hvelvpassordet ditt?</string>
     <string name="vault_password_reminder_due_message">Du har ikke åpnet det krypterte hvelvet med passordet ditt på så lenge. Passordet ditt er den eneste måten å gjenopprette hvelvet på.</string>
     <string name="vault_password_reminder_verify_title">Bekreft passordet ditt</string>
@@ -679,6 +683,8 @@
     <string name="use_biometrics">Bruk biometri</string>
     <string name="hide_vault_key_presses">Skjul tastetrykk ved inntasting av hvelvpassord</string>
     <string name="show_pin_dots">Vis én prikk for hvert siffer når PIN-koden tastes inn</string>
+    <string name="pin_dots_notice_title">Alternativ PIN-visning</string>
+    <string name="pin_dots_notice_note">Alle som ser skjermen din kan telle de tomme sirklene for å finne PIN-lengden din. Dette reduserer antall passord som må prøves med omtrent 10 %. Hvis du anser det som akseptabelt fra et sikkerhetsperspektiv at PIN-lengden din er kjent, kan du bruke denne visningen.</string>
 <string name="archive_vault">Arkiver kryptert hvelv</string>
     <string name="archive_vault_summary">Flytter det gamle hvelvet til arkivet og lager et nytt</string>
     <string name="archive_vault_confirm">Det nåværende hvelvet flyttes til arkivet og et nytt opprettes på standardstedet. Ingenting slettes. For bruk på en annen enhet, bruk Eksporter kryptert hvelv — det kopierer og hvelvet blir liggende.</string>
