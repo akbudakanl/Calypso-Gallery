@@ -4,6 +4,22 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-22
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- Şifreli olmayan klasörlerdeki `.bin` dosyaları artık galeri medyası olarak toplanmıyor; kasa dosyaları yalnızca şifreli klasör içinde listeleniyor. Kopyalama/taşıma politikası için regresyon testleri eklendi.
+- Favoriler ve sanal albümler otomatik yedeklemesi kapatıldığında cihaz hafızasındaki yedeklerin silinmesi için onay penceresi gösteriliyor; yedek bulunmuyorsa ayar sessizce kapanıyor. Yedekler yeni kurulumda veya uygulama verileri silindikten sonra yalnızca bir kez geri yükleniyor; sonraki açılışlarda eski yedekler tekrar içe aktarılmıyor.
+
+### İyileştirmeler
+
+- Kasa bildirim kartındaki biyometrik simgesi, kartın üst kenarı ile başlık arasında dikey olarak ortalanıyor.
+- Ayarlardaki radyo diyaloglarına (dosya yükleme önceliği, video açma davranışı, çift dokunma süresi, ekran yönü ve albüm şifreleme çakışması) ile kasa arşivleme/boşaltma onay pencerelerine başlık eklendi; dil penceresine İptal düğmesi, Argon2 profil satırına boş özet gizleme ve kilit süresi etiketine dikey hizalama eklendi.
+
+### Çeviriler
+
+- Favori ve sanal albüm yedek silme metinleri 9 dilde tamamlandı; Azeri parola hatırlatıcı dizelerindeki bozuk karakterler düzeltildi. Kör çeviri karşılaştırma raporları 49 aktif dizeyle senkronize edildi; AI destekli temeller ve upstream-öncelikli katkı rehberi belgelendi.
+
 ## [1.2.0] - 2026-11-22
 
 ### Eklendi
@@ -133,5 +149,6 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.1...HEAD
 [1.2.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.5...1.2.0
+[1.2.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...1.2.1
