@@ -3,8 +3,13 @@
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
 ## [Unreleased]
+
+## [1.3.0] - 2026-11-22
 ### Eklendi
 
+- Ana galeri, albüm ve tam ekran görüntüleyici taşma menüleri Calypso açılır menüsüyle modernize edildi: doğrulanmış eylem sırası, albüm arama ipucu, yerel ölçekleme ve temalı Ayarlar altbilgisi; menü grupları arasında ayırıcı çizgiler eklendi.
+- Tam ekran görüntüleyicide hangi eylemlerin gösterileceğini seçmek için isteğe bağlı "Ek görüntüleyici eylemleri" ayarı ve yöneticisi eklendi.
+- Dosya adlarını göster/gizle seçeneği ile albüm içi arama metinleri uygulamaya alındı.
 - Ayarlara **Bildirimler** kategorisi eklendi: ana anahtar ile Kopyalama/Taşıma, Şifreleme/Çözme, Silme/Geri dönüşüm ve Sanal albüm güncellemeleri için ayrı anahtarlar (varsayılan açık). Android 13+ için izin verilmemişse listenin üstünde bildirim izni isteyen bir satır gösterilir. Android arka plan dosya işlemleri için kalıcı bildirim zorunlu kıldığından ayarlar ayrıntılı ilerlemenin (dosya adı ve yüzde) gösterilmesini kontrol eder.
 - Toplu silme işlemlerinde ilerleme diyaloğu ve bildirim ilerlemesi gösteriliyor; büyük albüm silmelerinde arka planda bir şey olup olmadığı artık görülebiliyor.
 
@@ -16,14 +21,6 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 - Sanal albüme ekleme/çıkarma işlemleri de kayıtlı foreground işlemi olarak ilerleme bildirimi üretiyor.
 - Bildirim ayrıntıları yalnızca uygulama arka plandayken gösteriliyor: uygulama açıkken ekrandaki ilerleme diyaloğu yeterli olduğundan bildirim sade başlıkta kalıyor, arka plana geçilince ilerleme çubuğu ve yüzde ekleniyor. Android çalışan foreground servis için bildirimi zorunlu kıldığından bildirim tamamen kaldırılamıyor.
 - Gizlilik: bildirimlere dosya adı, yol, albüm adı veya kasa içeriği hiçbir zaman yazılmıyor; servis katmanı yalnızca anonim `n / toplam (yüzde)` desenini kabul ediyor, diğer tüm metinleri filtreliyor.
-
-
-## [1.3.0] - 2026-11-22
-### Eklendi
-
-- Ana galeri, albüm ve tam ekran görüntüleyici taşma menüleri Calypso açılır menüsüyle modernize edildi: doğrulanmış eylem sırası, albüm arama ipucu, yerel ölçekleme ve temalı Ayarlar altbilgisi; menü grupları arasında ayırıcı çizgiler eklendi.
-- Tam ekran görüntüleyicide hangi eylemlerin gösterileceğini seçmek için isteğe bağlı "Ek görüntüleyici eylemleri" ayarı ve yöneticisi eklendi.
-- Dosya adlarını göster/gizle seçeneği ile albüm içi arama metinleri uygulamaya alındı.
 
 ### Güvenlik ve kararlılık düzeltmeleri
 
@@ -40,10 +37,14 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 - Görünüm paleti düğmelerinin kontrastı temalı diyalogda korundu.
 - Taşma menüsü eylem sırası, simgeler ve ölçek için regresyon testleri eklendi.
 - Dokümantasyon denetimi bulguları kodla hizalandı: geçersiz ADR kararları "superseded" olarak işaretlendi; arşiv geri yükleme modeli, biyometri akışları, HKDF bilgi dizeleri ve test kapsamı iddiaları gerçek davranışa getirildi.
+- Tam ekran medya ayarlarında sürgülü seçenekler `>` işaretli satırların önüne taşındı; "genişletilmiş ayrıntıları yönet" ve "ek eylemleri yönet" satırları döndürme ayarının altında görünüyor.
+- "Sanal albüme ekle" seçicisinde albüm öğe sayıları artık doğru gösteriliyor; daha önce albümde kaç öge olursa olsun `0` görünüyordu.
+- "Açılışta ana ekran görünümü" diyaloğuna başlık eklendi; diğer diyaloglu ayarlarla tutarlı hale getirildi.
 
 ### Çeviriler
 
 - Dosya adı gösterme, albüm arama ve ek görüntüleyici eylemlerinin metinleri 9 dilde çevrildi; kör çeviri karşılaştırma raporları güncellendi.
+- Dosya işlemi bildirimlerinin ayar başlığı, anahtarları, izin satırı ve ilerleme metinleri 9 kör test diline çevrildi; karşılaştırma raporları güncellendi.
 
 ## [1.2.2] - 2026-11-22
 ### Eklendi
