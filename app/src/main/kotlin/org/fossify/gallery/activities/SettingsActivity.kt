@@ -1174,10 +1174,14 @@ class SettingsActivity : SimpleActivity() {
                 CryptoManager.getVaultProtectionType(this) == PROTECTION_PIN
         )
 
-        // 4c) Nokta göstergesi: sadece kısa PIN kullanan kasalarda mantıklı
+        // 4c) Nokta göstergesi: PIN kullanan kasalarda gösterilir; PIN uzunluğu ayar kapalıyken
+        // diske yazılmadığı için uzunluk kontrolü ayar açılırken PIN doğrulaması sırasında yapılır.
         val pinDotsApplicable = vaultExists &&
-            CryptoManager.getVaultProtectionType(this) == PROTECTION_PIN &&
-            config.vaultPinLength in 1..VAULT_PIN_DOTS_MAX_LENGTH
+            CryptoManager.getVaultProtectionType(this) == PROTECTION_PIN
+        if (!config.showVaultPinDots) {
+            // Eski sürümden kalma açıkta duran vault_pin_length kaydı varsa temizle
+            config.vaultPinLength = 0
+        }
         binding.settingsShowVaultPinDotsHolder.beVisibleIf(hasStoragePermission && pinDotsApplicable)
 
         // 5) Şifreli kasayı boşalt
@@ -1248,9 +1252,24 @@ class SettingsActivity : SimpleActivity() {
     private fun setupShowVaultPinDots() {
         binding.settingsShowVaultPinDots.isChecked = config.showVaultPinDots
         binding.settingsShowVaultPinDotsHolder.setOnClickListener {
-            requireVaultPassword {
-                binding.settingsShowVaultPinDots.toggle()
-                config.showVaultPinDots = binding.settingsShowVaultPinDots.isChecked
+            val enabling = !config.showVaultPinDots
+            // Ayar açılırken PIN uzunluğunu öğrenmek için biyometrik yerine PIN girişi zorunlu tutulur;
+            // ayar kapatılırken biyometrik doğrulama da kullanılabilir ve uzunluk diskten silinir.
+            requireVaultPassword(allowBiometrics = !enabling) {
+                if (enabling) {
+                    config.showVaultPinDots = true
+                    val enteredLen = VaultAuthInputHelper.lastAuthenticatedPinLength
+                    if (enteredLen in 1..VAULT_PIN_DOTS_MAX_LENGTH) {
+                        config.vaultPinLength = enteredLen
+                        binding.settingsShowVaultPinDots.isChecked = true
+                    } else {
+                        config.showVaultPinDots = false
+                        binding.settingsShowVaultPinDots.isChecked = false
+                    }
+                } else {
+                    config.showVaultPinDots = false
+                    binding.settingsShowVaultPinDots.isChecked = false
+                }
             }
         }
     }

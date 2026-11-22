@@ -304,6 +304,7 @@ fun CryptoManager.prepareVaultLocationSwitch(context: Context, newVaultRoot: Fil
     cfg.vaultWrappedKeyData = ""
     cfg.hiddenPasswordHash = ""
     cfg.vaultUnlockMeasuredMs = 0
+    cfg.showVaultPinDots = false
     cfg.isHiddenPasswordProtectionOn = false
     cfg.temporarilyShowHidden = false
     cfg.temporarilyShowVaultExcluded = false
@@ -492,6 +493,7 @@ fun CryptoManager.resetStaleVaultState(context: Context) {
     cfg.vaultWrappedKeyData = ""
     cfg.hiddenPasswordHash = ""
     cfg.vaultUnlockMeasuredMs = 0
+    cfg.showVaultPinDots = false
     cfg.isHiddenPasswordProtectionOn = false
     cfg.isVaultBiometricEnabled = false
     cfg.temporarilyShowHidden = false
@@ -568,6 +570,7 @@ fun CryptoManager.deleteExistingVault(context: Context) {
     context.config.vaultRootPath = ""
     context.config.vaultWrappedKeyData = ""
     context.config.hiddenPasswordHash = ""
+    context.config.showVaultPinDots = false
     context.config.isHiddenPasswordProtectionOn = false
     context.config.isVaultBiometricEnabled = false
     context.config.temporarilyShowHidden = false

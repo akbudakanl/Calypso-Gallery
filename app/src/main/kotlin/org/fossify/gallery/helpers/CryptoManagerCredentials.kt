@@ -403,6 +403,14 @@ internal fun CryptoManager.unlockFromHeaderFile(
     if (keys.storedProtectionType in listOf(PROTECTION_PATTERN, PROTECTION_PIN, PROTECTION_PASSWORD)) {
         context.config.hiddenProtectionType = keys.storedProtectionType
     }
+    if (context.config.showVaultPinDots &&
+        keys.storedProtectionType == PROTECTION_PIN &&
+        secret.size in 1..VAULT_PIN_DOTS_MAX_LENGTH
+    ) {
+        context.config.vaultPinLength = secret.size
+    } else if (!context.config.showVaultPinDots || secret.size > VAULT_PIN_DOTS_MAX_LENGTH) {
+        context.config.showVaultPinDots = false
+    }
     return true
 }
 
@@ -868,10 +876,14 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     val marker = "argon2id_aes256_gcm"
     context.config.hiddenPasswordHash = marker
     context.config.hiddenProtectionType = protectionType
-    context.config.vaultPinLength = if (protectionType == PROTECTION_PIN) secret.size else 0
-    // The dot indicator only makes sense for short PINs; never offer it for passwords or oversized PINs.
+    // The dot indicator only makes sense for short PINs; never persist PIN length on disk unless
+    // the user has explicitly turned on the per-digit dot setting.
     if (protectionType != PROTECTION_PIN || secret.size > VAULT_PIN_DOTS_MAX_LENGTH) {
         context.config.showVaultPinDots = false
+    } else if (context.config.showVaultPinDots) {
+        context.config.vaultPinLength = secret.size
+    } else {
+        context.config.vaultPinLength = 0
     }
     context.config.isHiddenPasswordProtectionOn = true
 

@@ -584,6 +584,7 @@ class VaultAuthInputHelper(
         binding.vaultStatusLabel.setText(R.string.unlocking_encrypted_vault)
 
         val secretCopy = secret.copyOf()
+        val enteredLength = secretCopy.size
         ensureBackgroundThread {
             val unlocked = try {
                 if (rewrapKdfOnSuccess) {
@@ -606,6 +607,7 @@ class VaultAuthInputHelper(
                 setInputsEnabled(true)
                 onPostExecute?.invoke()
                 if (unlocked) {
+                    lastAuthenticatedPinLength = if (currentType == PROTECTION_PIN) enteredLength else 0
                     activity.config.hiddenProtectionType = currentType
                     if (!rewrapKdfOnSuccess) {
                         activity.applyVaultScreenProtection(true)
@@ -680,6 +682,9 @@ class VaultAuthInputHelper(
     companion object {
         /** Temporarily unavailable back arrow; matches DISABLED_TEXT_ALPHA (~0.38). Colour stays theme-driven. */
         const val DISABLED_BACK_ALPHA = 0.4f
+        /** Ephemeral in-memory PIN length from the last PIN authentication, used only when enabling PIN dots. */
+        @Volatile
+        var lastAuthenticatedPinLength: Int = 0
         private const val DISABLED_TEXT_ALPHA = 0x61
         private const val BUTTON_RIPPLE_ALPHA = 0x1F
         private const val PIN_BUTTON_RIPPLE_RADIUS_DP = 12f

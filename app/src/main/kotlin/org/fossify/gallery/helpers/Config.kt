@@ -64,18 +64,30 @@ class Config(context: Context) : BaseConfig(context) {
         set(value) = prefs.edit().putBoolean(AUTO_BACKUP_SAVED_THEMES, value).apply()
 
     /**
-     * Digit count of the vault PIN, written when credentials are created or changed. The lock
-     * screen uses it to render one fixed dot slot per digit. 0 means no fixed length is known
-     * (e.g. alphanumeric password protection), in which case the dots grow while typing.
+     * Digit count of the vault PIN, persisted ONLY while [showVaultPinDots] is explicitly enabled
+     * by the user. When [showVaultPinDots] is off (the default), this key is removed from
+     * SharedPreferences so the PIN length is never leaked on disk.
      */
     var vaultPinLength: Int
-        get() = prefs.getInt(VAULT_PIN_LENGTH, 0)
-        set(value) = prefs.edit().putInt(VAULT_PIN_LENGTH, value).apply()
+        get() = if (prefs.getBoolean(SHOW_VAULT_PIN_DOTS, false)) prefs.getInt(VAULT_PIN_LENGTH, 0) else 0
+        set(value) {
+            if (value > 0 && prefs.getBoolean(SHOW_VAULT_PIN_DOTS, false)) {
+                prefs.edit().putInt(VAULT_PIN_LENGTH, value).apply()
+            } else {
+                prefs.edit().remove(VAULT_PIN_LENGTH).apply()
+            }
+        }
 
     /** Optional per-digit dot feedback while typing a short vault PIN. Off by default. */
     var showVaultPinDots: Boolean
         get() = prefs.getBoolean(SHOW_VAULT_PIN_DOTS, false)
-        set(value) = prefs.edit().putBoolean(SHOW_VAULT_PIN_DOTS, value).apply()
+        set(value) {
+            val editor = prefs.edit().putBoolean(SHOW_VAULT_PIN_DOTS, value)
+            if (!value) {
+                editor.remove(VAULT_PIN_LENGTH)
+            }
+            editor.apply()
+        }
 
     /**
      * Appearance mode for the fork's own Appearance screen. On first run after the upgrade,
