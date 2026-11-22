@@ -207,8 +207,13 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             val footerReservePx = if (settingsItem != null) (64f * density).toInt() else 0
             scrollView.maxHeightPx = (availableBelow - footerReservePx).coerceAtLeast((120f * density).toInt())
 
+            var previousGroup: String? = null
             for (item in mainItems) {
                 if (!item.isVisible) continue
+                val currentGroup = resolveMenuItemGroup(item.itemId)
+                if (previousGroup != null && currentGroup != null && currentGroup != previousGroup) {
+                    listLayout.addView(buildInsetDivider(palette, density))
+                }
                 val row = buildRow(
                     item = item,
                     palette = palette,
@@ -231,6 +236,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                     onItemSelected(item)
                 }
                 listLayout.addView(row)
+                previousGroup = currentGroup
             }
 
             if (settingsItem != null) {
@@ -306,6 +312,20 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             .setDuration(200L)
             .setInterpolator(PathInterpolator(0.2f, 1.05f, 0.34f, 1f))
             .start()
+    }
+
+    private fun buildInsetDivider(palette: AppearancePalette, density: Float): View {
+        val hMargin = (13f * density).toInt()
+        val vMargin = (4f * density).toInt()
+        return View(activity).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (1f * density).toInt().coerceAtLeast(1)
+            ).apply {
+                setMargins(hMargin, vMargin, hMargin, vMargin)
+            }
+            setBackgroundColor(ColorUtils.setAlphaComponent(palette.border, 0xE6))
+        }
     }
 
     private fun buildSettingsFooterBand(
@@ -512,6 +532,102 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
 
         fun isSettingsItem(itemId: Int): Boolean {
             return itemId == R.id.settings
+        }
+
+        fun resolveMenuItemGroup(itemId: Int): String? {
+            return when (itemId) {
+                // Main & Media menus
+                R.id.sort,
+                R.id.show_all,
+                R.id.show_albums,
+                R.id.refresh_menu -> "primary"
+
+                R.id.filter,
+                R.id.toggle_filename,
+                R.id.change_view_type,
+                R.id.group -> "view"
+
+                R.id.temporarily_show_hidden_folders,
+                R.id.stop_showing_hidden_folders,
+                R.id.temporarily_show_excluded,
+                R.id.stop_showing_excluded,
+                R.id.temporarily_show_hidden,
+                R.id.stop_showing_hidden -> "visibility"
+
+                R.id.create_new_folder,
+                R.id.open_recycle_bin,
+                R.id.restore_all_files,
+                R.id.empty_recycle_bin,
+                R.id.empty_disable_recycle_bin,
+                R.id.slideshow -> "manage"
+
+                // ViewPager (Fullscreen viewer) menu
+                R.id.menu_shuffle,
+                R.id.menu_properties,
+                R.id.menu_rename -> "viewer_info"
+
+                R.id.menu_copy_to_clipboard,
+                R.id.menu_unhide,
+                R.id.menu_hide,
+                R.id.menu_copy_to,
+                R.id.menu_move_to,
+                R.id.menu_add_to_virtual_album,
+                R.id.menu_remove_from_virtual_album,
+                R.id.menu_restore_file -> "viewer_file"
+
+                R.id.menu_rotate,
+                R.id.menu_change_orientation -> "viewer_display"
+
+                R.id.menu_open_with,
+                R.id.menu_set_as,
+                R.id.menu_slideshow -> "viewer_external"
+
+                R.id.menu_show_on_map,
+                R.id.menu_resize,
+                R.id.menu_print,
+                R.id.menu_create_shortcut -> "viewer_extra"
+
+                R.id.menu_share,
+                R.id.menu_edit,
+                R.id.menu_delete -> "viewer_fallback"
+
+                // CAB (Selection Action Mode) menus
+                R.id.cab_properties,
+                R.id.cab_rename,
+                R.id.cab_edit,
+                R.id.cab_change_cover_image,
+                R.id.cab_select_photo,
+                R.id.cab_use_default -> "cab_info"
+
+                R.id.cab_hide,
+                R.id.cab_unhide,
+                R.id.cab_hide_folder,
+                R.id.cab_unhide_folder,
+                R.id.cab_exclude,
+                R.id.cab_unexclude,
+                R.id.cab_lock,
+                R.id.cab_unlock,
+                R.id.cab_copy_to,
+                R.id.cab_move_to,
+                R.id.cab_add_to_virtual_album,
+                R.id.cab_remove_from_virtual_album,
+                R.id.cab_add_to_favorites,
+                R.id.cab_remove_from_favorites,
+                R.id.cab_restore_recycle_bin_files,
+                R.id.cab_empty_recycle_bin,
+                R.id.cab_empty_disable_recycle_bin -> "cab_file"
+
+                R.id.cab_rotate,
+                R.id.cab_resize,
+                R.id.cab_open_with,
+                R.id.cab_set_as,
+                R.id.cab_create_shortcut,
+                R.id.cab_change_order -> "cab_transform"
+
+                R.id.cab_select_all -> "cab_select"
+
+                else -> null
+            }
         }
 
         fun loadTintedDrawable(context: Context, resId: Int, tintColor: Int): Drawable? {

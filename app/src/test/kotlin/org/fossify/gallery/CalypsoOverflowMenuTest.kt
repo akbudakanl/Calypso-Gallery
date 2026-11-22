@@ -153,4 +153,21 @@ class CalypsoOverflowMenuTest {
         assertTrue(CalypsoOverflowMenuPopup.isSettingsItem(R.id.settings))
         assertFalse(CalypsoOverflowMenuPopup.isSettingsItem(R.id.sort))
     }
+
+    @Test
+    fun semanticGroupsSeparatePrimaryViewVisibilityAndManageSections() {
+        assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.show_albums))
+        assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.refresh_menu))
+        assertEquals("view", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.filter))
+        assertEquals("view", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.group))
+        assertEquals("visibility", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.temporarily_show_hidden_folders))
+        assertEquals("manage", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.open_recycle_bin))
+        assertEquals("manage", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.slideshow))
+
+        assertEquals("viewer_info", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.menu_properties))
+        assertEquals("viewer_file", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.menu_copy_to))
+        assertEquals("viewer_display", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.menu_rotate))
+        assertEquals("viewer_external", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.menu_slideshow))
+        assertEquals("viewer_extra", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.menu_show_on_map))
+    }
 }
