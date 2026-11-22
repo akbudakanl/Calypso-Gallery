@@ -865,23 +865,40 @@ class VaultLockPolicyTest {
     }
 
     @Test
-    fun shutterSweepStaysAboveLegacyPinBullets() {
+    fun shutterSweepLiftAppliesOnlyToManualPinEntry() {
         val layout = locateAppFile("src/main/res/layout/dialog_vault_security.xml").readText()
         val sweepBlock = layout
             .substringAfter("android:id=\"@+id/vault_unlock_sweep\"")
             .substringBefore("/>")
         assertTrue(
-            "Sweep must travel in the corridor above the bullets, not through them",
-            sweepBlock.contains("android:layout_gravity=\"top\"") &&
-                !sweepBlock.contains("center_vertical")
+            "Biometric unlock must keep the original centered sweep",
+            sweepBlock.contains("android:layout_gravity=\"center_vertical\"")
         )
-        val legacyBlock = layout
-            .substringAfter("android:id=\"@+id/vault_pin_dots_legacy\"")
-            .substringBefore("/>")
+
+        val animator = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/VaultShutterAnimator.kt"
+        ).readText()
         assertTrue(
-            "Legacy bullets stay vertically centered inside their own text view",
-            legacyBlock.contains("android:gravity=\"center\"")
+            "Manual PIN entry lifts the legacy sweep above the bullets",
+            animator.contains("sweepView.translationY = -sweepLiftDp * density") &&
+                animator.contains("const val LEGACY_SWEEP_LIFT_DP = 24f")
         )
+
+        for (relative in listOf(
+            "src/main/kotlin/org/fossify/gallery/activities/VaultLockActivity.kt",
+            "src/main/kotlin/org/fossify/gallery/dialogs/VaultSecurityDialog.kt"
+        )) {
+            val source = locateAppFile(relative).readText()
+            assertTrue(
+                "$relative must mark biometric unlocks so they keep the original sweep",
+                source.contains("completeUnlockSuccess(viaBiometric = true)") ||
+                    source.contains("onAuthenticated(viaBiometric = true)")
+            )
+            assertTrue(
+                "$relative must pass the lift for manual PIN entry only",
+                source.contains("sweepLiftDp = if (!viaBiometric")
+            )
+        }
     }
 
     private class FakeContext(private val root: File) : ContextWrapper(null) {

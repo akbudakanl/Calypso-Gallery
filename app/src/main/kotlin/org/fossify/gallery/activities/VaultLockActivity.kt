@@ -126,7 +126,7 @@ class VaultLockActivity : SimpleActivity() {
         inputHelper.setupPasswordInput(::handleSecretSubmission)
         inputHelper.showProtectionType(currentType, window)
         inputHelper.setupBiometricButton(enabled = true) {
-            onAuthenticated()
+            onAuthenticated(viaBiometric = true)
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -166,7 +166,7 @@ class VaultLockActivity : SimpleActivity() {
         binding.root.post {
             if (!isFinishing && !isDestroyed && hasWindowFocus() && !CryptoManager.isDeviceLocked(this)) {
                 inputHelper.promptBiometricUnlock(isAutoTrigger = true) {
-                    onAuthenticated()
+                    onAuthenticated(viaBiometric = true)
                 }
             }
         }
@@ -198,7 +198,7 @@ class VaultLockActivity : SimpleActivity() {
             }
         ) { success ->
             if (success) {
-                onAuthenticated()
+                onAuthenticated(viaBiometric = false)
             } else {
                 binding.vaultSecurityContent.vaultStatusLabel.beGone()
             }
@@ -236,7 +236,7 @@ class VaultLockActivity : SimpleActivity() {
         overridePendingTransition(0, 0)
     }
 
-    private fun onAuthenticated() {
+    private fun onAuthenticated(viaBiometric: Boolean = false) {
         if (!ValueAnimator.areAnimatorsEnabled()) {
             VaultSessionManager.onVaultReauthenticated(this)
             finish()
@@ -264,6 +264,11 @@ class VaultLockActivity : SimpleActivity() {
             panel = binding.vaultLockContainer,
             pulseView = if (isPassword) securityBinding.vaultPasswordInputLayout else null,
             sweepColor = AppearanceManager.resolve(this, config).primary,
+            sweepLiftDp = if (!viaBiometric && currentType == PROTECTION_PIN && !config.showVaultPinDots) {
+                VaultShutterAnimator.LEGACY_SWEEP_LIFT_DP
+            } else {
+                0f
+            },
         )
         shutterAnimator = animator
         animator.play {

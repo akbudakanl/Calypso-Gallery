@@ -281,7 +281,7 @@ class VaultSecurityDialog(
 
         inputHelper.setupBiometricButton(enabled = biometricsEnabled) {
             dialogSucceeded = true
-            completeUnlockSuccess()
+            completeUnlockSuccess(viaBiometric = true)
         }
 
         // Host the security form on the same ambient frosted backdrop as the full-screen lock
@@ -383,7 +383,7 @@ class VaultSecurityDialog(
             clearAutoPromptFocusListener()
             inputHelper.promptBiometricUnlock(isAutoTrigger = true) {
                 dialogSucceeded = true
-                completeUnlockSuccess()
+                completeUnlockSuccess(viaBiometric = true)
             }
         }
 
@@ -512,7 +512,7 @@ class VaultSecurityDialog(
                             if (currentType == PROTECTION_PIN) secret.size else 0
                         markVaultPasswordEntered(activity.config)
                         dialogSucceeded = true
-                        completeUnlockSuccess()
+                        completeUnlockSuccess(viaBiometric = false)
                     } else {
                         updateStatusLabel()
                     }
@@ -530,7 +530,7 @@ class VaultSecurityDialog(
                     // A real password/PIN entry restarts the "only biometrics" reminder window.
                     markVaultPasswordEntered(activity.config)
                     dialogSucceeded = true
-                    completeUnlockSuccess()
+                    completeUnlockSuccess(viaBiometric = false)
                 } else {
                     updateStatusLabel()
                 }
@@ -701,7 +701,7 @@ class VaultSecurityDialog(
      * Plays the approved shutter feedback on a real unlock. Setup, password-change and KDF
      * rewrap flows keep their immediate behaviour - the motion is only for entering the vault.
      */
-    private fun completeUnlockSuccess() {
+    private fun completeUnlockSuccess(viaBiometric: Boolean = false) {
         if (isSetupMode || isChangePasswordMode || rewrapKdfOnUnlock || verifyOnly ||
             !android.animation.ValueAnimator.areAnimatorsEnabled()
         ) {
@@ -728,6 +728,13 @@ class VaultSecurityDialog(
             panel = binding.root,
             pulseView = if (isPassword) binding.vaultPasswordInputLayout else null,
             sweepColor = AppearanceManager.resolve(activity, activity.config).primary,
+            sweepLiftDp = if (!viaBiometric && currentType == PROTECTION_PIN &&
+                !activity.config.showVaultPinDots
+            ) {
+                VaultShutterAnimator.LEGACY_SWEEP_LIFT_DP
+            } else {
+                0f
+            },
         )
         shutterAnimator = animator
         animator.play {

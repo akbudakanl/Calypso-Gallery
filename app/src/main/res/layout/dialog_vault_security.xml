@@ -110,14 +110,13 @@
                 android:textSize="24sp"
                 android:visibility="gone" />
 
-            <!-- The sweep travels in the open corridor ABOVE the legacy bullets, mirroring the
-                 approved prototype (sweepY, then bullets at sweepY + 20dp). Never center it on
-                 the bullet text: that makes the line cross straight through the dots. -->
+            <!-- Default position is preserved for biometric unlocks. A manual PIN entry lifts
+                 the sweep into the corridor above the bullets (see VaultShutterAnimator). -->
             <View
                 android:id="@+id/vault_unlock_sweep"
                 android:layout_width="64dp"
                 android:layout_height="4dp"
-                android:layout_gravity="top"
+                android:layout_gravity="center_vertical"
                 android:background="@drawable/vault_unlock_sweep"
                 android:visibility="invisible" />
         </FrameLayout>

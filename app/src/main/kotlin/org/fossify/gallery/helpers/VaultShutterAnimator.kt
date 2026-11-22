@@ -30,6 +30,11 @@ class VaultShutterAnimator(
     private val pulseView: View? = null,
     /** The gradient drawable is white in XML; tint it so the sweep stays visible in light themes. */
     private val sweepColor: Int = Color.WHITE,
+    /**
+     * Manual PIN entry with the per-digit dot box disabled lifts the sweep above the legacy
+     * bullets. Biometric unlock passes 0 so its long-approved motion stays exactly unchanged.
+     */
+    private val sweepLiftDp: Float = 0f,
 ) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val running = mutableListOf<Animator>()
@@ -75,15 +80,17 @@ class VaultShutterAnimator(
             }
         }
 
-        // 3 — light sweep in the corridor ABOVE the PIN characters (380-900 ms). The XML gradient
-        // is white, so light themes need the active primary colour to keep it visible. It is
-        // omitted when the PIN per-digit dot rectangle is shown, and for legacy bullets it sits
-        // above the text (dialog_vault_security.xml, layout_gravity="top") so it never crosses
-        // the dots.
+        // 3 — light sweep (380-900 ms). The XML gradient is white, so light themes need the active
+        // primary colour to keep it visible. It is omitted when the PIN per-digit dot rectangle is
+        // shown. For manual PIN entry with legacy bullets it is lifted above the text; biometric
+        // unlock keeps the original centered sweep unchanged.
         sweep?.let { sweepView ->
             sweepView.background?.mutate()?.setColorFilter(sweepColor, PorterDuff.Mode.SRC_ATOP)
             sweepView.alpha = 0f
             sweepView.visibility = View.VISIBLE
+            if (sweepLiftDp > 0f) {
+                sweepView.translationY = -sweepLiftDp * density
+            }
             val sweepDistance = (sweepView.parent as? View)?.measuredWidth?.toFloat() ?: sweepView.width * 3f
             track(ObjectAnimator.ofFloat(sweepView, "translationX", 0f, sweepDistance).apply {
                 duration = 520L
@@ -137,6 +144,8 @@ class VaultShutterAnimator(
     }
 
     companion object {
+        /** Manual PIN entry lifts the legacy sweep into the corridor above the bullets. */
+        const val LEGACY_SWEEP_LIFT_DP = 24f
         private const val SETTLE_DELAY_MS = 620L
         private const val PANEL_DURATION_MS = 560L
         private const val PANEL_TRAVEL_DP = 70f
