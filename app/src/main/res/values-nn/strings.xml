@@ -852,4 +852,12 @@
     <string name="checking_files_before_transfer">Sjekkar filer før overføring…</string>
     <string name="checking_files_before_crypto">Sjekkar filer før kryptering…</string>
     <string name="deleting_files_progress">Sletter filer…</string>
+    <string name="brute_force_level_fast">Rask opplåsing</string>
+    <string name="brute_force_level_balanced">Balansert tryggleik</string>
+    <string name="brute_force_level_high">Høg tryggleik</string>
+    <string name="brute_force_level_maximum">Maksimalt vern</string>
+    <string name="brute_force_level_fast_desc">Rask opplåsing av kvelvet</string>
+    <string name="brute_force_level_balanced_desc">Tilrådd område</string>
+    <string name="brute_force_level_high_desc">Auka minnebruk</string>
+    <string name="brute_force_level_maximum_desc">Minneåtvaring aktiv</string>
 </resources>

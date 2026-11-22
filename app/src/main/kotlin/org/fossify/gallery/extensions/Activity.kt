@@ -3391,12 +3391,13 @@ fun BaseSimpleActivity.showVaultPullTutorialDialog(onDone: () -> Unit = {}) {
         ),
         noteText = getString(R.string.vault_pull_tutorial_note),
         positiveText = getString(R.string.vault_pull_tutorial_confirm),
-        cancelable = true,
+        // The final tutorial is the last mandatory step of vault setup: Back must not skip it.
+        // Completion goes through the positive button only.
+        cancelable = false,
         showPullTutorial = true,
         filledPositiveButton = true,
         alignSingleActionEnd = true,
         onPositive = onDone,
-        onCancel = onDone,
     )
 }
 

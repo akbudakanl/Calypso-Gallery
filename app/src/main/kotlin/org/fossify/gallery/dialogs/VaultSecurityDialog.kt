@@ -159,9 +159,14 @@ class VaultSecurityDialog(
                     )
                     if (value.isNotEmpty()) {
                         append('\n')
-                        val start = length
+                        val valueStart = length
                         append(value)
-                        setSpan(ForegroundColorSpan(primaryColor), start, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        setSpan(ForegroundColorSpan(primaryColor), valueStart, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        // Same security-level wording as the Settings row and the shared dial.
+                        append(" · ")
+                        val levelStart = length
+                        append(BruteForceDialog.levelForCurrentTarget(activity))
+                        setSpan(ForegroundColorSpan(palette.secondary), levelStart, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                     }
                 }
             }
@@ -603,6 +608,11 @@ class VaultSecurityDialog(
                 val newSecret = secret.copyOf()
                 val candidate = newSecret.copyOf()
                 weakWarningInFlight = true
+                // The KDF comparison runs on a background thread; lock every credential input
+                // (password field, PIN pad, OK and the back arrow) until it returns. Otherwise the
+                // user can keep typing while "Parola kontrol ediliyor…" is shown and those
+                // characters are silently erased by clearInputs() when the check completes.
+                setDialogBusy(true)
                 binding.vaultStatusLabel.beVisible()
                 binding.vaultStatusLabel.setText(R.string.checking_password)
                 try {
@@ -618,10 +628,11 @@ class VaultSecurityDialog(
                             }
                             activity.runOnUiThread {
                                 try {
+                                    weakWarningInFlight = false
+                                    setDialogBusy(false)
                                     if (activity.isFinishing || activity.isDestroyed || dialog?.isShowing != true) {
                                         return@runOnUiThread
                                     }
-                                    weakWarningInFlight = false
                                     binding.vaultStatusLabel.beGone()
                                     if (same) {
                                         VaultNoticeDialog(
@@ -649,6 +660,7 @@ class VaultSecurityDialog(
                     }
                 } catch (_: Throwable) {
                     weakWarningInFlight = false
+                    setDialogBusy(false)
                     candidate.fill('\u0000')
                     newSecret.fill('\u0000')
                 }

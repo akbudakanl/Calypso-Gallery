@@ -821,4 +821,12 @@
     <string name="checking_files_before_transfer">Comprobando archivos antes de la transferencia…</string>
     <string name="checking_files_before_crypto">Comprobando archivos antes del cifrado…</string>
     <string name="deleting_files_progress">Eliminando archivos…</string>
+    <string name="brute_force_level_fast">Desbloqueo rápido</string>
+    <string name="brute_force_level_balanced">Seguridad equilibrada</string>
+    <string name="brute_force_level_high">Seguridad alta</string>
+    <string name="brute_force_level_maximum">Protección máxima</string>
+    <string name="brute_force_level_fast_desc">Apertura rápida de la bóveda</string>
+    <string name="brute_force_level_balanced_desc">Rango recomendado</string>
+    <string name="brute_force_level_high_desc">Mayor uso de memoria</string>
+    <string name="brute_force_level_maximum_desc">Advertencia de memoria activa</string>
 </resources>

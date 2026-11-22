@@ -778,4 +778,13 @@
     <string name="share_metadata_off">Kapalı</string>
     <string name="share_metadata_location_only">Sadece konum</string>
     <string name="share_metadata_all">Tüm meta veri</string>
+    <!-- Hedeflenen kasa açılış süresi kadranının üstünde gösterilen güvenlik seviyesi. -->
+    <string name="brute_force_level_fast">Hızlı açılış</string>
+    <string name="brute_force_level_balanced">Dengeli güvenlik</string>
+    <string name="brute_force_level_high">Yüksek güvenlik</string>
+    <string name="brute_force_level_maximum">Maksimum koruma</string>
+    <string name="brute_force_level_fast_desc">Hızlı kasa açılışı</string>
+    <string name="brute_force_level_balanced_desc">Önerilen aralık</string>
+    <string name="brute_force_level_high_desc">Daha fazla bellek</string>
+    <string name="brute_force_level_maximum_desc">Bellek uyarısı aktif</string>
 </resources>

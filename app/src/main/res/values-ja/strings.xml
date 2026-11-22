@@ -779,4 +779,12 @@
     <string name="checking_files_before_transfer">転送前にファイルを確認中…</string>
     <string name="checking_files_before_crypto">暗号化前にファイルを確認中…</string>
     <string name="deleting_files_progress">ファイルを削除中…</string>
+    <string name="brute_force_level_fast">高速なロック解除</string>
+    <string name="brute_force_level_balanced">バランスの取れたセキュリティ</string>
+    <string name="brute_force_level_high">高いセキュリティ</string>
+    <string name="brute_force_level_maximum">最大限の保護</string>
+    <string name="brute_force_level_fast_desc">高速な保管庫のロック解除</string>
+    <string name="brute_force_level_balanced_desc">推奨範囲</string>
+    <string name="brute_force_level_high_desc">より多くのメモリ使用量</string>
+    <string name="brute_force_level_maximum_desc">メモリ警告が有効</string>
 </resources>

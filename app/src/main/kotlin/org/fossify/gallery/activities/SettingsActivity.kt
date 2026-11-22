@@ -1404,7 +1404,14 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsArgon2ProfileHolder.beVisibleIf(hasStoragePermission && doesVaultExist())
         fun refreshSummary() {
             val summary = org.fossify.gallery.dialogs.BruteForceDialog.summary(this)
-            binding.settingsArgon2ProfileValue.text = summary
+            // Settings and first-time vault setup share the same dial and level wording.
+            val level = if (summary.isEmpty()) {
+                ""
+            } else {
+                org.fossify.gallery.dialogs.BruteForceDialog.levelForCurrentTarget(this)
+            }
+            binding.settingsArgon2ProfileValue.text =
+                if (level.isEmpty()) summary else "$summary · $level"
             binding.settingsArgon2ProfileValue.beGoneIf(summary.isEmpty())
         }
         refreshSummary()

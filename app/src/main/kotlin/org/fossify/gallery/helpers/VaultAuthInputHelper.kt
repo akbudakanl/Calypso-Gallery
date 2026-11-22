@@ -348,6 +348,9 @@ class VaultAuthInputHelper(
     }
 
     private fun submitPassword(onPasswordSubmit: (CharArray) -> Unit) {
+        // A disabled field can still deliver a queued IME "Done" action; ignore it so a check
+        // running on the background thread cannot be submitted twice.
+        if (!binding.vaultPasswordInput.isEnabled) return
         val editable = binding.vaultPasswordInput.text ?: return
         val len = editable.length
         if (len < MIN_PASSWORD_LENGTH) {

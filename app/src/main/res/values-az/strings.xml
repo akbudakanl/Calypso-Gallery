@@ -850,4 +850,12 @@
     <string name="checking_files_before_transfer">Köçürmədən əvvəl fayllar yoxlanılır…</string>
     <string name="checking_files_before_crypto">Şifrələmədən əvvəl fayllar yoxlanılır…</string>
     <string name="deleting_files_progress">Fayllar silinir…</string>
+    <string name="brute_force_level_fast">Sürətli açılış</string>
+    <string name="brute_force_level_balanced">Balanslaşdırılmış təhlükəsizlik</string>
+    <string name="brute_force_level_high">Yüksək təhlükəsizlik</string>
+    <string name="brute_force_level_maximum">Maksimum qoruma</string>
+    <string name="brute_force_level_fast_desc">Sürətli seyf açılışı</string>
+    <string name="brute_force_level_balanced_desc">Tövsiyə olunan aralıq</string>
+    <string name="brute_force_level_high_desc">Daha çox yaddaş istifadəsi</string>
+    <string name="brute_force_level_maximum_desc">Yaddaş xəbərdarlığı aktivdir</string>
 </resources>

@@ -88,6 +88,10 @@ The vault credential tab uses **Alphanumeric** (not "Password" / "Şifre"): it d
 
 Related password-prompt strings (`enter_password`, `repeat_password`, `wrong_password`, `enter_new_password`, `repeat_new_password`, `change_encrypted_vault_password`, `faq_2_title`, `existing_vault_detected_at_location`) consistently use the word for **password** — Türkçe `parola`, Azerbaijani `parol` — and reserve `şifre` / `şifrə` strictly for encryption ("encrypt", "encrypted vault"). The other audited locales already follow the same distinction (`Passwort`, `contraseña`, `パスワード`, `passord`, `密碼`).
 
+### Unlock-time security levels (this revision)
+
+The four fork-only `brute_force_level_*` keys (`fast`, `balanced`, `high`, `maximum`) label the themed unlock-time dial in both Settings and first-time vault setup, and the matching `brute_force_level_*_desc` keys explain each range under the dial. For 0–2.5 s the description is `Hızlı kasa açılışı` / `Fast vault opening`; the older `Düşük KDF maliyeti` wording is no longer used. These are Calypso-specific (KDF/unlock time), so translations belong in this fork, not upstream Weblate. All nine audited locales are documented in `(this revision)` sections at the end of their comparison reports.
+
 ## Adding a New Language Audit
 
 1. Create a subfolder named after the Android locale code (e.g., `fr/`, `es/`, `zh-rCN/`).

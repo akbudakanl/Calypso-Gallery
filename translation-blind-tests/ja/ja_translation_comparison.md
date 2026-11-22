@@ -1206,3 +1206,25 @@ Added the notification settings section (category heading, per-operation toggles
 | 18 | `checking_files_before_transfer` | Checking files before transfer… | 転送前にファイルを確認中… | Pre-transfer verification progress |
 | 19 | `checking_files_before_crypto` | Checking files before encryption… | 暗号化前にファイルを確認中… | Pre-encryption verification progress |
 | 20 | `deleting_files_progress` | Deleting files… | ファイルを削除中… | Deletion progress status |
+
+## Unlock-time security levels (this revision)
+
+Added the four fork-only `brute_force_level_*` keys used by the themed unlock-time dial in Settings and first-time vault setup. The label follows the chosen unlock time: 0–2.5 s fast, 2.5–5 s balanced, 5–7.5 s high, 7.5–10 s maximum. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_level_fast` | Fast unlock | 高速なロック解除 | 0–2.5 s |
+| 2 | `brute_force_level_balanced` | Balanced security | バランスの取れたセキュリティ | 2.5–5 s |
+| 3 | `brute_force_level_high` | High security | 高いセキュリティ | 5–7.5 s |
+| 4 | `brute_force_level_maximum` | Maximum protection | 最大限の保護 | 7.5–10 s |
+
+## Unlock-time level descriptions (this revision)
+
+Added the four fork-only `brute_force_level_*_desc` keys shown under the themed unlock-time dial in Settings and first-time vault setup. The 0–2.5 s description is now `Hızlı kasa açılışı` / `Fast vault opening` (previously `Düşük KDF maliyeti`, which is no longer used). English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_level_fast_desc` | Fast vault opening | 高速な保管庫のロック解除 | 0–2.5 s |
+| 2 | `brute_force_level_balanced_desc` | Recommended range | 推奨範囲 | 2.5–5 s |
+| 3 | `brute_force_level_high_desc` | More memory usage | より多くのメモリ使用量 | 5–7.5 s |
+| 4 | `brute_force_level_maximum_desc` | Memory warning active | メモリ警告が有効 | 7.5–10 s |

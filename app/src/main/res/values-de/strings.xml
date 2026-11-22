@@ -779,4 +779,12 @@
     <string name="checking_files_before_transfer">Dateien werden vor der Übertragung geprüft…</string>
     <string name="checking_files_before_crypto">Dateien werden vor der Verschlüsselung geprüft…</string>
     <string name="deleting_files_progress">Dateien werden gelöscht…</string>
+    <string name="brute_force_level_fast">Schnelle Entsperrung</string>
+    <string name="brute_force_level_balanced">Ausgewogene Sicherheit</string>
+    <string name="brute_force_level_high">Hohe Sicherheit</string>
+    <string name="brute_force_level_maximum">Maximaler Schutz</string>
+    <string name="brute_force_level_fast_desc">Schnelles Tresor-Öffnen</string>
+    <string name="brute_force_level_balanced_desc">Empfohlener Bereich</string>
+    <string name="brute_force_level_high_desc">Höherer Speicherverbrauch</string>
+    <string name="brute_force_level_maximum_desc">Speicherwarnung aktiv</string>
 </resources>

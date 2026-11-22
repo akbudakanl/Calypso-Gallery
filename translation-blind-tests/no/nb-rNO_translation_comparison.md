@@ -1229,3 +1229,25 @@ Added the notification settings section (category heading, per-operation toggles
 | 18 | `checking_files_before_transfer` | Checking files before transfer… | Sjekker filer før overføring… | Pre-transfer verification progress |
 | 19 | `checking_files_before_crypto` | Checking files before encryption… | Sjekker filer før kryptering… | Pre-encryption verification progress |
 | 20 | `deleting_files_progress` | Deleting files… | Sletter filer… | Deletion progress status |
+
+## Unlock-time security levels (this revision)
+
+Added the four fork-only `brute_force_level_*` keys used by the themed unlock-time dial in Settings and first-time vault setup. The label follows the chosen unlock time: 0–2.5 s fast, 2.5–5 s balanced, 5–7.5 s high, 7.5–10 s maximum. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_level_fast` | Fast unlock | Rask opplåsing | 0–2.5 s |
+| 2 | `brute_force_level_balanced` | Balanced security | Balansert sikkerhet | 2.5–5 s |
+| 3 | `brute_force_level_high` | High security | Høy sikkerhet | 5–7.5 s |
+| 4 | `brute_force_level_maximum` | Maximum protection | Maksimal beskyttelse | 7.5–10 s |
+
+## Unlock-time level descriptions (this revision)
+
+Added the four fork-only `brute_force_level_*_desc` keys shown under the themed unlock-time dial in Settings and first-time vault setup. The 0–2.5 s description is now `Hızlı kasa açılışı` / `Fast vault opening` (previously `Düşük KDF maliyeti`, which is no longer used). English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `brute_force_level_fast_desc` | Fast vault opening | Rask opplåsing av hvelvet | 0–2.5 s |
+| 2 | `brute_force_level_balanced_desc` | Recommended range | Anbefalt område | 2.5–5 s |
+| 3 | `brute_force_level_high_desc` | More memory usage | Økt minnebruk | 5–7.5 s |
+| 4 | `brute_force_level_maximum_desc` | Memory warning active | Minneadvarsel aktiv | 7.5–10 s |
