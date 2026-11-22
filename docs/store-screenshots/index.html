@@ -676,6 +676,59 @@
     flex-shrink: 0;
   }
 
+  .vault-password-field {
+    width: 100%;
+    height: 86px;
+    border-radius: 26px;
+    background: rgba(24, 24, 27, 0.82);
+    border: 1.5px solid #2E2E36;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+    margin-bottom: 26px;
+    flex-shrink: 0;
+  }
+
+  .vault-password-field span {
+    font-size: 34px;
+    letter-spacing: 0.16em;
+    color: #FAFAFA;
+    line-height: 1;
+  }
+
+  .vault-password-field svg {
+    width: 34px;
+    height: 34px;
+    stroke: #A1A1AA;
+    fill: none;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .vault-password-ok {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: rgba(24, 24, 27, 0.82);
+    border: 1.5px solid #2E2E36;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .vault-password-ok svg {
+    width: 42px;
+    height: 42px;
+    stroke: #FAFAFA;
+    fill: none;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   .pin-dot {
     width: 16px;
     height: 16px;
@@ -746,45 +799,6 @@
     stroke-linejoin: round;
   }
 
-   /* Banner left phone: navy vault screen using the same navy tokens as the theme showcase */
-   .bp-left .device-screen.navy-vault {
-     background: #0B1220;
-     color: #EFF6FF;
-   }
-
-   .bp-left .navy-vault .vault-bg-blur {
-     opacity: 0.22;
-     filter: blur(36px) saturate(0.8);
-   }
-
-   .bp-left .navy-vault .vault-vignette {
-     background: radial-gradient(circle at 50% 44%, rgba(11,18,32,0.10) 0%, rgba(11,18,32,0.58) 58%, rgba(6,11,22,0.92) 100%);
-   }
-
-   .bp-left .navy-vault .vault-emblem-ring,
-   .bp-left .navy-vault .vault-pin-box {
-     background: rgba(19, 29, 49, 0.86);
-     border-color: #243451;
-   }
-
-   .bp-left .navy-vault .vault-emblem-ring {
-     box-shadow: 0 20px 54px rgba(0,0,0,0.55), 0 0 0 14px rgba(147,197,253,0.06);
-   }
-
-   .bp-left .navy-vault .vault-emblem-ring svg {
-     stroke: #EFF6FF;
-   }
-
-   .bp-left .navy-vault .vault-lock-sub {
-     color: #8BA7CC;
-   }
-
-   .bp-left .navy-vault .vault-unlock-btn {
-     background: #1E3A5F;
-     border: 1.5px solid #2E4E7A;
-     color: #EFF6FF;
-   }
-
   /* =========================================================
      SLIDE 3: VIRTUAL ALBUMS (Playlists for Your Photos)
      ========================================================= */
@@ -851,74 +865,6 @@
 
   .media-cell.highlight {
     box-shadow: inset 0 0 0 4px #FAFAFA;
-  }
-
-  .floating-virtual-card {
-    position: absolute;
-    right: 54px;
-    top: 660px;
-    z-index: 15;
-    width: 390px;
-    border-radius: 30px;
-    background: rgba(20, 20, 24, 0.94);
-    backdrop-filter: blur(20px);
-    border: 1.5px solid rgba(255, 255, 255, 0.16);
-    padding: 24px;
-    box-shadow: 0 36px 90px rgba(0, 0, 0, 0.72);
-  }
-
-  .fvc-top {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 18px;
-  }
-
-  .fvc-top img {
-    width: 82px;
-    height: 82px;
-    border-radius: 18px;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-
-  .fvc-top strong {
-    display: block;
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .fvc-top span {
-    display: inline-block;
-    font-size: 19px;
-    font-weight: 600;
-    color: #09090B;
-    background: #FAFAFA;
-    padding: 5px 14px;
-    border-radius: 999px;
-  }
-
-  .fvc-links {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 16px;
-    border-top: 1px solid #27272A;
-  }
-
-  .fvc-link-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 21px;
-    color: #D4D4D8;
-  }
-
-  .fvc-link-row em {
-    font-style: normal;
-    font-size: 18px;
-    color: #71717A;
   }
 
   /* =========================================================
@@ -1565,7 +1511,6 @@
               <div class="device-screen">
                 <div class="punch-hole"></div>
                 <div class="and-status">
-                  <span>9:41</span>
                   <div class="and-status-icons">
                     <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                     <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
@@ -1656,7 +1601,6 @@
               <div class="device-screen">
                 <div class="punch-hole"></div>
                 <div class="and-status">
-                  <span>9:41</span>
                   <div class="and-status-icons">
                     <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                     <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
@@ -1739,26 +1683,11 @@
             <h2 class="art-headline js-editable"><span class="muted-line">Playlists for</span><br>your photos.</h2>
           </div>
 
-          <div class="floating-virtual-card">
-            <div class="fvc-top">
-              <img data-photo="3" src="photos/photo-3.jpg" alt="">
-              <div>
-                <strong>1 Original File</strong>
-                <span>0 MB extra storage</span>
-              </div>
-            </div>
-            <div class="fvc-links">
-              <div class="fvc-link-row"><span>Golden Hour</span><em>Virtual album</em></div>
-              <div class="fvc-link-row"><span>Editorial Picks</span><em>Virtual album</em></div>
-            </div>
-          </div>
-
           <div class="device-wrap" style="left:44%;">
             <div class="device-frame">
               <div class="device-screen">
                 <div class="punch-hole"></div>
                 <div class="and-status">
-                  <span>9:41</span>
                   <div class="and-status-icons">
                     <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                     <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
@@ -1823,7 +1752,6 @@
                 <div class="punch-hole"></div>
 
                 <div class="and-status" style="color:#FAFAFA;">
-                  <span>9:41</span>
                   <div class="and-status-icons">
                     <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                     <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
@@ -1871,7 +1799,7 @@
               <div class="device-frame">
                 <div class="device-screen">
                   <div class="punch-hole"></div>
-                  <div class="and-status"><span>9:41</span></div>
+                  
                   <div class="cal-search-bar">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span>Search folders</span>
@@ -1904,8 +1832,7 @@
                 <div class="device-screen light">
                   <div class="punch-hole"></div>
                   <div class="and-status" style="color:#18181B;">
-                    <span>9:41</span>
-                    <div class="and-status-icons">
+                      <div class="and-status-icons">
                       <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                       <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
                     </div>
@@ -1959,7 +1886,6 @@
               <div class="device-screen">
                 <div class="punch-hole"></div>
                 <div class="and-status">
-                  <span>9:41</span>
                   <div class="and-status-icons">
                     <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
                     <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
@@ -2064,9 +1990,9 @@
             <!-- Left: Encrypted Vault -->
             <div class="bp-slot bp-left">
               <div class="device-frame">
-                <div class="device-screen navy-vault">
+                <div class="device-screen">
                   <div class="punch-hole"></div>
-                  <div class="and-status"><span>9:41</span></div>
+                  
                   <div class="vault-bg-blur">
                     <img data-photo="5" src="photos/photo-5.jpg" alt="">
                     <img data-photo="2" src="photos/photo-2.jpg" alt="">
@@ -2078,11 +2004,14 @@
                       <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/></svg>
                     </div>
                     <h3 class="vault-lock-title">Encrypted Vault</h3>
-                    <p class="vault-lock-sub">AES-256-GCM · Argon2id</p>
-                    <div class="vault-pin-box">
-                      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot empty"></span>
+                    <p class="vault-lock-sub">Enter vault password</p>
+                    <div class="vault-password-field">
+                      <span>••••••••</span>
+                      <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
                     </div>
-                    <div class="vault-unlock-btn">Unlock Vault</div>
+                    <div class="vault-password-ok">
+                      <svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/></svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2093,7 +2022,7 @@
               <div class="device-frame">
                 <div class="device-screen">
                   <div class="punch-hole"></div>
-                  <div class="and-status"><span>9:41</span></div>
+                  
                   <div class="cal-search-bar">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span>Search folders</span>
@@ -2133,7 +2062,6 @@
               <div class="device-frame">
                 <div class="device-screen light">
                   <div class="punch-hole"></div>
-                  <div class="and-status" style="color:#18181B;"><span>9:41</span></div>
                   <div class="cal-search-bar">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span>Search folders</span>
