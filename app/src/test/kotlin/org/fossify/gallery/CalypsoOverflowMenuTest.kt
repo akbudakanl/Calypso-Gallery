@@ -155,6 +155,15 @@ class CalypsoOverflowMenuTest {
     }
 
     @Test
+    fun settingsFooterDoesNotRenderATrailingChevron() {
+        val source = File(
+            "app/src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt"
+        ).readText()
+        assertFalse(source.contains("if (item.hasSubMenu() || isSettingsFooter)"))
+        assertTrue(source.contains("if (item.hasSubMenu())"))
+    }
+
+    @Test
     fun semanticGroupsSeparatePrimaryViewVisibilityAndManageSections() {
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.show_albums))
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.refresh_menu))

@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><title>Ayarlar satırındaki > ikonunun kaldırılması</title><style>
+:root{--bg:#0d0d10;--panel:#141417;--border:#27272a;--text:#fafafa;--sec:#a1a1aa;--accent:#d9af76;--bad:#f87171;--good:#4ade80;--row:#1d1d21;--tint:#23201b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px}
+h1{font-size:27px;letter-spacing:-.035em;margin:0 0 6px}
+p.lead{color:var(--sec);max-width:1050px;font-size:14px;line-height:1.6;margin:0 0 24px}
+.grid{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;width:340px}
+.card h2{font-size:15px;margin:0 0 4px}
+.card .sub{color:var(--sec);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:10px}
+.tag.new{background:rgba(74,222,128,.14);color:var(--good)}
+.tag.oldtag{background:rgba(248,113,113,.14);color:var(--bad)}
+.tag.info{background:rgba(217,175,118,.14);color:var(--accent)}
+
+/* popup mockup */
+.phone{width:290px;height:392px;border:1px solid var(--border);border-radius:22px;background:#0a0a0c;margin:0 auto;padding:16px;display:flex;flex-direction:column;justify-content:center}
+.popup{background:#18181b;border:1px solid #34343c;border-radius:18px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.pr{padding:0 0}
+.row{height:38px;display:flex;align-items:center;gap:12px;padding:0 13px;font-size:12.5px;color:var(--text)}
+.ico{width:20px;height:20px;border-radius:5px;background:#3a3a42;flex:none;position:relative}
+.ico::after{content:"";position:absolute;inset:5px;border:1.6px solid #9ca3af;border-radius:3px}
+.divider{height:1px;background:#2f2f37;margin:4px 13px}
+.footer{border-top:1px solid #34343c;background:var(--tint);padding:5px 7px}
+.footer .row{height:42px;border-radius:12px}
+.footer .ico{background:#4a3d2c}
+.footer .ico::after{border-color:var(--accent)}
+.footer .lbl{font-weight:700;color:var(--accent);flex:1}
+.chev{width:14px;height:14px;flex:none;position:relative}
+.chev::before{content:"";position:absolute;left:3px;top:2px;width:7px;height:7px;border-top:2px solid #a1a1aa;border-right:2px solid #a1a1aa;transform:rotate(45deg)}
+.footcap{font-size:11px;color:var(--sec);text-align:center;margin-top:12px;line-height:1.5}
+.footcap b{color:var(--text)} .footcap .r{color:var(--bad)} .footcap .g{color:var(--good)}
+
+.cap{font-size:12.5px;color:var(--sec);line-height:1.7;margin:14px 0 0}
+.cap b{color:var(--text)} .cap .g{color:var(--good)} .cap .r{color:var(--bad)}
+code{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px}
+
+/* views strip */
+.views{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 22px}
+.view{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:12.5px;color:var(--sec);min-width:220px}
+.view b{display:block;color:var(--text);font-size:13.5px;margin-bottom:3px}
+.view .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:7px}
+
+/* code */
+.code{background:#0a0a0c;border:1px solid var(--border);border-radius:16px;padding:0;overflow:hidden;width:100%;max-width:1050px}
+.code .bar{background:#141417;border-bottom:1px solid var(--border);padding:11px 16px;font-size:12.5px;color:var(--sec);display:flex;align-items:center;gap:10px}
+.code .bar b{color:var(--text)}
+.code pre{margin:0;padding:18px 16px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.7;color:#d4d4d8;overflow:auto}
+.del{color:var(--bad)} .add{color:var(--good)} .cmt{color:#6b7280} .kw{color:#c4a7e7} .fn{color:#7dd3fc} .str{color:#a5d6a7}
+.note{background:rgba(217,175,118,.06);border:1px solid rgba(217,175,118,.25);border-radius:12px;padding:12px 16px;font-size:12.5px;color:var(--sec);line-height:1.6;max-width:1050px;margin-top:0}
+.note b{color:var(--accent)}
+</style></head><body>
+
+<h1>Ayarlar satırındaki <code>&gt;</code> ikonunun kaldırılması</h1>
+<p class="lead">Son güncellemelerle gelen yeni "more options" (Calypso overflow) menüsünde, en alttaki tinted <b>Ayarlar</b> bandının sağındaki chevron <code>&gt;</code> kaldırılıyor. Değişiklik tek bir dosyada, tek satırlık bir koşul düzenlemesiyle yapılıyor; menü sırası, ikonlar, alt menü oklar ve davranış aynen kalıyor.</p>
+
+<div class="views">
+  <div class="view"><b><span class="dot"></span>Ana sayfa — şifreli</b>MainActivity · menu_main.xml</div>
+  <div class="view"><b><span class="dot"></span>Ana sayfa — şifresiz</b>MainActivity · menu_main.xml</div>
+  <div class="view"><b><span class="dot"></span>Albüm içi görünüm</b>MediaActivity · menu_media.xml</div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <span class="tag oldtag">ÖNCE</span>
+    <h2>chevron görünüyor</h2>
+    <p class="sub">Ayarlar bandında <code>isSettingsFooter = true</code> olduğu için ok ekleniyor.</p>
+    <div class="phone"><div class="popup">
+      <div class="row"><span class="ico"></span>Sırala</div>
+      <div class="row"><span class="ico"></span>Tüm dosyalar</div>
+      <div class="row"><span class="ico"></span>Yenile</div>
+      <div class="divider"></div>
+      <div class="row"><span class="ico"></span>Filtrele</div>
+      <div class="row"><span class="ico"></span>Görünümü değiştir</div>
+      <div class="divider"></div>
+      <div class="row"><span class="ico"></span>Gizli klasörleri göster</div>
+      <div class="row"><span class="ico"></span>Geri dönüşüm kutusu</div>
+      <div class="footer"><div class="row"><span class="ico"></span><span class="lbl">Ayarlar</span><span class="chev"></span></div></div>
+    </div></div>
+    <p class="footcap"><span class="r">Sorun:</span> Ayarlar bir alt menü değil, doğrudan sayfa açıyor — <b>&gt;</b> yanıltıcı.</p>
+  </div>
+
+  <div class="card">
+    <span class="tag new">SONRA</span>
+    <h2>chevron kaldırıldı</h2>
+    <p class="sub">Ayarlar bandı düz metin + ikon olarak kalıyor; tıklama davranışı değişmiyor.</p>
+    <div class="phone"><div class="popup">
+      <div class="row"><span class="ico"></span>Sırala</div>
+      <div class="row"><span class="ico"></span>Tüm dosyalar</div>
+      <div class="row"><span class="ico"></span>Yenile</div>
+      <div class="divider"></div>
+      <div class="row"><span class="ico"></span>Filtrele</div>
+      <div class="row"><span class="ico"></span>Görünümü değiştir</div>
+      <div class="divider"></div>
+      <div class="row"><span class="ico"></span>Gizli klasörleri göster</div>
+      <div class="row"><span class="ico"></span>Geri dönüşüm kutusu</div>
+      <div class="footer"><div class="row"><span class="ico"></span><span class="lbl">Ayarlar</span></div></div>
+    </div></div>
+    <p class="footcap"><span class="g">Sonuç:</span> Tinted Ayarlar şeridi ve kalın etiket <b>aynen korunuyor</b>, sadece ok yok.</p>
+  </div>
+</div>
+
+<div class="code" style="margin-top:24px">
+  <div class="bar"><b>app/src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt</b><span>— buildRow(), ~satır 482</span></div>
+<pre><span class="cmt">// Ayarlar alt menü değil; chevron yalnızca gerçek alt menülerde gösterilmeli.</span>
+<span class="del">- if (item.hasSubMenu() || isSettingsFooter) {</span>
+<span class="add">+ if (item.hasSubMenu()) {</span>
+      val chevronSize = (15f * density).toInt()
+      val chevronView = ImageView(activity).apply {
+          ...
+          setImageDrawable(
+              loadTintedDrawable(
+                  activity,
+                  org.fossify.commons.R.drawable.ic_chevron_right_unpadded_vector,
+                  palette.secondary
+              )
+          )
+      }
+      addView(chevronView)
+  }</pre>
+</div>
+
+<p class="note" style="margin-top:14px"><b>Etki kapsamı:</b> Bu popup <code>MainActivity</code> ve <code>MediaActivity</code> tarafından paylaşıldığı için değişiklik yukarıdaki <b>üç görünümün tamamına</b> uygulanır. <code>ViewPagerActivity</code> (tam ekran görüntüleyici) menüsünde <code>settings</code> öğesi bulunmadığından orada zaten bir chevron yoktur; etkilenmez. <code>item.hasSubMenu()</code> koşulu korunduğu için <b>gerçek alt menülerin okları durmaya devam eder</b>. Test tarafında (<code>CalypsoOverflowMenuTest</code>) sıra, ikon ve footer tespiti kontrolleri değişiklikten etkilenmez; istenirse chevron'un artık ayarlar satırında üretilmediğini doğrulayan yeni bir test eklenebilir.</p>
+
+</body></html>
