@@ -370,7 +370,7 @@
     <string name="vault_password_reminder_verified">パスワードを確認しました</string>
     <string name="vault_password_reminder_not_now">今はしない</string>
     <string name="vault_password_reminder_forgot_title">パスワードを覚えていませんか？</string>
-    <string name="vault_password_reminder_forgot_steps">1. 生体認証で開きます。\n2. 暗号化データをコピーします。\n3. 設定 → 暗号化保管庫をリセット。\n\n生体認証も使えない場合は、アーカイブ、コピー、または %1$s のフォルダーを削除してください。</string>
+    <string name="vault_password_reminder_forgot_steps">1. 生体認証で開きます。\n2. 暗号化データをコピーします。\n3. 設定 → 暗号化保管庫をアーカイブし、新しい保管庫を作成します。\n\n生体認証も使えない場合は、アーカイブ、コピー、または %1$s のフォルダーを削除してください。</string>
     <string name="vault_password_reminder_verify_action">パスワードを確認する</string>
     <string name="vault_password_reminder_forgot_action">覚えていない</string>
     <string name="vault_password_reminder_open_settings">設定を開く</string>
@@ -680,7 +680,7 @@
     <string name="archived_vault_invalid_message">%1$s に保管庫ヘッダーが見つかりません。ファイルマネージャーで削除できます。</string>
     <string name="copy_path">パスをコピー</string>
     <string name="faq_forgot_password_title">暗号化保管庫のパスワードを忘れました。どうすればいいですか？</string>
-    <string name="faq_forgot_password_text">1. 生体認証で開けます。\n2. 暗号化データをコピー（エクスポート）します。コピーであり移動ではありません。\n3. 設定 → 暗号化保管庫をリセット で新しいパスワードを設定します。\n\n警告: 生体認証も使えない場合、保管庫にはアクセスできません。アーカイブ、コピー、または %1$s のフォルダーをファイルマネージャーで削除できます。</string>
+    <string name="faq_forgot_password_text">1. 生体認証で開けます。\n2. 暗号化データをコピー（エクスポート）します。コピーであり移動ではありません。\n3. 設定 → 暗号化保管庫をアーカイブし、新しい保管庫を作成します。\n\n警告: 生体認証も使えない場合、保管庫にはアクセスできません。アーカイブ、コピー、または %1$s のフォルダーをファイルマネージャーで削除できます。</string>
 
     <string name="unarchive_vault">アーカイブから戻す</string>
     <string name="unarchive_vault_summary">保管庫をアーカイブ前の場所に戻します</string>

@@ -385,7 +385,7 @@
     <string name="vault_password_reminder_verified">Passord bekreftet</string>
     <string name="vault_password_reminder_not_now">Ikke nå</string>
     <string name="vault_password_reminder_forgot_title">Husker du ikke passordet ditt?</string>
-    <string name="vault_password_reminder_forgot_steps">1. Lås opp med biometri.\n2. Kopier de krypterte dataene.\n3. Innstillinger → Nullstill kryptert hvelv.\n\nHvis biometri ikke virker: arkiver, kopier eller slett mappen %1$s med en filbehandler.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Lås opp med biometri.\n2. Kopier de krypterte dataene.\n3. Innstillinger → Arkiver det krypterte hvelvet og opprett et nytt.\n\nHvis biometri ikke virker: arkiver, kopier eller slett mappen %1$s med en filbehandler.</string>
     <string name="vault_password_reminder_verify_action">Bekreft passordet mitt</string>
     <string name="vault_password_reminder_forgot_action">Jeg husker ikke</string>
     <string name="vault_password_reminder_open_settings">Åpne innstillinger</string>
@@ -697,7 +697,7 @@
     <string name="archived_vault_invalid_message">Fant ikke hvelvheader i %1$s. Du kan slette mappen med en filbehandler.</string>
     <string name="copy_path">Kopier sti</string>
     <string name="faq_forgot_password_title">Jeg har glemt passordet til det krypterte hvelvet, hva kan jeg gjøre?</string>
-    <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) de krypterte dataene — kopiering er ikke flytting.\n3. Innstillinger → Nullstill kryptert hvelv for nytt passord.\n\nAdvarsel: hvis biometri heller ikke virker, er hvelvet utilgjengelig. Du kan arkivere, kopiere eller slette mappen på %1$s med en filbehandler.</string>
+    <string name="faq_forgot_password_text">1. Lås opp med biometri.\n2. Kopier (eksporter) de krypterte dataene — kopiering er ikke flytting.\n3. Innstillinger → Arkiver det krypterte hvelvet og opprett et nytt.\n\nAdvarsel: hvis biometri heller ikke virker, er hvelvet utilgjengelig. Du kan arkivere, kopiere eller slette mappen på %1$s med en filbehandler.</string>
 
     <string name="unarchive_vault">Ta ut av arkivet</string>
     <string name="unarchive_vault_summary">Flytter hvelvet tilbake til plasseringen før arkivering</string>

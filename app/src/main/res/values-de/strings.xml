@@ -372,7 +372,7 @@
     <string name="vault_password_reminder_verified">Passwort bestätigt</string>
     <string name="vault_password_reminder_not_now">Jetzt nicht</string>
     <string name="vault_password_reminder_forgot_title">Passwort vergessen?</string>
-    <string name="vault_password_reminder_forgot_steps">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren.\n3. Einstellungen → Tresor zurücksetzen.\n\nWenn auch Biometrie nicht geht: archivieren, kopieren oder Ordner %1$s mit einem Dateimanager löschen.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren.\n3. Einstellungen → Tresor archivieren und einen neuen erstellen.\n\nWenn auch Biometrie nicht geht: archivieren, kopieren oder Ordner %1$s mit einem Dateimanager löschen.</string>
     <string name="vault_password_reminder_verify_action">Passwort bestätigen</string>
     <string name="vault_password_reminder_forgot_action">Ich weiß es nicht mehr</string>
     <string name="vault_password_reminder_open_settings">Einstellungen öffnen</string>
@@ -680,7 +680,7 @@
     <string name="archived_vault_invalid_message">Kein Tresor-Kopf in %1$s gefunden. Sie können den Ordner mit einem Dateimanager löschen.</string>
     <string name="copy_path">Pfad kopieren</string>
     <string name="faq_forgot_password_title">Ich habe das Tresor-Passwort vergessen, was kann ich tun?</string>
-    <string name="faq_forgot_password_text">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren (exportieren) — kopieren ist nicht verschieben.\n3. Einstellungen → Tresor zurücksetzen für ein neues Passwort.\n\nWarnung: Wenn auch Biometrie nicht funktioniert, ist der Tresor nicht erreichbar. Sie können ihn archivieren, kopieren oder den Ordner unter %1$s mit einem Dateimanager löschen.</string>
+    <string name="faq_forgot_password_text">1. Mit Biometrie anmelden.\n2. Verschlüsselte Daten kopieren (exportieren) — kopieren ist nicht verschieben.\n3. Einstellungen → Tresor archivieren und einen neuen erstellen.\n\nWarnung: Wenn auch Biometrie nicht funktioniert, ist der Tresor nicht erreichbar. Sie können ihn archivieren, kopieren oder den Ordner unter %1$s mit einem Dateimanager löschen.</string>
 
     <string name="unarchive_vault">Aus Archiv wiederherstellen</string>
     <string name="unarchive_vault_summary">Verschiebt den Tresor zurück an den Ort vor dem Archivieren</string>

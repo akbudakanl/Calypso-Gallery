@@ -438,7 +438,7 @@
     <string name="vault_password_reminder_verified">Parola təsdiqləndi</string>
     <string name="vault_password_reminder_not_now">İndi deyil</string>
     <string name="vault_password_reminder_forgot_title">Parolanızı xatırlamırsınız?</string>
-    <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile giriş yapın.\n2. Şifreli verileri kopyalayın (dışa aktarın).\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola.\n\nBiyometrik de çalışmıyorsa kasa erişilemez; arşivleyebilir, kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile giriş yapın.\n2. Şifreli verileri kopyalayın (dışa aktarın).\n3. Ayarlar → Şifreli kasayı arşivleyip yeni kasa oluşturun.\n\nBiyometrik de çalışmıyorsa kasa erişilemez; arşivleyebilir, kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
     <string name="vault_password_reminder_verify_action">Parolamı təsdiqlə</string>
     <string name="vault_password_reminder_forgot_action">Xatırlamıram</string>
     <string name="vault_password_reminder_open_settings">Parametrlərə get</string>
@@ -751,7 +751,7 @@
     <string name="archived_vault_invalid_message">%1$s konumunda kasa başlığı bulunamadı. Bu klasörü dosya yöneticisiyle silebilirsiniz.</string>
     <string name="copy_path">Yolu kopyala</string>
     <string name="faq_forgot_password_title">Şifreli kasanın parolasını unuttum, ne yapabilirim?</string>
-    <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama taşıma değildir.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturun.\n\nUyarı: biyometrik de çalışmıyorsa kasaya erişim yoktur. Kasayı arşivleyip yeni kasa oluşturabilir, verileri kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
+    <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama taşıma değildir.\n3. Ayarlar → Şifreli kasayı arşivleyip yeni kasa oluşturun.\n\nUyarı: biyometrik de çalışmıyorsa kasaya erişim yoktur. Kasayı arşivleyip yeni kasa oluşturabilir, verileri kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz.</string>
 
     <string name="unarchive_vault">Arşivden çıkar</string>
     <string name="unarchive_vault_summary">Kasayı arşivlenmeden önceki konumuna geri taşır</string>

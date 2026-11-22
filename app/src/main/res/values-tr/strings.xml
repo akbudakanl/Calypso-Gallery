@@ -409,7 +409,7 @@
     <string name="vault_password_reminder_verified">Parola doğrulandı</string>
     <string name="vault_password_reminder_not_now">Şimdi değil</string>
     <string name="vault_password_reminder_forgot_title">Parolanızı hatırlamıyor musunuz?</string>
-    <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — bu işlem kasayı yerinden çıkarmaz.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturup geri yükleyin.\n\nBiyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni bir kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki kasa klasörünü dosya yöneticisiyle silebilirsiniz (geri alınamaz).</string>
+    <string name="vault_password_reminder_forgot_steps">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — bu işlem kasayı yerinden çıkarmaz.\n3. Ayarlar → Şifreli kasayı arşivleyip yeni bir kasa oluşturun.\n\nBiyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni bir kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki kasa klasörünü dosya yöneticisiyle silebilirsiniz (geri alınamaz).</string>
 
     <!-- Kasa arşivleme (ADR 0007): arşivleme taşır, dışa aktarma kopyalar, silme dosya yöneticisindedir. -->
     <string name="archive_vault">Şifreli kasayı arşivle</string>
@@ -438,7 +438,7 @@
     <string name="export_vault_different_vault">Hedef klasörde zaten farklı bir şifreli kasa var. Mevcut kasayı korumak için dışa aktarma iptal edildi. Lütfen boş bir klasör seçin.</string>
     <string name="export_vault_unknown_content">Hedef klasörde şifreli dosyalar var ancak kasa başlığı yok. Kasaların karışmaması için dışa aktarma iptal edildi.</string>
     <string name="faq_forgot_password_title">Şifreli kasanın parolasını unuttum, ne yapabilirim?</string>
-    <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama, taşıma değildir; orijinal yerinde kalır.\n3. Ayarlar → Şifreli kasayı sıfırla ile yeni parola oluşturup geri yükleyin.\n\nUyarı: biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz. Silme geri alınamaz.</string>
+    <string name="faq_forgot_password_text">1. Biyometrik ile kasaya giriş yapın.\n2. Şifreli verilerinizi kopyalayın (dışa aktarın) — kopyalama, taşıma değildir; orijinal yerinde kalır.\n3. Ayarlar → Şifreli kasayı arşivleyip yeni bir kasa oluşturun.\n\nUyarı: biyometrik ile de giriş yapamıyorsanız kasaya erişim mümkün değildir. Mevcut kasayı arşivleyip yeni kasa oluşturabilir, şifreli verileri başka cihaz için kopyalayabilir veya %1$s konumundaki klasörü dosya yöneticisiyle silebilirsiniz. Silme geri alınamaz.</string>
     <string name="select_hidden_album">Şifreli Albüm Seçin</string>
     <string name="create_new_hidden_album">Yeni Şifreli Albüm Oluştur</string>
     <string name="new_hidden_album">Yeni şifreli albüm</string>

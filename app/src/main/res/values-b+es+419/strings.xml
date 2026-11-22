@@ -377,7 +377,7 @@
     <string name="vault_password_reminder_verified">Contraseña confirmada</string>
     <string name="vault_password_reminder_not_now">Ahora no</string>
     <string name="vault_password_reminder_forgot_title">¿No recuerdas tu contraseña?</string>
-    <string name="vault_password_reminder_forgot_steps">1. Acceda con biometría.\n2. Copie los datos cifrados.\n3. Configuración → Restablecer bóveda cifrada.\n\nSi la biometría tampoco funciona: archive, copie o elimine la carpeta %1$s con un gestor de archivos.</string>
+    <string name="vault_password_reminder_forgot_steps">1. Acceda con biometría.\n2. Copie los datos cifrados.\n3. Configuración → Archivar la bóveda cifrada y crear una nueva.\n\nSi la biometría tampoco funciona: archive, copie o elimine la carpeta %1$s con un gestor de archivos.</string>
     <string name="vault_password_reminder_verify_action">Verificar mi contraseña</string>
     <string name="vault_password_reminder_forgot_action">No la recuerdo</string>
     <string name="vault_password_reminder_open_settings">Abrir configuración</string>
@@ -686,7 +686,7 @@
     <string name="archived_vault_invalid_message">No se encontró la cabecera de la bóveda en %1$s. Puede eliminar la carpeta con un gestor de archivos.</string>
     <string name="copy_path">Copiar ruta</string>
     <string name="faq_forgot_password_title">Olvidé la contraseña de la bóveda cifrada, ¿qué puedo hacer?</string>
-    <string name="faq_forgot_password_text">1. Acceda con biometría.\n2. Copie (exporte) sus datos cifrados; copiar no es mover.\n3. Configuración → Restablecer bóveda cifrada para crear una contraseña nueva.\n\nAdvertencia: si la biometría tampoco funciona, la bóveda es inaccesible. Puede archivarla, copiar los datos o eliminar la carpeta en %1$s con un gestor de archivos.</string>
+    <string name="faq_forgot_password_text">1. Acceda con biometría.\n2. Copie (exporte) sus datos cifrados; copiar no es mover.\n3. Configuración → Archivar la bóveda cifrada y crear una nueva.\n\nAdvertencia: si la biometría tampoco funciona, la bóveda es inaccesible. Puede archivarla, copiar los datos o eliminar la carpeta en %1$s con un gestor de archivos.</string>
 
     <string name="unarchive_vault">Sacar del archivo</string>
     <string name="unarchive_vault_summary">Devuelve la bóveda a su ubicación anterior al archivado</string>
