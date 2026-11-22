@@ -122,7 +122,7 @@ fun CryptoManager.getVaultRecycleBinRestoreMap(context: Context): HashMap<String
     return try {
         val encryptedContent = restoreFile.readText(Charsets.UTF_8).trim()
         if (encryptedContent.isEmpty()) return HashMap()
-        val json = decryptStringFromVault(encryptedContent) ?: return HashMap()
+        val json = decryptStringFromVault(encryptedContent, "restore_info") ?: return HashMap()
         val type = object : TypeToken<HashMap<String, String>>() {}.type
         Gson().fromJson(json, type) ?: HashMap()
     } catch (_: Exception) {

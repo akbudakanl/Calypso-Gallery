@@ -963,7 +963,12 @@ fun CryptoManager.encryptStringForVault(
 }
 
 
-fun CryptoManager.decryptStringFromVault(storedText: String): String? {
+/**
+ * [purpose] kaydın içinde açıkta durur; tek başına bir kimlik doğrulaması değildir. Bu yüzden
+ * çağıran beklediği amacı geçirmeli ve eşleşmezse kayıt reddedilmelidir. Aksi halde geçerli bir
+ * `FVSTR:` blob'u kategori değiştirilerek (örn. albüm adı yerine JSON yedeği) kopyalanabilir.
+ */
+fun CryptoManager.decryptStringFromVault(storedText: String, expectedPurpose: String): String? {
     if (!isEncryptedVaultString(storedText)) return storedText
 
     val kek = activeKek() ?: return null
@@ -974,6 +979,7 @@ fun CryptoManager.decryptStringFromVault(storedText: String): String? {
             if (version != VaultContainer.VAULT_FORMAT_VERSION) return null
             dis.readUnsignedShort() // keyId
             val purpose = dis.readUTF()
+            if (purpose != expectedPurpose) return null
             val iv = ByteArray(GCM_IV_LENGTH)
             dis.readFully(iv)
             val len = dis.readInt()

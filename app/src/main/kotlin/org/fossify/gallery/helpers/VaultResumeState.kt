@@ -65,7 +65,7 @@ data class VaultResumeState(
         fun decrypt(blob: String?): VaultResumeState? {
             if (blob.isNullOrEmpty() || !CryptoManager.isEncryptedVaultString(blob)) return null
             val json = try {
-                CryptoManager.decryptStringFromVault(blob)
+                CryptoManager.decryptStringFromVault(blob, "resume")
             } catch (_: Exception) {
                 null
             } ?: return null

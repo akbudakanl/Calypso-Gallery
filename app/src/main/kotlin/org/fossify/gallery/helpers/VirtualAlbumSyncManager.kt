@@ -695,7 +695,7 @@ object VirtualAlbumSyncManager {
                                 // Vault locked, leave file to be restored upon unlock
                                 continue
                             }
-                            val decrypted = CryptoManager.decryptStringFromVault(outerBackup.encryptedPayload) ?: continue
+                            val decrypted = CryptoManager.decryptStringFromVault(outerBackup.encryptedPayload, "album_json") ?: continue
                             try {
                                 gson.fromJson(decrypted, VirtualAlbumBackup::class.java)
                             } catch (_: Exception) {
@@ -890,7 +890,7 @@ object VirtualAlbumSyncManager {
             // unlocked, otherwise every hidden name would look undecryptable.
             if (CryptoManager.isVaultUnlocked &&
                 CryptoManager.isEncryptedVaultString(album.name) &&
-                CryptoManager.decryptStringFromVault(album.name) == null
+                CryptoManager.decryptStringFromVault(album.name, "album") == null
             ) {
                 try {
                     deleteAlbumFile(context, album)

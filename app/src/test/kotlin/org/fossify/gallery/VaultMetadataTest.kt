@@ -7,7 +7,7 @@ import org.fossify.gallery.helpers.encryptStringForVault
 import org.fossify.gallery.helpers.decryptStringFromVault
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -46,18 +46,20 @@ class VaultMetadataTest {
     fun roundTripAndPurposeBinding() {
         val albumName = CryptoManager.encryptStringForVault(ctx, "Secret Album", "album")
         assertTrue(albumName.startsWith(VaultContainer.VAULT_STR_PREFIX))
-        assertEquals("Secret Album", CryptoManager.decryptStringFromVault(albumName))
+        assertEquals("Secret Album", CryptoManager.decryptStringFromVault(albumName, "album"))
+        // Aynı blob başka bir kategoriye taşınırsa çağıranın beklediği purpose uyuşmaz: reddet.
+        assertNull(CryptoManager.decryptStringFromVault(albumName, "album_json"))
 
         val albumJson = CryptoManager.encryptStringForVault(ctx, "{\"name\":\"x\"}", "album_json")
-        assertEquals("{\"name\":\"x\"}", CryptoManager.decryptStringFromVault(albumJson))
+        assertEquals("{\"name\":\"x\"}", CryptoManager.decryptStringFromVault(albumJson, "album_json"))
+        assertNull(CryptoManager.decryptStringFromVault(albumJson, "album"))
 
-        // Purpose, kaydın içinde açıkta olduğu için decrypt kendi bağlamını okur;
-        // değiştirilen purpose testi aşağıda:
+        // Yerinde purpose bozulması da reddedilir (AAD artık eski purpose'a bağlıdır).
         val raw = java.util.Base64.getDecoder().decode(albumName.removePrefix(VaultContainer.VAULT_STR_PREFIX))
         val tampered = raw.clone()
         val purposeIdx = 3 // version(1) + keyId(2)
         tampered[purposeIdx] = (tampered[purposeIdx].toInt() xor 1).toByte()
         val forged = VaultContainer.VAULT_STR_PREFIX + java.util.Base64.getEncoder().encodeToString(tampered)
-        assertFalse(CryptoManager.decryptStringFromVault(forged) == "Secret Album")
+        assertNull(CryptoManager.decryptStringFromVault(forged, "album"))
     }
 }

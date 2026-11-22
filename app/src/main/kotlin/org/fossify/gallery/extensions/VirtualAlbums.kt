@@ -81,7 +81,7 @@ fun Context.getResolvedVirtualAlbumName(album: VirtualAlbum): String? {
     if (!canAccessHiddenVirtualAlbums()) {
         return null
     }
-    return CryptoManager.decryptStringFromVault(album.name) ?: album.name
+    return CryptoManager.decryptStringFromVault(album.name, "album") ?: album.name
 }
 
 /** Existing, not deleted files of the given virtual album path, newest additions first. Must run on a background thread. */
@@ -349,7 +349,7 @@ fun Context.virtualAlbumNameExists(name: String, ignoreAlbumId: Long? = null): B
         allAlbums.any { album ->
             if (album.id == ignoreAlbumId) return@any false
             val resolved = if (album.isHidden) {
-                CryptoManager.decryptStringFromVault(album.name) ?: album.name
+                CryptoManager.decryptStringFromVault(album.name, "album") ?: album.name
             } else {
                 album.name
             }
@@ -515,7 +515,7 @@ fun Context.addMediaToVirtualAlbum(albumId: Long, media: Collection<Medium>, for
         if (hasVaultItem) {
             val currentAlbum = virtualAlbumsDB.getAlbumById(albumId)
             if (currentAlbum != null && (!currentAlbum.isHidden || !CryptoManager.isEncryptedVaultString(currentAlbum.name))) {
-                val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name) ?: currentAlbum.name
+                val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name, "album") ?: currentAlbum.name
                 val encName = CryptoManager.encryptStringForVault(this, plainName, "album")
                 virtualAlbumsDB.updateAlbumVisibilityAndName(albumId, true, encName)
                 directoryDB.deleteDirPath(getVirtualAlbumPath(albumId))
@@ -592,7 +592,7 @@ fun Context.addFileDirItemsToVirtualAlbum(
         if (hasVaultItem) {
             val currentAlbum = virtualAlbumsDB.getAlbumById(albumId)
             if (currentAlbum != null && (!currentAlbum.isHidden || !CryptoManager.isEncryptedVaultString(currentAlbum.name))) {
-                val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name) ?: currentAlbum.name
+                val plainName = CryptoManager.decryptStringFromVault(currentAlbum.name, "album") ?: currentAlbum.name
                 val encName = CryptoManager.encryptStringForVault(this, plainName, "album")
                 virtualAlbumsDB.updateAlbumVisibilityAndName(albumId, true, encName)
                 directoryDB.deleteDirPath(getVirtualAlbumPath(albumId))

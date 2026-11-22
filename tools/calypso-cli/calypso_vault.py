@@ -669,8 +669,15 @@ def derive_header_key(kek: bytes, file_id: bytes) -> bytes:
 
 
 def derive_metadata_key(kek: bytes, context: str) -> bytes:
-    """Per-record key for FVSTR: vault strings (domain|purpose, purpose is also the AAD)."""
-    return _hkdf_sha256(kek, HKDF_EMPTY_SALT, (DOMAIN_METADATA_KEY + "|" + context).encode("utf-8"))
+    """Per-record key for FVSTR: vault strings.
+
+    Android passes an already domain-prefixed context ("domain|purpose") into
+    VaultKeyDerivation.deriveMetadataKey, which prepends the domain once more. The actual HKDF
+    info is therefore "domain|domain|purpose", while GCM AAD stays single-prefixed. This helper
+    mirrors that behaviour; it currently has no CLI call sites (the CLI never reads FVSTR:).
+    """
+    info = (DOMAIN_METADATA_KEY + "|" + DOMAIN_METADATA_KEY + "|" + context).encode("utf-8")
+    return _hkdf_sha256(kek, HKDF_EMPTY_SALT, info)
 
 
 def expected_ciphertext_size(plaintext_size: int) -> int:
