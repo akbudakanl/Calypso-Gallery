@@ -596,7 +596,7 @@
     <string name="search_in_storage">Buscar en el almacenamiento</string>
     <string name="brute_force_time_hint">Selecciona el tiempo que se dedica a abrir la bóveda cifrada. Mantener este valor alto brinda seguridad adicional al dificultar los ataques de fuerza bruta.</string>
     <string name="brute_force_time_min_hint">El límite inferior es el tiempo estándar seguro de este dispositivo.</string>
-    <string name="brute_force_high_memory_warning">Una mayor seguridad usa más memoria. Es posible que tengas problemas para abrir tu bóveda en dispositivos con 2 GB de RAM o menos. En ese caso, reduce el tiempo de apertura en la configuración de la aplicación y vuelve a exportar la bóveda.</string>
+    <string name="brute_force_high_memory_warning">Los valores más altos usan más memoria. Es posible que tengas problemas para abrir tu bóveda en dispositivos con 2 GB de RAM o menos. En ese caso, reduce el tiempo de apertura en la configuración de la aplicación y vuelve a exportar la bóveda.</string>
     <string name="brute_force_time_value_device">%1$.1f s (en este dispositivo)</string>
     <string name="brute_force_time_out_of_range">Este tiempo supera el máximo seleccionable (10 s). Toca para cambiarlo.</string>
     <string name="brute_force_time_value">%1$.1f s</string>

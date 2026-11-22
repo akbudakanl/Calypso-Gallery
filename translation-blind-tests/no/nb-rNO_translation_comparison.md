@@ -1081,7 +1081,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Samme passord |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Det nye passordet er likt det nåværende passordet for hvelvet. Velg et annet. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d runder) |
-| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Høyere sikkerhet bruker mer minne. Du kan få problemer med å åpne hvelvet på enheter med 2 GB RAM eller mindre. Hvis dette skjer, senker du åpningstiden i appinnstillingene og eksporterer hvelvet på nytt. |
+| `brute_force_high_memory_warning` | Higher values use more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Høyere verdier bruker mer minne. Du kan få problemer med å åpne hvelvet på enheter med 2 GB RAM eller mindre. Hvis dette skjer, senker du åpningstiden i appinnstillingene og eksporterer hvelvet på nytt. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Måler standard KDF-hastighet på denne enheten… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Motstand mot brute force oppdatert for det krypterte hvelvet |
 | `appearance_automatic` | Automatic | Automatisk |

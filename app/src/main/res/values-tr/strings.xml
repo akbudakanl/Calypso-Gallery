@@ -656,7 +656,7 @@
     <string name="search_in_storage">Depolama alanında ara</string>
     <string name="brute_force_time_hint">Şifreli kasayı açma işlemi sırasında harcanan süreyi seçiniz. Bu değeri yüksek tutmak, deneme-yanılma saldırılarını zorlaştırarak ekstra güvenlik sağlar.</string>
     <string name="brute_force_time_min_hint">Alt sınır, bu cihazın güvenli standart süresidir.</string>
-    <string name="brute_force_high_memory_warning">Yüksek güvenlik daha fazla bellek kullanır. 2 GB ve altı RAM\'li cihazlarda kasanızı açmakta sorun yaşayabilirsiniz. Böyle bir durumda uygulama ayarlarından açılış süresini düşürüp kasayı yeniden dışa aktarın.</string>
+    <string name="brute_force_high_memory_warning">Yüksek değerler daha fazla bellek kullanır. 2 GB veya daha az RAM içeren cihazlarda kasanızı açmakta sorun yaşayabilirsiniz. Böyle bir durumda uygulama ayarlarından açılış süresini düşürüp kasayı yeniden dışa aktarın.</string>
     <string name="brute_force_time_value_device">%1$.1f s (bu cihazda)</string>
     <string name="brute_force_time_out_of_range">Bu süre seçilebilir üst sınırın (10 sn) üzerinde. Değiştirmek için dokunun.</string>
     <string name="brute_force_time_value">%1$.1f sn</string>

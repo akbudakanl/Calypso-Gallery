@@ -658,7 +658,7 @@
     <string name="search_in_storage">Søk i lagring</string>
     <string name="brute_force_time_hint">Vel tida som blir brukt på å opne det krypterte kvelvet. Å halde denne verdien høg gir ekstra tryggleik ved å gjere brute force-åtak vanskelegare.</string>
     <string name="brute_force_time_min_hint">Nedre grense er den trygge standardtida til denne eininga.</string>
-    <string name="brute_force_high_memory_warning">Høgare tryggleik bruker meir minne. Du kan få problem med å opne kvelvet på einingar med 2 GB RAM eller mindre. Om dette skjer, senkar du opningstida i appinnstillingane og eksporterer kvelvet på nytt.</string>
+    <string name="brute_force_high_memory_warning">Høgare verdiar bruker meir minne. Du kan få problem med å opne kvelvet på einingar med 2 GB RAM eller mindre. Om dette skjer, senkar du opningstida i appinnstillingane og eksporterer kvelvet på nytt.</string>
     <string name="brute_force_time_value_device">%1$.1f s (på denne eininga)</string>
     <string name="brute_force_time_out_of_range">Denne tida er over det valbare maksimumnivået (10 s). Trykk for å endre ho.</string>
     <string name="brute_force_time_value">%1$.1f s</string>

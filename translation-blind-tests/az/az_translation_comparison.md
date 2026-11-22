@@ -1055,7 +1055,7 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `vault_same_password_title` | Same password | Eyni parol |
 | `vault_same_password_message` | The new password is identical to the current vault password. Please choose a different one. | Yeni parol cari seyf parolu ilə eynidir. Zəhmət olmasa fərqli bir parol seçin. |
 | `brute_force_time_with_params` | %1$.1f s (%2$d MiB / %3$d rounds) | %1$.1f s (%2$d MiB / %3$d dövr) |
-| `brute_force_high_memory_warning` | Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Yüksək təhlükəsizlik daha çox yaddaşdan istifadə edir. 2 GB və daha az RAM-lı cihazlarda seyfinizi açmaqda problem yaşaya bilərsiniz. Belə bir halda tətbiq parametrlərindən açılış müddətini azaldıb seyfi yenidən ixrac edin. |
+| `brute_force_high_memory_warning` | Higher values use more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again. | Yüksək dəyərlər daha çox yaddaşdan istifadə edir. 2 GB və ya daha az RAM olan cihazlarda seyfinizi açmaqda problem yaşaya bilərsiniz. Belə bir halda tətbiq parametrlərindən açılış müddətini azaldıb seyfi yenidən ixrac edin. |
 | `measuring_device_kdf_speed` | Measuring standard KDF speed on this device… | Bu cihazda standart KDF sürəti ölçülür… |
 | `kdf_settings_updated_successfully` | Brute-Force resistance updated for encrypted vault | Brute-Force müqaviməti şifrəli seyfə tətbiq edildi |
 | `appearance_automatic` | Automatic | Avtomatik |

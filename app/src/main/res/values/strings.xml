@@ -754,7 +754,7 @@
     <string name="search_in_storage">Search in storage</string>
     <string name="brute_force_time_hint">Select the time spent during opening the encrypted vault. Keeping this value high provides extra security by making brute-force attacks harder.</string>
     <string name="brute_force_time_min_hint">The lower bound is this device\'s safe standard time.</string>
-    <string name="brute_force_high_memory_warning">Higher security uses more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again.</string>
+    <string name="brute_force_high_memory_warning">Higher values use more memory. You may have trouble opening your vault on devices with 2 GB of RAM or less. If that happens, lower the unlock time in app settings and export the vault again.</string>
     <string name="brute_force_time_value_device">%1$.1f s (on this device)</string>
     <string name="brute_force_time_out_of_range">This time is above the selectable maximum (10 s). Tap to change it.</string>
     <string name="brute_force_time_value">%1$.1f s</string>

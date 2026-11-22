@@ -590,7 +590,7 @@
     <string name="search_in_storage">ストレージを検索</string>
     <string name="brute_force_time_hint">暗号化された保管庫を開く際にかかる時間を選択してください。この値を高くすると、総当たり攻撃が難しくなり、セキュリティが強化されます。</string>
     <string name="brute_force_time_min_hint">下限はこの端末の安全な標準時間です。</string>
-    <string name="brute_force_high_memory_warning">セキュリティを高めるとより多くのメモリを使用します。RAM が 2 GB 以下の端末では保管庫を開けない場合があります。その場合は、アプリの設定でロック解除時間を短くしてから保管庫を再エクスポートしてください。</string>
+    <string name="brute_force_high_memory_warning">値が高いほどより多くのメモリを使用します。RAM が 2 GB 以下の端末では保管庫を開けない場合があります。その場合は、アプリの設定でロック解除時間を短くしてから保管庫を再エクスポートしてください。</string>
     <string name="brute_force_time_value_device">%1$.1f 秒（この端末）</string>
     <string name="brute_force_time_out_of_range">この時間は選択可能な上限（10 秒）を超えています。変更するにはタップしてください。</string>
     <string name="brute_force_time_value">%1$.1f 秒</string>
