@@ -274,14 +274,24 @@ object BruteForceDialog {
 
         val barView = DialBarView(activity).apply {
             trackColor = ColorUtils.blendARGB(palette.background, palette.text, 0.14f)
-            // Deep theme colour -> primary -> light, derived from the active palette.
-            ramp = intArrayOf(
-                ColorUtils.blendARGB(primary, palette.background, 0.45f),
-                primary,
-                ColorUtils.blendARGB(primary, Color.WHITE, 0.38f)
-            )
+            // Stronger left-to-right ramp. For light palettes the primary is already the darkest
+            // stop, so start there and lighten towards the right instead of inverting the ramp.
+            val lightBackground = ColorUtils.calculateLuminance(palette.background) > 0.5f
+            ramp = if (lightBackground) {
+                intArrayOf(
+                    primary,
+                    ColorUtils.blendARGB(primary, Color.WHITE, 0.34f),
+                    ColorUtils.blendARGB(primary, Color.WHITE, 0.66f)
+                )
+            } else {
+                intArrayOf(
+                    ColorUtils.blendARGB(primary, palette.background, 0.68f),
+                    primary,
+                    ColorUtils.blendARGB(primary, Color.WHITE, 0.55f)
+                )
+            }
             knobColor = primary
-            knobEdgeColor = ColorUtils.blendARGB(primary, palette.background, 0.45f)
+            knobEdgeColor = ramp.first()
         }
         fun barParams() = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, dp(32f),
