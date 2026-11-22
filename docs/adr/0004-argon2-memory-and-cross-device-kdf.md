@@ -2,10 +2,13 @@
 
 - **Status:** Implemented (2026-11-18; updated 2026-11-21 — Rust Native Argon2id JNI §9)
 - **Date:** 2026-11-17 (implemented 2026-11-18; updated 2026-11-21)
-- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md ("Brute-Force direnci"); `CryptoManagerCredentials.kt`; `NativeArgon2.kt`; `rust/calypso-argon2`
+- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md §1.1.5 (Rust JNI); `CryptoManagerCredentials.kt`; `NativeArgon2.kt`; `rust/calypso-argon2`
 - **Decision owner:** Accepted and implemented (2026-11-18)
 
-> **Terminology.** User-facing text uses **"Encrypted Vault" / "Şifreli Kasa"** and keeps the English phrase **"Brute-Force"** in Turkish strings, as decided earlier.
+> [!IMPORTANT]
+> **Superseded sections.** §1 item 4, §2, §11 and §12 describe the original 2026-11-18 BouncyCastle/Java-heap decision. On 2026-11-21 §11.1 replaced it with a pure-Rust JNI engine and physical-RAM `64 → 128 → 256 MiB` scaling. Where the two conflict, **§11.1 and the current code are authoritative**.
+
+> **Terminology.** User-facing text uses **"Encrypted Vault" / "Şifreli Kasa"**. The active setting is **"Targeted vault unlock time"** (`brute_force_time_title`); the old `"Brute-Force direnci"` label is unused except in one legacy toast string.
 
 ---
 
@@ -16,7 +19,7 @@ The "Brute-Force direnci" setting originally let a user pick a fixed target unlo
 1. **A user must never crash the app merely by picking a target time** in the settings dialog.
 2. **A vault created on a strong device must be openable on a weaker device.** If the stored parameters exceed what the weaker device can allocate (`OOM`), the vault cannot be unlocked — whereas taking longer in CPU time (e.g., `20–30 s` on a weak phone for a `7–10 s` flagship vault) is acceptable.
 3. **Standard security should be measured in KDF parameters, with a "1.0 s sweet spot" default.** The safe RFC 9106 floor is `64 MiB / 3 rounds / p=2`. If this floor runs in `<= 1.0 s` on the device, the default unlock target is `1.0 s`; if the device is slower, the default equals the device's measured safe-floor duration (`T_std_64`). Users can adjust the slider in `0.1 s` increments from `T_std_64` up to `10.0 s`.
-4. **Users should still be able to step up to `128 MiB` memory** when device heap permits, without risking cross-device OOM deadlocks (`256 MiB` must never be selected automatically).
+4. **Users should still be able to step up to `128 MiB` memory** when device heap permits, without risking cross-device OOM deadlocks (`256 MiB` must never be selected automatically). — *Historical 2026-11-18 BouncyCastle requirement; §11.1 (2026-11-21) replaced it with physical-RAM-based `64 → 128 → 256 MiB` scaling plus a portability warning.*
 
 ---
 
@@ -28,11 +31,11 @@ The "Brute-Force direnci" setting originally let a user pick a fixed target unlo
 - **Rationale for Argon2id:** Argon2d is stronger against GPU/ASIC but side-channel sensitive; Argon2i is the opposite; Argon2id is the hybrid and the RFC 9106 / OWASP recommended default.
 - **Implementation constraint:** BouncyCastle's `Argon2BytesGenerator` allocates the whole working memory as a **single Java `int[]`** — inside the **Java heap**.
 
-Current safety & standard bounds (implemented 2026-11-18):
+**Historical** 2026-11-18 safety & standard bounds (superseded by §11.1 where noted):
 
 - **RFC 9106 safe floor & "1.0 s sweet spot" default:** Minimum parameters are `64 MiB` (`65,536 KiB`) / `3` iterations / `2` parallelism (the legacy `32 MiB / 2 rounds` profile and ready-made preset modes were removed). With unlock-time calibration, `defaultUnlockTargetMs = max(1_000 ms, T_std_64)`: fast devices default to `1.0 s` (and can even step down to `T_std_64`, e.g. `0.4–0.9 s`), while slower devices default to `T_std_64`.
 - **Dynamic slider range (`T_std_64 .. 10.0 s` in `0.1 s` steps):** Replaces the old hardcoded `2.0–7.0 s` bounds.
-- **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** Targets `>= 2 * T_std_64` step up to `128 MiB` when `Runtime.maxMemory() / 2 >= 128 MiB` (falling back to `64 MiB` on constrained heaps or `OutOfMemoryError`), and scale `iterations` in `3..100` up to `10.0 s`. Memory never exceeds `128 MiB`.
+- **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** *(Historical BouncyCastle rule.)* Targets `>= 2 * T_std_64` stepped up to `128 MiB` when `Runtime.maxMemory() / 2 >= 128 MiB`, falling back to `64 MiB` on constrained heaps or `OutOfMemoryError`. This Java-heap ceiling is no longer used: §11.1 keys off physical RAM and 64-bit ABIs and can select `256 MiB`.
 - **`android:largeHeap="true"` + OOM cache trim:** Enabled in `AndroidManifest.xml` (expanding Java heap limits from 128–256 MB to 256–512+ MB) alongside automatic Glide RAM cache clearing and GC retry on `OutOfMemoryError`.
 - **`.vault` header validation & background execution:** Both Android (`CryptoManagerCredentials.kt`) and Python CLI (`calypso_vault.py`) accept `iterations in 1..256` (fixing the prior `1..10` vs `2..16` unlock deadlock), and Argon2id runs exclusively on background threads to prevent 5-second Android ANRs on 7–30s unlocks.
 
@@ -122,19 +125,19 @@ Idea: skip the extra Argon2id invocation (`CryptoManager.isCurrentVaultSecret`) 
 
 ---
 
-## 9. Candidate option — native Argon2 (JNI)
+## 9. Native Argon2 (JNI) — originally a candidate option, implemented in §11.1
 
 ### 9.1 Mechanism
 
 Move the Argon2 working buffer off the Java heap:
 
-| | BouncyCastle today | JNI / native |
+| | BouncyCastle (historical) | JNI / native (active, §11.1) |
 |---|---|---|
 | buffer | `int[]` on **Java heap** | `malloc/calloc` on **native heap** |
 | limit | `Runtime.maxMemory()` → 256 MB here | process cgroup limit → hundreds of MB to GBs |
 | 128 MiB | risky / OOM | fine on any device with enough RAM |
 
-A `calloc` failure is reported by the reference Argon2 library as `ARGON2_MEMORY_ALLOCATION_ERROR`, which the JNI wrapper can translate into a controlled, catchable error → **a dialog, not a Java crash**.
+A native allocation failure is translated by the JNI wrapper into a **catchable `java/lang/OutOfMemoryError`**, not a process abort. Calibration then steps down `256 → 128 → 64 MiB`; if an unrecoverable OOM still occurs during unlock/setup, the user gets a generic error toast (`wrong_password` / `wrong_pin` or `vault_location_not_writable`), not a dedicated OOM dialog.
 
 ### 9.2 Cryptographic equivalence (the key point)
 
@@ -147,7 +150,7 @@ Native Argon2 with the **same algorithm, version 1.3 and the same `(m, t, p)`** 
 
 ### 9.3 API choice — critical
 
-Use the reference Argon2 C library's `argon2id_hash_raw(t_cost, m_cost, parallelism, ...)` via JNI.
+Implemented with the **pure-Rust `RustCrypto/argon2` crate** over JNI (no C reference library and no CMake), producing the same Argon2id v1.3 key for the same `(m, t, p)`.
 
 **Do not use libsodium's `crypto_pwhash_argon2id`**: it fixes the pass count at 3 and maps `opslimit` as a multiplier, so it cannot reproduce our exact `(m, t, p)`. The derived key would differ from the canonical one.
 
@@ -155,7 +158,7 @@ Use the reference Argon2 C library's `argon2id_hash_raw(t_cost, m_cost, parallel
 
 | Residual issue | Catchable? | Notes |
 |---|---|---|
-| Native allocation failure (cgroup / physical RAM) | ✅ Yes — error code | controlled dialog, no crash |
+| Native allocation failure (cgroup / physical RAM) | ✅ Yes — `OutOfMemoryError` | catchable; calibration steps down a tier, no dedicated dialog |
 | 32-bit address-space fragmentation (`armeabi-v7a`) | ✅ Yes — same path | a single large contiguous `calloc` may fail despite free RAM |
 | Low Memory Killer (kernel `SIGKILL`) | ❌ No | process kill, not an exception; risk reduced by smaller parameters, not eliminated; also applies to large image/video decode |
 | Vault transferred to a genuinely incapable device | ⚠️ Formally unchanged | JNI makes 128 MiB affordable on virtually all current phones, but not on ~512 MB / old 32-bit hardware |
@@ -164,7 +167,7 @@ Use the reference Argon2 C library's `argon2id_hash_raw(t_cost, m_cost, parallel
 
 ### 9.5 Cost
 
-NDK/CMake setup, native binaries for `arm64-v8a` / `armeabi-v7a` (+ `x86` / `x86_64` if needed) linked with `-Wl,-z,max-page-size=16384` for Android 15+/16 16 KB ELF page-size compliance, APK size increase, and a vetted, reproducible build of the Argon2 reference library.
+*(Historical estimate from the C-reference-library plan.)* The shipped implementation uses Rust/Cargo + Android NDK clang (no CMake), four ABIs (`arm64-v8a`, `armeabi-v7a`, `x86`, `x86_64`) linked with `-Wl,-z,max-page-size=16384`, and `cargo test --locked` in CI. Because BouncyCastle left the runtime APK, the APK **shrank by ~7.3 MB** rather than growing.
 
 ---
 
@@ -182,12 +185,14 @@ This breaks the §6 deadlock **without weakening password security**: an attacke
 
 ---
 
-## 11. Decision (Implemented 2026-11-18)
+## 11. Decision (Implemented 2026-11-18 — superseded by §11.1)
 
-Rather than introducing an NDK/CMake build pipeline for native C Argon2 right away, the project adopts a **Java-heap portable ceiling + RFC 9106 parameter floor + authenticated re-wrapping** architecture:
+> **Historical decision.** This was the original 2026-11-18 BouncyCastle/Java-heap decision. The current architecture is §11.1 (2026-11-21): Rust JNI with physical-RAM `64 → 128 → 256 MiB` scaling, no `Runtime.maxMemory()` ceiling.
+
+Rather than introducing an NDK/CMake build pipeline for native C Argon2 right away, the project initially adopted a **Java-heap portable ceiling + RFC 9106 parameter floor + authenticated re-wrapping** architecture:
 
 1. **RFC 9106 safe floor & "1.0 s sweet spot" default (`max(1.0 s, T_std_64)`):** The safe minimum is `64 MiB / 3 rounds / 2 parallelism`. When `T_std_64 <= 1.0 s`, the default unlock target is `1.0 s`; on slower phones where `T_std_64 > 1.0 s`, the default equals `T_std_64`. In the unlock-time dialog, users can dial in `0.1 s` increments from `T_std_64` (including `< 1.0 s` on fast phones) up to `10.0 s`.
-2. **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** High-target calibrations (`>= 2 * T_std_64`) step up to `128 MiB` (never `256 MiB`) when `maxMemory() / 2 >= 128 MiB`, then scale `iterations` up to `100` (reaching `10.0 s` without needing `256 MiB`). Because memory stays capped at `<= 128 MiB` and `android:largeHeap="true"` provides a 256–512+ MB heap across devices (with automatic Glide RAM cache trimming + GC retry on OOM), even a `10.0 s` flagship vault opens reliably on weaker devices instead of deadlocking.
+2. **Tiered `64 -> 128 MiB` portable ceiling & elastic iterations (`3..100`):** *(Historical.)* High-target calibrations stepped up to `128 MiB` — never `256 MiB` — when `maxMemory() / 2 >= 128 MiB`, scaling `iterations` up to `100` to reach `10.0 s`. §11.1 replaced the `maxMemory()` gate with physical RAM and now **does** auto-select `256 MiB` on 64-bit devices with >= 5 GiB RAM, guarded by `brute_force_high_memory_warning`.
 3. **Authenticated in-place `.vault` header re-wrapping:** When changing Brute-Force resistance on an existing vault, the app prompts for the current password/PIN (biometrics disabled), unwraps `VMK` and `KEK` under the old KDF on a background thread, and atomically re-wraps them under the newly calibrated PDK (`rewrapVaultHeaderWithCurrentKdf`). No weaker fallback wrapper is ever stored.
 4. **Critical hardening applied alongside the decision:**
    - Expanded `.vault` header validation from `1..10` to `1..256` iterations in both Android (`CryptoManagerCredentials.kt`) and `calypso_vault.py`.
@@ -205,7 +210,7 @@ Deferred / future options:
 Because Java-heap allocation limits forced a `128 MiB` ceiling under BouncyCastle and left a performance gap relative to native C/GPU crackers, §9 was implemented specifically for the KDF layer using **pure-Rust `RustCrypto/argon2`** over JNI while keeping the rest of the application in Kotlin + Tink:
 
 1. **Memory-safe native KDF (`rust/calypso-argon2`):**
-   - Uses `argon2 = 0.5.3` (RFC 9106 Argon2id v1.3, single-threaded — no `rayon`) and `zeroize = 1.8.1` (`ZeroizingBlocks` RAII drop guard + `Zeroizing<Vec<u8>>` for password/salt/key buffers).
+   - Uses `argon2 = 0.5.3` (RFC 9106 Argon2id v1.3, single-threaded — no `rayon`) and `zeroize = "1.8.1"` (caret requirement, locked to **1.9.2** in `Cargo.lock`) with `ZeroizingBlocks` RAII drop guards + `Zeroizing<Vec<u8>>` for password/salt/key buffers.
    - Allocates Argon2 working memory via `Vec::try_reserve_exact(block_count)` + `hash_password_into_with_memory` rather than infallible `vec![]`, translating native allocation failures into `java/lang/OutOfMemoryError` instead of aborting (`SIGABRT`).
    - Wraps the JNI entry point (`Java_org_fossify_gallery_helpers_NativeArgon2_deriveKeyArgon2idNative`) in `std::panic::catch_unwind` with `panic = "unwind"` so no Rust panic can cross FFI.
    - Compiled across `arm64-v8a`, `armeabi-v7a`, `x86`, and `x86_64` with `-C link-arg=-Wl,-z,max-page-size=16384` for Android 15+/16 16 KB ELF page-size compliance.
@@ -223,9 +228,9 @@ Because Java-heap allocation limits forced a `128 MiB` ceiling under BouncyCastl
 
 ## 12. Consequences of this decision
 
-- No `.vault` container format break; no NDK/CMake build complexity added.
-- Ready-made preset profiles (`Default` / `High security`) were removed in favor of unified unlock-time calibration (`T_std_64 .. 10.0 s` in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`), enforcing RFC 9106 minimums and keeping cross-device compatibility intact.
-- Native JNI Argon2 (§9) can still be dropped in later as a pure allocator swap without changing derived keys or `.vault` headers.
+- No `.vault` container format break. There is **no CMake**, but §11.1 adds a required **Rust/Cargo + Android NDK clang** build pipeline (four ABI targets, 16 KB ELF page-size link flag) in Gradle and CI.
+- Ready-made preset profiles (`Default` / `High security`) were removed in favor of unified unlock-time calibration (`T_std_64 .. 10.0 s` in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`), enforcing RFC 9106 minimums. Cross-device compatibility is no longer unconditional: `256 MiB` can be selected automatically on 64-bit devices with >= 5 GiB RAM, so `brute_force_high_memory_warning` advises users of `<= 2 GB RAM` devices.
+- Native JNI Argon2 (§9) is **implemented and active** in §11.1 — it is not a future option. It removed BouncyCastle from the runtime APK.
 
 ---
 

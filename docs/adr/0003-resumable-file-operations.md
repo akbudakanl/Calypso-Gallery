@@ -21,7 +21,7 @@ This ADR specifies a unified resume framework for those operations; §9 and §11
 | Layer | Trigger | Behaviour | User prompt |
 |---|---|---|---|
 | **Transient wait** | Process alive; external volume unmounted, write error, temporary I/O failure | Service stays alive, keys stay in RAM, notification/progress shows "waiting", polls until the resource returns, then continues from the journal | None |
-| **Process death** | App killed, reboot, user force-closed, service cancelled | Journal persists; Encrypt Phase-2 wipes & approved skipped deletes finish silently on vault unlock, unanswered `ASK` skipped-crypto dialogs re-open, and incomplete Phase-1 transfers show one Yes/No prompt (plain on app start; vault/encrypted on vault unlock) | **One-time Yes/No** per eligible batch (`No` clears permanently and never re-prompts) |
+| **Process death** | App killed, reboot, user force-closed | Journal persists; Encrypt Phase-2 wipes & approved skipped deletes finish silently on vault unlock, unanswered `ASK` skipped-crypto dialogs re-open, and incomplete Phase-1 transfers show one Yes/No prompt (plain on app start; vault/encrypted on vault unlock). **User/service cancellation is different**: `ACTION_CANCEL` only signals cooperative cancellation; active paths clear the journal, so it does not survive. | **One-time Yes/No** per eligible batch (`No` clears permanently and never re-prompts) |
 
 The resume dialog is deliberately shown once per interrupted operation, with no persistent preference: a partially copied or encrypted file does not change the vault format, so there is no risk the user might miss a state change.
 
@@ -62,21 +62,16 @@ The staging protocol must not inherit the gaps of the *original* check. Before t
 implemented, `getAvailableStorageB` was used only in `CopyMoveHelper.prepareAndRunCopyMove` and only
 when `useStreamCopy == true`; it compared `Σ source.size` with `>= availableSpace` and skipped the
 check entirely when the API returned `-1`. Encrypt, decrypt, album operations and plain → vault
-copies had no space check at all. This is now implemented via `SpaceEstimator`, per-item re-checks
-and an explicit confirmation dialog for the `-1` case (see §11 and the results document §8.3.3).
+copies had no space check at all. `SpaceEstimator` now covers a **subset**: `CopyMoveHelper.prepareAndRunCopyMove` (stream copy only), `encryptFolderRegistered`, `decryptFolderRegistered`, plus per-item polling in `TransientOperationWaiter`. There is still **no batch space check** in `tryCopyMoveFilesTo`, single/multi-file encrypt/decrypt, `encryptStreamToDirectory`, `exportEncryptedVault` or `syncVaultFromExternalDirectory`, and an insufficient verifiable space still produces only a `no_space` toast (not a required/available dialog).
 
-- **Single estimator.** One `OperationSpaceEstimate` / `SpaceEstimator` component is used by every
-  path: plain copy/move, plain ↔ encrypted, encrypted `.bin` move/copy, file and album
-  encrypt/decrypt, stream import, and external sync/export. Inputs are operation kind, source sizes,
-  target format, conflict resolution and `resolvedDestName`; outputs are `requiredBytes`, `peakBytes`
-  and `confidence`.
+- **Estimator (bounded scope).** The component is `SpaceEstimator` with result type `SpaceEstimate` (there is no `OperationSpaceEstimate`). It takes source sizes / names only — not operation kind, conflict mode or `resolvedDestName` — and returns `requiredBytes == peakBytes == total` with `SpaceConfidence.EXACT`. `forDecrypt` and `forEncryptedCopy` exist but have zero production callers.
 - **Size formulas.**
   - Plain copy: `Σ source.length()` (`getProperSize` fallback when size is 0).
   - Encrypt: `143 + UTF8(resolvedName) + thumbnailBytes + expectedCiphertextSize(originalSize, segmentSize)`
     — 143 = `FIXED_PREFIX_LENGTH` (43) + fixed header fields (84) + GCM tag (16). A **pure**
     `VaultContainerWriter.estimateEncryptedSize(...)` mirrors `prepare()` so the formula has one
     source of truth. The thumbnail header field can be up to 5 MiB.
-  - Decrypt: `Σ meta.originalSize` (exact, read from the container header before writing).
+  - Decrypt: intended as `Σ meta.originalSize`, but `decryptFolderRegistered` currently uses `SpaceEstimator.forPlain(...)` with the sum of `.bin` file lengths, not the header's `originalSize`.
   - Encrypted `.bin` copy/move: `Σ sourceBin.length()` (exact).
   - **Album operations are the dominating case:** both `encryptFolder` and `decryptFolder` write
     *all* outputs before wiping *any* source, so `peakBytes = Σ(all outputs)` while all sources are
@@ -151,19 +146,22 @@ Status markers: **[DONE]** implemented, **[PARTIAL]** partly implemented, **[PEN
 Details and code pointers are in §11 and in `docs/transfer-data-integrity.md` §8.
 
 1. **[DONE]** Room table `pending_operations` + schema registration (including `stagingPath` and batch estimates, single-transaction batch `upsertAll`, and indexed `findItem` lookup).
-2. **[DONE]** `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)` wired into operation
-   entry points; state machine includes `WAITING_FOR_SPACE` / `SPACE_CHECK_FAILED`, and
-   `TransientOperationWaiter` handles both pre-item readiness polling (`awaitDestinationReady`) and
-   mid-stream `IOException` retry (`runWithTransientRetry`, discarding partial staging and waiting
-   for storage/space recovery while a foreground operation is active).
+2. **[PARTIAL]** `SpaceEstimator` + `VaultContainerWriter.estimateEncryptedSize(...)` are wired into
+   three batch entry points (stream copy/move, album encrypt, album decrypt) and per-item polling;
+   many single-file and stream/export paths have no check. State machine includes
+   `WAITING_FOR_SPACE` / `SPACE_CHECK_FAILED`, and `TransientOperationWaiter` handles pre-item
+   readiness polling (`awaitDestinationReady`) plus mid-stream `IOException` retry
+   (`runWithTransientRetry`, max 2 attempts; SAF paths use 1 attempt and skip the wait).
 3. **[DONE]** Journal hooks in `CopyMoveHelper` (copy/move, plain and encrypted, cross-album, including
    `renameTo` fast-path, `CONFLICT_SKIP`, and non-colliding top-level vs. child `itemIndex` tracking).
 4. **[DONE]** Journal hooks in encrypt/decrypt paths (file, album, and `tryCopyMoveFilesTo` / `MediaAdapter`
    batches), including per-item `kind`, `conflictResolution`, `resolvedDestName` suffix pinning,
    album `mergeTargetRoot` / `foldedSourceRoots` tracking, actual committed `destPath` on `markVerified`,
    and rollback cleanup.
-5. **[DONE]** Staging + same-directory atomic commit (`ATOMIC_MOVE`, SAF `DocumentFile.renameTo`, no
-   cross-store copy+delete fallback) in all write paths, including external-vault sync.
+5. **[PARTIAL]** Staging + same-directory atomic commit (`ATOMIC_MOVE`, SAF `DocumentFile.renameTo`) in
+   the four core paths. `syncVaultFromExternalDirectory` uses `.sync_tmp_*.bin` (no `OperationJournal`,
+   no `fd.sync()`, with a `renameTo` fallback on the same store); `exportEncryptedVault`,
+   `encryptStreamToDirectory` and `renameEncryptedFile` write/move without staging or `ATOMIC_MOVE`.
 6. **[DONE]** Notification/progress state, explicit `-1` confirmation, `TransientOperationWaiter`
    pre-item + mid-stream retry loop, localized `waiting_for_free_space_or_storage` notification
    string (11 locales), and `FileOperationService` notification Cancel action (`ACTION_CANCEL`).
@@ -201,11 +199,11 @@ separate conversation is needed to reconstruct what has been built.
 | ------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Separate `pending_operations` Room DB (§3)                                | **DONE**    | `PendingOperationsDatabase`, `PendingOperation`, `PendingOperationsDao` (`findItem`, `upsertAll`), `OperationJournal` (batch transaction + `O(1)` updates)                                                                                                                                                                                                              |
 | `stagingPath`, batch flags and per-item state machine (§3)                | **DONE**    | `operationId:itemIndex` keys; `isMove`, `wipeSource`, `deleteSource`; `markVerified` records actual committed `destPath`; `needsResume` distinguishes `COPY` (`VERIFIED` terminal) from pending source deletion                                                                                                                                                         |
-| Space estimator and container-size formula (§3a)                          | **DONE**    | `SpaceEstimator`, `VaultContainerWriter.estimateEncryptedSize`, wired into copy/move and album operations                                                                                                                                                                                                                                                               |
-| Explicit confirmation for unverifiable free space (§3a, §10)              | **DONE**    | `SpaceConfirmation` (async + blocking variants), localized across 11 `values*` resource sets                                                                                                                                                                                                                                                                            |
-| Staging + atomic commit in all write paths (§3a, §5)                      | **DONE**    | `AtomicStaging` (File + SAF, `alreadyFileSynced`), `CryptoManagerFileCrypto`, `CryptoManagerConflict`, `CopyMoveHelper`, `CryptoManagerExportSync` (`ATOMIC_MOVE`)                                                                                                                                                                                                      |
+| Space estimator and container-size formula (§3a)                          | **PARTIAL** | `SpaceEstimator` / `VaultContainerWriter.estimateEncryptedSize` in stream copy/move + album encrypt/decrypt only; `forDecrypt` / `forEncryptedCopy` unused; many single/stream/export paths have no check                                                                                                                                                           |
+| Explicit confirmation for unverifiable free space (§3a, §10)              | **PARTIAL** | `SpaceConfirmation` (async + blocking) triggers for `!probe.verifiable` (including `StatFs` fallback), but verifiable low space is still only a `no_space` toast; localized across 11 `values*` resource sets                                                                                                                                                          |
+| Staging + atomic commit in all write paths (§3a, §5)                      | **PARTIAL** | `AtomicStaging` in the four core paths; `syncVaultFromExternalDirectory` uses `.sync_tmp_*.bin` with fallback; `exportEncryptedVault`, `encryptStreamToDirectory`, `renameEncryptedFile` are outside the staging/`ATOMIC_MOVE` flow                                                                                                                                    |
 | Journal hooks in copy/move, album, and Activity/Adapter batches (§9/3-4)  | **DONE**    | `CopyMoveHelper`, `CryptoManagerFolderCrypto`, `tryCopyMoveFilesTo`, `MediaAdapter`, single/multi-file encrypt/decrypt (`Activity.kt`)                                                                                                                                                                                                                                  |
-| Read-back verification before source deletion (§3, §8)                    | **DONE**    | Full `verifyFileIntegrity` after encrypt and `.bin` copy; output-length check after decrypt; fingerprint check after plain copy                                                                                                                                                                                                                                         |
+| Read-back verification before source deletion (§3, §8)                    | **DONE**    | Full `verifyFileIntegrity` after encrypt and `.bin` copy; output-length check after decrypt. `Activity.tryCopyMoveFilesTo` and `OperationRecovery.resumePlainCopy` now compare source/target length + fingerprint before `markVerified` and securely wipe the unverified destination on mismatch                                                                    |
 | Process-death resume dialog (§2, §9/7)                                    | **DONE**    | `OperationRecovery.maybePromptResume` (type-split plain vs vault unlock, silent Phase-2 encrypt wipe, persistent `AWAITING_SKIP_CONFIRM` / `DELETE_SKIPPED_APPROVED` skipped-crypto recovery, permanent clear + aborted notice on `No`), triggered from `MainActivity.onResume`, vault unlock (`promptToResumeVault`, `enterSecretVault`), and `MediaActivity.onResume` |
 | Startup reconciliation and orphan cleanup (§8, §9/8)                      | **DONE**    | `OperationRecovery.reconcile` (prunes non-resumable batches, skips when `ForegroundOperationRegistry.isActive`), `MetadataReconciler` (per-item, prunes cleared operations)                                                                                                                                                                                             |
 | Foreground service and single owner token (§7)                            | **DONE**    | `FileOperationService` (`ACTION_CANCEL`) + same-thread re-entrant `ForegroundOperationRegistry` wired into all copy/move, album, Activity/MediaAdapter crypto, and resume paths; `VaultSessionManager` keeps RAM keys while `isActive`                                                                                                                                  |
@@ -214,4 +212,4 @@ separate conversation is needed to reconstruct what has been built.
 | Re-applying conflict decisions / `resolvedDestName` / merge tracking (§4) | **DONE**    | Pinned `resolvedDestName` & `destPath` recorded in `markInFlight`, existing committed plain output reused via size+fingerprint match, per-item `conflictResolution`, `mergeTargetRoot` + `foldedSourceRoots`                                                                                                                                                            |
 | Automated fault-injection / device tests (§9/9)                           | **PARTIAL** | `ResumableOperationsTest` covers JVM primitives, concurrency/re-entrancy, pinned dest names, destination reuse, folded merge skip, prompt split + silent Phase-2 encrypt wipe, deferred skipped-crypto reopen/auto-delete, and transient retry; physical device kill/remount tests remain manual (`docs/transfer-data-integrity.md` §8.4)                               |
 
-**Remaining work:** optional on-device hardware fault-injection smoke tests (`docs/transfer-data-integrity.md` §8.4). All code items under ADR 0003 are implemented and covered by JVM tests; the data-loss invariant (§8/2) is preserved by all paths.
+**Remaining work:** on-device hardware fault-injection smoke tests (`docs/transfer-data-integrity.md` §8.4) plus the gaps marked **PARTIAL** above: wider space-check coverage, staging/atomic commit in stream/export/rename paths, and the `SkippedCryptoFilesDialog` policy which applies to **encrypt only** (decrypt clears the journal silently). Plain-copy read-back verification is now complete in both paths. The data-loss invariant (§8/2) is enforced by the four core staged paths; the exceptional paths are documented in `docs/transfer-data-integrity.md`.

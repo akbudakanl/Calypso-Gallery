@@ -27,10 +27,10 @@ This ADR records both that user-experience defect and the **security decision be
 | Layer | Rule |
 |---|---|
 | Device gate | `BiometricManager.canAuthenticate(BIOMETRIC_STRONG) == BIOMETRIC_SUCCESS` |
-| Key gate | `setUserAuthenticationRequired(true)`, `setUserAuthenticationParameters(0, AUTH_BIOMETRIC_STRONG)`, `setInvalidatedByBiometricEnrollment(true)`, hardware-backed key (TEE/StrongBox) |
+| Key gate | `setUserAuthenticationRequired(true)`, `setUserAuthenticationParameters(0, AUTH_BIOMETRIC_STRONG)` on API 30+ (API 26–29 uses `setUserAuthenticationValidityDurationSeconds(-1)`), `setUnlockedDeviceRequired(true)` on API 28+, `setInvalidatedByBiometricEnrollment(true)`, hardware-backed key (TEE/StrongBox) |
 | Authentication | `BiometricPrompt.CryptoObject(cipher)` in every enrollment and unlock flow |
-| Device PIN/password | Accepted **only to confirm turning biometrics off** (`DEVICE_CREDENTIAL`); never used as an unlock fallback |
-| Weak biometrics | Not supported; no silent or explicit fallback |
+| Device PIN/password | `DEVICE_CREDENTIAL` is accepted for four **non-crypto device-owner confirmations** (disable biometrics, export vault, archive vault, unarchive vault); it is **never** an unlock or enrollment fallback for the vault. On API 28–29 these confirmations fall back to `BIOMETRIC_WEAK or DEVICE_CREDENTIAL` because of an AndroidX restriction. |
+| Weak biometrics | Not supported for vault unlock/enrollment, no silent or explicit fallback (API 28–29 device-owner confirmations excepted as above) |
 | UI | Row is visible whenever a vault exists; when a usable strong biometric/key is missing the switch is passive (grey) with an info icon opening the reason dialog (not a toast, not an always-visible text) |
 | Enrollment offer | Shown only if `canAuthenticate(BIOMETRIC_STRONG) == SUCCESS` and a usable hardware key exists; otherwise no note and no config rewrite during setup |
 | Enrollment changes | No broadcast/callback is available; `SettingsActivity.onResume()` re-checks the state. No popup; the setting activates on returning to Settings and remains off by default |
@@ -95,7 +95,7 @@ Independently of the security decision, the old behaviour was wrong: the setting
 
 - The row is **always visible** when a vault exists and storage permission is granted;
 - if no strong biometric is usable, the switch is **passive/grey** and an **info icon** appears at its right; no explanation text is forced into the row;
-- tapping the info icon (or the passive row) shows the localized explanation in a **`ConfirmationDialog`** (a toast is not used because it truncates long text);
+- tapping the info icon (or the passive row) shows the localized explanation in a **`VaultNoticeDialog`** (`cancelable = true`; a toast is not used because it truncates long text);
 - the vault-creation / password-change enrollment note appears **only when a Class 3 biometric is enrolled**. With no enrollment there is no "you cannot add a fingerprint" message during setup — the user discovers the state later in Settings;
 - Android does not notify apps when biometric enrollment changes. The state is therefore re-read in `onResume()`. **Leaving and re-entering Settings is the refresh trigger.** If the user enables biometrics in Android settings, no dialog pops up: the info icon disappears, the switch becomes active and remains **off by default**;
 - a key generated while nothing was enrolled would be invalidated by a later enrollment (`setInvalidatedByBiometricEnrollment(true)`). `ensureBiometricKeyAvailable()` detects this and clears the stale key/config, so re-enrollment leaves the setting off instead of leaving a dead configuration behind.
@@ -106,10 +106,10 @@ The message varies by cause; in particular, "weak face unlock is not accepted; e
 
 - Order is strict: **3a (password saved acknowledgement) → 3b (biometric setup card)**. The one-time offer is triggered from the 3a acknowledgement, never directly from the credential callback, so 3b can no longer appear before 3a.
 - 3b appears **only when a Class 3 biometric is enrolled**. On devices without one, 3b is skipped and 3a is the last message of the setup flow.
-- The card uses the approved **"İz dalgası"** glyph: seven fingerprint ridges are drawn with 90 ms stagger (450 ms each), darken from 30 % to full opacity at 850 ms, then a single background circle fades in with a glow peaking at 12 dp and settling at 4 dp (1250–2150 ms). With `ANIMATOR_DURATION_SCALE == 0` the final state is drawn immediately.
-- **Dismissal:** 3a and the recovery dialog (6) are **not cancelable** (back/outside tap does nothing). The reminder dialog (4) and the 3b card **are** cancelable with the back button. The separate one-time offer dialog keeps its existing platform behaviour; it is not changed.
+- The card uses the approved **"İz dalgası"** glyph: seven fingerprint ridges are drawn with 90 ms stagger (450 ms each), darken from 30 % to full opacity at 850 ms, then a single background circle fades in with a Gaussian glow (**18 dp blur / 5 dp spread at 38 % alpha** at 35 % progress, settling at **8 dp blur / 1 dp spread at 16 % alpha**). With `ANIMATOR_DURATION_SCALE == 0` the final state is drawn immediately.
+- **Dismissal:** only the recovery dialog (6) is **not cancelable**. 3a, the reminder dialog (4) and the 3b card are cancelable with the Back button; tapping outside remains disabled throughout. The old separate platform "offer" dialog was **removed**: `VaultBiometricOfferDialog.showIfNeeded()` now goes straight to the themed 3b card.
 - **Enrollment state:** until 3b is completed, `isVaultBiometricEnabled` stays **false**. Closing 3b does not re-show the offer; the user must later open Settings, verify the password and enable biometrics explicitly.
-- **Reminder scheduling is independent of 3a/3b.** Dismissing them or closing the app while they are visible does not touch the reminder clock. Dismissing 4/5/6 or closing the app there does: the notice timestamp was already written when 4 was shown, so the reminder returns after the next full interval (e.g. two weeks).
+- **Dismissing 3a/3b does not affect reminder scheduling.** Completing 3b does: `completeBiometricSetup()` calls `markVaultPasswordEntered(context.config)` and starts the reminder window at that moment. Dismissing 4/5/6 or closing the app there also does: the notice timestamp was already written when 4 was shown, so the reminder returns after the next full interval (e.g. two weeks).
 
 ---
 
@@ -144,7 +144,8 @@ When two strong biometrics — Class 3 3D face unlock **and** fingerprint — ar
 
 ## 7. Verification and Status
 
-- `VaultLockPolicyTest` verifies, at source level, the error-code → message mapping, that the row is not re-hidden by `setupVaultBiometric()`, that the switch is passive when unusable, that the info icon exists, and that the enrollment offer stays silent when no strong biometric is enrolled.
+- `VaultLockPolicyTest` verifies, at source level, the error-code → message mapping, that the row is not re-hidden by `setupVaultBiometric()`, that the switch is passive when unusable, that the info icon exists, and that the enrollment offer stays silent when no strong biometric is enrolled. `biometricUnavailableReasonDistinguishesWeakFaceHardwareAndKeyFailures` is a direct unit test and does not yet assert `BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED`.
+- **Password-change enrollment:** `promptChangeVaultPassword()` now defers `lockVaultIfOutsideSession()` until `showVaultPasswordSavedDialog`'s `onDone` (after 3b or a Back dismissal). Wiping the key before 3a caused `completeBiometricSetup()` to fail silently (`unlockedMasterKey ?: return false`).
 - The 1:1 comparison tables for the 7 new keys in 9 audited locales (az, de, es, es-419, es-US, ja, nb-NO, nn, zh-TW) were updated under `translation-blind-tests/`.
 - `:app:testFossDebugUnitTest` passes; resource merging is error-free.
 - **Test coverage limit:** No device with Class 3 3D face-unlock hardware was available, so this modality was **not tested on a physical device**. The behaviour described in §5 is based on Android/AOSP and OEM documentation and still needs verification on such a device.

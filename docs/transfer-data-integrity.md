@@ -10,8 +10,9 @@ sürecin öldürülmesi) sırasında verilerin ne olduğu. Referanslar: `DOCS.md
 
 > **Belge durumu:** §1–§3 ve §6.1, değişiklik öncesi (*upstream/fork başlangıç*) davranışının
 > tarihsel analizini ve tasarım önerisini korur. [ADR 0003](adr/0003-resumable-file-operations.md)
-> kabul edilmiş ve temel fazları uygulanmıştır; **kodda şu an çalışan güncel durum** §5, §6.4, §8
-> ve ADR 0003 §11'de belgelenmektedir.
+> kabul edilmiş ve temel fazları uygulanmıştır; **kodda şu an çalışan güncel durum** §5, §8
+> ve ADR 0003 §11'de belgelenmektedir. §6.4 bir tasarım önerisidir; kapsamı §8'deki gerçek
+> kod durumuyla sınırlıdır.
 >
 > **Bağımsız kriptografik denetim yapılmamıştır.** Konteyner yerleşimi proje özgüdür; iyi bilinen
 > primitiflerin kullanılması tasarım hatası olmadığını kanıtlamaz.
@@ -64,8 +65,10 @@ Kayıp olan şey **B'ye harcanan ilerlemedir**; veri değil.
 
 Yarım `.bin` sessizce kabul edilmez: header'daki `ciphertextLength` tam boyutu bildirir,
 `verifyFileIntegrity` dosya uzunluğunu kontrol edip reddeder (`CryptoManagerStreams.kt:177`);
-görüntüleme yolu bozuk segmenti sarı `!` rozetiyle gösterir (DOCS §2.4). Yani bozulma **tespit
-edilir ama temizlenmez ve kullanıcıya resume seçeneği sunulmaz.**
+görüntüleme yolu Tink segment doğrulama hatasını `IOException` / `GeneralSecurityException` olarak
+fırlatır ve yükleme başarısız olur; sarı `!` rozeti, `allowUnverified` ve
+`vault_corruption_reports` tablosu **uygulanmamıştır** (bkz. ADR 0001 fail-closed kararı). Yani
+bozulma **tespit edilir, gösterilmez ve kullanıcıya resume seçeneği sunulmaz.**
 
 ### 1.5 Mevcut kodda gerçek (dar) açıklar
 
@@ -84,9 +87,11 @@ Bu proje (Fossify Gallery fork'u) veri bütünlüğü açısından aşağıdakil
 - **Kanonik konteyner:** `FGVLTENC` v1; AES-256-GCM ile authenticate edilmiş header +
   dosyaya özel DEK ile Tink `AES256_GCM_HKDF` akışı (256 KiB segment), AAD = `fileId`
   (ADR 0001, DOCS §2.5, `TinkStreamSpec.kt`).
-- **Tolerant görüntüleme / strict veri işlemleri** ayrımı: bozuk segment görüntülemede sıfırla
-  değiştirilir, asla diske geri yazılmaz; dedup, conflict ve pre-wipe kararları doğrulanmış
-  baytlar üzerinden alınır (DOCS §2.4.3-§2.4.5).
+- **Fail-closed doğrulama:** bozuk segment görüntülemede de yükleme hatası verir (sıfır ikamesi
+  yoktur); dedup, conflict ve pre-wipe kararları `verifyFileIntegrity()` ile doğrulanmış baytlar
+  üzerinden alınır. Tolerant görüntüleme tasarımı (sarı `!` rozeti, corruption raporu,
+  `allowUnverified`) ADR 0001 §7.3'te **reddedilmiştir**, kodda yoktur (DOCS §2.4 güncel durumu
+  yansıtır).
 - **Kısmi atomik yazma desenleri:** `renameEncryptedFile` `.tmp_<rand>.bin` + `Files.move(REPLACE_EXISTING)`
   (`CryptoManagerFileCrypto.kt:640-683`);External sync `.sync_tmp_*.bin` + `verifyFileIntegrity` + move
   (`CryptoManagerExportSync.kt:276-330`); sanal albüm ve favorites manifest'leri `*.tmp` + `renameTo`
@@ -111,9 +116,11 @@ Aşağıdaki maddeler başlangıç analizinde önerilen hedeflerdir; güncel kod
    (operationId, kök yollar, conflict kararları, albüm merge hedefi) kaydı. `PENDING/IN_FLIGHT`
    ilk bayttan **önce**, `VERIFIED` rename+sync'den **sonra**, `SOURCE_DELETED` kaynak silindikten
    sonra yazılır. Böylece ölü süreçten kalan staging dosyası tanım gereği orphan olur.
-3. **Read-back doğrulaması.** Encrypt sonrası `verifyFileIntegrity`, düz kopyada tam
-   boyut+fingerprint; `VERIFIED` yalnızca doğrulama sonrası. Kaynak silme yalnızca `VERIFIED` sonrası.
-   Bozuk kaynak `.bin` kopyalanacaksa corruption kaydı kopyaya/Journal'a taşınır.
+3. **Read-back doğrulaması.** Encrypt sonrası `verifyFileIntegrity`, `.bin` kopyasında tam
+   boyut+AEAD kontrolü vardır. `Activity.tryCopyMoveFilesTo` düz→düz dalı ve
+   `OperationRecovery.resumePlainCopy` de kaynak/hedef boyut + parmak izini karşılaştırır;
+   uyuşmazlıkta doğrulanmamış hedef güvenli silinir ve kaynak korunur. Bozuk kaynak `.bin`
+   kopyalanmaz (`verifyFileIntegrity` başta reddeder); corruption kaydı taşıma özelliği yoktur.
 4. **Startup reconciliation.** Çalışan işlem yokken journal'da referansı olmayan staging dosyaları
    temizlenir. **Düz metin tutan staging dosyaları normal `delete()` değil secure wipe ile silinir**
    (ADR 0002 §7). `VERIFIED` öğeler disk karşılaştırması, `IN_FLIGHT` öğeler kaynaktan yeniden yazım.
@@ -153,7 +160,7 @@ Bu hedef şu varsayımlara dayanır:
 | 4 | **Dosya dışı store'lar atomic değil (kısmen giderildi)** | `MetadataReconciler` startup'ta commit edilmiş öğeler için `updateDBMediaPath` (MediaStore + Room medium/date_takens/favorites/virtual albums + manifest), sanal albüm `parentPhysicalPath` düzeltmesi ve düz dosyalar için MediaStore rescan yapar. İşaretleme **öğe bazında** yapılır (`operationId:itemIndex`), böylece resume sırasında ikinci bir süreç ölümü yeni tamamlanan öğelerin de reconcile edilmesini sağlar; temizlenmiş işlemlerin eski anahtarları prefs'ten budanır. **Kalan:** klasör config ve thumbnail cache tutarlılığı (bkz. §8.3.2 — kasıtlı kapsam dışı). |
 | 5 | **Foreground service sınırları** | Force-stop `onDestroy` çağırmadan öldürür (journal `IN_FLIGHT` kalır — resume halleder). `FileOperationService` + `ForegroundOperationRegistry` tüm işlem yollarını kapsar ve `ACTION_CANCEL` bildirim iptali ile `TransientOperationWaiter` (120 sn zaman aşımı) içerir; ancak OEM battery optimizer / Doze servisi yine de duraklatabilir veya harici birim geri gelmeyebilir. |
 | 6 | **Plaintext staging izi** | Decrypt ve düz kopya staging dosyaları düz metin tutar; `delete()` ile silinirse flash'te iz kalır. Secure wipe şart (ADR 0002 §7). Ciphertext staging için normal `delete()` yeterli. |
-| 7 | **Öğe başı ve batch alan kontrolü (kısmen giderildi)** | Batch başı `SpaceEstimator` kontrolüne ek olarak `TransientOperationWaiter.awaitDestinationReady` her yazma öncesinde hedef dizin erişilebilirliğini ve doğrulanabilir boş alanı yeniden kontrol eder. Yazma ortasında gerçekleşen `ENOSPC` / IO hatasında aynı dosya içinde otomatik yeniden deneme henüz yoktur; öğe `FAILED` olur ve kaynak korunur. |
+| 7 | **Öğe başı ve batch alan kontrolü (kısmen giderildi)** | `SpaceEstimator` yalnızca stream copy/move + albüm encrypt/decrypt yollarında batch kontrolü yapar. `TransientOperationWaiter.awaitDestinationReady` öğe başı kontrol eder, ancak `StatFs` fallback `verifiable = false` döndürdüğü için bu öğe kontrolü atlanır. Yazma ortası `IOException` için `runWithTransientRetry` **vardır** (encrypt/decrypt/.bin kopya + `CopyMoveHelper` direct-file; `maxAttempts = 2`, SAF'ta 1); düz→düz `tryCopyMoveFilesTo` ve `resumePlainCopy` bu kapsam dışındadır. |
 | 8 | **Eşzamanlılık (giderildi)** | `ForegroundOperationRegistry` aynı anda çalışan farklı thread'lerdeki işlemleri tek owner token ile serileştirir (aynı thread içi çağrılar re-entrant'tır). Staging isimleri `operationId + itemIndex` ile benzersizdir. |
 
 Bu risklerin **hiçbiri** "kaynak ve hedefin yarısı kalıp birleştirilemez veri kaybı" şeklinde
@@ -218,24 +225,29 @@ görünür olup olmamasıdır.
 Alan kontrolü, ADR 0003'ün bir parçası olarak **"Decision — space budgeting"** bölümünde
 (§3a) ve §9 checklist maddesinde tanımlandı. Özet:
 
-1. **Tek estimator:** `SpaceEstimator` + saf `VaultContainerWriter.estimateEncryptedSize(...)`;
-   düz kopya, düz↔şifreli, `.bin` taşıma, dosya/albüm encrypt-decrypt, stream import ve sync/export
-   aynı hesabı kullanır. Encrypt formülü: `143 + UTF8(ad) + thumbnail + expectedCiphertextSize(boyut)`
-   (143 = 43 sabit prefix + 84 sabit header alanı + 16 GCM tag). Decrypt ve `.bin` kopyası kesin boyut
-   kullanır.
+1. **Estimator (sınırlı kapsam):** `SpaceEstimator` + saf `VaultContainerWriter.estimateEncryptedSize(...)`;
+   yalnızca `CopyMoveHelper` stream kopyası, `encryptFolderRegistered` ve `decryptFolderRegistered`
+   içinde kullanılır. `tryCopyMoveFilesTo`, tekli/çoklu dosya crypto, `encryptStreamToDirectory`,
+   `exportEncryptedVault` ve `syncVaultFromExternalDirectory` kapsam dışıdır. `forDecrypt` /
+   `forEncryptedCopy` çağrılmaz; `decryptFolder` gerçek `meta.originalSize` yerine `.bin` uzunluklarını
+   kullanır. Encrypt formülü: `143 + UTF8(ad) + thumbnail + expectedCiphertextSize(boyut)`
+   (143 = 43 sabit prefix + 84 sabit header alanı + 16 GCM tag).
 2. **Albüm tepe kullanımı:** `encryptFolder`/`decryptFolder` tüm çıktıları yazıp ancak sonra
    kaynakları sildiği için `peakBytes = Σ(tüm çıktılar)` — tek dosya değil tüm batch.
-3. **Zamanlama:** batch başında + her öğenin `IN_FLIGHT` geçişinden önce yeniden kontrol;
-   startup orphan temizliği kontrolden **önce** çalışır.
-4. **`-1` politikası:** sessiz atlama yok; `File` yolu için `StatFs` fallback, SAF/OTG için açık
-   onay diyaloğu ("devam et / iptal") — bkz. §8.3.3.
+3. **Zamanlama:** batch başında (kapsam içi yollarda) + öğe bazında `TransientOperationWaiter`
+   kontrolü; resume sırasında `estimatedRequiredBytes` / `peakBytes` **yeniden kontrol edilmez**.
+4. **`-1` / doğrulanamayan alan politikası:** `SpaceEstimator.probe` `StatFs` fallback'inde bile
+   `verifiable = false` döndürür; `SpaceConfirmation` her `!verifiable` durumunda açık onay ister ve
+   SAF'ta kullanıcı onayı olmadan otomatik devam edilmez. Doğrulanabilir alan yetersizliğinde hâlâ
+   yalnızca `no_space` toast'u gösterilir (gereken/mevcut diyaloğu yoktur).
 5. **Eşik:** `required + max(64 MiB, %1) > available` ise engelle veya `WAITING_FOR_SPACE` durumuna
    geç (ADR §2 transient-wait katmanı, bildirim ve iptal akışıyla).
-6. **Staging:** nihai dizinde → rename ücretsiz, 2x kopya yok; `ATOMIC_MOVE` desteklenmezse
-   `FAILED`, kopyala-sil'e düşülmez.
-7. **Journal/UI:** `estimatedRequiredBytes`/`peakBytes` batch kaydında tutulur; resume aynı
-   sayılarla yeniden kontrol eder, kullanıcıya sadece `no_space` toast'u yerine gereken/mevcut
-   bilgisi verilir.
+6. **Staging:** dört çekirdek yazma yolunda `AtomicStaging` + `ATOMIC_MOVE` kullanılır;
+   `syncVaultFromExternalDirectory` `.sync_tmp_*.bin` + `renameTo` fallback'i kullanır;
+   `exportEncryptedVault` ve `encryptStreamToDirectory` staging kullanmaz.
+7. **Journal/UI:** `estimatedRequiredBytes` yalnızca albüm encrypt/decrypt kayıtlarında yazılır;
+   resume bu alanları okumaz ve gereken/mevcut bilgisi göstermez. `no_space` toast'u marjsız
+   `peakBytes` değerini yazar.
 
 Test kapsamı: tam eşik, N dosyalı albüm tepe kullanımı, maksimum thumbnail, SAF `-1`, orphan
 birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, force-stop sonrası resume.
@@ -342,7 +354,7 @@ birikimi, disk çıkarılıp takılması, `KEEP_BOTH`, yazma ortasında ENOSPC, 
 
 - `MetadataReconciler`: süreç ölümü sonrası startup'ta (`OperationRecovery.reconcile` içinden) commit
   edilmiş (`VERIFIED` / `SOURCE_DELETED`) öğelerin path referanslarını onarır.
-- `MOVE/ENCRYPT/DECRYPT` için mevcut `Context.updateDBMediaPath` çağrılır: MediaStore, Room
+- `MOVE/ENCRYPT/DECRYPT` için mevcut `Context.updateDBMediaPath` çağrılır: Room
   `media`/`date_takens`/`favorites`/`virtual_albums` ve ilgili JSON manifest'leri tek seferde güncellenir.
   `COPY` için kaynak korunduğundan yalnızca yeni hedefin kimliği kaydedilir.
 - Sanal albümün kendi `parentPhysicalPath` değeri eski klasöre işaret ediyorsa düzeltilip manifest
@@ -385,8 +397,9 @@ Bu durum bilinçli bir sınırlamadır; ADR 0003'ün 0001/0002 ile birlikte okun
   (`isCancelled` ile erken iptal edilebilir); ayrıca tüm dört yazma yolunda akış ortası `IOException`
   hatalarında `runWithTransientRetry` kısmi staging'i temizleyip depolama geri gelince öğeyi
   yeniden dener.
-- Yeni metinler (alan uyarısı, bekleme bildirimi, Faz-2 güvenli silme istemi ve işlem bazlı
-  iptal metinleri) desteklenen 11 locale kaynağına eklendi.
+- Yeni metinler (alan uyarısı, bekleme bildirimi ve işlem bazlı iptal metinleri) **11 aktif locale
+  kaynağına** eklendi (diğer diller İngilizceye düşer). Faz-2 şifreleme silmeleri sessiz yürür;
+  "Faz-2 güvenli silme istemi" diye bir metin yoktur.
 
 **Tamamlanan Faz 3/4 kalemleri:** Albüm ve Activity batch işlemlerinin `ForegroundOperationRegistry`
 kaydı, `resolvedDestName` çakışma soneki sabitleme, commit edilmiş hedefin boyut + parmak iziyle

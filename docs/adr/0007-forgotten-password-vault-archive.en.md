@@ -40,11 +40,11 @@ When a simple user forgets the password of the vault at the default location (`C
 
 ### 3.1. Settings location and routing
 
-A separate row is added at the bottom of the **Encrypted vault** section, below the password-gated "Reset encrypted vault":
+The setting lives in the **Vault management** card, **above** the password-gated "Reset encrypted vault":
 
-> **Archive vault** — *Moves the old vault to the archive and creates a new one in the default location*
+> **Archive encrypted vault** — *Moves the old vault to the archive and creates a new one in the default location*
 
-The row is visible **only when a vault exists**. The **"I don't remember"** link in the password verification form (reached from the reminder dialog) opens a compact in-app recovery dialog with numbered steps and the currently selected vault path (§3.4). It does **not** open Settings. The **About → FAQ** entry *"I forgot my encrypted vault password, what can I do?"* remains available from About; the word *archiving* in that FAQ text links back to this setting.
+It is mutually exclusive with **Unarchive vault** (shown while an archived vault is active). The `archive_vault_summary` string exists but is not rendered in the row. The **"I don't remember"** link in the password verification form (reached from the reminder dialog) opens a compact in-app recovery dialog with numbered steps and the currently selected vault path (§3.4). It does **not** open Settings. The **About → FAQ** entry *"I forgot my encrypted vault password, what can I do?"* remains available from About. Clickable links in that FAQ text are **not implemented**: `FaqActivity` renders the string as plain text.
 
 **"Vault location"** shows three options:
 
@@ -52,32 +52,29 @@ The row is visible **only when a vault exists**. The **"I don't remember"** link
 2. **Use existing vault**,
 3. **Select from archived vaults** — visible **only when at least one archived vault exists**.
 
-The archive list is ordered by archival time and labelled in the UI as **"1st archived vault"**, **"2nd archived vault"**, etc. (§4.4). This order survives an app reinstall.
+The archive list is ordered by **descending** archival time and labelled as **"1. archived vault"**, **"2. archived vault"**, etc. (§4.4); there is no secondary sort on equal timestamps. It is a single-line `setSingleChoiceItems` list: valid entries show only the label, entries with no date show *"Encrypted vault with unknown date"*, and invalid entries show *"Invalid archive entry"* (only those reveal `humanizePath` + a Copy path action). If every entry is invalid, the picker option is hidden because `promptVaultSetupChoice()` checks only `archivedEntries().isNotEmpty()`.
 
 ### 3.2. Question asked to the user
 
 The dialog offers a single real flow:
 
-1. **Archive and continue** (default): the old vault is preserved and a new vault is created at the default `Secrets` location. The alternative action is **Cancel**.
+1. **Yes** (default): the old vault is preserved and a new vault is created at the default `Secrets` location. The alternative button is **No** (`DeleteSecretsDialog`).
 
 > The rejected "delete without archiving" option and the passwordless-reset idea are recorded in §10, not here. Because of the axiom, the app cannot perform a deletion itself: a user who still wants to delete is shown the archive path (§8) and may copy it to the clipboard; the app never performs the delete action.
 
 ### 3.3. Archival flow
 
-Preconditions: the vault must be locked and no foreground file operation may be active.
+Current code flow (`SettingsActivity.setupArchiveVault()` → `VaultArchiveManager.archiveActiveVault()`):
 
-1. User confirmation uses the same `DeleteSecretsDialog` as "Reset encrypted vault": **10-second countdown + confirmation checkbox + Yes/No**. **Difference: no vault password is asked** — the axiom forbids passwordless deletion, while archiving is a move, not a deletion (§6). The dialog also reminds: *"If you want to use the vault on another device, use Export encrypted vault"* (§9).
-2. **Device-owner verification** follows the confirmation on devices with a secure lock screen: `BiometricPrompt` with `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` — a Class 3 biometric, falling back to the device PIN/pattern/password. This proves possession of the device, not knowledge of the vault password, and releases **no vault key**. On devices **without** any secure lock screen there is no owner signal to check, so only the 10-second confirmation applies. This closes the "unlocked phone in someone else's hands" gap without introducing a passwordless *deletion* path. Because `DEVICE_CREDENTIAL` is explicitly allowed, a failing or unavailable biometric (faulty sensor, wet finger, etc.) never blocks the flow — the system prompt still offers the device PIN/pattern/password.
-3. `Calypso Gallery/Archive/` is created **if missing**, with a generic `readme.txt`. The folder **does not exist at app installation**; it is created on first archival only.
-4. A random destination name is generated (§5) and checked for collisions.
-5. The destination path is stored in private preferences (`archivedVaults`), and the old vault folder is **moved** there.
-6. If the move fails, the preference entry is rolled back and the source stays in place.
-7. Biometric vault state is cleared: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`. The old vault's biometric binding is never carried over to the new one.
-8. The new-vault setup flow starts at the default location (`Calypso Gallery/Secrets`); the user chooses a new password/PIN.
-9. If new-vault creation fails, `config.vaultRootPath` is restored to the archive path so the old vault stays accessible.
-10. On success, `config.vaultRootPath` points to the new vault; the archive entry remains in private preferences.
+1. No explicit "vault locked / no foreground operation" precondition is checked; `lockVault()` is called partway through.
+2. **Device-owner verification comes first**, then the `DeleteSecretsDialog` confirmation with **Yes/No**. Owner verification uses `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` (API 28–29: `BIOMETRIC_WEAK or DEVICE_CREDENTIAL` because of an AndroidX restriction) and releases no vault key; devices without a secure lock screen skip it.
+3. `Calypso Gallery/Archive/` and a generic `readme.txt` are created **before** the move, so a failed first archival leaves an empty `Archive/readme.txt` behind. External-storage locations are not rejected explicitly: a cross-filesystem `renameTo` simply fails with the generic `archive_vault_failed` toast (the dedicated guidance text in §6 is not shown).
+4. A random 12-byte (24 hex character) destination name is generated and checked for collisions.
+5. The destination path is written to private preferences (`archivedVaults`, via `.apply()`) **before** `source.renameTo(destination)`; a failed move rolls the entry back.
+6. Biometric state is cleared: `isVaultBiometricEnabled = false`, `vaultBiometricWrappedBundle = ""`, `clearBiometricKey()`.
+7. `config.vaultRootPath` is set to `""` and `promptWhereToCreateVault()` opens (Default vs Custom location). Because it is launched immediately after a non-blocking `VaultNoticeDialog`, the success / Copy-path dialog can be overlaid by the location picker. Cancelling the picker does **not** restore the previous `vaultRootPath`.
 
-All steps run through a **journal** following ADR 0003. If the process dies at any step, the vault is either at its source or reachable from the archive path — **never lost**.
+**No ADR 0003 journal is used** (`OperationJournal` knows only COPY/MOVE/ENCRYPT/DECRYPT). Crash safety rests solely on the write-ahead preference entry plus the single atomic `renameTo`.
 
 ### 3.4. FAQ entry and routing
 
@@ -87,7 +84,7 @@ The "I don't remember" link on the verification form (screen 5 of the reminder f
 >
 > 1. Unlock the vault with biometrics.
 > 2. **Copy (export) your encrypted data.** This does not remove the vault from its place; the original stays where it is. You can open the copy on another device with "Use existing vault".
-> 3. To keep using the same location, use Settings → Encrypted vault → **Archive vault**. This moves the old vault to `Calypso Gallery/Archive/` and creates a fresh vault at the default location with a new password. **"Reset encrypted vault" requires the current password** and is therefore not available in this situation.
+> 3. To keep using the same location, use Settings → Vault management → **Archive encrypted vault**. This moves the old vault to `Calypso Gallery/Archive/` and creates a fresh vault at the default location with a new password. **"Reset encrypted vault" requires the current password** and is therefore not available in this situation.
 >
 > **Warning:** If biometrics cannot unlock it either, the vault is inaccessible. You have three options (least destructive first):
 >
@@ -95,7 +92,7 @@ The "I don't remember" link on the verification form (screen 5 of the reminder f
 > - **Copy (export) your encrypted data** — for use on another device; **copying is not moving**, the original stays in place.
 > - **Permanently remove the vault** — delete the vault folder at *(its location)* with a file manager. This cannot be undone.
 
-*archiving* and *copy (export)* are clickable links (`SpannableString`/`ClickableSpan` in FaqActivity or a target extra for SettingsActivity) leading to **Archive vault** and **Export encrypted vault** respectively. *(its location)* is replaced with the dynamic path from §8; no hardcoded path is printed. The option order is deliberate: the least destructive one comes first.
+*archiving* and *copy (export)* are plain text today: `FaqActivity` uses a `MyTextView` without `SpannableString`/`ClickableSpan`, so there are no tappable links to Settings. *(its location)* is replaced with the dynamic path from §8; no hardcoded path is printed. The option order is deliberate: the least destructive one comes first. The shipped string resources (`faq_forgot_password_text`, `vault_password_reminder_forgot_steps`) now point step 3 at archiving instead of the password-gated "Reset encrypted vault".
 
 ---
 
@@ -203,43 +200,22 @@ Friendly names shown to the user ("Archive 1", "Archive 2") exist **only in the 
 ## 6. Move, rollback and key state
 
 - When the source vault is under `Calypso Gallery`, the destination is on the same filesystem; `File.renameTo` is **atomic and instantaneous** and copies no data. The long foreground operation from ADR 0003 is not needed.
-- A vault on a **custom/external storage location cannot be archived**: the archive lives on device storage and `File.renameTo` across filesystems fails. The operation is cancelled with an error; no copy is attempted and nothing is moved. User-facing note:
-  > "A vault on external storage cannot be archived. If you want to create another encrypted vault in the same location without deleting the current one, move the current vault to the device's internal storage before archiving it."
+- A vault on a **custom/external storage location** is not explicitly rejected: if it happens to be on the same filesystem it is archived normally; otherwise `File.renameTo` fails and the generic `archive_vault_failed` toast (*"Could not archive the vault. Nothing was changed."*) is shown. The dedicated external-storage guidance quoted in older revisions is not implemented.
 - Implementation detail: the archive entry is written to preferences **before** the rename and rolled back if the rename fails, so a crash cannot leave an unfindable vault. There is no multi-step ADR 0003 journal; the remaining steps (clear biometrics, create new vault, switch config) happen after the single atomic rename.
 - The archived vault's `.vault` header and `.bin` files are **not path-dependent**, so keys remain intact. The archived vault can later be opened **only with its own password**.
 
 ---
 
-## 7. Restore — the "vaults swap places" model for simple users
+## 7. Restore — in-place activation + explicit "Unarchive vault"
 
-The user is told exactly this:
+The "vaults swap places" model was removed (`6f6268efc`): there is **no swap and no overwrite**. The shipped model has two steps:
 
-> "To use an archived vault again, go to **Settings → Encrypted vault → Vault location → Open from archive**. Pick the vault from the list. The chosen vault returns to the default location and the current vault is moved to the archive. **Nothing is deleted.**"
+1. **Activate in place.** "Select from archived vaults" calls `activateArchivedVault()` on tap — no folder is moved and no confirmation is shown. `config.vaultRootPath` is pointed at the archive entry; after the vault password is entered, the `archived_vault_activated` toast says *"Use Settings → Unarchive vault to move it back"*. Because `vaultRootPath` is written before password entry, cancelling the prompt leaves the active path inside the archive.
+2. **Explicit "Unarchive vault" row.** While an archived vault is active, Settings hides "Archive encrypted vault" and shows "Unarchive vault". `setupUnarchiveVault()` → `canUnarchive(entry)` checks `restoreTarget(entry)` (the original path, or the default `Secrets` after a reinstall): if another valid `.vault` occupies that location, `unarchive_vault_blocked` explains that the other vault must be archived first and offers **"Combine data into one vault"** with manual import steps. No swap occurs.
 
-Moving a vault back out of the archive uses the same device-owner verification as archiving (§3.3): Class 3 biometric with device-credential fallback, no vault password. The picker also exposes an info icon with the total size of all archived vaults.
+Otherwise `DeleteSecretsDialog` → `requireDeviceOwner()` → a single `source.renameTo(target)` moves the vault back, using the same device-owner verification as archiving (no vault password). The picker also exposes an info icon with the total size of all archived vaults.
 
-The user does not need to understand "active vault" or "archive" as separate concepts; their mental model is simply **"two vaults swap places"**.
-
-Flow:
-
-1. An **"Open from archive"** entry appears in "Vault location".
-2. `archivedVaults` entries from private preferences are shown with a friendly name + `mtime`. If preferences were wiped, `Archive/*` is scanned and `CryptoManager.resolveExistingVaultInDirectory(dir)` finds a valid `.vault` header; the random name is a fallback label.
-3. The user picks a vault; the confirmation dialog says only: *"This vault will move to the default location. The current vault will be moved to the archive. No data will be deleted. Continue?"*
-4. On confirmation, the ADR 0003 journal performs two **atomic renames on the same filesystem**:
-   - `Secrets` → `Archive/<new-random-id>` (current vault goes to the archive),
-   - `Archive/<chosen-id>` → `Secrets` (chosen vault returns to the default location).
-5. `config.vaultRootPath` is set to `Secrets`; biometric state is cleared.
-6. `VaultSecurityDialog` asks for the **chosen vault's password**. If it is wrong, the user can retry: the vault stays at `Secrets` and remains accessible, the app does not get stuck.
-7. Success message: *"The chosen vault has returned to the default location. Your previous vault is preserved in the archive."*
-
-Why this approach:
-
-- The user needs no folder name, random id or file manager knowledge.
-- The default location always contains exactly **one** vault; `findVaultRoot` discovery stays unchanged.
-- The axiom is preserved: both renames copy/delete nothing, and the operation is reversible.
-- Because the restored vault lives at the default location, biometric setup and lock flows work exactly as before.
-
-If the user does not remember the restored vault's password either, they cannot complete step 6; the "I forgot my password" flow can then be used again — it archives the current vault and creates a new one.
+There is no two-rename transaction and no ADR 0003 journal: `VaultArchiveManager` contains zero `OperationJournal` / `OperationRecovery` calls. If the user does not remember the archived vault's password, the "I forgot my password" flow can still be used.
 
 ---
 

@@ -112,7 +112,7 @@ Calypso Gallery employs a defense-in-depth cryptographic pipeline designed to pr
 ### Bit-Rot Resilience (Zero Error Propagation)
 Monolithic container formats (such as Veracrypt volumes or ZIP archives) risk total catastrophic loss if a single sector corrupts. Calypso Gallery avoids this through granular file isolation:
 1. **File-Level Granularity:** Each image and video is stored as an independent encrypted binary file. Corruption in one file has **zero effect** on any other file or the vault at large.
-2. **Segment-Authenticated Streaming:** payloads use Tink `AES256_GCM_HKDF` with a per-file DEK and AAD = `fileId`. A corrupt segment is *detected* by its GCM tag: the reader throws for that segment while other segments still decrypt. The app substitutes placeholder bytes for the bad segment only and keeps playing (§2.4). Bit-rot isolation is therefore **per-segment**, not per-bit; the substitution is explicit application logic and is never written back to disk.
+2. **Segment-Authenticated Streaming:** payloads use Tink `AES256_GCM_HKDF` with a per-file DEK and AAD = `fileId`. A corrupt segment is *detected* by its GCM tag: the reader throws and the media load fails (§2.4). There is **no** zero-substitution / tolerant display in this build — failures are fail-closed. Bit-rot isolation is therefore **per-segment**, not per-bit: other files are unaffected, but a damaged file does not play.
 3. **Optional Hardware Binding:** biometric unlock adds an Android Keystore (StrongBox/TEE) wrapping layer around the VMK on supported devices. The `.vault` header is the only portable copy of the credentials: if it is lost or damaged, the vault cannot be recovered. Keep a backup of the vault directory.
 
 ### 2.1 Desktop CLI encryption pipeline
@@ -146,11 +146,11 @@ offset  size  content
 
 The header GCM associated data is `magic | version | keyId | fileId | N` (N is the **encrypted** header length); the header carries the per-file DEK and the payload's Tink AAD is the immutable `fileId`. **All three write paths funnel through `VaultContainerWriter`:** file→file encryption, stream→file encryption, and rename (which rewrites only the header while copying the payload verbatim, without re-encrypting media bytes).
 
-Vault-level strings use `FVSTR:` records: a per-purpose `HKDF(KEK, "CalypsoGallery:Metadata:AESGCM" | purpose)` key with `AES-256-GCM` and `purpose` as AAD. Album names, stealth-album JSON, restore manifests and resume blobs use distinct purposes, preventing record swapping between categories.
+Vault-level strings use `FVSTR:` records: a per-purpose key derived with `HKDF-SHA256(KEK, info = "CalypsoGallery:Metadata:AESGCM|CalypsoGallery:Metadata:AESGCM|" + purpose)` (the Android caller supplies an already-prefixed context and `VaultKeyDerivation` prepends the domain again; the Python helper mirrors this), with `AES-256-GCM` and the single-prefixed `"CalypsoGallery:Metadata:AESGCM|purpose"` as AAD. Album names, stealth-album JSON, restore manifests and resume blobs use distinct purposes, preventing record swapping between categories.
 
 ### 2.3 Cross-Implementation Test Fixtures
 
-`tools/calypso-cli/make_fixtures.py` produces canonical `FGVLTENC` version 1 `.bin` containers with the CLI and stores them under `app/src/test/resources/fixtures/cli/`. `CliFixtureCompatibilityTest` then asserts that the Android app can read, authenticate and decrypt every one of them, and that tampered segments, headers and length fields are rejected. This pins the "encrypt on the desktop CLI → open on the phone" workflow against regressions.
+`tools/calypso-cli/make_fixtures.py` produces canonical `FGVLTENC` version 1 `.bin` containers with the CLI and stores them under `app/src/test/resources/fixtures/cli/`. `CliFixtureCompatibilityTest` then asserts that the Android app can read, authenticate and decrypt every one of them and that the plaintext SHA-256 matches the manifest. Tamper rejection is covered by the Kotlin container tests (`VaultContainerReadTest` / `VaultContainerWriterTest`), not by this fixture test. This pins the "encrypt on the desktop CLI → open on the phone" workflow against regressions.
 
 ### 2.4 Corruption & Bit-Rot Behaviour
 
@@ -174,56 +174,40 @@ The practical answers:
 - A **payload** bit → only that **segment** is undecryptable, not the whole file. The file never vanishes because of a verification failure.
 - Tink trades silent degradation for a **loud, localized** failure. Left unhandled, sequential playback would stop with an error at the bad segment (a small GIF may fail to display entirely). Seeking past it recovers the rest because segments decrypt independently — but Media3/Glide do not do this automatically.
 
-#### 2.4.3 Adopted policy: tolerant display, strict data operations
+#### 2.4.3 Current policy: fail-closed everywhere
 
 | Path | Behaviour on authentication failure |
 | :--- | :--- |
-| Thumbnail / photo / video / GIF / SVG / dimensions | Wrap the read: substitute **zeros for that segment only**, reposition to the next segment boundary, and continue. Never write the substituted bytes back. Emit a corruption report (§2.4.4). |
-| Conflict comparison, dedup, pre-wipe verification | **Strict** — reject/skip. Unverifiable bytes are never treated as valid data or re-encrypted into a valid-looking file. |
-| "Dosyanın şifresini çöz" (explicit user action) | Allowed as an *unverified best-effort* output (§2.4.6). |
+| Thumbnail / photo / video / GIF / SVG / dimensions | Tink throws `IOException` / `GeneralSecurityException`; the image or video load fails (`onLoadFailed`). **No** zero substitution, no placeholder bytes. |
+| Conflict comparison, dedup, pre-wipe verification | `verifyFileIntegrity()` rejects the file; unverifiable bytes are never treated as valid data or re-encrypted into a valid-looking file. |
+| Copy / move of an encrypted `.bin` | `verifyFileIntegrity()` gate → the item is rejected and the source is kept. |
 
-Substituting zeros is safe for display: the decoder gets a known placeholder rather than attacker-chosen plaintext, and no write path consumes the decoded stream.
+The **tolerant-display** design (zero substitution for one segment, yellow `!` badge, `vault_corruption_reports` table, `allowUnverified` best-effort decrypt) was **evaluated and rejected** in [ADR 0001](docs/adr/0001-tink-streaming-aead-migration.md) §7.3. The repository has no `vault_corruption_reports` table and no `allowUnverified` flag.
 
-#### 2.4.4 How the user learns about it
+#### 2.4.4 What the user sees today
 
-- Detection occurs in the read layer on background threads and can fire on every read, seek or thumbnail regeneration. It must **never** open a dialog there.
-- A record is written to the app-private Room table `vault_corruption_reports`, keyed by (vault-relative path + file fingerprint), holding `firstDetectedAt`, `lastDetectedAt`, `badSegmentCount`, `notified`, `derivedFromCorrupt`. No cleartext sidecar file is placed in the Encrypted Vault.
-- **Grid / album list:** small **yellow `!` overlay** on the thumbnail — the primary indicator, visible without opening the file.
-- **Fullscreen viewer:** small yellow `!` badge in a corner; tapping it opens the dialog in §2.4.6.
-- **First detection only:** one non-blocking toast/snackbar. Later detections only refresh `lastDetectedAt` — the warning never repeats on every appearance or seek.
-- Records survive restarts. They are cleared when the `.bin` is deleted, securely wiped, or replaced by a verified re-encryption (fingerprint change); renames follow the existing path-update plumbing. When "Dosyanın şifresini çöz" writes a plaintext output, that path is recorded with `derivedFromCorrupt = true` so the badge and the hidden Move action follow the decrypted file too.
-- **No quarantine and no automatic hiding** of damaged files.
+A damaged segment appears as a failed image / video load, not as a badge. A damaged header makes the file unavailable (`readMetadata()` returns null). There is no corruption dialog, no first-detection toast, no persistent corruption record and no automatic hiding of damaged files — those options were rejected in ADR 0001 §7.3.
 
 #### 2.4.5 Which operations are strict
 
 | Operation | Behaviour on a corrupted file |
 | :--- | :--- |
-| Normal export (`decryptFileToDirectory`) | Shows the dialog (§2.4.6); if cancelled, returns `null`. No plaintext is written and the `.bin` is untouched. |
-| Copy | **Allowed.** Payload is copied verbatim, no tag is recomputed; the corruption record and badge follow the copy. |
-| **Move** | **Action hidden entirely** for corrupted files — both encrypted and decrypted states. It is functionally identical to copy, so no Move entry and no explanatory notice. |
-| Conflict / dedup comparison | `SOURCE_MAC_INVALID`: the file is never treated as bit-identical, so it cannot be auto-deduplicated or merged as an identical copy. |
-| Pre-wipe verification (before wiping a plaintext source during a new encryption) | Returns `false`; the plaintext is not accepted as a verified duplicate. This is a direct gain of MAC verification: without it you cannot distinguish "damaged" from "valid but unusual media" and could write garbage while deleting the only surviving copy. Note this is **not** about forbidding deletion of a file — deleting a `.bin` is always allowed. |
-| Rename | **Allowed.** The header-only rewrite copies the payload verbatim (the payload is bound to the immutable `fileId`), so renaming cannot launder the damage. The badge persists. |
+| Normal export (`decryptFileToDirectory`) | `verifyFileIntegrity()` gate → the operation fails (`smart_conflict_integrity_failed`); no plaintext is written and the `.bin` is untouched. |
+| Copy / move of an encrypted `.bin` | `verifyFileIntegrity()` gate in `CryptoManagerConflict` → the item is rejected and the source is kept. |
+| Conflict / dedup comparison | Strict; a damaged file is never treated as bit-identical, so it cannot be auto-deduplicated or merged as an identical copy. |
+| Pre-wipe verification (before wiping a plaintext source during a new encryption) | Returns `false`; damaged plaintext is not accepted as a verified duplicate. Note this is **not** about forbidding deletion of a file — deleting a `.bin` is always allowed. |
+| Rename | Header-only rewrite; the payload is copied verbatim (bound to the immutable `fileId`). `verifyFileIntegrity()` gates the rename. |
 | Deleting the `.bin` itself | **Always allowed**, including secure wipe. No integrity check gates deletion. |
 
-Three invariants make the relaxed operations safe: **(1)** no authentication tag is ever recomputed over damaged bytes; **(2)** no source is deleted on the strength of an unverified copy; **(3)** no dedup/conflict decision is made from unverified bytes.
+Invariant: no source is deleted on the strength of an unverified copy and no dedup / conflict decision is made from unverified bytes. The "corruption badge follows the copy" and "Move action hidden" behaviours were rejected in ADR 0001 §7.3.
 
-#### 2.4.6 The corruption dialog and "Dosyanın şifresini çöz"
+#### 2.4.6 Repair
 
-> "Dosyanın bazı kısımları doğrulanamadı. Dosyanızda veri kaybı oluşmuş olabilir. Dosyanızın başka bir yedeği varsa geri yükleyebilirsiniz ya da orijinal dosya internette yer alıyorsa mevcut dosyanızın şifresini çözüp web aratması yapabilirsiniz."
-
-| Entry point | Left button | Right button |
-| :--- | :--- | :--- |
-| Yellow `!` badge / file menu | "Dosyanın şifresini çöz" | **Tamam** (default) |
-| Normal export icon | **İptal** | "Dosyanın şifresini çöz" (primary) |
-
-"Dosyanın şifresini çöz" reuses the existing decrypt function with `allowUnverified = true`. It streams through the tolerant reader, **keeps the encrypted source** (`deleteEncryptedSource = false`), and its output is never fed back into dedup, conflict checks, pre-wipe verification or re-encryption. There is **no "recovered / kurtarılmış" wording anywhere** — nothing was recovered, the output is still visibly damaged. It is a best-effort chance to reverse-search the intact portion online (works well for JPEG; for MP4 it depends on whether the damage landed in `mdat` or `moov`). The UI makes no promises.
-
-**Repair is cryptographically impossible:** the original bits of a damaged segment are information-theoretically gone from the ciphertext. Only a backup — **if one exists** — can restore them; never assume the user has one.
+There is no corruption dialog and no "Dosyanın şifresini çöz" unverified-decrypt action in this build. Repair is cryptographically impossible: the original bits of a damaged segment are information-theoretically gone from the ciphertext. Only a backup — **if one exists** — can restore them; never assume the user has one. The `allowUnverified` best-effort decrypt flow was rejected in ADR 0001 §7.3 and is not shipped.
 
 #### 2.4.7 Why this is engineered this way
 
-Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external Encrypted Vault use case. The design assumes corruption is *exceptional*: it detects it loudly, keeps the user's media playable, and never silently propagates or "launters" damaged bytes.
+Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external Encrypted Vault use case. The design assumes corruption is *exceptional*: it detects it loudly and never silently propagates or "launters" damaged bytes. The current build surfaces a load error for a damaged file; the tolerant-display alternative was rejected in ADR 0001 §7.3.
 
 A plain **move** is already trace-free when source and target share a filesystem — `rename(2)` changes only the directory entry, and the app uses this for atomic temp-file replacement. Encryption/decryption are *transformations*, not moves: two different byte sequences must coexist until the new one is verified, which is what preserves the only good copy if the process is interrupted. In-place overwrite is non-atomic (a crash leaves half-plaintext/half-ciphertext with no original), and external vaults are usually on a different filesystem where `rename` degrades to copy+delete anyway. "Forensic trace-free deletion" is not achievable at app level on flash (FTL wear-leveling, journal metadata); CSPRNG overwrite + `fsync` remains best effort as stated in §2.
 
@@ -236,7 +220,7 @@ Encrypted payloads use Tink `AES256_GCM_HKDF`, which authenticates data in **seg
 - **Sequential throughput:** every segment has its own GCM tag and IV setup, so more segments mean more per-segment work. Smaller segments are slower.
 - **Seek latency:** to read byte X the reader must decrypt the whole segment containing X. Smaller segments mean less work per seek.
 - **Tag overhead:** 16 bytes per segment. 256 KiB costs 0.006 %; 1 MiB costs 0.0015 % — negligible either way.
-- **Corruption blast radius:** a single flipped bit invalidates that segment's tag. With the tolerant-display policy (§2.4.3), a smaller segment produces a smaller visible glitch. This is a side benefit, **not** the deciding factor.
+- **Corruption blast radius:** a single flipped bit invalidates that segment's tag. With per-segment authentication (§2.4.2), a smaller segment limits the failure to that segment. This is a side benefit, **not** the deciding factor; there is no zero-substitution display in this build.
 
 #### Measurement 1 — JVM relative benchmark
 

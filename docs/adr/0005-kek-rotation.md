@@ -24,7 +24,7 @@ parola / PIN ──► Argon2id(salt, params) ──► PDK   (.vault içinde VM
         ┌────────────────────────────────────┴────────────────────────────────────┐
         ▼                                                                         ▼
   HKDF-SHA256(KEK[keyId],                                             HKDF-SHA256(KEK[keyId],
-    "CalypsoGallery:Header:AES256GCM" ‖ fileId)                         "CalypsoGallery:Metadata:AESGCM" ‖ purpose)
+    "CalypsoGallery:Header:AES256GCM" ‖ hex(fileId))                   "CalypsoGallery:Metadata:AESGCM|CalypsoGallery:Metadata:AESGCM|" ‖ purpose)
         │                                                                         │
         ▼                                                                         ▼
   headerKey ──► AES-256-GCM(DEK + dosya başlığı)                    metadataKey ──► AES-256-GCM(FVSTR: kaydı)
@@ -41,7 +41,7 @@ parola / PIN ──► Argon2id(salt, params) ──► PDK   (.vault içinde VM
 - Bir KEK rotasyonunun kriptografik açıdan en yaygın sebebi, aynı simetrik anahtar altında şifrelenen blok/mesaj sayısı arttıkça AES-GCM nonce çakışması veya doğum günü sınırı ($2^{32}$) riskinin büyümesidir.
 - Calypso Gallery mimarisinde **`KEK` hiçbir zaman doğrudan AES-GCM şifrelemesinde kullanılmaz**:
   - Her `.bin` dosyası oluşturulurken rastgele 16 baytlık değişmez `fileId` ve 32 baytlık bağımsız bir **`DEK`** üretilir.
-  - Başlık anahtarı `HKDF-SHA256(KEK[keyId], "CalypsoGallery:Header:AES256GCM" || fileId)` ile dosya başına ayrı türetilir; yani her dosya kendi benzersiz `headerKey` değerini alır.
+  - Başlık anahtarı `HKDF-SHA256(KEK[keyId], "CalypsoGallery:Header:AES256GCM|" || hex(fileId))` ile dosya başına ayrı türetilir; yani her dosya kendi benzersiz `headerKey` değerini alır.
   - Medya gövdesi ise Tink `AesGcmHkdfStreaming` içinde `DEK` ve 32 baytlık rastgele akış tuzu (`salt`) ile türetilen alt anahtarlarla şifrelenir.
 - Bu nedenle tek bir `KEK` (`keyId = 1`) altında milyonlarca dosya şifrelense dahi anahtar/nonce aşınması oluşmaz.
 
@@ -59,13 +59,13 @@ parola / PIN ──► Argon2id(salt, params) ──► PDK   (.vault içinde VM
 Bireysel kullanıcılar için KEK rotasyonunun getirdiği mühendislik ve operasyonel riskler, sağladığı marjinal kurumsal uyumluluk faydasından çok daha büyüktür:
 1. **Toplu Yeniden Yazma Sırasında Veri ve Küçük Resim (Thumbnail) Kaybı Riski:** Kasadaki tüm `.bin` dosyalarının başlıklarının yerinde (in-place) yeniden yazılması sırasında pil bitmesi, OS tarafından sürecin öldürülmesi (`SIGKILL`), depolama dolması veya OTG bağlantısının kopması yarım kalmış durumlar yaratır; ayrıca başlıktaki gömülü küçük resim (`thumbnail`) baytlarının yanlışlıkla düşürülmesi riski taşır.
 2. **Metadata (`FVSTR:`) Kayıtlarının Okunamaz Hale Gelme Riski:** Mevcut `decryptStringFromVault` implementasyonu kayıttaki `keyId` alanını okuyup kullanmaz ve her zaman aktif KEK'e (`activeKek()`) başvurur. Rotasyondan sonra eski KEK ile yazılmış Room SQLite gizli sanal albüm adları, `JSON/` dışa aktarımları, geri yükleme manifestleri ve resume kayıtları çözülemez hale gelir.
-3. **Harici Disk / Masaüstü CLI (`calypso_vault.py`) "Split-Brain" Riski:** Kullanıcı **"Sadece `.vault` dosyası içeren klasörü dışa aktar"** seçeneğiyle PC'deki Python CLI aracını kullanıyorsa, telefonda KEK rotasyonu yapıldığı anda PC'deki/harici diskteki eski `.vault` dosyası yeni `keyId` ile oluşturulan `.bin` dosyalarını açamaz; kullanıcı güncel `.vault` başlığını dışa aktarmayı unutursa senkronizasyon sessizce bozulur.
+3. **Harici Disk / Masaüstü CLI (`calypso_vault.py`) "Split-Brain" Riski:** CLI **yalnızca şifreleme (encrypt-only)** aracıdır; hibir `.bin` dosyasını açıp çözmez. Eski `.vault` ile PC tarafında şifrelenen yeni `.bin` dosyaları eski KEK ve sabit `ACTIVE_KEY_ID = 1` ile yazılır (eski KEK emekli edilirse senkronizasyon bozulur). Ayrı bir Android cihazda ise yeni `keyId`'li `.bin` dosyaları eski `.vault` başlığıyla **açılamaz**. Güncel `.vault` başlığını eski dışa aktarım klasörüne yazmak `checkVaultExportTarget` (`VaultExportHeaderCheck`) bayt eşitliği kontrolü nedeniyle `DIFFERENT_VAULT` hatasıyla engellenir; yeni bir klasöre dışa aktarım gerekir.
 
 ---
 
-## 3. İleriye Dönük Format Uyumluluğu (`1.0.0`)
+## 3. İleriye Dönük Format Uyumluluğu (`1.x`, güncel sürüm `1.2.0`)
 
-`1.0.0` sürümünde KEK rotasyonu uygulanmamış olsa da kanonik format ileride geriye dönük uyumluluğu bozmadan eklenebilecek şekilde tasarlanmıştır:
+KEK rotasyonu `1.x` boyunca uygulanmamış olsa da kanonik kapsayıcı biçimi (`FGVLTENC` v1) ileride geriye dönük uyumluluğu bozmadan eklenebilecek şekilde tasarlanmıştır:
 - **`.bin` başlıkları (`FGVLTENC` v1):** 9. baytta 2 baytlık açık `keyId` (`u16`, şu an `1`) alanını zaten taşır.
 - **`FVSTR:` metadata kayıtları:** 1 bayt sürümün hemen ardından 2 baytlık `keyId` (`u16`, şu an `1`) alanını zaten yazar.
 - **`.vault` keyring yapısı:** Uzunluk ön-ekli (`keyringLen`) olarak saklanır.
@@ -82,7 +82,7 @@ Bu özellik bireysel kullanımdan ziyade **kurumsal uyumluluk** (ör. PCI DSS 3.
 - `CryptoManager` ve `tools/calypso-cli/calypso_vault.py` tek bir `unlockedKek` yerine bellek içi anahtar halkası haritası (`unlockedKeyring: Map<Short, ByteArray>`) ve `activeKeyId: Short` tutmalıdır.
 - `.vault` okuyucuları `keyringLen == 34` ise tekil anahtar olarak yüklemeli; `keyringLen > 34` ise `keyCount` kadar `(keyId, KEK)` çiftini okumalıdır.
 - **Kritik Ön Koşul (`FVSTR:`):** `decryptStringFromVault` kayıttaki `keyId` değerini okuyarak doğrudan `kekFor(keyId)` ile anahtar türetmelidir; yeni yazılan her `FVSTR:` kaydı `activeKeyId` ve `activeKek()` kullanmalıdır.
-- **Kritik Ön Koşul (`VaultContainer`):** `readMetadata(file)` başlıktaki `keyId` alanına göre `kekFor(keyId)` seçmeli; yalnızca yeni/güncellenmiş başlıklar `activeKeyId` ile yazılmalıdır.
+- **Kritik Ön Koşul (`VaultContainer`):** Gerçek API `CryptoManager.readMetadata(file, includeThumbnail, cacheResult)` + `CryptoManagerStreams.readContainerMetadata(dis, kek, version, includeThumbnail)`dır; `VaultContainer.readMetadata` diye bir metod yoktur. Başlıktaki `keyId` alanına göre `kekFor(keyId)` seçilmeli; yalnızca yeni/güncellenmiş başlıklar `activeKeyId` ile yazılmalıdır. `renameEncryptedFile` bugün `meta.keyId`'yi eşleştirmeden `activeKek()` kullanır.
 - `clearKeys(context)` çağrısında keyring haritasındaki **tüm** KEK dizileri `fill(0)` ile sıfırlanmalıdır.
 
 ### 4.2. Önce-Keyring (Keyring-First) ve ADR 0003 Dayanıklı İşlem Mimarisi
@@ -91,13 +91,13 @@ Bu özellik bireysel kullanımdan ziyade **kurumsal uyumluluk** (ör. PCI DSS 3.
    - `newId = max(mevcut keyId) + 1` ve rastgele 32 bayt `newKek` üretilir (`keyCount <= 256` sınırı kontrol edilir).
    - **Eski KEK'ler silinmeden**, yeni `(newId, newKek)` keyring'e eklenip `activeKeyId = newId` ile `.vault` başlığına **önce atomik olarak yazılır** (`.vault.tmp` + `fsync` + `rename`). Böylece işlem yarıda kesilse bile hem eski hem yeni `keyId`'li dosyalar okunabilir kalır.
 3. **ADR 0003 Foreground Service + Durable Journal ile Başlık Dönüşümü:**
-   - Rotasyon, ADR 0003 ve ADR 0002 §7 kapsamında kayıtlı bir **`ForegroundOperation`** olarak çalıştırılmalı (`PARTIAL_WAKE_LOCK` + bildirim + işlem bitiminde arka plandaysa otomatik `clearKeys`), kalıcı bir `.kek_rotation_journal` dosyası tutmalıdır.
+   - Rotasyon, ADR 0003 ve ADR 0002 §7 kapsamında kayıtlı bir **`ForegroundOperationRegistry.withOperation` + `FileOperationService`** olarak çalıştırılmalı (`PARTIAL_WAKE_LOCK` + bildirim + işlem bitiminde arka plandaysa otomatik `clearKeys`), kalıcı bir `.kek_rotation_journal` dosyası tutmalıdır.
    - Her `.bin` dosyası için:
      - Başlıktaki `keyId == newId` ise atlanır (kesinti sonrası tam idempotent devamlılık).
-     - `VaultContainer.readMetadata(..., includeThumbnail = true)` ile mevcut DEK, `fileId`, metadata ve **gömülü küçük resim (`thumbnailBytes`) eksiksiz okunur**.
+     - `CryptoManager.readMetadata(..., includeThumbnail = true)` ile mevcut DEK, `fileId`, metadata ve **gömülü küçük resim (`thumbnailBytes`) eksiksiz okunur**.
      - `VaultContainerWriter.rewriteContainer(...)` ile geçici dosya `.tmp` üzerinde yalnızca başlık `newId / newKek` altında yeniden şifrelenir (`DEK`, `fileId` ve Tink ciphertext baytları aynen korunur).
      - Geçici dosya üzerinde Tink bütünlük doğrulaması (`verifyFileIntegrity`) çalıştırıldıktan sonra atomik olarak asıl dosyanın üzerine taşınır ve `metadataCache` girdisi güncellenir/temizlenir.
-4. **Opsiyonel Metadata (`FVSTR:`) Yeniden Şifrelemesi:** Room SQLite ve `JSON/` içindeki aktif `FVSTR:` kayıtları yeni `activeKeyId` ile yeniden şifrelenir (ancak eski yedeklerin açılabilmesi için eski KEK'ler keyring'de tutulmaya devam eder).
+4. **Opsiyonel Metadata (`FVSTR:`) Yeniden Şifrelemesi:** Room SQLite, `JSON/` ve kasa çöp kutusu `.restore_info` dosyalarındaki aktif `FVSTR:` kayıtları yeni `activeKeyId` ile yeniden şifrelenir (ancak eski yedeklerin açılabilmesi için eski KEK'ler keyring'de tutulmaya devam eder).
 5. **Harici Kasa / CLI Eşitleme Bildirimi:** Rotasyon tamamlandığında kullanıcıya harici disk / PC CLI için dışa aktarılmış eski `.vault` dosyalarının güncellenmesi gerektiği açıkça bildirilir.
 
 ### 4.3. Eski Anahtarların Emekli Edilmesi (Kripto-İmha / Re-Encryption)
