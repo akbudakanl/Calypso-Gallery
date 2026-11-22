@@ -149,7 +149,12 @@ import org.fossify.gallery.fragments.PhotoFragment
 import org.fossify.gallery.fragments.VideoFragment
 import org.fossify.gallery.fragments.ViewPagerFragment
 import org.fossify.gallery.helpers.AspectRatioOrientation
+import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_CREATE_SHORTCUT
+import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_PRINT
+import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_RESIZE
+import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_SHOW_ON_MAP
 import org.fossify.gallery.helpers.BOTTOM_ACTION_CHANGE_ORIENTATION
+import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.BOTTOM_ACTION_COPY
 import org.fossify.gallery.helpers.BOTTOM_ACTION_DELETE
 import org.fossify.gallery.helpers.BOTTOM_ACTION_EDIT
@@ -278,6 +283,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     private var mIgnoredPaths = ArrayList<String>()
     private val mVideoPlaybackPositions = mutableMapOf<String, Long>()
     private var mOriginalBrightness: Float? = null
+    private var mMenuController: CalypsoToolbarMenuController? = null
+    private var mCurrentMenuIsVault = false
 
     private val binding by viewBinding(ActivityMediumBinding::inflate)
 
@@ -342,6 +349,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     override fun onPause() {
         super.onPause()
+        mMenuController?.dismiss()
         stopSlideshow()
         flushPendingMediaOrderIfNeeded()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
@@ -395,6 +403,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     override fun onDestroy() {
+        mMenuController?.dismiss()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
         super.onDestroy()
@@ -416,6 +425,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     fun refreshMenuItems() {
         val currentMedium = getCurrentMedium() ?: return
+        val controller = mMenuController ?: return
         currentMedium.isFavorite = mFavoritePaths.contains(currentMedium.path)
         val visibleBottomActions = getVisibleBottomActions()
         val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this@ViewPagerActivity, mDirectory) ||
@@ -427,8 +437,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
         runOnUiThread {
             val rotationDegrees = getCurrentPhotoFragment()?.mCurrentRotationDegrees ?: 0
-            binding.mediumViewerToolbar.menu.apply {
-                findItem(R.id.menu_show_on_map).isVisible = visibleBottomActions and BOTTOM_ACTION_SHOW_ON_MAP == 0
+            mCurrentMenuIsVault = isVaultMedium
+            controller.menu.apply {
                 findItem(R.id.menu_slideshow).isVisible = visibleBottomActions and BOTTOM_ACTION_SLIDESHOW == 0
                 findItem(R.id.menu_properties).isVisible = visibleBottomActions and BOTTOM_ACTION_PROPERTIES == 0
                 findItem(R.id.menu_delete).isVisible = visibleBottomActions and BOTTOM_ACTION_DELETE == 0
@@ -437,8 +447,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 findItem(R.id.menu_shuffle).isVisible = isRandomSortingEnabled() && !isExternalIntent() && !mAreSlideShowMediaVisible && !mRandomSlideshowStopped && mMediaFiles.size > 1
                 findItem(R.id.menu_rename).isVisible = visibleBottomActions and BOTTOM_ACTION_RENAME == 0 && !currentMedium.getIsInRecycleBin()
                 findItem(R.id.menu_rotate).isVisible = currentMedium.isImage() && visibleBottomActions and BOTTOM_ACTION_ROTATE == 0
-                findItem(R.id.menu_set_as).isVisible = visibleBottomActions and BOTTOM_ACTION_SET_AS == 0
-                findItem(R.id.menu_copy_to_clipboard).isVisible = currentMedium.isImage() && !CryptoManager.isVaultUnlocked && !config.temporarilyShowHidden
+                findItem(R.id.menu_set_as).isVisible = currentMedium.isImage() && visibleBottomActions and BOTTOM_ACTION_SET_AS == 0
+                findItem(R.id.menu_copy_to_clipboard).isVisible = currentMedium.isImage() && !isVaultMedium && !CryptoManager.isVaultUnlocked && !config.temporarilyShowHidden
                 findItem(R.id.menu_copy_to).isVisible = visibleBottomActions and BOTTOM_ACTION_COPY == 0
                 findItem(R.id.menu_move_to).isVisible =
                     visibleBottomActions and BOTTOM_ACTION_MOVE == 0 &&
@@ -451,8 +461,6 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                         isVaultRecycleBin = isVaultRecycleBin
                     )
                 findItem(R.id.menu_save_as).isVisible = rotationDegrees != 0
-                findItem(R.id.menu_print).isVisible = currentMedium.isImage() || currentMedium.isRaw()
-                findItem(R.id.menu_resize).isVisible = visibleBottomActions and BOTTOM_ACTION_RESIZE == 0 && currentMedium.isImage()
                 findItem(R.id.menu_hide).isVisible =
                     (!isRPlus() || isExternalStorageManager()) &&
                     vaultCreated &&
@@ -472,13 +480,28 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 findItem(R.id.menu_remove_from_virtual_album).isVisible = mDirectory.isVirtualAlbumPath()
 
                 findItem(R.id.menu_restore_file).isVisible = currentMedium.getIsInRecycleBin() || currentMedium.path.startsWith(recycleBinPath) || CryptoManager.isVaultRecycleBinPath(currentMedium.path)
-                findItem(R.id.menu_create_shortcut).isVisible = true
+                findItem(R.id.menu_open_with).isVisible = true
                 findItem(R.id.menu_change_orientation).isVisible = !isLargeScreen && rotationDegrees == 0 && visibleBottomActions and BOTTOM_ACTION_CHANGE_ORIENTATION == 0
+
+                val extraActionsEnabled = config.showExtraViewerActions
+                val extraActionsMask = if (extraActionsEnabled) config.extraViewerActions else 0
+                findItem(R.id.menu_show_on_map).isVisible =
+                    (extraActionsMask and EXTRA_VIEWER_ACTION_SHOW_ON_MAP != 0) &&
+                    visibleBottomActions and BOTTOM_ACTION_SHOW_ON_MAP == 0
+                findItem(R.id.menu_resize).isVisible =
+                    (extraActionsMask and EXTRA_VIEWER_ACTION_RESIZE != 0) &&
+                    visibleBottomActions and BOTTOM_ACTION_RESIZE == 0 &&
+                    currentMedium.isImage()
+                findItem(R.id.menu_print).isVisible =
+                    (extraActionsMask and EXTRA_VIEWER_ACTION_PRINT != 0) &&
+                    (currentMedium.isImage() || currentMedium.isRaw())
+                findItem(R.id.menu_create_shortcut).isVisible =
+                    extraActionsMask and EXTRA_VIEWER_ACTION_CREATE_SHORTCUT != 0
             }
 
             // Inside the encrypted vault only management actions are allowed.
             // Exposure-type actions (share, reveal, edit, wallpaper...) are removed.
-            binding.mediumViewerToolbar.menu.apply {
+            controller.menu.apply {
                 // Favorites, share and edit are completely disabled for hidden files.
                 if (isVaultMedium || currentMedium.isHidden()) {
                     findItem(R.id.menu_share).isVisible = false
@@ -487,26 +510,23 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                     findItem(R.id.menu_remove_from_favorites).isVisible = false
                 }
                 if (isVaultMedium) {
-                    // Delete replaces the slideshow button in the toolbar,
-                    // the slideshow itself moves into the overflow menu.
-                    findItem(R.id.menu_delete).apply {
-                        isVisible = true
-                        setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-                    }
-                    findItem(R.id.menu_slideshow).setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+                    // Delete stays on the toolbar; slideshow stays in the overflow menu.
+                    findItem(R.id.menu_delete).isVisible = true
                     findItem(R.id.menu_rotate).isVisible = false
                     findItem(R.id.menu_hide).isVisible = false
                     findItem(R.id.menu_unhide).isVisible =
                         (!isRPlus() || isExternalStorageManager()) &&
                         CopyMovePolicy.canDecryptFrom(mDirectory, true, isInRecycleBin, isVaultRecycleBin)
-                    findItem(R.id.menu_create_shortcut).isVisible = false
                     findItem(R.id.menu_open_with).isVisible = false
                     findItem(R.id.menu_set_as).isVisible = false
-                    findItem(R.id.menu_print).isVisible = false
-                    findItem(R.id.menu_resize).isVisible = false
                     findItem(R.id.menu_show_on_map).isVisible = false
+                    findItem(R.id.menu_resize).isVisible = false
+                    findItem(R.id.menu_print).isVisible = false
+                    findItem(R.id.menu_create_shortcut).isVisible = false
                 }
             }
+
+            controller.syncToolbar()
 
             if (visibleBottomActions != 0) {
                 initBottomActionButtons()
@@ -517,55 +537,67 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     private fun setupOptionsMenu() {
-        binding.mediumViewerToolbar.apply {
+        val toolbar = binding.mediumViewerToolbar
+        toolbar.apply {
             setTitleTextColor(Color.WHITE)
-            overflowIcon = resources.getColoredDrawableWithColor(R.drawable.ic_more_vertical_calypso_vector, Color.WHITE)
             navigationIcon = resources.getColoredDrawableWithColor(org.fossify.commons.R.drawable.ic_arrow_left_vector, Color.WHITE)
         }
 
-        updateMenuItemColors(binding.mediumViewerToolbar.menu, forceWhiteIcons = true)
-        binding.mediumViewerToolbar.setOnMenuItemClickListener { menuItem ->
-            if (getCurrentMedium() == null) {
-                return@setOnMenuItemClickListener true
+        mMenuController?.dismiss()
+        mMenuController = CalypsoToolbarMenuController(
+            activity = this,
+            toolbar = toolbar,
+            menuRes = R.menu.menu_viewpager,
+            isBarAction = { item ->
+                item.itemId == R.id.menu_save_as ||
+                    item.itemId == R.id.menu_add_to_favorites ||
+                    item.itemId == R.id.menu_remove_from_favorites ||
+                    (item.itemId == R.id.menu_delete && mCurrentMenuIsVault)
+            },
+            anchorViewProvider = { toolbar },
+            alignRightInsetDpProvider = { 12f },
+            barIconColorProvider = { Color.WHITE },
+            onItemSelected = { itemId ->
+                if (getCurrentMedium() == null) {
+                    return@CalypsoToolbarMenuController true
+                }
+                when (itemId) {
+                    R.id.menu_set_as -> setAs(getCurrentPath())
+                    R.id.menu_slideshow -> initSlideshow()
+                    R.id.menu_copy_to -> checkMediaManagementAndCopy(true)
+                    R.id.menu_move_to -> moveFileTo()
+                    R.id.menu_add_to_virtual_album -> addCurrentToVirtualAlbum()
+                    R.id.menu_open_with -> openPath(getCurrentPath(), true)
+                    R.id.menu_hide -> toggleFileVisibility(true)
+                    R.id.menu_unhide -> toggleFileVisibility(false)
+                    R.id.menu_share -> shareMediumPath(getCurrentPath())
+                    R.id.menu_delete -> checkDeleteConfirmation()
+                    R.id.menu_shuffle -> shuffleMedia()
+                    R.id.menu_rename -> checkMediaManagementAndRename()
+                    R.id.menu_edit -> openEditor(getCurrentPath())
+                    R.id.menu_properties -> showProperties()
+                    R.id.menu_rotate_right -> rotateImage(90)
+                    R.id.menu_rotate_left -> rotateImage(-90)
+                    R.id.menu_rotate_one_eighty -> rotateImage(180)
+                    R.id.menu_add_to_favorites -> toggleFavorite()
+                    R.id.menu_remove_from_favorites -> toggleFavorite()
+                    R.id.menu_remove_from_virtual_album -> removeCurrentFromVirtualAlbum()
+                    R.id.menu_restore_file -> restoreFile()
+                    R.id.menu_force_portrait -> toggleOrientation(SCREEN_ORIENTATION_PORTRAIT)
+                    R.id.menu_force_landscape -> toggleOrientation(SCREEN_ORIENTATION_LANDSCAPE)
+                    R.id.menu_force_landscape_reverse -> toggleOrientation(SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    R.id.menu_default_orientation -> toggleOrientation(SCREEN_ORIENTATION_UNSPECIFIED)
+                    R.id.menu_save_as -> saveImageAs()
+                    R.id.menu_copy_to_clipboard -> copyImageToClipboard()
+                    R.id.menu_show_on_map -> showFileOnMap(getCurrentPath())
+                    R.id.menu_resize -> resizeImage()
+                    R.id.menu_print -> printFile()
+                    R.id.menu_create_shortcut -> createShortcut()
+                    else -> return@CalypsoToolbarMenuController false
+                }
+                true
             }
-
-            when (menuItem.itemId) {
-                R.id.menu_set_as -> setAs(getCurrentPath())
-                R.id.menu_slideshow -> initSlideshow()
-                R.id.menu_copy_to -> checkMediaManagementAndCopy(true)
-                R.id.menu_move_to -> moveFileTo()
-                R.id.menu_add_to_virtual_album -> addCurrentToVirtualAlbum()
-                R.id.menu_open_with -> openPath(getCurrentPath(), true)
-                R.id.menu_hide -> toggleFileVisibility(true)
-                R.id.menu_unhide -> toggleFileVisibility(false)
-                R.id.menu_share -> shareMediumPath(getCurrentPath())
-                R.id.menu_delete -> checkDeleteConfirmation()
-                R.id.menu_shuffle -> shuffleMedia()
-                R.id.menu_rename -> checkMediaManagementAndRename()
-                R.id.menu_print -> printFile()
-                R.id.menu_edit -> openEditor(getCurrentPath())
-                R.id.menu_properties -> showProperties()
-                R.id.menu_show_on_map -> showFileOnMap(getCurrentPath())
-                R.id.menu_rotate_right -> rotateImage(90)
-                R.id.menu_rotate_left -> rotateImage(-90)
-                R.id.menu_rotate_one_eighty -> rotateImage(180)
-                R.id.menu_add_to_favorites -> toggleFavorite()
-                R.id.menu_remove_from_favorites -> toggleFavorite()
-                R.id.menu_remove_from_virtual_album -> removeCurrentFromVirtualAlbum()
-                R.id.menu_restore_file -> restoreFile()
-                R.id.menu_force_portrait -> toggleOrientation(SCREEN_ORIENTATION_PORTRAIT)
-                R.id.menu_force_landscape -> toggleOrientation(SCREEN_ORIENTATION_LANDSCAPE)
-                R.id.menu_force_landscape_reverse -> toggleOrientation(SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                R.id.menu_default_orientation -> toggleOrientation(SCREEN_ORIENTATION_UNSPECIFIED)
-                R.id.menu_save_as -> saveImageAs()
-                R.id.menu_create_shortcut -> createShortcut()
-                R.id.menu_resize -> resizeImage()
-                R.id.menu_settings -> launchSettings()
-                R.id.menu_copy_to_clipboard -> copyImageToClipboard()
-                else -> return@setOnMenuItemClickListener false
-            }
-            return@setOnMenuItemClickListener true
-        }
+        )
 
         binding.mediumViewerToolbar.setNavigationOnClickListener {
             finish()

@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="AppCompatResource">
-    <!-- Sort stays as the only toolbar action; everything else lives in overflow, in the same
-         order as the main (album) screen: view switch -> view options -> visibility -> folders. -->
+    <!-- In All-Files view (mShowAll), Sort stays on the search pill and Show albums is 1st in overflow.
+         In Album view (!mShowAll), Show albums is hidden and Sort moves to 1st in overflow.
+         Refresh stays 2nd in both views. -->
     <item
         android:id="@+id/sort"
         android:icon="@drawable/ic_sort_view_calypso_vector"
@@ -12,93 +13,110 @@
         app:showAsAction="always" />
     <item
         android:id="@+id/show_albums"
+        android:icon="@drawable/ic_folders_vector"
+        android:showAsAction="never"
         android:title="@string/show_albums"
         app:showAsAction="never" />
     <item
+        android:id="@+id/refresh_menu"
+        android:icon="@drawable/ic_refresh_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/refresh"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/filter"
+        android:icon="@drawable/ic_filter_vector"
+        android:showAsAction="never"
         android:title="@string/filter_media"
         app:showAsAction="never" />
     <item
         android:id="@+id/toggle_filename"
+        android:icon="@drawable/ic_filename_calypso_vector"
         android:showAsAction="never"
-        android:title="@string/toggle_filename"
+        android:title="@string/show_filenames"
         app:showAsAction="never" />
     <item
         android:id="@+id/change_view_type"
+        android:icon="@drawable/ic_view_type_calypso_vector"
         android:showAsAction="never"
         android:title="@string/change_view_type"
         app:showAsAction="never" />
     <item
         android:id="@+id/group"
+        android:icon="@drawable/ic_group_calypso_vector"
         android:showAsAction="never"
         android:title="@string/group_by"
         app:showAsAction="never" />
     <item
-        android:id="@+id/temporarily_show_hidden"
-        android:showAsAction="never"
-        android:title="@string/temporarily_show_hidden"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/stop_showing_hidden"
-        android:showAsAction="never"
-        android:title="@string/stop_showing_hidden"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/temporarily_show_excluded"
-        android:showAsAction="never"
-        android:title="@string/temporarily_show_excluded"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/stop_showing_excluded"
-        android:showAsAction="never"
-        android:title="@string/stop_showing_excluded"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/temporarily_show_hidden_folders"
+        android:icon="@drawable/ic_album_hidden_vector"
         android:showAsAction="never"
         android:title="@string/temporarily_show_hidden_folders"
         app:showAsAction="never" />
     <item
         android:id="@+id/stop_showing_hidden_folders"
+        android:icon="@drawable/ic_album_hidden_vector"
         android:showAsAction="never"
         android:title="@string/stop_showing_hidden_folders"
         app:showAsAction="never" />
     <item
-        android:id="@+id/create_new_folder"
+        android:id="@+id/temporarily_show_excluded"
+        android:icon="@drawable/ic_album_excluded_vector"
         android:showAsAction="never"
-        android:title="@string/create_new_folder"
+        android:title="@string/temporarily_show_excluded"
         app:showAsAction="never" />
     <item
-        android:id="@+id/refresh_menu"
+        android:id="@+id/stop_showing_excluded"
+        android:icon="@drawable/ic_album_excluded_vector"
         android:showAsAction="never"
-        android:title="@string/refresh" />
+        android:title="@string/stop_showing_excluded"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/temporarily_show_hidden"
+        android:icon="@drawable/ic_encrypt_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/temporarily_show_hidden"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/stop_showing_hidden"
+        android:icon="@drawable/ic_unhide_vector"
+        android:showAsAction="never"
+        android:title="@string/stop_showing_hidden"
+        app:showAsAction="never" />
     <item
         android:id="@+id/open_recycle_bin"
+        android:icon="@drawable/ic_delete_vector"
         android:showAsAction="never"
         android:title="@string/open_the_recycle_bin"
         app:showAsAction="never" />
     <item
+        android:id="@+id/restore_all_files"
+        android:icon="@drawable/ic_reset_vector"
+        android:showAsAction="never"
+        android:title="@string/restore_all_files"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/empty_recycle_bin"
+        android:icon="@drawable/ic_delete_vector"
         android:showAsAction="never"
         android:title="@string/empty_recycle_bin"
         app:showAsAction="never" />
     <item
         android:id="@+id/empty_disable_recycle_bin"
+        android:icon="@drawable/ic_delete_vector"
         android:showAsAction="never"
         android:title="@string/empty_and_disable_recycle_bin"
         app:showAsAction="never" />
     <item
-        android:id="@+id/restore_all_files"
-        android:showAsAction="never"
-        android:title="@string/restore_all_files"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/slideshow"
+        android:icon="@drawable/ic_slideshow_vector"
         android:showAsAction="never"
         android:title="@string/slideshow"
         app:showAsAction="never" />
     <item
         android:id="@+id/settings"
+        android:icon="@drawable/ic_settings_cog_vector"
+        android:showAsAction="never"
         android:title="@string/settings"
         app:showAsAction="never" />
 </menu>

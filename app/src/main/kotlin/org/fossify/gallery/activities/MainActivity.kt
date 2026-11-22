@@ -94,6 +94,7 @@ import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
+import org.fossify.gallery.extensions.resolveCalypsoSearchIconColor
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.createDirectoryFromMedia
@@ -138,9 +139,11 @@ import org.fossify.gallery.extensions.storeDirectoryItems
 import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateDBDirectory
 import org.fossify.gallery.extensions.updateWidgets
+import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
+import org.fossify.gallery.helpers.getOrCreateVaultRecycleBin
 import org.fossify.gallery.helpers.getVaultProtectionType
 import org.fossify.gallery.helpers.getVaultRoot
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
@@ -212,6 +215,7 @@ import org.fossify.gallery.helpers.isVaultRecycleBinPath
 
 class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     override var isSearchBarEnabled = true
+    private var mMenuController: CalypsoToolbarMenuController? = null
     
     companion object {
         private const val PICK_MEDIA = 2
@@ -723,6 +727,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     override fun onPause() {
         super.onPause()
+        mMenuController?.dismiss()
         mVaultBackHelper.cancelToast()
         binding.directoriesRefreshLayout.isRefreshing = false
         mFetchGeneration.incrementAndGet()
@@ -763,6 +768,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     override fun onDestroy() {
+        mMenuController?.dismiss()
         super.onDestroy()
         if (!isChangingConfigurations) {
             config.temporarilyShowExcluded = false
@@ -905,14 +911,16 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     private fun refreshMenuItems() {
+        val controller = mMenuController ?: return
+        val menu = controller.menu
         if (!mIsThirdPartyIntent) {
-            binding.mainMenu.requireToolbar().menu.apply {
+            menu.apply {
                 findItem(R.id.open_recycle_bin)?.isVisible =
-                    !mIsSecretVaultView && config.useRecycleBin && !config.showRecycleBinAtFolders
+                    config.useRecycleBin && !config.showRecycleBinAtFolders
             }
         }
 
-        binding.mainMenu.requireToolbar().menu.apply {
+        menu.apply {
             findItem(R.id.temporarily_show_hidden)?.isVisible = false
             findItem(R.id.stop_showing_hidden)?.isVisible =
                 !mIsSecretVaultView && (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden
@@ -931,6 +939,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             findItem(R.id.temporarily_show_hidden_folders)?.isVisible = hiddenFoldersMenuVisibility.showTemporarilyShowExcluded
             findItem(R.id.stop_showing_hidden_folders)?.isVisible = hiddenFoldersMenuVisibility.showStopShowingExcluded
         }
+        controller.syncToolbar()
     }
 
     private fun setupOptionsMenu() {
@@ -940,7 +949,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             R.menu.menu_main
         }
 
-        binding.mainMenu.requireToolbar().inflateMenu(menuId)
         binding.mainMenu.toggleHideOnScroll(false)
         binding.mainMenu.setupMenu()
 
@@ -950,34 +958,64 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             binding.directoriesSwitchSearching.beVisibleIf(text.isNotEmpty())
         }
 
-        binding.mainMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.refresh_menu -> {
-                    RandomOrderManager.invalidateDirectoryOrder()
-                    getDirectories()
-                    true
+        val toolbar = binding.mainMenu.requireToolbar()
+        mMenuController?.dismiss()
+        mMenuController = CalypsoToolbarMenuController(
+            activity = this,
+            toolbar = toolbar,
+            menuRes = menuId,
+            isBarAction = { !mIsThirdPartyIntent && it.itemId == R.id.sort },
+            anchorViewProvider = {
+                binding.mainMenu.findViewById(org.fossify.commons.R.id.toolbar_container) ?: toolbar
+            },
+            barIconColorProvider = {
+                resolveCalypsoSearchIconColor(this, binding.mainMenu.isSearchOpen)
+            },
+            onItemSelected = { itemId ->
+                when (itemId) {
+                    R.id.refresh_menu -> {
+                        RandomOrderManager.invalidateDirectoryOrder()
+                        getDirectories()
+                    }
+                    R.id.sort -> showSortingDialog()
+                    R.id.filter -> showFilterMediaDialog()
+                    R.id.show_all -> showAllMedia()
+                    R.id.change_view_type -> changeViewType()
+                    R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
+                    R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
+                    R.id.temporarily_show_excluded -> tryToggleTemporarilyShowExcluded()
+                    R.id.stop_showing_excluded -> tryToggleTemporarilyShowExcluded()
+                    R.id.temporarily_show_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
+                    R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
+                    R.id.create_new_folder -> createNewFolder()
+                    R.id.open_recycle_bin -> openCurrentRecycleBin()
+                    R.id.settings -> launchSettings()
+                    else -> return@CalypsoToolbarMenuController false
                 }
-                R.id.sort -> showSortingDialog()
-                R.id.filter -> showFilterMediaDialog()
-                R.id.show_all -> showAllMedia()
-                R.id.change_view_type -> changeViewType()
-                R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.temporarily_show_excluded -> tryToggleTemporarilyShowExcluded()
-                R.id.stop_showing_excluded -> tryToggleTemporarilyShowExcluded()
-                R.id.temporarily_show_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
-                R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
-                R.id.create_new_folder -> createNewFolder()
-                R.id.open_recycle_bin -> openRecycleBin()
-                R.id.settings -> launchSettings()
-                else -> return@setOnMenuItemClickListener false
+                true
             }
-            return@setOnMenuItemClickListener true
+        )
+    }
+
+    private fun openCurrentRecycleBin() {
+        if (mIsSecretVaultView) {
+            val vaultBin = CryptoManager.getOrCreateVaultRecycleBin(this)
+            if (vaultBin != null) {
+                Intent(this, MediaActivity::class.java).apply {
+                    putExtra(DIRECTORY, vaultBin.absolutePath)
+                    startActivity(this)
+                }
+            } else {
+                toast(org.fossify.commons.R.string.no_items_found)
+            }
+        } else {
+            openRecycleBin()
         }
     }
 
     private fun updateMenuColors() {
         binding.mainMenu.updateColors()
+        mMenuController?.syncToolbar()
         binding.mainMenu.applyCalypsoSearchBarStyle()
         binding.mainMenu.keepHeaderPinned()
     }

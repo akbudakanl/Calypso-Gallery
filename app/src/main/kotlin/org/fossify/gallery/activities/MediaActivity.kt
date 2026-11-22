@@ -80,6 +80,7 @@ import org.fossify.gallery.extensions.hasHiddenNormalFolders
 import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
+import org.fossify.gallery.extensions.resolveCalypsoSearchIconColor
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
 import org.fossify.gallery.extensions.config
@@ -114,6 +115,7 @@ import org.fossify.gallery.extensions.showRecycleBinEmptyingDialog
 import org.fossify.gallery.extensions.showRestoreConfirmationDialog
 import org.fossify.gallery.extensions.tryDeleteFileDirItem
 import org.fossify.gallery.extensions.updateWidgets
+import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ExcludedMenuPolicy
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
@@ -172,6 +174,7 @@ import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 class MediaActivity : SimpleActivity(), MediaOperationsListener {
     override var isSearchBarEnabled = true
+    private var mMenuController: CalypsoToolbarMenuController? = null
     
     private val LAST_MEDIA_CHECK_PERIOD = 3000L
 
@@ -415,6 +418,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     override fun onPause() {
         super.onPause()
+        mMenuController?.dismiss()
         mVaultBackHelper.cancelToast()
         mIsGettingMedia = false
         mPendingMediaRefresh = false
@@ -528,6 +532,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     override fun onDestroy() {
+        mMenuController?.dismiss()
         unregisterFileUpdateListener()
         // only a real exit wipes the vault right away; a system-initiated destroy keeps it until the timeout
         if ((config.showAll || mIsVaultFilesView) && !mIsSwitchingVaultView && !isChangingConfigurations && isFinishing) {
@@ -631,12 +636,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     private fun refreshMenuItems() {
+        val controller = mMenuController ?: return
         val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this@MediaActivity, mPath)
-        binding.mediaMenu.requireToolbar().menu.apply {
-            // Albums keep only the magnifier and overflow in the bar; sorting moves into overflow.
-            findItem(R.id.sort).setShowAsAction(
-                if (mShowAll) MenuItem.SHOW_AS_ACTION_ALWAYS else MenuItem.SHOW_AS_ACTION_NEVER
-            )
+        val showVisibilityToggles = mShowAll && !mIsVaultFilesView
+        controller.menu.apply {
             findItem(R.id.show_albums).isVisible = mShowAll
             findItem(R.id.group).isVisible = !config.scrollHorizontally
 
@@ -644,37 +647,38 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             findItem(R.id.empty_disable_recycle_bin).isVisible = mPath == RECYCLE_BIN
             findItem(R.id.restore_all_files).isVisible = mPath == RECYCLE_BIN || isVaultRecycleBin
 
-            findItem(R.id.create_new_folder).isVisible =
-                !mShowAll && mPath != RECYCLE_BIN && !isVaultRecycleBin && mPath != FAVORITES && !mPath.isVirtualAlbumPath()
             findItem(R.id.open_recycle_bin).isVisible =
-                config.useRecycleBin && mPath != RECYCLE_BIN && !isVaultRecycleBin && !mIsVaultFilesView
+                mShowAll && !mIsVaultFilesView && config.useRecycleBin && mPath != RECYCLE_BIN && !isVaultRecycleBin
 
             findItem(R.id.temporarily_show_hidden).isVisible = false
             findItem(R.id.stop_showing_hidden).isVisible =
-                !mIsVaultFilesView && (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden
+                showVisibilityToggles && (!isRPlus() || isExternalStorageManager()) && config.temporarilyShowHidden
 
-            // Same two visibility toggles the album screen offers, available in the files view too.
+            // Same two visibility toggles the album screen offers, available in the unencrypted files view too.
             val excludedVisibility = ExcludedMenuPolicy.resolve(
-                hasExcludedInCurrentScope = !mIsVaultFilesView && mHasNormalExcludedFolders,
-                isCurrentlyShowingExcluded = !mIsVaultFilesView && config.temporarilyShowExcluded
+                hasExcludedInCurrentScope = showVisibilityToggles && mHasNormalExcludedFolders,
+                isCurrentlyShowingExcluded = showVisibilityToggles && config.temporarilyShowExcluded
             )
             findItem(R.id.temporarily_show_excluded).isVisible = excludedVisibility.showTemporarilyShowExcluded
             findItem(R.id.stop_showing_excluded).isVisible = excludedVisibility.showStopShowingExcluded
 
             val hiddenFoldersVisibility = ExcludedMenuPolicy.resolve(
-                hasExcludedInCurrentScope = !mIsVaultFilesView && mHasNormalHiddenFolders,
-                isCurrentlyShowingExcluded = !mIsVaultFilesView && config.temporarilyShowHiddenFolders
+                hasExcludedInCurrentScope = showVisibilityToggles && mHasNormalHiddenFolders,
+                isCurrentlyShowingExcluded = showVisibilityToggles && config.temporarilyShowHiddenFolders
             )
             findItem(R.id.temporarily_show_hidden_folders).isVisible = hiddenFoldersVisibility.showTemporarilyShowExcluded
             findItem(R.id.stop_showing_hidden_folders).isVisible = hiddenFoldersVisibility.showStopShowingExcluded
 
             val viewType = config.getFolderViewType(if (mShowAll) SHOW_ALL else mPath)
-            findItem(R.id.toggle_filename).isVisible = viewType == VIEW_TYPE_GRID
+            findItem(R.id.toggle_filename).apply {
+                isVisible = viewType == VIEW_TYPE_GRID
+                setTitle(if (config.displayFileNames) R.string.hide_filenames else R.string.show_filenames)
+            }
         }
+        controller.syncToolbar()
     }
 
     private fun setupOptionsMenu() {
-        binding.mediaMenu.requireToolbar().inflateMenu(R.menu.menu_media)
         binding.mediaMenu.toggleHideOnScroll(false)
         binding.mediaMenu.setupMenu()
 
@@ -687,6 +691,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
         // The album header turns into the search field; refresh its visibility on both transitions.
         binding.mediaMenu.onSearchOpenListener = {
+            mMenuController?.dismiss()
             applyToolbarMode()
             updateAlbumHeader()
         }
@@ -695,34 +700,51 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             updateAlbumHeader()
         }
 
-        binding.mediaMenu.requireToolbar().setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.refresh_menu -> {
-                    RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
-                    getMedia()
-                    true
+        val toolbar = binding.mediaMenu.requireToolbar()
+        mMenuController?.dismiss()
+        mMenuController = CalypsoToolbarMenuController(
+            activity = this,
+            toolbar = toolbar,
+            menuRes = R.menu.menu_media,
+            isBarAction = { it.itemId == R.id.sort && mShowAll },
+            anchorViewProvider = {
+                if (mShowAll) {
+                    binding.mediaMenu.findViewById(org.fossify.commons.R.id.toolbar_container) ?: toolbar
+                } else {
+                    toolbar
                 }
-                R.id.sort -> showSortingDialog()
-                R.id.filter -> showFilterMediaDialog()
-                R.id.empty_recycle_bin -> emptyRecycleBin()
-                R.id.empty_disable_recycle_bin -> emptyAndDisableRecycleBin()
-                R.id.restore_all_files -> restoreAllFiles()
-                R.id.toggle_filename -> toggleFilenameVisibility()
-                R.id.show_albums -> switchToFolderView()
-                R.id.change_view_type -> changeViewType()
-                R.id.group -> showGroupByDialog()
-                R.id.create_new_folder -> createNewFolder()
-                R.id.open_recycle_bin -> openRecycleBin()
-                R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
-                R.id.temporarily_show_excluded, R.id.stop_showing_excluded -> tryToggleTemporarilyShowExcluded()
-                R.id.temporarily_show_hidden_folders, R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
-                R.id.slideshow -> startSlideshow()
-                R.id.settings -> launchSettings()
-                else -> return@setOnMenuItemClickListener false
+            },
+            alignRightInsetDpProvider = { if (mShowAll) 0f else 12f },
+            barIconColorProvider = {
+                resolveCalypsoSearchIconColor(this, binding.mediaMenu.isSearchOpen || !mShowAll)
+            },
+            onItemSelected = { itemId ->
+                when (itemId) {
+                    R.id.refresh_menu -> {
+                        RandomOrderManager.invalidateMediaScope(getRandomOrderScopeKey())
+                        getMedia()
+                    }
+                    R.id.sort -> showSortingDialog()
+                    R.id.filter -> showFilterMediaDialog()
+                    R.id.empty_recycle_bin -> emptyRecycleBin()
+                    R.id.empty_disable_recycle_bin -> emptyAndDisableRecycleBin()
+                    R.id.restore_all_files -> restoreAllFiles()
+                    R.id.toggle_filename -> toggleFilenameVisibility()
+                    R.id.show_albums -> switchToFolderView()
+                    R.id.change_view_type -> changeViewType()
+                    R.id.group -> showGroupByDialog()
+                    R.id.open_recycle_bin -> openRecycleBin()
+                    R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
+                    R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
+                    R.id.temporarily_show_excluded, R.id.stop_showing_excluded -> tryToggleTemporarilyShowExcluded()
+                    R.id.temporarily_show_hidden_folders, R.id.stop_showing_hidden_folders -> tryToggleTemporarilyShowHiddenFolders()
+                    R.id.slideshow -> startSlideshow()
+                    R.id.settings -> launchSettings()
+                    else -> return@CalypsoToolbarMenuController false
+                }
+                true
             }
-            return@setOnMenuItemClickListener true
-        }
+        )
     }
 
     private fun startSlideshow() {
@@ -749,6 +771,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun updateMenuColors() {
         binding.mediaMenu.updateColors()
+        mMenuController?.syncToolbar()
         binding.mediaMenu.applyCalypsoSearchBarStyle()
         binding.mediaMenu.keepHeaderPinned()
         applyToolbarMode()
@@ -861,6 +884,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 binding.mediaMenu.applyCalypsoSearchBarStyle()
             } else {
                 toolbarContainer?.background = null
+                mMenuController?.syncToolbar()
             }
         }
 
@@ -942,9 +966,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                     runOnUiThread {
                         if (!isDestroyed && !isFinishing) {
                             mCurrentAlbumDisplayName = albumName
-                            binding.mediaMenu.updateHintText(
-                                getString(org.fossify.commons.R.string.search_in_placeholder, albumName)
-                            )
+                            binding.mediaMenu.updateHintText(getString(R.string.search_in_album))
                             updateAlbumHeader()
                         }
                     }
@@ -962,7 +984,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                 val searchHint = if (mShowAll) {
                     getString(org.fossify.commons.R.string.search_files)
                 } else {
-                    getString(org.fossify.commons.R.string.search_in_placeholder, dirName)
+                    getString(R.string.search_in_album)
                 }
 
                 binding.mediaMenu.updateHintText(searchHint)
@@ -1169,6 +1191,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun toggleFilenameVisibility() {
         config.displayFileNames = !config.displayFileNames
         getMediaAdapter()?.updateDisplayFilenames(config.displayFileNames)
+        refreshMenuItems()
     }
 
     private fun switchToFolderView() {

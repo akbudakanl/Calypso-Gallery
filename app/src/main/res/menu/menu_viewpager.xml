@@ -19,49 +19,78 @@
         android:icon="@drawable/ic_star_calypso_vector"
         android:title="@string/remove_from_favorites"
         app:showAsAction="always" />
-    <!-- First item in overflow ("More options") for all file types -->
-    <item
-        android:id="@+id/menu_properties"
-        android:icon="@drawable/ic_info_vector"
-        android:title="@string/properties"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_share"
-        android:icon="@drawable/ic_share_calypso_vector"
-        android:title="@string/share"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_edit"
-        android:icon="@drawable/ic_edit_calypso_vector"
-        android:title="@string/edit"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_delete"
-        android:icon="@drawable/ic_delete_calypso_vector"
-        android:title="@string/delete"
-        app:showAsAction="never" />
+    <!-- Shuffle stays first in overflow whenever random sorting is active. -->
     <item
         android:id="@+id/menu_shuffle"
+        android:icon="@drawable/ic_shuffle_calypso_vector"
+        android:showAsAction="never"
         android:title="@string/shuffle"
         android:visible="false"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_properties"
+        android:icon="@drawable/ic_info_vector"
+        android:showAsAction="never"
+        android:title="@string/properties"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_rename"
+        android:icon="@drawable/ic_rename_vector"
+        android:showAsAction="never"
         android:title="@string/rename"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_hide"
-        android:icon="@drawable/ic_hide_vector"
-        android:title="@string/encrypt"
+        android:id="@+id/menu_copy_to_clipboard"
+        android:icon="@drawable/ic_clipboard_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/copy_to_clipboard"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_unhide"
         android:icon="@drawable/ic_unhide_vector"
+        android:showAsAction="never"
         android:title="@string/decrypt"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_hide"
+        android:icon="@drawable/ic_encrypt_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/encrypt"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_copy_to"
+        android:icon="@drawable/ic_copy_vector"
+        android:showAsAction="never"
+        android:title="@string/copy_to"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_move_to"
+        android:icon="@drawable/ic_move_vector"
+        android:showAsAction="never"
+        android:title="@string/move_to"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_add_to_virtual_album"
+        android:icon="@drawable/ic_album_virtual_vector"
+        android:showAsAction="never"
+        android:title="@string/add_to_virtual_album"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_remove_from_virtual_album"
+        android:icon="@drawable/ic_minus_circle_vector"
+        android:showAsAction="never"
+        android:title="@string/remove_from_virtual_album"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_restore_file"
+        android:icon="@drawable/ic_reset_vector"
+        android:showAsAction="never"
+        android:title="@string/restore_this_file"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_rotate"
         android:icon="@drawable/ic_rotate_right_vector"
+        android:showAsAction="never"
         android:title="@string/rotate"
         app:showAsAction="never">
         <menu>
@@ -77,52 +106,9 @@
         </menu>
     </item>
     <item
-        android:id="@+id/menu_copy_to_clipboard"
-        android:showAsAction="never"
-        android:title="@string/copy_to_clipboard"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_copy_to"
-        android:showAsAction="never"
-        android:title="@string/copy_to"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_move_to"
-        android:showAsAction="never"
-        android:title="@string/move_to"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_add_to_virtual_album"
-        android:showAsAction="never"
-        android:title="@string/add_to_virtual_album"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_create_shortcut"
-        android:showAsAction="never"
-        android:title="@string/create_shortcut"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_open_with"
-        android:showAsAction="never"
-        android:title="@string/open_with"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_set_as"
-        android:icon="@drawable/ic_set_as_vector"
-        android:title="@string/set_as"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_remove_from_virtual_album"
-        android:showAsAction="never"
-        android:title="@string/remove_from_virtual_album"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_restore_file"
-        android:showAsAction="never"
-        android:title="@string/restore_this_file"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/menu_change_orientation"
+        android:icon="@drawable/ic_orientation_auto_vector"
+        android:showAsAction="never"
         android:title="@string/change_orientation"
         app:showAsAction="never">
         <menu>
@@ -141,28 +127,69 @@
         </menu>
     </item>
     <item
-        android:id="@+id/menu_print"
+        android:id="@+id/menu_open_with"
+        android:icon="@drawable/ic_open_with_calypso_vector"
         android:showAsAction="never"
-        android:title="@string/print"
+        android:title="@string/open_with"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_resize"
+        android:id="@+id/menu_set_as"
+        android:icon="@drawable/ic_set_as_vector"
         android:showAsAction="never"
-        android:title="@string/resize"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_show_on_map"
-        android:showAsAction="never"
-        android:title="@string/show_on_map"
+        android:title="@string/set_as"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_slideshow"
         android:icon="@drawable/ic_slideshow_vector"
+        android:showAsAction="never"
         android:title="@string/slideshow"
         app:showAsAction="never" />
+    <!-- Optional extra actions (all hidden by default; enabled in Settings -> Media viewer). -->
     <item
-        android:id="@+id/menu_settings"
-        android:icon="@drawable/ic_settings_cog_vector"
-        android:title="@string/settings"
+        android:id="@+id/menu_show_on_map"
+        android:icon="@drawable/ic_place_vector"
+        android:showAsAction="never"
+        android:title="@string/show_on_map"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_resize"
+        android:icon="@drawable/ic_aspect_ratio_vector"
+        android:showAsAction="never"
+        android:title="@string/resize"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_print"
+        android:icon="@drawable/ic_print_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/print"
+        android:visible="false"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_create_shortcut"
+        android:icon="@drawable/ic_link_vector"
+        android:showAsAction="never"
+        android:title="@string/create_shortcut"
+        android:visible="false"
+        app:showAsAction="never" />
+    <!-- Fallback items if removed from bottom action bar (menu_delete also becomes toolbar action in vault). -->
+    <item
+        android:id="@+id/menu_share"
+        android:icon="@drawable/ic_share_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/share"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_edit"
+        android:icon="@drawable/ic_edit_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/edit"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_delete"
+        android:icon="@drawable/ic_delete_calypso_vector"
+        android:showAsAction="never"
+        android:title="@string/delete"
         app:showAsAction="never" />
 </menu>
