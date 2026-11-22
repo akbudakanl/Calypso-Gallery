@@ -4,7 +4,7 @@ This directory stores translation audit and blind-review comparison reports for 
 
 > [!NOTE]
 > **Notes — Translation Requests & Feedback:**  
-> If you notice any inaccurate, unnatural, or missing translations—or would like to request full audit/support for a new language—please submit a report, complaint, or Pull Request on the project's [GitHub Issues](https://github.com/akbudakanl/Gallery-Cipher/issues) page.
+> For strings inherited from Fossify Gallery, please contribute fixes through [Fossify on Hosted Weblate](https://hosted.weblate.org/projects/fossify/gallery) or report them on the [upstream issue tracker](https://github.com/FossifyOrg/Gallery/issues); those changes flow back into this fork with upstream updates. Use this project's [GitHub Issues](https://github.com/akbudakanl/Gallery-Cipher/issues) only for strings unique to Calypso Gallery, or to request a full audit/support for a new language.
 
 ## Directory Structure
 
@@ -52,6 +52,18 @@ translation-blind-tests/
    - Scope and key terminology glossary.
    - Section 1: Summary of newly added or revised translations with contextual notes.
    - Section 2: Full 1-to-1 comparison table pairing every English source entry (plus any overridden `fossify-commons` keys) with its localized counterpart.
+
+## AI-Generated Baselines and Community Review
+
+The translations documented in this folder are produced initially with AI assistance. They are meant as a starting point for review rather than as final wording: native speakers are invited to check them against the English source and flag anything that reads unnaturally, uses the wrong register, or is simply inaccurate.
+
+To make that review practical, every `<lang>_translation_comparison.md` report places the English source string and its localized counterpart side by side in a single table row, along with a note on where the string appears in the app. Reviewers can therefore evaluate the complete set of user-facing text at a glance, without cross-referencing XML resource files by hand, and can propose clearer or more idiomatic alternatives with minimal effort.
+
+**Where to contribute.** The preferred route is to improve translations in **Fossify Gallery upstream**, not in this fork. Fossify manages translations in [Hosted Weblate](https://hosted.weblate.org/projects/fossify/gallery), and Weblate commits accepted translations back to the upstream repository. This fork follows upstream releases and imports their translations, so a fix made upstream benefits both projects. Please report problems with shared strings through the [upstream issue tracker](https://github.com/FossifyOrg/Gallery/issues) or submit them directly on Weblate.
+
+**How to tell where a string belongs.** You do not have to guess from the wording: search the string key in Fossify's [`values/strings.xml`](https://github.com/FossifyOrg/Gallery/blob/main/app/src/main/res/values/strings.xml) or in the Weblate component. If the key exists there, the string is upstream and the fix belongs on Weblate; if it does not, it is Calypso-specific. As a quick rule of thumb, anything tied to the encrypted vault (`Secrets`), passwords, PINs, KDF, biometrics, virtual albums, conflict-handling settings, or Calypso branding is fork-only, while ordinary gallery features (folders, sorting, slideshow, wallpaper, editor, recycle bin) come from upstream. If you are still unsure, report the string here and it will be redirected upstream where appropriate.
+
+Contributions here are still welcome, but only for strings that exist solely in Calypso Gallery—such as vault, encryption, and virtual-album wording—so that all shared strings remain in sync with upstream.
 
 ## Notes on Shared & Inherited Resources
 

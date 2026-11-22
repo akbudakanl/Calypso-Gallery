@@ -123,7 +123,7 @@ These 66 strings were introduced by this fork (Calypso Gallery) and do not exist
 | 46 | `use_password_or_pin` | Use PIN / Password | 使用 PIN 碼 / 密碼 | BiometricPrompt negative button to fall back to PIN/password |
 | 47 | `biometric_key_invalidated` | Biometric credentials have changed. Please enter your PIN or password. | 生物辨識憑證已變更，請輸入您的 PIN 碼或密碼。 | Toast shown when biometric credentials changed and Keystore key invalidated |
 | 48 | `no_biometric_hardware_or_enrolled` | No biometric hardware or enrolled credentials found on this device | 此裝置上找不到生物辨識硬體或已註冊的憑證 | Toast shown when no biometric hardware or enrolled credentials exist |
-| 49 | `default_hidden_album` | Default Hidden Album | 預設隱藏相簿 | Settings / picker label for default hidden album |
+| 49 | `default_hidden_album` | Default Secret Album | 預設隱藏相簿 | Settings / picker label for default hidden album |
 | 50 | `select_hidden_album` | Select Encrypted Album | 選擇加密相簿 | Dialog title for choosing the target encrypted album |
 | 51 | `create_new_hidden_album` | Create New Encrypted Album | 建立新加密相簿 | Action label to create a new encrypted album |
 | 52 | `new_hidden_album` | New encrypted album | 新加密相簿 | Input hint / default label for a new encrypted album |
@@ -241,7 +241,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 
 | # | Key (`name`) | English (`values/strings.xml`) | Taiwanese (`values-zh-rTW/strings.xml`) |
 |---:|---|---|---|
-| 1 | `app_launcher_name` | Gallery | 圖庫 |
+| 1 | `app_launcher_name` | Calypso Gallery | 圖庫 |
 | 2 | `edit` | Edit | 編輯 |
 | 3 | `open_camera` | Open camera | 開啟相機 |
 | 4 | `hidden` | (hidden) | （已隱藏） |
@@ -275,7 +275,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 32 | `reorder_by_dragging` | Reorder folders by dragging | 拖曳以重新排序資料夾 |
 | 33 | `reorder_by_dragging_pro` | Reorder folders by dragging (Pro) | 拖曳以重新排序資料夾（專業版） |
 | 34 | `restore_to_path` | Restoring to \'%s\' | 還原至「%s」 |
-| 35 | `full_storage_permission_required` | Fossify Gallery needs full access to display all your photos and videos. Go to Settings &gt; Permissions &gt; Photos and videos &gt; Allow all. | Fossify 圖庫需要完整存取權限才能顯示您所有的照片與影片。請到「設定」→「隱私權」→「應用程式權限」→「相片和影片」→「一律全部允許」。 |
+| 35 | `full_storage_permission_required` | Calypso Gallery needs full access to display all your photos and videos. Go to Settings > Permissions > Photos and videos > Allow all. | Fossify 圖庫需要完整存取權限才能顯示您所有的照片與影片。請到「設定」→「隱私權」→「應用程式權限」→「相片和影片」→「一律全部允許」。 |
 | 36 | `filter_media` | Filter media | 篩選媒體檔案 |
 | 37 | `images` | Images | 圖片 |
 | 38 | `videos` | Videos | 影片 |
@@ -285,12 +285,12 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 42 | `portraits` | Portraits | 人像 |
 | 43 | `no_media_with_filters` | No media files have been found with the selected filters. | 未發現符合篩選條件的媒體檔案。 |
 | 44 | `change_filters_underlined` | <u>Change filters</u> | <u>更改篩選條件</u> |
-| 45 | `exclude_folder_description` | This will exclude the selection together with its subfolders from Fossify Gallery only. You can manage excluded folders in Settings. | 僅在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾。稍後可在設定中管理已排除的資料夾。 |
+| 45 | `exclude_folder_description` | This will exclude the selection together with its subfolders from Calypso Gallery only. You can manage excluded folders in Settings. | 僅在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾。稍後可在設定中管理已排除的資料夾。 |
 | 46 | `exclude_folder_parent` | Exclude a parent instead? | 是否排除上層資料夾？ |
-| 47 | `excluded_activity_placeholder` | Excluding folders will make them together with their subfolders hidden just in Fossify Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Hide function. | 排除資料夾功能僅會在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾，在其他應用程式中仍會正常顯示。\n\n如要同時在其他應用程式中隱藏，請使用「隱藏」功能。 |
+| 47 | `excluded_activity_placeholder` | Excluding folders will make them together with their subfolders hidden just in Calypso Gallery, they will still be visible in other applications.\n\nIf you want to hide them from other apps too, use the Encrypt function. | 排除資料夾功能僅會在 Fossify 圖庫中排除選定的資料夾及其所有子資料夾，在其他應用程式中仍會正常顯示。\n\n如要同時在其他應用程式中隱藏，請使用「隱藏」功能。 |
 | 48 | `hidden_folders` | Hidden folders | 隱藏資料夾 |
 | 49 | `manage_hidden_folders` | Manage hidden folders | 管理隱藏的資料夾 |
-| 50 | `hidden_folders_placeholder` | Seems like you don\'t have any folders hidden with a \".nomedia\" file. | 未發現以「.nomedia」檔案來隱藏的資料夾。 |
+| 50 | `hidden_folders_placeholder` | Seems like you don\'t have any folders hidden with a \".nomedia\" file or dot prefix. | 未發現以「.nomedia」檔案來隱藏的資料夾。 |
 | 51 | `hidden_all_files` | You have to grant the app All Files access to see hidden files, else it cannot work. | 請務必授予此應用程式「所有檔案存取權」以檢視隱藏的檔案。 |
 | 52 | `cant_unhide_folder` | If a folder or one of its parent folders has a dot before its name, it is hidden and cannot be unhidden like this. You have to remove the dot by renaming it. | 如果資料夾或其上層資料夾的名稱開頭為「.」，該資料夾將會被隱藏且無法直接取消隱藏。您需要重新命名資料夾以移除前方的「.」。 |
 | 53 | `include_folders` | Included folders | 包含資料夾 |
@@ -466,7 +466,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 223 | `media_exceeds_device_capabilities` | Media exceeds device capabilities. | 媒體超出裝置的播放能力。 |
 | 224 | `unsupported_format` | Unsupported format. | 不支援的格式。 |
 | 225 | `video_no_sound` | This video has no audio | 此影片沒有音訊 |
-| 226 | `faq_1_title` | How can I make Fossify Gallery the default device gallery? | 怎樣將 Fossify Gallery 設為本裝置的預設相簿？ |
+| 226 | `faq_1_title` | How can I make Calypso Gallery the default device gallery? | 怎樣將 Fossify Gallery 設為本裝置的預設相簿？ |
 | 227 | `faq_1_text` | First you have to find the currently default gallery in the Apps section of your device settings, look for a button that says something like \"Open by default\", click on it, then select \"Clear defaults\". The next time you will try opening an image or video you should see an app picker, where you can select Fossify Gallery and make it the default app. | 首先，您需要在裝置設定的應用程式部分找到目前預設的相簿，尋找一個寫著「預設開啟」之類的按鈕，點擊它，然後選擇「清除預設」。下次嘗試開啟圖片或影片時，您應該會看到一個應用程式選擇器，您可以在其中選擇 Fossify Gallery 並將其設為預設應用程式。 |
 | 228 | `faq_2_title` | I locked the app with a password, but I forgot it. What can I do? | 用密碼把這個應用程式上鎖後忘記密碼該怎麼辦？ |
 | 229 | `faq_2_text` | You can solve it in 2 ways. You can either reinstall the app, or find the app in your device settings and select \"Clear data\". It will reset all your settings, it will not remove any media files. | 有兩種解決方法。一是重新安裝本應用程式。一是在裝置的設定中找到本應用程式，然後按「清除資料」（或「清除儲存空間」等類似的字眼），應用程式的設定將會被重設，但不會移除任何媒體檔案。 |
@@ -475,7 +475,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 232 | `faq_4_title` | How can I fast forward videos? | 如何快轉影片？ |
 | 233 | `faq_4_text` | You can do it by double tapping the side of the screen, or tapping the current or max duration texts near the seekbar. If you enable opening videos on a separate screen in the app settings, you can use horizontal gestures too. | 點兩下螢幕邊邊，或者按一下進度條旁邊的目前播放時間／影片時長文字。若您在設定中啟用了「總是用新的水平手勢在獨立畫面開啟影片」，則您也可以使用水平手勢快轉。 |
 | 234 | `faq_5_title` | What is the difference between hiding and excluding a folder? | 「隱藏」與「排除」資料夾之間有什麼差別？ |
-| 235 | `faq_5_text` | Exclude prevents displaying the folder only in Fossify Gallery, while Hide works system-wise and it hides the folder from other galleries too. It works by creating an empty \".nomedia\" file in the given folder, which you can then remove with any file manager too. Note that some devices do not allow hiding folders like Camera, Screenshots and Downloads. | 排除是指僅在 Fossify Gallery 中不顯示該資料夾，而隱藏則是系統層級的操作，它也會將資料夾隱藏於其他相簿。這是透過在指定資料夾建立一個名為「.nomedia」的空檔案來實現的，您也可以使用任何檔案管理員刪除它。請注意，有些裝置不允許隱藏像是相機、螢幕截圖和下載等資料夾。 |
+| 235 | `faq_5_text` | Exclude prevents displaying the folder only in Calypso Gallery, while Hide works system-wise and it hides the folder from other galleries too. It works by creating an empty \".nomedia\" file in the given folder, which you can then remove with any file manager too. Note that some devices do not allow hiding folders like Camera, Screenshots and Downloads. | 排除是指僅在 Fossify Gallery 中不顯示該資料夾，而隱藏則是系統層級的操作，它也會將資料夾隱藏於其他相簿。這是透過在指定資料夾建立一個名為「.nomedia」的空檔案來實現的，您也可以使用任何檔案管理員刪除它。請注意，有些裝置不允許隱藏像是相機、螢幕截圖和下載等資料夾。 |
 | 236 | `faq_6_title` | Why do folders with music cover art or stickers show up? | 為何出現了音樂的封面圖或是貼圖的資料夾？ |
 | 237 | `faq_6_text` | It can happen that you will see some unusual albums show up. You can easily exclude them by long pressing them and selecting Exclude. In the next dialog you can then select the parent folder, chances are it will prevent the other related albums showing up too. | 有時候會出現一些異常的相簿。長按並點選排除可排除它們，在接下來的對話框選擇它們的上層資料夾的話，有機會避免相關的相簿出現。 |
 | 238 | `faq_7_title` | A folder with images isn\'t showing up, or it doesn\'t show all items.  What can I do? | 有個含有圖片的資料夾沒出現，抑或是沒有顯示所有項目時，該怎麼辦？ |
@@ -656,10 +656,10 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 411 | `usb_direct_filesystem_required` | This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card. | 此 USB 路徑僅透過 Android 虛擬 OTG 提供者公開，無法直接作為檔案系統路徑存取。請選擇已掛載的儲存目錄，或內部儲存空間 / SD 卡上的資料夾。 |
 | 412 | `vault_location_not_writable` | The selected folder does not exist or is not writable on this device. | 所選資料夾不存在，或無法在此裝置上寫入。 |
 | 413 | `vault_location_not_readable` | The selected folder does not exist or is not readable on this device. | 所選資料夾不存在，或無法在此裝置上讀取。 |
-| 414 | `sync_vault_from_external` | Import encrypted media files to encrypted section | 將加密的媒體檔案匯入至加密區域 |
+| 414 | `sync_vault_from_external` | Import newly encrypted media filed to encrypted section | 將加密的媒體檔案匯入至加密區域 |
 | 415 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg. | 加密媒體匯入運作方式：\n\n1. 統一的 Secrets 資料夾：\n在外接磁碟機（USB / SD）上保留名為 Secrets 的資料夾。您可以將保險箱的完整備份複本存放在該處，或僅放入保險箱的 .vault 標頭檔。\n\n2. 加密新媒體（PC / Tails CLI）：\n離線 CLI 工具會自動將新加密的檔案直接儲存至 Secrets。放在根目錄的檔案會進入 Default Secret Album；放在子資料夾中的檔案會進入對應的加密相簿（或建立新相簿）。\n\n3. 逐位元智慧同步：\n接下來請選擇您的外接磁碟機或 Secrets 資料夾。應用程式會在 RAM 中比對外接磁碟機與手機保險箱：\n• 僅匯入新的檔案與相簿。\n• 保險箱中已存在且位元完全相同的檔案將會略過。\n• 同名但內容不同的檔案（例如 download.jpg）會安全地匯入為 download(1).jpg。 |
 | 416 | `conflict_handling_mode_label` | File conflict & duplicate resolution | 檔案衝突與重複處理方式 |
-| 417 | `conflict_handling_auto_short` | Full automatic (Default — Skip identical, rename different as (1)) | 全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)） |
+| 417 | `conflict_handling_auto_short` | Automatic (Experimental — Auto-skip identical, rename different as (1)) | 全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)） |
 | 418 | `conflict_handling_smart_dialog_short` | Smart dialog (Auto-skip identical, ask when content differs) | 智慧對話方塊（自動略過相同檔案，僅在內容不同時詢問） |
 | 419 | `album_crypto_conflict_mode_label` | Album conflict (Encrypt / Decrypt) | 相簿衝突（加密 / 解密） |
 | 420 | `album_crypto_conflict_ask` | Always ask (Default) | 一律詢問（預設） |
@@ -684,7 +684,7 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 439 | `fast_large_duplicate_check_hint` | Crucial for transfers containing large files: checks 5 blocks (1.25 MB total) per file instead of reading whole files, speeding up duplicate checks dozens of times. | 對包含大型檔案的傳輸至關重要：每個檔案僅檢查 5 個區塊（共 1.25 MB）而不必讀取整個檔案，可將重複檢查加速數十倍。 |
 | 440 | `fast_large_duplicate_check_info_title` | Fast Duplicate Check (>8 MB) | 快速重複檢查 (>8 MB) |
 | 441 | `conflict_handling_explanation_title` | File Conflict & Duplicate Resolution | 檔案衝突與重複解決 |
-| 442 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums, if a file with the same name already exists at the destination:\n\n1. Bit-by-Bit Duplicate Check (RAM):\nThe app checks file sizes first, and if sizes match, compares the file contents bit-by-bit in RAM (encrypted files are checked in memory without writing plaintext to disk). During copy/move, identical files are skipped and the original remains untouched in the source folder. When merging an album during encrypt/decrypt, you can choose whether 100% bit-identical source files are deleted or kept.\n\n2. Same Name, Different Content (e.g. two different download.jpg files):\n• Full automatic (Default): Keeps both files without interrupting you by naming the new file download(1).jpg, download(2).jpg.\n• Smart dialog: Still skips bit-identical files silently, and only asks (Skip / Overwrite / Keep both) when two files have the same name but different content. | 複製、移動、加密或解密檔案與相簿時，若目的地已存在同名檔案：\n\n1. 逐位元重複檢查 (RAM)：\n應用程式會先檢查檔案大小，若大小相符，則在 RAM 中逐位元比對檔案內容（加密檔案會在記憶體中檢查，不會將明文寫入磁碟）。複製/移動期間，相同檔案會被略過，原始檔案在來源資料夾中保持不變。在加密/解密期間合併相簿時，您可選擇要刪除或保留 100% 位元完全相同的來源檔案。\n\n2. 同名但內容不同（例如兩個不同的 download.jpg 檔案）：\n• 全自動（預設）：將新檔案命名為 download(1).jpg、download(2).jpg，不中斷您的操作並保留兩個檔案。\n• 智慧對話方塊：仍會靜默略過位元完全相同的檔案，僅在兩個檔案同名但內容不同時詢問（略過 / 覆寫 / 兩者皆保留）。 |
+| 442 | `conflict_handling_explanation_message` | When copying, moving, encrypting, or decrypting files and albums (including album merges), if a file with the same name already exists at the destination:\n\n• Standard dialog (Default): Checks filename only (like the original Fossify Gallery app) without comparing file contents, and asks you to Skip / Overwrite / Keep both.\n• Smart dialog: Checks file sizes and bit-by-bit contents in RAM (encrypted files stay in memory), auto-skips identical duplicates, and asks with side-by-side previews (Skip / Overwrite / Keep both) only when content differs.\n• Automatic (Experimental): Auto-skips identical duplicates and automatically keeps both different files by naming the incoming file download(1).jpg, download(2).jpg. | 複製、移動、加密或解密檔案與相簿時，若目的地已存在同名檔案：\n\n1. 逐位元重複檢查 (RAM)：\n應用程式會先檢查檔案大小，若大小相符，則在 RAM 中逐位元比對檔案內容（加密檔案會在記憶體中檢查，不會將明文寫入磁碟）。複製/移動期間，相同檔案會被略過，原始檔案在來源資料夾中保持不變。在加密/解密期間合併相簿時，您可選擇要刪除或保留 100% 位元完全相同的來源檔案。\n\n2. 同名但內容不同（例如兩個不同的 download.jpg 檔案）：\n• 全自動（預設）：將新檔案命名為 download(1).jpg、download(2).jpg，不中斷您的操作並保留兩個檔案。\n• 智慧對話方塊：仍會靜默略過位元完全相同的檔案，僅在兩個檔案同名但內容不同時詢問（略過 / 覆寫 / 兩者皆保留）。 |
 | 443 | `syncing_vault_progress` | Syncing vault from external drive… | 正在從外接磁碟機同步保險箱… |
 | 444 | `vault_sync_summary_message` | Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d | 保險箱同步完成：\n• 已複製：%1$d\n• 已重新命名（名稱衝突）：%2$d\n• 已略過（相同）：%3$d\n• 失敗：%4$d |
 | 445 | `vault_sync_nothing_to_sync` | No pending CLI-encrypted media (.pending_sync) was found in the selected folder. | 在所選資料夾中找不到待處理的 CLI 加密媒體 (.pending_sync)。 |
@@ -755,8 +755,8 @@ Following the previous audit, 22 additional keys were localized in `values-zh-rT
 | 510 | `unhide_folder` | Unhide | 取消隱藏 |
 | 511 | `about_title` | About Calypso Gallery | 關於 Calypso Gallery |
 | 512 | `about_version` | Version %1$s (%2$s) | 版本 %1$s (%2$s) |
-| 513 | `about_fork_description` | Calypso Gallery is an independently maintained, unofficial personal fork of Fossify Gallery. It is not affiliated with or endorsed by Fossify. | Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。 |
-| 514 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery. The fork was created from upstream commit 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2), and all fork-specific modifications are documented in FORK_CHANGELOG.md. | 此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。 |
+| 513 | `about_fork_description` | Calypso Gallery is a security-hardened, independently maintained personal fork of Fossify Gallery. Thanks to the original authors and contributors of Fossify Gallery. It is an unofficial project and is not affiliated with, endorsed by, or supported by the Fossify organization. | Calypso Gallery 是由個人獨立維護的非官方 Fossify Gallery 分支。它與 Fossify 無任何關聯，也未獲得 Fossify 的認可。 |
+| 514 | `about_modification_notice` | This distribution is a modified version of Fossify Gallery v1.14.2 (2688360, 07-11-2026). All fork-specific modifications are documented in FORK_CHANGELOG.md. | 此發行版本是 Fossify Gallery 的修改版本。本分支建立自上游提交 054228be2da275396eb03d2b9002807b5055afac (1.14.1-5-g054228be2)，所有分支專屬的修改皆記錄於 FORK_CHANGELOG.md。 |
 | 515 | `about_license_heading` | License | 授權條款 |
 | 516 | `about_gpl_notice` | This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.\n\nThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License along with this program. If not, use the license action below or visit https://www.gnu.org/licenses/. | 本程式為自由軟體：您可以依據自由軟體基金會所發布的 GNU General Public License 第 3 版條款，重新散佈及／或修改本程式。\n\n本程式係以「希望能有所用途」之心散佈，但「不提供任何擔保」；亦不隱含對可銷售性或適合特定用途之擔保。詳情請參閱 GNU General Public License。\n\n您應已隨本程式收到一份 GNU General Public License 的副本。若未收到，請使用下方的授權動作，或造訪 https://www.gnu.org/licenses/。 |
 | 517 | `about_read_gpl_license` | Read the GNU GPL v3 license | 閱讀 GNU GPL v3 授權條款 |
@@ -982,8 +982,8 @@ Added/updated in `values-zh-rTW/strings.xml`. Archive moves the old vault; expor
 | 10 | `archived_vault_invalid_message` | Vault header not found at %1$s. You can delete this folder with a file manager. | 在 %1$s 找不到保險箱標頭。您可以用檔案管理器刪除此資料夾。 |
 | 11 | `copy_path` | Copy path | 複製路徑 |
 | 12 | `faq_forgot_password_title` | I forgot my encrypted vault password, what can I do? | 我忘記加密保險箱的密碼了，該怎麼辦？ |
-| 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — copying is not moving; the original stays in place. 3. Settings → Reset encrypted vault to set a new password and restore.  Warning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. 使用生物辨識解鎖。 2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。 3. 設定 → 重設加密保險箱以設定新密碼。  警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
-| 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics. 2. Copy (export) your encrypted data — this does not move the vault. 3. Settings → Reset encrypted vault to set a new password and restore.  If biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 使用生物辨識解鎖。 2. 複製加密資料。 3. 設定 → 重設加密保險箱。  若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
+| 13 | `faq_forgot_password_text` | 1. Unlock the vault with biometrics.\n2. Copy (export) your encrypted data — copying is not moving; the original stays in place.\n3. Settings → Reset encrypted vault to set a new password and restore.\n\nWarning: if biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager. Deletion cannot be undone. | 1. 使用生物辨識解鎖。 2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。 3. 設定 → 重設加密保險箱以設定新密碼。  警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
+| 14 | `vault_password_reminder_forgot_steps` | 1. Unlock the vault with biometrics.\n2. Copy (export) your encrypted data — this does not move the vault.\n3. Settings → Reset encrypted vault to set a new password and restore.\n\nIf biometrics cannot unlock it either, the vault is inaccessible. You can archive the current vault and create a new one, copy the encrypted data for another device, or delete the vault folder at %1$s with a file manager (cannot be undone). | 1. 使用生物辨識解鎖。 2. 複製加密資料。 3. 設定 → 重設加密保險箱。  若生物辨識也無法使用：可封存、複製，或用檔案管理器刪除 %1$s 的資料夾。 |
 
 ## Unarchive Strings (this revision)
 
@@ -1094,3 +1094,59 @@ Added the `identical_files_skipped` plural and revised `date_tie_break_ask_info_
 | `settings_group_vault_transfer` | Encrypted vault transfer | 加密保險箱傳輸 |
 | `settings_search_results` | Search results | 搜尋結果 |
 | `settings_no_search_results` | No matching settings found. | 找不到符合的設定。 |
+
+## Active keys added since 2688360 (7 November) - added in this revision
+
+The following strings were added after the base commit `2688360` (7 November) and are now documented here. English source: `values/strings.xml` (or the corresponding license/defaults resource). Target source: `values-zh-rTW/strings.xml`.
+
+| # | Key (`name`) | English | zh-rTW (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `about_copyright_notice` | Copyright © Fossify Gallery contributors\nCopyright © 2026 Calypso Gallery contributors | *(translatable="false"; not localized)* | |
+| 2 | `app_name` | Calypso Gallery | *(translatable="false"; not localized)* | |
+| 3 | `auto_biometric_prompt_on_vault_return` | Automatically show biometric prompt when returning to app | 返回應用程式時自動顯示生物辨識提示 | |
+| 4 | `biometric_access_to_encrypted_vault` | Biometric access to encrypted vault | 透過生物辨識存取加密保險箱 | |
+| 5 | `change_encrypted_vault_password` | Change encrypted vault password | 變更加密保險箱密碼 | |
+| 6 | `create_encrypted_vault` | Create encrypted vault | 建立加密保險箱 | |
+| 7 | `delete_auto_backup_confirm` | Delete device storage backups for the %1$s created while this setting was enabled? | 是否要刪除此設定啟用期間所建立、用於「%1$s」的裝置儲存空間備份？ | |
+| 8 | `delete_auto_backup_target_both` | favorites and virtual albums | 我的最愛和虛擬相簿 | |
+| 9 | `delete_auto_backup_target_favorites` | favorites | 我的最愛 | |
+| 10 | `delete_auto_backup_target_virtual_albums` | virtual albums | 虛擬相簿 | |
+| 11 | `empty_encrypted_vault_warning` | The encrypted vault (Secrets) and all its files will be permanently deleted. Are you sure? | 加密保險箱（Secrets）及其所有檔案將會被永久刪除。確定要繼續嗎？ | |
+| 12 | `encrypted_vault` | Encrypted vault | 加密保險箱 | |
+| 13 | `encrypted_vault_emptied` | Encrypted vault emptied | 加密保險箱已清空 | |
+| 14 | `enter_new_password` | Enter new password | 輸入新密碼 | |
+| 15 | `enter_new_pin` | Enter new PIN | 輸入新 PIN | |
+| 16 | `fast_large_duplicate_check_info_message` | Why this matters for large copy/move transfers:\n\nWhen copying or moving large files, such as gigabytes of videos, exact bit-by-bit checking must read both the source and destination files from start to finish whenever filenames and sizes match—taking minutes on fast storage or much longer on SD cards.\n\nHow Fast Check works:\n• Files under 8 MB are ALWAYS checked 100% bit-by-bit.\n• For files over 8 MB, the app compares file size plus five 256 KB blocks distributed across the start, 25%, 50%, 75%, and end of the file (1.25 MB total per side).\n• For a 50 GB archive of 50 MB–1 GB videos, this cuts disk reads by ~40× to ~800×.\n\nWhen to enable or disable:\n• Recommended ON: If most of your gallery consists of large files (&gt;8 MB), two intact, distinct files sharing the same name, exact byte size, and all 5 sampled regions is virtually impossible in practice.\n• Recommended OFF (no speedup): If your gallery consists mostly of photos or files under 8 MB, this setting provides no significant speed gain since files under 8 MB are always checked 100% bit-by-bit.\n• Encrypt, decrypt, and external USB vault sync operations always perform full bit-by-bit verification. | 為何這對大型複製/移動傳輸很重要：\n\n複製或移動大型檔案（例如數 GB 的影片）時，只要檔名與大小相符，精確逐位元檢查就必須從頭到尾讀取來源與目的地檔案——在高速儲存裝置上需數分鐘，在 SD 卡上則需更久。\n\n快速檢查的運作方式：\n• 小於 8 MB 的檔案一律進行 100% 逐位元檢查。\n• 對於超過 8 MB 的檔案，應用程式會比對檔案大小以及分佈於檔案開頭、25%、50%、75% 與結尾的五個 256 KB 區塊（單側共 1.25 MB）。\n• 對於包含 50 MB–1 GB 影片的 50 GB 封存檔，這可將磁碟讀取減少約 ~40× 至 ~800×。\n\n何時啟用或停用：\n• 建議開啟：若您的圖庫大多為大型檔案 (&gt;8 MB)，兩個未損壞且不同的檔案在實務上幾乎不可能同時擁有相同檔名、精確位元組大小與全部 5 個取樣區段。\n• 建議關閉（無加速效果）：若您的圖庫主要是相片或小於 8 MB 的檔案，由於小於 8 MB 的檔案一律進行 100% 逐位元檢查，此設定不會帶來明顯的速度提升。\n• 外部 USB 保險箱同步一律維持完整的 Tink AEAD 驗證。 | |
+| 17 | `license_androidsvg_text` | Copyright 2013-2020 Paul LeBeau\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. | *(translatable="false"; not localized)* | |
+| 18 | `license_androidsvg_url` | https://github.com/BigBadaboom/androidsvg | *(translatable="false"; not localized)* | |
+| 19 | `license_exif_extended_text` | Copyright 2013 Alessandro Crugnola\n\nReleased into the Public Domain, based on the jhead library and the Android Open Source Project ExifInterface.\n\nIncludes Apache Commons Lang and Apache Commons IO, Copyright The Apache Software Foundation, licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0). | *(translatable="false"; not localized)* | |
+| 20 | `license_exif_extended_url` | https://github.com/sephiroth74/Android-Exif-Extended | *(translatable="false"; not localized)* | |
+| 21 | `license_fossify_commons_text` | GNU General Public License v3.0 — Copyright © Fossify Commons contributors. | *(translatable="false"; not localized)* | |
+| 22 | `license_fossify_commons_title` | Fossify Commons | *(translatable="false"; not localized)* | |
+| 23 | `license_fossify_commons_url` | https://github.com/FossifyOrg/Commons | *(translatable="false"; not localized)* | |
+| 24 | `license_jxl_coder_text` | Copyright 2023 Radzivon Bartoshyk\n\nLicensed under the Apache License, Version 2.0 and the 3-Clause BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. | *(translatable="false"; not localized)* | |
+| 25 | `license_jxl_coder_url` | https://github.com/awxkee/jxl-coder-glide | *(translatable="false"; not localized)* | |
+| 26 | `license_material_icons_text` | Copyright Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. | *(translatable="false"; not localized)* | |
+| 27 | `license_material_icons_url` | https://github.com/google/material-design-icons | *(translatable="false"; not localized)* | |
+| 28 | `license_rustcrypto_argon2_text` | Bundles Rust crates argon2 (0.5.3), zeroize (1.8.1), and jni (0.21.1).\n\nCopyright (c) 2020-2024 RustCrypto Developers (argon2, zeroize)\nCopyright (c) jni-rs contributors (jni: https://github.com/jni-rs/jni-rs)\n\nLicensed under either of Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0) or MIT license (https://opensource.org/licenses/MIT), at your option.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. | *(translatable="false"; not localized)* | |
+| 29 | `license_rustcrypto_argon2_url` | https://github.com/RustCrypto/password-hashes | *(translatable="false"; not localized)* | |
+| 30 | `license_tink_text` | Copyright 2022 Google LLC\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. | *(translatable="false"; not localized)* | |
+| 31 | `license_tink_url` | https://github.com/tink-crypto/tink-java | *(translatable="false"; not localized)* | |
+| 32 | `license_webpdecoder_text` | Copyright 2018 zjupure\n\nLicensed under the Apache License, Version 2.0 and the Simplified BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License. | *(translatable="false"; not localized)* | |
+| 33 | `license_webpdecoder_url` | https://github.com/zjupure/GlideWebpDecoder | *(translatable="false"; not localized)* | |
+| 34 | `no_virtual_albums_yet` | No virtual albums yet. Tap \"New album\" to create one. | 尚未建立任何虛擬相簿。點選「新增相簿」即可建立。 | |
+| 35 | `password_changed_successfully` | Password changed successfully | 密碼變更成功 | |
+| 36 | `refresh` | Refresh | 重新整理 | |
+| 37 | `repeat_new_password` | Repeat new password | 再次輸入新密碼 | |
+| 38 | `repeat_new_pin` | Repeat new PIN | 再次輸入新 PIN | |
+| 39 | `resume_op_copy` | Copy | 複製 | |
+| 40 | `resume_op_decrypt` | Decryption | 解密 | |
+| 41 | `resume_op_encrypt` | Encryption | 加密 | |
+| 42 | `resume_op_move` | Move | 移動 | |
+| 43 | `resume_operation_aborted_message` | %1$s operation was aborted. Already completed files were kept. | %1$s操作已中止。已完成的檔案仍會保留。 | |
+| 44 | `resume_operation_interrupted_message` | %1$s operation was interrupted (%2$d remaining item(s)). No data was lost — do you want to continue? | %1$s操作已中斷（尚餘 %2$d 個項目）。資料未遺失，是否要繼續？ | |
+| 45 | `search_virtual_albums` | Search virtual albums | 搜尋虛擬相簿 | |
+| 46 | `skip_delete_confirmation` | Always skip delete confirmation dialog | 一律略過刪除確認對話框 | |
+| 47 | `vault_no_recovery_warning` | Offline encryption is used. If you forget your password or PIN, there is no way to recover your vault. | 本系統採用離線加密。如果您忘記密碼或 PIN 碼，將無法復原您的保險箱。 | |
+| 48 | `vault_not_created_prompt` | You haven\'t created a vault yet. Do you want to create a vault? | 您尚未建立保險箱。是否要建立保險箱？ | |
+| 49 | `waiting_for_free_space_or_storage` | Waiting for free space or destination storage… | 正在等待可用空間或目標儲存裝置… | |

@@ -415,20 +415,20 @@
     <string name="vault_biometric_unavailable_security_update">Biometrik funksiyalardan istifadə etmək üçün cihazın təhlükəsizlik yeniləməsi quraşdırılmalıdır.</string>
     <string name="vault_biometric_unavailable_no_secure_key">Bu cihazda aparat dəstəkli açar (TEE/StrongBox) yaradıla bilmədi. Təhlükəsizlik səbəbindən seyfə biometrik giriş deaktiv edilib.</string>
     <string name="vault_biometric_unavailable_generic">Bu cihazda seyfə biometrik giriş mövcud deyil. Sistem parametrlərində barmaq izi və ya güclü üz tanıma qeydiyyata alın, yaxud PIN/parolunuzdan istifadə edin.</string>
-    <string name="vault_password_reminder">Parolamı müntǙǙm xatırlat</string>
+    <string name="vault_password_reminder">Parolamı müntəzəm xatırlat</string>
     <string name="vault_password_reminder_disabled">Bağlı</string>
     <string name="vault_password_reminder_weeks">%d həftə</string>
     <string name="vault_password_reminder_months">%d ay</string>
     <string name="vault_password_reminder_dialog_title">Xatırlatma intervalı</string>
-    <string name="vault_password_reminder_dialog_message">Bu mýddət ərzində şifrəli seyfə parolunuzla daxil olmasanız, parolanızı xatırladacağıq.</string>
-    <string name="vault_password_reminder_setup_note">Parolanızı unutmamanız üçün müntǙǙm xatırlatmalar göndərəcəyik. Bunu Parametrlər → Şifrəli seyf → Parolamı müntǙǙm xatırlat bölməsindən bağlaya bilərsiniz.</string>
+    <string name="vault_password_reminder_dialog_message">Bu müddət ərzində şifrəli seyfə parolunuzla daxil olmasanız, parolanızı xatırladacağıq.</string>
+    <string name="vault_password_reminder_setup_note">Parolanızı unutmamanız üçün müntəzəm xatırlatmalar göndərəcəyik. Bunu Parametrlər → Şifrəli seyf → Parolamı müntəzəm xatırlat bölməsindən bağlaya bilərsiniz.</string>
     <string name="vault_biometric_setup_password_note">Biyometrik ilə daxil olmağı seçsəniz, parolanızı hələ də bilməli olduğunuzu unutmayın.</string>
     <string name="vault_password_saved_title">Parolanızı qeyd etdinizmi?</string>
     <string name="vault_password_saved_message">Parolanızı unutsanız, şifrəli seyfə girişi daimi olaraq itirəcəksiniz. Davam etməzdən əvvəl parolanızı bir yerə qeyd etdiyinizdən əmin olun. Parola menecerindən istifadə etmək tövsiyə olunur.</string>
     <string name="vault_password_saved_confirm">Bəli, qeyd etdim</string>
     <string name="vault_password_saved_later">Qeyd edəcəyəm</string>
     <string name="vault_password_reminder_due_title">Seyf parolanızı hələ də xatırlayırsınız?</string>
-    <string name="vault_password_reminder_due_message">Bu mýddət ərzində şifrəli seyfə parolanızla daxil olmadınız. Parolanız seyfi bərpa etməyin yeganə yoludur.</string>
+    <string name="vault_password_reminder_due_message">Bu müddət ərzində şifrəli seyfə parolanızla daxil olmadınız. Parolanız seyfi bərpa etməyin yeganə yoludur.</string>
     <string name="vault_password_reminder_verify_title">Parolanızı təsdiqləyin</string>
     <string name="vault_password_reminder_verify_message">Bu, seyfin açılması deyildir. Yalnızca parolanızı hələ də bildiyinizi təsdiqləyirik.</string>
     <string name="vault_password_reminder_verified">Parola təsdiqləndi</string>
@@ -808,4 +808,9 @@
     <string name="settings_group_vault_transfer">Şifrəli seyf köçürməsi</string>
     <string name="settings_search_results">Axtarış nəticələri</string>
     <string name="settings_no_search_results">Uyğun parametr tapılmadı.</string>
+    <string name="delete_auto_backup_confirm">Bu parametr aktiv olarkən yaradılmış %1$s üçün cihaz yaddaşındakı ehtiyat nüsxələri silinsin?</string>
+    <string name="delete_auto_backup_target_favorites">sevimlilər</string>
+    <string name="delete_auto_backup_target_virtual_albums">virtual albomlar</string>
+    <string name="delete_auto_backup_target_both">sevimlilər və virtual albomlar</string>
+    <string name="skip_delete_confirmation">Silmə təsdiqləmə pəncərəsini həmişə atla</string>
 </resources>

@@ -811,4 +811,8 @@
     <string name="settings_group_vault_transfer">Overføring av kryptert kvelv</string>
     <string name="settings_search_results">Søkjeresultat</string>
     <string name="settings_no_search_results">Fann ingen innstillingar som passar.</string>
+    <string name="delete_auto_backup_confirm">Vil du slette tryggingskopiane på einingslagringa for %1$s som vart laga medan denne innstillinga var aktiv?</string>
+    <string name="delete_auto_backup_target_favorites">favorittar</string>
+    <string name="delete_auto_backup_target_virtual_albums">virtuelle album</string>
+    <string name="delete_auto_backup_target_both">favorittar og virtuelle album</string>
 </resources>

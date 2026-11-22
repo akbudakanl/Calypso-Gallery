@@ -737,4 +737,9 @@
     <string name="settings_group_vault_transfer">Übertragung des verschlüsselten Tresors</string>
     <string name="settings_search_results">Suchergebnisse</string>
     <string name="settings_no_search_results">Keine passenden Einstellungen gefunden.</string>
+    <string name="delete_auto_backup_confirm">Gerätespeicher-Sicherungen für %1$s löschen, die erstellt wurden, während diese Einstellung aktiviert war?</string>
+    <string name="delete_auto_backup_target_favorites">Favoriten</string>
+    <string name="delete_auto_backup_target_virtual_albums">virtuelle Alben</string>
+    <string name="delete_auto_backup_target_both">Favoriten und virtuelle Alben</string>
+    <string name="skip_delete_confirmation">Löschbestätigungsdialog immer überspringen</string>
 </resources>

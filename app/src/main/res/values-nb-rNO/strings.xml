@@ -754,4 +754,9 @@
     <string name="settings_group_vault_transfer">Overføring av kryptert hvelv</string>
     <string name="settings_search_results">Søkeresultater</string>
     <string name="settings_no_search_results">Fant ingen samsvarende innstillinger.</string>
+    <string name="delete_auto_backup_confirm">Vil du slette sikkerhetskopiene på enhetslagringen for %1$s som ble opprettet mens denne innstillingen var aktiv?</string>
+    <string name="delete_auto_backup_target_favorites">favoritter</string>
+    <string name="delete_auto_backup_target_virtual_albums">virtuelle album</string>
+    <string name="delete_auto_backup_target_both">favoritter og virtuelle album</string>
+    <string name="skip_delete_confirmation">Hopp alltid over dialogen for bekreftelse av sletting</string>
 </resources>

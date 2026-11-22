@@ -743,4 +743,9 @@
     <string name="settings_group_vault_transfer">Transferencia de bóveda cifrada</string>
     <string name="settings_search_results">Resultados de búsqueda</string>
     <string name="settings_no_search_results">No se encontraron opciones coincidentes.</string>
+    <string name="delete_auto_backup_confirm">¿Eliminar las copias de seguridad en el almacenamiento del dispositivo de %1$s creadas mientras esta configuración estaba activada?</string>
+    <string name="delete_auto_backup_target_favorites">favoritos</string>
+    <string name="delete_auto_backup_target_virtual_albums">álbumes virtuales</string>
+    <string name="delete_auto_backup_target_both">favoritos y álbumes virtuales</string>
+    <string name="skip_delete_confirmation">Omitir siempre el diálogo de confirmación de eliminación</string>
 </resources>

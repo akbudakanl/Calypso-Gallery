@@ -737,4 +737,9 @@
     <string name="settings_group_vault_transfer">暗号化された保管庫の移行</string>
     <string name="settings_search_results">検索結果</string>
     <string name="settings_no_search_results">一致する設定が見つかりません。</string>
+    <string name="delete_auto_backup_confirm">この設定が有効な間に作成された %1$s の端末ストレージへのバックアップを削除しますか？</string>
+    <string name="delete_auto_backup_target_favorites">お気に入り</string>
+    <string name="delete_auto_backup_target_virtual_albums">仮想アルバム</string>
+    <string name="delete_auto_backup_target_both">お気に入りと仮想アルバム</string>
+    <string name="skip_delete_confirmation">削除の確認ダイアログを常にスキップする</string>
 </resources>

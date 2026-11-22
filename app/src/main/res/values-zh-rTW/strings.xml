@@ -734,4 +734,9 @@
     <string name="settings_group_vault_transfer">加密保險箱傳輸</string>
     <string name="settings_search_results">搜尋結果</string>
     <string name="settings_no_search_results">找不到符合的設定。</string>
+    <string name="delete_auto_backup_confirm">是否要刪除此設定啟用期間所建立、用於「%1$s」的裝置儲存空間備份？</string>
+    <string name="delete_auto_backup_target_favorites">我的最愛</string>
+    <string name="delete_auto_backup_target_virtual_albums">虛擬相簿</string>
+    <string name="delete_auto_backup_target_both">我的最愛和虛擬相簿</string>
+    <string name="skip_delete_confirmation">一律略過刪除確認對話框</string>
 </resources>
