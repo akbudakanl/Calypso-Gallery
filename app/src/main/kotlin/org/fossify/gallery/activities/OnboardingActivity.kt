@@ -1,8 +1,10 @@
 package org.fossify.gallery.activities
 
 import android.animation.Animator
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Environment
@@ -41,6 +43,20 @@ class OnboardingActivity : SimpleActivity() {
         const val MODE_ALL_FILES_ACCESS = 2
 
         private const val STATE_CURRENT_MODE = "state_current_mode"
+        internal const val LARGE_SCREEN_MIN_SMALLEST_WIDTH_DP = 600
+
+        /**
+         * Returns [ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED] on tablets and unfolded dual-screen
+         * foldables (`smallestScreenWidthDp >= 600`) so landscape works freely, and
+         * [ActivityInfo.SCREEN_ORIENTATION_PORTRAIT] on phones (`smallestScreenWidthDp < 600`).
+         */
+        internal fun resolveRequestedOrientation(smallestScreenWidthDp: Int): Int {
+            return if (smallestScreenWidthDp >= LARGE_SCREEN_MIN_SMALLEST_WIDTH_DP) {
+                ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+        }
 
         fun createIntent(context: Context, startMode: Int): Intent {
             return Intent(context, OnboardingActivity::class.java).apply {
@@ -56,6 +72,8 @@ class OnboardingActivity : SimpleActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        applyOrientationPolicy(resources.configuration)
 
         val initialMode = savedInstanceState?.getInt(STATE_CURRENT_MODE)
             ?: intent.getIntExtra(EXTRA_START_MODE, MODE_WELCOME)
@@ -82,12 +100,21 @@ class OnboardingActivity : SimpleActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        applyOrientationPolicy(newConfig)
         if (::binding.isInitialized) {
             activePulseAnimator?.cancel()
             activePulseAnimator = null
             binding.paneWelcome.onboardingHeroLogo.stopAnimations()
         }
         inflateAndBindLayout()
+    }
+
+    @SuppressLint("SourceLockedOrientationActivity")
+    private fun applyOrientationPolicy(configuration: Configuration) {
+        val targetOrientation = resolveRequestedOrientation(configuration.smallestScreenWidthDp)
+        if (requestedOrientation != targetOrientation) {
+            requestedOrientation = targetOrientation
+        }
     }
 
     private fun inflateAndBindLayout() {

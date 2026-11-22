@@ -4,6 +4,32 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 
 ## [Unreleased]
 
+
+## [1.2.2] - 2026-11-22
+### Eklendi
+
+- Şifreli kasa henüz oluşturulmadığında yukarı çekme hareketi ve şifreleme arayüzü devre dışı bırakıldı; kasa kurulumunun ardından kasanın bu hareketle nasıl açılacağını anlatan temalı, tek seferlik kurulum eğitimi gösteriliyor.
+- "PIN girilirken her basamağı bir nokta ile göster" seçeneği açılmadan önce, yeni görünümü mevcut görünümle yan yana canlı olarak karşılaştıran tek seferlik önizleme penceresi gösteriliyor.
+- Çoklu seçim eylemi çubuğu, Calypso yüzen hap çubuğu ve temalı taşma menüsüyle modernize edildi.
+
+### Güvenlik ve kararlılık düzeltmeleri
+
+- PIN uzunluğu artık yalnızca basamak başına nokta görünümü etkinken diskte saklanıyor; görünüm kapalıyken bu meta veri yazılmıyor (bkz. [ADR 0008](docs/adr/0008-pin-dots-indicator-and-length-metadata.md)).
+- PIN noktası yuvaları etkinken kilit açma süpürme çizgisi atlanıyor; nokta göstergesiyle görsel çakışma giderildi.
+- Upstream Fossify bağış, puanlama ve "Teşekkürler" istemleri uygulamada tamamen devre dışı bırakıldı.
+
+### İyileştirmeler
+
+- Karşılama ve izin ekranlarında yönlendirme politikası cihaz sınıfına göre belirlendi: telefonlarda (en küçük genişlik < 600dp) dikey kilit, tablet ve açılmış katlanabilir cihazlarda serbest yönlendirme. Yatay 600dp tabletler için "Tüm dosyalara erişim" ekranına iki sütunlu düzen eklendi; yapılandırma değişiklikleri (en küçük ekran genişliği, ekran düzeni) artık yeniden başlatma gerektirmiyor.
+- Uygulama ve kasa güvenlik pencerelerindeki desen/PIN alanı yön değişiminde yeniden ölçülüyor; yatay modda kırpılan tuş takımı ve son satır artık kaydırılabiliyor, dikeye dönüldüğünde tam yükseklik geri geliyor.
+- PIN noktası göstergesinin güvenlik/kullanılabilirlik ödünleşimi ve uzunluk meta verisi saklama kararı ADR 0008'de belgelendi.
+- Yönlendirme politikası, tablet düzenleri ve güvenlik penceresi boyutlandırması için regresyon testleri eklendi.
+
+### Çeviriler
+
+- "Sanal klasör" / "Virtual folder" terminolojisi "Sanal albüm" / "Virtual album" olarak tüm dillerde ve kör çeviri karşılaştırma raporlarında güncellendi.
+- Kasa kurulum eğitimi ve PIN noktası önizlemesinin yeni metinleri 9 dilde çevrilip kör çeviri karşılaştırma raporlarına eklendi.
+
 ## [1.2.1] - 2026-11-22
 
 ### Güvenlik ve kararlılık düzeltmeleri
@@ -149,6 +175,7 @@ Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Ga
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.1...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.2...HEAD
 [1.2.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.5...1.2.0
 [1.2.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...1.2.1
+[1.2.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.1...1.2.2

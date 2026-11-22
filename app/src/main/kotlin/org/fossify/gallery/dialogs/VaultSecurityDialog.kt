@@ -303,6 +303,13 @@ class VaultSecurityDialog(
                     org.fossify.commons.R.dimen.smaller_margin
                 )
             }
+            val setupTopPad = (104f * density).toInt()
+            hostBinding.vaultSecurityHostContent.setPadding(
+                hostBinding.vaultSecurityHostContent.paddingLeft,
+                setupTopPad,
+                hostBinding.vaultSecurityHostContent.paddingRight,
+                hostBinding.vaultSecurityHostContent.paddingBottom
+            )
         }
 
         hostBinding.vaultSecurityHostContent.addView(

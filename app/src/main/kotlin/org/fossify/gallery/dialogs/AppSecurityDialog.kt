@@ -1,7 +1,10 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.content.ComponentCallbacks
+import android.content.res.Configuration
 import android.view.Gravity
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.auth.AuthPromptHost
@@ -36,29 +39,16 @@ class AppSecurityDialog(
     private val binding = DialogAppSecurityBinding.inflate(activity.layoutInflater, null, false)
     private var tabsAdapter: AppPasswordTypesAdapter
     private var viewPager: MyDialogViewPager
+    private val configCallbacks = object : ComponentCallbacks {
+        override fun onConfigurationChanged(newConfig: Configuration) {
+            updateDialogDimensions()
+        }
+
+        override fun onLowMemory() = Unit
+    }
 
     init {
         val palette = AppearanceManager.resolve(activity, activity.config)
-
-        // A wrap_content ScrollView passes the dialog's height limit down to the ViewPager,
-        // which squeezes the 3x3 pattern and hides its last row. A bounded height makes the
-        // child measure at its natural size and keeps it reachable by scrolling.
-        // Fixed dp sizing keeps the card visually identical in portrait and landscape.
-        // Previously the card inherited the screen width (huge in landscape) and its height
-        // was computed for the orientation it was first opened in, so rotating it filled the
-        // whole display.
-        val metrics = activity.resources.displayMetrics
-        val cardWidth = minOf(
-            (440f * metrics.density).toInt(),
-            metrics.widthPixels - (32f * metrics.density).toInt()
-        )
-        val contentHeight = minOf(
-            (480f * metrics.density).toInt(),
-            (metrics.heightPixels * 0.7f).toInt()
-        )
-        binding.dialogScrollview.layoutParams = binding.dialogScrollview.layoutParams.apply {
-            height = contentHeight
-        }
 
         binding.apply {
             viewPager = dialogTabViewPager
@@ -106,15 +96,42 @@ class AppSecurityDialog(
             .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ -> onCancelFail() }
             .setCancelable(false)
 
+        updateDialogDimensions()
+
         activity.setupDialogStuff(binding.root, builder) { alertDialog ->
             dialog = alertDialog
             alertDialog.setCanceledOnTouchOutside(false)
-            alertDialog.window?.setLayout(cardWidth, WindowManager.LayoutParams.WRAP_CONTENT)
+            updateDialogDimensions()
             alertDialog.window?.attributes = alertDialog.window?.attributes?.apply {
                 gravity = Gravity.CENTER
                 y = 0
             }
+            activity.registerComponentCallbacks(configCallbacks)
+            alertDialog.setOnDismissListener {
+                runCatching { activity.unregisterComponentCallbacks(configCallbacks) }
+            }
         }
+    }
+
+    /**
+     * Recomputes the dialog card width and inner ScrollView viewport height from the current
+     * display metrics so the PIN/Pattern area fits and scrolls cleanly whether the dialog is
+     * opened in portrait or landscape and across live portrait <-> landscape rotations on
+     * phones and tablets.
+     */
+    private fun updateDialogDimensions() {
+        val metrics = activity.resources.displayMetrics
+        val (cardWidth, contentHeight) = computeDialogDimensions(
+            widthPixels = metrics.widthPixels,
+            heightPixels = metrics.heightPixels,
+            density = metrics.density
+        )
+        binding.dialogScrollview.layoutParams = binding.dialogScrollview.layoutParams?.apply {
+            height = contentHeight
+        }
+        binding.dialogScrollview.requestLayout()
+        viewPager.requestLayout()
+        dialog?.window?.setLayout(cardWidth, WindowManager.LayoutParams.WRAP_CONTENT)
     }
 
     private fun onCancelFail() {
@@ -135,6 +152,26 @@ class AppSecurityDialog(
     private fun updateTabVisibility() {
         for (i in 0..2) {
             tabsAdapter.isTabVisible(i, viewPager.currentItem == i)
+        }
+    }
+
+    companion object {
+        internal fun computeDialogDimensions(
+            widthPixels: Int,
+            heightPixels: Int,
+            density: Float
+        ): Pair<Int, Int> {
+            fun dp(value: Float) = (value * density).toInt()
+            val cardWidth = minOf(
+                dp(440f),
+                (widthPixels - dp(32f)).coerceAtLeast(dp(260f))
+            )
+            // Reserve vertical space for the TabLayout, the AlertDialog button bar, and system bars
+            // so the ScrollView viewport never gets clipped in landscape, while capping at 480dp
+            // so the 3x3 pattern / PIN keypad stays comfortably sized in portrait and on tablets.
+            val availableForScroll = (heightPixels - dp(196f)).coerceAtLeast(dp(170f))
+            val contentHeight = minOf(dp(480f), availableForScroll)
+            return cardWidth to contentHeight
         }
     }
 }

@@ -10,11 +10,23 @@
         android:layout_height="match_parent"
         android:importantForAccessibility="no" />
 
-    <FrameLayout
-        android:id="@+id/vault_security_host_content"
+    <ScrollView
+        android:id="@+id/vault_security_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fitsSystemWindows="true" />
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:fitsSystemWindows="true"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="none">
+
+        <FrameLayout
+            android:id="@+id/vault_security_host_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="60dp"
+            android:paddingBottom="24dp" />
+    </ScrollView>
 
     <!-- Top stack for the credential prompt. In setup mode the PIN / Alphanumeric tabs are
          moved here so they sit at the very top; the exit button follows directly beneath the

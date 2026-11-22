@@ -92,7 +92,7 @@
 
         <activity
             android:name=".activities.OnboardingActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="orientation|keyboardHidden|screenSize|smallestScreenSize|screenLayout"
             android:exported="false"
             android:theme="@style/AppTheme" />
 
