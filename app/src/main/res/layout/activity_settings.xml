@@ -927,6 +927,36 @@
                             android:layout_marginEnd="28dp"
                             android:text="@string/manage_extended_details" />
                     </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_extra_viewer_actions_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_extra_viewer_actions"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_extra_viewer_actions" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_manage_extra_viewer_actions_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_manage_extra_viewer_actions"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/manage_extra_viewer_actions" />
+                    </RelativeLayout>
                 </LinearLayout>
 
                 <TextView

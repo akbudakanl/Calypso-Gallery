@@ -79,6 +79,8 @@ const val VIEW_TYPE_FILES = "view_type_files"
 const val SHOW_EXTENDED_DETAILS = "show_extended_details"
 const val EXTENDED_DETAILS = "extended_details"
 const val HIDE_EXTENDED_DETAILS = "hide_extended_details"
+const val SHOW_EXTRA_VIEWER_ACTIONS = "show_extra_viewer_actions"
+const val EXTRA_VIEWER_ACTIONS = "extra_viewer_actions"
 const val ALLOW_INSTANT_CHANGE = "allow_instant_change"
 const val WAS_NEW_APP_SHOWN = "was_new_app_shown_clock"
 const val LAST_FILEPICKER_PATH = "last_filepicker_path"
@@ -333,6 +335,12 @@ const val BOTTOM_ACTION_MOVE = 8192
 const val BOTTOM_ACTION_RESIZE = 16384
 
 const val DEFAULT_BOTTOM_ACTIONS = BOTTOM_ACTION_SHARE or BOTTOM_ACTION_EDIT or BOTTOM_ACTION_TOGGLE_VISIBILITY or BOTTOM_ACTION_DELETE
+
+// optional extra actions in fullscreen media viewer overflow menu (all off by default)
+const val EXTRA_VIEWER_ACTION_SHOW_ON_MAP = 1
+const val EXTRA_VIEWER_ACTION_RESIZE = 2
+const val EXTRA_VIEWER_ACTION_PRINT = 4
+const val EXTRA_VIEWER_ACTION_CREATE_SHORTCUT = 8
 
 // aspect ratios used at the editor for cropping
 const val ASPECT_RATIO_FREE = 0

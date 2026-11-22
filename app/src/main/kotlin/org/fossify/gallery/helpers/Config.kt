@@ -734,6 +734,14 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(EXTENDED_DETAILS, EXT_RESOLUTION or EXT_LAST_MODIFIED or EXT_EXIF_PROPERTIES)
         set(extendedDetails) = prefs.edit().putInt(EXTENDED_DETAILS, extendedDetails).apply()
 
+    var showExtraViewerActions: Boolean
+        get() = prefs.getBoolean(SHOW_EXTRA_VIEWER_ACTIONS, false)
+        set(showExtraViewerActions) = prefs.edit().putBoolean(SHOW_EXTRA_VIEWER_ACTIONS, showExtraViewerActions).apply()
+
+    var extraViewerActions: Int
+        get() = prefs.getInt(EXTRA_VIEWER_ACTIONS, 0)
+        set(extraViewerActions) = prefs.edit().putInt(EXTRA_VIEWER_ACTIONS, extraViewerActions).apply()
+
     var wasNewAppShown: Boolean
         get() = prefs.getBoolean(WAS_NEW_APP_SHOWN, false)
         set(wasNewAppShown) = prefs.edit().putBoolean(WAS_NEW_APP_SHOWN, wasNewAppShown).apply()

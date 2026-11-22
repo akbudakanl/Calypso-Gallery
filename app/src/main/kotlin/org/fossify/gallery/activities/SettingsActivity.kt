@@ -341,6 +341,8 @@ class SettingsActivity : SimpleActivity() {
             setupShowExtendedDetails()
             setupHideExtendedDetails()
             setupManageExtendedDetails()
+            setupShowExtraViewerActions()
+            setupManageExtraViewerActions()
             setupSkipDeleteConfirmation()
             setupDeleteOriginalFromFavoritesAndVirtualAlbums()
             setupAutoBackupFavoritesAndVirtualAlbums()
@@ -2221,6 +2223,33 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupShowExtraViewerActions() {
+        binding.settingsShowExtraViewerActions.isChecked = config.showExtraViewerActions
+        updateExtraViewerActionsButton()
+        binding.settingsShowExtraViewerActionsHolder.setOnClickListener {
+            binding.settingsShowExtraViewerActions.toggle()
+            config.showExtraViewerActions = binding.settingsShowExtraViewerActions.isChecked
+            updateExtraViewerActionsButton()
+        }
+    }
+
+    private fun setupManageExtraViewerActions() {
+        binding.settingsManageExtraViewerActionsHolder.setOnClickListener {
+            ManageExtraViewerActionsDialog(this) {
+                if (config.extraViewerActions == 0) {
+                    binding.settingsShowExtraViewerActionsHolder.callOnClick()
+                }
+            }
+        }
+    }
+
+    private fun updateExtraViewerActionsButton() {
+        binding.settingsManageExtraViewerActionsHolder.beVisibleIf(config.showExtraViewerActions)
+        if (!isSettingUpItems) {
+            refreshRowDecorations()
+        }
+    }
+
     private fun setupSkipDeleteConfirmation() {
         binding.settingsSkipDeleteConfirmation.isChecked = config.skipDeleteConfirmation
         binding.settingsSkipDeleteConfirmationHolder.setOnClickListener {
@@ -2662,6 +2691,8 @@ class SettingsActivity : SimpleActivity() {
                 put(SHOW_EXTENDED_DETAILS, config.showExtendedDetails)
                 put(HIDE_EXTENDED_DETAILS, config.hideExtendedDetails)
                 put(EXTENDED_DETAILS, config.extendedDetails)
+                put(SHOW_EXTRA_VIEWER_ACTIONS, config.showExtraViewerActions)
+                put(EXTRA_VIEWER_ACTIONS, config.extraViewerActions)
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
@@ -2829,6 +2860,8 @@ class SettingsActivity : SimpleActivity() {
                 SHOW_EXTENDED_DETAILS -> config.showExtendedDetails = value.toBoolean()
                 HIDE_EXTENDED_DETAILS -> config.hideExtendedDetails = value.toBoolean()
                 EXTENDED_DETAILS -> config.extendedDetails = value.toInt()
+                SHOW_EXTRA_VIEWER_ACTIONS -> config.showExtraViewerActions = value.toBoolean()
+                EXTRA_VIEWER_ACTIONS -> config.extraViewerActions = value.toInt()
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
