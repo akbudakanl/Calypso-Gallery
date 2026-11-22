@@ -379,6 +379,30 @@
     color: #18181B;
   }
 
+  .device-screen.navy {
+    background: #0B1220;
+    color: #EFF6FF;
+  }
+
+  .device-screen.navy .cal-search-bar {
+    background: #131D31;
+    border-color: #243451;
+    color: #8BA7CC;
+  }
+
+  .device-screen.navy .folder-thumb-wrap {
+    background: #131D31;
+  }
+
+  .device-screen.navy .folder-count {
+    color: #8BA7CC;
+  }
+
+  .device-screen.navy .folder-badge {
+    background: rgba(11, 18, 32, 0.78);
+    color: #93C5FD;
+  }
+
   /* Camera punch-hole & Android status bar */
   .punch-hole {
     position: absolute;
@@ -543,19 +567,56 @@
     inset: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    padding: 130px 28px 0;
-    opacity: 0.22;
-    filter: blur(26px) saturate(0.5);
+    gap: 28px;
+    padding: 130px 36px 90px;
+    opacity: 0.29;
+    filter: blur(36px);
     transform: scale(1.06);
     pointer-events: none;
   }
 
-  .vault-bg-blur img {
+  .vault-synth-tile {
     width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 24px;
-    object-fit: cover;
+    aspect-ratio: 1 / 1.18;
+    border-radius: 34px;
+  }
+
+  .vault-synth-tile.t1 { background: linear-gradient(135deg, #A89480 0%, #4C5B6E 100%); }
+  .vault-synth-tile.t2 { background: linear-gradient(135deg, #4E6B80 0%, #7E8C98 100%); }
+  .vault-synth-tile.t3 { background: linear-gradient(135deg, #B88E5E 0%, #5E4A3C 100%); }
+  .vault-synth-tile.t4 { background: linear-gradient(135deg, #3E6352 0%, #687D70 100%); }
+  .vault-synth-tile.t5 { background: linear-gradient(135deg, #755D82 0%, #9C7B65 100%); }
+  .vault-synth-tile.t6 { background: linear-gradient(135deg, #546E8A 0%, #8A7A6E 100%); }
+
+  .vault-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 44%, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.44) 58%, rgba(0,0,0,0.88) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .vault-back-btn {
+    position: absolute;
+    top: 78px;
+    left: 24px;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 6;
+    color: #FAFAFA;
+  }
+
+  .vault-back-btn svg {
+    width: 34px;
+    height: 34px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   .vault-lock-body {
@@ -565,27 +626,28 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 40px 56px 140px;
+    justify-content: flex-start;
+    padding: 46px 52px 40px;
     text-align: center;
   }
 
   .vault-emblem-ring {
-    width: 144px;
-    height: 144px;
-    border-radius: 40px;
-    background: #141418;
-    border: 1.5px solid #2E2E36;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 16px rgba(255,255,255,0.03);
+    width: 118px;
+    height: 118px;
+    border-radius: 34px;
+    background: rgba(24, 24, 27, 0.84);
+    border: 1.5px solid #32323A;
+    box-shadow: 0 20px 54px rgba(0,0,0,0.58), 0 0 0 14px rgba(250,250,250,0.06);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 38px;
+    margin-bottom: 28px;
+    flex-shrink: 0;
   }
 
   .vault-emblem-ring svg {
-    width: 62px;
-    height: 62px;
+    width: 52px;
+    height: 52px;
     stroke: #FAFAFA;
     fill: none;
     stroke-width: 1.85;
@@ -594,72 +656,84 @@
   }
 
   .vault-lock-title {
-    margin: 0 0 12px;
-    font-size: 38px;
+    margin: 0 0 28px;
+    font-size: 36px;
     font-weight: 700;
     letter-spacing: -0.02em;
   }
 
-  .vault-lock-sub {
-    margin: 0 0 46px;
-    font-size: 24px;
-    color: #A1A1AA;
-    line-height: 1.4;
-  }
-
   .vault-pin-box {
     width: 100%;
-    height: 92px;
-    border-radius: 24px;
-    background: rgba(24, 24, 28, 0.92);
-    border: 1.5px solid #3F3F46;
+    height: 86px;
+    border-radius: 26px;
+    background: rgba(24, 24, 27, 0.82);
+    border: 1.5px solid #2E2E36;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
-    margin-bottom: 24px;
+    gap: 22px;
+    margin-bottom: 26px;
+    flex-shrink: 0;
   }
 
   .pin-dot {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     background: #FAFAFA;
   }
 
-  .pin-dot.empty {
-    background: transparent;
-    border: 2px solid #52525B;
+  .vault-pin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 134px);
+    gap: 14px;
+    justify-content: center;
+    margin-bottom: 26px;
+    flex-shrink: 0;
   }
 
-  .vault-unlock-btn {
-    width: 100%;
-    height: 88px;
-    border-radius: 44px;
-    background: #FAFAFA;
-    color: #09090B;
-    font-size: 27px;
-    font-weight: 700;
+  .vault-pin-key {
+    height: 94px;
+    border-radius: 26px;
+    background: rgba(24, 24, 27, 0.82);
+    border: 1.5px solid #2E2E36;
+    color: #FAFAFA;
+    font-size: 34px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    margin-bottom: 26px;
+  }
+
+  .vault-pin-key.ghost {
+    background: transparent;
+    border-color: transparent;
+    color: #A1A1AA;
+    font-size: 32px;
+  }
+
+  .vault-pin-key.ok {
+    background: #E4E4E7;
+    border-color: #E4E4E7;
+    color: #000000;
+    font-size: 36px;
+    font-weight: 700;
   }
 
   .vault-bio-btn {
     width: 100%;
-    height: 84px;
-    border-radius: 42px;
-    background: rgba(255,255,255,0.05);
+    height: 78px;
+    border-radius: 39px;
+    background: rgba(24, 24, 27, 0.82);
     border: 1.5px solid #2E2E36;
-    color: #E4E4E7;
-    font-size: 25px;
+    color: #FAFAFA;
+    font-size: 23px;
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 14px;
+    flex-shrink: 0;
   }
 
   .vault-bio-btn svg {
@@ -672,30 +746,73 @@
     stroke-linejoin: round;
   }
 
-  .vault-footer-chip {
-    margin-top: 42px;
-    padding: 14px 24px;
-    border-radius: 16px;
-    background: rgba(24,24,28,0.8);
-    border: 1px solid #27272A;
-    font-size: 20px;
-    color: #A1A1AA;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-  }
+   /* Banner left phone: navy vault screen using the same navy tokens as the theme showcase */
+   .bp-left .device-screen.navy-vault {
+     background: #0B1220;
+     color: #EFF6FF;
+   }
+
+   .bp-left .navy-vault .vault-bg-blur {
+     opacity: 0.22;
+     filter: blur(36px) saturate(0.8);
+   }
+
+   .bp-left .navy-vault .vault-vignette {
+     background: radial-gradient(circle at 50% 44%, rgba(11,18,32,0.10) 0%, rgba(11,18,32,0.58) 58%, rgba(6,11,22,0.92) 100%);
+   }
+
+   .bp-left .navy-vault .vault-emblem-ring,
+   .bp-left .navy-vault .vault-pin-box {
+     background: rgba(19, 29, 49, 0.86);
+     border-color: #243451;
+   }
+
+   .bp-left .navy-vault .vault-emblem-ring {
+     box-shadow: 0 20px 54px rgba(0,0,0,0.55), 0 0 0 14px rgba(147,197,253,0.06);
+   }
+
+   .bp-left .navy-vault .vault-emblem-ring svg {
+     stroke: #EFF6FF;
+   }
+
+   .bp-left .navy-vault .vault-lock-sub {
+     color: #8BA7CC;
+   }
+
+   .bp-left .navy-vault .vault-unlock-btn {
+     background: #1E3A5F;
+     border: 1.5px solid #2E4E7A;
+     color: #EFF6FF;
+   }
 
   /* =========================================================
      SLIDE 3: VIRTUAL ALBUMS (Playlists for Your Photos)
      ========================================================= */
   .album-topbar {
-    padding: 16px 32px 24px;
+    padding: 16px 28px 24px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
   }
 
-  .album-topbar svg { width: 34px; height: 34px; stroke: #FAFAFA; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .album-topbar svg { width: 34px; height: 34px; stroke: #FAFAFA; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  .album-topbar-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .album-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .album-topbar-actions svg {
+    width: 30px;
+    height: 30px;
+  }
 
   .album-topbar-text h3 {
     margin: 0;
@@ -913,119 +1030,214 @@
   }
 
   /* =========================================================
-     SLIDE 5: DUAL-PHONE DARK & LIGHT APPEARANCE SHOWCASE
+     SLIDE 5: TRIO THEME SHOWCASE (DARK · NAVY BLUE · LIGHT + APPEARANCE)
      ========================================================= */
   .dual-stage {
     position: absolute;
-    inset: 430px 0 0;
+    inset: 420px 0 0;
     z-index: 5;
   }
 
-  .dual-phone-left {
+  .trio-phone-dark {
     position: absolute;
-    left: -20px;
-    top: 40px;
-    transform: scale(0.76) rotate(-5deg);
+    left: -58px;
+    top: 120px;
+    transform: scale(0.68) rotate(-7deg);
     transform-origin: top left;
+    z-index: 2;
   }
 
-  .dual-phone-right {
+  .trio-phone-navy {
     position: absolute;
-    right: -12px;
-    top: 120px;
-    transform: scale(0.80) rotate(3deg);
+    left: 205px;
+    top: 22px;
+    transform: scale(0.72) rotate(-1.5deg);
+    transform-origin: top left;
+    z-index: 4;
+  }
+
+  .trio-phone-light {
+    position: absolute;
+    right: -34px;
+    top: 158px;
+    transform: scale(0.75) rotate(4deg);
     transform-origin: top right;
+    z-index: 6;
+  }
+
+  .theme-pill-row {
+    position: relative;
+    z-index: 8;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 28px;
+  }
+
+  .theme-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    background: rgba(24, 24, 28, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 21px;
+    font-weight: 600;
+    color: #E4E4E7;
+  }
+
+  .theme-chip-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.28);
   }
 
   .app-bar-light {
-    padding: 20px 32px 24px;
+    padding: 18px 30px 20px;
     display: flex;
     align-items: center;
     gap: 18px;
-    border-bottom: 1px solid #E4E4E7;
-    font-size: 32px;
+    font-size: 31px;
     font-weight: 700;
     color: #18181B;
   }
 
-  .app-bar-light svg { width: 32px; height: 32px; stroke: #18181B; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+  .app-bar-light svg { width: 30px; height: 30px; stroke: #18181B; fill: none; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 
   .app-sec {
-    padding: 26px 32px 10px;
-    font-size: 20px;
+    padding: 18px 34px 10px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #52525B;
   }
 
-  .app-radio-row {
-    padding: 18px 32px;
+  .app-card {
+    margin: 0 26px;
+    border-radius: 24px;
+    background: #FFFFFF;
+    border: 1.5px solid #E4E4E7;
+    overflow: hidden;
+  }
+
+  .app-card-row {
+    padding: 17px 24px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    font-size: 26px;
+    gap: 16px;
+    font-size: 23px;
     color: #18181B;
     font-weight: 500;
+    border-bottom: 1px solid #F0F0F3;
+  }
+
+  .app-card-row:last-child {
+    border-bottom: none;
+  }
+
+  .app-card-row .row-label {
+    flex: 1;
+  }
+
+  .app-card-row .row-sub {
+    display: block;
+    font-size: 18px;
+    color: #71717A;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  .app-switch {
+    width: 64px;
+    height: 36px;
+    border-radius: 999px;
+    background: #E4E4E7;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .app-switch::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 5px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  }
+
+  .swatch-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .swatch-mini {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    border: 1.5px solid #D4D4D8;
   }
 
   .app-radio {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    border: 3px solid #27272A;
+    border: 2.5px solid #A1A1AA;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .app-radio.on {
+    border-color: #27272A;
   }
 
   .app-radio.on::after {
     content: "";
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: #27272A;
   }
 
-  .app-swatch-row {
-    padding: 16px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 25px;
-    color: #18181B;
-    border-bottom: 1px solid #F0F0F3;
-  }
-
   .app-swatch {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
     border: 1.5px solid #D4D4D8;
+    flex-shrink: 0;
   }
 
   .app-preview-box {
-    margin: 24px 32px;
-    padding: 28px;
-    border-radius: 22px;
+    margin: 0 26px;
+    padding: 24px 26px;
+    border-radius: 24px;
     background: #FFFFFF;
     border: 1.5px solid #E4E4E7;
   }
 
   .app-preview-box strong {
     display: block;
-    font-size: 28px;
-    margin-bottom: 18px;
+    font-size: 24px;
+    margin-bottom: 16px;
     color: #18181B;
   }
 
   .app-preview-btn {
     display: inline-block;
-    padding: 14px 28px;
+    padding: 13px 26px;
     border-radius: 14px;
     background: #27272A;
     color: #FFFFFF;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
   }
 
@@ -1436,7 +1648,7 @@
           </div>
           <div class="float-pill" style="right:58px;top:636px;">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Argon2id · Screen Shield
+            Screen Shield
           </div>
 
           <div class="device-wrap">
@@ -1451,11 +1663,19 @@
                   </div>
                 </div>
 
+                <!-- Cosmetic procedural frosted backdrop (VaultAmbientBackdropView — zero real media read) -->
                 <div class="vault-bg-blur">
-                  <img data-photo="5" src="photos/photo-5.jpg" alt="">
-                  <img data-photo="2" src="photos/photo-2.jpg" alt="">
-                  <img data-photo="6" src="photos/photo-6.jpg" alt="">
-                  <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                  <div class="vault-synth-tile t1"></div>
+                  <div class="vault-synth-tile t2"></div>
+                  <div class="vault-synth-tile t3"></div>
+                  <div class="vault-synth-tile t4"></div>
+                  <div class="vault-synth-tile t5"></div>
+                  <div class="vault-synth-tile t6"></div>
+                </div>
+                <div class="vault-vignette"></div>
+
+                <div class="vault-back-btn">
+                  <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                 </div>
 
                 <div class="vault-lock-body">
@@ -1466,7 +1686,7 @@
                       <circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/>
                     </svg>
                   </div>
-                  <h3 class="vault-lock-title" style="margin-bottom:44px;">Unlock encrypted vault</h3>
+                  <h3 class="vault-lock-title">Unlock encrypted vault</h3>
 
                   <div class="vault-pin-box">
                     <span class="pin-dot"></span>
@@ -1474,10 +1694,24 @@
                     <span class="pin-dot"></span>
                     <span class="pin-dot"></span>
                     <span class="pin-dot"></span>
-                    <span class="pin-dot empty"></span>
+                    <span class="pin-dot"></span>
                   </div>
 
-                  <div class="vault-unlock-btn">Unlock Vault</div>
+                  <div class="vault-pin-grid">
+                    <div class="vault-pin-key">1</div>
+                    <div class="vault-pin-key">2</div>
+                    <div class="vault-pin-key">3</div>
+                    <div class="vault-pin-key">4</div>
+                    <div class="vault-pin-key">5</div>
+                    <div class="vault-pin-key">6</div>
+                    <div class="vault-pin-key">7</div>
+                    <div class="vault-pin-key">8</div>
+                    <div class="vault-pin-key">9</div>
+                    <div class="vault-pin-key ghost">⌫</div>
+                    <div class="vault-pin-key">0</div>
+                    <div class="vault-pin-key ok">✓</div>
+                  </div>
+
                   <div class="vault-bio-btn">
                     <svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
                     Use biometrics
@@ -1830,7 +2064,7 @@
             <!-- Left: Encrypted Vault -->
             <div class="bp-slot bp-left">
               <div class="device-frame">
-                <div class="device-screen">
+                <div class="device-screen navy-vault">
                   <div class="punch-hole"></div>
                   <div class="and-status"><span>9:41</span></div>
                   <div class="vault-bg-blur">
