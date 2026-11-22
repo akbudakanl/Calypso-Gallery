@@ -746,4 +746,9 @@
     <string name="settings_group_vault_transfer">Şifreli kasa aktarımı</string>
     <string name="settings_search_results">Arama sonuçları</string>
     <string name="settings_no_search_results">Eşleşen ayar bulunamadı.</string>
+    <string name="show_filenames">Dosya adlarını göster</string>
+    <string name="hide_filenames">Dosya adlarını gizle</string>
+    <string name="search_in_album">Albüm içerisinde ara</string>
+    <string name="show_extra_viewer_actions">Tam ekran medya üzerinde ekstra eylemleri göster</string>
+    <string name="manage_extra_viewer_actions">Ekstra eylemleri yönet</string>
 </resources>

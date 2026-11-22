@@ -790,4 +790,9 @@
     <string name="delete_auto_backup_target_favorites">favoritos</string>
     <string name="delete_auto_backup_target_virtual_albums">álbumes virtuales</string>
     <string name="delete_auto_backup_target_both">favoritos y álbumes virtuales</string>
+    <string name="show_filenames">Mostrar nombres de archivo</string>
+    <string name="hide_filenames">Ocultar nombres de archivo</string>
+    <string name="search_in_album">Buscar en el álbum</string>
+    <string name="show_extra_viewer_actions">Mostrar acciones adicionales en medios a pantalla completa</string>
+    <string name="manage_extra_viewer_actions">Administrar acciones adicionales</string>
 </resources>

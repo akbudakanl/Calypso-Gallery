@@ -765,4 +765,9 @@
     <string name="delete_auto_backup_target_virtual_albums">virtuelle album</string>
     <string name="delete_auto_backup_target_both">favoritter og virtuelle album</string>
     <string name="skip_delete_confirmation">Hopp alltid over dialogen for bekreftelse av sletting</string>
+    <string name="show_filenames">Vis filnavn</string>
+    <string name="hide_filenames">Skjul filnavn</string>
+    <string name="search_in_album">Søk i album</string>
+    <string name="show_extra_viewer_actions">Vis ekstra handlinger på fullskjermsmedier</string>
+    <string name="manage_extra_viewer_actions">Administrer ekstra handlinger</string>
 </resources>

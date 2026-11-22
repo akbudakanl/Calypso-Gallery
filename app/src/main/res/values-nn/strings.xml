@@ -821,4 +821,9 @@
     <string name="delete_auto_backup_target_favorites">favorittar</string>
     <string name="delete_auto_backup_target_virtual_albums">virtuelle album</string>
     <string name="delete_auto_backup_target_both">favorittar og virtuelle album</string>
+    <string name="show_filenames">Vis filnamn</string>
+    <string name="hide_filenames">Gøym filnamn</string>
+    <string name="search_in_album">Søk i album</string>
+    <string name="show_extra_viewer_actions">Vis ekstra handlingar på fullskjermsmedium</string>
+    <string name="manage_extra_viewer_actions">Administrer ekstra handlingar</string>
 </resources>

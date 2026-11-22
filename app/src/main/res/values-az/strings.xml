@@ -819,4 +819,9 @@
     <string name="delete_auto_backup_target_virtual_albums">virtual albomlar</string>
     <string name="delete_auto_backup_target_both">sevimlilər və virtual albomlar</string>
     <string name="skip_delete_confirmation">Silmə təsdiqləmə pəncərəsini həmişə atla</string>
+    <string name="show_filenames">Fayl adlarını göstər</string>
+    <string name="hide_filenames">Fayl adlarını gizlət</string>
+    <string name="search_in_album">Albom daxilində axtar</string>
+    <string name="show_extra_viewer_actions">Tam ekran mediada əlavə əməliyyatları göstər</string>
+    <string name="manage_extra_viewer_actions">Əlavə əməliyyatları idarə et</string>
 </resources>

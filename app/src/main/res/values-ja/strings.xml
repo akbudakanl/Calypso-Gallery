@@ -748,4 +748,9 @@
     <string name="delete_auto_backup_target_virtual_albums">仮想アルバム</string>
     <string name="delete_auto_backup_target_both">お気に入りと仮想アルバム</string>
     <string name="skip_delete_confirmation">削除の確認ダイアログを常にスキップする</string>
+    <string name="show_filenames">ファイル名を表示</string>
+    <string name="hide_filenames">ファイル名を非表示</string>
+    <string name="search_in_album">アルバム内を検索</string>
+    <string name="show_extra_viewer_actions">全画面メディアで追加の操作を表示</string>
+    <string name="manage_extra_viewer_actions">追加の操作を管理</string>
 </resources>

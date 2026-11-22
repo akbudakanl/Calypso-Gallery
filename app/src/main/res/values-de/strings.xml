@@ -748,4 +748,9 @@
     <string name="delete_auto_backup_target_virtual_albums">virtuelle Alben</string>
     <string name="delete_auto_backup_target_both">Favoriten und virtuelle Alben</string>
     <string name="skip_delete_confirmation">Löschbestätigungsdialog immer überspringen</string>
+    <string name="show_filenames">Dateinamen anzeigen</string>
+    <string name="hide_filenames">Dateinamen ausblenden</string>
+    <string name="search_in_album">Im Album suchen</string>
+    <string name="show_extra_viewer_actions">Zusätzliche Aktionen bei Vollbildmedien anzeigen</string>
+    <string name="manage_extra_viewer_actions">Zusätzliche Aktionen verwalten</string>
 </resources>

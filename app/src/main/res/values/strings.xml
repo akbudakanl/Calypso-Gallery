@@ -796,4 +796,9 @@
     <string name="settings_group_vault_transfer">Encrypted vault transfer</string>
     <string name="settings_search_results">Search results</string>
     <string name="settings_no_search_results">No matching settings found.</string>
+    <string name="show_filenames">Show filenames</string>
+    <string name="hide_filenames">Hide filenames</string>
+    <string name="search_in_album">Search in album</string>
+    <string name="show_extra_viewer_actions">Show extra actions on fullscreen media</string>
+    <string name="manage_extra_viewer_actions">Manage extra actions</string>
 </resources>
