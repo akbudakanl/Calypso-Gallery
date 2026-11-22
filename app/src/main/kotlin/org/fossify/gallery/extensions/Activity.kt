@@ -3343,12 +3343,26 @@ fun BaseSimpleActivity.showVaultPasswordSavedDialog(
     isInitialCreation: Boolean = false,
     onDone: () -> Unit,
 ) {
-    // Back dismisses it; tapping outside does not. Dismissing with Back still completes the
-    // vault setup (onDone) but skips the biometric offer — biometrics stay off until enabled
-    // explicitly in Settings.
+    // Tapping outside does not dismiss it; Back does. Both Back and the confirmation button
+    // continue to the one-time biometric offer (3b), followed by the 3c tutorial when creating
+    // a vault. Backing out of 3a used to skip 3b entirely, which also skipped the callbacks that
+    // refresh the vault settings screen — the "create vault" row stayed visible until the
+    // settings category was reopened. Declining/backing out of 3b still leaves biometrics off
+    // (the offer defaults it to off) and then finishes setup through 3c / onDone.
     val finishSetup: () -> Unit = {
         if (isInitialCreation && !isFinishing && !isDestroyed) {
             showVaultPullTutorialDialog { onDone() }
+        } else {
+            onDone()
+        }
+    }
+
+    val proceedToBiometricOffer: () -> Unit = {
+        if (!isFinishing && !isDestroyed) {
+            config.vaultBiometricOfferShown = false
+            VaultBiometricOfferDialog.showIfNeeded(this) {
+                finishSetup()
+            }
         } else {
             onDone()
         }
@@ -3361,19 +3375,8 @@ fun BaseSimpleActivity.showVaultPasswordSavedDialog(
             "\n\n" + getString(R.string.vault_password_reminder_setup_note),
         positiveText = getString(R.string.vault_password_saved_confirm),
         cancelable = true,
-        onPositive = {
-            // HTML: 3a is acknowledged first, then the one-time biometric offer (3b) may appear,
-            // followed by the 3c top-scroll gesture tutorial when creating a vault.
-            if (!isFinishing && !isDestroyed) {
-                config.vaultBiometricOfferShown = false
-                VaultBiometricOfferDialog.showIfNeeded(this) {
-                    finishSetup()
-                }
-            } else {
-                onDone()
-            }
-        },
-        onCancel = { finishSetup() },
+        onPositive = proceedToBiometricOffer,
+        onCancel = proceedToBiometricOffer,
     )
 }
 
