@@ -676,59 +676,6 @@
     flex-shrink: 0;
   }
 
-  .vault-password-field {
-    width: 100%;
-    height: 86px;
-    border-radius: 26px;
-    background: rgba(24, 24, 27, 0.82);
-    border: 1.5px solid #2E2E36;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 30px;
-    margin-bottom: 26px;
-    flex-shrink: 0;
-  }
-
-  .vault-password-field span {
-    font-size: 34px;
-    letter-spacing: 0.16em;
-    color: #FAFAFA;
-    line-height: 1;
-  }
-
-  .vault-password-field svg {
-    width: 34px;
-    height: 34px;
-    stroke: #A1A1AA;
-    fill: none;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .vault-password-ok {
-    width: 86px;
-    height: 86px;
-    border-radius: 50%;
-    background: rgba(24, 24, 27, 0.82);
-    border: 1.5px solid #2E2E36;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .vault-password-ok svg {
-    width: 42px;
-    height: 42px;
-    stroke: #FAFAFA;
-    fill: none;
-    stroke-width: 2.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
   .pin-dot {
     width: 16px;
     height: 16px;
@@ -1657,7 +1604,7 @@
                   </div>
 
                   <div class="vault-bio-btn">
-                    <svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M12,10a2,2 0,0 0,-2 2c0,1.02 -0.1,2.51 -0.26,4"/><path d="M14,13.12c0,2.38 0,6.38 -1,8.88"/><path d="M17.29,21.02c0.12,-0.6 0.43,-2.3 0.5,-3.02"/><path d="M2,12a10,10 0,0 1,18 -6"/><path d="M21.8,16c0.2,-2 0.131,-5.354 0,-6"/><path d="M5,19.5C5.5,18 6,15 6,12a6,6 0,0 1,0.34 -2"/><path d="M8.65,22c0.21,-0.66 0.45,-1.32 0.57,-2"/><path d="M9,6.8a6,6 0,0 1,9 5.2v2"/></svg>
                     Use biometrics
                   </div>
                 </div>
@@ -2004,14 +1951,11 @@
                       <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/></svg>
                     </div>
                     <h3 class="vault-lock-title">Encrypted Vault</h3>
-                    <p class="vault-lock-sub">Enter vault password</p>
-                    <div class="vault-password-field">
-                      <span>••••••••</span>
-                      <svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    <p class="vault-lock-sub">AES-256-GCM · Argon2id</p>
+                    <div class="vault-pin-box">
+                      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot empty"></span>
                     </div>
-                    <div class="vault-password-ok">
-                      <svg viewBox="0 0 24 24"><path d="M5 12l4 4L19 6"/></svg>
-                    </div>
+                    <div class="vault-unlock-btn">Unlock Vault</div>
                   </div>
                 </div>
               </div>
