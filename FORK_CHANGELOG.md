@@ -4,6 +4,10 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+### Changed
+
+- The per-digit PIN dot indicator now supports PINs of up to 14 digits instead of 16, so the dots keep a comfortable spacing on narrow screens. Existing 15- or 16-digit PINs turn the setting off on next unlock.
+
 ### Fixed
 
 - Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.

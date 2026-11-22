@@ -13,7 +13,7 @@
 The encrypted vault supports two secret types:
 
 1. **Alphanumeric password** (`PROTECTION_PASSWORD`), and
-2. **Numeric PIN** (`PROTECTION_PIN`, minimum 4 digits, uncapped length; per-digit dot indicator supported up to 16 digits via `VAULT_PIN_DOTS_MAX_LENGTH`).
+2. **Numeric PIN** (`PROTECTION_PIN`, minimum 4 digits, uncapped length; per-digit dot indicator supported up to 14 digits via `VAULT_PIN_DOTS_MAX_LENGTH`).
 
 For PIN entry, the application offers two visual presentations:
 

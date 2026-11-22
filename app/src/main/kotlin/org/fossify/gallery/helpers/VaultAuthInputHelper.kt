@@ -49,7 +49,7 @@ class VaultAuthInputHelper(
     /** 0 while a new PIN is being defined; otherwise the digit count saved at setup. */
     private val fixedPinLength: Int = maxOf(0, expectedPinLength ?: activity.config.vaultPinLength)
 
-    /** User preference: draw one dot per digit. The view is also hidden for PINs longer than 16. */
+    /** User preference: draw one dot per digit. The view is also hidden for PINs longer than 14. */
     private val showPinDots: Boolean = activity.config.showVaultPinDots
 
     private var pinLength = 0

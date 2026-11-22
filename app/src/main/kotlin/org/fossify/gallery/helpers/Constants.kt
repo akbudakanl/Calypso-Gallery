@@ -187,7 +187,7 @@ const val VAULT_LAST_PASSWORD_ENTRY_AT = "vault_last_password_entry_at"
 const val VAULT_LAST_PASSWORD_REMINDER_AT = "vault_last_password_reminder_at"
 const val VAULT_HEADER_FILE = ".vault"
 /** Longest PIN that still gets the optional per-digit dot indicator. */
-const val VAULT_PIN_DOTS_MAX_LENGTH = 16
+const val VAULT_PIN_DOTS_MAX_LENGTH = 14
 
 /** Metadata sanitization applied to a temporary copy when sharing images. */
 const val SHARE_METADATA_MODE_OFF = 0

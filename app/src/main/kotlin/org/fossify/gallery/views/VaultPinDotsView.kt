@@ -111,6 +111,6 @@ class VaultPinDotsView @JvmOverloads constructor(
         private const val DOT_DIAMETER_DP = 11f
         private const val DOT_STEP_DP = 25f
         private const val RING_STROKE_DP = 1.5f
-        private const val MAX_SLOTS = 16
+        private const val MAX_SLOTS = 14
     }
 }
