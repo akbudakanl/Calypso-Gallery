@@ -41,6 +41,7 @@ class Config(context: Context) : BaseConfig(context) {
         private const val AUTO_BACKUP_SAVED_THEMES = "auto_backup_saved_themes"
         private const val VAULT_PIN_LENGTH = "vault_pin_length"
         private const val SHOW_VAULT_PIN_DOTS = "show_vault_pin_dots"
+        private const val PIN_DOTS_NOTICE_SHOWN = "pin_dots_notice_shown"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -88,6 +89,11 @@ class Config(context: Context) : BaseConfig(context) {
             }
             editor.apply()
         }
+
+    /** True once the user has acknowledged the "Alternative PIN appearance" notice dialog (ADR 0008). */
+    var pinDotsNoticeShown: Boolean
+        get() = prefs.getBoolean(PIN_DOTS_NOTICE_SHOWN, false)
+        set(value) = prefs.edit().putBoolean(PIN_DOTS_NOTICE_SHOWN, value).apply()
 
     /**
      * Appearance mode for the fork's own Appearance screen. On first run after the upgrade,

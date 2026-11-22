@@ -766,6 +766,8 @@
     <string name="use_biometrics">Use biometrics</string>
     <string name="hide_vault_key_presses">Hide key presses when entering vault password</string>
     <string name="show_pin_dots">Show a dot for each PIN digit</string>
+    <string name="pin_dots_notice_title">Alternative PIN appearance</string>
+    <string name="pin_dots_notice_note">Anyone seeing your screen can count the empty rings to tell your PIN length. This reduces the number of passwords to try by about 10%. If you find having your PIN length known acceptable from a security standpoint, you can use this view.</string>
 
     <!-- Minimalist Settings & Appearance Redesign -->
     <string name="appearance_automatic">Automatic</string>

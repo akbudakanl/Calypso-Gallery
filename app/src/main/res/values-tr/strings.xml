@@ -716,6 +716,8 @@
     <string name="use_biometrics">Biyometrik kullan</string>
     <string name="hide_vault_key_presses">Kasa parolası girerken tuş basımlarını gizle</string>
     <string name="show_pin_dots">PIN girilirken her basamağı bir nokta ile göster</string>
+    <string name="pin_dots_notice_title">Alternatif PIN görünümü</string>
+    <string name="pin_dots_notice_note">Ekranı gören biri boş halkaları sayarak PIN uzunluğunuzu anlayabilir. Bu, denenmesi gereken parola sayısını yaklaşık %10 azaltır. PIN uzunluğunuzun bilinmesini güvenlik açısından kabul edilebilir buluyorsanız bu görünümü kullanabilirsiniz.</string>
 
     <!-- Minimalist Ayarlar & Görünüm Yenilemesi -->
     <string name="appearance_automatic">Otomatik</string>

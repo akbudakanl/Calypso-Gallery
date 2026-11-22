@@ -1257,23 +1257,47 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsShowVaultPinDots.isChecked = config.showVaultPinDots
         binding.settingsShowVaultPinDotsHolder.setOnClickListener {
             val enabling = !config.showVaultPinDots
-            // Ayar açılırken PIN uzunluğunu öğrenmek için biyometrik yerine PIN girişi zorunlu tutulur;
-            // ayar kapatılırken biyometrik doğrulama da kullanılabilir ve uzunluk diskten silinir.
-            requireVaultPassword(allowBiometrics = !enabling) {
-                if (enabling) {
-                    config.showVaultPinDots = true
-                    val enteredLen = VaultAuthInputHelper.lastAuthenticatedPinLength
-                    if (enteredLen in 1..VAULT_PIN_DOTS_MAX_LENGTH) {
-                        config.vaultPinLength = enteredLen
-                        binding.settingsShowVaultPinDots.isChecked = true
+            val proceedWithAuth = {
+                // Ayar açılırken PIN uzunluğunu öğrenmek için biyometrik yerine PIN girişi zorunlu tutulur;
+                // ayar kapatılırken biyometrik doğrulama da kullanılabilir ve uzunluk diskten silinir.
+                requireVaultPassword(allowBiometrics = !enabling) {
+                    if (enabling) {
+                        config.showVaultPinDots = true
+                        val enteredLen = VaultAuthInputHelper.lastAuthenticatedPinLength
+                        if (enteredLen in 1..VAULT_PIN_DOTS_MAX_LENGTH) {
+                            config.vaultPinLength = enteredLen
+                            binding.settingsShowVaultPinDots.isChecked = true
+                        } else {
+                            config.showVaultPinDots = false
+                            binding.settingsShowVaultPinDots.isChecked = false
+                        }
                     } else {
                         config.showVaultPinDots = false
                         binding.settingsShowVaultPinDots.isChecked = false
                     }
-                } else {
-                    config.showVaultPinDots = false
-                    binding.settingsShowVaultPinDots.isChecked = false
                 }
+            }
+
+            if (enabling && !config.pinDotsNoticeShown) {
+                org.fossify.gallery.dialogs.VaultNoticeDialog(
+                    activity = this,
+                    title = getString(R.string.pin_dots_notice_title),
+                    message = "",
+                    noteText = getString(R.string.pin_dots_notice_note),
+                    positiveText = getString(R.string.onboarding_continue),
+                    negativeText = getString(org.fossify.commons.R.string.cancel),
+                    cancelable = true,
+                    canceledOnTouchOutside = true,
+                    showPinDotsPreview = true,
+                    showNoteShieldIcon = true,
+                    filledPositiveButton = true,
+                    onPositive = {
+                        config.pinDotsNoticeShown = true
+                        proceedWithAuth()
+                    },
+                )
+            } else {
+                proceedWithAuth()
             }
         }
     }

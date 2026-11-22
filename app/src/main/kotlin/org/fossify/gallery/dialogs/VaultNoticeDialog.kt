@@ -1,12 +1,14 @@
 package org.fossify.gallery.dialogs
 
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.core.graphics.ColorUtils
+import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
@@ -33,6 +35,8 @@ class VaultNoticeDialog(
     canceledOnTouchOutside: Boolean = false,
     showBiometricGlyph: Boolean = false,
     showPullTutorial: Boolean = false,
+    showPinDotsPreview: Boolean = false,
+    showNoteShieldIcon: Boolean = false,
     filledPositiveButton: Boolean = false,
     alignSingleActionEnd: Boolean = false,
     onPositive: () -> Unit,
@@ -57,9 +61,13 @@ class VaultNoticeDialog(
             text = title
             setTextColor(palette.text)
         }
-        binding.noticeMessage.apply {
-            text = message
-            setTextColor(palette.secondary)
+        if (message.isEmpty()) {
+            binding.noticeScroll.beGone()
+        } else {
+            binding.noticeMessage.apply {
+                text = message
+                setTextColor(palette.secondary)
+            }
         }
 
         if (showBiometricGlyph) {
@@ -85,14 +93,34 @@ class VaultNoticeDialog(
             }
         }
 
+        if (showPinDotsPreview) {
+            binding.noticePinDotsPreview.beVisible()
+            binding.noticePinDotsPreview.applyPalette(palette)
+            binding.noticePinDotsPreview.post {
+                binding.noticePinDotsPreview.start()
+            }
+        }
+
         if (noteText != null) {
             binding.noticeNote.apply {
                 text = noteText
                 setTextColor(palette.text)
+            }
+            if (showNoteShieldIcon) {
+                binding.noticeNoteIcon.imageTintList = ColorStateList.valueOf(palette.primary)
+                binding.noticeNoteIcon.visibility = View.VISIBLE
+            }
+            binding.noticeNoteHolder.apply {
                 background = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
-                    cornerRadius = dp(12f).toFloat()
+                    cornerRadius = dp(13f).toFloat()
                     setColor(ColorUtils.blendARGB(palette.surface, palette.primary, 0.08f))
+                    if (showNoteShieldIcon) {
+                        setStroke(
+                            dp(1f).coerceAtLeast(1),
+                            ColorUtils.blendARGB(palette.surface, palette.primary, 0.18f),
+                        )
+                    }
                 }
                 visibility = View.VISIBLE
             }
