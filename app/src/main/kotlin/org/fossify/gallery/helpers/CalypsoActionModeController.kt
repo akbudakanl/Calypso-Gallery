@@ -3,7 +3,6 @@ package org.fossify.gallery.helpers
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
@@ -19,17 +18,13 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupWindow
-import android.widget.ScrollView
 import android.widget.TextView
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.ActionBarContextView
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.adapters.MyRecyclerViewAdapter
-import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
 import org.fossify.gallery.extensions.config
 
@@ -58,7 +53,7 @@ class CalypsoActionModeController(
     private var pillContainer: LinearLayout? = null
     private var actionsContainer: LinearLayout? = null
     private var counterTextView: TextView? = null
-    private var overflowPopup: PopupWindow? = null
+    private val overflowPopup = CalypsoOverflowMenuPopup(activity)
     private var hiddenSearchBarContainer: View? = null
 
     fun onActionModeCreated(actMode: ActionMode?) {
@@ -223,7 +218,7 @@ class CalypsoActionModeController(
                 contentDescription = moreTitle
                 TooltipCompat.setTooltipText(this, moreTitle)
                 setOnClickListener {
-                    toggleOverflowPopup(overflowItems, palette, density)
+                    toggleOverflowPopup(overflowItems)
                 }
             }
             rightActions.addView(moreBtn)
@@ -243,12 +238,7 @@ class CalypsoActionModeController(
     }
 
     fun dismissOverflowPopup() {
-        runCatching {
-            if (overflowPopup?.isShowing == true) {
-                overflowPopup?.dismiss()
-            }
-        }
-        overflowPopup = null
+        overflowPopup.dismiss()
     }
 
     private fun styleCounterBadge(counter: TextView, palette: AppearancePalette, density: Float) {
@@ -325,165 +315,10 @@ class CalypsoActionModeController(
         actionModeBar.requestLayout()
     }
 
-    private fun toggleOverflowPopup(
-        overflowItems: List<MenuItem>,
-        palette: AppearancePalette,
-        density: Float
-    ) {
-        if (overflowPopup?.isShowing == true) {
-            dismissOverflowPopup()
-            return
-        }
+    private fun toggleOverflowPopup(overflowItems: List<MenuItem>) {
         val anchor = pillContainer ?: outerWrapper ?: return
-        val strokeWidth = (1f * density).toInt().coerceAtLeast(1)
-        val popupWidth = (238f * density).toInt()
-
-        val cardContainer = FrameLayout(activity).apply {
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = 18f * density
-                setColor(palette.surface)
-                setStroke(strokeWidth, palette.border)
-            }
-            outlineProvider = ViewOutlineProvider.BACKGROUND
-            clipToOutline = true
-            elevation = 14f * density
-        }
-
-        val scrollView = ScrollView(activity).apply {
-            isVerticalScrollBarEnabled = false
-            overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
-        }
-
-        val listPad = (6f * density).toInt()
-        val listLayout = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(listPad, listPad, listPad, listPad)
-        }
-
-        scrollView.addView(
-            listLayout,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        )
-        cardContainer.addView(
-            scrollView,
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        val popup = PopupWindow(
-            cardContainer,
-            popupWidth,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            true
-        ).apply {
-            isOutsideTouchable = true
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            elevation = 16f * density
-            setOnDismissListener {
-                if (overflowPopup === this) {
-                    overflowPopup = null
-                }
-            }
-        }
-
-        fun populateItems(items: List<MenuItem>) {
-            listLayout.removeAllViews()
-            for (item in items) {
-                if (!item.isVisible) continue
-                val row = buildOverflowRow(item, palette, density) {
-                    val subMenu = item.subMenu
-                    if (item.hasSubMenu() && subMenu != null && subMenu.size() > 0) {
-                        val subItems = ArrayList<MenuItem>()
-                        for (idx in 0 until subMenu.size()) {
-                            val subItem = subMenu.getItem(idx)
-                            if (subItem.isVisible) {
-                                subItems.add(subItem)
-                            }
-                        }
-                        if (subItems.isNotEmpty()) {
-                            populateItems(subItems)
-                            return@buildOverflowRow
-                        }
-                    }
-                    popup.dismiss()
-                    adapter.actionItemPressed(item.itemId)
-                }
-                listLayout.addView(row)
-            }
-        }
-
-        populateItems(overflowItems)
-        overflowPopup = popup
-
-        val yOffset = (6f * density).toInt()
-        val xOffset = anchor.width - popupWidth
-        popup.showAsDropDown(anchor, xOffset, yOffset, Gravity.START)
-    }
-
-    private fun buildOverflowRow(
-        item: MenuItem,
-        palette: AppearancePalette,
-        density: Float,
-        onClick: () -> Unit
-    ): View {
-        val padH = (11f * density).toInt()
-        val padV = (9.5f * density).toInt()
-        val iconSize = (18f * density).toInt()
-
-        return LinearLayout(activity).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            setPadding(padH, padV, padH, padV)
-            background = createMenuRowRipple(palette, density)
-            isClickable = true
-            isFocusable = true
-
-            val iconView = ImageView(activity).apply {
-                layoutParams = LinearLayout.LayoutParams(iconSize, iconSize)
-                scaleType = ImageView.ScaleType.FIT_CENTER
-                setImageDrawable(resolveMenuItemIcon(item, palette.secondary))
-            }
-            addView(iconView)
-
-            val titleView = MyTextView(activity).apply {
-                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    marginStart = (11f * density).toInt()
-                }
-                text = item.title
-                setTextColor(palette.text)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
-                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-            }
-            addView(titleView)
-
-            if (item.hasSubMenu()) {
-                val chevronSize = (14f * density).toInt()
-                val chevronView = ImageView(activity).apply {
-                    layoutParams = LinearLayout.LayoutParams(chevronSize, chevronSize).apply {
-                        marginStart = (6f * density).toInt()
-                    }
-                    scaleType = ImageView.ScaleType.FIT_CENTER
-                    setImageDrawable(
-                        loadTintedDrawable(
-                            org.fossify.commons.R.drawable.ic_chevron_right_unpadded_vector,
-                            palette.secondary
-                        )
-                    )
-                }
-                addView(chevronView)
-            }
-
-            setOnClickListener { onClick() }
+        overflowPopup.toggle(anchor = anchor, items = overflowItems) { chosen ->
+            adapter.actionItemPressed(chosen.itemId)
         }
     }
 
@@ -497,76 +332,12 @@ class CalypsoActionModeController(
         return RippleDrawable(ColorStateList.valueOf(rippleColor), null, mask)
     }
 
-    private fun createMenuRowRipple(palette: AppearancePalette, density: Float): Drawable {
-        val isLight = AppearancePalette.isLightBackground(palette.background)
-        val rippleColor = ColorUtils.blendARGB(palette.surface, palette.primary, if (isLight) 0.12f else 0.18f)
-        val mask = GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = 12f * density
-            setColor(Color.WHITE)
-        }
-        return RippleDrawable(ColorStateList.valueOf(rippleColor), null, mask)
-    }
-
     private fun resolveMenuItemIcon(item: MenuItem, tintColor: Int): Drawable? {
-        val resId = when (item.itemId) {
-            R.id.cab_confirm_selection -> org.fossify.commons.R.drawable.ic_check_vector
-            R.id.cab_delete,
-            org.fossify.commons.R.id.cab_remove,
-            R.id.cab_empty_recycle_bin,
-            R.id.cab_empty_disable_recycle_bin -> org.fossify.commons.R.drawable.ic_delete_vector
-            R.id.cab_share -> org.fossify.commons.R.drawable.ic_share_vector
-            R.id.cab_pin -> org.fossify.commons.R.drawable.ic_pin_filled_vector
-            R.id.cab_unpin -> R.drawable.ic_unpin_vector
-            R.id.cab_properties -> org.fossify.commons.R.drawable.ic_info_vector
-            R.id.cab_rename -> org.fossify.commons.R.drawable.ic_rename_vector
-            R.id.cab_hide -> R.drawable.ic_encrypt_calypso_vector
-            R.id.cab_unhide,
-            R.id.cab_unhide_folder -> org.fossify.commons.R.drawable.ic_unhide_vector
-            R.id.cab_hide_folder -> R.drawable.ic_album_hidden_vector
-            R.id.cab_exclude,
-            R.id.cab_unexclude -> R.drawable.ic_album_excluded_vector
-            R.id.cab_rotate,
-            R.id.cab_rotate_right,
-            R.id.cab_rotate_left,
-            R.id.cab_rotate_one_eighty -> R.drawable.ic_rotate_right_vector
-            R.id.cab_change_order -> org.fossify.commons.R.drawable.ic_drag_handle_vector
-            R.id.cab_move_to_top -> org.fossify.commons.R.drawable.ic_move_to_top_vector
-            R.id.cab_move_to_bottom -> org.fossify.commons.R.drawable.ic_move_to_bottom_vector
-            R.id.cab_copy_to -> org.fossify.commons.R.drawable.ic_copy_vector
-            R.id.cab_move_to -> org.fossify.commons.R.drawable.ic_move_vector
-            R.id.cab_add_to_virtual_album,
-            R.id.cab_select_photo -> R.drawable.ic_album_virtual_vector
-            R.id.cab_remove_from_virtual_album -> org.fossify.commons.R.drawable.ic_minus_circle_vector
-            R.id.cab_create_shortcut -> org.fossify.commons.R.drawable.ic_link_vector
-            R.id.cab_open_with -> R.drawable.ic_open_with_calypso_vector
-            R.id.cab_set_as -> org.fossify.commons.R.drawable.ic_set_as_vector
-            R.id.cab_resize -> R.drawable.ic_aspect_ratio_vector
-            R.id.cab_edit,
-            R.id.cab_change_cover_image -> R.drawable.ic_edit_calypso_vector
-            R.id.cab_add_to_favorites -> R.drawable.ic_star_outline_calypso_vector
-            R.id.cab_remove_from_favorites -> R.drawable.ic_star_calypso_vector
-            R.id.cab_restore_recycle_bin_files,
-            R.id.cab_use_default -> org.fossify.commons.R.drawable.ic_reset_vector
-            R.id.cab_lock -> org.fossify.commons.R.drawable.ic_lock_outlined_vector
-            R.id.cab_unlock -> org.fossify.commons.R.drawable.ic_lock_vector
-            R.id.cab_select_all -> org.fossify.commons.R.drawable.ic_select_all_vector
-            else -> 0
-        }
-        if (resId != 0) {
-            return loadTintedDrawable(resId, tintColor)
-        }
-        return item.icon?.constantState?.newDrawable()?.mutate()?.apply {
-            colorFilter = null
-            setTintList(ColorStateList.valueOf(tintColor))
-        }
+        return CalypsoOverflowMenuPopup.resolveMenuItemIcon(activity, item, tintColor)
     }
 
     private fun loadTintedDrawable(resId: Int, tintColor: Int): Drawable? {
-        return AppCompatResources.getDrawable(activity, resId)?.mutate()?.apply {
-            colorFilter = null
-            setTintList(ColorStateList.valueOf(tintColor))
-        }
+        return CalypsoOverflowMenuPopup.loadTintedDrawable(activity, resId, tintColor)
     }
 
     companion object {

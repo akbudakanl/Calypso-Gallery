@@ -65,7 +65,14 @@ fun MySearchMenu.applyCalypsoSearchBarStyle() {
 
     val actionIconColor = resolveCalypsoSearchIconColor(context, isSearchOpen)
     val toolbar = requireToolbar()
-    toolbar.overflowIcon = ContextCompat.getDrawable(context, R.drawable.ic_more_vertical_calypso_vector)
+    val hasCalypsoOverflow = toolbar.menu?.findItem(R.id.calypso_overflow) != null
+    toolbar.overflowIcon = if (hasCalypsoOverflow) {
+        null
+    } else {
+        ContextCompat.getDrawable(context, R.drawable.ic_more_vertical_calypso_vector)
+            ?.mutate()?.apply { setTintList(ColorStateList.valueOf(actionIconColor)) }
+    }
+    toolbar.menu?.findItem(R.id.calypso_overflow)?.icon = ContextCompat.getDrawable(context, R.drawable.ic_more_vertical_calypso_vector)
         ?.mutate()?.apply { setTintList(ColorStateList.valueOf(actionIconColor)) }
     toolbar.menu?.findItem(R.id.sort)?.icon = ContextCompat.getDrawable(context, R.drawable.ic_sort_view_calypso_vector)
         ?.mutate()?.apply { setTintList(ColorStateList.valueOf(actionIconColor)) }
