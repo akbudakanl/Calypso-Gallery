@@ -63,7 +63,7 @@ Bireysel kullanıcılar için KEK rotasyonunun getirdiği mühendislik ve operas
 
 ---
 
-## 3. İleriye Dönük Format Uyumluluğu (`1.x`, güncel sürüm `1.2.0`)
+## 3. İleriye Dönük Format Uyumluluğu (`1.x`, güncel sürüm `1.0.0`)
 
 KEK rotasyonu `1.x` boyunca uygulanmamış olsa da kanonik kapsayıcı biçimi (`FGVLTENC` v1) ileride geriye dönük uyumluluğu bozmadan eklenebilecek şekilde tasarlanmıştır:
 - **`.bin` başlıkları (`FGVLTENC` v1):** 9. baytta 2 baytlık açık `keyId` (`u16`, şu an `1`) alanını zaten taşır.

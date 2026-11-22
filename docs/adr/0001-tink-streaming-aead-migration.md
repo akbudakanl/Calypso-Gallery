@@ -181,7 +181,7 @@ The header keeps the outer `writeVaultHeader` framing (magic `FGVLT`, Argon2id p
 ```
 
 - Password/PIN change re-wraps `PdkWrappedVmK` **and** `VmkWrappedKeyring` under a fresh `ivVmk`, and clears the biometric bundle; the plaintext VMK/KEK and file headers are untouched. KDF-only re-wrap preserves biometrics.
-- Keystore/StrongBox wrapping of a local VMK copy is **optional** and only enabled when biometrics are enrolled; the portable `.vault` path uses the Argon2id PDK. The calibrated Argon2id parameters travel in `.vault` like KeePass rounds in `.kdbx`.
+- Keystore/StrongBox wrapping of a local VMK copy is **optional** and only enabled when biometrics are enrolled; the portable `.vault` path uses the Argon2id PDK. The calibrated Argon2id parameters travel in `.vault` alongside the encrypted payload.
 
 ---
 

@@ -1,4 +1,4 @@
-# Crypto design review — Calypso Gallery 1.2.0
+# Crypto design review — Calypso Gallery 1.0.0
 
 Short design review note. Refer to `DOCS.md` section 2 and ADR 0001 for the primitives and file
 format used by the application. This document focuses on the **threat model**, **AAD rationale**

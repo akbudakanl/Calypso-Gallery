@@ -6,8 +6,8 @@ import kotlin.math.roundToInt
 /**
  * Lightweight, fully on-device strength estimate for a new vault secret.
  *
- * Inspired by the ideas behind zxcvbn/KeePassXC (character-class entropy plus penalties for
- * dictionary words, repeats, sequences and keyboard walks), but intentionally small: no dictionary
+ * Uses character-class entropy plus penalties for dictionary words, repeats, sequences and
+ * keyboard walks, but intentionally small: no dictionary
  * file, no native code, no network. The result is guidance for the person choosing a password -
  * the real offline brute-force resistance comes from Argon2 and the chosen unlock-time target.
  */
@@ -104,7 +104,7 @@ object VaultPasswordStrength {
         if (YEAR.containsMatchIn(normalized)) bits -= 6.0
         if (text.length < 8) bits = bits.coerceAtMost(22.0)
 
-        // Sözlükeli dizilimleri cezalandır: zxcvbn'de bir sözlük kelimesi ~10-12 bittir.
+        // Sözlükeli dizilimleri cezalandır: bir sözlük kelimesi ~10-12 bit olarak ele alınır.
         // "doğru at yem" gibi 2-3 kelimelik passphrase'ler saf karakter entropisiyle
         // "çok güçlü" görünür; gerçekte çok daha zayıftır. Kelime benzeri harf bloklarını
         // ~12 bit + uzunluk fazlası ile sınırlayarak gerçekçi hale getiriyoruz.
@@ -121,7 +121,7 @@ object VaultPasswordStrength {
         return Result(score, levelOf(score))
     }
 
-    // KeePassXC ile aynı eşik mantığı: 80 bit ve üzeri "çok güçlü".
+    // Eşik mantığı: 80 bit ve üzeri "çok güçlü".
     private fun levelOf(score: Int) = when {
         score <= 0 -> Level.BAD
         score < 40 -> Level.POOR

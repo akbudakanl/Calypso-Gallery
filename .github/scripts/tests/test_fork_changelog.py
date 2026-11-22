@@ -145,7 +145,7 @@ class ForkChangelogTests(unittest.TestCase):
             try:
                 os.chdir(root)
                 arguments = argparse.Namespace(
-                    version="1.20.0-cipher",
+                    version="1.0.0-invalid",
                     code=40,
                     repository="akbudakanl/Gallery-Cipher",
                 )

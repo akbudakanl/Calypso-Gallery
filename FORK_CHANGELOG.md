@@ -2,222 +2,28 @@
 
 Calypso Gallery'nin kullanıcıya yönelik sürüm notları. Orijinal Fossify Gallery sürüm geçmişi `CHANGELOG.md` içinde tutulur.
 
-## [Unreleased]
+## [1.0.0] - 2026-11-22
 
-## [1.3.0] - 2026-11-22
 ### Eklendi
 
-- Ana galeri, albüm ve tam ekran görüntüleyici taşma menüleri Calypso açılır menüsüyle modernize edildi: doğrulanmış eylem sırası, albüm arama ipucu, yerel ölçekleme ve temalı Ayarlar altbilgisi; menü grupları arasında ayırıcı çizgiler eklendi.
-- Tam ekran görüntüleyicide hangi eylemlerin gösterileceğini seçmek için isteğe bağlı "Ek görüntüleyici eylemleri" ayarı ve yöneticisi eklendi.
-- Dosya adlarını göster/gizle seçeneği ile albüm içi arama metinleri uygulamaya alındı.
-- Ayarlara **Bildirimler** kategorisi eklendi: ana anahtar ile Kopyalama/Taşıma, Şifreleme/Çözme, Silme/Geri dönüşüm ve Sanal albüm güncellemeleri için ayrı anahtarlar (varsayılan açık). Android 13+ için izin verilmemişse listenin üstünde bildirim izni isteyen bir satır gösterilir. Android arka plan dosya işlemleri için kalıcı bildirim zorunlu kıldığından ayarlar ayrıntılı ilerlemenin (dosya adı ve yüzde) gösterilmesini kontrol eder.
-- Toplu silme işlemlerinde ilerleme diyaloğu ve bildirim ilerlemesi gösteriliyor; büyük albüm silmelerinde arka planda bir şey olup olmadığı artık görülebiliyor.
+- Tink akışlı AEAD ile şifreli kasa: Argon2id anahtar türetme, biyometrik kilit açma, parola değiştirme ve kasayı içe/dışa aktarma.
+- Şifreli kasa için yalnızca cihazda çalışan parola güç göstergesi ve güçlü biyometri politikası.
+- Sanal albümler ve favoriler: dosyaları kopyalamadan referansla gösterme, klasör adı/değişimi sonrası yol onarımı, yedekleme ve içe aktarma.
+- Çevrimdışı çalışma: ağ izni yok, bulut bağımlılığı yok; tüm veriler cihazda.
+- Dosya işlemleri için tek bir arka plan bildirimi ve ayrıntılı ilerleme gösterimi; kopyalama, taşıma, şifreleme, çözme ve silme işlemleri.
+- Karakter sınıfı entropisi, sözlük/tekrar/dizi ve klavye yürüyüşü cezaları içeren yerel parola güç ölçümü.
+- İlk kullanım karşılama ekranı, tam dosya erişimi izin akışı ve kasa kurulum eğitimi.
+- Tam ekran görüntüleyici, sanal albüm rozetleri, akıllı çakışma diyalogları ve masaüstü şifreleme aracı (CLI).
+- Ayrı Ayarlar görünümü, açık/koyu/özel tema paletleri, ayar araması ve Calypso açılır menüsü.
+- Uygulama içi GPLv3 ve üçüncü taraf lisans ekranları.
 
-### Değiştirildi
+### Güvenlik ve kararlılık
 
-- Dosya işlemi bildirimleri tek bir sistemde birleştirildi: `FileOperationService` artık tüm işlemler için ilerleme çubuklu tek bildirim yayınlıyor; bağımsız `OperationProgressNotifier` kaldırıldı. Kopyalama/taşıma, şifreleme/çözme ve kasa içe/dışa aktarma aynı kanal ve bildirim kimliğini kullanıyor.
-- Kopyalama/taşıma öncesindeki bit-bit karşılaştırma/çakışma kontrolü artık ayrı "Dosyalar aktarım öncesi kontrol ediliyor" diyaloğunda gösteriliyor; gerçek aktarım diyaloğu yalnızca kontrol tamamlandığında açılıyor. Böylece ilerleme %0'da takılı görünmüyor.
-- İşlem başlatılmadan önce `POST_NOTIFICATIONS` izin istemi kaldırıldı (foreground servis bildirimi Android 13+'ta bu izinden muaf). Önceki tek kullanımlık "izin soruldu" kilidi de kaldırıldı; bir kez vazgeçmek sonraki işlemlerin bildirimini sessizce kapatmıyordu.
-- Sanal albüme ekleme/çıkarma işlemleri de kayıtlı foreground işlemi olarak ilerleme bildirimi üretiyor.
-- Bildirim ayrıntıları yalnızca uygulama arka plandayken gösteriliyor: uygulama açıkken ekrandaki ilerleme diyaloğu yeterli olduğundan bildirim sade başlıkta kalıyor, arka plana geçilince ilerleme çubuğu ve yüzde ekleniyor. Android çalışan foreground servis için bildirimi zorunlu kıldığından bildirim tamamen kaldırılamıyor.
-- Gizlilik: bildirimlere dosya adı, yol, albüm adı veya kasa içeriği hiçbir zaman yazılmıyor; servis katmanı yalnızca anonim `n / toplam (yüzde)` desenini kabul ediyor, diğer tüm metinleri filtreliyor.
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- `FVSTR:` kayıtları (albüm adı, albüm JSON'u, geri yükleme bildirimi, kasa durumu) artık okuyucunun beklediği amaçla bağlanıyor; geçerli bir kaydın kategori değiştirilerek başka yerde okunması engellendi.
-- Akış şifrelemesinde başlık yerinde güncellenirken IV'nin 27. ofset yerine 43. ofsete yazılması düzeltildi; bozulan konteyner başlığı için regresyon testi eklendi.
-- Parola değişikliğinden sonraki biyometrik kayıt akışı, anahtar RAM'den çok erken silindiği için sessizce başarısız oluyordu; anahtar artık 3a → 3b akışı tamamlandıktan sonra siliniyor.
-- Parolasını unutan kullanıcıya "Şifreli kasayı sıfırla" öneren hatırlatma ve SSS metni 11 dilde "Şifreli kasayı arşivle" olarak düzeltildi (sıfırlama mevcut parolayı gerektiriyordu).
-- Kasa içeriği gösteren diyalog pencereleri kendi `FLAG_SECURE` bayrağını alıyor; kilit ekranı, "ekran görüntülerini engelle" ayarı kapalıyken de korunuyor.
-- Tek seferlik Ayarlar doğrulamaları oturum anahtarını RAM'e almadan yapılıyor; biyometri kaydı iptalinde anahtar temizleniyor, PIN tamponu büyütülürken sıfırlanıyor ve kasa kaynaklı pano içeriği kilitlenince siliniyor.
-- Düz kopyalama ve kopya kurtarma yollarında kaynak/hedef boyut ve parmak izi karşılaştırılmadan kaynak siliniyordu; read-back doğrulaması eklendi ve doğrulanmamış çıktı güvenli siliniyor. Şifre çözme geri alma yollarındaki düz metin çıktılar artık güvenli siliniyor.
-
-### İyileştirmeler
-
-- Görünüm paleti düğmelerinin kontrastı temalı diyalogda korundu.
-- Taşma menüsü eylem sırası, simgeler ve ölçek için regresyon testleri eklendi.
-- Dokümantasyon denetimi bulguları kodla hizalandı: geçersiz ADR kararları "superseded" olarak işaretlendi; arşiv geri yükleme modeli, biyometri akışları, HKDF bilgi dizeleri ve test kapsamı iddiaları gerçek davranışa getirildi.
-- Tam ekran medya ayarlarında sürgülü seçenekler `>` işaretli satırların önüne taşındı; "genişletilmiş ayrıntıları yönet" ve "ek eylemleri yönet" satırları döndürme ayarının altında görünüyor.
-- "Sanal albüme ekle" seçicisinde albüm öğe sayıları artık doğru gösteriliyor; daha önce albümde kaç öge olursa olsun `0` görünüyordu.
-- "Açılışta ana ekran görünümü" diyaloğuna başlık eklendi; diğer diyaloglu ayarlarla tutarlı hale getirildi.
+- Şifreli kasa içeriği için ekran görüntüsü engelleme, pano temizleme ve kilit sonrası RAM temizleme.
+- Aktarım öncesi bit-bit doğrulama ve read-back doğrulaması ile doğrulanmamış çıktıların güvenli silinmesi.
+- Kasa dosyaları için atomik değiştirme, bütünlük doğrulaması ve sürüm göçü.
+- Favori ve sanal albüm referansları için sabit dosya kimliği ve kirletmeyen (zero-pollution) klasör kimliği.
 
 ### Çeviriler
 
-- Dosya adı gösterme, albüm arama ve ek görüntüleyici eylemlerinin metinleri 9 dilde çevrildi; kör çeviri karşılaştırma raporları güncellendi.
-- Dosya işlemi bildirimlerinin ayar başlığı, anahtarları, izin satırı ve ilerleme metinleri 9 kör test diline çevrildi; karşılaştırma raporları güncellendi.
-
-## [1.2.2] - 2026-11-22
-### Eklendi
-
-- Şifreli kasa henüz oluşturulmadığında yukarı çekme hareketi ve şifreleme arayüzü devre dışı bırakıldı; kasa kurulumunun ardından kasanın bu hareketle nasıl açılacağını anlatan temalı, tek seferlik kurulum eğitimi gösteriliyor.
-- "PIN girilirken her basamağı bir nokta ile göster" seçeneği açılmadan önce, yeni görünümü mevcut görünümle yan yana canlı olarak karşılaştıran tek seferlik önizleme penceresi gösteriliyor.
-- Çoklu seçim eylemi çubuğu, Calypso yüzen hap çubuğu ve temalı taşma menüsüyle modernize edildi.
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- PIN uzunluğu artık yalnızca basamak başına nokta görünümü etkinken diskte saklanıyor; görünüm kapalıyken bu meta veri yazılmıyor (bkz. [ADR 0008](docs/adr/0008-pin-dots-indicator-and-length-metadata.md)).
-- PIN noktası yuvaları etkinken kilit açma süpürme çizgisi atlanıyor; nokta göstergesiyle görsel çakışma giderildi.
-- Upstream Fossify bağış, puanlama ve "Teşekkürler" istemleri uygulamada tamamen devre dışı bırakıldı.
-
-### İyileştirmeler
-
-- Karşılama ve izin ekranlarında yönlendirme politikası cihaz sınıfına göre belirlendi: telefonlarda (en küçük genişlik < 600dp) dikey kilit, tablet ve açılmış katlanabilir cihazlarda serbest yönlendirme. Yatay 600dp tabletler için "Tüm dosyalara erişim" ekranına iki sütunlu düzen eklendi; yapılandırma değişiklikleri (en küçük ekran genişliği, ekran düzeni) artık yeniden başlatma gerektirmiyor.
-- Uygulama ve kasa güvenlik pencerelerindeki desen/PIN alanı yön değişiminde yeniden ölçülüyor; yatay modda kırpılan tuş takımı ve son satır artık kaydırılabiliyor, dikeye dönüldüğünde tam yükseklik geri geliyor.
-- PIN noktası göstergesinin güvenlik/kullanılabilirlik ödünleşimi ve uzunluk meta verisi saklama kararı ADR 0008'de belgelendi.
-- Yönlendirme politikası, tablet düzenleri ve güvenlik penceresi boyutlandırması için regresyon testleri eklendi.
-
-### Çeviriler
-
-- "Sanal klasör" / "Virtual folder" terminolojisi "Sanal albüm" / "Virtual album" olarak tüm dillerde ve kör çeviri karşılaştırma raporlarında güncellendi.
-- Kasa kurulum eğitimi ve PIN noktası önizlemesinin yeni metinleri 9 dilde çevrilip kör çeviri karşılaştırma raporlarına eklendi.
-
-## [1.2.1] - 2026-11-22
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Şifreli olmayan klasörlerdeki `.bin` dosyaları artık galeri medyası olarak toplanmıyor; kasa dosyaları yalnızca şifreli klasör içinde listeleniyor. Kopyalama/taşıma politikası için regresyon testleri eklendi.
-- Favoriler ve sanal albümler otomatik yedeklemesi kapatıldığında cihaz hafızasındaki yedeklerin silinmesi için onay penceresi gösteriliyor; yedek bulunmuyorsa ayar sessizce kapanıyor. Yedekler yeni kurulumda veya uygulama verileri silindikten sonra yalnızca bir kez geri yükleniyor; sonraki açılışlarda eski yedekler tekrar içe aktarılmıyor.
-
-### İyileştirmeler
-
-- Kasa bildirim kartındaki biyometrik simgesi, kartın üst kenarı ile başlık arasında dikey olarak ortalanıyor.
-- Ayarlardaki radyo diyaloglarına (dosya yükleme önceliği, video açma davranışı, çift dokunma süresi, ekran yönü ve albüm şifreleme çakışması) ile kasa arşivleme/boşaltma onay pencerelerine başlık eklendi; dil penceresine İptal düğmesi, Argon2 profil satırına boş özet gizleme ve kilit süresi etiketine dikey hizalama eklendi.
-
-### Çeviriler
-
-- Favori ve sanal albüm yedek silme metinleri 9 dilde tamamlandı; Azeri parola hatırlatıcı dizelerindeki bozuk karakterler düzeltildi. Kör çeviri karşılaştırma raporları 49 aktif dizeyle senkronize edildi; AI destekli temeller ve upstream-öncelikli katkı rehberi belgelendi.
-
-## [1.2.0] - 2026-11-22
-
-### Eklendi
-
-- Sanal albümler için özel ekleme/çıkarma işlemleri, albüm içi arama ve boş durum ekranı eklendi; dizinler, medya öğeleri ve görüntüleyici için bağlam eylemi kısayolları sunuldu.
-- Şifreli kasa biyometrik hatırlatma simgesinin animasyonu, onaylanan prototipteki zamanlama ve parıltı görünümüne uyarlandı.
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Kasa parola ve kilit ekranlarında sistem Geri tuşu artık hiçbir işe yaramıyor; uygulama içindeki tek çıkış yolu sol üstteki ok. Bu ok anahtar türetme (KDF) süresince devre dışı kalıp soluklaştırılıyor; böylece iptal edilen bir ekrana geç gelen açılış sonucunun uygulanması engelleniyor. Ok rengi temadan gelmeye devam ediyor.
-- Başlatıcı simgesinin arka plan rengi temadan bağımsız sabitlendi; tema değiştiğinde simge renginin bozulması giderildi.
-
-### İyileştirmeler
-
-- Görünüm paleti, arama çubuğu stili ve kopyalama/taşıma politikası iyileştirildi; ilgili birim testleri genişletildi.
-- Kasa etiketleri yeniden adlandırıldı; parola hatırlatıcı ayarı hedef açılış süresinin hemen altına taşındı, şifreli kasayı sıfırlama ayarı listenin sonuna alındı ve parola değiştirme satırındaki ok işareti kaldırıldı.
-
-### Çeviriler
-
-- Sanal albüm ve kasa etiketlerindeki yeni/değişen metinler 10 dilde çevrildi; kör çeviri karşılaştırma raporları güncellendi.
-
-## [1.1.5] - 2026-11-21
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Eski Reprint parmak izi kütüphanesi tamamen kaldırıldı ve uygulama/klasör kilidi AndroidX Biometric'e geçirildi; Android 15/16 çalışma zamanı sertleştirmeleri (foreground service zaman aşımı, display cutout/IME kenar boşlukları, güvenli alıcı kaydı) uygulandı.
-
-### İyileştirmeler
-
-- Şifreli kasa anahtar türetme motoru (Argon2id v1.3), yerel Rust JNI katmanına (`rust/calypso-argon2`, `RustCrypto/argon2` + `zeroize`) taşındı ve Bouncy Castle APK'dan çıkarıldı (~7,3 MB boyut azalması, 16 KB ELF sayfa hizalamalı 4 ABI, gerçek cihazda ~8,6–9,5× hız artışı). Fiziksel RAM + 64-bit kontrolüyle `64 → 128 → 256 MiB` (`>= 3,0 sn`) kademeli kalibrasyon ve 2 GB ve altı RAM cihazlar için yol gösterici uyarı eklendi (mevcut kasalarla bit-birebir uyumlu; bkz. [ADR 0004 §11.1](docs/adr/0004-argon2-memory-and-cross-device-kdf.md#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented)).
-- Minimalist Ayarlar düzeni, yeni görünüm temaları ve 9 dilde tam çeviri güncellemeleri.
-
-## [1.1.4] - 2026-11-21
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Android 12 (API 31) uyumluluğu: şifreli kasa oluştururken konum seçildiğinde açılan parola penceresi çöküyordu. Parola alanı, platformun reddettiği `*/*` MIME tipi yerine geçerli kategori tipleri (`text/*`, `image/*`, `video/*`, `audio/*`, `application/*`) ile kaydediliyor; pano ve içeriği yapıştırma engellemesi korunuyor.
-- Parola alanlarında metin seçimi tamamen kapatıldı; temadan gelen yeşil seçim tutamacı artık görünmüyor. İmleç rengi ve karakter girişi etkilenmiyor.
-- Şifreli kasa parolası değiştirilirken zayıf parola uyarısı artık gösteriliyor ve mevcut parolayla aynı bir parola seçilmesi açıkça uyarıyla reddediliyor.
-
-### İyileştirmeler
-
-- Ekran yönü değiştiğinde parola pencerelerinin ve uygulama pencerelerinin kapanmasına yol açan davranış giderildi: ilgili activity'ler yön değişikliğinde yeniden oluşturulmuyor, parola pencereleri de dışarı dokunma/Geri tuşuyla sessizce kapatılamıyor.
-- Otomatik oynatma açıkken, video ölçüleriyle ekran yönü uyuşmadığında önbelleğe alınan önizleme karesinin en-boy oranı bozuluyordu. Kare artık tek ölçek faktörüyle alınıyor; oynatma başlamadan önceki kısa önizleme videonun oranlarını koruyor.
-- Uygulamanın orijinal parola korumaları (albüm kilidi, uygulama kilidi, hariç tutulan klasörler, taşıma/silme koruması) için kullanılan parola penceresinde Desen ve PIN sekmeleri geri geldi; dikey tablette desenin son satırı kesilmiyordu, artık görünür.
-
-## [1.1.2] - 2026-11-21
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Şifreli kasa oluşturma: zayıf parola uyarısında "Yine de devam et" seçildikten sonra parola tekrarında aynı parolanın hatalı sayılması düzeltildi; zayıf parola uyarısı güç çubuğuyla uyumlu hale getirilerek yalnızca "Çok zayıf" ve "Zayıf" seviyelerinde gösterilir ("Orta" seviyesinde gösterilmez).
-- Alfanümerik kasa parola alanında kopyalama, kesme, yapıştırma, metin seçimi, bağlam menüsü, sürükle-bırak ve klavye kısayolları güvenlik gereğince devre dışı bırakıldı.
-
-### İyileştirmeler
-
-- Tablet ekran uyumu: karşılama ekranı ekran yönü değiştiğinde mevcut adımı koruyarak yeni düzene geçer, yatay karşılama logosu kırpılmadan hizalanır ve 600dp / 900dp ekran genişlikleri için galeri sütun sayıları dengelendi.
-
-## [1.1.1] - 2026-11-21
-
-### Eklendi
-
-- Tablet ve büyük ekran uyumu: karşılama ve izin ekranları, şifreli kasa giriş/kilit ekranı ile Ayarlar, Görünüm ve Hakkında ekranlarında maksimum içerik genişliği ve ortalama eklendi. Yatay tabletlerde karşılama ekranı iki sütunlu düzene geçer; şifreli kasa formu tabletlerde yarı saydam buzlu cam kart içinde ortalanır.
-- Şifreli kasa oluşturma: ilk kez kasa kurulurken zayıf parola veya PIN seçildiğinde onay adımından önce uyarı penceresi gösterilir.
-
-### İyileştirmeler
-
-- Kasa bildirim pencerelerinde geri tuşu ile kapatma davranışı tutarlı hale getirildi; dışarı dokunarak yanlışlıkla kapanma engellendi.
-
-## [1.1.0] - 2026-11-21
-
-### Eklendi
-
-- Dosya işlemleri: Akıllı diyalog veya Otomatik modda adı, bit düzeyinde içeriği ve tarihi birebir aynı olduğu için sessizce atlanan dosyalar, işlem sonunda kısa bir "N aynı dosya atlandı" toast'ıyla bildirilir. "İçerik aynı, tarih farklıysa → Her zaman sor" seçiliyse bu dosyalar thumbnail'li çakışma penceresinde kullanıcıya gösterilir ve onaylandığı için toast çıkmaz; yalnızca üçü de aynı olan dosyalar bildirilir. Otomatik (Deneysel) modda "Her zaman sor" seçeneği devre dışıdır ve bu moda geçildiğinde "Hedefteki dosyanın tarihi kalsın (varsayılan)" seçeneğine geri dönülür.
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Class 2 (zayıf) biyometriğin şifreli kasa erişimi için desteklenmediğine dair açık not eklendi; güçlü biyometrik olmayan cihazlarda ayar sessizce gizlenmek yerine devre dışı görünür ve nedeni yerelleştirilmiş bir pencerede anlatılır (bkz. [ADR 0006](docs/adr/0006-strong-biometrics-only.md)).
-- Android 16 (API 36) uyumluluğu: büyük ekranlarda (sw ≥ 600dp) sistem yön kısıtlarını yok saydığı için tabletlerde etkisiz olan "yataya zorla / dikeye zorla" menüleri, alt aksiyon düğmesi ve ilgili ayar gizlendi.
-
-## [1.0.0] - 2026-11-19
-
-İlk genel sürüm. Fossify Gallery 1.14.2 temelinden bağımsız geliştirilen, çevrimdışı çalışan ve kanonik Tink şifreleme biçimini kullanan bir galeri uygulamasıdır.
-
-### Eklendi
-
-- Sanal albümler: medyayı diskte çoğaltmadan referansla gösterir; favoriler ve sanal albümler klasör yeniden adlandırma veya taşıma sonrasında da korunur.
-- Dosya ve klasör kimliği: MediaStore kimliği, boyut, değiştirme zamanı, içerik parmak izi ve klasör inode'u ve komşu çapa imzalarıyla taşınan dosyalar yeniden bulunur; aynı adlı klasörler birbirine karışmaz.
-- Şifreli kasa: Tink AES256_GCM_HKDF akış şifrelemesi, Argon2id anahtar türetme, rastgele DEK'li konteynerler, KEK anahtar halkası ve `CalypsoGallery` alan ayırımı ile kanonik konteyner biçimi.
-- Kasa güvenliği: biyometrik kilit (donanım tabanlı anahtarlar), kaba kuvvete karşı ayarlanabilir Argon2 hedef süresi, kasa geri dönüşüm kutusu, sıfırlama hareketiyle kilit, RAM temizliği, ekran görüntüsü ve ekran yakalama engelleme, uygulama geri yüklendiğinde yeniden kimlik doğrulama.
-- Çevrimdışı çalışma: ağ izni kaldırıldı, tüm ağ özellikleri devre dışı; gizli içerik için ekran koruyucu ve pano görüntü kopyalama engelleme.
-- Masaüstü şifreleme aracı: çevrimdışı/Tails uyumlu CLI, harici kasa konumu, yerel telefona aktarım, `.pending_sync` artımlı senkronizasyon ve uygulamayla birebir uyumlu kanonik konteyner üretimi (payload'da gerçek Tink Python kütüphanesi kullanılır).
-- Dosya işlemleri: bit düzeyinde yineleme ayıklama, akıllı/standart çakışma pencereleri, önizleme ve bayt/tarih karşılaştırması, boş albüm temizliği, büyük dosyalar için hızlı kontrol, eşleşen içerik için tarih eşitlik ayarı.
-- Favori ve sanal albüm yedekleme: otomatik yedekler, ZIP dışa/içe aktarma, çakışma birleştirme ve kasa geri dönüşüm kutusu istisnaları.
-- Arayüz: uygulama içi dil seçici, albüm türü simgeleri, gizle/şifrele ve hariç tut akışlarının ayrılması, bağımsız görünüm modları, parmak kaydırmalı kasa açma, arama ve görünüm tercihleri.
-- Kasa kilidi: uygulamaya dönüldüğünde biyometrik istemi gösterme davranışı varsayılan olarak kapalı, ayarlardan açılabilir; kilit ekranındaki geri butonu kasayı kilitler, görsel önbellekleri temizler ve normal galeriye döner.
-
-### Güvenlik ve kararlılık düzeltmeleri
-
-- Biyometrik hata sınıflandırması: anahtarın kalıcı olarak geçersiz olması, cihazın kilitli olması ve geçici Keystore hataları ayrım yapılır. Geçici hatalarda anahtar ve biyometrik düğmesi korunur; otomatik istemler yalnızca pencere odakta ve cihaz açıkken tetiklenir, geçersiz anahtar geçerli bir CryptoObject olmadan asla açılış sağlamaz.
-- Kasa geri dönüş davranışı: otomatik biyometrik istemi ayarı dışa/içe aktarma dahil tüm ayar akışlarına bağlandı; kilit ekranı düzeni geri butonu ve kaydırılabilir içerik için yeniden düzenlendi.
-- Favori yedekleri: diskteki boyut eşleştiğinde yedekteki parmak izi ve kimlik bilgileri yeniden kullanılarak dosya taşıma sonrası favori kimliği korunur.
-- Albüm ve izin akışları: boş dizin listelerinde geçersiz DB dizini temizliği atlanır, `GROUP_BY_NONE` seçiliyken albüm kapağı oluşturma sıralaması bozulmaz, yinelenen medya izin istekleri engellenir.
-- Biyometrik hata sınıflandırması ve kasa kilit politikası için regresyon testleri eklendi.
-
-### Orijinal uygulamadan gelen düzeltmeler
-
-- Video oynatma konumu kaydırma sırasında korunur; ilk oynatma ve geri sarma takılmaları, tekrar döngüsü ve otomatik oynatma çakışması giderildi.
-- Oynatma simgesi video başladıktan sonra duraklatılmış kareyi kapatmaz; dokunmatik oynatma simgesi yalnızca kullanıcı kaynaklı duraklamada görünür.
-- Albüm ızgarasını yavaşlatan gereksiz ortam taramaları kaldırıldı; medya gözlemcisi değişiklikleri süzülerek gereksiz yenilemeler engellendi.
-- Görünüm yenileme sırasında çoklu seçim korunur, rastgele sıralama sabit kalır, gereksiz sıralama ve arka plan indeksleme kaldırıldı.
-- Yatay kaydırma ile aşağı çekerek yenileme birlikte çalışır; sabitleme/çözme simgeleri ve seçim menüleri standartlaştırıldı.
-- Farklı paket adı nedeniyle gösterilen yanlış "uygulama bozuk" uyarısı kaldırıldı.
-
-### Çeviriler
-
-- 11 farklı dilde tam kapsamlı çeviri denetimi.
-
-### Teknik ve yasal
-
-- Kapsamlı mimari dokümantasyonu (DOCS.md, ADR'ler), yasal lisans ve atıflar (GPLv3, Tink, Bouncy Castle ve üçüncü taraf bileşenler), marka yeniden adlandırma ve ilk genel sürüm için sürüm/tooling sıfırlaması.
-- Kullanılmayan eski `Picasso`, `OkHttp` ve `Okio` bağımlılıkları ile yedek kodlar kaldırıldı; üçüncü taraf lisansları tek ekranda birleştirildi.
-- Uygulama tek sürüm davranışıyla sunulur; kod tabanı sadeleştirilmiştir.
-
-[1.1.4]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.4
-[1.1.2]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.2
-[1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.1
-[1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
-[1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
-
-[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.3.0...HEAD
-[1.2.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.5...1.2.0
-[1.2.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.0...1.2.1
-[1.2.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.2.1...1.2.2
-[1.3.0]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.2.2...1.3.0
+- Arayüz metinleri Türkçe ve çok dilli kör test yerel ayarlarında tamamlandı.

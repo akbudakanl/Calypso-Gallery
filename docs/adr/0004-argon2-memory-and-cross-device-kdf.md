@@ -2,7 +2,7 @@
 
 - **Status:** Implemented (2026-11-18; updated 2026-11-21 — Rust Native Argon2id JNI §9)
 - **Date:** 2026-11-17 (implemented 2026-11-18; updated 2026-11-21)
-- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md §1.1.5 (Rust JNI); `CryptoManagerCredentials.kt`; `NativeArgon2.kt`; `rust/calypso-argon2`
+- **Relates to:** [ADR 0002](0002-operational-security-hardening.md) §3 (Argon2id profiles and unlock delay); `docs/argon2-calibration-methodology.md`; FORK_CHANGELOG.md §1.0.0 (Rust JNI); `CryptoManagerCredentials.kt`; `NativeArgon2.kt`; `rust/calypso-argon2`
 - **Decision owner:** Accepted and implemented (2026-11-18)
 
 > [!IMPORTANT]

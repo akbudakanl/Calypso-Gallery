@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-Calypso Gallery derives the Encrypted Vault **key-wrapping key (PDK)** with **Argon2id**; the PDK wraps the random 32-byte VMK/KEK stored in `.vault`. The cost parameters (memory, iterations, parallelism) are stored in the `.vault` header, so they travel with the vault to other devices — exactly like KeePass stores KDF rounds inside a `.kdbx` file. This document records how the cost profiles were measured on a real Android device and how the "vault unlock time" setting is derived from those measurements.
+Calypso Gallery derives the Encrypted Vault **key-wrapping key (PDK)** with **Argon2id**; the PDK wraps the random 32-byte VMK/KEK stored in `.vault`. The cost parameters (memory, iterations, parallelism) are stored in the `.vault` header, so they travel with the vault to other devices alongside the encrypted payload. This document records how the cost profiles were measured on a real Android device and how the "vault unlock time" setting is derived from those measurements.
 
 ## 2. Historical BouncyCastle baseline — test device (2026-11-17)
 
@@ -11,7 +11,7 @@ Calypso Gallery derives the Encrypted Vault **key-wrapping key (PDK)** with **Ar
 | Model     | Xiaomi Redmi Note 10s                                                     |
 | RAM       | 8 GB                                                                      |
 | Android   | (as reported by device; MIUI)                                             |
-| App build | `gallery-39-foss-debug.apk` from the 2026-11-17 pre-Rust tree (historical `VERSION_CODE=39`; current build is `1.2.0` / code 10) |
+| App build | `gallery-39-foss-debug.apk` from the 2026-11-17 pre-Rust tree (historical `VERSION_CODE=39`; current build is `1.0.0` / code 1) |
 | Provider  | BouncyCastle `Argon2BytesGenerator` via `CryptoManager.deriveKeyArgon2id` |
 
 The device contains only test data. No album, virtual-album, file or vault content was inspected during measurement — only CPU timing values were read from `logcat`.
@@ -100,7 +100,7 @@ To prevent crashes, ANRs, and cross-device lockouts:
 - One device, one build, two samples per point in initial measurements. Numbers are order-of-magnitude guidance, not a benchmark suite.
 - Thermal throttling, battery saver and background load can shift results.
 - Measuring `std64Ms` costs one `64 MiB / 3 rounds` native run (~0.1–0.5 s typical; ~0.28 s on the Redmi Note 10s above). Settings does **not** probe silently on startup: the run happens with a visible progress dialog when the user opens the time dialog, or during vault creation / password change / KDF re-wrap.
-- Wall-clock target cannot be guaranteed across devices; only the stored KDF parameters are portable (by design, matching KeePass — e.g. a `7–10 s` flagship vault takes longer on a slower phone without OOM).
+- Wall-clock target cannot be guaranteed across devices; only the stored KDF parameters are portable (by design — e.g. a `7–10 s` flagship vault takes longer on a slower phone without OOM).
 
 ## 8. Status
 

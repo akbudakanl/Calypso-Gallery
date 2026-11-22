@@ -824,7 +824,7 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
     try {
         // Brute-force direnci: hedef acilis suresi seciliyse cihazda tek bir referans
         // olcumu yapip iterasyon sayisini hedefe gore ayarlariz. Sonuc .vault'a yazilir;
-        // baska cihazda ayni parametreler kullanilir, gercek sure degisir (KeePass gibi).
+        // baska cihazda ayni parametreler kullanilir, gercek sure degisir.
         val (argon2MemoryKb, argon2Iterations, argon2Parallelism) = resolveArgon2Params(context)
         val wrappingKey = deriveKeyArgon2idWithTrim(
             context, secret, salt, argon2MemoryKb, argon2Iterations, argon2Parallelism

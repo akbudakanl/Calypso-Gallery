@@ -14,7 +14,7 @@ import org.fossify.gallery.views.VaultPinDotsView
 import org.fossify.gallery.views.VaultShutterLockView
 
 /**
- * "Shutter" unlock feedback, matching the approved motion prototype:
+ * "Shutter" unlock feedback with the following motion design:
  *  1. the lock shackle lifts with a spring while the emblem glows,
  *  2. PIN dots pulse one after another (the password field pulses for alphanumeric secrets),
  *  3. a light sweep confirms the entry,

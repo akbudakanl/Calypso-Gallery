@@ -21,7 +21,7 @@ import kotlin.math.exp
 /**
  * "İz dalgası" — the fingerprint ridges used on the 3b biometric setup card.
  *
- * Timeline (matches the approved HTML prototype):
+ * Timeline (target design):
  *  1. 0–810 ms   : seven ridges are drawn with trimPathEnd-style segments, 450 ms each,
  *                  staggered by 90 ms (core first, outer arcs last), cubic-bezier(0.4, 0, 0.2, 1).
  *  2. 850–1250 ms: all ridges darken from 30% to full opacity, ease-in-out.
@@ -283,7 +283,7 @@ class VaultBiometricGlyphView @JvmOverloads constructor(
         val DARKEN_INTERPOLATOR = PathInterpolator(0.42f, 0f, 0.58f, 1f)
         val CIRCLE_INTERPOLATOR = DecelerateInterpolator()
 
-        /** Path data and stagger order from the approved HTML prototype (viewBox 48x48). */
+        /** Path data and stagger order from the target design (viewBox 48x48). */
         val RIDGES: List<Pair<String, Int>> = listOf(
             "M20 38v-9a4 4 0 0 1 8 0v3c0 3-.4 5-1.2 7" to 0,
             "M16 40v-11a8 8 0 0 1 16 0v4c0 2.5-.3 4.5-.9 6.5" to 1,

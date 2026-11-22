@@ -26,7 +26,7 @@ import kotlin.math.abs
  *
  * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. At that moment the framed
  * badge appears and the lock icon drops in from above with a single spring settle (the approved
- * prototype motion); the label only switches to "release to open" once the drop has completed.
+ * target motion); the label only switches to "release to open" once the drop has completed.
  * The lock stays locked - no shackle opening, because nothing has been decrypted at this point.
  * Short/early releases only snap back.
  */
@@ -124,7 +124,7 @@ class VaultPullGestureHandler(
     }
 
     /**
-     * Sizes the icon like the prototype emblem but keeps the background transparent. The circle
+     * Sizes the icon like the target emblem but keeps the background transparent. The circle
      * exists only while the one-shot glow is playing; afterwards the icon sits on the bare screen.
      */
     private fun styleBadge() {

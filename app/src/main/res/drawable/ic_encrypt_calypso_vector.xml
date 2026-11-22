@@ -3,7 +3,7 @@
     android:height="28dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Larger rendering of the prototype lock used by the fullscreen Encrypt action, so its
+    <!-- Larger rendering of the lock icon used by the fullscreen Encrypt action, so its
          visual weight matches the neighbouring Share / Edit / Delete icons. -->
     <path
         android:fillColor="#00000000"

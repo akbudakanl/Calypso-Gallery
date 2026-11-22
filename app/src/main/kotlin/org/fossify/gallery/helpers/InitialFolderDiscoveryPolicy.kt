@@ -223,7 +223,7 @@ object InitialFolderDiscoveryPolicy {
                             hasDirectMedia = true
                         }
                     }
-                    // Skip stat()/isDirectory on media filenames (thousands of files in Camera/WhatsApp).
+                    // Skip stat()/isDirectory on media filenames (thousands of files in camera/media folders).
                     continue
                 }
 

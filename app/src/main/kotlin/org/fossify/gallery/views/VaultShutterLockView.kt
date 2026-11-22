@@ -12,8 +12,8 @@ import androidx.core.graphics.ColorUtils
 /**
  * Lock glyph used by the vault "shutter" unlock motion.
  *
- * Geometry follows the approved lock prototype: a wide dome with short legs, a softly rounded
- * body and a pill keyhole, all authored in the prototype's 104-unit coordinate space. The shackle
+ * Geometry follows the target lock design: a wide dome with short legs, a softly rounded
+ * body and a pill keyhole, all authored in a 104-unit coordinate space. The shackle
  * can be lifted independently of the body so the true/false feedback of a PIN entry feels
  * mechanical instead of a plain icon swap. Purely presentational - it never stores or derives
  * any secret.
@@ -66,7 +66,7 @@ class VaultShutterLockView @JvmOverloads constructor(
 
         val u = minOf(width, height) / ART_SIZE
         // Centre on the glyph's actual painted bounds (x 28..76, y 12..80 -> centre 52,46),
-        // not the prototype's artboard origin. Mapping y=58 left the lock visibly high.
+        // not the artboard origin. Mapping y=58 left the lock visibly high.
         val ox = width / 2f - 52f * u
         val oy = height / 2f - 46f * u
 
