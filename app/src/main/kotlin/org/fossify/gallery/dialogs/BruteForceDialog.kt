@@ -9,10 +9,6 @@ import android.graphics.Paint
 import android.graphics.Shader
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
-import android.text.Editable
-import android.text.InputType
-import android.text.TextWatcher
-import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
@@ -23,12 +19,9 @@ import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.helpers.ensureBackgroundThread
-import org.fossify.commons.views.MyEditText
 import org.fossify.commons.views.MySeekBar
 import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.R
-import org.fossify.gallery.extensions.applyThemedCursor
-import org.fossify.gallery.extensions.applyThemedSelectionHandles
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.ARGON2_MIN_MEASURED_MS
 import org.fossify.gallery.helpers.ARGON2_ULTRA_MEMORY_KB
@@ -62,7 +55,7 @@ object BruteForceDialog {
     private const val MAX_TENTHS = 100
     private const val MAX_SECONDS = 10.0f
     private const val DIALOG_PADDING_DP = 20f
-    private const val VALUE_TEXT_SP = 22f
+    private const val VALUE_TEXT_SP = 18f
     private const val WARNING_TEXT_SP = 13f
     private const val LEVEL_TEXT_SP = 12f
 
@@ -194,17 +187,6 @@ object BruteForceDialog {
         }
     }
 
-    private fun parseTargetMsOrNull(
-        raw: CharSequence?,
-        unit: String,
-        minSec: Float
-    ): Int? {
-        val parsed = raw?.toString()?.replace(',', '.')?.replace(unit, "")?.trim()
-            ?.toFloatOrNull() ?: return null
-        val clampedSec = parsed.coerceIn(minSec, MAX_SECONDS)
-        return Math.round(clampedSec * MS_PER_SECOND)
-    }
-
     private fun shouldShowHighMemoryWarning(
         targetMs: Int,
         rawStdMs: Int,
@@ -214,34 +196,17 @@ object BruteForceDialog {
         return memKb >= ARGON2_ULTRA_MEMORY_KB
     }
 
+    /** The badge is display-only; the SeekBar is the single source of truth for the value. */
     private fun attachTargetControls(
-        valueInput: MyEditText,
         seek: MySeekBar,
         minTenths: Int,
-        unit: String,
-        minSec: Float,
         onTargetMsChanged: (Int) -> Unit,
         onUiRefresh: (Int) -> Unit
     ) {
-        // The number is shown without its unit inside the floating bubble.
-        fun formatted(tenths: Int) = String.format(Locale.US, "%.1f", tenths / TENTHS_PER_SECOND)
-        valueInput.isEnabled = MAX_TENTHS > minTenths
-        valueInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-            override fun afterTextChanged(s: Editable?) {
-                parseTargetMsOrNull(s, unit, minSec)?.let {
-                    onTargetMsChanged(it)
-                    onUiRefresh(it)
-                }
-            }
-        })
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
                 if (!fromUser) return
-                val tenths = minTenths + p
-                valueInput.setText(formatted(tenths))
-                val targetMs = tenths * MS_PER_TENTH
+                val targetMs = (minTenths + p) * MS_PER_TENTH
                 onTargetMsChanged(targetMs)
                 onUiRefresh(targetMs)
             }
@@ -293,7 +258,7 @@ object BruteForceDialog {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { topMargin = dp(18f) }
-            minimumHeight = dp(92f)
+            minimumHeight = dp(104f)
         }
 
         val levelLabel = MyTextView(activity).apply {
@@ -334,46 +299,59 @@ object BruteForceDialog {
         dial.addView(seek, barParams())
 
         val unit = activity.getString(R.string.vault_unlock_time_unit)
-        val valueInput = MyEditText(ContextThemeWrapper(activity, R.style.VaultCursorTheme)).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+        // Display-only number: no EditText, no cursor, no keyboard, no click handling.
+        val valueLabel = MyTextView(activity).apply {
             textSize = VALUE_TEXT_SP
-            gravity = Gravity.CENTER
-            background = null
-            // EditText inherits theme padding/minWidth; clear them so the bubble stays compact.
-            setPadding(0, 0, 0, 0)
-            minWidth = 0
-            minimumWidth = 0
-            isSingleLine = true
-            setText(String.format(Locale.US, "%.1f", initialTenths / TENTHS_PER_SECOND))
             setTextColor(primary)
-            applyThemedCursor(primary)
-            applyThemedSelectionHandles(palette.text)
-            isEnabled = MAX_TENTHS > minTenths
+            setText(String.format(Locale.US, "%.1f", initialTenths / TENTHS_PER_SECOND))
+            isClickable = false
+            isFocusable = false
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
             )
         }
-        // The badge holds only the number: no "s", no pencil icon.
+        // Compact badge: only the number, plus a small pointer aimed at the bar.
+        val badgeFill = ColorUtils.blendARGB(palette.surface, primary, 0.10f)
+        val badgeStroke = ColorUtils.blendARGB(palette.surface, primary, 0.55f)
+        val badge = FrameLayout(activity).apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            ).apply { topMargin = dp(32f) }
+        }
+        val pointerSize = dp(8f)
+        // Added first so the pill covers its upper half, leaving a downward-pointing triangle.
+        badge.addView(View(activity).apply {
+            rotation = 45f
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.RECTANGLE
+                setColor(badgeFill)
+                setStroke(dp(1f), badgeStroke)
+            }
+        }, FrameLayout.LayoutParams(pointerSize, pointerSize, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+            bottomMargin = -pointerSize / 2
+        })
         val bubble = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(8f).toFloat()
-                setColor(ColorUtils.blendARGB(palette.surface, primary, 0.10f))
-                setStroke(dp(1f), ColorUtils.blendARGB(palette.surface, primary, 0.55f))
+                cornerRadius = dp(6f).toFloat()
+                setColor(badgeFill)
+                setStroke(dp(1f), badgeStroke)
             }
-            setPadding(dp(10f), dp(4f), dp(10f), dp(4f))
+            setPadding(dp(6f), dp(2f), dp(6f), dp(2f))
         }
-        bubble.addView(valueInput)
-        dial.addView(bubble, FrameLayout.LayoutParams(
+        bubble.addView(valueLabel)
+        badge.addView(bubble, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        ).apply { topMargin = dp(28f) })
+        ))
+        dial.addView(badge)
 
         fun positionBubble() {
             seek.post {
-                if (dial.width <= 0 || bubble.width <= 0) return@post
+                if (dial.width <= 0 || badge.width <= 0) return@post
                 val range = (MAX_TENTHS - minTenths).coerceAtLeast(1)
                 val fraction = seek.progress.toFloat() / range
                 barView.fraction = fraction
@@ -381,11 +359,11 @@ object BruteForceDialog {
                 val usable = (seek.width - seek.paddingLeft - seek.paddingRight)
                     .toFloat().coerceAtLeast(1f)
                 val center = seek.left + seek.paddingLeft + usable * fraction
-                val half = bubble.width / 2f
+                val half = badge.width / 2f
                 val margin = dp(6f).toFloat()
                 val clamped = center.coerceIn(half + margin, dial.width - half - margin)
-                // The bubble is initially centred by gravity; translate it onto the thumb.
-                bubble.translationX = clamped - dial.width / 2f
+                // The badge is initially centred by gravity; move it (pill + pointer) onto the thumb.
+                badge.translationX = clamped - dial.width / 2f
             }
         }
 
@@ -433,7 +411,8 @@ object BruteForceDialog {
                 }
         }
         updateWarningForTarget(initialTenths * MS_PER_TENTH)
-        attachTargetControls(valueInput, seek, minTenths, unit, minSec, ::updateWarningForTarget) { targetMs ->
+        attachTargetControls(seek, minTenths, ::updateWarningForTarget) { targetMs ->
+            valueLabel.text = String.format(Locale.US, "%.1f", targetMs / MS_PER_SECOND)
             levelLabel.text = levelForTarget(activity, targetMs)
             positionBubble()
         }
@@ -445,8 +424,7 @@ object BruteForceDialog {
         activity.getAlertDialogBuilder()
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .setPositiveButton(org.fossify.commons.R.string.ok) { dialog, _ ->
-                val targetMs = parseTargetMsOrNull(valueInput.text, unit, minSec)
-                    ?: (initialTenths * MS_PER_TENTH)
+                val targetMs = (minTenths + seek.progress) * MS_PER_TENTH
                 val (memKb, iters, clampedFlag) =
                     calculateTieredArgon2Params(targetMs, rawStdMs, capabilities)
                 config.unlockTargetMs = targetMs
