@@ -181,14 +181,8 @@ class VaultAuthInputHelper(
             }
         }
 
-        // The PIN key's "✓" glyph sits low in the font box; a little bottom padding lifts it.
-        // The password key uses a vector icon overlaid on the button, which is centred exactly.
-        binding.pinOk.setPadding(
-            binding.pinOk.paddingLeft,
-            binding.pinOk.paddingTop,
-            binding.pinOk.paddingRight,
-            binding.pinOk.paddingBottom + 2
-        )
+        // Both confirm keys use the same centred slim vector check, tinted to the theme's onPrimary.
+        binding.pinOkIcon.imageTintList = primaryButtonTextColors
         binding.vaultPasswordOkIcon.imageTintList = primaryButtonTextColors
 
         // Legacy bullet dots inherit the fullscreen dialog's white text color; tie it to the theme.

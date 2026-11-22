@@ -9,7 +9,9 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.drawable.DrawableCompat
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.getAlertDialogBuilder
@@ -42,6 +44,7 @@ class VaultNoticeDialog(
     showPinDotsPreview: Boolean = false,
     showNoteShieldIcon: Boolean = false,
     filledPositiveButton: Boolean = false,
+    showPositiveCheckIcon: Boolean = false,
     alignSingleActionEnd: Boolean = false,
     onPositive: () -> Unit,
     onNegative: (() -> Unit)? = null,
@@ -159,6 +162,15 @@ class VaultNoticeDialog(
                 }
             } else {
                 setTextColor(palette.primary)
+            }
+            if (showPositiveCheckIcon) {
+                AppCompatResources.getDrawable(context, R.drawable.ic_check_slim)?.mutate()?.let { icon ->
+                    DrawableCompat.setTint(icon, if (filledPositiveButton) palette.onPrimary else palette.primary)
+                    val size = dp(17f)
+                    icon.setBounds(0, 0, size, size)
+                    setCompoundDrawables(icon, null, null, null)
+                    compoundDrawablePadding = dp(6f)
+                }
             }
             setOnClickListener {
                 dialog?.dismiss()

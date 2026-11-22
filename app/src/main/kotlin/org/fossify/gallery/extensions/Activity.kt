@@ -3420,6 +3420,7 @@ fun BaseSimpleActivity.showBiometricPasswordNoteDialog(
         noteText = note,
         positiveText = getString(R.string.vault_biometric_setup_continue),
         negativeText = getString(org.fossify.commons.R.string.cancel),
+        showPositiveCheckIcon = true,
         cancelable = true,
         showBiometricGlyph = true,
         onPositive = onContinue,

@@ -11,7 +11,6 @@ import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -65,7 +64,6 @@ class VaultChoiceDialog(
         val choiceTextPx = res.getDimension(R.dimen.compact_dialog_choice_text_size)
         val actionTextPx = res.getDimension(R.dimen.compact_dialog_action_medium_text_size)
         val rowMinHeightPx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_row_min_height)
-        val radioSizePx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_radio_size)
         val infoBtnSizePx = res.getDimensionPixelSize(R.dimen.compact_dialog_choice_info_button_size)
 
         val root = LinearLayout(activity).apply {
@@ -119,17 +117,9 @@ class VaultChoiceDialog(
         }
         root.addView(headerRow)
 
-        // Scrollable options list inside a subtle grouped surface container
+        // Proposal B: no grouped card and no border - plain setting-like rows with thin dividers.
         val listCard = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            background = GradientDrawable().apply {
-                shape = GradientDrawable.RECTANGLE
-                cornerRadius = dp(14f).toFloat()
-                val isLight = AppearancePalette.isLightBackground(palette.background)
-                setColor(ColorUtils.blendARGB(palette.surface, palette.background, if (isLight) 0.55f else 0.35f))
-                setStroke(dp(1f).coerceAtLeast(1), palette.border)
-            }
-            clipToOutline = true
         }
 
         val divColor = SettingsCardUi.dividerColor(palette)
@@ -145,16 +135,10 @@ class VaultChoiceDialog(
                 isFocusable = true
             }
 
-            val radioIndicator = ImageView(activity).apply {
-                setImageDrawable(SettingsCardUi.createRadioCircleDrawable(activity, isSelected, palette))
-                layoutParams = LinearLayout.LayoutParams(radioSizePx, radioSizePx).apply {
-                    marginEnd = dp(12f)
-                }
-            }
-
             val labelView = TextView(activity).apply {
                 text = item.title
-                setTextColor(palette.text)
+                // Selection is shown by the theme colour only, matching other settings rows.
+                setTextColor(if (isSelected) palette.primary else palette.text)
                 setTextSize(TypedValue.COMPLEX_UNIT_PX, choiceTextPx)
                 if (isSelected) {
                     setTypeface(typeface, Typeface.BOLD)
@@ -162,14 +146,10 @@ class VaultChoiceDialog(
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
             }
 
-            row.addView(radioIndicator)
             row.addView(labelView)
             row.setOnClickListener {
                 if (wasSelected) return@setOnClickListener
                 wasSelected = true
-                radioIndicator.setImageDrawable(
-                    SettingsCardUi.createRadioCircleDrawable(activity, true, palette)
-                )
                 dialog?.dismiss()
                 callback(item.id)
             }
@@ -181,10 +161,7 @@ class VaultChoiceDialog(
                     layoutParams = LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         dp(1f).coerceAtLeast(1),
-                    ).apply {
-                        marginStart = dp(46f)
-                        marginEnd = dp(14f)
-                    }
+                    )
                 }
                 listCard.addView(divider)
             }

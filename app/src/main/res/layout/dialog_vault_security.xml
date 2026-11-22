@@ -228,14 +228,27 @@
                 android:text="0"
                 android:textSize="21sp" />
 
-            <org.fossify.commons.views.MyButton
-                android:id="@+id/pin_ok"
-                style="?android:attr/borderlessButtonStyle"
+            <!-- Slim vector check instead of the low-sitting "✓" glyph. -->
+            <FrameLayout
                 android:layout_width="78dp"
-                android:layout_height="58dp"
-                android:text="✓"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                android:layout_height="58dp">
+
+                <org.fossify.commons.views.MyButton
+                    android:id="@+id/pin_ok"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/ok" />
+
+                <ImageView
+                    android:id="@+id/pin_ok_icon"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:src="@drawable/ic_check_slim" />
+            </FrameLayout>
         </GridLayout>
     </LinearLayout>
 
@@ -312,7 +325,7 @@
                     android:layout_gravity="center"
                     android:clickable="false"
                     android:focusable="false"
-                    android:src="@drawable/ic_onboarding_check" />
+                    android:src="@drawable/ic_check_slim" />
             </FrameLayout>
         </LinearLayout>
     </LinearLayout>
