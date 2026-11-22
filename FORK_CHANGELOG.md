@@ -4,6 +4,11 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+### Fixed
+
+- Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
+- Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
+
 ## [1.0.0] - 2026-11-22
 
 The first public release. The entries below summarize, by concept rather than by individual commit, the changes accumulated throughout the fork.

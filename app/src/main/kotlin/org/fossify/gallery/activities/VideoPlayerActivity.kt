@@ -419,7 +419,9 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
 
         mExoPlayer = ExoPlayer.Builder(this)
             .setMediaSourceFactory(DefaultMediaSourceFactory(applicationContext))
-            .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+            // EXACT keeps skips and seek-bar moves accurate. CLOSEST_SYNC snaps to the nearest
+            // keyframe, which made a 10 s skip advance only e.g. 8 s.
+            .setSeekParameters(SeekParameters.EXACT)
             .setLoadControl(loadControl)
             .build()
             .apply {

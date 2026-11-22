@@ -155,7 +155,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mVideoSurface: Surface? = null
     private var mDeferredSurfaceTexture: SurfaceTexture? = null
     private var mActiveDeferredRelease: DeferredPlayerRelease? = null
-    private var mPausedByPagerDrag = false
     private var mPendingAutoplayOnIdle = false
     private var mPendingInitOnIdle = false
     private var mPendingFrameCaptureOnIdle = false
@@ -498,7 +497,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     override fun onPause() {
         super.onPause()
         storeStateVariables()
-        mPausedByPagerDrag = false
         mPendingAutoplayOnIdle = false
         mPendingInitOnIdle = false
         mPendingFrameCaptureOnIdle = false
@@ -517,7 +515,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
     override fun setMenuVisibility(menuVisible: Boolean) {
         super.setMenuVisibility(menuVisible)
-        mPausedByPagerDrag = false
         if (mIsFragmentVisible && !menuVisible) {
             mPendingAutoplayOnIdle = false
             mPendingInitOnIdle = false
@@ -554,26 +551,17 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         when (state) {
             ViewPager.SCROLL_STATE_DRAGGING -> {
+                // A drag alone does not mean the page will change. Keep the video playing until
+                // setMenuVisibility(false) confirms this fragment is no longer the active one.
+                // Pausing here would stop playback on every swipe that is released before the
+                // neighbouring page becomes current (and briefly cut audio/frame on all swipes).
                 mTimerHandler.removeCallbacks(mTouchHoldRunnable)
                 stopHoldSpeedMultiplierGesture()
-                if (mIsFragmentVisible && mIsPlaying && mExoPlayer != null) {
-                    mPausedByPagerDrag = true
-                    mExoPlayer?.playWhenReady = false
-                    stopTimer()
-                }
             }
 
             ViewPager.SCROLL_STATE_IDLE -> {
                 if (mIsFragmentVisible) {
                     mPendingFrameCaptureOnIdle = false
-                    if (mPausedByPagerDrag) {
-                        mPausedByPagerDrag = false
-                        if (mIsPlaying && mExoPlayer != null) {
-                            mExoPlayer?.playWhenReady = true
-                            startTimer()
-                        }
-                    }
-
                     if (mPendingAutoplayOnIdle) {
                         mPendingAutoplayOnIdle = false
                         if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
@@ -586,7 +574,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                         }
                     }
                 } else {
-                    mPausedByPagerDrag = false
                     mPendingAutoplayOnIdle = false
                     mPendingInitOnIdle = false
                     if (mPendingFrameCaptureOnIdle) {
@@ -726,7 +713,10 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         mExoPlayer = ExoPlayer.Builder(requireContext())
             .setMediaSourceFactory(DefaultMediaSourceFactory(requireContext()))
-            .setSeekParameters(SeekParameters.CLOSEST_SYNC)
+            // EXACT is required for correct skips: CLOSEST_SYNC snaps to the nearest keyframe,
+            // so a 10 s forward skip could land at 8 s. Restore seeks are already skipped when
+            // not needed below, so there is no redundant seek on setup.
+            .setSeekParameters(SeekParameters.EXACT)
             .setLoadControl(loadControl)
             .build()
             .apply {
@@ -1178,7 +1168,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPlayOnPrepared = false
         // A playback that was waiting for the screen rotation must not start anymore.
         mPendingPlayStart = false
-        mPausedByPagerDrag = false
         mIsPlaying = false
         stopTimer()
         val ended = videoEnded()
@@ -1323,7 +1312,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun cleanup() {
-        mPausedByPagerDrag = false
         mPendingAutoplayOnIdle = false
         mPendingInitOnIdle = false
         mPendingFrameCaptureOnIdle = false
