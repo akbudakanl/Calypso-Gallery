@@ -4,8 +4,10 @@ import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.AppearancePalette
 import org.fossify.gallery.helpers.Config
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class AppearancePaletteTest {
 
@@ -76,6 +78,30 @@ class AppearancePaletteTest {
         assertHueInRange("customBlue.secondary", customBlue.secondary, 200f, 230f)
         val secondaryContrast = AppearancePalette.contrastRatio(customBlue.secondary, customBlue.background)
         assertTrue("Expected customBlue secondary contrast >= 4.5, got $secondaryContrast", secondaryContrast >= 4.5)
+    }
+
+    @Test
+    fun lightAndDarkPalettesKeepAccessibleOnPrimaryContrast() {
+        assertWcagAa("LIGHT", AppearancePalette.LIGHT)
+        assertWcagAa("DARK", AppearancePalette.DARK)
+    }
+
+    @Test
+    fun appearancePaletteDialogsAvoidMyTextViewSoSetupDialogStuffCannotClobberOnPrimary() {
+        val guardedFiles = listOf(
+            "src/main/res/layout/dialog_grant_all_files.xml",
+            "src/main/res/layout/dialog_vault_notice.xml",
+            "src/main/kotlin/org/fossify/gallery/dialogs/VaultChoiceDialog.kt",
+        )
+        for (relativePath in guardedFiles) {
+            val file = File(relativePath).takeIf { it.exists() } ?: File("app", relativePath)
+            assertTrue("Missing $relativePath", file.exists())
+            val content = file.readText()
+            assertFalse(
+                "$relativePath must not instantiate or inflate MyTextView; setupDialogStuff() overwrites MyTextView text color with config.textColor",
+                content.contains("org.fossify.commons.views.MyTextView") || content.contains("MyTextView("),
+            )
+        }
     }
 
     private fun assertWcagAa(label: String, palette: AppearancePalette) {

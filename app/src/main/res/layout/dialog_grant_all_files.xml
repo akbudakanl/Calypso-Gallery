@@ -56,7 +56,9 @@
         </FrameLayout>
     </FrameLayout>
 
-    <org.fossify.commons.views.MyTextView
+    <!-- Plain TextViews (not MyTextView) so setupDialogStuff()'s updateTextColors() cannot
+         overwrite AppearancePalette foregrounds (secondary, primary, onPrimary) with textColor. -->
+    <TextView
         android:id="@+id/grant_all_files_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -66,7 +68,7 @@
         android:textSize="17sp"
         android:textStyle="bold" />
 
-    <org.fossify.commons.views.MyTextView
+    <TextView
         android:id="@+id/grant_all_files_description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -76,7 +78,7 @@
         android:text="@string/hidden_all_files"
         android:textSize="13.5sp" />
 
-    <org.fossify.commons.views.MyTextView
+    <TextView
         android:id="@+id/grant_all_files_note"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -94,7 +96,7 @@
         android:gravity="end|center_vertical"
         android:orientation="horizontal">
 
-        <org.fossify.commons.views.MyTextView
+        <TextView
             android:id="@+id/grant_all_files_negative"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -109,7 +111,7 @@
             android:textSize="13.5sp"
             android:textStyle="bold" />
 
-        <org.fossify.commons.views.MyTextView
+        <TextView
             android:id="@+id/grant_all_files_positive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

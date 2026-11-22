@@ -15,13 +15,13 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.models.RadioItem
-import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.AppearancePalette
@@ -78,7 +78,7 @@ class VaultChoiceDialog(
             }
         }
 
-        val titleView = MyTextView(activity).apply {
+        val titleView = TextView(activity).apply {
             text = title
             setTextColor(palette.text)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
@@ -139,7 +139,7 @@ class VaultChoiceDialog(
                 }
             }
 
-            val labelView = MyTextView(activity).apply {
+            val labelView = TextView(activity).apply {
                 text = item.title
                 setTextColor(palette.text)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
@@ -208,7 +208,8 @@ class VaultChoiceDialog(
             }
         }
 
-        val cancelBtn = MyTextView(activity).apply {
+        // Plain TextView so setupDialogStuff()'s updateTextColors() keeps palette.primary.
+        val cancelBtn = TextView(activity).apply {
             text = activity.getString(org.fossify.commons.R.string.cancel)
             setTextColor(palette.primary)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13.5f)
