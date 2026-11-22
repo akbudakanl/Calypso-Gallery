@@ -501,20 +501,34 @@ class VaultSecurityDialog(
             handleSetupSubmission(secret)
         } else if (verifyOnly) {
             setDialogBusy(true)
+            // setupPinInput()/setupPasswordInput() zero the caller's buffer in a `finally` block
+            // as soon as this method returns. The KDF below runs on a background thread, so copy
+            // the secret (and its length) here, on the calling thread, or verification would read
+            // an already-cleared array and always fail - leaving every verification prompt stuck.
+            val secretCopy = secret.copyOf()
+            val enteredLength = secretCopy.size
             ensureBackgroundThread {
-                val success = CryptoManager.isCurrentVaultSecret(activity, secret)
-                secret.fill('\u0000')
+                val success = CryptoManager.isCurrentVaultSecret(activity, secretCopy)
+                secretCopy.fill('\u0000')
                 activity.runOnUiThread {
                     setDialogBusy(false)
                     if (success) {
                         // PIN-dot settings need the entered length without promoting a session key.
                         VaultAuthInputHelper.lastAuthenticatedPinLength =
-                            if (currentType == PROTECTION_PIN) secret.size else 0
+                            if (currentType == PROTECTION_PIN) enteredLength else 0
                         markVaultPasswordEntered(activity.config)
                         dialogSucceeded = true
                         completeUnlockSuccess(viaBiometric = false)
                     } else {
+                        inputHelper.clearInputs()
                         updateStatusLabel()
+                        activity.toast(
+                            if (currentType == PROTECTION_PASSWORD) {
+                                R.string.wrong_password
+                            } else {
+                                org.fossify.commons.R.string.wrong_pin
+                            }
+                        )
                     }
                 }
             }

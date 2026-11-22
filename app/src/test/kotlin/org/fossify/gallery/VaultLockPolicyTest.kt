@@ -817,6 +817,41 @@ class VaultLockPolicyTest {
         )
     }
 
+    @Test
+    fun pinDotsNoticeIsOneTimeAndVerificationPromptsStayUsable() {
+        val settingsText = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt"
+        ).readText()
+        val pinDotsBody = settingsText.substringAfter("private fun setupShowVaultPinDots()")
+            .substringBefore("private fun setupShareMetadata()")
+        assertTrue(
+            "The comparison preview must be gated on the persisted one-time flag",
+            pinDotsBody.contains("if (enabling && !config.pinDotsNoticeShown)")
+        )
+        assertTrue(
+            "Re-enabling later must still open the verification prompt",
+            pinDotsBody.contains("} else {\n                proceedWithAuth()") ||
+                pinDotsBody.contains("} else {\r\n                proceedWithAuth()")
+        )
+
+        val dialogText = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/dialogs/VaultSecurityDialog.kt"
+        ).readText()
+        val verifyOnlyBranch = dialogText.substringAfter("} else if (verifyOnly) {")
+            .substringBefore("} else {\n            inputHelper.unlockWithSecretAsync(")
+            .substringBefore("} else {\r\n            inputHelper.unlockWithSecretAsync(")
+        assertTrue(
+            "verifyOnly must copy the caller's buffer before the async KDF, which otherwise reads an already-zeroed array",
+            verifyOnlyBranch.contains("val secretCopy = secret.copyOf()") &&
+                verifyOnlyBranch.contains("CryptoManager.isCurrentVaultSecret(activity, secretCopy)")
+        )
+        assertTrue(
+            "The entered PIN length must come from the copy taken before the buffer is cleared",
+            verifyOnlyBranch.contains("val enteredLength = secretCopy.size") &&
+                verifyOnlyBranch.contains("if (currentType == PROTECTION_PIN) enteredLength else 0")
+        )
+    }
+
     private fun locateAppFile(relPath: String): File {
         val direct = File(relPath)
         if (direct.exists()) return direct

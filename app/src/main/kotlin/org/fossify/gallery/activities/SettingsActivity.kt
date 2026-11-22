@@ -1341,6 +1341,10 @@ class SettingsActivity : SimpleActivity() {
                 }
             }
 
+            // The side-by-side preview is a one-time introduction: show it only on the first
+            // enable. Every later attempt - including turning the setting back on after it was
+            // disabled - must go straight to password verification, otherwise the toggle would be
+            // stuck once the notice flag has been persisted.
             if (enabling && !config.pinDotsNoticeShown) {
                 org.fossify.gallery.dialogs.VaultNoticeDialog(
                     activity = this,
