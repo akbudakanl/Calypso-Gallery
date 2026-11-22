@@ -39,8 +39,11 @@ object VaultContainer {
     /** `.vault` içinde saklanan, amaç bazlı HKDF anahtarıyla korunan kayıt. */
     const val VAULT_STR_PREFIX = "FVSTR:"
 
+    /** header IV'sinin dosyadaki başlangıç ofseti: magic(8) + versiyon(1) + keyId(2) + fileId(16). */
+    const val HEADER_IV_OFFSET = 8 + 1 + KEY_ID_LENGTH + FILE_ID_LENGTH
+
     /** Sabit önek: magic(8) + versiyon(1) + keyId(2) + fileId(16) + headerIv(12) + headerLen(4). */
-    const val FIXED_PREFIX_LENGTH = 8 + 1 + KEY_ID_LENGTH + FILE_ID_LENGTH + GCM_IV_LENGTH + 4
+    const val FIXED_PREFIX_LENGTH = HEADER_IV_OFFSET + GCM_IV_LENGTH + 4
 
     /** Şifreli payload'ın dosya içindeki başlangıç ofseti. */
     fun payloadOffset(encryptedHeaderLength: Int): Long =

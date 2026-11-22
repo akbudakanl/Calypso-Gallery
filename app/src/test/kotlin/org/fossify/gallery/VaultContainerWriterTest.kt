@@ -91,6 +91,50 @@ class VaultContainerWriterTest {
     }
 
     @Test
+    fun inPlaceHeaderRewriteKeepsContainerReadable() {
+        assertEquals(27, VaultContainer.HEADER_IV_OFFSET)
+        assertEquals(43, VaultContainer.FIXED_PREFIX_LENGTH)
+
+        val payload = ByteArray(70_000) { (it * 7 + 5).toByte() }
+        // Aynı uzunlukta bir ad: header uzunluğu sabit kalır, yerinde yazım güvenlidir.
+        val prepared = VaultContainerWriter.prepare(
+            kek = kek, keyId = 1, originalName = "a.jpg",
+            lastModified = 1L, dateTaken = 2L, originalSize = payload.size.toLong(),
+            mediaType = 1, videoDuration = 0, thumbnail = null
+        )
+        val target = File(tempDir, "in_place.bin")
+        VaultContainerWriter.writeContainer(
+            target = target,
+            prepared = prepared,
+            payloadProvider = { ByteArrayInputStream(payload) }
+        )
+
+        VaultContainerWriter.rewriteHeaderInPlace(
+            file = target,
+            kek = kek,
+            keyId = 1,
+            prepared = prepared,
+            originalName = "b.jpg",
+            lastModified = 3L,
+            dateTaken = 4L,
+            originalSize = payload.size.toLong(),
+            mediaType = 1,
+            videoDuration = 0,
+            thumbnail = null
+        )
+
+        // Eski kod IV'yi offset 43'e (header'ın kendisine) yazdığı için burada okuma
+        // başarısız olur veya bozuk bir başlık döner.
+        val meta = CryptoManager.readMetadata(target)!!
+        assertEquals("b.jpg", meta.originalName)
+        assertEquals(3L, meta.lastModified)
+        assertEquals(prepared.payloadOffset, meta.payloadOffset)
+        assertEquals(prepared.ciphertextLength, target.length() - prepared.payloadOffset)
+        assertArrayEquals(payload, CryptoManager.openDecryptedContentStream(target, 0L, meta)!!.use { it.readBytes() })
+        assertTrue(CryptoManager.verifyFileIntegrity(target, meta))
+    }
+
+    @Test
     fun rejectsTamperedV4Payload() {
         val payload = ByteArray(70_000) { (it * 3 + 9).toByte() }
         val prepared = VaultContainerWriter.prepare(

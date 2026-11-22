@@ -215,7 +215,9 @@ internal object VaultContainerWriter {
         val newIv = ByteArray(VaultContainer.GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
         val encHeader = encryptHeader(kek, prepared.fileId, keyId, prepared.version, newIv, headerPlain)
         RandomAccessFile(file, "rw").use { raf ->
-            raf.seek(VaultContainer.FIXED_PREFIX_LENGTH.toLong())
+            // IV, header uzunluğu ve şifreli header sırayla 27 / 39 / 43. offset'inde başlar.
+            // FIXED_PREFIX_LENGTH (43) header'ın kendisini gösterir; oraya yazmak N ve IV'yi bozar.
+            raf.seek(VaultContainer.HEADER_IV_OFFSET.toLong())
             raf.write(newIv)
             raf.writeInt(encHeader.size)
             raf.write(encHeader)
