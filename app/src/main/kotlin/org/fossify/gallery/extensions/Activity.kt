@@ -138,17 +138,20 @@ import org.fossify.gallery.helpers.resolveExportVaultTargetDir
 import org.fossify.gallery.helpers.resolvePickedPathToFile
 import org.fossify.gallery.helpers.resolveSyncSourceRoot
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.setVaultRootLocation
 import org.fossify.gallery.helpers.showSkippedIdenticalToast
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.verifyVaultOnDisk
 
 fun Activity.sharePath(path: String) {
-    sharePathIntent(path, BuildConfig.APPLICATION_ID)
+    val shared = ShareMetadataSanitizer.sanitizedPaths(this, listOf(path)).first()
+    sharePathIntent(shared, BuildConfig.APPLICATION_ID)
 }
 
 fun Activity.sharePaths(paths: ArrayList<String>) {
-    sharePathsIntent(paths, BuildConfig.APPLICATION_ID)
+    val shared = ShareMetadataSanitizer.sanitizedPaths(this, paths)
+    sharePathsIntent(ArrayList(shared), BuildConfig.APPLICATION_ID)
 }
 
 fun Activity.shareMediumPath(path: String) {
@@ -2631,7 +2634,16 @@ fun BaseSimpleActivity.tryAddFilesToVirtualAlbum(
         sourcePath = sourceHint
     ) { albumId, albumName ->
         val destination = getVirtualAlbumPath(albumId)
+        val owner = "virtual-album-add"
+        val acquired = ForegroundOperationRegistry.acquire(this, owner)
+        if (acquired) {
+            ForegroundOperationRegistry.updateProgress(this, 0, validItems.size, null)
+        }
         VirtualAlbumConflictHelper.add(this, albumId, validItems, isHiddenSource) { added ->
+            if (acquired) {
+                ForegroundOperationRegistry.updateProgress(this, validItems.size, validItems.size, null)
+                ForegroundOperationRegistry.release(this, owner)
+            }
             val resolvedName = albumName.ifEmpty { getVirtualAlbumName(destination) ?: "" }
             val msgRes = if (added > 0) R.string.added_to_virtual_album else R.string.already_in_virtual_album
             toast(getString(msgRes, resolvedName))

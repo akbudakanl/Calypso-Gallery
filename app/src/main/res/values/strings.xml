@@ -34,6 +34,14 @@
     <string name="thumbnails_and_scrolling_settings">Thumbnails &amp; scrolling</string>
     <string name="media_viewer_settings">Media viewer</string>
     <string name="security_and_vault_settings">Security &amp; encrypted vault</string>
+    <string name="notifications_settings">Notifications</string>
+    <string name="settings_group_operation_notifications">File operation notifications</string>
+    <string name="notifications_enabled">Show operation progress</string>
+    <string name="notify_copy_move">Copy and move</string>
+    <string name="notify_crypto">Encrypt and decrypt</string>
+    <string name="notify_delete">Delete and recycle bin</string>
+    <string name="notify_virtual_album">Virtual album updates</string>
+    <string name="notifications_info">Android requires a persistent notification while a background file operation runs. These settings control whether its detailed progress (file name and percentage) is shown.</string>
     <string name="custom_colors">Custom colors</string>
     <string name="font_system_default">System default</string>
     <string name="appearance_preview">Preview</string>
@@ -401,6 +409,15 @@
     <string name="files_decrypted_successfully">Files decrypted successfully</string>
     <string name="decrypting_files">Decrypting files…</string>
     <string name="encrypt_decrypt_notifications">Encrypt / Decrypt</string>
+    <string name="file_operations_notifications">File operations</string>
+    <string name="file_operation_copy_move">Copying / moving files…</string>
+    <string name="file_operation_crypto">Encrypting / decrypting files…</string>
+    <string name="file_operation_delete">Deleting files…</string>
+    <string name="file_operation_virtual_album">Updating albums…</string>
+    <string name="file_operation_generic">File operation in progress…</string>
+    <string name="checking_files_before_transfer">Checking files before transfer…</string>
+    <string name="checking_files_before_crypto">Checking files before encryption…</string>
+    <string name="deleting_files_progress">Deleting files…</string>
     <string name="place_finger_prompt">Please place your finger on the fingerprint sensor</string>
     <string name="connect_at_least_4_dots_prompt">Connect at least 4 dots</string>
     <string name="password_must_be_at_least_4_characters">Password must be at least 4 characters long</string>
@@ -801,4 +818,11 @@
     <string name="search_in_album">Search in album</string>
     <string name="show_extra_viewer_actions">Show extra actions on fullscreen media</string>
     <string name="manage_extra_viewer_actions">Manage extra actions</string>
+
+    <!-- Secure sharing: metadata sanitization applied to a temporary copy of shared images. -->
+    <string name="settings_group_secure_sharing">Secure sharing</string>
+    <string name="settings_share_metadata_title">Clear metadata before sharing</string>
+    <string name="share_metadata_off">Off</string>
+    <string name="share_metadata_location_only">Location only</string>
+    <string name="share_metadata_all">All metadata</string>
 </resources>

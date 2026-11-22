@@ -32,6 +32,14 @@
     <string name="thumbnails_and_scrolling_settings">Küçük resimler ve kaydırma</string>
     <string name="media_viewer_settings">Medya görüntüleyici</string>
     <string name="security_and_vault_settings">Güvenlik ve şifreli kasa</string>
+    <string name="notifications_settings">Bildirimler</string>
+    <string name="settings_group_operation_notifications">Dosya işlemi bildirimleri</string>
+    <string name="notifications_enabled">İşlem ilerlemesini göster</string>
+    <string name="notify_copy_move">Kopyalama ve taşıma</string>
+    <string name="notify_crypto">Şifreleme ve çözme</string>
+    <string name="notify_delete">Silme ve geri dönüşüm kutusu</string>
+    <string name="notify_virtual_album">Sanal albüm güncellemeleri</string>
+    <string name="notifications_info">Android, arka planda çalışan bir dosya işlemi sırasında kalıcı bir bildirim gerektirir. Bu ayarlar bildirimde ayrıntılı ilerlemenin (dosya adı ve yüzde) gösterilip gösterilmeyeceğini belirler.</string>
     <string name="custom_colors">Özel renkler</string>
     <string name="font_system_default">Sistem varsayılanı</string>
     <string name="font_monospace">Monospace</string>
@@ -346,6 +354,15 @@
     <string name="files_decrypted_successfully">Dosyaların şifresi başarıyla çözüldü</string>
     <string name="decrypting_files">Şifre çözülüyor…</string>
     <string name="encrypt_decrypt_notifications">Şifreleme / Şifre Çözme</string>
+    <string name="file_operations_notifications">Dosya işlemleri</string>
+    <string name="file_operation_copy_move">Dosyalar kopyalanıyor / taşınıyor…</string>
+    <string name="file_operation_crypto">Dosyalar şifreleniyor / çözülüyor…</string>
+    <string name="file_operation_delete">Dosyalar siliniyor…</string>
+    <string name="file_operation_virtual_album">Albümler güncelleniyor…</string>
+    <string name="file_operation_generic">Dosya işlemi sürüyor…</string>
+    <string name="checking_files_before_transfer">Dosyalar aktarım öncesi kontrol ediliyor…</string>
+    <string name="checking_files_before_crypto">Dosyalar şifreleme öncesi kontrol ediliyor…</string>
+    <string name="deleting_files_progress">Dosyalar siliniyor…</string>
     <string name="place_finger_prompt">Lütfen parmağınızı parmak izi sensörüne yerleştirin</string>
     <string name="connect_at_least_4_dots_prompt">En az 4 noktayı birleştirin</string>
     <string name="password_must_be_at_least_4_characters">Parola en az 4 karakter olmalıdır</string>
@@ -751,4 +768,11 @@
     <string name="search_in_album">Albüm içerisinde ara</string>
     <string name="show_extra_viewer_actions">Tam ekran medya üzerinde ekstra eylemleri göster</string>
     <string name="manage_extra_viewer_actions">Ekstra eylemleri yönet</string>
+
+    <!-- Güvenli paylaşım: paylaşılan görüntülerin geçici kopyasından meta veri temizleme. -->
+    <string name="settings_group_secure_sharing">Güvenli paylaşım</string>
+    <string name="settings_share_metadata_title">Paylaşmadan önce meta verileri temizle</string>
+    <string name="share_metadata_off">Kapalı</string>
+    <string name="share_metadata_location_only">Sadece konum</string>
+    <string name="share_metadata_all">Tüm meta veri</string>
 </resources>

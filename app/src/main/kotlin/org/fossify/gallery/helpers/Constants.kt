@@ -154,6 +154,11 @@ const val CRYPTO_SKIPPED_FILES_ASK = 0
 const val CRYPTO_SKIPPED_FILES_KEEP = 1
 const val CRYPTO_SKIPPED_FILES_DELETE = 2
 const val WAS_NOTIFICATION_PERMISSION_ASKED = "was_notification_permission_asked"
+const val NOTIFICATIONS_ENABLED = "notifications_enabled"
+const val NOTIFY_COPY_MOVE = "notify_copy_move"
+const val NOTIFY_CRYPTO = "notify_crypto"
+const val NOTIFY_DELETE = "notify_delete"
+const val NOTIFY_VIRTUAL_ALBUM = "notify_virtual_album"
 const val HAS_SEEN_ONBOARDING = "has_seen_onboarding"
 const val AUTO_BACKUP_FAVORITES_AND_VIRTUAL_ALBUMS = "auto_backup_favorites_and_virtual_albums"
 const val HAS_COMPLETED_INITIAL_FAVORITES_RESTORE = "has_completed_initial_favorites_restore"
@@ -183,6 +188,11 @@ const val VAULT_LAST_PASSWORD_REMINDER_AT = "vault_last_password_reminder_at"
 const val VAULT_HEADER_FILE = ".vault"
 /** Longest PIN that still gets the optional per-digit dot indicator. */
 const val VAULT_PIN_DOTS_MAX_LENGTH = 16
+
+/** Metadata sanitization applied to a temporary copy when sharing images. */
+const val SHARE_METADATA_MODE_OFF = 0
+const val SHARE_METADATA_MODE_LOCATION = 1
+const val SHARE_METADATA_MODE_ALL = 2
 const val VAULT_SUBFOLDER_META_FILE = ".meta"
 const val VAULT_DEFAULT_ALBUM_NAME = "__VAULT_DEFAULT_ALBUM__"
 const val DEFAULT_SECRET_ALBUM_NAME = "Default Secret Album"

@@ -1164,3 +1164,15 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 | 3 | `search_in_album` | Search in album | Albom daxilində axtar | Album-view search hint |
 | 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | Tam ekran mediada əlavə əməliyyatları göstər | Settings switch label |
 | 5 | `manage_extra_viewer_actions` | Manage extra actions | Əlavə əməliyyatları idarə et | Settings row label and extra-actions dialog title |
+
+## Secure sharing — metadata sanitization (this revision)
+
+Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `settings_group_secure_sharing` | Secure sharing | Təhlükəsiz paylaşım | New eyebrow in the Security category |
+| 2 | `settings_share_metadata_title` | Clear metadata before sharing | Paylaşmadan əvvəl meta məlumatları təmizlə | Settings row label and radio dialog title |
+| 3 | `share_metadata_off` | Off | Bağlı | No sanitization |
+| 4 | `share_metadata_location_only` | Location only | Yalnız mövqe | Default mode: strips GPS tags |
+| 5 | `share_metadata_all` | All metadata | Bütün meta məlumatlar | Strips Make/Model/Software/DateTime/XMP too |

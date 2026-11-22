@@ -409,6 +409,48 @@
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/settings_secure_sharing_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_secure_sharing" />
+
+                <LinearLayout
+                    android:id="@+id/settings_secure_sharing_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_share_metadata_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_share_metadata_label"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="28dp"
+                            android:text="@string/settings_share_metadata_title" />
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_share_metadata_value"
+                            style="@style/SettingsTextValueStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_below="@+id/settings_share_metadata_label"
+                            android:layout_marginEnd="28dp"
+                            tools:text="@string/share_metadata_location_only" />
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <TextView
                     android:id="@+id/settings_vault_eyebrow"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -1520,7 +1562,117 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- CATEGORY 7: GERİ DÖNÜŞÜM KUTUSU -->
+            <!-- CATEGORY 7: BİLDİRİMLER -->
+            <LinearLayout
+                android:id="@+id/settings_category_notifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/settings_notifications_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/settings_group_operation_notifications" />
+
+                <LinearLayout
+                    android:id="@+id/settings_notifications_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notifications_info_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyTextView
+                            android:id="@+id/settings_notifications_info"
+                            style="@style/SettingsTextLabelStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notifications_info" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notifications_enabled_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_notifications_enabled"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notifications_enabled" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notify_copy_move_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_notify_copy_move"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notify_copy_move" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notify_crypto_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_notify_crypto"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notify_crypto" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notify_delete_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_notify_delete"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notify_delete" />
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_notify_virtual_album_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_notify_virtual_album"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/notify_virtual_album" />
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- CATEGORY 8: GERİ DÖNÜŞÜM KUTUSU -->
             <LinearLayout
                 android:id="@+id/settings_category_recycle"
                 android:layout_width="match_parent"

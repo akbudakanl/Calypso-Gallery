@@ -68,6 +68,7 @@ class SettingsActivity : SimpleActivity() {
         const val CATEGORY_FILES = "files"
         const val CATEGORY_RECYCLE = "recycle"
         const val CATEGORY_MIGRATING = "migrating"
+        const val CATEGORY_NOTIFICATIONS = "notifications"
 
         private const val PICK_IMPORT_SOURCE_INTENT = 1
         private const val SELECT_EXPORT_FAVORITES_FILE_INTENT = 2
@@ -137,6 +138,7 @@ class SettingsActivity : SimpleActivity() {
                 container = binding.settingsCategorySecurity,
                 groups = listOf(
                     binding.settingsSecurityCard to binding.settingsSecurityEyebrow,
+                    binding.settingsSecureSharingCard to binding.settingsSecureSharingEyebrow,
                     binding.settingsVaultCard to binding.settingsVaultEyebrow,
                     binding.settingsVaultManagementCard to binding.settingsVaultManagementEyebrow,
                 ),
@@ -200,6 +202,15 @@ class SettingsActivity : SimpleActivity() {
                     binding.settingsMigratingStorageCard to binding.settingsMigratingStorageEyebrow,
                     binding.settingsMigratingBackupCard to binding.settingsMigratingBackupEyebrow,
                     binding.settingsMigratingVaultCard to binding.settingsMigratingVaultEyebrow,
+                ),
+            ),
+            CategorySpec(
+                key = CATEGORY_NOTIFICATIONS,
+                titleRes = R.string.notifications_settings,
+                iconRes = R.drawable.ic_section_notifications,
+                container = binding.settingsCategoryNotifications,
+                groups = listOf(
+                    binding.settingsNotificationsCard to binding.settingsNotificationsEyebrow,
                 ),
             ),
         )
@@ -320,6 +331,7 @@ class SettingsActivity : SimpleActivity() {
             setupExcludedItemPasswordProtection()
             setupAppPasswordProtection()
             setupFileDeletionPasswordProtection()
+            setupShareMetadata()
             setupVaultSettings()
             setupConflictHandlingMode()
             setupSkippedEncryptFilesMode()
@@ -350,6 +362,7 @@ class SettingsActivity : SimpleActivity() {
             setupShowRecycleBin()
             setupShowRecycleBinLast()
             setupEmptyRecycleBin()
+            setupNotifications()
             updateTextColors(binding.settingsHolder)
             setupClearCache()
             setupExportFavorites()
@@ -1309,6 +1322,35 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupShareMetadata() {
+        fun refreshSummary() {
+            binding.settingsShareMetadataValue.text = getString(
+                when (config.shareMetadataMode) {
+                    SHARE_METADATA_MODE_ALL -> R.string.share_metadata_all
+                    SHARE_METADATA_MODE_OFF -> R.string.share_metadata_off
+                    else -> R.string.share_metadata_location_only
+                }
+            )
+        }
+        refreshSummary()
+
+        binding.settingsShareMetadataHolder.setOnClickListener {
+            RadioGroupDialog(
+                activity = this,
+                items = arrayListOf(
+                    RadioItem(SHARE_METADATA_MODE_OFF, getString(R.string.share_metadata_off)),
+                    RadioItem(SHARE_METADATA_MODE_LOCATION, getString(R.string.share_metadata_location_only)),
+                    RadioItem(SHARE_METADATA_MODE_ALL, getString(R.string.share_metadata_all))
+                ),
+                checkedItemId = config.shareMetadataMode,
+                titleId = R.string.settings_share_metadata_title,
+            ) {
+                config.shareMetadataMode = it as Int
+                refreshSummary()
+            }
+        }
+    }
+
     private fun setupArgon2Profile() {
         // Bu ayar yalnızca kasa mevcutsa ve tüm dosyalara erişim izni varsa görünür.
         val hasStoragePermission = !isRPlus() || isExternalStorageManager()
@@ -2088,6 +2130,52 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
+    private fun setupNotifications() {
+        fun bindSwitch(
+            holder: android.view.View,
+            switch: org.fossify.commons.views.MyMaterialSwitch,
+            getValue: () -> Boolean,
+            setValue: (Boolean) -> Unit
+        ) {
+            switch.isChecked = getValue()
+            holder.setOnClickListener {
+                switch.toggle()
+                setValue(switch.isChecked)
+            }
+        }
+
+        bindSwitch(
+            binding.settingsNotificationsEnabledHolder,
+            binding.settingsNotificationsEnabled,
+            { config.notificationsEnabled },
+            { config.notificationsEnabled = it }
+        )
+        bindSwitch(
+            binding.settingsNotifyCopyMoveHolder,
+            binding.settingsNotifyCopyMove,
+            { config.notifyCopyMove },
+            { config.notifyCopyMove = it }
+        )
+        bindSwitch(
+            binding.settingsNotifyCryptoHolder,
+            binding.settingsNotifyCrypto,
+            { config.notifyCrypto },
+            { config.notifyCrypto = it }
+        )
+        bindSwitch(
+            binding.settingsNotifyDeleteHolder,
+            binding.settingsNotifyDelete,
+            { config.notifyDelete },
+            { config.notifyDelete = it }
+        )
+        bindSwitch(
+            binding.settingsNotifyVirtualAlbumHolder,
+            binding.settingsNotifyVirtualAlbum,
+            { config.notifyVirtualAlbum },
+            { config.notifyVirtualAlbum = it }
+        )
+    }
+
     private fun setupAllowPhotoGestures() {
         binding.settingsAllowPhotoGestures.isChecked = config.allowPhotoGestures
         binding.settingsAllowPhotoGesturesHolder.setOnClickListener {
@@ -2713,6 +2801,11 @@ class SettingsActivity : SimpleActivity() {
                 put(DELETE_EMPTY_FOLDERS, config.deleteEmptyFolders)
                 put(CONFLICT_HANDLING_MODE, config.conflictHandlingMode)
                 put(FAST_LARGE_DUPLICATE_CHECK, config.fastLargeDuplicateCheck)
+                put(NOTIFICATIONS_ENABLED, config.notificationsEnabled)
+                put(NOTIFY_COPY_MOVE, config.notifyCopyMove)
+                put(NOTIFY_CRYPTO, config.notifyCrypto)
+                put(NOTIFY_DELETE, config.notifyDelete)
+                put(NOTIFY_VIRTUAL_ALBUM, config.notifyVirtualAlbum)
                 put(DATE_TIE_BREAK_MODE, config.dateTieBreakMode)
                 put(ALBUM_CRYPTO_CONFLICT_MODE, config.albumCryptoConflictMode)
                 put(SKIPPED_ENCRYPT_FILES_MODE, config.skippedEncryptFilesMode)
@@ -2882,6 +2975,11 @@ class SettingsActivity : SimpleActivity() {
                 DELETE_EMPTY_FOLDERS -> config.deleteEmptyFolders = value.toBoolean()
                 CONFLICT_HANDLING_MODE -> config.conflictHandlingMode = value.toInt()
                 FAST_LARGE_DUPLICATE_CHECK -> config.fastLargeDuplicateCheck = value.toBoolean()
+                NOTIFICATIONS_ENABLED -> config.notificationsEnabled = value.toBoolean()
+                NOTIFY_COPY_MOVE -> config.notifyCopyMove = value.toBoolean()
+                NOTIFY_CRYPTO -> config.notifyCrypto = value.toBoolean()
+                NOTIFY_DELETE -> config.notifyDelete = value.toBoolean()
+                NOTIFY_VIRTUAL_ALBUM -> config.notifyVirtualAlbum = value.toBoolean()
                 DATE_TIE_BREAK_MODE -> config.dateTieBreakMode = value.toInt()
                 ALBUM_CRYPTO_CONFLICT_MODE -> config.albumCryptoConflictMode = value.toInt()
                 SKIPPED_ENCRYPT_FILES_MODE -> config.skippedEncryptFilesMode = value.toInt()

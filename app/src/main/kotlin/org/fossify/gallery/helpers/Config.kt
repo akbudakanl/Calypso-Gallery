@@ -42,6 +42,7 @@ class Config(context: Context) : BaseConfig(context) {
         private const val VAULT_PIN_LENGTH = "vault_pin_length"
         private const val SHOW_VAULT_PIN_DOTS = "show_vault_pin_dots"
         private const val PIN_DOTS_NOTICE_SHOWN = "pin_dots_notice_shown"
+        private const val SHARE_METADATA_MODE = "share_metadata_mode"
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -94,6 +95,14 @@ class Config(context: Context) : BaseConfig(context) {
     var pinDotsNoticeShown: Boolean
         get() = prefs.getBoolean(PIN_DOTS_NOTICE_SHOWN, false)
         set(value) = prefs.edit().putBoolean(PIN_DOTS_NOTICE_SHOWN, value).apply()
+
+    /**
+     * How outgoing images are sanitized. Defaults to stripping GPS only, matching the privacy
+     * promise in the README while keeping camera/date metadata in the user's own library.
+     */
+    var shareMetadataMode: Int
+        get() = prefs.getInt(SHARE_METADATA_MODE, SHARE_METADATA_MODE_LOCATION)
+        set(value) = prefs.edit().putInt(SHARE_METADATA_MODE, value).apply()
 
     /**
      * Appearance mode for the fork's own Appearance screen. On first run after the upgrade,

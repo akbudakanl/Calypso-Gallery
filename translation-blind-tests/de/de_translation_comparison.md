@@ -1126,3 +1126,15 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 | 3 | `search_in_album` | Search in album | Im Album suchen | Album-view search hint |
 | 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | Zusätzliche Aktionen bei Vollbildmedien anzeigen | Settings switch label |
 | 5 | `manage_extra_viewer_actions` | Manage extra actions | Zusätzliche Aktionen verwalten | Settings row label and extra-actions dialog title |
+
+## Secure sharing — metadata sanitization (this revision)
+
+Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `settings_group_secure_sharing` | Secure sharing | Sicheres Teilen | New eyebrow in the Security category |
+| 2 | `settings_share_metadata_title` | Clear metadata before sharing | Metadaten vor dem Teilen entfernen | Settings row label and radio dialog title |
+| 3 | `share_metadata_off` | Off | Aus | No sanitization |
+| 4 | `share_metadata_location_only` | Location only | Nur Standort | Default mode: strips GPS tags |
+| 5 | `share_metadata_all` | All metadata | Alle Metadaten | Strips Make/Model/Software/DateTime/XMP too |

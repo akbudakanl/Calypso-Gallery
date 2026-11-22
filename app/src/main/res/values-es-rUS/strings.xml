@@ -795,4 +795,9 @@
     <string name="search_in_album">Buscar en el álbum</string>
     <string name="show_extra_viewer_actions">Mostrar acciones adicionales en medios a pantalla completa</string>
     <string name="manage_extra_viewer_actions">Administrar acciones adicionales</string>
+    <string name="settings_group_secure_sharing">Uso compartido seguro</string>
+    <string name="settings_share_metadata_title">Borrar metadatos antes de compartir</string>
+    <string name="share_metadata_off">Desactivado</string>
+    <string name="share_metadata_location_only">Solo ubicación</string>
+    <string name="share_metadata_all">Todos los metadatos</string>
 </resources>

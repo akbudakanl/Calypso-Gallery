@@ -1175,3 +1175,15 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 | 3 | `search_in_album` | Search in album | 在相簿中搜尋 | Album-view search hint |
 | 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | 在全螢幕媒體上顯示額外動作 | Settings switch label |
 | 5 | `manage_extra_viewer_actions` | Manage extra actions | 管理額外動作 | Settings row label and extra-actions dialog title |
+
+## Secure sharing — metadata sanitization (this revision)
+
+Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `settings_group_secure_sharing` | Secure sharing | 安全分享 | New eyebrow in the Security category |
+| 2 | `settings_share_metadata_title` | Clear metadata before sharing | 分享前清除中繼資料 | Settings row label and radio dialog title |
+| 3 | `share_metadata_off` | Off | 關閉 | No sanitization |
+| 4 | `share_metadata_location_only` | Location only | 僅位置資訊 | Default mode: strips GPS tags |
+| 5 | `share_metadata_all` | All metadata | 所有中繼資料 | Strips Make/Model/Software/DateTime/XMP too |

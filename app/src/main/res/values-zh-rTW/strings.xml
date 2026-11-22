@@ -750,4 +750,9 @@
     <string name="search_in_album">在相簿中搜尋</string>
     <string name="show_extra_viewer_actions">在全螢幕媒體上顯示額外動作</string>
     <string name="manage_extra_viewer_actions">管理額外動作</string>
+    <string name="settings_group_secure_sharing">安全分享</string>
+    <string name="settings_share_metadata_title">分享前清除中繼資料</string>
+    <string name="share_metadata_off">關閉</string>
+    <string name="share_metadata_location_only">僅位置資訊</string>
+    <string name="share_metadata_all">所有中繼資料</string>
 </resources>

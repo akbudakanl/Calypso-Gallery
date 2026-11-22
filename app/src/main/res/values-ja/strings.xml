@@ -753,4 +753,9 @@
     <string name="search_in_album">アルバム内を検索</string>
     <string name="show_extra_viewer_actions">全画面メディアで追加の操作を表示</string>
     <string name="manage_extra_viewer_actions">追加の操作を管理</string>
+    <string name="settings_group_secure_sharing">安全な共有</string>
+    <string name="settings_share_metadata_title">共有前にメタデータを削除</string>
+    <string name="share_metadata_off">オフ</string>
+    <string name="share_metadata_location_only">位置情報のみ</string>
+    <string name="share_metadata_all">すべてのメタデータ</string>
 </resources>

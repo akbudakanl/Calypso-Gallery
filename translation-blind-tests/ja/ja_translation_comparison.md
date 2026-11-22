@@ -1167,3 +1167,15 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 | 3 | `search_in_album` | Search in album | アルバム内を検索 | Album-view search hint |
 | 4 | `show_extra_viewer_actions` | Show extra actions on fullscreen media | 全画面メディアで追加の操作を表示 | Settings switch label |
 | 5 | `manage_extra_viewer_actions` | Manage extra actions | 追加の操作を管理 | Settings row label and extra-actions dialog title |
+
+## Secure sharing — metadata sanitization (this revision)
+
+Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `settings_group_secure_sharing` | Secure sharing | 安全な共有 | New eyebrow in the Security category |
+| 2 | `settings_share_metadata_title` | Clear metadata before sharing | 共有前にメタデータを削除 | Settings row label and radio dialog title |
+| 3 | `share_metadata_off` | Off | オフ | No sanitization |
+| 4 | `share_metadata_location_only` | Location only | 位置情報のみ | Default mode: strips GPS tags |
+| 5 | `share_metadata_all` | All metadata | すべてのメタデータ | Strips Make/Model/Software/DateTime/XMP too |

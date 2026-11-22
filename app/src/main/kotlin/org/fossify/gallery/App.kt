@@ -23,6 +23,7 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.Config
 import org.fossify.gallery.helpers.RandomOrderManager
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.SideloadCheck
 import org.fossify.gallery.helpers.VaultSessionManager
 import java.io.IOException
@@ -88,6 +89,7 @@ class App : FossifyApp() {
         super.onCreate()
         // ADR 0003: durable operation journal must be available before any file operation starts.
         OperationJournal.init(this)
+        ShareMetadataSanitizer.clearTemp(this)
         val mainHandler = runCatching { Handler(Looper.getMainLooper()) }.getOrNull()
         ForegroundOperationRegistry.onStateChanged = { active ->
             mainHandler?.post { syncKeepScreenOnForTrackedActivities(active) }
