@@ -1176,3 +1176,30 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | Bağlı | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | Yalnız mövqe | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | Bütün meta məlumatlar | Strips Make/Model/Software/DateTime/XMP too |
+
+## File operation notifications (this revision)
+
+Added the notification settings section (category heading, per-operation toggles, permission row and progress messages) introduced by the file-operation notification work to `values-az/strings.xml`. Translated independently from the English source in `values/strings.xml`, matching the locale's existing terminology; the `…` ellipses are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `notifications_settings` | Notifications | Bildirişlər | Settings category label |
+| 2 | `settings_group_operation_notifications` | File operation notifications | Fayl əməliyyatları bildirişləri | Settings subcategory eyebrow |
+| 3 | `notifications_enabled` | Show operation progress | Əməliyyat gedişatını göstər | Settings switch label |
+| 4 | `notify_copy_move` | Copy and move | Kopyala və köçür | Per-operation toggle label |
+| 5 | `notify_crypto` | Encrypt and decrypt | Şifrələ və şifrəni aç | Per-operation toggle label |
+| 6 | `notify_delete` | Delete and recycle bin | Sil və zibil qutusu | Per-operation toggle label |
+| 7 | `notify_virtual_album` | Virtual album updates | Virtual albom yeniləmələri | Per-operation toggle label |
+| 8 | `notifications_info` | Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications. | Android, fon rejimində fayl əməliyyatı icra olunarkən davamlı bildiriş tələb edir. Ətraflı gedişat yalnız tətbiqdən çıxdıqdan sonra göstərilir; tətbiqin içindəykən ekrandakı dialoq istifadə olunur. Fayl adları, yollar və seyf məzmunu heç vaxt bildirişlərə daxil edilmir. | Explanatory text below the settings group |
+| 9 | `notification_permission_label` | Notification permission | Bildiriş icazəsi | Android notification permission label |
+| 10 | `notification_permission_granted` | Granted | Verildi | Permission status / positive action |
+| 11 | `notification_permission_request` | Tap to allow | İcazə vermək üçün toxunun | Permission request hint |
+| 12 | `file_operations_notifications` | File operations | Fayl əməliyyatları | Notification channel / section title |
+| 13 | `file_operation_copy_move` | Copying / moving files… | Fayllar kopyalanır / köçürülür… | Progress notification title; `…` preserved |
+| 14 | `file_operation_crypto` | Encrypting / decrypting files… | Fayllar şifrələnir / şifrəsi açılır… | Progress notification title; `…` preserved |
+| 15 | `file_operation_delete` | Deleting files… | Fayllar silinir… | Progress notification title; `…` preserved |
+| 16 | `file_operation_virtual_album` | Updating albums… | Albomlar yenilənir… | Progress notification title; `…` preserved |
+| 17 | `file_operation_generic` | File operation in progress… | Fayl əməliyyatı davam edir… | Fallback progress notification title |
+| 18 | `checking_files_before_transfer` | Checking files before transfer… | Köçürmədən əvvəl fayllar yoxlanılır… | Pre-transfer verification progress |
+| 19 | `checking_files_before_crypto` | Checking files before encryption… | Şifrələmədən əvvəl fayllar yoxlanılır… | Pre-encryption verification progress |
+| 20 | `deleting_files_progress` | Deleting files… | Fayllar silinir… | Deletion progress status |

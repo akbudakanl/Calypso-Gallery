@@ -775,4 +775,25 @@
     <string name="share_metadata_off">Av</string>
     <string name="share_metadata_location_only">Kun plassering</string>
     <string name="share_metadata_all">Alle metadata</string>
+    <!-- File operation notifications -->
+    <string name="notifications_settings">Varsler</string>
+    <string name="settings_group_operation_notifications">Varsler om filoperasjoner</string>
+    <string name="notifications_enabled">Vis fremdrift for operasjoner</string>
+    <string name="notify_copy_move">Kopier og flytt</string>
+    <string name="notify_crypto">Krypter og dekrypter</string>
+    <string name="notify_delete">Slett og papirkurv</string>
+    <string name="notify_virtual_album">Oppdateringer av virtuelle album</string>
+    <string name="notifications_info">Android krever en vedvarende varsel mens en filoperasjon kjører i bakgrunnen. Detaljert fremdrift vises bare etter at du har forlatt appen – mens du er i appen, brukes dialogboksen på skjermen i stedet. Filnavn, baner og innholdet i hvelvet tas aldri med i varsler.</string>
+    <string name="notification_permission_label">Varslingstillatelse</string>
+    <string name="notification_permission_granted">Gitt</string>
+    <string name="notification_permission_request">Trykk for å tillate</string>
+    <string name="file_operations_notifications">Filoperasjoner</string>
+    <string name="file_operation_copy_move">Kopierer / flytter filer…</string>
+    <string name="file_operation_crypto">Krypterer / dekrypterer filer…</string>
+    <string name="file_operation_delete">Sletter filer…</string>
+    <string name="file_operation_virtual_album">Oppdaterer album…</string>
+    <string name="file_operation_generic">Filoperasjon pågår…</string>
+    <string name="checking_files_before_transfer">Sjekker filer før overføring…</string>
+    <string name="checking_files_before_crypto">Sjekker filer før kryptering…</string>
+    <string name="deleting_files_progress">Sletter filer…</string>
 </resources>

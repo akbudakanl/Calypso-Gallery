@@ -764,4 +764,25 @@
     <string name="share_metadata_off">Desactivado</string>
     <string name="share_metadata_location_only">Solo ubicación</string>
     <string name="share_metadata_all">Todos los metadatos</string>
+    <!-- Notificaciones de operaciones con archivos -->
+    <string name="notifications_settings">Notificaciones</string>
+    <string name="settings_group_operation_notifications">Notificaciones de operaciones con archivos</string>
+    <string name="notifications_enabled">Mostrar el progreso de las operaciones</string>
+    <string name="notify_copy_move">Copiar y mover</string>
+    <string name="notify_crypto">Cifrar y descifrar</string>
+    <string name="notify_delete">Eliminar y papelera de reciclaje</string>
+    <string name="notify_virtual_album">Actualizaciones de álbumes virtuales</string>
+    <string name="notifications_info">Android requiere una notificación persistente mientras se ejecuta una operación de archivos en segundo plano. El progreso detallado solo se muestra después de salir de la aplicación; mientras se encuentra en ella, se utiliza el diálogo en pantalla. Los nombres de archivo, las rutas y el contenido de la bóveda nunca se incluyen en las notificaciones.</string>
+    <string name="notification_permission_label">Permiso de notificaciones</string>
+    <string name="notification_permission_granted">Concedido</string>
+    <string name="notification_permission_request">Toque para permitir</string>
+    <string name="file_operations_notifications">Operaciones con archivos</string>
+    <string name="file_operation_copy_move">Copiando / moviendo archivos…</string>
+    <string name="file_operation_crypto">Cifrando / descifrando archivos…</string>
+    <string name="file_operation_delete">Eliminando archivos…</string>
+    <string name="file_operation_virtual_album">Actualizando álbumes…</string>
+    <string name="file_operation_generic">Operación con archivos en curso…</string>
+    <string name="checking_files_before_transfer">Comprobando archivos antes de la transferencia…</string>
+    <string name="checking_files_before_crypto">Comprobando archivos antes del cifrado…</string>
+    <string name="deleting_files_progress">Eliminando archivos…</string>
 </resources>

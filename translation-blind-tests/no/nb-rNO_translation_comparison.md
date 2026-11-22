@@ -1202,3 +1202,30 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | Av | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | Kun plassering | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | Alle metadata | Strips Make/Model/Software/DateTime/XMP too |
+
+## File operation notifications (this revision)
+
+Added the notification settings section (category heading, per-operation toggles, permission row and progress messages) introduced by the file-operation notification work to `values-nb-rNO/strings.xml`. Translated independently from the English source in `values/strings.xml`, matching the locale's existing terminology; the `…` ellipses are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `notifications_settings` | Notifications | Varsler | Settings category label |
+| 2 | `settings_group_operation_notifications` | File operation notifications | Varsler om filoperasjoner | Settings subcategory eyebrow |
+| 3 | `notifications_enabled` | Show operation progress | Vis fremdrift for operasjoner | Settings switch label |
+| 4 | `notify_copy_move` | Copy and move | Kopier og flytt | Per-operation toggle label |
+| 5 | `notify_crypto` | Encrypt and decrypt | Krypter og dekrypter | Per-operation toggle label |
+| 6 | `notify_delete` | Delete and recycle bin | Slett og papirkurv | Per-operation toggle label |
+| 7 | `notify_virtual_album` | Virtual album updates | Oppdateringer av virtuelle album | Per-operation toggle label |
+| 8 | `notifications_info` | Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications. | Android krever en vedvarende varsel mens en filoperasjon kjører i bakgrunnen. Detaljert fremdrift vises bare etter at du har forlatt appen – mens du er i appen, brukes dialogboksen på skjermen i stedet. Filnavn, baner og innholdet i hvelvet tas aldri med i varsler. | Explanatory text below the settings group |
+| 9 | `notification_permission_label` | Notification permission | Varslingstillatelse | Android notification permission label |
+| 10 | `notification_permission_granted` | Granted | Gitt | Permission status / positive action |
+| 11 | `notification_permission_request` | Tap to allow | Trykk for å tillate | Permission request hint |
+| 12 | `file_operations_notifications` | File operations | Filoperasjoner | Notification channel / section title |
+| 13 | `file_operation_copy_move` | Copying / moving files… | Kopierer / flytter filer… | Progress notification title; `…` preserved |
+| 14 | `file_operation_crypto` | Encrypting / decrypting files… | Krypterer / dekrypterer filer… | Progress notification title; `…` preserved |
+| 15 | `file_operation_delete` | Deleting files… | Sletter filer… | Progress notification title; `…` preserved |
+| 16 | `file_operation_virtual_album` | Updating albums… | Oppdaterer album… | Progress notification title; `…` preserved |
+| 17 | `file_operation_generic` | File operation in progress… | Filoperasjon pågår… | Fallback progress notification title |
+| 18 | `checking_files_before_transfer` | Checking files before transfer… | Sjekker filer før overføring… | Pre-transfer verification progress |
+| 19 | `checking_files_before_crypto` | Checking files before encryption… | Sjekker filer før kryptering… | Pre-encryption verification progress |
+| 20 | `deleting_files_progress` | Deleting files… | Sletter filer… | Deletion progress status |

@@ -1179,3 +1179,30 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | オフ | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | 位置情報のみ | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | すべてのメタデータ | Strips Make/Model/Software/DateTime/XMP too |
+
+## File operation notifications (this revision)
+
+Added the notification settings section (category heading, per-operation toggles, permission row and progress messages) introduced by the file-operation notification work to `values-ja/strings.xml`. Translated independently from the English source in `values/strings.xml`, matching the locale's existing terminology (`保管庫` for "Encrypted Vault"); the `…` ellipses are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `notifications_settings` | Notifications | 通知 | Settings category label |
+| 2 | `settings_group_operation_notifications` | File operation notifications | ファイル操作の通知 | Settings subcategory eyebrow |
+| 3 | `notifications_enabled` | Show operation progress | 操作の進捗を表示 | Settings switch label |
+| 4 | `notify_copy_move` | Copy and move | コピーと移動 | Per-operation toggle label |
+| 5 | `notify_crypto` | Encrypt and decrypt | 暗号化と復号 | Per-operation toggle label |
+| 6 | `notify_delete` | Delete and recycle bin | 削除とごみ箱 | Per-operation toggle label |
+| 7 | `notify_virtual_album` | Virtual album updates | 仮想アルバムの更新 | Per-operation toggle label |
+| 8 | `notifications_info` | Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications. | Androidでは、バックグラウンドでファイル操作中は永続的な通知が必要です。詳細な進捗はアプリを終了した後にのみ表示され、アプリ内では画面上のダイアログが代わりに使用されます。ファイル名、パス、保管庫の内容が通知に含まれることはありません。 | Explanatory text below the settings group |
+| 9 | `notification_permission_label` | Notification permission | 通知の権限 | Android notification permission label |
+| 10 | `notification_permission_granted` | Granted | 許可済み | Permission status / positive action |
+| 11 | `notification_permission_request` | Tap to allow | タップして許可 | Permission request hint |
+| 12 | `file_operations_notifications` | File operations | ファイル操作 | Notification channel / section title |
+| 13 | `file_operation_copy_move` | Copying / moving files… | ファイルをコピー／移動中… | Progress notification title; `…` preserved |
+| 14 | `file_operation_crypto` | Encrypting / decrypting files… | ファイルを暗号化／復号中… | Progress notification title; `…` preserved |
+| 15 | `file_operation_delete` | Deleting files… | ファイルを削除中… | Progress notification title; `…` preserved |
+| 16 | `file_operation_virtual_album` | Updating albums… | アルバムを更新中… | Progress notification title; `…` preserved |
+| 17 | `file_operation_generic` | File operation in progress… | ファイル操作中… | Fallback progress notification title |
+| 18 | `checking_files_before_transfer` | Checking files before transfer… | 転送前にファイルを確認中… | Pre-transfer verification progress |
+| 19 | `checking_files_before_crypto` | Checking files before encryption… | 暗号化前にファイルを確認中… | Pre-encryption verification progress |
+| 20 | `deleting_files_progress` | Deleting files… | ファイルを削除中… | Deletion progress status |

@@ -755,4 +755,25 @@
     <string name="share_metadata_off">關閉</string>
     <string name="share_metadata_location_only">僅位置資訊</string>
     <string name="share_metadata_all">所有中繼資料</string>
+    <!-- File operation notifications -->
+    <string name="notifications_settings">通知</string>
+    <string name="settings_group_operation_notifications">檔案操作通知</string>
+    <string name="notifications_enabled">顯示操作進度</string>
+    <string name="notify_copy_move">複製並移動</string>
+    <string name="notify_crypto">加密並解密</string>
+    <string name="notify_delete">刪除與資源回收筒</string>
+    <string name="notify_virtual_album">虛擬專輯更新</string>
+    <string name="notifications_info">Android 在背景執行檔案操作時需要持續顯示的通知。詳細進度只有在您離開應用程式後才會顯示；當您仍在應用程式內時，會改用畫面上的對話框。檔案名稱、路徑與保險箱內容永遠不會包含在通知中。</string>
+    <string name="notification_permission_label">通知權限</string>
+    <string name="notification_permission_granted">已授予</string>
+    <string name="notification_permission_request">輕觸以允許</string>
+    <string name="file_operations_notifications">檔案操作</string>
+    <string name="file_operation_copy_move">正在複製／移動檔案…</string>
+    <string name="file_operation_crypto">正在加密／解密檔案…</string>
+    <string name="file_operation_delete">正在刪除檔案…</string>
+    <string name="file_operation_virtual_album">正在更新專輯…</string>
+    <string name="file_operation_generic">檔案操作進行中…</string>
+    <string name="checking_files_before_transfer">傳輸前正在檢查檔案…</string>
+    <string name="checking_files_before_crypto">加密前正在檢查檔案…</string>
+    <string name="deleting_files_progress">正在刪除檔案…</string>
 </resources>

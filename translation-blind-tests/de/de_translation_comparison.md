@@ -1138,3 +1138,30 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | Aus | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | Nur Standort | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | Alle Metadaten | Strips Make/Model/Software/DateTime/XMP too |
+
+## File operation notifications (this revision)
+
+Added the notification settings section (category heading, per-operation toggles, permission row and progress messages) introduced by the file-operation notification work to `values-de/strings.xml`. Translated independently from the English source in `values/strings.xml`, matching the locale's existing terminology; the `…` ellipses are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `notifications_settings` | Notifications | Benachrichtigungen | Settings category label |
+| 2 | `settings_group_operation_notifications` | File operation notifications | Benachrichtigungen über Dateioperationen | Settings subcategory eyebrow |
+| 3 | `notifications_enabled` | Show operation progress | Fortschritt von Operationen anzeigen | Settings switch label |
+| 4 | `notify_copy_move` | Copy and move | Kopieren und Verschieben | Per-operation toggle label |
+| 5 | `notify_crypto` | Encrypt and decrypt | Verschlüsseln und Entschlüsseln | Per-operation toggle label |
+| 6 | `notify_delete` | Delete and recycle bin | Löschen und Papierkorb | Per-operation toggle label |
+| 7 | `notify_virtual_album` | Virtual album updates | Aktualisierungen virtueller Alben | Per-operation toggle label |
+| 8 | `notifications_info` | Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications. | Android benötigt eine dauerhafte Benachrichtigung, während eine Dateioperation im Hintergrund läuft. Detaillierter Fortschritt wird erst angezeigt, nachdem du die App verlassen hast – solange du dich in der App befindest, wird stattdessen der Dialog auf dem Bildschirm verwendet. Dateinamen, Pfade und Tresorinhalte werden niemals in Benachrichtigungen aufgenommen. | Explanatory text below the settings group |
+| 9 | `notification_permission_label` | Notification permission | Benachrichtigungsberechtigung | Android notification permission label |
+| 10 | `notification_permission_granted` | Granted | Erteilt | Permission status / positive action |
+| 11 | `notification_permission_request` | Tap to allow | Tippen zum Erlauben | Permission request hint |
+| 12 | `file_operations_notifications` | File operations | Dateioperationen | Notification channel / section title |
+| 13 | `file_operation_copy_move` | Copying / moving files… | Dateien werden kopiert / verschoben… | Progress notification title; `…` preserved |
+| 14 | `file_operation_crypto` | Encrypting / decrypting files… | Dateien werden verschlüsselt / entschlüsselt… | Progress notification title; `…` preserved |
+| 15 | `file_operation_delete` | Deleting files… | Dateien werden gelöscht… | Progress notification title; `…` preserved |
+| 16 | `file_operation_virtual_album` | Updating albums… | Alben werden aktualisiert… | Progress notification title; `…` preserved |
+| 17 | `file_operation_generic` | File operation in progress… | Dateioperation läuft… | Fallback progress notification title |
+| 18 | `checking_files_before_transfer` | Checking files before transfer… | Dateien werden vor der Übertragung geprüft… | Pre-transfer verification progress |
+| 19 | `checking_files_before_crypto` | Checking files before encryption… | Dateien werden vor der Verschlüsselung geprüft… | Pre-encryption verification progress |
+| 20 | `deleting_files_progress` | Deleting files… | Dateien werden gelöscht… | Deletion progress status |

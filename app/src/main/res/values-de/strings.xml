@@ -758,4 +758,25 @@
     <string name="share_metadata_off">Aus</string>
     <string name="share_metadata_location_only">Nur Standort</string>
     <string name="share_metadata_all">Alle Metadaten</string>
+    <!-- File operation notifications -->
+    <string name="notifications_settings">Benachrichtigungen</string>
+    <string name="settings_group_operation_notifications">Benachrichtigungen über Dateioperationen</string>
+    <string name="notifications_enabled">Fortschritt von Operationen anzeigen</string>
+    <string name="notify_copy_move">Kopieren und Verschieben</string>
+    <string name="notify_crypto">Verschlüsseln und Entschlüsseln</string>
+    <string name="notify_delete">Löschen und Papierkorb</string>
+    <string name="notify_virtual_album">Aktualisierungen virtueller Alben</string>
+    <string name="notifications_info">Android benötigt eine dauerhafte Benachrichtigung, während eine Dateioperation im Hintergrund läuft. Detaillierter Fortschritt wird erst angezeigt, nachdem du die App verlassen hast – solange du dich in der App befindest, wird stattdessen der Dialog auf dem Bildschirm verwendet. Dateinamen, Pfade und Tresorinhalte werden niemals in Benachrichtigungen aufgenommen.</string>
+    <string name="notification_permission_label">Benachrichtigungsberechtigung</string>
+    <string name="notification_permission_granted">Erteilt</string>
+    <string name="notification_permission_request">Tippen zum Erlauben</string>
+    <string name="file_operations_notifications">Dateioperationen</string>
+    <string name="file_operation_copy_move">Dateien werden kopiert / verschoben…</string>
+    <string name="file_operation_crypto">Dateien werden verschlüsselt / entschlüsselt…</string>
+    <string name="file_operation_delete">Dateien werden gelöscht…</string>
+    <string name="file_operation_virtual_album">Alben werden aktualisiert…</string>
+    <string name="file_operation_generic">Dateioperation läuft…</string>
+    <string name="checking_files_before_transfer">Dateien werden vor der Übertragung geprüft…</string>
+    <string name="checking_files_before_crypto">Dateien werden vor der Verschlüsselung geprüft…</string>
+    <string name="deleting_files_progress">Dateien werden gelöscht…</string>
 </resources>

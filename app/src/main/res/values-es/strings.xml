@@ -769,7 +769,7 @@
     <string name="notify_crypto">Cifrar y descifrar</string>
     <string name="notify_delete">Eliminar y papelera de reciclaje</string>
     <string name="notify_virtual_album">Actualizaciones de álbumes virtuales</string>
-    <string name="notifications_info">Android requiere una notificación persistente mientras se ejecuta una operación de archivos en segundo plano. Estos ajustes controlan si se muestra su progreso detallado (nombre del archivo y porcentaje).</string>
+    <string name="notifications_info">Android requiere una notificación persistente mientras se ejecuta una operación de archivos en segundo plano. El progreso detallado solo se muestra después de salir de la aplicación; mientras se encuentra en ella, se utiliza el diálogo en pantalla. Los nombres de archivo, las rutas y el contenido de la bóveda nunca se incluyen en las notificaciones.</string>
     <string name="notification_permission_label">Permiso de notificaciones</string>
     <string name="notification_permission_granted">Concedido</string>
     <string name="notification_permission_request">Toque para permitir</string>

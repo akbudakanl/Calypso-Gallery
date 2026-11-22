@@ -1187,3 +1187,30 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | 關閉 | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | 僅位置資訊 | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | 所有中繼資料 | Strips Make/Model/Software/DateTime/XMP too |
+
+## File operation notifications (this revision)
+
+Added the notification settings section (category heading, per-operation toggles, permission row and progress messages) introduced by the file-operation notification work to `values-zh-rTW/strings.xml`. Translated independently from the English source in `values/strings.xml`, matching the locale's existing terminology (`保險箱` for "Encrypted Vault"); the `…` ellipses are preserved exactly.
+
+| # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
+|--:|---|---|---|---|
+| 1 | `notifications_settings` | Notifications | 通知 | Settings category label |
+| 2 | `settings_group_operation_notifications` | File operation notifications | 檔案操作通知 | Settings subcategory eyebrow |
+| 3 | `notifications_enabled` | Show operation progress | 顯示操作進度 | Settings switch label |
+| 4 | `notify_copy_move` | Copy and move | 複製並移動 | Per-operation toggle label |
+| 5 | `notify_crypto` | Encrypt and decrypt | 加密並解密 | Per-operation toggle label |
+| 6 | `notify_delete` | Delete and recycle bin | 刪除與資源回收筒 | Per-operation toggle label |
+| 7 | `notify_virtual_album` | Virtual album updates | 虛擬專輯更新 | Per-operation toggle label |
+| 8 | `notifications_info` | Android requires a persistent notification while a background file operation runs. Detailed progress is only shown after you leave the app — while you are inside it, the on-screen dialog is used instead. File names, paths and vault contents are never included in notifications. | Android 在背景執行檔案操作時需要持續顯示的通知。詳細進度只有在您離開應用程式後才會顯示；當您仍在應用程式內時，會改用畫面上的對話框。檔案名稱、路徑與保險箱內容永遠不會包含在通知中。 | Explanatory text below the settings group |
+| 9 | `notification_permission_label` | Notification permission | 通知權限 | Android notification permission label |
+| 10 | `notification_permission_granted` | Granted | 已授予 | Permission status / positive action |
+| 11 | `notification_permission_request` | Tap to allow | 輕觸以允許 | Permission request hint |
+| 12 | `file_operations_notifications` | File operations | 檔案操作 | Notification channel / section title |
+| 13 | `file_operation_copy_move` | Copying / moving files… | 正在複製／移動檔案… | Progress notification title; `…` preserved |
+| 14 | `file_operation_crypto` | Encrypting / decrypting files… | 正在加密／解密檔案… | Progress notification title; `…` preserved |
+| 15 | `file_operation_delete` | Deleting files… | 正在刪除檔案… | Progress notification title; `…` preserved |
+| 16 | `file_operation_virtual_album` | Updating albums… | 正在更新專輯… | Progress notification title; `…` preserved |
+| 17 | `file_operation_generic` | File operation in progress… | 檔案操作進行中… | Fallback progress notification title |
+| 18 | `checking_files_before_transfer` | Checking files before transfer… | 傳輸前正在檢查檔案… | Pre-transfer verification progress |
+| 19 | `checking_files_before_crypto` | Checking files before encryption… | 加密前正在檢查檔案… | Pre-encryption verification progress |
+| 20 | `deleting_files_progress` | Deleting files… | 正在刪除檔案… | Deletion progress status |

@@ -758,4 +758,25 @@
     <string name="share_metadata_off">オフ</string>
     <string name="share_metadata_location_only">位置情報のみ</string>
     <string name="share_metadata_all">すべてのメタデータ</string>
+    <!-- File operation notifications -->
+    <string name="notifications_settings">通知</string>
+    <string name="settings_group_operation_notifications">ファイル操作の通知</string>
+    <string name="notifications_enabled">操作の進捗を表示</string>
+    <string name="notify_copy_move">コピーと移動</string>
+    <string name="notify_crypto">暗号化と復号</string>
+    <string name="notify_delete">削除とごみ箱</string>
+    <string name="notify_virtual_album">仮想アルバムの更新</string>
+    <string name="notifications_info">Androidでは、バックグラウンドでファイル操作中は永続的な通知が必要です。詳細な進捗はアプリを終了した後にのみ表示され、アプリ内では画面上のダイアログが代わりに使用されます。ファイル名、パス、保管庫の内容が通知に含まれることはありません。</string>
+    <string name="notification_permission_label">通知の権限</string>
+    <string name="notification_permission_granted">許可済み</string>
+    <string name="notification_permission_request">タップして許可</string>
+    <string name="file_operations_notifications">ファイル操作</string>
+    <string name="file_operation_copy_move">ファイルをコピー／移動中…</string>
+    <string name="file_operation_crypto">ファイルを暗号化／復号中…</string>
+    <string name="file_operation_delete">ファイルを削除中…</string>
+    <string name="file_operation_virtual_album">アルバムを更新中…</string>
+    <string name="file_operation_generic">ファイル操作中…</string>
+    <string name="checking_files_before_transfer">転送前にファイルを確認中…</string>
+    <string name="checking_files_before_crypto">暗号化前にファイルを確認中…</string>
+    <string name="deleting_files_progress">ファイルを削除中…</string>
 </resources>
