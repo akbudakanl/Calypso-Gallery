@@ -961,7 +961,8 @@ class SettingsActivity : SimpleActivity() {
             RadioGroupDialog(
                 activity = this@SettingsActivity,
                 items = items,
-                checkedItemId = config.homeScreenViewOnLaunch
+                checkedItemId = config.homeScreenViewOnLaunch,
+                titleId = R.string.main_screen_view_on_launch,
             ) {
                 config.homeScreenViewOnLaunch = it as Int
                 binding.settingsHomeScreenViewOnLaunch.text = getHomeScreenViewOnLaunchText()
