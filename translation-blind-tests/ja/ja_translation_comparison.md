@@ -1229,3 +1229,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | 推奨範囲 | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | より多くのメモリ使用量 | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | メモリ警告が有効 | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-ja/strings.xml` (Japanese).
+
+| Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | CLI / 外部の暗号化メディアをインポート | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | 暗号化メディアのインポートの仕組み:\n\n1. スマートフォンでの準備:\n設定 → CLIブリッジを準備 は、アクティブな保管庫のために Calypso Gallery/CLI の下にフォルダーを作成し、保管庫ヘッダー (vault) と cli_bridge マーカーを格納します。\n\n2. コンピューターでの暗号化:\n写真と動画を To_Encrypt フォルダーに入れてください。Windows と Linux では run.bat / run.sh を実行するとランチャーがブリッジを自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。CLI は暗号化された .bin ファイル、アルバム情報、pending_sync リストをブリッジフォルダーに書き込みます。保管庫には書き込みません。ルートのファイルは Default Secret Album に、サブフォルダーは暗号化アルバムになります。\n\n3. アクティブな保管庫への統合:\n設定でこの行をタップします。保留中のすべてのファイルが、アプリで現在アクティブな保管庫にインポートされます。同一ファイルはスキップされ、同名で内容が異なるファイルは name(1) になります。ブリッジは完全に成功したインポート後のみクリーンアップされます。 | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI がブリッジフォルダーに書き込み中です。完了するまで待ってからもう一度お試しください。 | New key; shown when the selected bridge contains the busy marker |

@@ -1188,3 +1188,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | Empfohlener Bereich | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | Höherer Speicherverbrauch | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | Speicherwarnung aktiv | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-de/strings.xml` (German).
+
+| Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | CLI / verschlüsselte Medien aus externem Speicher importieren | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | So funktioniert der Import verschlüsselter Medien:\n\n1. Vorbereitung auf dem Telefon:\nEinstellungen → CLI-Brücke vorbereiten erstellt für den aktiven Tresor einen Ordner unter Calypso Gallery/CLI mit der Tresor-Headerdatei (vault) und einer cli_bridge-Markierung.\n\n2. Verschlüsseln auf dem Computer:\nLege deine Fotos und Videos in To_Encrypt. Unter Windows und Linux übernimmt der Launcher den Transfer automatisch, wenn du run.bat / run.sh ausführst; unter macOS kopiere den Ordner mit OpenMTP. Das CLI schreibt verschlüsselte .bin-Dateien, Album-Metadaten und eine pending_sync-Liste in den Brückenordner - niemals in deinen Tresor. Dateien im Stammverzeichnis landen im Default Secret Album, Unterordner werden zu verschlüsselten Alben.\n\n3. Zusammenführen mit dem aktiven Tresor:\nTippe in den Einstellungen auf diese Zeile. Alle ausstehenden Dateien werden in den aktuell aktiven Tresor importiert. Identische Dateien werden übersprungen, gleichnamige Dateien mit anderem Inhalt werden zu name(1). Die Brücke wird erst nach einem vollständig erfolgreichen Import bereinigt. | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | Das CLI schreibt noch in den Brückenordner. Warte, bis es fertig ist, und versuche es erneut. | New key; shown when the selected bridge contains the busy marker |

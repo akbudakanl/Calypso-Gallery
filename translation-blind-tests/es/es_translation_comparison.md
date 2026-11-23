@@ -1226,3 +1226,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | Rango recomendado | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | Mayor uso de memoria | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | Advertencia de memoria activa | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-es/strings.xml` (Spanish (Standard)).
+
+| Key (`name`) | English (`values/strings.xml`) | Spanish (Standard) (`values-es/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | Importar medios cifrados desde CLI / almacenamiento externo | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Preparación en el teléfono:\nAjustes → Preparar puente CLI crea una carpeta en Calypso Gallery/CLI para la bóveda activa, con el encabezado de la bóveda (vault) y un marcador cli_bridge.\n\n2. Cifrado en el ordenador:\nColoque sus fotos y vídeos en To_Encrypt. En Windows y Linux, el lanzador realiza la transferencia automáticamente al ejecutar run.bat / run.sh; en macOS, copie la carpeta con OpenMTP. La CLI escribe archivos .bin cifrados, metadatos de álbumes y una lista pending_sync en la carpeta puente, nunca en su bóveda. Los archivos en la raíz van a Default Secret Album; las subcarpetas se convierten en álbumes cifrados.\n\n3. Fusión en la bóveda activa:\nToque esta fila en Ajustes. Todos los archivos pendientes se importan en la bóveda activa en ese momento en la aplicación. Los archivos idénticos se omiten y los archivos con el mismo nombre pero contenido distinto pasan a ser name(1). La carpeta puente solo se limpia tras una importación completamente correcta. | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | La CLI sigue escribiendo en la carpeta puente. Espere a que termine e inténtelo de nuevo. | New key; shown when the selected bridge contains the busy marker |

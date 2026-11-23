@@ -1226,3 +1226,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | Tövsiyə olunan aralıq | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | Daha çox yaddaş istifadəsi | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | Yaddaş xəbərdarlığı aktivdir | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-az/strings.xml` (Azerbaijani).
+
+| Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | CLI / xarici şifrələnmiş medianı idxal et | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Şifrələnmiş Medianın İdxalı Necə İşləyir:\n\n1. Telefonda hazırlıq:\nParametrlər → CLI körpüsünü hazırla, aktiv seyf üçün Calypso Gallery/CLI altında qovluq yaradır; içində seyf başlığı (vault) və cli_bridge işarə faylı var.\n\n2. Kompüterdə şifrələmə:\nFoto və videolarınızı To_Encrypt qovluğuna qoyun. Windows və Linux-da run.bat / run.sh işlətdiyinizdə körpü avtomatik ötürülür; macOS-da qovluğu OpenMTP ilə kopyalayın. CLI şifrələnmiş .bin fayllarını, albom məlumatlarını və pending_sync siyahısını körpü qovluğuna yazır - heç vaxt seyfinizə. Kökdəki fayllar Default Secret Album-a, alt qovluqlar şifrələnmiş albomlara gedir.\n\n3. Aktiv seyfə birləşdirmə:\nParametrlərdə bu sətirə toxunun. Gözləyən bütün fayllar tətbiqdə hazırda aktiv olan seyfə idxal olunur. Eyni fayllar ötürülür, eyni adlı fərqli məzmunlu fayllar ad(1) olur. Körpü yalnız tam uğurlu idxaldan sonra təmizlənir. | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI körpü qovluğuna yazmağa davam edir. Bitməsini gözləyib yenidən cəhd edin. | New key; shown when the selected bridge contains the busy marker |

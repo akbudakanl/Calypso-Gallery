@@ -547,8 +547,8 @@
     <string name="usb_direct_filesystem_required">This USB path is only exposed through Android\'s virtual OTG provider and cannot be accessed directly as a filesystem path. Please choose a mounted storage directory or a folder on internal storage / SD card.</string>
     <string name="vault_location_not_writable">The selected folder does not exist or is not writable on this device.</string>
     <string name="vault_location_not_readable">The selected folder does not exist or is not readable on this device.</string>
-    <string name="sync_vault_from_external">Import newly encrypted media filed to encrypted section</string>
-    <string name="sync_vault_select_source_prompt">How Encrypted Media Import Works:\n\n1. Unified Secrets Folder:\nKeep a folder named Secrets on your external drive (USB / SD). You can either keep a full backup copy of your vault there, or place only your vault\'s .vault header file inside it.\n\n2. Encrypting New Media (PC / Tails CLI):\nThe offline CLI tool automatically saves new encrypted files directly into Secrets. Files placed at the root go to Default Secret Album; files in subfolders go to matching encrypted albums (or create new ones).\n\n3. Bit-by-Bit Smart Sync:\nSelect your external drive or Secrets folder next. The app compares the external drive with your phone vault in RAM:\n• Only new files and albums are imported.\n• Bit-identical files already in your vault are skipped.\n• Different files with the same name (e.g. download.jpg) are safely imported as download(1).jpg.</string>
+    <string name="sync_vault_from_external">Import CLI / external encrypted media</string>
+    <string name="sync_vault_select_source_prompt">How Encrypted Media Import Works:\n\n1. Prepare on your phone:\nSettings → Prepare CLI bridge creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker.\n\n2. Encrypt on the computer:\nPut your photos and videos in To_Encrypt. On Windows and Linux the launcher transfers the bridge automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The CLI writes encrypted .bin files, album metadata and a pending_sync list into the bridge folder - never into your vault. Root files go to Default Secret Album; subfolders become encrypted albums.\n\n3. Merge into the active vault:\nTap this row in Settings. All pending files are imported into the vault that is currently active in the app. Identical files are skipped and same-name files with different content become name(1). The bridge is cleaned only after a completely successful import.</string>
     <string name="conflict_handling_mode_label">File conflict &amp; duplicate resolution</string>
     <string name="conflict_handling_standard_dialog_summary">Standard dialog</string>
     <string name="conflict_handling_smart_dialog_summary">Smart dialog</string>
@@ -614,7 +614,8 @@
     <string name="smart_conflict_meta_date_modified">Modified: %s</string>
     <string name="syncing_vault_progress">Syncing vault from external drive…</string>
     <string name="vault_sync_summary_message">Vault sync complete:\n• Copied: %1$d\n• Renamed (name conflict): %2$d\n• Skipped (identical): %3$d\n• Failed: %4$d</string>
-    <string name="vault_sync_nothing_to_sync">No pending CLI-encrypted media (.pending_sync) was found in the selected folder.</string>
+    <string name="vault_sync_nothing_to_sync">No pending CLI-encrypted media (pending_sync) was found in the selected folder.</string>
+    <string name="vault_sync_cli_busy">The CLI is still writing to the bridge folder. Wait for it to finish, then try again.</string>
     <string name="vault_sync_same_folder_error">The selected source folder is the same as your active vault.</string>
     <string name="change_encrypted_vault_password">Change encrypted vault password</string>
     <string name="biometric_access_to_encrypted_vault">Biometric access to encrypted vault</string>

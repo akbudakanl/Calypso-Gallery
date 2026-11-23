@@ -464,8 +464,8 @@
     <string name="usb_direct_filesystem_required">この USB パスは Android の仮想 OTG プロバイダー経由でのみ公開されており、ファイルシステムパスとして直接アクセスできません。マウントされたストレージディレクトリ、または内部ストレージ / SD カード上のフォルダーを選択してください。</string>
     <string name="vault_location_not_writable">選択したフォルダーは存在しないか、このデバイスでは書き込みできません。</string>
     <string name="vault_location_not_readable">選択したフォルダーは存在しないか、このデバイスでは読み取れません。</string>
-    <string name="sync_vault_from_external">暗号化されたメディアファイルを暗号化セクションにインポート</string>
-    <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. 統合 Secrets フォルダー:\n外部ドライブ (USB / SD) に Secrets という名前のフォルダーを用意します。そこに保管庫の完全なバックアップコピーを置くか、保管庫の .vault ヘッダーファイルのみを配置できます。\n\n2. 新しいメディアの暗号化 (PC / Tails CLI):\nオフライン CLI ツールは、新しい暗号化ファイルを自動的に Secrets に直接保存します。ルートに置かれたファイルは Default Secret Album に、サブフォルダー内のファイルは対応する暗号化アルバムに入ります（存在しない場合は新規作成）。\n\n3. ビット単位のスマート同期:\n次に外部ドライブまたは Secrets フォルダーを選択してください。アプリは RAM 上で外部ドライブとスマートフォンの保管庫を比較します:\n• 新しいファイルとアルバムのみがインポートされます。\n• 保管庫に既にあるビット単位で同一のファイルはスキップされます。\n• 同名で内容が異なるファイル（例: download.jpg）は安全に download(1).jpg としてインポートされます。</string>
+    <string name="sync_vault_from_external">CLI / 外部の暗号化メディアをインポート</string>
+    <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. スマートフォンでの準備:\n設定 → CLIブリッジを準備 は、アクティブな保管庫のために Calypso Gallery/CLI の下にフォルダーを作成し、保管庫ヘッダー (vault) と cli_bridge マーカーを格納します。\n\n2. コンピューターでの暗号化:\n写真と動画を To_Encrypt フォルダーに入れてください。Windows と Linux では run.bat / run.sh を実行するとランチャーがブリッジを自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。CLI は暗号化された .bin ファイル、アルバム情報、pending_sync リストをブリッジフォルダーに書き込みます。保管庫には書き込みません。ルートのファイルは Default Secret Album に、サブフォルダーは暗号化アルバムになります。\n\n3. アクティブな保管庫への統合:\n設定でこの行をタップします。保留中のすべてのファイルが、アプリで現在アクティブな保管庫にインポートされます。同一ファイルはスキップされ、同名で内容が異なるファイルは name(1) になります。ブリッジは完全に成功したインポート後のみクリーンアップされます。</string>
     <string name="conflict_handling_mode_label">ファイルの競合と重複の解決</string>
     <string name="conflict_handling_auto_short">完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更）</string>
     <string name="conflict_handling_smart_dialog_short">スマートダイアログ（同一は自動スキップ、内容が異なる場合のみ確認）</string>
@@ -496,7 +496,8 @@
     <string name="conflict_handling_explanation_message" formatted="false">ファイルやアルバムのコピー、移動、暗号化、または復号時に、同じ名前のファイルが保存先に既に存在する場合:\n\n1. ビット単位の重複チェック (RAM):\nアプリは最初にファイルサイズを確認し、一致する場合は RAM 上でファイル内容をビット単位で比較します（暗号化ファイルはディスクに平文を書き込まずメモリ内で確認されます）。コピー/移動時は同一ファイルがスキップされ、元ファイルは元のフォルダーにそのまま残ります。暗号化/復号時にアルバムを統合する場合は、ビット単位で100%同一の元ファイルを削除するか残すかを選択できます。\n\n2. 同名で異なる内容（例: 2つの異なる download.jpg ファイル）:\n• 完全自動（既定）: 新しいファイルを download(1).jpg、download(2).jpg のように名前変更して、操作を中断せず両方のファイルを保持します。\n• スマートダイアログ: ビット単位で同一のファイルは引き続き静かにスキップし、名前が同じで内容が異なる場合のみ確認します（スキップ / 上書き / 両方保持）。</string>
     <string name="syncing_vault_progress">外部ドライブから保管庫を同期中…</string>
     <string name="vault_sync_summary_message">保管庫の同期が完了しました:\n• コピー: %1$d\n• 名前変更（名前の競合）: %2$d\n• スキップ（同一）: %3$d\n• 失敗: %4$d</string>
-    <string name="vault_sync_nothing_to_sync">選択したフォルダーに保留中の CLI 暗号化メディア (.pending_sync) が見つかりませんでした。</string>
+    <string name="vault_sync_nothing_to_sync">選択したフォルダーに保留中の CLI 暗号化メディア (pending_sync) が見つかりませんでした。</string>
+    <string name="vault_sync_cli_busy">CLI がブリッジフォルダーに書き込み中です。完了するまで待ってからもう一度お試しください。</string>
     <string name="vault_sync_same_folder_error">選択した参照元フォルダーは、現在有効な保管庫と同じです。</string>
     <string name="use_for_this_album">このアルバムのみに適用</string>
     <string name="export_encrypted_vault">暗号化された保管庫をエクスポート</string>

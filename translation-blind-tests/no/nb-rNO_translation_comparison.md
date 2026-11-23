@@ -1252,3 +1252,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | Anbefalt område | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | Økt minnebruk | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | Minneadvarsel aktiv | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-nb-rNO/strings.xml` (Norwegian Bokmål).
+
+| Key (`name`) | English (`values/strings.xml`) | Norwegian Bokmål (`values-nb-rNO/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | Importer CLI / kryptert media fra ekstern lagring | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Slik fungerer import av krypterte medier:\n\n1. Forberedelse på telefonen:\nInnstillinger → Gjør CLI-bro klar oppretter en mappe under Calypso Gallery/CLI for det aktive hvelvet, med hvelvheaderen (vault) og en cli_bridge-markør.\n\n2. Kryptering på datamaskinen:\nLegg fotoene og videoene dine i To_Encrypt. På Windows og Linux overfører startprogrammet broen automatisk når du kjører run.bat / run.sh; på macOS kopierer du mappen med OpenMTP. CLI skriver krypterte .bin-filer, albummetadata og en pending_sync-liste inn i bromappen - aldri inn i hvelvet ditt. Filer i roten havner i Default Secret Album; undermapper blir krypterte album.\n\n3. Sammenslåing i det aktive hvelvet:\nTrykk på denne raden i Innstillinger. Alle ventende filer importeres i hvelvet som er aktivt i appen nå. Identiske filer hoppes over, og filer med samme navn men ulikt innhold blir til name(1). Broen ryddes bare etter en fullstendig vellykket import. | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI skriver fortsatt til bromappen. Vent til den er ferdig, og prøv igjen. | New key; shown when the selected bridge contains the busy marker |

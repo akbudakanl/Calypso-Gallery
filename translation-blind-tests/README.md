@@ -98,3 +98,15 @@ The four fork-only `brute_force_level_*` keys (`fast`, `balanced`, `high`, `maxi
 2. Audit `app/src/main/res/values-<lang>/strings.xml` against **both** `app/src/main/res/values/strings.xml` **and** `org.fossify:commons`'s `res/values/values.xml` / `res/values-<lang>/values-<lang>.xml`, and add any missing entries or local `fossify-commons` overrides to `app/src/main/res/values-<lang>/strings.xml`.
 3. Add `<lang>_translation_comparison.md` inside `translation-blind-tests/<lang>/` with English descriptions, a summary of added/updated keys, and the full English-vs-target comparison table.
 4. Register the new subfolder in the table above.
+
+## CLI Bridge Import Strings (this revision)
+
+The encrypted-media import flow now uses a per-vault **bridge folder** created by the app under `Calypso Gallery/CLI`. Three keys were updated or added in all audited locales (English/Türkçe included):
+
+| Key | Change |
+|---|---|
+| `sync_vault_from_external` | Settings row label ("Import CLI / external encrypted media"); unchanged in English, reworded in the nine audit locales. |
+| `sync_vault_select_source_prompt` | Rewritten for the bridge workflow (prepare on phone → encrypt on computer → merge into active vault). The old "unified Secrets folder / export `.vault` header" wording is gone, and the header is now named `vault`. |
+| `vault_sync_cli_busy` | **New key** in every locale, shown when the selected bridge still contains the CLI busy marker. |
+
+Each `<lang>_translation_comparison.md` has a `## CLI bridge import strings (this revision)` section at the end with the English source and the localized value side by side.

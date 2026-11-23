@@ -1237,3 +1237,13 @@ Added the four fork-only `brute_force_level_*_desc` keys shown under the themed 
 | 2 | `brute_force_level_balanced_desc` | Recommended range | 建議範圍 | 2.5–5 s |
 | 3 | `brute_force_level_high_desc` | More memory usage | 更多記憶體使用量 | 5–7.5 s |
 | 4 | `brute_force_level_maximum_desc` | Memory warning active | 記憶體警告已啟用 | 7.5–10 s |
+
+## CLI bridge import strings (this revision)
+
+The import flow now uses a per-vault bridge folder created by the app; the old "unified Secrets folder / export .vault" wording is replaced. Three keys were updated or added in `values-zh-rTW/strings.xml` (Traditional Chinese (Taiwan)).
+
+| Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|---|---|---|---|
+| `sync_vault_from_external` | Import CLI / external encrypted media | 從 CLI / 外部儲存匯入加密媒體 | Settings row label; kept unchanged in English |
+| `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | 加密媒體匯入的運作方式：\n\n1. 在手機上準備：\n設定 → 準備 CLI 橋接資料夾 會為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。\n\n2. 在電腦上加密：\n請將照片與影片放入 To_Encrypt。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸橋接資料夾；在 macOS 上請使用 OpenMTP 複製。CLI 會將加密的 .bin 檔案、相簿中繼資料與 pending_sync 清單寫入橋接資料夾，絕不寫入您的保險箱。根目錄的檔案會進入 Default Secret Album；子資料夾會成為加密相簿。\n\n3. 合併至活動保險箱：\n在設定中點選此列。所有待處理檔案都會匯入應用程式目前活動的保險箱。完全相同的檔案會略過，同名但內容不同的檔案會變成 name(1)。橋接資料夾只有在完全成功的匯入後才會清理。 | Rewritten for the bridge workflow; `\n` preserved in XML |
+| `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI 仍在寫入橋接資料夾。請等待完成後再試一次。 | New key; shown when the selected bridge contains the busy marker |

@@ -491,8 +491,8 @@
     <string name="usb_direct_filesystem_required">Bu USB yolu yalnızca Android\'in sanal OTG sağlayıcısı üzerinden erişilebilir ve doğrudan dosya sistemi yolu olarak kullanılamaz. Lütfen bağlanmış bir depolama dizini veya dahili depolama / SD kart üzerinde bir klasör seçin.</string>
     <string name="vault_location_not_writable">Seçilen klasör mevcut değil veya bu cihazda yazılabilir değil.</string>
     <string name="vault_location_not_readable">Seçilen klasör mevcut değil veya bu cihazda okunabilir değil.</string>
-    <string name="sync_vault_from_external">Şifrelenmiş yeni medya dosyalarını şifreli alana aktar</string>
-    <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Tek Klasör Düzeni (Secrets):\nHarici diskinizde (USB / SD) Secrets adlı bir klasör bulundurun. Bu klasöre telefonunuzdaki kasanın tam yedeğini koyabilir veya içine yalnızca kasanızın .vault başlık dosyasını atabilirsiniz.\n\n2. Yeni Medya Şifreleme (PC / Tails CLI):\nÇevrimdışı şifreleme aracı yeni dosyaları otomatik olarak Secrets içine aktarır. Doğrudan eklenen dosyalar Default Secret Album\'e, alt klasördekiler ise ilgili gizli albüme (yoksa yeni oluşturularak) yönlendirilir.\n\n3. Akıllı Bit-Bit Eşitleme:\nBir sonraki adımda harici diskinizi veya Secrets klasörünü seçin. Uygulama harici disk ile telefon kasanızı RAM üzerinde karşılaştırır:\n• Sadece yeni dosyalar ve albümler kasanıza aktarılır.\n• Kasada zaten bulunan birebir aynı dosyalar atlanır.\n• Aynı isimde olup içeriği farklı olan dosyalar (örn. farklı bir download.jpg) veri kaybı olmaması için download(1).jpg olarak kaydedilir.</string>
+    <string name="sync_vault_from_external">CLI / harici şifreli medyayı içe aktar</string>
+    <string name="sync_vault_select_source_prompt">Şifreli Medya İçe Aktarma Nasıl Çalışır?\n\n1. Telefonda hazırlık:\nAyarlar → CLI köprüsünü hazırla, aktif kasa için Calypso Gallery/CLI altında bir klasör oluşturur; içinde kasa başlığı (vault) ve cli_bridge işaret dosyası bulunur.\n\n2. Bilgisayarda şifreleme:\nFotoğraf ve videolarınızı To_Encrypt klasörüne koyun. Windows ve Linux'ta run.bat / run.sh çalıştırdığınızda köprü aktarımı otomatik yapılır; macOS'ta klasörü OpenMTP ile kopyalayın. CLI şifreli .bin dosyalarını, albüm bilgilerini ve pending_sync listesini köprü klasörüne yazar; kasanıza asla yazmaz. Kök dosyalar Varsayılan Gizli Albüm'e, alt klasörler şifreli albümlere gider.\n\n3. Aktif kasaya birleştirme:\nAyarlarda bu satıra dokunun. Bekleyen tüm dosyalar uygulamada o anda aktif olan kasaya aktarılır. Birebir aynı dosyalar atlanır, aynı adda farklı içerikli dosyalar ad(1) olur. Köprü yalnızca tam başarılı bir içe aktarmadan sonra temizlenir.</string>
     <string name="conflict_handling_mode_label">Dosya çakışması ve kopya kontrolü</string>
     <string name="conflict_handling_standard_dialog_summary">Standart diyalog</string>
     <string name="conflict_handling_smart_dialog_summary">Akıllı diyalog</string>
@@ -558,7 +558,8 @@
     <string name="smart_conflict_meta_date_modified">Değiştirilme: %s</string>
     <string name="syncing_vault_progress">Kasa harici diskten eşitleniyor…</string>
     <string name="vault_sync_summary_message">Kasa eşitlemesi tamamlandı:\n• Kopyalanan: %1$d\n• Yeniden adlandırılan (ad çakışması): %2$d\n• Atlanan (aynı içerik): %3$d\n• Başarısız: %4$d</string>
-    <string name="vault_sync_nothing_to_sync">Seçilen klasörde eşitlenecek yeni CLI medyası (.pending_sync) bulunamadı.</string>
+    <string name="vault_sync_nothing_to_sync">Seçilen klasörde eşitlenecek yeni CLI medyası (pending_sync) bulunamadı.</string>
+    <string name="vault_sync_cli_busy">CLI köprü klasörüne yazmaya devam ediyor. Bitmesini bekleyip tekrar deneyin.</string>
     <string name="vault_sync_same_folder_error">Seçilen kaynak klasör aktif kasanızla aynı.</string>
     <string name="change_encrypted_vault_password">Şifreli kasa parolasını değiştir</string>
     <string name="biometric_access_to_encrypted_vault">Şifreli kasaya biyometrik ile giriş</string>
