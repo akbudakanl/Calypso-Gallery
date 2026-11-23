@@ -138,6 +138,7 @@ import org.fossify.gallery.helpers.resolveExportVaultTargetDir
 import org.fossify.gallery.helpers.resolvePickedPathToFile
 import org.fossify.gallery.helpers.resolveSyncSourceRoot
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
+import org.fossify.gallery.helpers.ShareMetadataSanitizationException
 import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.setVaultRootLocation
 import org.fossify.gallery.helpers.showSkippedIdenticalToast
@@ -145,13 +146,27 @@ import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.verifyVaultOnDisk
 
 fun Activity.sharePath(path: String) {
-    val shared = ShareMetadataSanitizer.sanitizedPaths(this, listOf(path)).first()
-    sharePathIntent(shared, BuildConfig.APPLICATION_ID)
+    ensureBackgroundThread {
+        val shared = sanitizeForSharing(listOf(path)) ?: return@ensureBackgroundThread
+        sharePathIntent(shared.first(), BuildConfig.APPLICATION_ID)
+    }
 }
 
 fun Activity.sharePaths(paths: ArrayList<String>) {
-    val shared = ShareMetadataSanitizer.sanitizedPaths(this, paths)
-    sharePathsIntent(ArrayList(shared), BuildConfig.APPLICATION_ID)
+    ensureBackgroundThread {
+        val shared = sanitizeForSharing(paths) ?: return@ensureBackgroundThread
+        sharePathsIntent(ArrayList(shared), BuildConfig.APPLICATION_ID)
+    }
+}
+
+/** Returns null when a metadata-free copy could not be made; in that case sharing is aborted. */
+private fun Activity.sanitizeForSharing(paths: List<String>): List<String>? = try {
+    ShareMetadataSanitizer.sanitizedPaths(this, paths)
+} catch (_: ShareMetadataSanitizationException) {
+    runOnUiThread { toast(R.string.share_metadata_failed) }
+    null
+} catch (_: Throwable) {
+    paths
 }
 
 fun Activity.shareMediumPath(path: String) {

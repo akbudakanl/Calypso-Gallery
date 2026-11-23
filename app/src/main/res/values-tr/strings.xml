@@ -778,6 +778,7 @@
     <string name="share_metadata_off">Kapalı</string>
     <string name="share_metadata_location_only">Sadece konum</string>
     <string name="share_metadata_all">Tüm meta veri</string>
+    <string name="share_metadata_failed">Meta verisiz kopya oluşturulamadı (depolama alanı dolu olabilir). Gizliliğiniz için paylaşım iptal edildi.</string>
     <!-- Hedeflenen kasa açılış süresi kadranının üstünde gösterilen güvenlik seviyesi. -->
     <string name="brute_force_level_fast">Hızlı açılış</string>
     <string name="brute_force_level_balanced">Dengeli güvenlik</string>

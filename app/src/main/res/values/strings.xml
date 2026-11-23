@@ -846,6 +846,7 @@
     <string name="share_metadata_off">Off</string>
     <string name="share_metadata_location_only">Location only</string>
     <string name="share_metadata_all">All metadata</string>
+    <string name="share_metadata_failed">Could not create a metadata-free copy (storage may be full). Sharing was cancelled to protect your privacy.</string>
     <!-- Security level shown above the targeted vault unlock time dial. -->
     <string name="brute_force_level_fast">Fast unlock</string>
     <string name="brute_force_level_balanced">Balanced security</string>

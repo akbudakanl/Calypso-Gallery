@@ -35,20 +35,64 @@ class ShareMetadataPolicyTest {
             .substringBefore("fun Activity.shareMediumPath")
         val sharePaths = activity.substringAfter("fun Activity.sharePaths")
             .substringBefore("fun Activity.shareMediumPath")
+        assertTrue("Single share must sanitize a copy", sharePath.contains("sanitizeForSharing"))
+        assertTrue("Multiple share must sanitize every copy", sharePaths.contains("sanitizeForSharing"))
+
+        val fallback = activity.substringAfter("private fun Activity.sanitizeForSharing")
         assertTrue(
-            "Single share must sanitize a copy",
-            sharePath.contains("ShareMetadataSanitizer.sanitizedPaths")
+            "Sanitizer must be used",
+            fallback.contains("ShareMetadataSanitizer.sanitizedPaths")
         )
         assertTrue(
-            "Multiple share must sanitize every copy",
-            sharePaths.contains("ShareMetadataSanitizer.sanitizedPaths")
+            "A failed sanitization must abort sharing instead of leaking metadata",
+            fallback.contains("ShareMetadataSanitizationException") &&
+                fallback.contains("R.string.share_metadata_failed") &&
+                fallback.contains("null")
         )
+
         val sanitizer = locate(
             "src/main/kotlin/org/fossify/gallery/helpers/ShareMetadataSanitizer.kt"
         ).readText()
         assertTrue(
             sanitizer.contains("AllNonDimensionExifAttributes.filter { it.startsWith(\"GPS\") }") &&
                 sanitizer.contains("SHARE_METADATA_MODE_ALL -> AllNonDimensionExifAttributes")
+        )
+    }
+
+    @Test
+    fun sanitizedCopiesArePublishedToPublicMediaStore() {
+        val sanitizer = locate(
+            "src/main/kotlin/org/fossify/gallery/helpers/ShareMetadataSanitizer.kt"
+        ).readText()
+        assertTrue(
+            "Bytes must be streamed directly into the published MediaStore entry",
+            sanitizer.contains("resolver.openOutputStream(uri)") &&
+                sanitizer.contains("source.inputStream().use")
+        )
+        assertTrue(
+            "No intermediate cache copy may be created",
+            !sanitizer.contains("workingDirs") && !sanitizer.contains("source.copyTo(target")
+        )
+        assertTrue(
+            "EXIF must be stripped in place on the published copy",
+            sanitizer.contains("openFileDescriptor(uri, \"rw\")") &&
+                sanitizer.contains("ExifInterface(pfd.fileDescriptor)")
+        )
+        assertTrue(
+            "Cleaned copies must be published to MediaStore",
+            sanitizer.contains("MediaStore.Images.Media.EXTERNAL_CONTENT_URI") &&
+                sanitizer.contains("MEDIA_RELATIVE_PATH")
+        )
+        assertTrue(
+            "The share folder must be hidden from the gallery before copies appear",
+            sanitizer.contains("ensureNoMediaMarker(context)") &&
+                sanitizer.contains("\".nomedia\"")
+        )
+        assertTrue(
+            "Published copies must be cleaned up shortly after sharing and on app start",
+            sanitizer.contains("scheduleCleanup(context.applicationContext, published.second)") &&
+                sanitizer.contains("Uri.parse(entry.substringBefore('|'))") &&
+                sanitizer.contains("CLEANUP_DELAY_MS = 30 * 60 * 1000L")
         )
     }
 
