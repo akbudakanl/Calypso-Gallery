@@ -193,7 +193,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_language_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -233,7 +233,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_home_screen_view_on_launch_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -274,7 +274,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_file_loading_priority_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -432,7 +432,7 @@
                         android:gravity="center_vertical">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_share_metadata_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -557,7 +557,7 @@
                         android:gravity="center_vertical">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_argon2_profile_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -605,7 +605,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_vault_location_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -951,7 +951,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_screen_rotation_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1193,7 +1193,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_on_video_tap_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1217,7 +1217,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_video_double_tap_seek_duration_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1358,7 +1358,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_folder_thumbnail_style_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1495,7 +1495,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_conflict_handling_mode_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1519,7 +1519,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_skipped_encrypt_files_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1543,7 +1543,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_album_crypto_conflict_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1593,7 +1593,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_notification_permission_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -1832,7 +1832,7 @@
                         android:layout_height="wrap_content">
 
                         <org.fossify.commons.views.MyTextView
-
+                            android:id="@+id/settings_clear_cache_label"
                             style="@style/SettingsTextLabelStyle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
