@@ -860,4 +860,21 @@
     <string name="brute_force_level_balanced_desc">Tövsiyə olunan aralıq</string>
     <string name="brute_force_level_high_desc">Daha çox yaddaş istifadəsi</string>
     <string name="brute_force_level_maximum_desc">Yaddaş xəbərdarlığı aktivdir</string>
+
+    <!-- CLI bridge UX strings (this revision) -->
+    <string name="cli_bridge_prepare_label">CLI körpüsünü hazırla</string>
+    <string name="cli_bridge_prepare_info_title">CLI körpüsü</string>
+    <string name="cli_bridge_prepare_info_message">Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri körpü qovluqlarına təsir etmir.</string>
+    <string name="cli_bridge_prepare_success">CLI körpüsü hazırdır: %1$s</string>
+    <string name="cli_bridge_conflict_title">CLI körpüsü artıq var</string>
+    <string name="cli_bridge_conflict_message">Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri körpü qovluqlarına təsir etmir.</string>
+    <string name="cli_bridge_conflict_skip">Ötür</string>
+    <string name="cli_bridge_conflict_use_existing">Mövcud körpüdən istifadə et</string>
+    <string name="cli_bridge_conflict_create_new">Yeni körpü yarat</string>
+    <string name="cli_bridge_selection_title">CLI körpüsünü seç</string>
+    <string name="cli_bridge_selection_warning">Tətbiqdə hazırda aktiv olan seyfi seçin; əks halda idxal uğursuz olar.</string>
+    <string name="vault_sync_stale_marker_title">Yarımçıq yazı işarəsi</string>
+    <string name="vault_sync_stale_marker_message">Bu körpü %1$s vaxtında yazı işarəsi ehtiva edir. CLI işləmir görünür. İşarəni silib idxala davam edilsin?</string>
+    <string name="vault_sync_stale_marker_remove">Sil və davam et</string>
+    <string name="vault_sync_stale_marker_keep">Olduğu kimi saxla</string>
 </resources>

@@ -1198,3 +1198,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | CLI / verschlüsselte Medien aus externem Speicher importieren | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | So funktioniert der Import verschlüsselter Medien:\n\n1. Vorbereitung auf dem Telefon:\nEinstellungen → CLI-Brücke vorbereiten erstellt für den aktiven Tresor einen Ordner unter Calypso Gallery/CLI mit der Tresor-Headerdatei (vault) und einer cli_bridge-Markierung.\n\n2. Verschlüsseln auf dem Computer:\nLege deine Fotos und Videos in To_Encrypt. Unter Windows und Linux übernimmt der Launcher den Transfer automatisch, wenn du run.bat / run.sh ausführst; unter macOS kopiere den Ordner mit OpenMTP. Das CLI schreibt verschlüsselte .bin-Dateien, Album-Metadaten und eine pending_sync-Liste in den Brückenordner - niemals in deinen Tresor. Dateien im Stammverzeichnis landen im Default Secret Album, Unterordner werden zu verschlüsselten Alben.\n\n3. Zusammenführen mit dem aktiven Tresor:\nTippe in den Einstellungen auf diese Zeile. Alle ausstehenden Dateien werden in den aktuell aktiven Tresor importiert. Identische Dateien werden übersprungen, gleichnamige Dateien mit anderem Inhalt werden zu name(1). Die Brücke wird erst nach einem vollständig erfolgreichen Import bereinigt. | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | Das CLI schreibt noch in den Brückenordner. Warte, bis es fertig ist, und versuche es erneut. | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | CLI-Brücke vorbereiten |
+| `cli_bridge_prepare_info_title` | CLI bridge | CLI-Brücke |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Erstellt für den aktiven Tresor einen Ordner unter Calypso Gallery/CLI mit der Tresor-Headerdatei (vault) und einer cli_bridge-Markierung. Unter Windows und Linux übernimmt der Launcher den Transfer automatisch, wenn du run.bat / run.sh ausführst; unter macOS kopiere den Ordner mit OpenMTP. Die Brücke ist nur ein Transferbereich und speichert keine verschlüsselten Medien dauerhaft. Die Einstellung zum Datumsvergleich gilt nicht für Brückenordner. |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI-Brücke bereit: %1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | CLI-Brücke bereits vorhanden |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Für diesen Tresor existiert bereits eine CLI-Brücke. Was soll passieren?\n\nDie Einstellung zum Datumsvergleich gilt nicht für Brückenordner. |
+| `cli_bridge_conflict_skip` | Skip | Überspringen |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | Vorhandene Brücke verwenden |
+| `cli_bridge_conflict_create_new` | Create new bridge | Neue Brücke erstellen |
+| `cli_bridge_selection_title` | Select CLI bridge | CLI-Brücke auswählen |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | Wähle den Tresor, der in der App gerade aktiv ist; andernfalls schlägt der Import fehl. |
+| `vault_sync_stale_marker_title` | Unfinished write marker | Unvollständige Schreibmarkierung |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Diese Brücke enthält eine Schreibmarkierung vom %1$s. Das CLI scheint nicht zu laufen. Markierung entfernen und den Import fortsetzen? |
+| `vault_sync_stale_marker_remove` | Remove and continue | Entfernen und fortfahren |
+| `vault_sync_stale_marker_keep` | Keep it | Behalten |

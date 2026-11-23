@@ -1236,3 +1236,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | Importar medios cifrados desde CLI / almacenamiento externo | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Cómo funciona la importación de archivos multimedia cifrados:\n\n1. Preparación en el teléfono:\nAjustes → Preparar puente CLI crea una carpeta en Calypso Gallery/CLI para la bóveda activa, con el encabezado de la bóveda (vault) y un marcador cli_bridge.\n\n2. Cifrado en el ordenador:\nColoque sus fotos y vídeos en To_Encrypt. En Windows y Linux, el lanzador realiza la transferencia automáticamente al ejecutar run.bat / run.sh; en macOS, copie la carpeta con OpenMTP. La CLI escribe archivos .bin cifrados, metadatos de álbumes y una lista pending_sync en la carpeta puente, nunca en su bóveda. Los archivos en la raíz van a Default Secret Album; las subcarpetas se convierten en álbumes cifrados.\n\n3. Fusión en la bóveda activa:\nToque esta fila en Ajustes. Todos los archivos pendientes se importan en la bóveda activa en ese momento en la aplicación. Los archivos idénticos se omiten y los archivos con el mismo nombre pero contenido distinto pasan a ser name(1). La carpeta puente solo se limpia tras una importación completamente correcta. | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | La CLI sigue escribiendo en la carpeta puente. Espere a que termine e inténtelo de nuevo. | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | Preparar puente CLI |
+| `cli_bridge_prepare_info_title` | CLI bridge | Puente CLI |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Crea una carpeta en Calypso Gallery/CLI para la bóveda activa, con el encabezado de la bóveda (vault) y un marcador cli_bridge. En Windows y Linux, el lanzador transfiere el puente automáticamente al ejecutar run.bat / run.sh; en macOS, copie la carpeta con OpenMTP. El puente es solo un área de transferencia y no almacena medios cifrados de forma permanente. La opción de comparación de fechas no afecta a las carpetas puente. |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | Puente CLI listo: %1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | El puente CLI ya existe |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Ya existe un puente CLI para esta bóveda. ¿Qué debe ocurrir?\n\nLa opción de comparación de fechas no afecta a las carpetas puente. |
+| `cli_bridge_conflict_skip` | Skip | Omitir |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | Usar el puente existente |
+| `cli_bridge_conflict_create_new` | Create new bridge | Crear un puente nuevo |
+| `cli_bridge_selection_title` | Select CLI bridge | Seleccionar puente CLI |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | Seleccione la bóveda que está activa actualmente en la aplicación; de lo contrario, la importación fallará. |
+| `vault_sync_stale_marker_title` | Unfinished write marker | Marcador de escritura incompleto |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Este puente contiene un marcador de escritura de %1$s. La CLI parece no estar ejecutándose. ¿Eliminar el marcador y continuar con la importación? |
+| `vault_sync_stale_marker_remove` | Remove and continue | Eliminar y continuar |
+| `vault_sync_stale_marker_keep` | Keep it | Conservar |

@@ -1247,3 +1247,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | 從 CLI / 外部儲存匯入加密媒體 | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | 加密媒體匯入的運作方式：\n\n1. 在手機上準備：\n設定 → 準備 CLI 橋接資料夾 會為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。\n\n2. 在電腦上加密：\n請將照片與影片放入 To_Encrypt。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸橋接資料夾；在 macOS 上請使用 OpenMTP 複製。CLI 會將加密的 .bin 檔案、相簿中繼資料與 pending_sync 清單寫入橋接資料夾，絕不寫入您的保險箱。根目錄的檔案會進入 Default Secret Album；子資料夾會成為加密相簿。\n\n3. 合併至活動保險箱：\n在設定中點選此列。所有待處理檔案都會匯入應用程式目前活動的保險箱。完全相同的檔案會略過，同名但內容不同的檔案會變成 name(1)。橋接資料夾只有在完全成功的匯入後才會清理。 | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI 仍在寫入橋接資料夾。請等待完成後再試一次。 | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | 準備 CLI 橋接資料夾 |
+| `cli_bridge_prepare_info_title` | CLI bridge | CLI 橋接 |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | 為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸；在 macOS 上請使用 OpenMTP 複製。橋接僅是傳輸區域，不會永久儲存加密媒體。日期比較設定不適用於橋接資料夾。 |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI 橋接已準備完成：%1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | CLI 橋接已存在 |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | 此保險箱的 CLI 橋接已存在。要如何處理？\n\n日期比較設定不適用於橋接資料夾。 |
+| `cli_bridge_conflict_skip` | Skip | 略過 |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | 使用現有橋接 |
+| `cli_bridge_conflict_create_new` | Create new bridge | 建立新橋接 |
+| `cli_bridge_selection_title` | Select CLI bridge | 選取 CLI 橋接 |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | 請選取應用程式中目前活動的保險箱，否則匯入會失敗。 |
+| `vault_sync_stale_marker_title` | Unfinished write marker | 未完成的寫入標記 |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | 此橋接包含 %1$s 的寫入標記。CLI 似乎未在執行。是否移除標記並繼續匯入？ |
+| `vault_sync_stale_marker_remove` | Remove and continue | 移除並繼續 |
+| `vault_sync_stale_marker_keep` | Keep it | 保留 |

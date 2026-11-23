@@ -1253,3 +1253,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | Importer CLI / kryptert medium frå ekstern lagring | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Slik fungerer import av krypterte medium:\n\n1. Førebuing på telefonen:\nInnstillingar → Gjer CLI-bru klar opprettar ei mappe under Calypso Gallery/CLI for det aktive kvelvet, med kvelvheaderen (vault) og ein cli_bridge-markør.\n\n2. Kryptering på datamaskina:\nLegg fotoa og videoane dine i To_Encrypt. På Windows og Linux overfører startprogrammet brua automatisk når du køyrer run.bat / run.sh; på macOS kopierer du mappa med OpenMTP. CLI skriv krypterte .bin-filer, albumnedskrivingar og ei pending_sync-liste inn i brumappa - aldri inn i kvelvet ditt. Filer i rota hamnar i Default Secret Album; undermapper blir krypterte album.\n\n3. Samanslåing i det aktive kvelvet:\nTrykk på denne raden i Innstillingar. Alle ventande filer blir importerte i kvelvet som er aktivt i appen no. Identiske filer blir hoppa over, og filer med same namn men ulikt innhald blir til name(1). Brua blir rydda berre etter ein fullstendig vellykka import. | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI skriv framleis til brumappa. Vent til ho er ferdig, og prøv igjen. | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | Gjer CLI-bru klar |
+| `cli_bridge_prepare_info_title` | CLI bridge | CLI-bru |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Opprettar ei mappe under Calypso Gallery/CLI for det aktive kvelvet, med kvelvheaderen (vault) og ein cli_bridge-markør. På Windows og Linux overfører startprogrammet brua automatisk når du køyrer run.bat / run.sh; på macOS kopierer du mappa med OpenMTP. Brua er berre eit overføringsområde og lagrar ikkje kryptert medium permanent. Innstillinga for datosamanlikning gjeld ikkje brumapper. |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI-brua er klar: %1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | CLI-brua finst alt |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Det finst alt ei CLI-bru for dette kvelvet. Kva skal skje?\n\nInnstillinga for datosamanlikning gjeld ikkje brumapper. |
+| `cli_bridge_conflict_skip` | Skip | Hopp over |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | Bruk eksisterande bru |
+| `cli_bridge_conflict_create_new` | Create new bridge | Opprett ny bru |
+| `cli_bridge_selection_title` | Select CLI bridge | Vel CLI-bru |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | Vel kvelvet som er aktivt i appen no; elles vil importen mislukkast. |
+| `vault_sync_stale_marker_title` | Unfinished write marker | Ufullstendig skrivemarkør |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Denne brua inneheld ein skrivemarkør frå %1$s. CLI ser ikkje ut til å køyre. Fjerne markøren og halde fram importen? |
+| `vault_sync_stale_marker_remove` | Remove and continue | Fjern og hald fram |
+| `vault_sync_stale_marker_keep` | Keep it | Behald |

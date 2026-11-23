@@ -1239,3 +1239,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | CLI / 外部の暗号化メディアをインポート | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | 暗号化メディアのインポートの仕組み:\n\n1. スマートフォンでの準備:\n設定 → CLIブリッジを準備 は、アクティブな保管庫のために Calypso Gallery/CLI の下にフォルダーを作成し、保管庫ヘッダー (vault) と cli_bridge マーカーを格納します。\n\n2. コンピューターでの暗号化:\n写真と動画を To_Encrypt フォルダーに入れてください。Windows と Linux では run.bat / run.sh を実行するとランチャーがブリッジを自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。CLI は暗号化された .bin ファイル、アルバム情報、pending_sync リストをブリッジフォルダーに書き込みます。保管庫には書き込みません。ルートのファイルは Default Secret Album に、サブフォルダーは暗号化アルバムになります。\n\n3. アクティブな保管庫への統合:\n設定でこの行をタップします。保留中のすべてのファイルが、アプリで現在アクティブな保管庫にインポートされます。同一ファイルはスキップされ、同名で内容が異なるファイルは name(1) になります。ブリッジは完全に成功したインポート後のみクリーンアップされます。 | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI がブリッジフォルダーに書き込み中です。完了するまで待ってからもう一度お試しください。 | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | CLIブリッジを準備 |
+| `cli_bridge_prepare_info_title` | CLI bridge | CLIブリッジ |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | アクティブな保管庫のために Calypso Gallery/CLI の下に、保管庫ヘッダー (vault) と cli_bridge マーカーを含むフォルダーを作成します。Windows と Linux では run.bat / run.sh を実行するとランチャーが自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。ブリッジは転送領域のみで、暗号化メディアを永続的に保存しません。日付比較の設定はブリッジフォルダーには適用されません。 |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLIブリッジの準備ができました: %1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | CLIブリッジはすでに存在します |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | この保管庫のCLIブリッジはすでに存在します。どうしますか？\n\n日付比較の設定はブリッジフォルダーには適用されません。 |
+| `cli_bridge_conflict_skip` | Skip | スキップ |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | 既存のブリッジを使用 |
+| `cli_bridge_conflict_create_new` | Create new bridge | 新しいブリッジを作成 |
+| `cli_bridge_selection_title` | Select CLI bridge | CLIブリッジを選択 |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | アプリで現在アクティブな保管庫を選択してください。そうしないとインポートに失敗します。 |
+| `vault_sync_stale_marker_title` | Unfinished write marker | 未完成の書き込みマーカー |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | このブリッジには %1$s の書き込みマーカーがあります。CLI は動作していないようです。マーカーを削除してインポートを続けますか？ |
+| `vault_sync_stale_marker_remove` | Remove and continue | 削除して続行 |
+| `vault_sync_stale_marker_keep` | Keep it | 保持する |

@@ -857,4 +857,21 @@
     <string name="brute_force_level_balanced_desc">Recommended range</string>
     <string name="brute_force_level_high_desc">More memory usage</string>
     <string name="brute_force_level_maximum_desc">Memory warning active</string>
+
+    <!-- CLI bridge UX strings (this revision) -->
+    <string name="cli_bridge_prepare_label">Prepare CLI bridge</string>
+    <string name="cli_bridge_prepare_info_title">CLI bridge</string>
+    <string name="cli_bridge_prepare_info_message">Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders.</string>
+    <string name="cli_bridge_prepare_success">CLI bridge ready: %1$s</string>
+    <string name="cli_bridge_conflict_title">CLI bridge already exists</string>
+    <string name="cli_bridge_conflict_message">A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders.</string>
+    <string name="cli_bridge_conflict_skip">Skip</string>
+    <string name="cli_bridge_conflict_use_existing">Use existing bridge</string>
+    <string name="cli_bridge_conflict_create_new">Create new bridge</string>
+    <string name="cli_bridge_selection_title">Select CLI bridge</string>
+    <string name="cli_bridge_selection_warning">Select the vault that is currently active in the app; otherwise the transfer will fail.</string>
+    <string name="vault_sync_stale_marker_title">Unfinished write marker</string>
+    <string name="vault_sync_stale_marker_message">This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer?</string>
+    <string name="vault_sync_stale_marker_remove">Remove and continue</string>
+    <string name="vault_sync_stale_marker_keep">Keep it</string>
 </resources>

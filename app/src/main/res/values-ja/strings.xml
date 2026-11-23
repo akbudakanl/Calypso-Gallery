@@ -789,4 +789,21 @@
     <string name="brute_force_level_balanced_desc">推奨範囲</string>
     <string name="brute_force_level_high_desc">より多くのメモリ使用量</string>
     <string name="brute_force_level_maximum_desc">メモリ警告が有効</string>
+
+    <!-- CLI bridge UX strings (this revision) -->
+    <string name="cli_bridge_prepare_label">CLIブリッジを準備</string>
+    <string name="cli_bridge_prepare_info_title">CLIブリッジ</string>
+    <string name="cli_bridge_prepare_info_message">アクティブな保管庫のために Calypso Gallery/CLI の下に、保管庫ヘッダー (vault) と cli_bridge マーカーを含むフォルダーを作成します。Windows と Linux では run.bat / run.sh を実行するとランチャーが自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。ブリッジは転送領域のみで、暗号化メディアを永続的に保存しません。日付比較の設定はブリッジフォルダーには適用されません。</string>
+    <string name="cli_bridge_prepare_success">CLIブリッジの準備ができました: %1$s</string>
+    <string name="cli_bridge_conflict_title">CLIブリッジはすでに存在します</string>
+    <string name="cli_bridge_conflict_message">この保管庫のCLIブリッジはすでに存在します。どうしますか？\n\n日付比較の設定はブリッジフォルダーには適用されません。</string>
+    <string name="cli_bridge_conflict_skip">スキップ</string>
+    <string name="cli_bridge_conflict_use_existing">既存のブリッジを使用</string>
+    <string name="cli_bridge_conflict_create_new">新しいブリッジを作成</string>
+    <string name="cli_bridge_selection_title">CLIブリッジを選択</string>
+    <string name="cli_bridge_selection_warning">アプリで現在アクティブな保管庫を選択してください。そうしないとインポートに失敗します。</string>
+    <string name="vault_sync_stale_marker_title">未完成の書き込みマーカー</string>
+    <string name="vault_sync_stale_marker_message">このブリッジには %1$s の書き込みマーカーがあります。CLI は動作していないようです。マーカーを削除してインポートを続けますか？</string>
+    <string name="vault_sync_stale_marker_remove">削除して続行</string>
+    <string name="vault_sync_stale_marker_keep">保持する</string>
 </resources>

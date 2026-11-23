@@ -831,4 +831,21 @@
     <string name="brute_force_level_balanced_desc">Rango recomendado</string>
     <string name="brute_force_level_high_desc">Mayor uso de memoria</string>
     <string name="brute_force_level_maximum_desc">Advertencia de memoria activa</string>
+
+    <!-- CLI bridge UX strings (this revision) -->
+    <string name="cli_bridge_prepare_label">Preparar puente CLI</string>
+    <string name="cli_bridge_prepare_info_title">Puente CLI</string>
+    <string name="cli_bridge_prepare_info_message">Crea una carpeta en Calypso Gallery/CLI para la bóveda activa, con el encabezado de la bóveda (vault) y un marcador cli_bridge. En Windows y Linux, el lanzador transfiere el puente automáticamente al ejecutar run.bat / run.sh; en macOS, copia la carpeta con OpenMTP. El puente es solo un área de transferencia y no almacena contenido cifrado de forma permanente. La opción de comparación de fechas no afecta a las carpetas puente.</string>
+    <string name="cli_bridge_prepare_success">Puente CLI listo: %1$s</string>
+    <string name="cli_bridge_conflict_title">El puente CLI ya existe</string>
+    <string name="cli_bridge_conflict_message">Ya existe un puente CLI para esta bóveda. ¿Qué debe suceder?\n\nLa opción de comparación de fechas no afecta a las carpetas puente.</string>
+    <string name="cli_bridge_conflict_skip">Omitir</string>
+    <string name="cli_bridge_conflict_use_existing">Usar el puente existente</string>
+    <string name="cli_bridge_conflict_create_new">Crear un puente nuevo</string>
+    <string name="cli_bridge_selection_title">Seleccionar puente CLI</string>
+    <string name="cli_bridge_selection_warning">Selecciona la bóveda activa actualmente en la app; de lo contrario, la importación fallará.</string>
+    <string name="vault_sync_stale_marker_title">Marcador de escritura incompleto</string>
+    <string name="vault_sync_stale_marker_message">Este puente contiene un marcador de escritura de %1$s. La CLI parece no estar ejecutándose. ¿Eliminar el marcador y continuar la importación?</string>
+    <string name="vault_sync_stale_marker_remove">Eliminar y continuar</string>
+    <string name="vault_sync_stale_marker_keep">Mantener</string>
 </resources>

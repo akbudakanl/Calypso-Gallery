@@ -786,4 +786,21 @@
     <string name="brute_force_level_balanced_desc">建議範圍</string>
     <string name="brute_force_level_high_desc">更多記憶體使用量</string>
     <string name="brute_force_level_maximum_desc">記憶體警告已啟用</string>
+
+    <!-- CLI bridge UX strings (this revision) -->
+    <string name="cli_bridge_prepare_label">準備 CLI 橋接資料夾</string>
+    <string name="cli_bridge_prepare_info_title">CLI 橋接</string>
+    <string name="cli_bridge_prepare_info_message">為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸；在 macOS 上請使用 OpenMTP 複製。橋接僅是傳輸區域，不會永久儲存加密媒體。日期比較設定不適用於橋接資料夾。</string>
+    <string name="cli_bridge_prepare_success">CLI 橋接已準備完成：%1$s</string>
+    <string name="cli_bridge_conflict_title">CLI 橋接已存在</string>
+    <string name="cli_bridge_conflict_message">此保險箱的 CLI 橋接已存在。要如何處理？\n\n日期比較設定不適用於橋接資料夾。</string>
+    <string name="cli_bridge_conflict_skip">略過</string>
+    <string name="cli_bridge_conflict_use_existing">使用現有橋接</string>
+    <string name="cli_bridge_conflict_create_new">建立新橋接</string>
+    <string name="cli_bridge_selection_title">選取 CLI 橋接</string>
+    <string name="cli_bridge_selection_warning">請選取應用程式中目前活動的保險箱，否則匯入會失敗。</string>
+    <string name="vault_sync_stale_marker_title">未完成的寫入標記</string>
+    <string name="vault_sync_stale_marker_message">此橋接包含 %1$s 的寫入標記。CLI 似乎未在執行。是否移除標記並繼續匯入？</string>
+    <string name="vault_sync_stale_marker_remove">移除並繼續</string>
+    <string name="vault_sync_stale_marker_keep">保留</string>
 </resources>

@@ -1236,3 +1236,25 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 | `sync_vault_from_external` | Import CLI / external encrypted media | CLI / xarici şifrələnmiş medianı idxal et | Settings row label; kept unchanged in English |
 | `sync_vault_select_source_prompt` | How Encrypted Media Import Works: prepare on phone, encrypt on computer, merge into active vault | Şifrələnmiş Medianın İdxalı Necə İşləyir:\n\n1. Telefonda hazırlıq:\nParametrlər → CLI körpüsünü hazırla, aktiv seyf üçün Calypso Gallery/CLI altında qovluq yaradır; içində seyf başlığı (vault) və cli_bridge işarə faylı var.\n\n2. Kompüterdə şifrələmə:\nFoto və videolarınızı To_Encrypt qovluğuna qoyun. Windows və Linux-da run.bat / run.sh işlətdiyinizdə körpü avtomatik ötürülür; macOS-da qovluğu OpenMTP ilə kopyalayın. CLI şifrələnmiş .bin fayllarını, albom məlumatlarını və pending_sync siyahısını körpü qovluğuna yazır - heç vaxt seyfinizə. Kökdəki fayllar Default Secret Album-a, alt qovluqlar şifrələnmiş albomlara gedir.\n\n3. Aktiv seyfə birləşdirmə:\nParametrlərdə bu sətirə toxunun. Gözləyən bütün fayllar tətbiqdə hazırda aktiv olan seyfə idxal olunur. Eyni fayllar ötürülür, eyni adlı fərqli məzmunlu fayllar ad(1) olur. Körpü yalnız tam uğurlu idxaldan sonra təmizlənir. | Rewritten for the bridge workflow; `\n` preserved in XML |
 | `vault_sync_cli_busy` | The CLI is still writing to the bridge folder. Wait for it to finish, then try again. | CLI körpü qovluğuna yazmağa davam edir. Bitməsini gözləyib yenidən cəhd edin. | New key; shown when the selected bridge contains the busy marker |
+
+## CLI bridge UX strings (this revision)
+
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+
+| Key | English | Localized |
+|---|---|---|
+| `cli_bridge_prepare_label` | Prepare CLI bridge | CLI körpüsünü hazırla |
+| `cli_bridge_prepare_info_title` | CLI bridge | CLI körpüsü |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri körpü qovluqlarına təsir etmir. |
+| `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI körpüsü hazırdır: %1$s |
+| `cli_bridge_conflict_title` | CLI bridge already exists | CLI körpüsü artıq var |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri körpü qovluqlarına təsir etmir. |
+| `cli_bridge_conflict_skip` | Skip | Ötür |
+| `cli_bridge_conflict_use_existing` | Use existing bridge | Mövcud körpüdən istifadə et |
+| `cli_bridge_conflict_create_new` | Create new bridge | Yeni körpü yarat |
+| `cli_bridge_selection_title` | Select CLI bridge | CLI körpüsünü seç |
+| `cli_bridge_selection_warning` | Select the vault that is currently active in the app; otherwise the transfer will fail. | Tətbiqdə hazırda aktiv olan seyfi seçin; əks halda idxal uğursuz olar. |
+| `vault_sync_stale_marker_title` | Unfinished write marker | Yarımçıq yazı işarəsi |
+| `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Bu körpü %1$s vaxtında yazı işarəsi ehtiva edir. CLI işləmir görünür. İşarəni silib idxala davam edilsin? |
+| `vault_sync_stale_marker_remove` | Remove and continue | Sil və davam et |
+| `vault_sync_stale_marker_keep` | Keep it | Olduğu kimi saxla |

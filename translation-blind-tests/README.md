@@ -110,3 +110,17 @@ The encrypted-media import flow now uses a per-vault **bridge folder** created b
 | `vault_sync_cli_busy` | **New key** in every locale, shown when the selected bridge still contains the CLI busy marker. |
 
 Each `<lang>_translation_comparison.md` has a `## CLI bridge import strings (this revision)` section at the end with the English source and the localized value side by side.
+
+### Bridge preparation, deduplication and recovery strings (this revision)
+
+Fifteen more fork-only keys were added in all 11 locales (`cli_bridge_prepare_*`, `cli_bridge_conflict_*`, `cli_bridge_selection_*`, `vault_sync_stale_marker_*`), each with a `## CLI bridge UX strings (this revision)` table at the end of the audit reports.
+
+Bridge deduplication follows the existing **`conflictHandlingMode`** setting rather than a hard-coded warning:
+
+| Mode | Bridge behaviour |
+|---|---|
+| Standard dialog (default) | Ask: Skip / Use existing bridge / Create new bridge |
+| Smart dialog | Silently reuse the bridge when the KEK fingerprint matches; ask only when it differs |
+| Automatic (experimental) | Silently reuse when it matches; create a new bridge automatically when it does not |
+
+The **date comparison** setting (`dateTieBreakMode`) does **not** apply to bridge folders — the decision is based on the marker fingerprint, not on timestamps. The existing normalization `AUTO + ASK → KEEP_TARGET` in `Config.kt` is unchanged.
