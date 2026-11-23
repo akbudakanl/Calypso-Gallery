@@ -154,11 +154,12 @@ class RenameVirtualAlbumDialog(
  * Lets the user pick one of the existing virtual albums (with cover thumbnails, item counts, and search),
  * or create a new one in the matching encryption scope.
  * [callback] receives the id and the name of the chosen album.
- * @param excludedAlbumId an album that should not be offered, e.g. the one the items are already being viewed in
+ * @param sourceAlbumId the album the items are being added from. It stays visible in the picker just like
+ *   a physical source folder, but selecting it shows a warning instead of adding the items to itself.
  */
 class PickVirtualAlbumDialog(
     val activity: BaseSimpleActivity,
-    val excludedAlbumId: Long? = null,
+    val sourceAlbumId: Long? = null,
     val isHiddenSource: Boolean = false,
     val sourcePath: String = "",
     val callback: (albumId: Long, albumName: String) -> Unit
@@ -251,8 +252,7 @@ class PickVirtualAlbumDialog(
             )
             // Keep strictly within the matching encryption scope even when the vault is unlocked.
             val filtered = rawDirs.filter { dir ->
-                val albumId = dir.path.getVirtualAlbumId() ?: return@filter false
-                if (albumId == excludedAlbumId) {
+                if (dir.path.getVirtualAlbumId() == null) {
                     return@filter false
                 }
                 activity.isHiddenVirtualAlbumPath(dir.path) == isHiddenSource
@@ -283,6 +283,10 @@ class PickVirtualAlbumDialog(
                 ) { clicked ->
                     val clickedDir = clicked as Directory
                     val albumId = clickedDir.path.getVirtualAlbumId() ?: return@DirectoryAdapter
+                    if (albumId == sourceAlbumId) {
+                        activity.toast(org.fossify.commons.R.string.source_and_destination_same)
+                        return@DirectoryAdapter
+                    }
                     activity.hideKeyboard(searchEditText)
                     dialog?.dismiss()
                     callback(albumId, clickedDir.name)

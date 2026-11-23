@@ -2654,7 +2654,7 @@ fun BaseSimpleActivity.tryAddFilesToVirtualAlbum(
     val isHiddenSource = CryptoManager.isEncryptedFolderPath(this, source) ||
         (source.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(source)) ||
         hasEncrypted
-    val excludedAlbumId = currentDirectoryPath.getVirtualAlbumId()
+    val sourceAlbumId = currentDirectoryPath.getVirtualAlbumId()
     val sourceHint = if (currentDirectoryPath.isNotEmpty() &&
         currentDirectoryPath != FAVORITES &&
         currentDirectoryPath != RECYCLE_BIN
@@ -2666,7 +2666,7 @@ fun BaseSimpleActivity.tryAddFilesToVirtualAlbum(
 
     PickVirtualAlbumDialog(
         activity = this,
-        excludedAlbumId = excludedAlbumId,
+        sourceAlbumId = sourceAlbumId,
         isHiddenSource = isHiddenSource,
         sourcePath = sourceHint
     ) { albumId, albumName ->
