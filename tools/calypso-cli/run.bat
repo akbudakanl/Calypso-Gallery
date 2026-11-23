@@ -68,8 +68,6 @@ if errorlevel 1 (
     if /i "!DO_INSTALL!"=="" set "DO_INSTALL=Y"
     if /i "!DO_INSTALL!"=="Y" goto :install_deps
     if /i "!DO_INSTALL!"=="YES" goto :install_deps
-    if /i "!DO_INSTALL!"=="E" goto :install_deps
-    if /i "!DO_INSTALL!"=="EVET" goto :install_deps
     echo Cannot proceed without required cryptography libraries.
     if "%~1"=="" pause
     exit /b 1
@@ -94,18 +92,30 @@ if errorlevel 1 (
 set PYTHON_CMD="%VENV_PY%"
 
 :run_cli
-set "HAS_ADB=0"
-for %%A in (%*) do (
-    if "%%~A"=="--adb" set "HAS_ADB=1"
-)
-if "%HAS_ADB%"=="1" (
-    echo [*] --adb specified: running with ADB network access allowed.
+echo [Sandbox] Python audit hook active ^(OS-level bwrap sandbox is Linux-only^).
+
+REM Automatic phone bridge sync (best effort; manual steps remain as fallback).
+set "PHONE_SYNC=0"
+set "BRIDGE_TEMP=%TEMP%\calypso-cli-bridge"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\sync_phone.ps1" -Action pull -LocalRoot "%BRIDGE_TEMP%" >nul 2>&1
+if !errorlevel! equ 0 (
+    set "PHONE_SYNC=1"
+    set "CALYPSO_BRIDGE_ROOT=%BRIDGE_TEMP%"
+    echo [Phone] Bridge copied to temporary workspace.
 ) else (
-    echo [Sandbox] Python network audit hook active ^(OS-level bwrap sandbox is Linux-only^).
+    echo [Phone] No MTP phone bridge found; continuing with local bridges.
 )
 
 %PYTHON_CMD% "%SCRIPT_DIR%\calypso_vault.py" %*
 set "EXIT_CODE=%errorlevel%"
+
+if "!PHONE_SYNC!"=="1" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\sync_phone.ps1" -Action push -LocalRoot "%BRIDGE_TEMP%" >nul 2>&1
+    if !errorlevel! neq 0 (
+        echo [Phone] Could not copy the bridge back; copy it manually.
+        set "EXIT_CODE=1"
+    )
+)
 
 if "%~1"=="" (
     echo.

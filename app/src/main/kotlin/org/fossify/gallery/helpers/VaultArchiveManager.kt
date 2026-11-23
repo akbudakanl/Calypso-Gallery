@@ -109,6 +109,7 @@ object VaultArchiveManager {
         }
 
         runCatching { File(destination, ARCHIVE_INFO_FILE).writeText(infoText) }
+        CliBridgeManager.moveToArchive(context, source)
         context.config.vaultRootPath = ""
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""
@@ -182,6 +183,7 @@ object VaultArchiveManager {
         val entries = ArrayList(context.config.archivedVaults)
         entries.removeAll { it.id == entry.id }
         context.config.archivedVaults = entries
+        CliBridgeManager.restoreFromArchive(context, target)
         context.config.vaultRootPath = target.absolutePath
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""
@@ -193,6 +195,7 @@ object VaultArchiveManager {
     fun activateArchivedVault(context: Context, entry: ArchivedVault): Boolean {
         val source = File(entry.path)
         if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return false
+        CliBridgeManager.restoreFromArchive(context, source)
         context.config.vaultRootPath = source.absolutePath
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""

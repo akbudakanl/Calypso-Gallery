@@ -135,7 +135,7 @@ Select the vault that is currently active in the app; otherwise the transfer wil
 
 - Kasa başlığını açmak için **şifreyi/PIN'i sorar** (köprü oluşturulduğu andaki şifre — bkz. bölüm 8).
 - Dosyaları şifreler, geçici köprüye `.meta` + `.bin` yazar, `pending_sync` listesini günceller.
-- Yazım sırasında `.cli_writing` oluşur, bitince silinir.
+- Yazım sırasında `cli_writing` oluşur, bitince silinir.
 
 Köprü klasörüne düz medya yazılmaz; yalnızca şifreli veri ve liste dosyaları.
 

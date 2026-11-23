@@ -83,7 +83,7 @@ if [ $? -ne 0 ]; then
         echo "  $PKG_CMD"
         echo ""
         read -rp "Install missing dependencies now? [Y/n]: " DO_INSTALL
-        if [[ "$DO_INSTALL" =~ ^([yY]|[yY][eE][sS]|[eE]|[eE][vV][eE][tT]|)$ ]]; then
+        if [[ "$DO_INSTALL" =~ ^([yY]|[yY][eE][sS]|)$ ]]; then
             eval "$PKG_CMD" || exit 1
         else
             echo "Cannot proceed without required cryptography libraries."
@@ -94,7 +94,7 @@ if [ $? -ne 0 ]; then
         echo "  \"$PYTHON_BIN\" -m venv \"$DIR/.venv\" && \"$DIR/.venv/bin/pip\" install -r \"$DIR/requirements.txt\""
         echo ""
         read -rp "Create .venv and install dependencies now? [Y/n]: " DO_VENV
-        if [[ "$DO_VENV" =~ ^([yY]|[yY][eE][sS]|[eE]|[eE][vV][eE][tT]|)$ ]]; then
+        if [[ "$DO_VENV" =~ ^([yY]|[yY][eE][sS]|)$ ]]; then
             "$PYTHON_BIN" -m venv "$DIR/.venv" || exit 1
             "$DIR/.venv/bin/pip" install -r "$DIR/requirements.txt" || exit 1
             PYTHON_BIN="$DIR/.venv/bin/python3"
@@ -105,22 +105,38 @@ if [ $? -ne 0 ]; then
     fi
 fi
 
-# 3. macOS fast path (no .desktop shortcut, /proc/swaps, or Linux bwrap namespaces)
-NEED_ADB=0
-for arg in "$@"; do
-    case "$arg" in
-        --adb)
-            NEED_ADB=1
-            ;;
-    esac
-done
-
-if [ "$OS_NAME" = "Darwin" ]; then
-    if [ "$NEED_ADB" -eq 1 ]; then
-        echo "[*] --adb specified: running with ADB network access allowed."
-    else
-        echo "[Sandbox] Python network audit hook active (OS-level bwrap sandbox is Linux-only)."
+# 2b. Prefer bubblewrap for maximum isolation; try to install it if missing.
+# Tails runs as the unprivileged "amnesia" user, so the install may fail there —
+# that is expected and simply leaves the firejail/unshare fallbacks in place.
+if [ "$OS_NAME" = "Linux" ] && ! command -v bwrap >/dev/null 2>&1; then
+    BWRAP_PKG_CMD=""
+    if command -v apt-get >/dev/null 2>&1; then
+        BWRAP_PKG_CMD="sudo apt-get install -y bubblewrap"
+    elif command -v dnf >/dev/null 2>&1; then
+        BWRAP_PKG_CMD="sudo dnf install -y bubblewrap"
+    elif command -v pacman >/dev/null 2>&1; then
+        BWRAP_PKG_CMD="sudo pacman -S --needed bubblewrap"
+    elif command -v zypper >/dev/null 2>&1; then
+        BWRAP_PKG_CMD="sudo zypper install -y bubblewrap"
     fi
+
+    if [ -n "$BWRAP_PKG_CMD" ]; then
+        echo "=========================================================="
+        echo "  [i] bubblewrap (bwrap) enables the strongest sandbox."
+        echo "=========================================================="
+        echo "Install with: $BWRAP_PKG_CMD"
+        read -rp "Try installing bubblewrap now? [Y/n]: " DO_BWRAP
+        if [[ "$DO_BWRAP" =~ ^([yY]|[yY][eE][sS]|)$ ]]; then
+            if ! eval "$BWRAP_PKG_CMD" >/dev/null 2>&1; then
+                echo "[!] Could not install bubblewrap; will use an available fallback sandbox."
+            fi
+        fi
+    fi
+fi
+
+# 3. macOS fast path (no .desktop shortcut, /proc/swaps, or Linux bwrap namespaces)
+if [ "$OS_NAME" = "Darwin" ]; then
+    echo "[Sandbox] Python audit hook active (OS-level bwrap sandbox is Linux-only)."
     exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
 fi
 
@@ -155,19 +171,22 @@ if [ -r /proc/swaps ]; then
 fi
 
 # 6. Per-process Network & Disk Sandbox Wrapper (does not affect other Python processes)
-if [ "$NEED_ADB" -eq 1 ]; then
-    echo "[*] --adb specified: running without network namespace isolation."
-    exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
-elif command -v bwrap >/dev/null 2>&1; then
+if command -v bwrap >/dev/null 2>&1; then
     mkdir -p "$DESKTOP_DIR" 2>/dev/null || true
     BWRAP_ARGS=(
         --unshare-net
         --unshare-ipc
         --unshare-pid
         --die-with-parent
+        --clearenv
+        --setenv PATH /usr/bin:/bin:/usr/local/bin
+        --setenv HOME "$HOME"
+        --setenv LANG "${LANG:-C}"
+        --setenv TMPDIR /tmp
         --proc /proc
         --dev /dev
         --tmpfs /tmp
+        --seccomp 21
         --ro-bind "$DIR" "$DIR"
         --bind "$DESKTOP_DIR" "$DESKTOP_DIR"
     )
@@ -241,15 +260,74 @@ elif command -v bwrap >/dev/null 2>&1; then
         esac
     done
 
+# ---- Automatic phone bridge sync (Linux only) ---------------------------------
+BRIDGE_TEMP=""
+PHONE_CLI=""
+if [ "$OS_NAME" = "Linux" ] && command -v gio >/dev/null 2>&1; then
+    MTP_URI="$(gio mount -li 2>/dev/null | awk -F'activation_root=' '/activation_root=mtp:/ {print $2; exit}')"
+    if [ -n "$MTP_URI" ]; then
+        gio mount "$MTP_URI" >/dev/null 2>&1 || true
+        for suffix in "Internal storage/Calypso Gallery/CLI" "Dahili depolama/Calypso Gallery/CLI"; do
+            if gio list "$MTP_URI/$suffix" >/dev/null 2>&1; then
+                PHONE_CLI="$MTP_URI/$suffix"
+                break
+            fi
+        done
+        if [ -n "$PHONE_CLI" ]; then
+            BRIDGE_TEMP="$(mktemp -d "${TMPDIR:-/tmp}/calypso-cli-bridge.XXXXXX")"
+            mkdir -p "$BRIDGE_TEMP/bridge"
+            if gio copy -r "$PHONE_CLI" "$BRIDGE_TEMP/bridge/"; then
+                export CALYPSO_BRIDGE_ROOT="$BRIDGE_TEMP/bridge/CLI"
+                echo "[Phone] Bridge copied to temporary workspace."
+            else
+                rm -rf "$BRIDGE_TEMP"
+                BRIDGE_TEMP=""
+                echo "[Phone] Could not copy the bridge; run the manual steps in the user manual."
+            fi
+        else
+            echo "[Phone] No MTP phone bridge found; continuing with local bridges."
+        fi
+    else
+        echo "[Phone] No MTP device found; continuing with local bridges."
+    fi
+fi
+
+CLI_RC=0
+if command -v bwrap >/dev/null 2>&1; then
     echo "[Sandbox] Network OFF + Restricted Disk (bwrap)"
-    exec bwrap "${BWRAP_ARGS[@]}" "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
+    bwrap "${BWRAP_ARGS[@]}" "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@" || CLI_RC=$?
 elif command -v firejail >/dev/null 2>&1; then
     echo "[Sandbox] Network OFF + Restricted Filesystem (firejail)"
-    exec firejail --quiet --net=none --private-tmp "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
+    firejail --quiet --net=none --private-tmp "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@" || CLI_RC=$?
 elif command -v unshare >/dev/null 2>&1 && unshare --user --net true 2>/dev/null; then
     echo "[Sandbox] Network OFF (Linux kernel unshare --user --net)"
-    exec unshare --user --net "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
+    unshare --user --net "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@" || CLI_RC=$?
 else
-    echo "[!] Sandbox unavailable on this kernel; running Python directly."
-    exec "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@"
+    echo "=========================================================="
+    echo "  No filesystem sandbox available on this system."
+    echo "=========================================================="
+    echo "Running with the Python audit hook only - no OS-level filesystem or"
+    echo "network sandbox. No sandbox could be started on this system."
+    printf "Continue anyway? [y/N]: "
+    read -r answer
+    case "$answer" in
+        y|Y) "$PYTHON_BIN" "$DIR/calypso_vault.py" "$@" || CLI_RC=$? ;;
+        *) echo "Aborted."; CLI_RC=1 ;;
+    esac
 fi
+
+# ---- Copy the processed bridge back to the phone -------------------------------
+if [ -n "$BRIDGE_TEMP" ] && [ -n "$PHONE_CLI" ] && [ "$CLI_RC" -eq 0 ] && [ -n "$CALYPSO_BRIDGE_ROOT" ]; then
+    for bridge_dir in "$CALYPSO_BRIDGE_ROOT"/*; do
+        [ -d "$bridge_dir" ] || continue
+        if ! gio copy -r "$bridge_dir" "$PHONE_CLI/"; then
+            echo "[Phone] Could not copy a bridge back; copy it manually."
+            CLI_RC=1
+        fi
+    done
+    rm -rf "$BRIDGE_TEMP"
+elif [ -n "$BRIDGE_TEMP" ]; then
+    echo "[Phone] Temporary workspace kept at $BRIDGE_TEMP (copy failed or CLI error)."
+fi
+
+exit "$CLI_RC"

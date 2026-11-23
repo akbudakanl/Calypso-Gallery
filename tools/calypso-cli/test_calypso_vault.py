@@ -29,7 +29,7 @@ def create_test_vault_file(
     vmk: bytes | None = None,
     kek: bytes | None = None,
 ) -> tuple[bytes, bytes]:
-    """Builds a canonical v1 .vault header (PDK -> VMK -> keyring -> KEK)."""
+    """Builds a canonical v1 vault header (PDK -> VMK -> keyring -> KEK)."""
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
     from argon2.low_level import hash_secret_raw, Type
 
@@ -82,10 +82,10 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         self.desktop = self.root / "Desktop"
         self.desktop.mkdir(parents=True, exist_ok=True)
         self.secret = "test-vault-password-123"
-        self.vault_dir = self.root / "ExternalUSB" / "Secrets"
-        self.vault_dir.mkdir(parents=True, exist_ok=True)
-        self.vault_file = self.vault_dir / ".vault"
-        self.vmk, self.kek = create_test_vault_file(self.vault_file, self.secret)
+        selfvault_dir = self.root / "ExternalUSB" / "Secrets"
+        selfvault_dir.mkdir(parents=True, exist_ok=True)
+        selfvault_file = selfvault_dir / "vault"
+        self.vmk, self.kek = create_test_vault_file(selfvault_file, self.secret)
         self.master_key = self.vmk   # VMK protects folder .meta files
 
     def tearDown(self):
@@ -97,18 +97,15 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         output_dir: Path | None = None,
         vault_file: Path | None = None,
         delete_source: bool = False,
-        lang: str = "en",
     ) -> argparse.Namespace:
         return argparse.Namespace(
             encrypt=True,
-            lang=lang,
-            vault=str(vault_file or self.vault_file),
+            vault=str(vault_file or selfvault_file),
             input=str(input_dir),
             output=str(output_dir) if output_dir is not None else None,
             secret=self.secret,
             pattern=None,
             delete_source=delete_source,
-            adb=False,
         )
 
     def test_supported_media_format_checks_and_types(self):
@@ -130,7 +127,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         unsupported = [
             "notes.txt", "doc.pdf", "readme.md", "archive.zip", "data.json",
-            "payload.bin", ".vault", ".meta", ".nomedia", "noextension",
+            "payload.bin", "vault", ".meta", ".nomedia", "noextension",
         ]
         for fname in unsupported:
             self.assertFalse(cv.is_supported_media_file(fname), f"Expected unsupported: {fname}")
@@ -144,35 +141,35 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
     def test_write_meta_and_nomedia_rules(self):
         # Normal subfolder must NOT have .nomedia inside it, only at vault_dir root
-        normal_dir = self.vault_dir / "a1b2c3"
+        normal_dir = selfvault_dir / "a1b2c3"
         normal_dir.mkdir()
-        cv.write_encrypted_folder_meta(normal_dir, "Vacation", self.master_key, vault_dir=self.vault_dir)
-        self.assertTrue((self.vault_dir / ".nomedia").is_file())
+        cv.write_encrypted_folder_meta(normal_dir, "Vacation", self.master_key, vault_dir=selfvault_dir)
+        self.assertTrue((selfvault_dir / ".nomedia").is_file())
         self.assertFalse((normal_dir / ".nomedia").exists())
         self.assertEqual((normal_dir / ".meta").read_bytes()[:6], cv.FOLDER_META_MAGIC)
         self.assertEqual(cv.read_raw_folder_meta(normal_dir / ".meta", self.master_key), "Vacation")
         self.assertEqual(cv.read_encrypted_folder_meta(normal_dir / ".meta", self.master_key), "Vacation")
 
         # Default album must NOT have .nomedia inside it
-        default_dir = self.vault_dir / "d4e5f6"
+        default_dir = selfvault_dir / "d4e5f6"
         default_dir.mkdir()
-        cv.write_encrypted_folder_meta(default_dir, cv.VAULT_DEFAULT_ALBUM_NAME, self.master_key, vault_dir=self.vault_dir)
+        cv.write_encrypted_folder_meta(default_dir, cv.VAULT_DEFAULT_ALBUM_NAME, self.master_key, vault_dir=selfvault_dir)
         self.assertFalse((default_dir / ".nomedia").exists())
         self.assertEqual(cv.read_raw_folder_meta(default_dir / ".meta", self.master_key), cv.VAULT_DEFAULT_ALBUM_NAME)
         self.assertEqual(cv.read_encrypted_folder_meta(default_dir / ".meta", self.master_key), cv.DEFAULT_SECRET_ALBUM_NAME)
 
         # Recycle bin must NOT get .nomedia created by write_encrypted_folder_meta
-        bin_dir = self.vault_dir / "112233"
+        bin_dir = selfvault_dir / "112233"
         bin_dir.mkdir()
-        cv.write_encrypted_folder_meta(bin_dir, cv.VAULT_RECYCLE_BIN_NAME, self.master_key, vault_dir=self.vault_dir)
+        cv.write_encrypted_folder_meta(bin_dir, cv.VAULT_RECYCLE_BIN_NAME, self.master_key, vault_dir=selfvault_dir)
         self.assertFalse((bin_dir / ".nomedia").exists())
         self.assertEqual(cv.read_raw_folder_meta(bin_dir / ".meta", self.master_key), cv.VAULT_RECYCLE_BIN_NAME)
         self.assertEqual(cv.read_encrypted_folder_meta(bin_dir / ".meta", self.master_key), "Recycle Bin")
 
         # Dot-prefixed custom album SHOULD get .nomedia inside it
-        dot_dir = self.vault_dir / "445566"
+        dot_dir = selfvault_dir / "445566"
         dot_dir.mkdir()
-        cv.write_encrypted_folder_meta(dot_dir, ".SecretFolder", self.master_key, vault_dir=self.vault_dir)
+        cv.write_encrypted_folder_meta(dot_dir, ".SecretFolder", self.master_key, vault_dir=selfvault_dir)
         self.assertTrue((dot_dir / ".nomedia").is_file())
         self.assertEqual(cv.read_raw_folder_meta(dot_dir / ".meta", self.master_key), ".SecretFolder")
 
@@ -183,30 +180,30 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
     def test_scan_existing_vault_albums_ignores_system_dirs(self):
         # Create a Turkish-named default album, a named album, recycle bin, JSON, .hidden, and bad .meta
-        def_dir = self.vault_dir / "aa1122"
+        def_dir = selfvault_dir / "aa1122"
         def_dir.mkdir()
         cv.write_encrypted_folder_meta(def_dir, "Varsayılan Gizli Albüm", self.master_key)
 
-        vac_dir = self.vault_dir / "bb3344"
+        vac_dir = selfvault_dir / "bb3344"
         vac_dir.mkdir()
         cv.write_encrypted_folder_meta(vac_dir, "Summer Trip", self.master_key)
 
-        rbin_dir = self.vault_dir / "cc5566"
+        rbin_dir = selfvault_dir / "cc5566"
         rbin_dir.mkdir()
         cv.write_encrypted_folder_meta(rbin_dir, cv.VAULT_RECYCLE_BIN_NAME, self.master_key)
 
-        json_dir = self.vault_dir / "JSON"
+        json_dir = selfvault_dir / "JSON"
         json_dir.mkdir()
         (json_dir / "album.json").write_text("{}", encoding="utf-8")
 
-        dot_dir = self.vault_dir / ".internal"
+        dot_dir = selfvault_dir / ".internal"
         dot_dir.mkdir()
 
-        corrupt_dir = self.vault_dir / "dd7788"
+        corrupt_dir = selfvault_dir / "dd7788"
         corrupt_dir.mkdir()
         (corrupt_dir / ".meta").write_bytes(b"corrupted-meta-bytes")
 
-        cache = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertEqual(cache.default_album_dir, def_dir)
         self.assertEqual(cache.exact_albums, {"Summer Trip": vac_dir})
         self.assertEqual(cache.normalized_albums, {"summer trip": vac_dir})
@@ -222,15 +219,15 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         buf = io.StringIO()
         with redirect_stdout(buf):
-            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=selfvault_dir), self.desktop)
         out_text = buf.getvalue()
 
         self.assertIn("Skipping unsupported format", out_text)
         self.assertIn("Skipped 1 unsupported file(s)", out_text)
-        self.assertTrue((self.vault_dir / ".nomedia").is_file())
-        self.assertEqual(list(self.vault_dir.glob("*.bin")), [])
+        self.assertTrue((selfvault_dir / ".nomedia").is_file())
+        self.assertEqual(list(selfvault_dir.glob("*.bin")), [])
 
-        subdirs = [p for p in self.vault_dir.iterdir() if p.is_dir()]
+        subdirs = [p for p in selfvault_dir.iterdir() if p.is_dir()]
         self.assertEqual(len(subdirs), 1)
         default_sub = subdirs[0]
         self.assertEqual(len(default_sub.name), 6)
@@ -247,9 +244,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         (input_dir2 / "root3.mp4").write_bytes(b"fake-mp4-3")
 
         with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(self._make_encrypt_args(input_dir2, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(input_dir2, output_dir=selfvault_dir), self.desktop)
 
-        subdirs_after = [p for p in self.vault_dir.iterdir() if p.is_dir()]
+        subdirs_after = [p for p in selfvault_dir.iterdir() if p.is_dir()]
         self.assertEqual(subdirs_after, [default_sub])
         self.assertEqual(len(list(default_sub.glob("*.bin"))), 3)
 
@@ -263,9 +260,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         (input_dir / ".Private" / "c.webp").write_bytes(b"priv-c")
 
         with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=selfvault_dir), self.desktop)
 
-        cache1 = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache1 = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertIn("Vacation", cache1.exact_albums)
         self.assertIn("Family", cache1.exact_albums)
         self.assertIn(".Private", cache1.exact_albums)
@@ -281,9 +278,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         (input_dir2 / "Work" / "e.avif").write_bytes(b"work-e")
 
         with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(self._make_encrypt_args(input_dir2, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(input_dir2, output_dir=selfvault_dir), self.desktop)
 
-        cache2 = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache2 = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertEqual(cache2.exact_albums["Vacation"], cache1.exact_albums["Vacation"])
         self.assertEqual(len(list(cache2.exact_albums["Vacation"].glob("*.bin"))), 2)
         self.assertIn("Work", cache2.exact_albums)
@@ -291,7 +288,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         self.assertFalse((cache2.exact_albums["Work"] / ".nomedia").exists())
 
     def test_mixed_input_json_untouched_and_encrypted_vault_verification(self):
-        json_dir = self.vault_dir / "JSON"
+        json_dir = selfvault_dir / "JSON"
         json_dir.mkdir()
         stealth_json = json_dir / "deadbeef.json"
         stealth_json.write_text('{"name":"encrypted-virtual-album"}', encoding="utf-8")
@@ -305,13 +302,13 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         (input_dir / "ignore_me.pdf").write_bytes(b"%PDF-1.4")
 
         with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(input_dir, output_dir=selfvault_dir), self.desktop)
 
         # JSON virtual album directory must be completely untouched
         self.assertEqual(stealth_json.read_text(encoding="utf-8"), '{"name":"encrypted-virtual-album"}')
-        self.assertEqual(list(self.vault_dir.glob("*.bin")), [])
+        self.assertEqual(list(selfvault_dir.glob("*.bin")), [])
 
-        cache = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertIsNotNone(cache.default_album_dir)
         self.assertIn("Trips", cache.exact_albums)
 
@@ -329,7 +326,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         self.assertEqual(trip_dec["orig_size"], len(trip_payload))
         self.assertEqual(trip_dec["payload"], trip_payload)
 
-        all_bins = list(self.vault_dir.rglob("*.bin"))
+        all_bins = list(selfvault_dir.rglob("*.bin"))
         self.assertEqual(len(all_bins), 2)
 
     def test_delete_source_preserves_unsupported_files(self):
@@ -342,9 +339,8 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         with redirect_stdout(io.StringIO()):
             cv.run_encrypt_mode(
-                self._make_encrypt_args(input_dir, output_dir=self.vault_dir, delete_source=True),
+                self._make_encrypt_args(input_dir, output_dir=selfvault_dir, delete_source=True),
                 self.desktop,
-                "en",
             )
 
         self.assertFalse((input_dir / "pic1.jpg").exists())
@@ -358,88 +354,88 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         desktop_out = self.desktop / "Encrypted_Output"
         args_no_out = argparse.Namespace(output=None)
 
-        # Standalone .vault on Desktop must NOT be treated as a targetable vault directory
-        standalone_desktop_vault = self.desktop / ".vault"
+        # Standalone vault on Desktop is a key source, not a staging target.
+        standalone_desktop_vault = self.desktop / "vault"
         create_test_vault_file(standalone_desktop_vault, self.secret, self.master_key)
         self.assertFalse(cv.is_targetable_vault_dir(standalone_desktop_vault, self.desktop, input_dir, desktop_out))
 
-        # External USB Secrets/.vault containing ONLY .vault (delta usage inside Secrets)
-        self.assertTrue(cv.is_targetable_vault_dir(self.vault_file, self.desktop, input_dir, desktop_out))
-
-        # Populated external Secrets/.vault (with .nomedia and a .meta album)
-        populated_vault_dir = self.root / "PopulatedUSB" / "Secrets"
-        populated_vault_dir.mkdir(parents=True)
-        populated_vault_file = populated_vault_dir / ".vault"
-        create_test_vault_file(populated_vault_file, self.secret, self.master_key)
-        (populated_vault_dir / ".nomedia").touch()
-        album_sub = populated_vault_dir / "a1b2c3"
-        album_sub.mkdir()
-        cv.write_encrypted_folder_meta(album_sub, "Album", self.master_key, vault_dir=populated_vault_dir)
-
-        # External root .vault (e.g. /media/usb/.vault without Secrets parent)
-        usb_root_dir = self.root / "ExternalUSBRoot"
-        usb_root_dir.mkdir()
-        usb_root_vault = usb_root_dir / ".vault"
-        create_test_vault_file(usb_root_vault, self.secret, self.master_key)
-        self.assertFalse(cv.is_targetable_vault_dir(usb_root_vault, self.desktop, input_dir, desktop_out))
-
         with mock.patch("sys.stdin.isatty", return_value=True), \
              mock.patch("builtins.input", side_effect=AssertionError("Should not prompt for destination")):
-            # 1. <USB>/Secrets/.vault (only .vault present) -> <USB>/Secrets
+            # 1. <USB>/Secrets/vault -> sibling <USB>/CLI (no "Secrets" name dependency in derive).
             buf1 = io.StringIO()
             with redirect_stdout(buf1):
                 chosen_only_vault = cv.choose_encrypt_output_dir(
-                    args_no_out, self.desktop, "en", input_dir, self.vault_file
+                    args_no_out, self.desktop, input_dir, selfvault_file
                 )
-            self.assertEqual(chosen_only_vault, self.vault_dir.resolve())
-            self.assertIn(str(self.vault_dir.resolve()), buf1.getvalue())
+            self.assertEqual(chosen_only_vault, (selfvault_dir.parent / "CLI").resolve())
+            self.assertIn(str(chosen_only_vault), buf1.getvalue())
 
-            # 2. <USB>/Secrets/.vault (with existing contents) -> <USB>/Secrets
+            # 2. Same derivation even when the exported vault is populated.
+            populated_vault_dir = self.root / "PopulatedUSB" / "Secrets"
+            populated_vault_dir.mkdir(parents=True)
+            populated_vault_file = populated_vault_dir / "vault"
+            create_test_vault_file(populated_vault_file, self.secret, self.master_key)
+            (populated_vault_dir / ".nomedia").touch()
             with redirect_stdout(io.StringIO()):
                 chosen_populated = cv.choose_encrypt_output_dir(
-                    args_no_out, self.desktop, "en", input_dir, populated_vault_file
+                    args_no_out, self.desktop, input_dir, populated_vault_file
                 )
-            self.assertEqual(chosen_populated, populated_vault_dir.resolve())
+            self.assertEqual(chosen_populated, (populated_vault_dir.parent / "CLI").resolve())
 
-            # 3. <USB>/.vault at external root -> <USB>/Secrets
+            # 3. Arbitrary custom vault folder name -> sibling CLI, not a Secrets child.
+            custom_vault_dir = self.root / "MyCustomVault"
+            custom_vault_dir.mkdir()
+            custom_vault_file = custom_vault_dir / "vault"
+            create_test_vault_file(custom_vault_file, self.secret, self.master_key)
             with redirect_stdout(io.StringIO()):
-                chosen_usb_root = cv.choose_encrypt_output_dir(
-                    args_no_out, self.desktop, "en", input_dir, usb_root_vault
+                chosen_custom = cv.choose_encrypt_output_dir(
+                    args_no_out, self.desktop, input_dir, custom_vault_file
                 )
-            self.assertEqual(chosen_usb_root, (usb_root_dir / "Secrets").resolve())
+            self.assertEqual(chosen_custom, (self.root / "CLI").resolve())
 
-            # 4. Standalone ~/Desktop/.vault -> ~/Desktop/Encrypted_Output
+            # 4. Standalone ~/Desktop/vault -> ~/Desktop/CLI (special folder: CLI inside it).
             with redirect_stdout(io.StringIO()):
                 chosen_desktop = cv.choose_encrypt_output_dir(
-                    args_no_out, self.desktop, "en", input_dir, standalone_desktop_vault
+                    args_no_out, self.desktop, input_dir, standalone_desktop_vault
                 )
-            self.assertEqual(chosen_desktop, desktop_out.resolve())
+            self.assertEqual(chosen_desktop, (self.desktop / "CLI").resolve())
 
-            # 5. Explicit -o / --output overrides cleanly
-            custom_path = self.root / "CustomVault"
+            # 5. Explicit -o / --output overrides cleanly.
+            custom_path = self.root / "CustomStaging"
             args_with_out = argparse.Namespace(output=str(custom_path))
             with redirect_stdout(io.StringIO()):
                 chosen_override = cv.choose_encrypt_output_dir(
-                    args_with_out, self.desktop, "en", input_dir, self.vault_file
+                    args_with_out, self.desktop, input_dir, selfvault_file
                 )
             self.assertEqual(chosen_override, custom_path.resolve())
 
-    def test_turkish_messages_when_skipping_unsupported(self):
-        input_dir = self.root / "Sifrelenecek"
+    def test_last_vault_path_is_remembered_and_validated(self):
+        with mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop):
+            self.assertIsNone(cv.read_last_vault_path())
+            cv.remember_vault_path(selfvault_file)
+            self.assertEqual(cv.read_last_vault_path(), selfvault_file.resolve())
+
+            # A stale path must be ignored rather than silently used.
+            cv.get_last_vault_path_file().write_text(
+                str(self.root / "missingvault"), encoding="utf-8"
+            )
+            self.assertIsNone(cv.read_last_vault_path())
+
+    def test_english_messages_when_skipping_unsupported(self):
+        input_dir = self.root / "To_Encrypt"
         input_dir.mkdir()
-        (input_dir / "notlar.txt").write_text("merhaba", encoding="utf-8")
-        (input_dir / "foto.jpg").write_bytes(b"jpg-bytes")
+        (input_dir / "notes.txt").write_text("hello", encoding="utf-8")
+        (input_dir / "photo.jpg").write_bytes(b"jpg-bytes")
 
         buf = io.StringIO()
         with redirect_stdout(buf):
             cv.run_encrypt_mode(
-                self._make_encrypt_args(input_dir, output_dir=self.vault_dir, lang="tr"),
+                self._make_encrypt_args(input_dir, output_dir=selfvault_dir),
                 self.desktop,
-                "tr",
             )
         out_text = buf.getvalue()
-        self.assertIn("Desteklenmeyen format atlanıyor", out_text)
-        self.assertIn("Desteklenmeyen 1 dosya atlandı", out_text)
+        self.assertIn("Skipping unsupported format", out_text)
+        self.assertIn("Skipped 1 unsupported file(s)", out_text)
 
     def test_cli_subprocess_default_encrypt_and_rejects_decrypt(self):
         import subprocess
@@ -459,10 +455,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
             [
                 sys.executable,
                 str(cli_script),
-                "--lang", "en",
                 "-i", str(in_dir),
-                "-o", str(self.vault_dir),
-                "-k", str(self.vault_file),
+                "-o", str(selfvault_dir),
+                "-k", str(selfvault_file),
                 "-s", self.secret,
             ],
             capture_output=True,
@@ -472,7 +467,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         self.assertEqual(enc_proc.returncode, 0, msg=enc_proc.stderr + enc_proc.stdout)
         self.assertIn("Skipped 1 unsupported file(s)", enc_proc.stdout)
 
-        cache = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertIsNotNone(cache.default_album_dir)
         self.assertIn("AlbumOne", cache.exact_albums)
         root_dec = decrypt_bin_for_test(next(cache.default_album_dir.glob("*.bin")), self.kek)
@@ -491,10 +486,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
                 sys.executable,
                 str(cli_script),
                 "--encrypt",
-                "--lang", "en",
                 "-i", str(in_dir2),
-                "-o", str(self.vault_dir),
-                "-v", str(self.vault_file),
+                "-o", str(selfvault_dir),
+                "-v", str(selfvault_file),
                 "-s", self.secret,
             ],
             capture_output=True,
@@ -518,10 +512,10 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         fake_media = self.root / "media_amnesia"
         usb_vault_dir = fake_media / "USBDRIVE" / "Secrets"
         usb_vault_dir.mkdir(parents=True)
-        usb_vault = usb_vault_dir / ".vault"
+        usb_vault = usb_vault_dir / "vault"
         create_test_vault_file(usb_vault, self.secret, self.master_key)
 
-        desktop_vault = self.desktop / ".vault"
+        desktop_vault = self.desktop / "vault"
         create_test_vault_file(desktop_vault, self.secret, self.master_key)
 
         with mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
@@ -529,16 +523,16 @@ class TestCalypsoVaultCLI(unittest.TestCase):
             detected = cv.find_vault_file()
         self.assertEqual(detected, usb_vault)
 
-        # Ensure prompt_for_vault_file returns the external Secrets/.vault directly
-        # without replacing it with Desktop/.vault
+        # Ensure prompt_for_vault_file returns the external Secrets/vault directly
+        # without replacing it with Desktop/vault
         empty_desktop = self.root / "EmptyDesktop"
         empty_desktop.mkdir()
         with mock.patch.object(cv, "get_desktop_dir", return_value=empty_desktop), \
              mock.patch("builtins.input", return_value=str(usb_vault)), \
              redirect_stdout(io.StringIO()):
-            chosen = cv.prompt_for_vault_file("en")
+            chosen = cv.prompt_for_vault_file()
         self.assertEqual(chosen, usb_vault.resolve())
-        self.assertFalse((empty_desktop / ".vault").exists())
+        self.assertFalse((empty_desktop / "vault").exists())
 
     def test_only_unsupported_files_exits_zero_with_skipped_summary(self):
         in_dir = self.root / "OnlyUnsupported"
@@ -548,7 +542,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         buf = io.StringIO()
         with redirect_stdout(buf):
             with self.assertRaises(SystemExit) as ctx:
-                cv.run_encrypt_mode(self._make_encrypt_args(in_dir, output_dir=self.vault_dir), self.desktop, "en")
+                cv.run_encrypt_mode(self._make_encrypt_args(in_dir, output_dir=selfvault_dir), self.desktop)
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("Skipping unsupported format", buf.getvalue())
         self.assertIn("Skipped 1 unsupported file(s)", buf.getvalue())
@@ -563,9 +557,9 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         orig_bytes = img_path.read_bytes()
 
         with redirect_stdout(io.StringIO()):
-            cv.run_encrypt_mode(self._make_encrypt_args(in_dir, output_dir=self.vault_dir), self.desktop, "en")
+            cv.run_encrypt_mode(self._make_encrypt_args(in_dir, output_dir=selfvault_dir), self.desktop)
 
-        cache = cv.scan_existing_vault_albums(self.vault_dir, self.master_key)
+        cache = cv.scan_existing_vault_albums(selfvault_dir, self.master_key)
         self.assertIn("Camera", cache.exact_albums)
         cam_bins = list(cache.exact_albums["Camera"].glob("*.bin"))
         self.assertEqual(len(cam_bins), 1)
@@ -578,18 +572,18 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
     def test_interactive_password_retry_loop(self):
         args = argparse.Namespace(
-            vault=str(self.vault_file),
+            vault=str(selfvault_file),
             secret=None,
             pattern=None,
         )
         with mock.patch("getpass.getpass", side_effect=["", "wrong-secret", self.secret]), \
              redirect_stdout(io.StringIO()), \
              mock.patch("sys.stderr", new_callable=io.StringIO):
-            unlocked_keys, unlocked_path = cv.unlock_master_key_with_path(args, "en")
+            unlocked_keys, unlocked_path = cv.unlock_master_key_with_path(args)
         self.assertEqual(unlocked_keys.vmk, self.vmk)
         self.assertEqual(unlocked_keys.kek, self.kek)
-        self.assertEqual(cv.unlock_vault_header_bytes(self.vault_file.read_bytes(), self.secret), self.kek)
-        self.assertEqual(unlocked_path, self.vault_file.resolve())
+        self.assertEqual(cv.unlock_vault_header_bytes(selfvault_file.read_bytes(), self.secret), self.kek)
+        self.assertEqual(unlocked_path, selfvault_file.resolve())
 
     def test_cloud_sync_path_detection_and_skips_desktop_vault_copy(self):
         self.assertTrue(cv.is_cloud_synced_path(Path("/Users/alice/Library/Mobile Documents/com~apple~CloudDocs/Desktop")))
@@ -601,19 +595,19 @@ class TestCalypsoVaultCLI(unittest.TestCase):
             with mock.patch("os.name", "nt"):
                 self.assertTrue(cv.is_cloud_synced_path(self.root / "SyncedRoot" / "Desktop"))
 
-        # Standalone .vault imported when Desktop is cloud-synced must NOT prompt to copy .vault to Desktop
+        # Standalone vault imported when Desktop is cloud-synced must NOT prompt to copy vault to Desktop
         synced_desktop = self.root / "OneDrive" / "Desktop"
         synced_desktop.mkdir(parents=True)
-        standalone_src = self.root / "LocalUSB" / "phone.vault"
+        standalone_src = self.root / "LocalUSB" / "phonevault"
         standalone_src.parent.mkdir(parents=True)
         create_test_vault_file(standalone_src, self.secret, self.master_key)
 
         with mock.patch.object(cv, "get_desktop_dir", return_value=synced_desktop), \
              mock.patch("builtins.input", side_effect=[str(standalone_src)]), \
              redirect_stdout(io.StringIO()):
-            chosen = cv.prompt_for_vault_file("en")
+            chosen = cv.prompt_for_vault_file()
         self.assertEqual(chosen, standalone_src.resolve())
-        self.assertFalse((synced_desktop / ".vault").exists())
+        self.assertFalse((synced_desktop / "vault").exists())
 
     def test_cross_platform_mount_roots_and_windows_drive_vault_discovery(self):
         with mock.patch.object(cv, "get_platform_kind", return_value="macos"):
@@ -621,7 +615,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         fake_usb_drive = self.root / "FakeDriveE"
         fake_usb_drive.mkdir()
-        drive_root_vault = fake_usb_drive / ".vault"
+        drive_root_vault = fake_usb_drive / "vault"
         create_test_vault_file(drive_root_vault, self.secret, self.master_key)
 
         with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
@@ -630,8 +624,8 @@ class TestCalypsoVaultCLI(unittest.TestCase):
             detected_root = cv.find_vault_file()
         self.assertEqual(detected_root, drive_root_vault)
 
-        # Secrets/.vault on Windows-style drive takes priority over root .vault
-        cs_vault = fake_usb_drive / "Secrets" / ".vault"
+        # Secrets/vault on Windows-style drive takes priority over root vault
+        cs_vault = fake_usb_drive / "Secrets" / "vault"
         cs_vault.parent.mkdir(parents=True)
         create_test_vault_file(cs_vault, self.secret, self.master_key)
         with mock.patch.object(cv, "get_platform_kind", return_value="windows"), \
@@ -653,9 +647,8 @@ class TestCalypsoVaultCLI(unittest.TestCase):
              mock.patch("builtins.input", side_effect=AssertionError("Should not prompt for OS choice or wipe when --delete-source is set")), \
              redirect_stdout(buf):
             cv.run_encrypt_mode(
-                self._make_encrypt_args(in_dir, output_dir=self.vault_dir, delete_source=True, lang="en"),
+                self._make_encrypt_args(in_dir, output_dir=selfvault_dir, delete_source=True),
                 self.desktop,
-                "en",
             )
 
         out = buf.getvalue()
@@ -686,7 +679,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         payload = bytes((i * 17 + 3) & 0xFF for i in range(262089))  # crosses a segment boundary
         source.write_bytes(payload)
 
-        out = cv.encrypt_file(source, self.vault_dir, self.kek)
+        out = cv.encrypt_file(source, selfvault_dir, self.kek)
         data = out.read_bytes()
 
         self.assertEqual(data[:8], cv.CONTAINER_MAGIC)
@@ -704,7 +697,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         self.assertEqual(len(data), cv.FIXED_PREFIX_LENGTH + n + parsed["ciphertext_length"])
 
     def test_canonical_vault_header_version_and_keyring(self):
-        raw = self.vault_file.read_bytes()
+        raw = selfvault_file.read_bytes()
         self.assertEqual(raw[:5], cv.VAULT_HEADER_MAGIC)
         self.assertEqual(raw[5], 1)   # canonical version 1
         self.assertEqual(raw[6], 1)   # Argon2id
@@ -720,7 +713,7 @@ class TestCalypsoVaultCLI(unittest.TestCase):
         """A container encrypted with the KEK must not open with the VMK."""
         source = self.root / "KeySeparation.jpg"
         source.write_bytes(b"key-separation-payload")
-        out = cv.encrypt_file(source, self.vault_dir, self.kek)
+        out = cv.encrypt_file(source, selfvault_dir, self.kek)
         from cryptography.exceptions import InvalidTag
         with self.assertRaises(InvalidTag):
             parse_container(out.read_bytes(), self.vmk)
@@ -732,12 +725,11 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         with redirect_stdout(io.StringIO()):
             cv.run_encrypt_mode(
-                self._make_encrypt_args(batch1, output_dir=self.vault_dir, delete_source=False),
+                self._make_encrypt_args(batch1, output_dir=selfvault_dir, delete_source=False),
                 self.desktop,
-                "en",
             )
 
-        pending_file = self.vault_dir / ".pending_sync"
+        pending_file = selfvault_dir / "pending_sync"
         self.assertTrue(pending_file.is_file())
         first_entries = [l for l in pending_file.read_text(encoding="utf-8").splitlines() if l.strip()]
         self.assertEqual(len(first_entries), 1)
@@ -748,15 +740,14 @@ class TestCalypsoVaultCLI(unittest.TestCase):
 
         with redirect_stdout(io.StringIO()):
             cv.run_encrypt_mode(
-                self._make_encrypt_args(batch2, output_dir=self.vault_dir, delete_source=False),
+                self._make_encrypt_args(batch2, output_dir=selfvault_dir, delete_source=False),
                 self.desktop,
-                "en",
             )
 
         all_entries = [l for l in pending_file.read_text(encoding="utf-8").splitlines() if l.strip()]
         self.assertEqual(len(all_entries), 2)
         self.assertEqual(all_entries[0], first_entries[0])
-        self.assertTrue((self.vault_dir / all_entries[1]).is_file())
+        self.assertTrue((selfvault_dir / all_entries[1]).is_file())
 
 
 if __name__ == "__main__":

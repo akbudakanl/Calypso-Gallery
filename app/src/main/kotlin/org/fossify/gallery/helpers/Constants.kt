@@ -206,6 +206,19 @@ const val ENCRYPTED_FOLDER_PREFIX = ".fvault_"
  * folder, it sits directly in the internal storage as its own top level folder.
  */
 const val CIPHER_APP_DIR_NAME = "Calypso Gallery"
+
+/** Neutral staging folder for encrypted media produced by the desktop CLI. */
+const val CLI_STAGING_DIR_NAME = "CLI"
+
+/** Marker identifying a CLI bridge folder (not a vault). */
+const val CLI_BRIDGE_MARKER_FILE = "cli_bridge"
+
+/** Archived bridges move one level below [CLI_STAGING_DIR_NAME]. */
+const val CLI_BRIDGE_ARCHIVED_DIR_NAME = "Archived"
+
+/** Written by the CLI while it is actively producing a batch; import must wait. */
+const val CLI_WRITING_SENTINEL = "cli_writing"
+
 const val CIPHER_VIRTUAL_ALBUMS_DIR_NAME = "Virtual Album Saves"
 /** On-disk name of the vault container folder inside the app container. */
 const val SECRETS_DIR_NAME = "Secrets"

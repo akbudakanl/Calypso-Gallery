@@ -63,6 +63,10 @@ import org.fossify.gallery.dialogs.VaultChoiceDialog
 import org.fossify.gallery.dialogs.VaultNoticeDialog
 import org.fossify.gallery.dialogs.VaultSecurityDialog
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
+import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
+import org.fossify.gallery.helpers.CLI_STAGING_DIR_NAME
+import org.fossify.gallery.helpers.CLI_WRITING_SENTINEL
+import org.fossify.gallery.helpers.CliBridgeManager
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.VAULT_ACTION_ARCHIVED
@@ -110,6 +114,7 @@ import org.fossify.gallery.helpers.operations.OperationFaults
 import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.TransientOperationWaiter
 import java.io.IOException
+import java.time.Instant
 import org.fossify.gallery.helpers.decryptFileToDirectory
 import org.fossify.gallery.helpers.decryptFolder
 import org.fossify.gallery.helpers.encryptFileToDirectory
@@ -1125,6 +1130,21 @@ private fun BaseSimpleActivity.defaultSyncSourcePickerPath(): String {
         ?: internalStoragePath
 }
 
+private fun BaseSimpleActivity.defaultCliPickerPath(): String? {
+    val internalCli = File(File(internalStoragePath, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME)
+    if (internalCli.isDirectory) {
+        return internalCli.parentFile?.absolutePath
+    }
+    for (volume in CryptoManager.listExternalStorageVolumeRoots(this)) {
+        val nestedCli = File(File(volume, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME)
+        val directCli = File(volume, CLI_STAGING_DIR_NAME)
+        if (nestedCli.isDirectory || directCli.isDirectory) {
+            return volume.absolutePath
+        }
+    }
+    return null
+}
+
 fun BaseSimpleActivity.promptSyncVaultFromExternal(
     forcePasswordPrompt: Boolean = false,
     onSynced: (() -> Unit)? = null,
@@ -1148,88 +1168,184 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
     }
 
     ensureVaultUnlocked(forcePrompt = forcePasswordPrompt, onCancelled = onFlowCancelled) {
-        val startFolderPickerAndSync = {
-            pickCustomVaultDirectory(
-                initialPath = defaultSyncSourcePickerPath(),
-                requireWritable = false,
-                onPicked = { pickedDir ->
-                    val resolvedSource = CryptoManager.resolveSyncSourceRoot(pickedDir)
-                    val activeVaultRoot = CryptoManager.findVaultRoot(this)
-                    val sameVault = activeVaultRoot != null && runCatching {
-                        resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
-                    }.getOrDefault(false)
-                    if (sameVault) {
-                        showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, onFlowCancelled)
-                        return@pickCustomVaultDirectory
-                    }
+        val internalCli = File(File(internalStoragePath, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME)
 
-                    ensureNotificationPermissionThenRun { notificationsAllowed ->
-                        val progressDialog = CryptoProgressDialog(
-                            activity = this,
-                            max = 0,
-                            titleId = R.string.syncing_vault_progress,
-                            enableNotification = notificationsAllowed
-                        )
-                        ensureBackgroundThread {
-                            val result = CryptoManager.syncVaultFromExternalDirectory(
-                                context = this,
-                                sourceDir = pickedDir
-                            ) { processed, total ->
-                                runOnUiThread {
-                                    if (!isFinishing && !isDestroyed) {
-                                        progressDialog.updateProgress(processed, total)
-                                    }
-                                }
-                            }
-                            runOnUiThread {
-                                progressDialog.dismiss()
-                                if (isFinishing || isDestroyed) {
-                                    onFlowFinished()
-                                    return@runOnUiThread
-                                }
-                                when {
-                                    result == null -> toast(
-                                        if (sameVault) {
-                                            R.string.vault_sync_same_folder_error
-                                        } else {
-                                            org.fossify.commons.R.string.unknown_error_occurred
-                                        }
-                                    )
-                                    result.copiedCount == 0 &&
-                                        result.renamedCount == 0 &&
-                                        result.skippedDuplicateCount == 0 &&
-                                        result.failedCount == 0 -> toast(R.string.vault_sync_nothing_to_sync)
-                                    else -> {
-                                        val summaryView = layoutInflater.inflate(
-                                            org.fossify.commons.R.layout.dialog_message,
-                                            null
-                                        )
-                                        summaryView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
-                                            getString(
-                                                R.string.vault_sync_summary_message,
-                                                result.copiedCount,
-                                                result.renamedCount,
-                                                result.skippedDuplicateCount,
-                                                result.failedCount
-                                            )
-                                        getAlertDialogBuilder()
-                                            .setPositiveButton(org.fossify.commons.R.string.ok, null)
-                                            .apply {
-                                                setupDialogStuff(
-                                                    summaryView,
-                                                    this,
-                                                    titleId = R.string.sync_vault_from_external
-                                                )
-                                            }
-                                    }
-                                }
-                                onFlowFinished()
+        // Removes ONLY the files listed in the consumed manifest and their
+        // now-empty album folders. Unrelated files in the staging folder stay.
+        val clearStagedEntries = { stagingDir: File, entries: List<String> ->
+            if (stagingDir.isDirectory) {
+                val base = runCatching { stagingDir.canonicalFile }.getOrDefault(stagingDir)
+                entries.forEach { rel ->
+                    runCatching {
+                        val bin = File(stagingDir, rel)
+                        val canonical = bin.canonicalFile
+                        if (canonical.path.startsWith(base.path + File.separator) && bin.isFile) {
+                            bin.delete()
+                            val parent = bin.parentFile
+                            if (parent != null && parent != stagingDir && parent.listFiles().isNullOrEmpty()) {
+                                parent.delete()
                             }
                         }
                     }
-                },
-                onCancelled = onFlowCancelled
-            )
+                }
+            }
+        }
+
+        val runImport = runImport@{ sourceDir: File ->
+            val manifestEntries: List<String> = runCatching {
+                val manifest = File(sourceDir, CryptoManager.PENDING_SYNC_FILE_NAME)
+                if (manifest.isFile) {
+                    manifest.readLines().map { it.trim().replace('\\', '/') }
+                        .filter { it.isNotEmpty() && !it.startsWith("/") && !it.contains("..") }
+                } else {
+                    emptyList()
+                }
+            }.getOrDefault(emptyList())
+
+            val resolvedSource = CryptoManager.resolveSyncSourceRoot(sourceDir)
+            val activeVaultRoot = CryptoManager.findVaultRoot(this)
+            val sameVault = activeVaultRoot != null && runCatching {
+                resolvedSource.canonicalPath == activeVaultRoot.canonicalPath
+            }.getOrDefault(false)
+            if (sameVault) {
+                showVaultLocationNoticeDialog(R.string.vault_sync_same_folder_error, onFlowCancelled)
+                return@runImport
+            }
+
+            ensureNotificationPermissionThenRun { notificationsAllowed ->
+                val progressDialog = CryptoProgressDialog(
+                    activity = this,
+                    max = 0,
+                    titleId = R.string.syncing_vault_progress,
+                    enableNotification = notificationsAllowed
+                )
+                ensureBackgroundThread {
+                    val result = CryptoManager.syncVaultFromExternalDirectory(
+                        context = this,
+                        sourceDir = sourceDir
+                    ) { processed, total ->
+                        runOnUiThread {
+                            if (!isFinishing && !isDestroyed) {
+                                progressDialog.updateProgress(processed, total)
+                            }
+                        }
+                    }
+                    runOnUiThread {
+                        progressDialog.dismiss()
+                        if (isFinishing || isDestroyed) {
+                            onFlowFinished()
+                            return@runOnUiThread
+                        }
+                        when {
+                            result == null -> toast(org.fossify.commons.R.string.unknown_error_occurred)
+                            result.copiedCount == 0 &&
+                                result.renamedCount == 0 &&
+                                result.skippedDuplicateCount == 0 &&
+                                result.failedCount == 0 -> toast(R.string.vault_sync_nothing_to_sync)
+                            else -> {
+                                val summaryView = layoutInflater.inflate(
+                                    org.fossify.commons.R.layout.dialog_message,
+                                    null
+                                )
+                                summaryView.findViewById<TextView>(org.fossify.commons.R.id.message).text =
+                                    getString(
+                                        R.string.vault_sync_summary_message,
+                                        result.copiedCount,
+                                        result.renamedCount,
+                                        result.skippedDuplicateCount,
+                                        result.failedCount
+                                    )
+                                getAlertDialogBuilder()
+                                    .setPositiveButton(org.fossify.commons.R.string.ok, null)
+                                    .apply {
+                                        setupDialogStuff(
+                                            summaryView,
+                                            this,
+                                            titleId = R.string.sync_vault_from_external
+                                        )
+                                    }
+                            }
+                        }
+                        // Only the app-owned CLI staging folder is cleaned up; an external
+                        // disk (possibly a full vault backup) is never modified by import.
+                        if (result != null && result.failedCount == 0 &&
+                            result.copiedCount + result.renamedCount + result.skippedDuplicateCount > 0 &&
+                            runCatching { sourceDir.canonicalPath == internalCli.canonicalPath }.getOrDefault(false)
+                        ) {
+                            clearStagedEntries(sourceDir, manifestEntries)
+                        }
+                        onFlowFinished()
+                    }
+                }
+            }
+        }
+
+        val activeFingerprint = CliBridgeManager.currentFingerprint()
+        val pendingBridges = CliBridgeManager.bridges(this).filter {
+            File(it.dir, CryptoManager.PENDING_SYNC_FILE_NAME).isFile
+        }
+
+        fun importBridge(bridge: CliBridgeManager.Bridge) {
+            if (activeFingerprint != null && !bridge.fingerprint.equals(activeFingerprint, ignoreCase = true)) {
+                showVaultLocationNoticeDialog(R.string.export_vault_different_vault, onFlowCancelled)
+                return
+            }
+            val marker = File(bridge.dir, CLI_WRITING_SENTINEL)
+            if (marker.isFile) {
+                val raw = runCatching { marker.readText(Charsets.UTF_8).trim() }.getOrDefault("")
+                val startedMs = runCatching { Instant.parse(raw).toEpochMilli() }.getOrNull()
+                val isStale = startedMs != null && System.currentTimeMillis() - startedMs > 30 * 60 * 1000L
+                if (startedMs == null || !isStale) {
+                    showVaultLocationNoticeDialog(R.string.vault_sync_cli_busy, onFlowCancelled)
+                    return
+                }
+                getAlertDialogBuilder()
+                    .setTitle(R.string.vault_sync_stale_marker_title)
+                    .setMessage(String.format(getString(R.string.vault_sync_stale_marker_message), raw))
+                    .setNegativeButton(R.string.vault_sync_stale_marker_keep, null)
+                    .setPositiveButton(R.string.vault_sync_stale_marker_remove) { _, _ ->
+                        marker.delete()
+                        runImport(bridge.dir)
+                    }
+                    .show()
+            } else {
+                runImport(bridge.dir)
+            }
+        }
+
+        val startImport = {
+            when {
+                pendingBridges.size == 1 -> importBridge(pendingBridges.first())
+
+                pendingBridges.size > 1 -> {
+                    val labels = pendingBridges.map {
+                        it.sourcePath.ifBlank { it.dir.absolutePath }
+                    }.toTypedArray()
+                    getAlertDialogBuilder()
+                        .setTitle(R.string.cli_bridge_selection_title)
+                        .setMessage(R.string.cli_bridge_selection_warning)
+                        .setSingleChoiceItems(labels, -1) { dialog, which ->
+                            dialog.dismiss()
+                            importBridge(pendingBridges[which])
+                        }
+                        .setNegativeButton(org.fossify.commons.R.string.cancel, null)
+                        .show()
+                }
+
+                internalCli.isDirectory && File(internalCli, CLI_WRITING_SENTINEL).exists() ->
+                    showVaultLocationNoticeDialog(R.string.vault_sync_cli_busy, onFlowCancelled)
+
+                internalCli.isDirectory &&
+                    File(internalCli, CryptoManager.PENDING_SYNC_FILE_NAME).isFile ->
+                    runImport(internalCli)
+
+                else -> pickCustomVaultDirectory(
+                    initialPath = defaultCliPickerPath() ?: defaultSyncSourcePickerPath(),
+                    requireWritable = false,
+                    onPicked = { pickedDir -> runImport(pickedDir) },
+                    onCancelled = onFlowCancelled
+                )
+            }
         }
 
         if (!config.hasShownVaultImportInfo) {
@@ -1239,14 +1355,14 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
             getAlertDialogBuilder()
                 .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
                     config.hasShownVaultImportInfo = true
-                    startFolderPickerAndSync()
+                    startImport()
                 }
                 .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ -> onFlowCancelled() }
                 .apply {
                     setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
                 }
         } else {
-            startFolderPickerAndSync()
+            startImport()
         }
     }
 }

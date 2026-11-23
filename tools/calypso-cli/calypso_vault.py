@@ -25,8 +25,8 @@ IMPORTANT SECURITY NOTICE (TIER 1 LIVE BOOT vs. TIER 2 STANDARD OS):
 Features:
 - Automatic OS detection (Linux/Tails, macOS, Windows) with zero extra prompts.
 - Encrypt-Only workflow targeting either an external Secrets vault
-  directly or an output/delta folder (Encrypted_Output / Sifreli_Cikti).
-- Automatic .vault discovery across Desktop, persistent storage, and mounted USB drives.
+  directly or an output/delta folder (Encrypted_Output).
+- Automatic vault discovery across Desktop, persistent storage, and mounted USB drives.
 - Pre-encryption supported media format validation matching the Android app.
 - Automatic Default Secret Album routing for root files & .meta-aware subfolder matching.
 - Secure source sanitation (overwriting with zeros) of plaintext source media (--delete-source).
@@ -40,7 +40,6 @@ import struct
 import getpass
 import argparse
 import subprocess
-import shutil
 from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -50,6 +49,11 @@ from io import BytesIO
 APP_DIR_NAME = "Calypso Gallery"
 VAULT_DIR_NAME = "Secrets"
 VAULT_DIR_NAMES = (VAULT_DIR_NAME,)
+CLI_DIR_NAME = "CLI"
+LOCAL_BRIDGE_DIR_NAME = "Calypso CLI"
+CLI_BRIDGE_MARKER_FILE = "cli_bridge"
+VAULT_HEADER_FILE_NAME = "vault"
+CLI_WRITING_SENTINEL = "cli_writing"
 
 HAS_CRYPTO = True
 HAS_TINK = True
@@ -126,17 +130,25 @@ def check_dependencies():
         print("  pip install -r requirements.txt", file=sys.stderr)
         sys.exit(1)
 
-def install_network_audit_hook(allow_adb: bool):
+def install_network_audit_hook():
     """
-    Defense-in-depth Python-level guard: blocks socket connections and external
-    network calls inside this Python process when --adb is not enabled.
+    Defense-in-depth Python-level guard: blocks network operations, subprocess
+    execution and dynamic code loading inside this process. The CLI is entirely
+    offline and must never spawn helper processes or open sockets.
     """
-    if allow_adb or not hasattr(sys, "addaudithook"):
+    if not hasattr(sys, "addaudithook"):
         return
 
+    blocked_events = {
+        "socket.connect", "socket.bind", "socket.sendto", "socket.getaddrinfo",
+        "urllib.Request", "http.client.connect",
+        "subprocess.Popen", "os.system", "os.exec", "os.spawn",
+        "ctypes.dlopen", "ctypes.dlsym",
+    }
+
     def _audit_hook(event, _args):
-        if event in ("socket.connect", "socket.bind", "socket.sendto", "urllib.Request"):
-            raise PermissionError(f"Network operation blocked by offline security policy: {event}")
+        if event in blocked_events or event.startswith(("socket.", "subprocess.")):
+            raise PermissionError(f"Operation blocked by offline security policy: {event}")
 
     sys.addaudithook(_audit_hook)
 
@@ -198,145 +210,66 @@ VIDEO_EXTS = {
 }
 SUPPORTED_MEDIA_EXTENSIONS = PHOTO_EXTS | GIF_EXTS | SVG_EXTS | RAW_EXTS | VIDEO_EXTS
 
-# ==================== LOCALIZATION (EN / TR) ====================
+# ==================== MESSAGES (ENGLISH ONLY) ====================
 
-FOLDER_NAMES = {
-    "en": {
-        "enc_in": "To_Encrypt",
-        "enc_out": "Encrypted_Output",
-    },
-    "tr": {
-        "enc_in": "Sifrelenecek",
-        "enc_out": "Sifreli_Cikti",
-    },
-}
+INPUT_FOLDER_NAME = "To_Encrypt"
 
 MESSAGES = {
-    "en": {
-        "op_cancelled": "\nOperation cancelled.",
-        "vault_not_found": "\033[1;33m[?] .vault file was not found automatically.\033[0m",
-        "vault_drop_hint": "    You can drop your .vault file (from {app_dir} > Secrets > .vault)",
-        "vault_path_hint": "    onto your Desktop or enter its path below.",
-        "vault_enter_path": "\n\033[1;36m-> Enter path to .vault file (or drag & drop here): \033[0m",
-        "vault_copy_prompt": "\033[1;32m[i] Copy .vault to Desktop for automatic detection next time? [Y/n]: \033[0m",
-        "vault_copied": "    [✓] Copied to {path}.",
-        "vault_invalid_path": "\033[1;31m[-] Error: Valid .vault file not found at: {path}\033[0m",
-        "vault_spec_not_found": "\033[1;31m[ERROR]\033[0m Specified .vault file not found: {path}",
-        "vault_auto_detected": "\033[1;32m[✓] .vault file auto-detected:\033[0m {path}",
-        "enter_secret": "\033[1;33m[?] Enter Vault Password or PIN: \033[0m",
-        "secret_empty": "\033[1;31m[ERROR]\033[0m Password cannot be empty!",
-        "unwrapping_vault": "\033[1;34m[*] Unwrapping .vault file (Argon2id + AES-256-GCM)...\033[0m",
-        "vault_unlocked": "\033[1;32m[✓] Vault unlocked successfully! Master Key loaded into memory.\033[0m\n",
-        "vault_unlock_err": "\033[1;31m[ERROR]\033[0m Could not unlock vault: {err}",
-        "vault_retry": "\033[1;33m[i] Please try again (Ctrl+C to cancel).\033[0m\n",
-        "enc_title": "\033[1;36m      Calypso Gallery - Offline Vault Encryptor\033[0m",
-        "non_ram_os_notice": "\033[1;33m[i] Standard OS Mode ({os_name}):\033[0m Running on a disk-backed OS (not RAM-only Tails/Live Boot). Swap, thumbnails, and filesystem logs are not cleared; best suited for encrypting media already on this PC.",
-        "cloud_sync_warning": "\033[1;31m[WARNING]\033[0m Cloud-synced folder detected ({path})! Plaintext media or .vault here may upload to OneDrive/iCloud/Dropbox. Prefer a non-synced local folder or USB drive (-i / -o).",
-        "wipe_non_ram_disclaimer": "\033[1;33m[i] Note:\033[0m On {os_name} SSDs, overwriting removes the file entry but cannot erase SSD wear-leveling blocks, NTFS/APFS journals, shadow copies/snapshots, or OS thumbnail/search caches.",
-        "folders_ready": "\033[1;32m[✓] Desktop folders are ready:\033[0m",
-        "input_folder": "    📥 Input Folder:   \033[1;33m{path}\033[0m",
-        "output_folder": "    📤 Output Folder:  \033[1;33m{path}\033[0m",
-        "enc_empty": "\n\033[1;33m[!] No photos or videos found in the input folder yet.\033[0m",
-        "enc_empty_hint1": "    Place the media you want to encrypt into the input folder",
-        "enc_empty_hint2": "    and run this tool again.",
-        "enc_queued": "\033[1;35m[*] Total {count} file(s) ({mb:.2f} MB) queued for encryption...\033[0m",
-        "enc_success": "\n\033[1;32m[✓] Success! {count} file(s) encrypted and saved:\033[0m",
-        "out_dir_line": "    -> Output Directory: \033[1;36m{path}\033[0m",
-        "enc_tip1": "\033[1;37m[i] Tip: Transfer the contents of the output folder into your phone's\033[0m",
-        "enc_tip2": "\033[1;37m    '{app_dir}/Secrets/' directory.\033[0m",
-        "wipe_prompt": "\n\033[1;33m[?] Securely wipe and delete plaintext files from input folder? [y/N]: \033[0m",
-        "wiping_start": "\n\033[1;33m[*] Securely overwriting with zeros and deleting source files...\033[0m",
-        "wipe_err": "    [-] Could not delete: {name} ({err})",
-        "wiping_done": "\033[1;32m[✓] Plaintext files securely wiped.\033[0m",
-        "adb_pushing": "\n\033[1;34m[*] Pushing to phone via ADB: {dest}\033[0m",
-        "adb_no_device": "\033[1;31m[-] Error: No ADB device connected.\033[0m",
-        "adb_transferring": "    -> Transferring: {name}",
-        "adb_done": "\033[1;32m[✓] All files pushed to phone successfully!\033[0m",
-        "files_unit": "files",
-        "skip_unsupported_fmt": "\033[1;33m[!] Skipping unsupported format (not a supported gallery media file):\033[0m {name}",
-        "enc_skipped_summary": "\033[1;33m[i] Skipped {count} unsupported file(s).\033[0m",
-        "enc_nested_flatten_note": "\033[1;34m[i] Nested subfolders under '{album}' will be routed into top-level vault album '{album}'.\033[0m",
-        "enc_input_not_found": "\033[1;31m[ERROR]\033[0m Input path does not exist: {path}",
-        "enc_auto_target_vault": "\033[1;32m[✓] Encryption destination:\033[0m {path}",
-        "enc_tip_direct": "\033[1;37m[i] Encrypted directly inside the Vault. Existing .meta albums were reused and new albums created.\033[0m",
-    },
-    "tr": {
-        "op_cancelled": "\nİşlem iptal edildi.",
-        "vault_not_found": "\033[1;33m[?] .vault dosyası otomatik olarak bulunamadı.\033[0m",
-        "vault_drop_hint": "    .vault dosyanızı ({app_dir} > Secrets > .vault)",
-        "vault_path_hint": "    Masaüstüne bırakabilir veya dosya yolunu aşağıya girebilirsiniz.",
-        "vault_enter_path": "\n\033[1;36m-> .vault dosya yolunu girin (veya sürükleyip bırakın): \033[0m",
-        "vault_copy_prompt": "\033[1;32m[i] Bir sonraki sefer otomatik algılama için .vault Masaüstüne kopyalansın mı? [E/h]: \033[0m",
-        "vault_copied": "    [✓] Kopyalandı: {path}.",
-        "vault_invalid_path": "\033[1;31m[-] Hata: Geçerli bir .vault dosyası bulunamadı: {path}\033[0m",
-        "vault_spec_not_found": "\033[1;31m[HATA]\033[0m Belirtilen .vault dosyası bulunamadı: {path}",
-        "vault_auto_detected": "\033[1;32m[✓] .vault dosyası otomatik algılandı:\033[0m {path}",
-        "enter_secret": "\033[1;33m[?] Kasa Şifresini veya PIN'ini Girin: \033[0m",
-        "secret_empty": "\033[1;31m[HATA]\033[0m Şifre boş bırakılamaz!",
-        "unwrapping_vault": "\033[1;34m[*] .vault dosyası açılıyor (Argon2id + AES-256-GCM)...\033[0m",
-        "vault_unlocked": "\033[1;32m[✓] Kasa başarıyla açıldı! Ana Anahtar (Master Key) belleğe alındı.\033[0m\n",
-        "vault_unlock_err": "\033[1;31m[HATA]\033[0m Kasa açılamadı: {err}",
-        "vault_retry": "\033[1;33m[i] Lütfen tekrar deneyin (İptal için Ctrl+C).\033[0m\n",
-        "enc_title": "\033[1;36m      Calypso Gallery - Çevrimdışı Şifreleme Aracı\033[0m",
-        "non_ram_os_notice": "\033[1;33m[i] Standart İşletim Sistemi Modu ({os_name}):\033[0m RAM tabanlı Tails/Live Boot yerine disk tabanlı sistemde çalışıyor. Takas alanı, küçük resim önbelleği ve dosya sistemi izleri silinmez; bilgisayarda zaten bulunan medyaları şifrelemek için uygundur.",
-        "cloud_sync_warning": "\033[1;31m[UYARI]\033[0m Bulutla eşitlenen klasör algılandı ({path})! Buradaki şifresiz medyalar veya .vault dosyası OneDrive/iCloud/Dropbox'a yüklenebilir. Bulut dışı yerel bir klasör veya USB (-i / -o) kullanmanız önerilir.",
-        "wipe_non_ram_disclaimer": "\033[1;33m[i] Not:\033[0m {os_name} SSD disklerde üzerine sıfır yazmak dosyayı siler; ancak SSD aşınma dengeleme bloklarını, NTFS/APFS günlüklerini, gölge kopyaları/anlık görüntüleri veya sistem önbelleklerini temizlemez.",
-        "folders_ready": "\033[1;32m[✓] Masaüstü klasörleri hazır:\033[0m",
-        "input_folder": "    📥 Girdi Klasörü:   \033[1;33m{path}\033[0m",
-        "output_folder": "    📤 Çıktı Klasörü:   \033[1;33m{path}\033[0m",
-        "enc_empty": "\n\033[1;33m[!] Girdi klasöründe henüz fotoğraf veya video bulunamadı.\033[0m",
-        "enc_empty_hint1": "    Şifrelemek istediğiniz medyaları girdi klasörüne bırakıp",
-        "enc_empty_hint2": "    bu aracı tekrar çalıştırın.",
-        "enc_queued": "\033[1;35m[*] Toplam {count} dosya ({mb:.2f} MB) şifrelenmek üzere sıraya alındı...\033[0m",
-        "enc_success": "\n\033[1;32m[✓] Başarılı! {count} dosya şifrelendi ve kaydedildi:\033[0m",
-        "out_dir_line": "    -> Çıktı Klasörü: \033[1;36m{path}\033[0m",
-        "enc_tip1": "\033[1;37m[i] İpucu: Çıktı klasörünün içeriğini telefonunuzdaki\033[0m",
-        "enc_tip2": "\033[1;37m    '{app_dir}/Secrets/' dizinine aktarabilirsiniz.\033[0m",
-        "wipe_prompt": "\n\033[1;33m[?] Girdi klasöründeki şifresiz kaynak dosyalar sıfırlanıp silinsin mi? [e/H]: \033[0m",
-        "wiping_start": "\n\033[1;33m[*] Kaynak dosyalar üzerine sıfır yazılarak güvenli şekilde siliniyor...\033[0m",
-        "wipe_err": "    [-] Silinemedi: {name} ({err})",
-        "wiping_done": "\033[1;32m[✓] Şifresiz kaynak dosyalar güvenli şekilde temizlendi.\033[0m",
-        "adb_pushing": "\n\033[1;34m[*] ADB ile telefona gönderiliyor: {dest}\033[0m",
-        "adb_no_device": "\033[1;31m[-] Hata: Bağlı ADB cihazı bulunamadı.\033[0m",
-        "adb_transferring": "    -> Gönderiliyor: {name}",
-        "adb_done": "\033[1;32m[✓] Tüm dosyalar telefona başarıyla gönderildi!\033[0m",
-        "files_unit": "dosya",
-        "skip_unsupported_fmt": "\033[1;33m[!] Desteklenmeyen format atlanıyor (desteklenen bir galeri medyası değil):\033[0m {name}",
-        "enc_skipped_summary": "\033[1;33m[i] Desteklenmeyen {count} dosya atlandı.\033[0m",
-        "enc_nested_flatten_note": "\033[1;34m[i] '{album}' altındaki iç içe alt klasör dosyaları '{album}' kasa albümüne yönlendirilecek.\033[0m",
-        "enc_input_not_found": "\033[1;31m[HATA]\033[0m Girdi yolu bulunamadı: {path}",
-        "enc_auto_target_vault": "\033[1;32m[✓] Şifreleme hedefi:\033[0m {path}",
-        "enc_tip_direct": "\033[1;37m[i] Doğrudan Kasa içine şifrelendi. Mevcut .meta albümleri yeniden kullanıldı ve yeni albümler oluşturuldu.\033[0m",
-    },
+    "op_cancelled": "\nOperation cancelled.",
+    "vault_not_found": "\033[1;33m[?] vault header was not found automatically.\033[0m",
+    "vault_drop_hint": "    Export it from the app: {app_dir} > Secrets > vault",
+    "vault_path_hint": "    then enter its path below (or pass -v on the command line).",
+    "vault_enter_path": "\n\033[1;36m-> Enter path to vault header (or drag & drop here): \033[0m",
+    "vault_invalid_path": "\033[1;31m[-] Error: Valid vault header not found at: {path}\033[0m",
+    "vault_spec_not_found": "\033[1;31m[ERROR]\033[0m Specified vault header not found: {path}",
+    "vault_auto_detected": "\033[1;32m[✓] vault header auto-detected:\033[0m {path}",
+    "enter_secret": "\033[1;33m[?] Enter Vault Password or PIN: \033[0m",
+    "secret_empty": "\033[1;31m[ERROR]\033[0m Password cannot be empty!",
+    "unwrapping_vault": "\033[1;34m[*] Unwrapping vault header (Argon2id + AES-256-GCM)...\033[0m",
+    "vault_unlocked": "\033[1;32m[✓] Vault unlocked successfully! Master Key loaded into memory.\033[0m\n",
+    "vault_unlock_err": "\033[1;31m[ERROR]\033[0m Could not unlock vault: {err}",
+    "vault_retry": "\033[1;33m[i] Please try again (Ctrl+C to cancel).\033[0m\n",
+    "enc_title": "\033[1;36m      Calypso Gallery - Offline Vault Encryptor\033[0m",
+    "non_ram_os_notice": "\033[1;33m[i] Standard OS Mode ({os_name}):\033[0m Running on a disk-backed OS (not RAM-only Tails/Live Boot). Swap, thumbnails, and filesystem logs are not cleared; best suited for encrypting media already on this PC.",
+    "cloud_sync_warning": "\033[1;31m[WARNING]\033[0m Cloud-synced folder detected ({path})! Plaintext media or vault here may upload to OneDrive/iCloud/Dropbox. Prefer a non-synced local folder or USB drive (-i / -o).",
+    "wipe_non_ram_disclaimer": "\033[1;33m[i] Note:\033[0m On {os_name} SSDs, overwriting removes the file entry but cannot erase SSD wear-leveling blocks, NTFS/APFS journals, shadow copies/snapshots, or OS thumbnail/search caches.",
+    "folders_ready": "\033[1;32m[✓] Desktop folders are ready:\033[0m",
+    "input_folder": "    📥 Input Folder:   \033[1;33m{path}\033[0m",
+    "output_folder": "    📤 Output Folder:  \033[1;33m{path}\033[0m",
+    "enc_empty": "\n\033[1;33m[!] No photos or videos found in the input folder yet.\033[0m",
+    "enc_empty_hint1": "    Place the media you want to encrypt into the input folder",
+    "enc_empty_hint2": "    and run this tool again.",
+    "enc_queued": "\033[1;35m[*] Total {count} file(s) ({mb:.2f} MB) queued for encryption...\033[0m",
+    "enc_success": "\n\033[1;32m[✓] Success! {count} file(s) encrypted and saved:\033[0m",
+    "out_dir_line": "    -> Output Directory: \033[1;36m{path}\033[0m",
+    "enc_tip1": "\033[1;37m[i] Tip: Transfer the contents of the output folder into your phone's\033[0m",
+    "enc_tip2": "\033[1;37m    '{app_dir}/Secrets/' directory.\033[0m",
+    "wipe_prompt": "\n\033[1;33m[?] Securely wipe and delete plaintext files from input folder? [y/N]: \033[0m",
+    "wiping_start": "\n\033[1;33m[*] Securely overwriting with zeros and deleting source files...\033[0m",
+    "wipe_err": "    [-] Could not delete: {name} ({err})",
+    "wiping_done": "\033[1;32m[✓] Plaintext files securely wiped.\033[0m",
+    "files_unit": "files",
+    "skip_unsupported_fmt": "\033[1;33m[!] Skipping unsupported format (not a supported gallery media file):\033[0m {name}",
+    "enc_skipped_summary": "\033[1;33m[i] Skipped {count} unsupported file(s).\033[0m",
+    "enc_nested_flatten_note": "\033[1;34m[i] Nested subfolders under '{album}' will be routed into top-level vault album '{album}'.\033[0m",
+    "enc_input_not_found": "\033[1;31m[ERROR]\033[0m Input path does not exist: {path}",
+    "enc_auto_target_vault": "\033[1;32m[✓] Encryption destination:\033[0m {path}",
+    "enc_tip_direct": "\033[1;37m[i] Encrypted directly inside the Vault. Existing .meta albums were reused and new albums created.\033[0m",
+    "enc_tip_staging": "\n\033[1;37m[i] Encrypted into a staging folder. In the app use Settings > Encrypted vault >\033[0m\n"
+                      "\033[1;37m    Import CLI media to move it into your active vault (or copy this folder\033[0m\n"
+                      "\033[1;37m    to Calypso Gallery/CLI on the phone over USB first).\033[0m",
+    "select_active_hint": "\033[1;33m[i]\033[0m Select the vault that is currently active in the app; otherwise the transfer will fail.\n",
+    "vault_multiple_found": "\033[1;31m[ERROR]\033[0m Multiple vault headers found. Pass -v <path> to choose one:\n{paths}",
+    "cli_writing_busy": "\033[1;31m[ERROR]\033[0m Staging folder is busy ({path}). Another encryption may be in progress.\n"
+                        "    If no other run is active, delete the cli_writing file and retry.",
+    "vault_last_used": "\033[1;32m[✓] Using last selected vault:\033[0m {path}",
 }
 
-def t(lang: str, key: str, **kwargs) -> str:
-    msg = MESSAGES.get(lang, MESSAGES["en"]).get(key, MESSAGES["en"].get(key, key))
+
+def t(key: str, **kwargs) -> str:
+    msg = MESSAGES.get(key, key)
     return msg.format(**kwargs) if kwargs else msg
 
-def choose_language(args) -> str:
-    """Selects CLI language via --lang flag or interactive prompt."""
-    if args.lang:
-        return args.lang
-    if not sys.stdin.isatty():
-        return "en"
-
-    print("\n" + "=" * 65)
-    print("  Select Language / Dil Seçin:")
-    print("    [1] English (Default / Varsayılan)")
-    print("    [2] Türkçe")
-    print("=" * 65)
-    while True:
-        try:
-            choice = input("\033[1;36m[?] Choice / Seçim [1/2]: \033[0m").strip().lower()
-        except (KeyboardInterrupt, EOFError):
-            print("\nOperation cancelled / İşlem iptal edildi.")
-            sys.exit(1)
-        if choice in ("", "1", "en", "english"):
-            return "en"
-        if choice in ("2", "tr", "turkish", "türkçe", "turkce"):
-            return "tr"
-        print("\033[1;31m[-] Invalid selection / Geçersiz seçim (1 or 2).\033[0m")
 
 # ==================== DESKTOP & DIRECTORY DISCOVERY ====================
 
@@ -353,7 +286,7 @@ CLOUD_SYNC_MARKERS = (
 def is_cloud_synced_path(path: Path) -> bool:
     """
     Heuristic check for paths inside common cloud-synced folders (OneDrive, iCloud Drive,
-    Dropbox, Google Drive) where staging plaintext media or .vault headers poses a leak risk.
+    Dropbox, Google Drive) where staging plaintext media or vault headers poses a leak risk.
     """
     try:
         resolved_str = str(path.expanduser().resolve()).lower()
@@ -438,9 +371,9 @@ def get_desktop_dir() -> Path:
     except Exception:
         return Path.home()
 
-def get_localized_desktop_dir(desktop: Path, lang: str, folder_key: str) -> Path:
-    """Finds or creates the localized Desktop folder for the selected language."""
-    folder_name = FOLDER_NAMES.get(lang, FOLDER_NAMES["en"])[folder_key]
+def get_desktop_folder(desktop: Path, folder_key: str) -> Path:
+    """Finds or creates the standard Desktop working folder."""
+    folder_name = INPUT_FOLDER_NAME if folder_key == "enc_in" else OUTPUT_FOLDER_NAME
     target = desktop / folder_name
     target.mkdir(parents=True, exist_ok=True)
     return target
@@ -524,8 +457,8 @@ def _external_mount_roots() -> list[Path]:
             unique.append(r)
     return unique
 
-def find_vault_file() -> Path | None:
-    """Searches for .vault header file across mounted vaults, Persistent storage, and Desktop."""
+def find_vault_files() -> list[Path]:
+    """Returns every valid vault header found across vaults, Persistent storage and Desktop."""
     desktop = get_desktop_dir()
     kind = get_platform_kind()
     vault_dir_candidates: list[Path] = []
@@ -533,8 +466,8 @@ def find_vault_file() -> Path | None:
 
     def add_vault_dir_locations(base: Path):
         vault_dir_candidates.extend([
-            base / VAULT_DIR_NAME / ".vault",
-            base / APP_DIR_NAME / VAULT_DIR_NAME / ".vault",
+            base / VAULT_DIR_NAME / VAULT_HEADER_FILE_NAME,
+            base / APP_DIR_NAME / VAULT_DIR_NAME / VAULT_HEADER_FILE_NAME,
         ])
 
     # 1. Tails / Live-Boot Persistent & external USB drives (vault containers first)
@@ -552,8 +485,7 @@ def find_vault_file() -> Path | None:
             continue
         add_vault_dir_locations(mount_root)
         if kind == "windows":
-            standalone_candidates.append(mount_root / ".vault")
-            standalone_candidates.append(mount_root / "phone.vault")
+            standalone_candidates.append(mount_root / VAULT_HEADER_FILE_NAME)
         try:
             for usb_dir in sorted(mount_root.iterdir(), key=lambda p: p.name):
                 try:
@@ -564,8 +496,7 @@ def find_vault_file() -> Path | None:
                     if kind == "windows" and usb_dir.name.lower() in windows_skip_dirs:
                         continue
                     add_vault_dir_locations(usb_dir)
-                    standalone_candidates.append(usb_dir / ".vault")
-                    standalone_candidates.append(usb_dir / "phone.vault")
+                    standalone_candidates.append(usb_dir / VAULT_HEADER_FILE_NAME)
                 except Exception:
                     continue
         except Exception:
@@ -574,82 +505,131 @@ def find_vault_file() -> Path | None:
     # 2. Desktop, Persistent standalone, Home, CWD, and script directory
     local_standalone: list[Path] = [
         # Desktop
-        desktop / ".vault",
-        desktop / "phone.vault",
-        desktop / "vault.vault",
-        desktop / "kasa.vault",
+        desktop / VAULT_HEADER_FILE_NAME,
         # Desktop folders
-        desktop / "To_Encrypt" / ".vault",
-        desktop / "Encrypted_Output" / ".vault",
-        desktop / "Sifrelenecek" / ".vault",
-        desktop / "Sifreli_Cikti" / ".vault",
+        desktop / "To_Encrypt" / VAULT_HEADER_FILE_NAME,
+        # Legacy Turkish folder names are recognized for discovery only, never created.
     ]
     if kind == "linux":
         local_standalone.extend([
-            Path("/home/amnesia/Persistent/.vault"),
-            Path("/home/amnesia/Persistent/phone.vault"),
-            Path("/home/amnesia/Persistent/vault.vault"),
-            Path.home() / "Persistent" / ".vault",
-            Path.home() / "Persistent" / "phone.vault",
+            Path(str(Path("/home/amnesia/Persistent") / VAULT_HEADER_FILE_NAME)),
+            Path.home() / "Persistent" / VAULT_HEADER_FILE_NAME,
         ])
     local_standalone.extend([
         # Home directory
-        Path.home() / ".vault",
-        Path.home() / "phone.vault",
+        Path.home() / VAULT_HEADER_FILE_NAME,
         # Working directory & script directory
-        Path.cwd() / ".vault",
-        Path.cwd() / "phone.vault",
-        Path(__file__).resolve().parent / ".vault",
-        Path(__file__).resolve().parent / "phone.vault",
+        Path.cwd() / VAULT_HEADER_FILE_NAME,
+        Path(__file__).resolve().parent / VAULT_HEADER_FILE_NAME,
     ])
     standalone_candidates = local_standalone + standalone_candidates
 
+    # CLI bridge folders: <root>/Calypso Gallery/CLI/<id>/vault and the
+    # local mirror <Desktop>/Calypso CLI/<id>/vault.
+    env_root = os.environ.get("CALYPSO_BRIDGE_ROOT")
+    discovery_bases = [desktop / LOCAL_BRIDGE_DIR_NAME]
+    if env_root:
+        discovery_bases.insert(0, Path(env_root).expanduser())
+    for base in discovery_bases:
+        try:
+            for child in sorted(base.iterdir(), key=lambda p: p.name):
+                standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
+        except Exception:
+            pass
+    for mount_root in _external_mount_roots():
+        for cli_root in [mount_root / APP_DIR_NAME / CLI_DIR_NAME, mount_root / CLI_DIR_NAME]:
+            try:
+                for child in sorted(cli_root.iterdir(), key=lambda p: p.name):
+                    standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
+            except Exception:
+                pass
+
+    found: list[Path] = []
+    seen: set[str] = set()
     for candidate in vault_dir_candidates + standalone_candidates:
-        if is_valid_vault_file(candidate):
-            return candidate
+        if not is_valid_vault_file(candidate):
+            continue
+        key = str(candidate.resolve()).lower()
+        if key not in seen:
+            seen.add(key)
+            found.append(candidate)
+    return found
 
-    return None
 
-def prompt_for_vault_file(lang: str) -> Path:
-    """Interactively prompts user for .vault file if not found automatically."""
-    print(t(lang, "vault_not_found"))
-    print(t(lang, "vault_drop_hint", app_dir=APP_DIR_NAME))
-    print(t(lang, "vault_path_hint"))
+def _bridge_is_active(vault_path: Path) -> bool:
+    marker = vault_path.parent / CLI_BRIDGE_MARKER_FILE
+    if not marker.is_file():
+        return False
+    try:
+        for line in marker.read_text(encoding="utf-8").splitlines():
+            if line.strip() == "active=1":
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def find_vault_file() -> Path | None:
+    """Backward-compatible helper: first discovered vault, or None."""
+    candidates = find_vault_files()
+    return candidates[0] if candidates else None
+
+def get_cli_config_dir() -> Path:
+    """Device-local config folder, kept on the Desktop so the Linux sandbox can write it."""
+    return get_desktop_dir() / ".calypso-cli"
+
+
+def get_last_vault_path_file() -> Path:
+    return get_cli_config_dir() / "last_vault_path"
+
+
+def read_last_vault_path() -> Path | None:
+    """Returns the last used vault if it still exists and is valid."""
+    try:
+        raw = get_last_vault_path_file().read_text(encoding="utf-8").strip()
+        if not raw:
+            return None
+        candidate = Path(raw).expanduser()
+        return candidate if is_valid_vault_file(candidate) else None
+    except Exception:
+        return None
+
+
+def remember_vault_path(path: Path | None) -> None:
+    """Persists the selected vault path locally (never inside a vault folder)."""
+    if path is None:
+        return
+    try:
+        config_dir = get_cli_config_dir()
+        config_dir.mkdir(parents=True, exist_ok=True)
+        get_last_vault_path_file().write_text(str(path.resolve()) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
+def prompt_for_vault_file() -> Path:
+    """Interactively prompts user for vault header if not found automatically."""
+    print(t("vault_not_found"))
+    print(t("vault_drop_hint", app_dir=APP_DIR_NAME))
+    print(t("vault_path_hint"))
     while True:
         try:
-            raw = input(t(lang, "vault_enter_path")).strip()
+            raw = input(t("vault_enter_path")).strip()
         except (KeyboardInterrupt, EOFError):
-            print(t(lang, "op_cancelled"))
+            print(t("op_cancelled"))
             sys.exit(1)
 
         clean_path = raw.strip().strip("'\"")
         p = Path(clean_path).expanduser().resolve()
         if is_valid_vault_file(p):
-            desktop = get_desktop_dir()
-            desktop_vault = desktop / ".vault"
-            in_vault_dir = p.parent.name in VAULT_DIR_NAMES or (p.parent / ".nomedia").is_file()
-            if (
-                not in_vault_dir
-                and not desktop_vault.exists()
-                and p != desktop_vault
-                and not is_cloud_synced_path(desktop)
-            ):
-                try:
-                    ans = input(t(lang, "vault_copy_prompt")).strip().lower()
-                    if ans in ("", "y", "yes", "e", "evet"):
-                        shutil.copy2(p, desktop_vault)
-                        print(t(lang, "vault_copied", path=desktop_vault))
-                        return desktop_vault
-                except Exception:
-                    pass
             return p
-        print(t(lang, "vault_invalid_path", path=clean_path))
+        print(t("vault_invalid_path", path=clean_path))
 
 # ==================== CRYPTOGRAPHIC UTILITIES ====================
 
 @dataclass
 class VaultKeys:
-    """The two keys held by a canonical .vault keyring."""
+    """The two keys held by a canonical vault keyring."""
     vmk: bytes  # Vault Master Key - protects folder .meta files
     kek: bytes  # Key Encryption Key - protects file container headers
 
@@ -737,7 +717,7 @@ class _KeepOpenBytesIO(BytesIO):
 
 def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     """
-    Unwraps a canonical v1 .vault header.
+    Unwraps a canonical v1 vault header.
 
     Layout: magic(5) | version(1) | kdf(1) | iterations(4) | memoryKb(4) |
     parallelism(4) | protectionType(1) | saltLen(4) | salt | ivPdk(12) |
@@ -747,14 +727,14 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
     which is packKeyringV4 = u16 keyId | 32-byte KEK.
     """
     if len(data) < 32:
-        raise ValueError(".vault file is too small or invalid.")
+        raise ValueError("vault header is too small or invalid.")
 
     offset = 0
 
     def take(count: int) -> bytes:
         nonlocal offset
         if count < 0 or offset + count > len(data):
-            raise ValueError("Corrupted .vault header: truncated field.")
+            raise ValueError("Corrupted vault header: truncated field.")
         chunk = data[offset:offset + count]
         offset += count
         return chunk
@@ -769,7 +749,7 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
 
     iterations, memory_kb, parallelism = struct.unpack(">3i", take(12))
     if not (1 <= iterations <= 256 and 1024 <= memory_kb <= 1_048_576 and 1 <= parallelism <= 32):
-        raise ValueError("Invalid Argon2id parameters in .vault header.")
+        raise ValueError("Invalid Argon2id parameters in vault header.")
 
     take(1)  # protection type (password / PIN / pattern)
 
@@ -820,12 +800,12 @@ def unwrap_vault_keys(data: bytes, secret: str) -> VaultKeys:
 
 
 def unlock_vault_header(vault_path: Path, secret: str) -> bytes:
-    """Unwraps a .vault header and returns the KEK (the file-header key)."""
+    """Unwraps a vault header and returns the KEK (the file-header key)."""
     return unlock_vault_header_bytes(vault_path.read_bytes(), secret)
 
 
 def unlock_vault_header_bytes(data: bytes, secret: str) -> bytes:
-    """Unwraps raw .vault header bytes and returns the KEK used for file headers."""
+    """Unwraps raw vault header bytes and returns the KEK used for file headers."""
     return unwrap_vault_keys(data, secret).kek
 
 def is_default_album_raw_name(raw_name: str | None) -> bool:
@@ -1086,10 +1066,9 @@ def generate_thumbnail_bytes(image_path: Path) -> bytes:
 
 class HorizontalProgressBar:
     """Terminal-width adaptive modern horizontal progress counter."""
-    def __init__(self, total_files: int, total_bytes: int, lang: str = "en"):
+    def __init__(self, total_files: int, total_bytes: int):
         self.total_files = total_files
         self.total_bytes = max(total_bytes, 1)
-        self.lang = lang
         self.processed_files = 0
         self.processed_bytes = 0
         self.start_time = time.time()
@@ -1113,7 +1092,7 @@ class HorizontalProgressBar:
 
         mb_done = self.processed_bytes / (1024 * 1024)
         mb_total = self.total_bytes / (1024 * 1024)
-        files_unit = t(self.lang, "files_unit")
+        files_unit = t("files_unit")
         info_str = f" {percent:5.1f}% | {self.processed_files}/{self.total_files} {files_unit} | {mb_done:.1f}/{mb_total:.1f} MB | {speed_mb:.1f} MB/s"
 
         fname_max = max(10, term_cols - len(info_str) - 25)
@@ -1140,17 +1119,19 @@ class HorizontalProgressBar:
 
 def append_pending_sync_entries(output_dir: Path, created_bins: list[Path]) -> Path | None:
     """
-    Appends newly encrypted .bin relative POSIX paths to <output_dir>/.pending_sync
-    while preserving any existing unsynced entries from earlier CLI sessions.
+    Appends newly encrypted .bin relative POSIX paths to the staging manifest
+    `pending_sync`. The name has no leading dot so it survives MTP transfers.
+    Existing entries from earlier CLI sessions are preserved and deduplicated.
     """
     if not created_bins:
         return None
-    pending_file = output_dir / ".pending_sync"
+    manifest_file = output_dir / "pending_sync"
+
     existing: list[str] = []
     seen: set[str] = set()
-    if pending_file.is_file():
+    if manifest_file.is_file():
         try:
-            for line in pending_file.read_text(encoding="utf-8").splitlines():
+            for line in manifest_file.read_text(encoding="utf-8").splitlines():
                 clean = line.strip().replace("\\", "/")
                 if clean and clean not in seen:
                     existing.append(clean)
@@ -1167,8 +1148,10 @@ def append_pending_sync_entries(output_dir: Path, created_bins: list[Path]) -> P
             existing.append(rel)
             seen.add(rel)
 
-    pending_file.write_text("\n".join(existing) + "\n", encoding="utf-8")
-    return pending_file
+    temp_file = manifest_file.with_name(manifest_file.name + f".{os.getpid()}.tmp")
+    temp_file.write_text("\n".join(existing) + "\n", encoding="utf-8")
+    os.replace(temp_file, manifest_file)
+    return manifest_file
 
 
 def extract_date_taken_ms(source_path: Path, fallback_ms: int) -> int:
@@ -1328,22 +1311,21 @@ def encrypt_file(
 
 def unlock_master_key_with_path(
     args,
-    lang: str,
     extra_vault_paths: list[Path] | None = None,
 ) -> tuple[VaultKeys, Path | None]:
     """
-    Locates .vault on disk, prompts for password/PIN (with retry on interactive input),
+    Locates vault on disk, prompts for password/PIN (with retry on interactive input),
     and unwraps both keys in the keyring. Returns (VaultKeys, vault_path_or_none).
     """
     vault_data: bytes | None = None
     vault_path: Path | None = None
 
-    if args.vault:
-        candidate = Path(args.vault).expanduser().resolve()
-        if candidate.is_dir() and (candidate / ".vault").is_file():
-            candidate = candidate / ".vault"
+    if argsvault:
+        candidate = Path(argsvault).expanduser().resolve()
+        if candidate.is_dir() and (candidate / VAULT_HEADER_FILE_NAME).is_file():
+            candidate = candidate / VAULT_HEADER_FILE_NAME
         if not candidate.is_file():
-            print(t(lang, "vault_spec_not_found", path=candidate), file=sys.stderr)
+            print(t("vault_spec_not_found", path=candidate), file=sys.stderr)
             sys.exit(1)
         vault_path = candidate
         vault_data = vault_path.read_bytes()
@@ -1354,27 +1336,44 @@ def unlock_master_key_with_path(
                     vault_path = cand
                     break
         if not vault_path:
-            vault_path = find_vault_file()
+            vault_path = read_last_vault_path()
+            if vault_path:
+                print(t("vault_last_used", path=vault_path))
+
+        if not vault_path:
+            candidates = find_vault_files()
+            if len(candidates) > 1:
+                active = [c for c in candidates if _bridge_is_active(c)]
+                if len(active) == 1:
+                    candidates = active
+                else:
+                    listing = "\n".join(f"  - {c}" for c in candidates)
+                    print(t("vault_multiple_found", paths=listing), file=sys.stderr)
+                    print(t("select_active_hint"), file=sys.stderr)
+                    sys.exit(1)
+            vault_path = candidates[0] if candidates else None
 
         if vault_path:
-            print(t(lang, "vault_auto_detected", path=vault_path))
+            print(t("vault_auto_detected", path=vault_path))
             vault_data = vault_path.read_bytes()
         else:
-            vault_path = prompt_for_vault_file(lang)
+            vault_path = prompt_for_vault_file()
             vault_data = vault_path.read_bytes()
+
+    remember_vault_path(vault_path)
 
     cli_secret = args.secret
     if not cli_secret and args.pattern:
         cli_secret = args.pattern.strip()
 
     if cli_secret:
-        print(t(lang, "unwrapping_vault"))
+        print(t("unwrapping_vault"))
         try:
             vault_keys = unwrap_vault_keys(vault_data, cli_secret)
-            print(t(lang, "vault_unlocked"))
+            print(t("vault_unlocked"))
             return vault_keys, vault_path
         except Exception as e:
-            print(t(lang, "vault_unlock_err", err=e), file=sys.stderr)
+            print(t("vault_unlock_err", err=e), file=sys.stderr)
             sys.exit(1)
 
     max_attempts = None if sys.stdin.isatty() else 5
@@ -1382,38 +1381,36 @@ def unlock_master_key_with_path(
     while True:
         attempt += 1
         try:
-            secret = getpass.getpass(t(lang, "enter_secret"))
+            secret = getpass.getpass(t("enter_secret"))
         except (KeyboardInterrupt, EOFError):
-            print(t(lang, "op_cancelled"))
+            print(t("op_cancelled"))
             sys.exit(1)
 
         if not secret:
-            print(t(lang, "secret_empty"), file=sys.stderr)
+            print(t("secret_empty"), file=sys.stderr)
             if max_attempts is not None and attempt >= max_attempts:
                 sys.exit(1)
-            print(t(lang, "vault_retry"), file=sys.stderr)
+            print(t("vault_retry"), file=sys.stderr)
             continue
 
-        print(t(lang, "unwrapping_vault"))
+        print(t("unwrapping_vault"))
         try:
             vault_keys = unwrap_vault_keys(vault_data, secret)
-            print(t(lang, "vault_unlocked"))
+            print(t("vault_unlocked"))
             return vault_keys, vault_path
         except Exception as e:
-            print(t(lang, "vault_unlock_err", err=e), file=sys.stderr)
+            print(t("vault_unlock_err", err=e), file=sys.stderr)
             if max_attempts is not None and attempt >= max_attempts:
                 sys.exit(1)
-            print(t(lang, "vault_retry"), file=sys.stderr)
+            print(t("vault_retry"), file=sys.stderr)
 
 def unlock_master_key(
     args,
-    lang: str,
     extra_vault_paths: list[Path] | None = None,
 ) -> VaultKeys:
-    """Locates .vault on disk, prompts for password/PIN, and unwraps both vault keys."""
+    """Locates vault on disk, prompts for password/PIN, and unwraps both vault keys."""
     vault_keys, _ = unlock_master_key_with_path(
         args,
-        lang,
         extra_vault_paths=extra_vault_paths,
     )
     return vault_keys
@@ -1427,7 +1424,7 @@ def is_targetable_vault_dir(
     """
     Returns True when vault_file.parent is a real vault directory (i.e. Secrets on an
     external USB/SD drive, or a directory containing .nomedia / .meta albums / .bin
-    files) rather than a standalone .vault copied onto Desktop, Home, input_path, or
+    files) rather than a standalone vault copied onto Desktop, Home, input_path, or
     Persistent root.
     """
     if vault_file is None:
@@ -1465,64 +1462,104 @@ def is_targetable_vault_dir(
         return False
     return False
 
+def _nearest_mount(path: Path) -> Path:
+    """Closest mount point at or above path (drive root on Windows)."""
+    cur = path
+    while True:
+        try:
+            if cur.is_mount():
+                return cur
+            if cur == Path(cur.anchor):
+                return cur
+        except Exception:
+            pass
+        parent = cur.parent
+        if parent == cur:
+            return cur
+        cur = parent
+
+
+def derive_staging_dir(vault_path: Path, desktop: Path, input_path: Path) -> Path:
+    """
+    Derives the CLI staging folder from the *exported vault location* without
+    assuming any particular vault folder name (the active phone vault may live
+    at a custom path and there may be several vaults).
+
+    Rule: put `CLI` next to the folder that holds the vault header, except when
+    that folder is itself a filesystem/USB mount root, Desktop, Home, the input
+    folder or the script folder — then put `CLI` inside it.
+
+    Examples (no `Secrets` assumption):
+      <USB>/Calypso Gallery/Secrets/vault  -> <USB>/Calypso Gallery/CLI
+      <USB>/MyCustomVault/vault            -> <USB>/CLI
+      <USB>/vault                          -> <USB>/CLI
+      ~/Desktop/vault                      -> ~/Desktop/CLI
+    """
+    vdir = vault_path.parent.resolve()
+    # A bridge folder is its own staging directory: write next to the header.
+    if any(part == CLI_DIR_NAME or part == LOCAL_BRIDGE_DIR_NAME for part in vdir.parts):
+        return vdir
+    mount = _nearest_mount(vdir)
+    special = {
+        desktop.resolve(),
+        Path.home().resolve(),
+        input_path.resolve(),
+        Path(__file__).resolve().parent.resolve(),
+        mount,
+    }
+    for root in _external_mount_roots():
+        try:
+            special.add(root.resolve())
+        except Exception:
+            pass
+    if vdir in special:
+        return vdir / CLI_DIR_NAME
+    return vdir.parent / CLI_DIR_NAME
+
+
 def choose_encrypt_output_dir(
     args,
     desktop: Path,
-    lang: str,
     input_path: Path,
     vault_path: Path | None,
 ) -> Path:
     """
-    Determines the unified encryption destination directory with no interactive prompt:
-    1. Explicit -o / --output path.
-    2. Targetable vault directory (e.g. .../Secrets/.vault -> .../Secrets).
-    3. External / non-local .vault parent (e.g. /media/usb/.vault -> /media/usb/Secrets).
-    4. Fallback to localized Desktop output folder (Encrypted_Output / Sifreli_Cikti).
+    Determines the staging directory for encrypted output:
+
+    1. Explicit -o / --output path wins.
+    2. Otherwise derive a sibling `CLI` folder from the exported vault path
+       (see derive_staging_dir) — independent of the folder name.
+    3. Last-resort Desktop fallback (Encrypted_Output) when no vault is known.
+
+    Encrypted output is NEVER written into the folder that holds the vault
+    header or into any vault album folder.
     """
     if args.output:
         target_dir = Path(args.output).expanduser().resolve()
-        print(t(lang, "enc_auto_target_vault", path=target_dir))
-        return target_dir
-
-    desktop_out_dir = (desktop / FOLDER_NAMES.get(lang, FOLDER_NAMES["en"])["enc_out"]).resolve()
-    if is_targetable_vault_dir(vault_path, desktop, input_path, desktop_out_dir):
-        target_dir = vault_path.parent.resolve()
     elif vault_path is not None:
-        vdir = vault_path.parent.resolve()
-        standalone_excluded = {
-            desktop.resolve(),
-            desktop_out_dir,
-            Path.home().resolve(),
-            input_path.resolve(),
-            Path(__file__).resolve().parent.resolve(),
-        }
-        if vdir not in standalone_excluded:
-            existing_vault_dir = next((vdir / name for name in VAULT_DIR_NAMES if (vdir / name).is_dir()), None)
-            target_dir = (existing_vault_dir or (vdir / VAULT_DIR_NAME)).resolve()
-        else:
-            target_dir = desktop_out_dir
+        target_dir = derive_staging_dir(vault_path, desktop, input_path)
     else:
-        target_dir = desktop_out_dir
+        target_dir = (desktop / OUTPUT_FOLDER_NAME).resolve()
 
     target_dir.mkdir(parents=True, exist_ok=True)
-    print(t(lang, "enc_auto_target_vault", path=target_dir))
+    print(t("enc_auto_target_vault", path=target_dir))
     return target_dir
 
-def run_encrypt_mode(args, desktop: Path, lang: str):
+def run_encrypt_mode(args, desktop: Path):
     platform_kind = get_platform_kind()
     if platform_kind in ("windows", "macos"):
-        print(t(lang, "non_ram_os_notice", os_name=get_platform_display_name()))
+        print(t("non_ram_os_notice", os_name=get_platform_display_name()))
 
-    input_path = Path(args.input).expanduser().resolve() if args.input else get_localized_desktop_dir(desktop, lang, "enc_in")
+    input_path = Path(args.input).expanduser().resolve() if args.input else get_desktop_folder(desktop, "enc_in")
     if args.input:
         if not input_path.exists():
-            print(t(lang, "enc_input_not_found", path=input_path), file=sys.stderr)
+            print(t("enc_input_not_found", path=input_path), file=sys.stderr)
             sys.exit(1)
     else:
         input_path.mkdir(parents=True, exist_ok=True)
 
     if is_cloud_synced_path(input_path):
-        print(t(lang, "cloud_sync_warning", path=input_path))
+        print(t("cloud_sync_warning", path=input_path))
 
     items_to_encrypt: list[tuple[Path, str | None]] = []
     skipped_unsupported = 0
@@ -1533,7 +1570,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
         if fname.lower().endswith(".bin") or fname.startswith("."):
             pass
         elif not is_supported_media_file(fname):
-            print(t(lang, "skip_unsupported_fmt", name=fname))
+            print(t("skip_unsupported_fmt", name=fname))
             skipped_unsupported += 1
         else:
             items_to_encrypt.append((input_path, None))
@@ -1545,7 +1582,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                 continue
             rel = p.relative_to(input_path)
             if not is_supported_media_file(p.name):
-                print(t(lang, "skip_unsupported_fmt", name=str(rel)))
+                print(t("skip_unsupported_fmt", name=str(rel)))
                 skipped_unsupported += 1
                 continue
             album_name = rel.parts[0] if len(rel.parts) > 1 else None
@@ -1554,31 +1591,31 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             items_to_encrypt.append((p, album_name))
 
     if not items_to_encrypt:
-        display_out = Path(args.output).expanduser().resolve() if args.output else get_localized_desktop_dir(desktop, lang, "enc_out")
+        display_out = Path(args.output).expanduser().resolve() if args.output else get_desktop_folder(desktop, "enc_out")
         print("\n" + "=" * 65)
-        print(t(lang, "enc_title"))
+        print(t("enc_title"))
         print("=" * 65)
-        print(t(lang, "folders_ready"))
-        print(t(lang, "input_folder", path=input_path))
-        print(t(lang, "output_folder", path=display_out))
-        print(t(lang, "enc_empty"))
-        print(t(lang, "enc_empty_hint1"))
-        print(t(lang, "enc_empty_hint2"))
+        print(t("folders_ready"))
+        print(t("input_folder", path=input_path))
+        print(t("output_folder", path=display_out))
+        print(t("enc_empty"))
+        print(t("enc_empty_hint1"))
+        print(t("enc_empty_hint2"))
         if skipped_unsupported > 0:
-            print(t(lang, "enc_skipped_summary", count=skipped_unsupported))
+            print(t("enc_skipped_summary", count=skipped_unsupported))
         print("=" * 65 + "\n")
         sys.exit(0)
 
-    vault_keys, vault_path = unlock_master_key_with_path(args, lang)
+    vault_keys, vault_path = unlock_master_key_with_path(args)
     vmk = vault_keys.vmk   # protects folder .meta files
     kek = vault_keys.kek   # protects file container headers
     if vault_path is not None and is_cloud_synced_path(vault_path):
-        print(t(lang, "cloud_sync_warning", path=vault_path))
+        print(t("cloud_sync_warning", path=vault_path))
 
-    output_dir = choose_encrypt_output_dir(args, desktop, lang, input_path, vault_path)
+    output_dir = choose_encrypt_output_dir(args, desktop, input_path, vault_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     if is_cloud_synced_path(output_dir):
-        print(t(lang, "cloud_sync_warning", path=output_dir))
+        print(t("cloud_sync_warning", path=output_dir))
 
     nomedia = output_dir / ".nomedia"
     if not nomedia.exists():
@@ -1588,14 +1625,20 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
             pass
 
     for album in sorted(nested_subfolders_seen):
-        print(t(lang, "enc_nested_flatten_note", album=album))
+        print(t("enc_nested_flatten_note", album=album))
 
     total_bytes = sum(f.stat().st_size for f, _ in items_to_encrypt)
-    print(t(lang, "enc_queued", count=len(items_to_encrypt), mb=total_bytes / (1024 * 1024)))
+    print(t("enc_queued", count=len(items_to_encrypt), mb=total_bytes / (1024 * 1024)))
 
     album_cache = scan_existing_vault_albums(output_dir, vmk)
-    progress = HorizontalProgressBar(len(items_to_encrypt), total_bytes, lang=lang)
+    progress = HorizontalProgressBar(len(items_to_encrypt), total_bytes)
     created_bins: list[Path] = []
+    sentinel = output_dir / CLI_WRITING_SENTINEL
+    try:
+        from datetime import datetime, timezone
+        sentinel.write_text(datetime.now(timezone.utc).isoformat() + "\n", encoding="utf-8")
+    except Exception:
+        pass
 
     try:
         for src_file, album_name in items_to_encrypt:
@@ -1617,33 +1660,29 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
 
         progress.finish()
         append_pending_sync_entries(output_dir, created_bins)
-        print(t(lang, "enc_success", count=len(created_bins)))
+        print(t("enc_success", count=len(created_bins)))
         if skipped_unsupported > 0:
-            print(t(lang, "enc_skipped_summary", count=skipped_unsupported))
-        print(t(lang, "out_dir_line", path=output_dir))
-        if (output_dir / ".vault").is_file() or output_dir.name in VAULT_DIR_NAMES:
-            print(t(lang, "enc_tip_direct"))
-        else:
-            print(t(lang, "enc_tip1"))
-            print(t(lang, "enc_tip2", app_dir=APP_DIR_NAME))
+            print(t("enc_skipped_summary", count=skipped_unsupported))
+        print(t("out_dir_line", path=output_dir))
+        print(t("enc_tip_staging"))
 
         delete_source = args.delete_source
         shown_wipe_disclaimer = False
         if not delete_source and sys.stdin.isatty():
             if platform_kind in ("windows", "macos"):
-                print("\n" + t(lang, "wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
+                print("\n" + t("wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
                 shown_wipe_disclaimer = True
             try:
-                ans = input(t(lang, "wipe_prompt")).strip().lower()
-                if ans in ("y", "yes", "e", "evet"):
+                ans = input(t("wipe_prompt")).strip().lower()
+                if ans in ("y", "yes"):
                     delete_source = True
             except (KeyboardInterrupt, EOFError):
                 pass
 
         if delete_source:
             if platform_kind in ("windows", "macos") and not shown_wipe_disclaimer:
-                print("\n" + t(lang, "wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
-            print(t(lang, "wiping_start"))
+                print("\n" + t("wipe_non_ram_disclaimer", os_name=get_platform_display_name()))
+            print(t("wiping_start"))
             for src_file, _ in items_to_encrypt:
                 try:
                     if not os.access(src_file, os.W_OK):
@@ -1663,7 +1702,7 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                             wipe_f.flush()
                     src_file.unlink()
                 except Exception as e:
-                    print(t(lang, "wipe_err", name=src_file.name, err=e))
+                    print(t("wipe_err", name=src_file.name, err=e))
 
             if input_path.is_dir():
                 for d in sorted(input_path.rglob("*"), key=lambda p: len(str(p)), reverse=True):
@@ -1672,33 +1711,13 @@ def run_encrypt_mode(args, desktop: Path, lang: str):
                             d.rmdir()
                         except Exception:
                             pass
-            print(t(lang, "wiping_done"))
+            print(t("wiping_done"))
 
-        if args.adb:
-            phone_container = f"/storage/emulated/0/{APP_DIR_NAME}"
-            phone_dest = f"{phone_container}/{VAULT_DIR_NAME}/"
-            print(t(lang, "adb_pushing", dest=phone_dest))
-            res = subprocess.run(["adb", "devices"], capture_output=True, text=True)
-            has_adb_device = any(
-                len(line.split()) >= 2 and line.split()[1] == "device"
-                for line in res.stdout.splitlines()[1:]
-            )
-            if not has_adb_device:
-                print(t(lang, "adb_no_device"))
-            else:
-                pushed_dirs: set[Path] = set()
-                for b in created_bins:
-                    parent = b.parent
-                    if parent != output_dir:
-                        if parent not in pushed_dirs:
-                            pushed_dirs.add(parent)
-                            print(t(lang, "adb_transferring", name=parent.name))
-                            subprocess.run(["adb", "push", str(parent), phone_dest], check=True)
-                    else:
-                        print(t(lang, "adb_transferring", name=b.name))
-                        subprocess.run(["adb", "push", str(b), phone_dest], check=True)
-                print(t(lang, "adb_done"))
     finally:
+        try:
+            sentinel.unlink(missing_ok=True)
+        except Exception:
+            pass
         vmk = bytearray(len(vmk))
         kek = bytearray(len(kek))
 
@@ -1716,30 +1735,28 @@ SECURITY NOTICE (Tier 1 Live Boot vs. Tier 2 Standard OS):
     media already stored on your PC (does not clear swap, thumbnails, or SSD blocks).
 
 Desktop Usage:
-  Encrypt (English: To_Encrypt -> Vault or Encrypted_Output | Türkçe: Sifrelenecek -> Kasa veya Sifreli_Cikti):
-     python3 calypso_vault.py --lang en
+  Encrypt (To_Encrypt -> Encrypted_Output or an external vault):
+     python3 calypso_vault.py
   Direct external vault example (Linux / macOS / Windows):
-     python3 calypso_vault.py --lang en -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/.vault
+     python3 calypso_vault.py -i ~/Desktop/To_Encrypt -v /media/amnesia/USB/Secrets/vault
 
         """
     )
     parser.add_argument("-e", "--encrypt", action="store_true", help="Encrypt plaintext media into .bin format (default)")
 
-    parser.add_argument("--lang", choices=["en", "tr"], help="CLI language and Desktop folder language (en or tr)")
-    parser.add_argument("-v", "-k", "--vault", help="Path to .vault file (Searched automatically across mounted vaults/USB/desktop if omitted)")
+    parser.add_argument("--lang", choices=["en", "tr"], help=argparse.SUPPRESS)  # deprecated, ignored
+    parser.add_argument("-v", "-k", "--vault", help="Path to vault header (Searched automatically across mounted vaults/USB/desktop if omitted)")
     parser.add_argument("-i", "--input", help="Input folder/file")
     parser.add_argument("-o", "--output", help="Output folder (or target Secrets vault directory)")
     parser.add_argument("-s", "--secret", help="Vault password or PIN (Prompted securely if omitted)")
     parser.add_argument("--pattern", help="Grid pattern indices if 3x3 pattern is used (e.g. '0,1,2,5')")
     parser.add_argument("--delete-source", action="store_true", help="Securely wipe and delete original files after encryption")
-    parser.add_argument("--adb", action="store_true", help="Directly push encrypted files to connected phone via ADB")
 
     args = parser.parse_args()
     check_dependencies()
-    install_network_audit_hook(allow_adb=args.adb)
+    install_network_audit_hook()
 
-    lang = choose_language(args)
-    run_encrypt_mode(args, desktop, lang)
+    run_encrypt_mode(args, desktop)
 
 if __name__ == "__main__":
     main()

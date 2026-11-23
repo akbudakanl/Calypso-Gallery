@@ -135,7 +135,7 @@ Select the vault that is currently active in the app; otherwise the transfer wil
 
 - It asks for the **vault password/PIN** (the one that was current when the bridge was created — see section 8).
 - It encrypts the files, writes `.meta` + `.bin` into the temporary bridge and updates `pending_sync`.
-- A `.cli_writing` sentinel exists while writing and is removed afterwards.
+- A `cli_writing` sentinel exists while writing and is removed afterwards.
 
 No plaintext is ever written into the bridge folder.
 

@@ -283,11 +283,17 @@ fun CryptoManager.syncVaultFromExternalDirectory(
                 val matchingCandidate = collisionCandidates.firstOrNull { (existingFile, existingMeta) ->
                     existingMeta.originalSize == sourceMeta.originalSize &&
                         existingMeta.mediaType == sourceMeta.mediaType &&
-                        areEncryptedTimestampsEquivalent(sourceMeta, existingMeta) &&
                         areEncryptedFilesIdenticalContent(sourceBin, sourceMeta, existingFile, existingMeta)
                 }
                 if (matchingCandidate != null) {
                     skippedDuplicateCount++
+                    // Date tie-break setting applies to the imported file too: when the
+                    // user chose "use source date", update the surviving encrypted file.
+                    CryptoManager.applyDuplicateDateToEncryptedFile(
+                        context,
+                        matchingCandidate.first,
+                        sourceMeta.lastModified
+                    )
                     processed++
                     onProgress?.invoke(processed, total)
                     continue

@@ -136,7 +136,7 @@ Select the vault that is currently active in the app; otherwise the transfer wil
 ```
 
 - Asks for the **vault password/PIN** (the one current when the bridge was created — see section 8).
-- Writes `.meta` + `.bin`, updates `pending_sync`; the `.cli_writing` sentinel exists while writing and is removed afterwards.
+- Writes `.meta` + `.bin`, updates `pending_sync`; the `cli_writing` sentinel exists while writing and is removed afterwards.
 
 No plaintext is ever written into the bridge folder.
 

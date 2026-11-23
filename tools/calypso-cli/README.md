@@ -32,7 +32,7 @@ Bridge folder layout:
 ├── vault                  # copy of the vault key header (never modified by the CLI)
 ├── cli_bridge             # vault path, active flag, KEK fingerprint
 ├── pending_sync           # relative paths of newly encrypted .bin files
-├── .cli_writing           # present only while encryption is running
+├── cli_writing           # present only while encryption is running
 └── <hex>/ .meta + *.bin   # one folder per vault album
 ```
 
@@ -130,11 +130,11 @@ Example for a manually copied bridge folder:
 
 ## Known limitations / TODO
 
-1. **Stale `.cli_writing` marker — user-visible risk.** If the CLI is killed mid-batch (power loss, forced quit, shutdown), the "writing in progress" marker can remain even though nothing is writing. The app then refuses the import with **"bridge folder is busy"**. Today the fix is manual: delete the marker from `Calypso Gallery/CLI/<vault-id>/` and tap the import row again. It is named `.cli_writing` today (enable "show hidden files" if needed); after the planned rename it will be the visible `cli_writing`. No encrypted data is lost — `pending_sync` is authoritative.
+1. **Stale `cli_writing` marker — user-visible risk.** If the CLI is killed mid-batch (power loss, forced quit, shutdown), the "writing in progress" marker can remain even though nothing is writing. The app then refuses the import with **"bridge folder is busy"**. Today the fix is manual: delete the marker from `Calypso Gallery/CLI/<vault-id>/` and tap the import row again. It is the visible `cli_writing` file and contains a UTC start timestamp; no "show hidden files" step is needed. No encrypted data is lost — `pending_sync` is authoritative.
 
    In the automatic Windows/Linux flow this is very unlikely: the marker lives in the temporary directory and the folder is pushed to the phone only after the CLI finishes. It can happen in the manual macOS flow if the bridge is copied while the CLI is still writing.
 
-   Planned improvement: rename the marker to `cli_writing`, write a UTC start timestamp inside it, and let the app offer a clear recovery choice ("This bridge has an unfinished write marker from &lt;time&gt;. Remove it and continue?") for old markers. Recent markers keep the normal "busy" message; removal requires explicit confirmation because a genuinely slow CLI must not lose its busy flag.
+   Implemented: the marker is `cli_writing` (visible, MTP-safe) with a UTC start timestamp. The app treats markers older than 30 minutes as stale and offers "Remove and continue" with explicit confirmation; recent markers keep the normal "busy" message, because a genuinely slow CLI must not lose its busy flag.
 
 Resolved by the bridge design:
 

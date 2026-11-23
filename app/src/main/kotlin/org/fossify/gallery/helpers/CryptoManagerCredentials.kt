@@ -865,6 +865,7 @@ internal fun CryptoManager.setupOrUpdateCredentialsInternal(
         unlockedKek?.fill(0)
         unlockedMasterKey = localVmk.copyOf()
         unlockedKek = localKek.copyOf()
+        CliBridgeManager.syncActiveFlag(context)
     } finally {
         localVmk.fill(0)
         localKek.fill(0)
