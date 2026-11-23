@@ -88,6 +88,9 @@ object ShareMetadataSanitizer {
                 ?: throw ShareMetadataSanitizationException()
             try {
                 stripExif(context, published.first, published.second, attributes)
+                // CRITICAL: a pending MediaStore entry is invisible to other apps. Without this,
+                // receivers only see the numeric _ID as the filename and cannot open the image.
+                finalizeMediaStoreEntry(context, published.second)
             } catch (_: Throwable) {
                 // Never hand out a copy whose metadata was not actually removed.
                 runCatching { context.contentResolver.delete(published.second, null, null) }
@@ -95,15 +98,12 @@ object ShareMetadataSanitizer {
             }
             recordPendingUri(context, published.second)
             scheduleCleanup(context.applicationContext, published.second)
-            // Return a content://media URI, NOT a file path. Commons resolves a public path by
-            // querying MediaStore's deprecated DATA column; when that fails on modern Android it
-            // falls back to our own FileProvider URI, which messaging apps reject as a private
-            // file. A MediaStore URI is accepted everywhere. The displayName query parameter is
-            // ignored by MediaStore but lets commons derive image/* MIME for multi-share.
-            published.second.buildUpon()
-                .appendQueryParameter("displayName", source.name)
-                .build()
-                .toString()
+            // Return a bare content://media URI, NOT a file path. Commons resolves a public path
+            // by querying MediaStore's deprecated DATA column; when that fails on modern Android
+            // it falls back to our own FileProvider URI, which messaging apps reject as a private
+            // file. Do not append query parameters either: receivers derive the filename/MIME
+            // from the URI and a query string makes them show the numeric _ID instead.
+            published.second.toString()
         } catch (e: ShareMetadataSanitizationException) {
             throw e
         } catch (_: Throwable) {
@@ -145,6 +145,8 @@ object ShareMetadataSanitizer {
                 resolver.openOutputStream(uri)?.use { output ->
                     source.inputStream().use { input -> input.copyTo(output) }
                 } ?: error("MediaStore returned no output stream")
+                // Keep IS_PENDING=1 until EXIF rewriting is finished, so MediaStore/other apps
+                // never observe a half-written or rewritten file.
                 @Suppress("DEPRECATION")
                 val publicPath = File(
                     Environment.getExternalStorageDirectory(),
@@ -195,6 +197,18 @@ object ShareMetadataSanitizer {
         } else {
             strip(ExifInterface(publicPath))
         }
+    }
+
+    /** Makes the published entry visible to other apps once writing and EXIF cleanup are done. */
+    private fun finalizeMediaStoreEntry(context: Context, uri: Uri) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val rows = context.contentResolver.update(
+            uri,
+            ContentValues().apply { put(MediaStore.Images.Media.IS_PENDING, 0) },
+            null,
+            null
+        )
+        require(rows > 0) { "Failed to publish MediaStore entry" }
     }
 
     /** One-time hidden marker for the dedicated share folder. Never deleted with the copies. */

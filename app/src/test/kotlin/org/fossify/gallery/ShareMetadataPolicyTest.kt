@@ -95,9 +95,14 @@ class ShareMetadataPolicyTest {
                 sanitizer.contains("CLEANUP_DELAY_MS = 30 * 60 * 1000L")
         )
         assertTrue(
-            "A public MediaStore content URI must be returned instead of a file path",
-            sanitizer.contains("published.second.buildUpon()") &&
-                sanitizer.contains("appendQueryParameter(\"displayName\", source.name)")
+            "A bare public MediaStore content URI must be returned instead of a file path",
+            sanitizer.contains("published.second.toString()") &&
+                !sanitizer.contains("appendQueryParameter(")
+        )
+        assertTrue(
+            "Pending MediaStore entries must be published before sharing",
+            sanitizer.contains("finalizeMediaStoreEntry(context, published.second)") &&
+                sanitizer.contains("put(MediaStore.Images.Media.IS_PENDING, 0)")
         )
         assertTrue(
             "The cleanup record must be persisted synchronously",
