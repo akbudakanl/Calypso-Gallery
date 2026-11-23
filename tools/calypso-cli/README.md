@@ -8,6 +8,29 @@ This **Encrypt-Only** offline CLI tool (supporting **Linux / Tails OS, macOS, an
 
 ---
 
+## 🎯 What this is for
+
+The CLI encrypts media **on the computer** with your phone vault's own key, so only ciphertext crosses over to the phone. This works the same way on **Windows, macOS and Linux**: your files stay where they are, are encrypted locally, and the encrypted version is added directly to the vault the app already uses — plaintext is never written to the phone's disk.
+
+Two ways to deliver the ciphertext:
+
+* `--adb` — pushes the `.bin`/`.meta` files straight into `/storage/emulated/0/Calypso Gallery/Secrets/` on the connected phone (over USB); or
+* an external USB/SD drive holding `Secrets/`, followed by **Settings → Encrypted vault → Sync vault from external drive** in the app.
+
+Only the small `.vault` key header from the phone (`Calypso Gallery/Secrets/.vault`) is needed on the desktop; no existing vault media has to be copied first (Scenario 2 in the workflows below).
+
+### Special use case: RAM-only desktop
+
+If the source itself must never touch a disk, run the same workflow from a RAM-only live OS such as **Tails** (or a `toram` Linux ISO):
+
+1. Download the file straight into `~/Desktop/To_Encrypt` (a `tmpfs` path).
+2. Encrypt in RAM, then deliver the ciphertext through either path above.
+3. Optionally use `--delete-source` to zero-wipe the staged input.
+
+In this mode plaintext exists only in RAM and disappears on shutdown — no unencrypted copy is left on the phone, the USB drive, or the computer's disk. This guarantee applies only to the RAM-only setup: on a disk-backed Windows/macOS/Linux host, swap, journals, thumbnail caches, search indexes and cloud sync may still retain traces of the source file (see Tier 2 below). The CLI's network guard is relaxed only for `--adb`, which is intended for a USB connection.
+
+---
+
 ## 🛡️ Recommended Operating Systems (Tier 1 vs. Tier 2)
 
 The CLI detects your operating system automatically with **no extra CLI prompts**:
@@ -150,7 +173,9 @@ run.bat  --lang en -i C:\LocalMedia\To_Encrypt -v E:\Secrets\.vault
 # Specify .vault (-v or -k), 3x3 pattern indices, and wipe plaintext sources after encryption
 ./run.sh -v ~/.vault --pattern "0,1,2,5" --delete-source
 
-# Encrypt and push directly to connected phone via ADB (bypasses network sandbox)
+# Encrypt locally, then push only the encrypted .bin/.meta files into the phone's
+# Secrets vault via ADB (USB) - no plaintext is written to the phone's disk
+# (the CLI's network guard is relaxed for this mode only)
 ./run.sh --adb
 ```
 
