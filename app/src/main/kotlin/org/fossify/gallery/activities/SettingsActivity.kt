@@ -1579,7 +1579,13 @@ class SettingsActivity : SimpleActivity() {
     private fun setupPrepareCliBridge() {
         val vaultExists = doesVaultExist()
         val hasStoragePermission = !(isRPlus() && !isExternalStorageManager())
-        if (!vaultExists || !hasStoragePermission) return
+        val existing = binding.settingsMigratingVaultCard.findViewById<View>(R.id.settings_prepare_cli_bridge_holder)
+        if (!vaultExists || !hasStoragePermission) {
+            existing?.let { binding.settingsMigratingVaultCard.removeView(it) }
+            return
+        }
+        // setupVaultSettings() also runs from onResume and several callbacks; never add twice.
+        if (existing != null) return
 
         // Inflated from its own layout so ActivitySettingsBinding does not grow
         // past the generated constructor's parameter limit.
