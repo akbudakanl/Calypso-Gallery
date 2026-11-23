@@ -1664,8 +1664,12 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsVaultBiometricAutoReturn.isChecked = config.autoBiometricPromptOnVaultReturn
         binding.settingsVaultBiometricAutoReturnHolder.setOnClickListener {
             if (!doesVaultExist() || !config.isVaultBiometricEnabled) return@setOnClickListener
-            binding.settingsVaultBiometricAutoReturn.toggle()
-            config.autoBiometricPromptOnVaultReturn = binding.settingsVaultBiometricAutoReturn.isChecked
+            // Kasa genelindeki güvenlik anahtarları gibi bu ayar da yeniden doğrulama ister.
+            // Parola/PIN veya biyometrik ile açma ve kapatma aynı şekilde onaylanır.
+            requireVaultPassword(verifyOnly = true) {
+                binding.settingsVaultBiometricAutoReturn.toggle()
+                config.autoBiometricPromptOnVaultReturn = binding.settingsVaultBiometricAutoReturn.isChecked
+            }
         }
     }
 

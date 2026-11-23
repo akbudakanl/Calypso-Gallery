@@ -651,6 +651,14 @@ class VaultLockPolicyTest {
             "VaultResume must respect config.autoBiometricPromptOnVaultReturn",
             resumeText.contains("autoPromptBiometrics = config.autoBiometricPromptOnVaultReturn")
         )
+
+        val settingsText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt").readText()
+        val autoReturnToggleBody = settingsText.substringAfter("private fun setupVaultBiometricAutoReturn()")
+            .substringBefore("private fun setupArchiveVault")
+        assertTrue(
+            "Toggling auto biometric return must require verification with password/PIN or biometric, in both directions",
+            autoReturnToggleBody.contains("requireVaultPassword(verifyOnly = true)")
+        )
     }
 
     @Test

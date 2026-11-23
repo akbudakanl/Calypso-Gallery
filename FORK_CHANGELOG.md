@@ -6,6 +6,11 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ### Changed
 
+- Renaming an album is now offered only when a single album is selected.
+- "Reorder folders by dragging" is shown only while the album sort order is set to Custom. With Custom sorting it is also available directly in the album list's overflow menu, above "Change view type".
+- Selected virtual albums can now be copied and added to other virtual albums from the selection menu.
+- "Resize" is checked by default in Settings › Media viewer › Manage extra actions; all other extra actions stay unchecked by default.
+- Turning the "Automatically show biometric prompt when returning to app" setting on or off now requires re-verifying the vault with the password/PIN or biometrics, like the other vault-wide security switches.
 - The per-digit PIN dot indicator now supports PINs of up to 14 digits instead of 16, so the dots keep a comfortable spacing on narrow screens. Existing 15- or 16-digit PINs turn the setting off on next unlock.
 
 ### Fixed

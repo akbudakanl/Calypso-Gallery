@@ -27,6 +27,12 @@
         android:title="@string/filter_media"
         app:showAsAction="never" />
     <item
+        android:id="@+id/change_order"
+        android:icon="@drawable/ic_drag_handle_vector"
+        android:showAsAction="never"
+        android:title="@string/reorder_by_dragging"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/change_view_type"
         android:icon="@drawable/ic_view_type_calypso_vector"
         android:showAsAction="never"

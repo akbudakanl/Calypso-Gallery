@@ -138,6 +138,8 @@ When `showVaultPinDots` is enabled on a PIN-protected vault:
 | **Option B: Conditional Persistence + Sweep Fix + User Notice (Chosen)** | Keep the feature opt-in (default off), store `vault_pin_length` on disk **only** while enabled, purge it immediately when disabled, suppress the overlapping sweep line when active, and inform the user of the metadata trade-off before enabling. | **Accepted.** Preserves the UX option (justified by the ~10% mathematical search-space bound) while eliminating silent on-disk leakage for default users. |
 | **Option C: Always Persist `vault_pin_length` (Previous Behaviour)** | Write `vault_pin_length` to `SharedPreferences` on every PIN setup/change even when `showVaultPinDots` is off. | **Rejected.** Leaks PIN length metadata on disk for all PIN users without their consent or knowledge. |
 
+**Rationale for deferring Option A.** Complete removal would pre-empt a risk assessment that belongs to the user. A governing design principle of this fork is that security policy is chosen by the user rather than imposed silently by the implementation: a control that trades some protection for usability may remain available when it is opt-in and default-off (§4.1), introduced with informed consent that states both the visual and the on-disk consequences (§4.3), bounded by `VAULT_PIN_DOTS_MAX_LENGTH`, and immediately reversible with the derived metadata purged on disable (§4.1). With those safeguards in place, eliminating the option would withdraw a preference-driven choice from users who deliberately accept the documented trade-off, without reducing the exposure of users who never enable it. Option A is therefore deferred rather than rejected, subject to the revision triggers in §6.
+
 ---
 
 ## 6. Conditions for Future Revision

@@ -911,11 +911,11 @@ Added to `values-nn/strings.xml` for the optional shoulder-surfing protection sw
 
 ## PIN Dot Indicator Setting (1 key)
 
-Added to `values-nn/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 14 digits).
+Added to `values-nn/strings.xml` for the optional per-digit PIN dot indicator (default off; only shown for PINs of at most 16 digits).
 
 | # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
 |--:|---|---|---|---|
-| 1 | `show_pin_dots` | Show a dot for each PIN digit | Vis ein prikk for kvart siffer når PIN-koden blir skriven inn | Settings switch; hidden for alphanumeric vaults and PINs longer than 14 digits |
+| 1 | `show_pin_dots` | Show a dot for each PIN digit | Vis ein prikk for kvart siffer når PIN-koden blir skriven inn | Settings switch; hidden for alphanumeric vaults and PINs longer than 16 digits |
 
 ## KDF Unlock-Time Hint Revision (this revision)
 

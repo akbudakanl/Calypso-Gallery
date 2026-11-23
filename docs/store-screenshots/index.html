@@ -295,7 +295,6 @@
   .eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
     padding: 10px 22px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
@@ -306,13 +305,6 @@
     text-transform: uppercase;
     color: #D4D4D8;
     margin-bottom: 34px;
-  }
-
-  .eyebrow-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #FAFAFA;
   }
 
   .art-headline {
@@ -923,40 +915,9 @@
   }
 
   /* =========================================================
-     SLIDE 5: TRIO THEME SHOWCASE (DARK · NAVY BLUE · LIGHT + APPEARANCE)
+     SLIDE 5: SINGLE DARK THEME SHOWCASE
      ========================================================= */
-  .dual-stage {
-    position: absolute;
-    inset: 420px 0 0;
-    z-index: 5;
-  }
-
-  .trio-phone-dark {
-    position: absolute;
-    left: -58px;
-    top: 120px;
-    transform: scale(0.68) rotate(-7deg);
-    transform-origin: top left;
-    z-index: 2;
-  }
-
-  .trio-phone-navy {
-    position: absolute;
-    left: 205px;
-    top: 22px;
-    transform: scale(0.72) rotate(-1.5deg);
-    transform-origin: top left;
-    z-index: 4;
-  }
-
-  .trio-phone-light {
-    position: absolute;
-    right: -34px;
-    top: 158px;
-    transform: scale(0.75) rotate(4deg);
-    transform-origin: top right;
-    z-index: 6;
-  }
+  #slide-5 .device-wrap { bottom: -62px; }
 
   .theme-pill-row {
     position: relative;
@@ -1076,6 +1037,25 @@
     height: 22px;
     border-radius: 7px;
     border: 1.5px solid #D4D4D8;
+  }
+
+  .app-radio-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 34px;
+    font-size: 23px;
+    color: #18181B;
+    font-weight: 500;
+  }
+
+  .app-swatch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 34px;
+    font-size: 22px;
+    color: #18181B;
   }
 
   .app-radio {
@@ -1448,7 +1428,7 @@
           <div class="bg-glow" style="width:920px;height:920px;left:80px;top:360px;background:radial-gradient(circle, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.02) 45%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>CALYPSO GALLERY</div>
+            <div class="eyebrow">CALYPSO GALLERY</div>
             <h2 class="art-headline js-editable"><span class="muted-line">No sign-up. No cloud.</span><br>Just your gallery.</h2>
           </div>
 
@@ -1534,7 +1514,7 @@
           <div class="bg-glow" style="width:940px;height:940px;left:70px;top:400px;background:radial-gradient(circle, rgba(161,161,170,0.12) 0%, rgba(161,161,170,0.03) 44%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>ENCRYPTED VAULT</div>
+            <div class="eyebrow">ENCRYPTED VAULT</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Private photos,</span><br>truly encrypted.</h2>
           </div>
 
@@ -1630,7 +1610,7 @@
           <div class="bg-glow" style="width:920px;height:920px;left:120px;top:400px;background:radial-gradient(circle, rgba(217,175,118,0.11) 0%, rgba(217,175,118,0.025) 45%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>VIRTUAL ALBUMS</div>
+            <div class="eyebrow">VIRTUAL ALBUMS</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Playlists for</span><br>your photos.</h2>
           </div>
 
@@ -1649,20 +1629,17 @@
                   <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                   <div class="album-topbar-text">
                     <h3>Golden Hour</h3>
-                    <p>Virtual album · 9 items</p>
+                    <p>Virtual album · 6 items</p>
                   </div>
                 </div>
 
                 <div class="media-grid-3">
-                   <div class="media-cell highlight"><img data-photo="1" src="photos/photo-7.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="2" src="photos/photo-1.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="3" src="photos/photo-8.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="4" src="photos/photo-2.jpg" alt=""></div>
+                   <div class="media-cell highlight"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                   <div class="media-cell"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                   <div class="media-cell"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                   <div class="media-cell"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
                    <div class="media-cell"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="6" src="photos/photo-9.jfif" alt=""></div>
-                   <div class="media-cell"><img data-photo="7" src="photos/photo-3.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="8" src="photos/photo-6.jpg" alt=""></div>
-                   <div class="media-cell"><img data-photo="9" src="photos/photo-4.jpg" alt=""></div>
+                   <div class="media-cell"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
                 </div>
               </div>
             </div>
@@ -1682,7 +1659,7 @@
           <div class="bg-glow" style="width:940px;height:940px;left:70px;top:380px;background:radial-gradient(circle, rgba(139,156,196,0.13) 0%, rgba(139,156,196,0.03) 45%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>PURE MEDIA VIEWER</div>
+            <div class="eyebrow">PURE MEDIA VIEWER</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Every frame,</span><br>pure &amp; fast.</h2>
           </div>
 
@@ -1737,74 +1714,43 @@
           <div class="bg-glow" style="width:860px;height:860px;right:-160px;top:520px;background:radial-gradient(circle, rgba(250,250,250,0.12) 0%, rgba(250,250,250,0.03) 45%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>APPEARANCE &amp; THEMES</div>
+            <div class="eyebrow">APPEARANCE &amp; THEMES</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Dark, light, or</span><br>entirely yours.</h2>
           </div>
 
-          <div class="dual-stage">
-            <!-- Left Dark Phone -->
-            <div class="dual-phone-left">
-              <div class="device-frame">
-                <div class="device-screen">
-                  <div class="punch-hole"></div>
-                  
-                  <div class="cal-search-bar">
-                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <span>Search folders</span>
-                  </div>
-                  <div class="folder-grid">
-                    <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
-                      <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
-                    </div>
-                    <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
-                      <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
-                    </div>
-                    <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
-                      <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
-                    </div>
-                    <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="4" src="photos/photo-4.jpg" alt=""></div>
-                      <div class="folder-meta"><span class="folder-name">Botanical</span><span class="folder-count">31</span></div>
-                    </div>
+          <div class="device-wrap">
+            <div class="device-frame">
+              <div class="device-screen">
+                <div class="punch-hole"></div>
+                <div class="and-status">
+                  <span>9:41</span>
+                  <div class="and-status-icons">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <!-- Right Light Appearance Phone -->
-            <div class="dual-phone-right">
-              <div class="device-frame">
-                <div class="device-screen light">
-                  <div class="punch-hole"></div>
-                  <div class="and-status" style="color:#18181B;">
-                      <div class="and-status-icons">
-                      <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
-                      <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
-                    </div>
+                <div class="cal-search-bar">
+                  <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span>Search folders</span>
+                </div>
+
+                <div class="folder-grid">
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                    <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
                   </div>
-
-                  <div class="app-bar-light">
-                    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                    Appearance
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                    <div class="folder-meta"><span class="folder-name">Golden Dunes</span><span class="folder-count">12</span></div>
                   </div>
-
-                  <div class="app-sec">App theme</div>
-                  <div class="app-radio-row"><span class="app-radio"></span>Auto light / dark</div>
-                  <div class="app-radio-row"><span class="app-radio"></span>Light</div>
-                  <div class="app-radio-row"><span class="app-radio"></span>Dark</div>
-                  <div class="app-radio-row"><span class="app-radio on"></span>Custom</div>
-
-                  <div class="app-sec">Custom colors</div>
-                  <div class="app-swatch-row"><span>Text color</span><span class="app-swatch" style="background:#18181B;"></span></div>
-                  <div class="app-swatch-row"><span>Background</span><span class="app-swatch" style="background:#FAFAFA;"></span></div>
-                  <div class="app-swatch-row"><span>Primary color</span><span class="app-swatch" style="background:#27272A;"></span></div>
-
-                  <div class="app-preview-box">
-                    <strong>Your memories, your colors</strong>
-                    <span class="app-preview-btn">Sample button</span>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                    <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
+                  </div>
+                  <div class="folder-tile">
+                    <div class="folder-thumb-wrap"><img data-photo="6" src="photos/photo-6.jpg" alt=""></div>
+                    <div class="folder-meta"><span class="folder-name">Alpine Peak</span><span class="folder-count">27</span></div>
                   </div>
                 </div>
               </div>
@@ -1825,7 +1771,7 @@
           <div class="bg-glow" style="width:940px;height:940px;left:70px;top:380px;background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 46%, transparent 72%);"></div>
 
           <div class="art-header">
-            <div class="eyebrow"><span class="eyebrow-dot"></span>OFFLINE · AD-FREE · GPLv3</div>
+            <div class="eyebrow">OFFLINE · AD-FREE · GPLv3</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Your data never</span><br>leaves your phone.</h2>
           </div>
 
@@ -2048,10 +1994,7 @@ const DEFAULT_PHOTOS = {
   3: 'photos/photo-3.jpg',
   4: 'photos/photo-4.jpg',
   5: 'photos/photo-5.jpg',
-  6: 'photos/photo-6.jpg',
-  7: 'photos/photo-7.jpg',
-  8: 'photos/photo-8.jpg',
-  9: 'photos/photo-9.jfif'
+  6: 'photos/photo-6.jpg'
 };
 
 function updateScales() {

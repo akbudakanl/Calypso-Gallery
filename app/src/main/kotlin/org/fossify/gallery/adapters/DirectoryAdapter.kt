@@ -96,6 +96,7 @@ import org.fossify.gallery.extensions.favoritesDB
 import org.fossify.gallery.extensions.fixDateTaken
 import org.fossify.gallery.extensions.getShortcutImage
 import org.fossify.gallery.extensions.getVirtualAlbumId
+import org.fossify.gallery.extensions.getVirtualAlbumPaths
 import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.isDirectoryExcludedForBadge
 import org.fossify.gallery.extensions.isDirectoryHiddenForBadge
@@ -279,19 +280,23 @@ class DirectoryAdapter(
                 !CryptoManager.isEncryptedFolderPath(activity, it)
         }
         val isMixedEncryption = hasEncryptedFolder && hasUnencryptedRealFolder
-        val canCopyMove = !hasVirtualAlbum && !hasFavorites && !hasRecycleBin && !hasVaultRecycleBin && !isMixedEncryption
+        // Virtual albums hold references to real media, so their files can be copied and added to
+        // other virtual albums. Moving the album itself is still only valid for real folders.
+        val canCopyOrAdd = !hasFavorites && !hasRecycleBin && !hasVaultRecycleBin && !isMixedEncryption
+        val canCopyMove = canCopyOrAdd && !hasVirtualAlbum
 
         menu.apply {
             findItem(R.id.cab_properties).isVisible = true
             findItem(R.id.cab_move_to_top).isVisible = isDragAndDropping
             findItem(R.id.cab_move_to_bottom).isVisible = isDragAndDropping
+            findItem(R.id.cab_change_order).isVisible = config.directorySorting and SORT_BY_CUSTOM != 0
 
             val hasNonRenamableEncrypted = selectedPaths.any {
                 CryptoManager.isVaultRecycleBinPath(activity, it) || CryptoManager.isDefaultHiddenAlbumPath(it)
             }
             val hasMultipleWithEncrypted = !isOneItemSelected && selectedPaths.any { CryptoManager.isEncryptedFolderPath(activity, it) }
             findItem(R.id.cab_rename).isVisible =
-                !hasFavorites && !hasRecycleBin && !hasNonRenamableEncrypted && !hasMultipleWithEncrypted
+                isOneItemSelected && !hasFavorites && !hasRecycleBin && !hasNonRenamableEncrypted && !hasMultipleWithEncrypted
             findItem(R.id.cab_change_cover_image).isVisible = isOneItemSelected
 
             val lockablePaths = selectedPaths.filter {
@@ -308,14 +313,14 @@ class DirectoryAdapter(
             findItem(R.id.cab_empty_disable_recycle_bin).isVisible = isOneItemSelected && selectedPaths.first() == RECYCLE_BIN
 
             findItem(R.id.cab_create_shortcut).isVisible = isOneItemSelected
-            findItem(R.id.cab_copy_to).isVisible = canCopyMove
+            findItem(R.id.cab_copy_to).isVisible = canCopyOrAdd
             findItem(R.id.cab_move_to).isVisible = canCopyMove
-            findItem(R.id.cab_add_to_virtual_album).isVisible = canCopyMove
+            findItem(R.id.cab_add_to_virtual_album).isVisible = canCopyOrAdd
 
             checkHideBtnVisibility(this, selectedPaths)
             checkPinBtnVisibility(this, selectedPaths)
 
-            // virtual albums are not real folders: they cannot be hidden, excluded, copied, moved or inspected on disk
+            // virtual albums are not real folders: they cannot be hidden, excluded, moved or inspected on disk
             if (hasVirtualAlbum) {
                 findItem(R.id.cab_rename).isVisible = isOneItemSelected
                 findItem(R.id.cab_hide).isVisible = false
@@ -324,9 +329,7 @@ class DirectoryAdapter(
                 findItem(R.id.cab_unexclude).isVisible = false
                 findItem(R.id.cab_hide_folder).isVisible = false
                 findItem(R.id.cab_unhide_folder).isVisible = false
-                findItem(R.id.cab_copy_to).isVisible = false
                 findItem(R.id.cab_move_to).isVisible = false
-                findItem(R.id.cab_add_to_virtual_album).isVisible = false
                 findItem(R.id.cab_create_shortcut).isVisible = false
                 findItem(R.id.cab_properties).isVisible = false
             }
@@ -408,11 +411,7 @@ class DirectoryAdapter(
     override fun onActionModeDestroyed() {
         calypsoActionMode.onActionModeDestroyed()
         if (isDragAndDropping) {
-            notifyDataSetChanged()
-
-            val reorderedFoldersList = dirs.map { it.path }
-            config.customFoldersOrder = TextUtils.join("|||", reorderedFoldersList)
-            config.directorySorting = SORT_BY_CUSTOM
+            saveCustomFoldersOrder()
         }
 
         isDragAndDropping = false
@@ -1188,6 +1187,21 @@ class DirectoryAdapter(
         listener?.recheckPinnedFolders()
     }
 
+    /** Enters folder reordering mode directly from the main menu, without requiring a selection. */
+    fun startReorderingFromMenu() {
+        changeOrder()
+    }
+
+    /** Leaves reordering mode when the main activity is paused; the order itself is saved on every drop. */
+    fun finishReorderingFromMenu() {
+        if (!isDragAndDropping) {
+            return
+        }
+
+        isDragAndDropping = false
+        notifyDataSetChanged()
+    }
+
     private fun changeOrder() {
         isDragAndDropping = true
         notifyDataSetChanged()
@@ -1203,6 +1217,13 @@ class DirectoryAdapter(
                 }
             }
         }
+    }
+
+    private fun saveCustomFoldersOrder() {
+        notifyDataSetChanged()
+        val reorderedFoldersList = dirs.map { it.path }
+        config.customFoldersOrder = TextUtils.join("|||", reorderedFoldersList)
+        config.directorySorting = SORT_BY_CUSTOM
     }
 
     private fun copyFilesTo() {
@@ -1221,24 +1242,37 @@ class DirectoryAdapter(
 
     private fun addFoldersToVirtualAlbum() {
         handleLockedFolderOpeningForFolders(getSelectedPaths()) { selectedPaths ->
-            val validPaths = filterValidRealFolders(selectedPaths) ?: return@handleLockedFolderOpeningForFolders
-            val fileDirItems = collectMediaItemsFromFolders(validPaths)
-            if (fileDirItems.isEmpty()) {
-                activity.toast(org.fossify.commons.R.string.no_items_found)
-                return@handleLockedFolderOpeningForFolders
-            }
-            val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
-            activity.tryAddFilesToVirtualAlbum(fileDirItems, currentDirectoryPath = sourceDirectoryPath) {
-                listener?.refreshPaths(validPaths)
-                finishActMode()
+            collectMediaItemsFromSelectedFolders(selectedPaths) { validPaths, fileDirItems ->
+                if (fileDirItems.isEmpty()) {
+                    activity.toast(org.fossify.commons.R.string.no_items_found)
+                    return@collectMediaItemsFromSelectedFolders
+                }
+                val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
+                activity.tryAddFilesToVirtualAlbum(fileDirItems, currentDirectoryPath = sourceDirectoryPath) {
+                    listener?.refreshPaths(validPaths)
+                    finishActMode()
+                }
             }
         }
     }
 
-    private fun filterValidRealFolders(selectedPaths: Collection<String>): List<String>? {
+    /** Resolves the media of both real folders and virtual albums, then hands the result back on the UI thread. */
+    private fun collectMediaItemsFromSelectedFolders(
+        selectedPaths: Collection<String>,
+        callback: (validPaths: List<String>, items: ArrayList<FileDirItem>) -> Unit
+    ) {
+        val validPaths = filterValidFolders(selectedPaths) ?: return
+        ensureBackgroundThread {
+            val fileDirItems = collectMediaItemsFromFolders(validPaths)
+            activity.runOnUiThread {
+                callback(validPaths, fileDirItems)
+            }
+        }
+    }
+
+    private fun filterValidFolders(selectedPaths: Collection<String>): List<String>? {
         val validPaths = selectedPaths.filter {
-            !it.isVirtualAlbumPath() &&
-                it != FAVORITES &&
+            it != FAVORITES &&
                 it != RECYCLE_BIN &&
                 !CryptoManager.isVaultRecycleBinPath(activity, it)
         }
@@ -1259,6 +1293,23 @@ class DirectoryAdapter(
         val showHidden = config.shouldShowHidden || config.temporarilyShowHiddenFolders
         val filter = config.filterMedia
         validPaths.forEach { folderPath ->
+            if (folderPath.isVirtualAlbumPath()) {
+                val isHiddenSource = activity.isHiddenVirtualAlbumPath(folderPath)
+                activity.getVirtualAlbumPaths(folderPath).forEach { path ->
+                    if (CopyMovePolicy.shouldCollectFolderEntry(
+                            fileName = path.getFilenameFromPath(),
+                            isDirectory = false,
+                            isEncryptedFolder = isHiddenSource,
+                            showHidden = showHidden,
+                            filterMedia = filter
+                        )
+                    ) {
+                        paths.add(path)
+                    }
+                }
+                return@forEach
+            }
+
             val isEncryptedFolder = CryptoManager.isEncryptedFolderPath(activity, folderPath)
             File(folderPath).listFiles()?.filter { file ->
                 CopyMovePolicy.shouldCollectFolderEntry(
@@ -1274,9 +1325,22 @@ class DirectoryAdapter(
     }
 
     private fun copyMoveTo(selectedPaths: Collection<String>, isCopyOperation: Boolean) {
-        val validPaths = filterValidRealFolders(selectedPaths) ?: return
-        val fileDirItems = collectMediaItemsFromFolders(validPaths)
-        val selectedFolderDirs = validPaths.map { File(it) }
+        val validPaths = filterValidFolders(selectedPaths) ?: return
+        collectMediaItemsFromSelectedFolders(selectedPaths) { _, fileDirItems ->
+            if (fileDirItems.isEmpty()) {
+                activity.toast(org.fossify.commons.R.string.no_items_found)
+                return@collectMediaItemsFromSelectedFolders
+            }
+            copyMoveTo(validPaths, fileDirItems, isCopyOperation)
+        }
+    }
+
+    private fun copyMoveTo(
+        validPaths: List<String>,
+        fileDirItems: ArrayList<FileDirItem>,
+        isCopyOperation: Boolean
+    ) {
+        val selectedFolderDirs = validPaths.filterNot { it.isVirtualAlbumPath() }.map { File(it) }
         val sourceDirectoryPath = if (validPaths.size == 1) validPaths.first() else ""
         activity.tryCopyMoveFilesTo(fileDirItems, isCopyOperation, currentDirectoryPath = sourceDirectoryPath) { destinationPath ->
             val affectedFolders = LinkedHashSet<String>(validPaths.size + 1).apply {
@@ -1834,6 +1898,10 @@ class DirectoryAdapter(
     override fun onRowClear(myViewHolder: ViewHolder?) {
         // Pull-to-refresh kaldırıldı; refresh sadece taşma menüsünden tetikleniyor.
         swipeRefreshLayout?.isEnabled = false
+        // Menu-initiated reordering has no action mode to save the order when it ends.
+        if (isDragAndDropping) {
+            saveCustomFoldersOrder()
+        }
     }
 
     override fun onChange(position: Int) = dirs.getOrNull(position)?.getBubbleText(directorySorting, activity, dateFormat, timeFormat) ?: ""

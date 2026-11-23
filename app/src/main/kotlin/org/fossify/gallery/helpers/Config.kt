@@ -795,7 +795,8 @@ class Config(context: Context) : BaseConfig(context) {
         set(showExtraViewerActions) = prefs.edit().putBoolean(SHOW_EXTRA_VIEWER_ACTIONS, showExtraViewerActions).apply()
 
     var extraViewerActions: Int
-        get() = prefs.getInt(EXTRA_VIEWER_ACTIONS, 0)
+        // Resize is the only extra action enabled by default; every other checkbox starts unchecked.
+        get() = prefs.getInt(EXTRA_VIEWER_ACTIONS, EXTRA_VIEWER_ACTION_RESIZE)
         set(extraViewerActions) = prefs.edit().putInt(EXTRA_VIEWER_ACTIONS, extraViewerActions).apply()
 
     var wasNewAppShown: Boolean

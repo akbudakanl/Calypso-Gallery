@@ -544,6 +544,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
 
                 R.id.filter,
                 R.id.toggle_filename,
+                R.id.change_order,
                 R.id.change_view_type,
                 R.id.group -> "view"
 
@@ -646,6 +647,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                 R.id.refresh_menu -> R.drawable.ic_refresh_calypso_vector
                 R.id.filter -> R.drawable.ic_filter_funnel_calypso_vector
                 R.id.toggle_filename -> R.drawable.ic_filename_calypso_vector
+                R.id.change_order -> org.fossify.commons.R.drawable.ic_drag_handle_vector
                 R.id.change_view_type -> R.drawable.ic_view_type_calypso_vector
                 R.id.group -> R.drawable.ic_group_calypso_vector
                 R.id.temporarily_show_hidden_folders,

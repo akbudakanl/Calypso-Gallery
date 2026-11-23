@@ -69,6 +69,7 @@ import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.PERMISSION_READ_STORAGE
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.commons.helpers.SHOW_ALL_TABS
+import org.fossify.commons.helpers.SORT_BY_CUSTOM
 import org.fossify.commons.helpers.SORT_BY_DATE_MODIFIED
 import org.fossify.commons.helpers.SORT_BY_DATE_TAKEN
 import org.fossify.commons.helpers.SORT_BY_RANDOM
@@ -729,6 +730,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     override fun onPause() {
         super.onPause()
         mMenuController?.dismiss()
+        getRecyclerAdapter()?.finishReorderingFromMenu()
         mVaultBackHelper.cancelToast()
         binding.directoriesRefreshLayout.isRefreshing = false
         mFetchGeneration.incrementAndGet()
@@ -918,6 +920,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             menu.apply {
                 findItem(R.id.open_recycle_bin)?.isVisible =
                     config.useRecycleBin && !config.showRecycleBinAtFolders
+                findItem(R.id.change_order)?.isVisible =
+                    config.directorySorting and SORT_BY_CUSTOM != 0
             }
         }
 
@@ -981,6 +985,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                     R.id.sort -> showSortingDialog()
                     R.id.filter -> showFilterMediaDialog()
                     R.id.show_all -> showAllMedia()
+                    R.id.change_order -> (binding.directoriesGrid.adapter as? DirectoryAdapter)?.startReorderingFromMenu()
                     R.id.change_view_type -> changeViewType()
                     R.id.temporarily_show_hidden -> tryToggleTemporarilyShowHidden()
                     R.id.stop_showing_hidden -> tryToggleTemporarilyShowHidden()
@@ -1204,6 +1209,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     private fun showSortingDialog() {
         ChangeSortingDialog(this, true, false) {
+            getRecyclerAdapter()?.finishReorderingFromMenu()
+            refreshMenuItems()
             val currentDirs = ArrayList(mDirs.ifEmpty { getCurrentlyDisplayedDirs() })
             binding.directoriesGrid.adapter = null
             if (config.directorySorting and SORT_BY_DATE_MODIFIED != 0 || config.directorySorting and SORT_BY_DATE_TAKEN != 0) {

@@ -53,6 +53,7 @@ class CalypsoOverflowMenuTest {
                 "show_all",
                 "refresh_menu",
                 "filter",
+                "change_order",
                 "change_view_type",
                 "temporarily_show_hidden_folders",
                 "stop_showing_hidden_folders",
@@ -170,6 +171,7 @@ class CalypsoOverflowMenuTest {
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.show_albums))
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.refresh_menu))
         assertEquals("view", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.filter))
+        assertEquals("view", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.change_order))
         assertEquals("view", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.group))
         assertEquals("visibility", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.temporarily_show_hidden_folders))
         assertEquals("manage", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.open_recycle_bin))
