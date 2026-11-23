@@ -4,21 +4,6 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
-### Changed
-
-- Renaming an album is now offered only when a single album is selected.
-- "Reorder folders by dragging" is shown only while the album sort order is set to Custom. With Custom sorting it is also available directly in the album list's overflow menu, above "Change view type".
-- Selected virtual albums can now be copied and added to other virtual albums from the selection menu.
-- "Resize" is checked by default in Settings › Media viewer › Manage extra actions; all other extra actions stay unchecked by default.
-- Turning the "Automatically show biometric prompt when returning to app" setting on or off now requires re-verifying the vault with the password/PIN or biometrics, like the other vault-wide security switches.
-- The per-digit PIN dot indicator now supports PINs of up to 14 digits instead of 16, so the dots keep a comfortable spacing on narrow screens. Existing 15- or 16-digit PINs turn the setting off on next unlock.
-
-### Fixed
-
-- Pressing Back on the "Have you saved your password?" dialog after vault creation now continues to the one-time biometric offer instead of skipping it. The Security & encrypted vault settings are also refreshed as soon as the vault is created, so the "create vault" row no longer stays visible until the settings category is reopened, regardless of how the follow-up dialogs are dismissed.
-- Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
-- Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
-
 ## [1.0.0] - 2026-11-22
 
 The first public release. The entries below summarize, by concept rather than by individual commit, the changes accumulated throughout the fork.
@@ -59,6 +44,21 @@ The first public release. The entries below summarize, by concept rather than by
 - The interface is translated into up to 34 locales; blind translation audits and one-to-one comparison reports are kept in `translation-blind-tests`.
 - Unit tests cover crypto vectors, vault format, file identity, conflict resolution and UI behavior.
 - Architecture decision records live in `docs/adr`; security audit and design documents are available in multiple languages.
+
+### Changed
+
+- Renaming an album is now offered only when a single album is selected.
+- "Reorder folders by dragging" is shown only while the album sort order is set to Custom. With Custom sorting it is also available directly in the album list's overflow menu, above "Change view type".
+- Selected virtual albums can now be copied and added to other virtual albums from the selection menu.
+- "Resize" is checked by default in Settings › Media viewer › Manage extra actions; all other extra actions stay unchecked by default.
+- Turning the "Automatically show biometric prompt when returning to app" setting on or off now requires re-verifying the vault with the password/PIN or biometrics, like the other vault-wide security switches.
+- The per-digit PIN dot indicator now supports PINs of up to 14 digits instead of 16, so the dots keep a comfortable spacing on narrow screens. Existing 15- or 16-digit PINs turn the setting off on next unlock.
+
+### Fixed
+
+- Pressing Back on the "Have you saved your password?" dialog after vault creation now continues to the one-time biometric offer instead of skipping it. The Security & encrypted vault settings are also refreshed as soon as the vault is created, so the "create vault" row no longer stays visible until the settings category is reopened, regardless of how the follow-up dialogs are dismissed.
+- Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
+- Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
 
 [Unreleased]: https://github.com/OWNER/REPO/compare/1.0.0...HEAD
 [1.0.0]: https://github.com/OWNER/REPO/releases/tag/1.0.0
