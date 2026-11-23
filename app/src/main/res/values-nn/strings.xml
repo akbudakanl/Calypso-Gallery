@@ -831,6 +831,7 @@
     <string name="share_metadata_off">Av</string>
     <string name="share_metadata_location_only">Berre plassering</string>
     <string name="share_metadata_all">Alle metadata</string>
+    <string name="share_metadata_failed">Kunne ikkje lage ein kopi utan metadata (lagringsplassen kan vere full). Deling vart avbroten for å verne personvernet ditt.</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">Varsel</string>
     <string name="settings_group_operation_notifications">Varsel om filoperasjonar</string>

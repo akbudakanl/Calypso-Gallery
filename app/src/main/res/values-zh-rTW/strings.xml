@@ -755,6 +755,7 @@
     <string name="share_metadata_off">關閉</string>
     <string name="share_metadata_location_only">僅位置資訊</string>
     <string name="share_metadata_all">所有中繼資料</string>
+    <string name="share_metadata_failed">無法建立不含中繼資料的副本（儲存空間可能已滿）。為保護您的隱私，已取消分享。</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">通知</string>
     <string name="settings_group_operation_notifications">檔案操作通知</string>

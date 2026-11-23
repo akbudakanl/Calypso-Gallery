@@ -758,6 +758,7 @@
     <string name="share_metadata_off">Aus</string>
     <string name="share_metadata_location_only">Nur Standort</string>
     <string name="share_metadata_all">Alle Metadaten</string>
+    <string name="share_metadata_failed">Es konnte keine Kopie ohne Metadaten erstellt werden (der Speicher ist möglicherweise voll). Das Teilen wurde zum Schutz Ihrer Privatsphäre abgebrochen.</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">Benachrichtigungen</string>
     <string name="settings_group_operation_notifications">Benachrichtigungen über Dateioperationen</string>

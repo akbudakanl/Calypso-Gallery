@@ -829,6 +829,7 @@
     <string name="share_metadata_off">Bağlı</string>
     <string name="share_metadata_location_only">Yalnız mövqe</string>
     <string name="share_metadata_all">Bütün meta məlumatlar</string>
+    <string name="share_metadata_failed">Meta məlumatlardan təmizlənmiş surət yaradıla bilmədi (yaddaş dolu ola bilər). Məxfiləyinizi qorumaq üçün paylaşım ləğv edildi.</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">Bildirişlər</string>
     <string name="settings_group_operation_notifications">Fayl əməliyyatları bildirişləri</string>

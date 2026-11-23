@@ -1178,7 +1178,7 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 
 ## Secure sharing — metadata sanitization (this revision)
 
-Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+Added the six strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (`values-zh-rTW/strings.xml`) | Notes |
 |--:|---|---|---|---|
@@ -1187,6 +1187,7 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | 關閉 | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | 僅位置資訊 | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | 所有中繼資料 | Strips Make/Model/Software/DateTime/XMP too |
+| 6 | `share_metadata_failed` | Could not create a metadata-free copy (storage may be full). Sharing was cancelled to protect your privacy. | 無法建立不含中繼資料的副本（儲存空間可能已滿）。為保護您的隱私，已取消分享。 | Shown when a clean copy cannot be made; sharing is aborted |
 
 ## File operation notifications (this revision)
 

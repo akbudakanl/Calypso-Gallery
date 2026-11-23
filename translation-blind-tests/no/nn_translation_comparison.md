@@ -1184,7 +1184,7 @@ Added the five strings introduced by the dynamic filename toggle, album search h
 
 ## Secure sharing — metadata sanitization (this revision)
 
-Added the five strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
+Added the six strings for the new **Settings → Security → Secure sharing** three-mode setting. A sanitized temporary copy is shared; the original media file is never modified. English source: `values/strings.xml`.
 
 | # | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
 |--:|---|---|---|---|
@@ -1193,6 +1193,7 @@ Added the five strings for the new **Settings → Security → Secure sharing** 
 | 3 | `share_metadata_off` | Off | Av | No sanitization |
 | 4 | `share_metadata_location_only` | Location only | Berre plassering | Default mode: strips GPS tags |
 | 5 | `share_metadata_all` | All metadata | Alle metadata | Strips Make/Model/Software/DateTime/XMP too |
+| 6 | `share_metadata_failed` | Could not create a metadata-free copy (storage may be full). Sharing was cancelled to protect your privacy. | Kunne ikkje lage ein kopi utan metadata (lagringsplassen kan vere full). Deling vart avbroten for å verne personvernet ditt. | Shown when a clean copy cannot be made; sharing is aborted |
 
 ## File operation notifications (this revision)
 

@@ -775,6 +775,7 @@
     <string name="share_metadata_off">Av</string>
     <string name="share_metadata_location_only">Kun plassering</string>
     <string name="share_metadata_all">Alle metadata</string>
+    <string name="share_metadata_failed">Kunne ikke lage en kopi uten metadata (lagringsplassen kan være full). Deling ble avbrutt for å beskytte personvernet ditt.</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">Varsler</string>
     <string name="settings_group_operation_notifications">Varsler om filoperasjoner</string>

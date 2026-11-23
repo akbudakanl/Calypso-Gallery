@@ -103,7 +103,8 @@ class ShareMetadataPolicyTest {
             "settings_share_metadata_title",
             "share_metadata_off",
             "share_metadata_location_only",
-            "share_metadata_all"
+            "share_metadata_all",
+            "share_metadata_failed"
         )
         val locales = listOf(
             "", "-tr", "-az", "-de", "-es", "-b+es+419", "-es-rUS", "-ja", "-nb-rNO", "-nn", "-zh-rTW"

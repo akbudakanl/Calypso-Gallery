@@ -758,6 +758,7 @@
     <string name="share_metadata_off">オフ</string>
     <string name="share_metadata_location_only">位置情報のみ</string>
     <string name="share_metadata_all">すべてのメタデータ</string>
+    <string name="share_metadata_failed">メタデータのないコピーを作成できませんでした（ストレージが満杯の可能性があります）。プライバシーを保護するため共有をキャンセルしました。</string>
     <!-- File operation notifications -->
     <string name="notifications_settings">通知</string>
     <string name="settings_group_operation_notifications">ファイル操作の通知</string>
