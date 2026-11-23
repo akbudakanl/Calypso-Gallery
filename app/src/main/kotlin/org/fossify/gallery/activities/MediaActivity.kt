@@ -712,7 +712,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             isBarAction = { it.itemId == R.id.sort && mShowAll },
             anchorViewProvider = {
                 if (mShowAll) {
-                    binding.mediaMenu.findViewById(org.fossify.commons.R.id.toolbar_container) ?: toolbar
+                    binding.mediaMenu.findViewById<android.view.View>(org.fossify.commons.R.id.toolbar_container) ?: toolbar
                 } else {
                     toolbar
                 }

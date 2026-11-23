@@ -967,7 +967,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             menuRes = menuId,
             isBarAction = { !mIsThirdPartyIntent && it.itemId == R.id.sort },
             anchorViewProvider = {
-                binding.mainMenu.findViewById(org.fossify.commons.R.id.toolbar_container) ?: toolbar
+                binding.mainMenu.findViewById<android.view.View>(org.fossify.commons.R.id.toolbar_container) ?: toolbar
             },
             barIconColorProvider = {
                 resolveCalypsoSearchIconColor(this, binding.mainMenu.isSearchOpen)
