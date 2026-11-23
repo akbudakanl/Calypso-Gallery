@@ -1194,9 +1194,6 @@ class SettingsActivity : SimpleActivity() {
         // 1b) Harici diskten kasayı eşitle
         binding.settingsSyncVaultHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
-        // 1c) CLI köprüsünü hazırla
-        binding.settingsPrepareCliBridgeHolder.beVisibleIf(hasStoragePermission && vaultExists)
-
         // 2) Şifreli kasa şifresini değiştir
         binding.settingsChangeVaultPasswordHolder.beVisibleIf(hasStoragePermission && vaultExists)
 
@@ -1580,7 +1577,16 @@ class SettingsActivity : SimpleActivity() {
     }
 
     private fun setupPrepareCliBridge() {
-        binding.settingsPrepareCliBridgeInfo.setOnClickListener {
+        val vaultExists = doesVaultExist()
+        val hasStoragePermission = !(isRPlus() && !isExternalStorageManager())
+        if (!vaultExists || !hasStoragePermission) return
+
+        // Inflated from its own layout so ActivitySettingsBinding does not grow
+        // past the generated constructor's parameter limit.
+        val row = layoutInflater.inflate(R.layout.settings_cli_bridge_row, binding.settingsMigratingVaultCard, false)
+        binding.settingsMigratingVaultCard.addView(row)
+        val holder = row.findViewById<View>(R.id.settings_prepare_cli_bridge_holder)
+        row.findViewById<View>(R.id.settings_prepare_cli_bridge_info).setOnClickListener {
             getAlertDialogBuilder()
                 .setTitle(R.string.cli_bridge_prepare_info_title)
                 .setMessage(R.string.cli_bridge_prepare_info_message)
@@ -1588,19 +1594,13 @@ class SettingsActivity : SimpleActivity() {
                 .show()
         }
 
-        binding.settingsPrepareCliBridgeHolder.setOnClickListener {
-            if (!doesVaultExist()) {
-                toast(R.string.enable_hidden_protection_first_prompt)
-                return@setOnClickListener
-            }
-            binding.settingsPrepareCliBridgeHolder.isEnabled = false
-            ensureVaultUnlocked(forcePrompt = true, onCancelled = {
-                binding.settingsPrepareCliBridgeHolder.isEnabled = true
-            }) {
+        holder.setOnClickListener {
+            holder.isEnabled = false
+            ensureVaultUnlocked(forcePrompt = true, onCancelled = { holder.isEnabled = true }) {
                 ensureBackgroundThread {
                     val result = CliBridgeManager.prepare(this)
                     runOnUiThread {
-                        binding.settingsPrepareCliBridgeHolder.isEnabled = true
+                        holder.isEnabled = true
                         when (result) {
                             is CliBridgeManager.PrepareResult.Created ->
                                 toast(String.format(getString(R.string.cli_bridge_prepare_success), result.bridge.dir.absolutePath))

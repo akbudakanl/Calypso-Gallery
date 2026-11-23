@@ -105,7 +105,9 @@ object CliBridgeManager {
         val dir = File(base, id)
         if (!dir.mkdirs()) return PrepareResult.NoVault
 
-        CryptoManager.getCipherRootDirectory().let { File(it, NOMEDIA).let { f -> if (!f.exists()) runCatching { f.createNewFile() } } }
+        File(CryptoManager.getCipherRootDirectory(), ".nomedia").let { f ->
+            if (!f.exists()) runCatching { f.createNewFile() }
+        }
         val header = File(vaultRoot, VAULT_HEADER_FILE)
         if (header.isFile) runCatching { header.copyTo(File(dir, VAULT_HEADER_FILE), overwrite = true) }
 
