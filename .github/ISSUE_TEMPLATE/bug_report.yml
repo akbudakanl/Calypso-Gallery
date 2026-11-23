@@ -14,9 +14,9 @@ body:
     attributes:
       label: "Checklist"
       options:
-        - label: "I can reproduce the bug with the latest version given [here](https://github.com/akbudakanl/Gallery-Cipher/releases/latest)."
+        - label: "I can reproduce the bug with the latest version given [here](https://github.com/akbudakanl/Calypso-Gallery/releases/latest)."
           required: true
-        - label: "I made sure that there are **no existing issues** - [open](https://github.com/akbudakanl/Gallery-Cipher/issues) or [closed](https://github.com/akbudakanl/Gallery-Cipher/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
+        - label: "I made sure that there are **no existing issues** - [open](https://github.com/akbudakanl/Calypso-Gallery/issues) or [closed](https://github.com/akbudakanl/Calypso-Gallery/issues?q=is%3Aissue+is%3Aclosed) - to which I could contribute my information."
           required: true
         - label: "I have read the FAQs inside the app (Menu -> About -> FAQs) and my problem isn't listed."
           required: true
@@ -24,7 +24,7 @@ body:
           required: true
         - label: "This issue contains only one bug."
           required: true
-        - label: "I have read and understood the [contribution guidelines](https://github.com/akbudakanl/Gallery-Cipher/blob/main/CONTRIBUTING.md)."
+        - label: "I have read and understood the [contribution guidelines](https://github.com/akbudakanl/Calypso-Gallery/blob/main/CONTRIBUTING.md)."
           required: true
 
   - type: input

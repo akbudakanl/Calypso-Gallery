@@ -60,5 +60,5 @@ The first public release. The entries below summarize, by concept rather than by
 - Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
 - Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
 
-[Unreleased]: https://github.com/OWNER/REPO/compare/1.0.0...HEAD
-[1.0.0]: https://github.com/OWNER/REPO/releases/tag/1.0.0
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0

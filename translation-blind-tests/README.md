@@ -4,7 +4,7 @@ This directory stores translation audit and blind-review comparison reports for 
 
 > [!NOTE]
 > **Notes — Translation Requests & Feedback:**  
-> For strings inherited from Fossify Gallery, please contribute fixes through [Fossify on Hosted Weblate](https://hosted.weblate.org/projects/fossify/gallery) or report them on the [upstream issue tracker](https://github.com/FossifyOrg/Gallery/issues); those changes flow back into this fork with upstream updates. Use this project's [GitHub Issues](https://github.com/akbudakanl/Gallery-Cipher/issues) only for strings unique to Calypso Gallery, or to request a full audit/support for a new language.
+> For strings inherited from Fossify Gallery, please contribute fixes through [Fossify on Hosted Weblate](https://hosted.weblate.org/projects/fossify/gallery) or report them on the [upstream issue tracker](https://github.com/FossifyOrg/Gallery/issues); those changes flow back into this fork with upstream updates. Use this project's [GitHub Issues](https://github.com/akbudakanl/Calypso-Gallery/issues) only for strings unique to Calypso Gallery, or to request a full audit/support for a new language.
 
 ## Directory Structure
 

@@ -42,10 +42,10 @@ class ForkChangelogTests(unittest.TestCase):
         releases = fork_changelog.parse_releases(content)
         release = next(item for item in releases if item.version != "Unreleased")
 
-        notes = fork_changelog.format_github(release, "akbudakanl/Gallery-Cipher", releases)
+        notes = fork_changelog.format_github(release, "akbudakanl/Calypso-Gallery", releases)
 
         self.assertIn(
-            f"https://github.com/akbudakanl/Gallery-Cipher/archive/refs/tags/{release.version}.tar.gz",
+            f"https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/{release.version}.tar.gz",
             notes,
         )
         self.assertIn("GNU General Public License version 3", notes)
@@ -77,8 +77,8 @@ class ForkChangelogTests(unittest.TestCase):
 ### Added
 - Previous release
 
-[Unreleased]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...HEAD
-[1.0.0]: https://github.com/akbudakanl/Gallery-Cipher/releases/tag/1.0.0
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 """
             (root / "FORK_CHANGELOG.md").write_text(changelog_fixture, encoding="utf-8")
             (root / "gradle.properties").write_text(
@@ -96,7 +96,7 @@ class ForkChangelogTests(unittest.TestCase):
                 arguments = argparse.Namespace(
                     version="1.1.0",
                     code=2,
-                    repository="akbudakanl/Gallery-Cipher",
+                    repository="akbudakanl/Calypso-Gallery",
                 )
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(fork_changelog.command_prepare(arguments), 0)
@@ -111,7 +111,7 @@ class ForkChangelogTests(unittest.TestCase):
             self.assertIn("VERSION_CODE=2", properties)
             self.assertIn("## [1.1.0] - ", changelog)
             self.assertIn(
-                "[1.1.0]: https://github.com/akbudakanl/Gallery-Cipher/compare/1.0.0...1.1.0",
+                "[1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.1.0",
                 changelog,
             )
             self.assertIn("1.1.0 (2)", marker)
@@ -147,7 +147,7 @@ class ForkChangelogTests(unittest.TestCase):
                 arguments = argparse.Namespace(
                     version="1.0.0-invalid",
                     code=40,
-                    repository="akbudakanl/Gallery-Cipher",
+                    repository="akbudakanl/Calypso-Gallery",
                 )
                 with contextlib.redirect_stderr(io.StringIO()):
                     self.assertEqual(fork_changelog.command_prepare(arguments), 1)

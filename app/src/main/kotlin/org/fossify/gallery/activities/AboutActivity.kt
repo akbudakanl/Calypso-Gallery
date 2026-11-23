@@ -203,7 +203,7 @@ class AboutActivity : SimpleActivity() {
 
     companion object {
         const val EXTRA_OPEN_FORGOT_FAQ = "open_forgot_faq"
-        private const val FORK_REPOSITORY_URL = "https://github.com/akbudakanl/Gallery-Cipher"
+        private const val FORK_REPOSITORY_URL = "https://github.com/akbudakanl/Calypso-Gallery"
         private const val FORK_RELEASES_URL = "$FORK_REPOSITORY_URL/releases"
         private const val FORK_ISSUES_URL = "$FORK_REPOSITORY_URL/issues"
         private const val UPSTREAM_REPOSITORY_URL = "https://github.com/FossifyOrg/Gallery"

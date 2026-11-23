@@ -4,7 +4,7 @@ Calypso Gallery is an independently maintained, unofficial fork. Contributions s
 
 ## Reporting a bug or requesting a feature
 
-Before opening a new report, search the [fork issue tracker](https://github.com/akbudakanl/Gallery-Cipher/issues), including closed issues, to avoid duplicates.
+Before opening a new report, search the [fork issue tracker](https://github.com/akbudakanl/Calypso-Gallery/issues), including closed issues, to avoid duplicates.
 
 Include:
 

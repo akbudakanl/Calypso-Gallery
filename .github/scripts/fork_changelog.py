@@ -19,7 +19,7 @@ from pathlib import Path
 CHANGELOG_PATH = Path("FORK_CHANGELOG.md")
 GRADLE_PROPERTIES_PATH = Path("gradle.properties")
 RELEASE_MARKER_PATH = Path(".fossify/release-marker.txt")
-DEFAULT_REPOSITORY = "akbudakanl/Gallery-Cipher"
+DEFAULT_REPOSITORY = "akbudakanl/Calypso-Gallery"
 MAX_FASTLANE_NOTE_LENGTH = 500
 FASTLANE_SUMMARY_LENGTH = 160
 

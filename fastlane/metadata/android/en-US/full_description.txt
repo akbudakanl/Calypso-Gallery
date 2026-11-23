@@ -28,5 +28,5 @@ Use the Material Design interface with dynamic color and theme support.
 
 Calypso Gallery is free software licensed under the GNU General Public License version 3.
 
-Fork source code and corresponding source: https://github.com/akbudakanl/Gallery-Cipher
-Release source archives: https://github.com/akbudakanl/Gallery-Cipher/releases
+Fork source code and corresponding source: https://github.com/akbudakanl/Calypso-Gallery
+Release source archives: https://github.com/akbudakanl/Calypso-Gallery/releases
