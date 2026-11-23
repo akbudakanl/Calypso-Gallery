@@ -19,7 +19,7 @@ The rest of this file documents the container format, the bridge-folder contract
 
 ## How the bridge works
 
-1. In the app, **Settings → Prepare CLI bridge** creates `Calypso Gallery/CLI/<vault-id>/` for the currently active vault. It contains only the vault header (`vault`) and a `cli_bridge` marker with the vault path, an `active` flag and a KEK fingerprint.
+1. When a vault is created (or when the import row is used), the app automatically creates `Calypso Gallery/CLI/<vault-id>/` for the active vault. It contains only the vault header (`vault`) and a `cli_bridge` marker with the vault path, an `active` flag and a KEK fingerprint.
 2. Put the media to encrypt in `~/Desktop/To_Encrypt`.
 3. On **Windows and Linux**, `run.bat` / `run.sh` copy the bridge into a temporary working directory, run the CLI there, copy the result back to the phone and delete the temporary directory. On **macOS**, the bridge folder is copied manually with OpenMTP (the CLI itself stays filesystem-based).
 4. The CLI writes encrypted `.bin` files, album `.meta` files and a `pending_sync` list into the bridge folder — never into the vault.

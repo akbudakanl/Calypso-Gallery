@@ -464,7 +464,7 @@
     <string name="usb_direct_filesystem_required">この USB パスは Android の仮想 OTG プロバイダー経由でのみ公開されており、ファイルシステムパスとして直接アクセスできません。マウントされたストレージディレクトリ、または内部ストレージ / SD カード上のフォルダーを選択してください。</string>
     <string name="vault_location_not_writable">選択したフォルダーは存在しないか、このデバイスでは書き込みできません。</string>
     <string name="vault_location_not_readable">選択したフォルダーは存在しないか、このデバイスでは読み取れません。</string>
-    <string name="sync_vault_from_external">CLI / 外部の暗号化メディアをインポート</string>
+    <string name="sync_vault_from_external">CLI から暗号化メディアをインポート</string>
     <string name="sync_vault_select_source_prompt">暗号化メディアのインポートの仕組み:\n\n1. スマートフォンでの準備:\n設定 → CLIブリッジを準備 は、アクティブな保管庫のために Calypso Gallery/CLI の下にフォルダーを作成し、保管庫ヘッダー (vault) と cli_bridge マーカーを格納します。\n\n2. コンピューターでの暗号化:\n写真と動画を To_Encrypt フォルダーに入れてください。Windows と Linux では run.bat / run.sh を実行するとランチャーがブリッジを自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。CLI は暗号化された .bin ファイル、アルバム情報、pending_sync リストをブリッジフォルダーに書き込みます。保管庫には書き込みません。ルートのファイルは Default Secret Album に、サブフォルダーは暗号化アルバムになります。\n\n3. アクティブな保管庫への統合:\n設定でこの行をタップします。保留中のすべてのファイルが、アプリで現在アクティブな保管庫にインポートされます。同一ファイルはスキップされ、同名で内容が異なるファイルは name(1) になります。ブリッジは完全に成功したインポート後のみクリーンアップされます。</string>
     <string name="conflict_handling_mode_label">ファイルの競合と重複の解決</string>
     <string name="conflict_handling_auto_short">完全自動（既定 — 同一はスキップ、異なる場合は (1) に名前変更）</string>

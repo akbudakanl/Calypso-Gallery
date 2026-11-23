@@ -1168,6 +1168,8 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
     }
 
     ensureVaultUnlocked(forcePrompt = forcePasswordPrompt, onCancelled = onFlowCancelled) {
+        // The bridge is prepared on demand: no separate settings row is needed.
+        CliBridgeManager.ensureActiveBridge(this)
         val internalCli = File(File(internalStoragePath, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME)
 
         // Removes ONLY the files listed in the consumed manifest and their
@@ -1314,23 +1316,10 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
         }
 
         val startImport = {
+            // No folder picker and no chooser: the bridge marked active wins.
+            val target = pendingBridges.firstOrNull { it.active } ?: pendingBridges.firstOrNull()
             when {
-                pendingBridges.size == 1 -> importBridge(pendingBridges.first())
-
-                pendingBridges.size > 1 -> {
-                    val labels = pendingBridges.map {
-                        it.sourcePath.ifBlank { it.dir.absolutePath }
-                    }.toTypedArray()
-                    getAlertDialogBuilder()
-                        .setTitle(R.string.cli_bridge_selection_title)
-                        .setMessage(R.string.cli_bridge_selection_warning)
-                        .setSingleChoiceItems(labels, -1) { dialog, which ->
-                            dialog.dismiss()
-                            importBridge(pendingBridges[which])
-                        }
-                        .setNegativeButton(org.fossify.commons.R.string.cancel, null)
-                        .show()
-                }
+                target != null -> importBridge(target)
 
                 internalCli.isDirectory && File(internalCli, CLI_WRITING_SENTINEL).exists() ->
                     showVaultLocationNoticeDialog(R.string.vault_sync_cli_busy, onFlowCancelled)
@@ -1339,31 +1328,14 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
                     File(internalCli, CryptoManager.PENDING_SYNC_FILE_NAME).isFile ->
                     runImport(internalCli)
 
-                else -> pickCustomVaultDirectory(
-                    initialPath = defaultCliPickerPath() ?: defaultSyncSourcePickerPath(),
-                    requireWritable = false,
-                    onPicked = { pickedDir -> runImport(pickedDir) },
-                    onCancelled = onFlowCancelled
-                )
+                else -> {
+                    toast(R.string.vault_sync_nothing_to_sync)
+                    onFlowCancelled()
+                }
             }
         }
 
-        if (!config.hasShownVaultImportInfo) {
-            val promptView = layoutInflater.inflate(org.fossify.commons.R.layout.dialog_message, null)
-            promptView.findViewById<TextView>(org.fossify.commons.R.id.message)
-                .setText(R.string.sync_vault_select_source_prompt)
-            getAlertDialogBuilder()
-                .setPositiveButton(org.fossify.commons.R.string.ok) { _, _ ->
-                    config.hasShownVaultImportInfo = true
-                    startImport()
-                }
-                .setNegativeButton(org.fossify.commons.R.string.cancel) { _, _ -> onFlowCancelled() }
-                .apply {
-                    setupDialogStuff(promptView, this, titleId = R.string.sync_vault_from_external)
-                }
-        } else {
-            startImport()
-        }
+        startImport()
     }
 }
 

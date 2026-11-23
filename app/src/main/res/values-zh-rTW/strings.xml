@@ -461,7 +461,7 @@
     <string name="usb_direct_filesystem_required">此 USB 路徑僅透過 Android 虛擬 OTG 提供者公開，無法直接作為檔案系統路徑存取。請選擇已掛載的儲存目錄，或內部儲存空間 / SD 卡上的資料夾。</string>
     <string name="vault_location_not_writable">所選資料夾不存在，或無法在此裝置上寫入。</string>
     <string name="vault_location_not_readable">所選資料夾不存在，或無法在此裝置上讀取。</string>
-    <string name="sync_vault_from_external">從 CLI / 外部儲存匯入加密媒體</string>
+    <string name="sync_vault_from_external">從 CLI 匯入加密媒體</string>
     <string name="sync_vault_select_source_prompt">加密媒體匯入的運作方式：\n\n1. 在手機上準備：\n設定 → 準備 CLI 橋接資料夾 會為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。\n\n2. 在電腦上加密：\n請將照片與影片放入 To_Encrypt。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸橋接資料夾；在 macOS 上請使用 OpenMTP 複製。CLI 會將加密的 .bin 檔案、相簿中繼資料與 pending_sync 清單寫入橋接資料夾，絕不寫入您的保險箱。根目錄的檔案會進入 Default Secret Album；子資料夾會成為加密相簿。\n\n3. 合併至活動保險箱：\n在設定中點選此列。所有待處理檔案都會匯入應用程式目前活動的保險箱。完全相同的檔案會略過，同名但內容不同的檔案會變成 name(1)。橋接資料夾只有在完全成功的匯入後才會清理。</string>
     <string name="conflict_handling_mode_label">檔案衝突與重複處理方式</string>
     <string name="conflict_handling_auto_short">全自動（預設 — 略過相同檔案，不同檔案重新命名為 (1)）</string>

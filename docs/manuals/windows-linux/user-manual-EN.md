@@ -70,7 +70,7 @@ Create the encrypted vault in the app (password, PIN or pattern). The **Default 
 
 ### Step 2 — Create the bridge folder
 
-Settings → **"Prepare CLI bridge"** (the new feature that replaces "export header only").
+No action is needed: the bridge is created automatically when the vault is created, or when you first tap the import row.
 
 - It creates `Calypso Gallery/CLI/<vault-id>/` for the currently selected vault.
 - It writes a copy of the `vault` header and the `cli_bridge` marker.

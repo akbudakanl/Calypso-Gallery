@@ -84,7 +84,6 @@ class SettingsActivity : SimpleActivity() {
             R.id.settings_change_vault_password_holder,
             R.id.settings_export_vault_holder,
             R.id.settings_sync_vault_holder,
-            R.id.settings_prepare_cli_bridge_holder,
             R.id.settings_empty_vault_holder,
             R.id.settings_archive_vault_holder,
             R.id.settings_empty_recycle_bin_holder,
@@ -1258,7 +1257,6 @@ class SettingsActivity : SimpleActivity() {
         setupCreateVault()
         setupExportVault()
         setupSyncVault()
-        setupPrepareCliBridge()
         setupChangeVaultPassword()
         setupVaultBiometric()
         setupVaultBiometricAutoReturn()
@@ -1574,93 +1572,6 @@ class SettingsActivity : SimpleActivity() {
                 onSynced = { setupVaultSettings() }
             )
         }
-    }
-
-    private fun setupPrepareCliBridge() {
-        val vaultExists = doesVaultExist()
-        val hasStoragePermission = !(isRPlus() && !isExternalStorageManager())
-        val existing = binding.settingsMigratingVaultCard.findViewById<View>(R.id.settings_prepare_cli_bridge_holder)
-        if (!vaultExists || !hasStoragePermission) {
-            existing?.let { binding.settingsMigratingVaultCard.removeView(it) }
-            return
-        }
-        // setupVaultSettings() also runs from onResume and several callbacks; never add twice.
-        if (existing != null) return
-
-        // Inflated from its own layout so ActivitySettingsBinding does not grow
-        // past the generated constructor's parameter limit.
-        val row = layoutInflater.inflate(R.layout.settings_cli_bridge_row, binding.settingsMigratingVaultCard, false)
-        binding.settingsMigratingVaultCard.addView(row)
-        val holder = row.findViewById<View>(R.id.settings_prepare_cli_bridge_holder)
-        row.findViewById<View>(R.id.settings_prepare_cli_bridge_info).setOnClickListener {
-            getAlertDialogBuilder()
-                .setTitle(R.string.cli_bridge_prepare_info_title)
-                .setMessage(R.string.cli_bridge_prepare_info_message)
-                .setPositiveButton(org.fossify.commons.R.string.ok, null)
-                .show()
-        }
-
-        holder.setOnClickListener {
-            holder.isEnabled = false
-            ensureVaultUnlocked(forcePrompt = true, onCancelled = { holder.isEnabled = true }) {
-                ensureBackgroundThread {
-                    val result = CliBridgeManager.prepare(this)
-                    runOnUiThread {
-                        holder.isEnabled = true
-                        when (result) {
-                            is CliBridgeManager.PrepareResult.Created ->
-                                toast(String.format(getString(R.string.cli_bridge_prepare_success), result.bridge.dir.absolutePath))
-                            is CliBridgeManager.PrepareResult.AlreadyExists -> handleBridgeConflict(result.bridge)
-                            CliBridgeManager.PrepareResult.NoVault ->
-                                toast(R.string.enable_hidden_protection_first_prompt)
-                            CliBridgeManager.PrepareResult.Locked ->
-                                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun handleBridgeConflict(existing: CliBridgeManager.Bridge) {
-        val sameVault = existing.fingerprint.equals(CliBridgeManager.currentFingerprint(), ignoreCase = true)
-        when (config.conflictHandlingMode) {
-            CONFLICT_HANDLING_AUTO -> {
-                if (sameVault) {
-                    CliBridgeManager.refresh(this, existing)
-                } else {
-                    CliBridgeManager.createAdditional(this)
-                }
-            }
-            CONFLICT_HANDLING_SMART_DIALOG -> {
-                if (sameVault) {
-                    CliBridgeManager.refresh(this, existing)
-                    toast(String.format(getString(R.string.cli_bridge_prepare_success), existing.dir.absolutePath))
-                } else {
-                    showBridgeConflictDialog(existing)
-                }
-            }
-            else -> showBridgeConflictDialog(existing)
-        }
-    }
-
-    private fun showBridgeConflictDialog(existing: CliBridgeManager.Bridge) {
-        getAlertDialogBuilder()
-            .setTitle(R.string.cli_bridge_conflict_title)
-            .setMessage(R.string.cli_bridge_conflict_message)
-            .setNeutralButton(R.string.cli_bridge_conflict_skip, null)
-            .setNegativeButton(R.string.cli_bridge_conflict_use_existing) { _, _ ->
-                if (CliBridgeManager.refresh(this, existing)) {
-                    toast(String.format(getString(R.string.cli_bridge_prepare_success), existing.dir.absolutePath))
-                }
-            }
-            .setPositiveButton(R.string.cli_bridge_conflict_create_new) { _, _ ->
-                val result = CliBridgeManager.createAdditional(this)
-                if (result is CliBridgeManager.PrepareResult.Created) {
-                    toast(String.format(getString(R.string.cli_bridge_prepare_success), result.bridge.dir.absolutePath))
-                }
-            }
-            .show()
     }
 
     private fun setupChangeVaultPassword() {

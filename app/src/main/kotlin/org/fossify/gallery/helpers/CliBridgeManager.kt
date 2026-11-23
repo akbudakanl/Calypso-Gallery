@@ -143,21 +143,31 @@ object CliBridgeManager {
         }
         val refreshed = bridge.copy(fingerprint = fingerprint, sourcePath = vaultRoot.absolutePath)
         writeMarker(refreshed, active = true)
-        setActiveFor(context, fingerprint, except = bridge.dir)
+        setActiveFor(context, fingerprint, preferred = bridge.dir)
         return true
     }
 
-    /** Marks bridges of the active vault as active and all others as inactive. */
-    fun setActiveFor(context: Context, fingerprint: String, except: File? = null) {
-        bridges(context).forEach { bridge ->
-            val isActive = bridge.fingerprint.equals(fingerprint, ignoreCase = true) && bridge.dir != except
-            writeMarker(bridge, active = isActive)
-        }
+    /** Marks exactly one bridge of the active vault as active and all others as inactive. */
+    fun setActiveFor(context: Context, fingerprint: String, preferred: File? = null) {
+        val all = bridges(context)
+        val matching = all.filter { it.fingerprint.equals(fingerprint, ignoreCase = true) }
+        val activeDir = preferred?.takeIf { p -> matching.any { it.dir == p } } ?: matching.firstOrNull()?.dir
+        all.forEach { writeMarker(it, active = it.dir == activeDir) }
     }
 
-    /** Called when a vault is created/unlocked so the CLI can auto-select the right bridge. */
-    fun syncActiveFlag(context: Context) {
-        currentFingerprint()?.let { setActiveFor(context, it) }
+    /**
+     * Idempotent preparation used by the import flow and by vault creation:
+     * create the bridge if missing, otherwise refresh its header and make it
+     * the single active bridge. Never creates a second folder for the same KEK.
+     */
+    fun ensureActiveBridge(context: Context): PrepareResult {
+        val fingerprint = currentFingerprint() ?: return PrepareResult.Locked
+        val existing = bridgeFor(context, fingerprint)
+        if (existing != null) {
+            refresh(context, existing)
+            return PrepareResult.AlreadyExists(existing)
+        }
+        return prepare(context)
     }
 
     fun moveToArchive(context: Context, vaultRoot: File): Boolean {

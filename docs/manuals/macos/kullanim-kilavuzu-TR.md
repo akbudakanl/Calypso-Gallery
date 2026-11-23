@@ -77,7 +77,7 @@ Uygulamada şifreli kasayı oluşturun. Kasa kurulurken **"Default Secret Album"
 
 ### Adım 2 — Köprü klasörünü oluşturun
 
-Ayarlar → **"CLI köprüsünü hazırla"** (yeni özellik; eski "sadece başlık dışa aktarma" seçeneğinin yerini alır).
+Ayrı bir işlem gerekmez: köprü, kasa oluşturulduğunda veya içe aktarma satırına ilk kez basıldığında otomatik oluşur.
 
 - Aktif kasa için `Calypso Gallery/CLI/<vault-id>/` açılır; içine `vault` ve `cli_bridge` yazılır.
 - Aynı kasa için köprü zaten varsa **"klasör zaten mevcut"** uyarısı gösterilir.

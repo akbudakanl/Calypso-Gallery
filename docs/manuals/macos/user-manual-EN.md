@@ -77,7 +77,7 @@ Create the encrypted vault in the app. The **Default Secret Album** is physicall
 
 ### Step 2 — Create the bridge folder
 
-Settings → **"Prepare CLI bridge"** (the new feature replacing "export header only").
+No action is needed: the bridge is created automatically when the vault is created, or when you first tap the import row.
 
 - Creates `Calypso Gallery/CLI/<vault-id>/` for the currently selected vault, with `vault` and `cli_bridge` inside.
 - If a bridge already exists for that vault, a **"folder already exists"** warning is shown.

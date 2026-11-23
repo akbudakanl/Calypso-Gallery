@@ -70,7 +70,7 @@ Uygulamada şifreli kasayı oluşturun (şifre, PIN veya desen). Kasa kurulurken
 
 ### Adım 2 — Köprü klasörünü oluşturun
 
-Ayarlar → **"CLI köprüsünü hazırla"** (yeni özellik; eski "sadece başlık dışa aktarma" seçeneğinin yerini alır).
+Ayrı bir işlem gerekmez: köprü, kasa oluşturulduğunda veya içe aktarma satırına ilk kez basıldığında otomatik oluşur.
 
 - Aktif kasa için `Calypso Gallery/CLI/<vault-id>/` açılır.
 - İçine `vault` başlığının kopyası ve `cli_bridge` dosyası yazılır.
