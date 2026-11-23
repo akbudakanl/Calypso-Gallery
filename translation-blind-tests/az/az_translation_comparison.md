@@ -1239,16 +1239,16 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 
 ## CLI bridge UX strings (this revision)
 
-New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. The date comparison setting does not decide which bridge is used, but it still applies when files are imported into the vault.
 
 | Key | English | Localized |
 |---|---|---|
 | `cli_bridge_prepare_label` | Prepare CLI bridge | CLI körpüsünü hazırla |
 | `cli_bridge_prepare_info_title` | CLI bridge | CLI körpüsü |
-| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri körpü qovluqlarına təsir etmir. |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. The date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri hansı körpünün istifadə olunacağına qərar vermir; fayllar seyfə idxal edilərkən tətbiq olunur. |
 | `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI körpüsü hazırdır: %1$s |
 | `cli_bridge_conflict_title` | CLI bridge already exists | CLI körpüsü artıq var |
-| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri körpü qovluqlarına təsir etmir. |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri hansı körpünün istifadə olunacağına qərar vermir; fayllar seyfə idxal edilərkən tətbiq olunur. |
 | `cli_bridge_conflict_skip` | Skip | Ötür |
 | `cli_bridge_conflict_use_existing` | Use existing bridge | Mövcud körpüdən istifadə et |
 | `cli_bridge_conflict_create_new` | Create new bridge | Yeni körpü yarat |

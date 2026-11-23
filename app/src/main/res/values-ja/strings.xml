@@ -793,10 +793,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">CLIブリッジを準備</string>
     <string name="cli_bridge_prepare_info_title">CLIブリッジ</string>
-    <string name="cli_bridge_prepare_info_message">アクティブな保管庫のために Calypso Gallery/CLI の下に、保管庫ヘッダー (vault) と cli_bridge マーカーを含むフォルダーを作成します。Windows と Linux では run.bat / run.sh を実行するとランチャーが自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。ブリッジは転送領域のみで、暗号化メディアを永続的に保存しません。日付比較の設定はブリッジフォルダーには適用されません。</string>
+    <string name="cli_bridge_prepare_info_message">アクティブな保管庫のために Calypso Gallery/CLI の下に、保管庫ヘッダー (vault) と cli_bridge マーカーを含むフォルダーを作成します。Windows と Linux では run.bat / run.sh を実行するとランチャーが自動転送します。macOS では OpenMTP でフォルダーをコピーしてください。ブリッジは転送領域のみで、暗号化メディアを永続的に保存しません。日付比較の設定は使用するブリッジを決定しません。ファイルを保管庫にインポートする際には適用されます。</string>
     <string name="cli_bridge_prepare_success">CLIブリッジの準備ができました: %1$s</string>
     <string name="cli_bridge_conflict_title">CLIブリッジはすでに存在します</string>
-    <string name="cli_bridge_conflict_message">この保管庫のCLIブリッジはすでに存在します。どうしますか？\n\n日付比較の設定はブリッジフォルダーには適用されません。</string>
+    <string name="cli_bridge_conflict_message">この保管庫のCLIブリッジはすでに存在します。どうしますか？\n\n日付比較の設定は使用するブリッジを決定しません。ファイルを保管庫にインポートする際には適用されます。</string>
     <string name="cli_bridge_conflict_skip">スキップ</string>
     <string name="cli_bridge_conflict_use_existing">既存のブリッジを使用</string>
     <string name="cli_bridge_conflict_create_new">新しいブリッジを作成</string>

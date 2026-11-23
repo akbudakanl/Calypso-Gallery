@@ -793,10 +793,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">CLI köprüsünü hazırla</string>
     <string name="cli_bridge_prepare_info_title">CLI köprüsü</string>
-    <string name="cli_bridge_prepare_info_message">Aktif kasa için Calypso Gallery/CLI altında, kasa başlığı (vault) ve cli_bridge işaret dosyasını içeren bir klasör oluşturur. Windows ve Linux'ta run.bat / run.sh çalıştırdığınızda aktarım otomatik yapılır; macOS'ta klasörü OpenMTP ile kopyalayın. Köprü yalnızca bir aktarım alanıdır; şifreli medyayı kalıcı olarak saklamaz. Tarih kıyaslaması ayarı köprü klasörlerini etkilemez.</string>
+    <string name="cli_bridge_prepare_info_message">Aktif kasa için Calypso Gallery/CLI altında, kasa başlığı (vault) ve cli_bridge işaret dosyasını içeren bir klasör oluşturur. Windows ve Linux'ta run.bat / run.sh çalıştırdığınızda aktarım otomatik yapılır; macOS'ta klasörü OpenMTP ile kopyalayın. Köprü yalnızca bir aktarım alanıdır; şifreli medyayı kalıcı olarak saklamaz. Tarih kıyaslaması ayarı hangi köprü klasörünün kullanılacağına karar vermez; dosyalar kasaya aktarılırken uygulanır.</string>
     <string name="cli_bridge_prepare_success">CLI köprüsü hazır: %1$s</string>
     <string name="cli_bridge_conflict_title">CLI köprüsü zaten var</string>
-    <string name="cli_bridge_conflict_message">Bu kasa için bir CLI köprüsü zaten var. Ne yapılsın?\n\nTarih kıyaslaması ayarı köprü klasörlerini etkilemez.</string>
+    <string name="cli_bridge_conflict_message">Bu kasa için bir CLI köprüsü zaten var. Ne yapılsın?\n\nTarih kıyaslaması ayarı hangi köprü klasörünün kullanılacağına karar vermez; dosyalar kasaya aktarılırken uygulanır.</string>
     <string name="cli_bridge_conflict_skip">Atla</string>
     <string name="cli_bridge_conflict_use_existing">Mevcut köprüyü kullan</string>
     <string name="cli_bridge_conflict_create_new">Yeni köprü oluştur</string>

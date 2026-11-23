@@ -810,10 +810,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">Gjør CLI-bro klar</string>
     <string name="cli_bridge_prepare_info_title">CLI-bro</string>
-    <string name="cli_bridge_prepare_info_message">Oppretter en mappe under Calypso Gallery/CLI for det aktive hvelvet, med hvelvheaderen (vault) og en cli_bridge-markør. På Windows og Linux overfører startprogrammet broen automatisk når du kjører run.bat / run.sh; på macOS kopierer du mappen med OpenMTP. Broen er kun et overføringsområde og lagrer ikke kryptert media permanent. Innstillingen for datosammenligning gjelder ikke bromapper.</string>
+    <string name="cli_bridge_prepare_info_message">Oppretter en mappe under Calypso Gallery/CLI for det aktive hvelvet, med hvelvheaderen (vault) og en cli_bridge-markør. På Windows og Linux overfører startprogrammet broen automatisk når du kjører run.bat / run.sh; på macOS kopierer du mappen med OpenMTP. Broen er kun et overføringsområde og lagrer ikke kryptert media permanent. Innstillingen for datosammenligning avgjør ikke hvilken bro som brukes; den gjelder fortsatt når filer importeres i hvelvet.</string>
     <string name="cli_bridge_prepare_success">CLI-broen er klar: %1$s</string>
     <string name="cli_bridge_conflict_title">CLI-broen finnes allerede</string>
-    <string name="cli_bridge_conflict_message">Det finnes allerede en CLI-bro for dette hvelvet. Hva skal skje?\n\nInnstillingen for datosammenligning gjelder ikke bromapper.</string>
+    <string name="cli_bridge_conflict_message">Det finnes allerede en CLI-bro for dette hvelvet. Hva skal skje?\n\nInnstillingen for datosammenligning avgjør ikke hvilken bro som brukes; den gjelder fortsatt når filer importeres i hvelvet.</string>
     <string name="cli_bridge_conflict_skip">Hopp over</string>
     <string name="cli_bridge_conflict_use_existing">Bruk eksisterende bro</string>
     <string name="cli_bridge_conflict_create_new">Opprett ny bro</string>

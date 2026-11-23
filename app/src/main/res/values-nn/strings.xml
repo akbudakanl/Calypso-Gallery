@@ -866,10 +866,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">Gjer CLI-bru klar</string>
     <string name="cli_bridge_prepare_info_title">CLI-bru</string>
-    <string name="cli_bridge_prepare_info_message">Opprettar ei mappe under Calypso Gallery/CLI for det aktive kvelvet, med kvelvheaderen (vault) og ein cli_bridge-markør. På Windows og Linux overfører startprogrammet brua automatisk når du køyrer run.bat / run.sh; på macOS kopierer du mappa med OpenMTP. Brua er berre eit overføringsområde og lagrar ikkje kryptert medium permanent. Innstillinga for datosamanlikning gjeld ikkje brumapper.</string>
+    <string name="cli_bridge_prepare_info_message">Opprettar ei mappe under Calypso Gallery/CLI for det aktive kvelvet, med kvelvheaderen (vault) og ein cli_bridge-markør. På Windows og Linux overfører startprogrammet brua automatisk når du køyrer run.bat / run.sh; på macOS kopierer du mappa med OpenMTP. Brua er berre eit overføringsområde og lagrar ikkje kryptert medium permanent. Innstillinga for datosamanlikning avgjer ikkje kva bru som blir brukt; ho gjeld framleis når filer blir importerte i kvelvet.</string>
     <string name="cli_bridge_prepare_success">CLI-brua er klar: %1$s</string>
     <string name="cli_bridge_conflict_title">CLI-brua finst alt</string>
-    <string name="cli_bridge_conflict_message">Det finst alt ei CLI-bru for dette kvelvet. Kva skal skje?\n\nInnstillinga for datosamanlikning gjeld ikkje brumapper.</string>
+    <string name="cli_bridge_conflict_message">Det finst alt ei CLI-bru for dette kvelvet. Kva skal skje?\n\nInnstillinga for datosamanlikning avgjer ikkje kva bru som blir brukt; ho gjeld framleis når filer blir importerte i kvelvet.</string>
     <string name="cli_bridge_conflict_skip">Hopp over</string>
     <string name="cli_bridge_conflict_use_existing">Bruk eksisterande bru</string>
     <string name="cli_bridge_conflict_create_new">Opprett ny bru</string>

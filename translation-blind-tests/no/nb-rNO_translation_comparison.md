@@ -1265,16 +1265,16 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 
 ## CLI bridge UX strings (this revision)
 
-New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. The date comparison setting does not decide which bridge is used, but it still applies when files are imported into the vault.
 
 | Key | English | Localized |
 |---|---|---|
 | `cli_bridge_prepare_label` | Prepare CLI bridge | Gjør CLI-bro klar |
 | `cli_bridge_prepare_info_title` | CLI bridge | CLI-bro |
-| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | Oppretter en mappe under Calypso Gallery/CLI for det aktive hvelvet, med hvelvheaderen (vault) og en cli_bridge-markør. På Windows og Linux overfører startprogrammet broen automatisk når du kjører run.bat / run.sh; på macOS kopierer du mappen med OpenMTP. Broen er kun et overføringsområde og lagrer ikke kryptert media permanent. Innstillingen for datosammenligning gjelder ikke bromapper. |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. The date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | Oppretter en mappe under Calypso Gallery/CLI for det aktive hvelvet, med hvelvheaderen (vault) og en cli_bridge-markør. På Windows og Linux overfører startprogrammet broen automatisk når du kjører run.bat / run.sh; på macOS kopierer du mappen med OpenMTP. Broen er kun et overføringsområde og lagrer ikke kryptert media permanent. Innstillingen for datosammenligning avgjør ikke hvilken bro som brukes; den gjelder fortsatt når filer importeres i hvelvet. |
 | `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI-broen er klar: %1$s |
 | `cli_bridge_conflict_title` | CLI bridge already exists | CLI-broen finnes allerede |
-| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | Det finnes allerede en CLI-bro for dette hvelvet. Hva skal skje?\n\nInnstillingen for datosammenligning gjelder ikke bromapper. |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | Det finnes allerede en CLI-bro for dette hvelvet. Hva skal skje?\n\nInnstillingen for datosammenligning avgjør ikke hvilken bro som brukes; den gjelder fortsatt når filer importeres i hvelvet. |
 | `cli_bridge_conflict_skip` | Skip | Hopp over |
 | `cli_bridge_conflict_use_existing` | Use existing bridge | Bruk eksisterende bro |
 | `cli_bridge_conflict_create_new` | Create new bridge | Opprett ny bro |

@@ -1250,16 +1250,16 @@ The import flow now uses a per-vault bridge folder created by the app; the old "
 
 ## CLI bridge UX strings (this revision)
 
-New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. Date comparison settings do not apply to bridge folders.
+New fork-only strings for the bridge preparation, mode-aware deduplication (aligned with `conflictHandlingMode`), multi-bridge selection and stale marker recovery. The date comparison setting does not decide which bridge is used, but it still applies when files are imported into the vault.
 
 | Key | English | Localized |
 |---|---|---|
 | `cli_bridge_prepare_label` | Prepare CLI bridge | 準備 CLI 橋接資料夾 |
 | `cli_bridge_prepare_info_title` | CLI bridge | CLI 橋接 |
-| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. Date comparison settings do not apply to bridge folders. | 為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸；在 macOS 上請使用 OpenMTP 複製。橋接僅是傳輸區域，不會永久儲存加密媒體。日期比較設定不適用於橋接資料夾。 |
+| `cli_bridge_prepare_info_message` | Creates a folder under Calypso Gallery/CLI for the active vault, containing the vault header (vault) and a cli_bridge marker. On Windows and Linux the launcher transfers it automatically when you run run.bat / run.sh; on macOS copy it with OpenMTP. The bridge is a transfer area only - it never stores encrypted media permanently. The date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | 為目前活動的保險箱在 Calypso Gallery/CLI 下建立資料夾，內含保險箱標頭檔 (vault) 與 cli_bridge 標記。在 Windows 與 Linux 上，執行 run.bat / run.sh 時啟動程式會自動傳輸；在 macOS 上請使用 OpenMTP 複製。橋接僅是傳輸區域，不會永久儲存加密媒體。日期比較設定不決定使用哪個橋接；將檔案匯入保險箱時仍會套用。 |
 | `cli_bridge_prepare_success` | CLI bridge ready: %1$s | CLI 橋接已準備完成：%1$s |
 | `cli_bridge_conflict_title` | CLI bridge already exists | CLI 橋接已存在 |
-| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not apply to bridge folders. | 此保險箱的 CLI 橋接已存在。要如何處理？\n\n日期比較設定不適用於橋接資料夾。 |
+| `cli_bridge_conflict_message` | A CLI bridge already exists for this vault. What should happen?\n\nThe date comparison setting does not decide which bridge is used; it still applies when files are imported into the vault. | 此保險箱的 CLI 橋接已存在。要如何處理？\n\n日期比較設定不決定使用哪個橋接；將檔案匯入保險箱時仍會套用。 |
 | `cli_bridge_conflict_skip` | Skip | 略過 |
 | `cli_bridge_conflict_use_existing` | Use existing bridge | 使用現有橋接 |
 | `cli_bridge_conflict_create_new` | Create new bridge | 建立新橋接 |

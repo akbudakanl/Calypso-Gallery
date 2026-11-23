@@ -793,10 +793,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">CLI-Brücke vorbereiten</string>
     <string name="cli_bridge_prepare_info_title">CLI-Brücke</string>
-    <string name="cli_bridge_prepare_info_message">Erstellt für den aktiven Tresor einen Ordner unter Calypso Gallery/CLI mit der Tresor-Headerdatei (vault) und einer cli_bridge-Markierung. Unter Windows und Linux übernimmt der Launcher den Transfer automatisch, wenn du run.bat / run.sh ausführst; unter macOS kopiere den Ordner mit OpenMTP. Die Brücke ist nur ein Transferbereich und speichert keine verschlüsselten Medien dauerhaft. Die Einstellung zum Datumsvergleich gilt nicht für Brückenordner.</string>
+    <string name="cli_bridge_prepare_info_message">Erstellt für den aktiven Tresor einen Ordner unter Calypso Gallery/CLI mit der Tresor-Headerdatei (vault) und einer cli_bridge-Markierung. Unter Windows und Linux übernimmt der Launcher den Transfer automatisch, wenn du run.bat / run.sh ausführst; unter macOS kopiere den Ordner mit OpenMTP. Die Brücke ist nur ein Transferbereich und speichert keine verschlüsselten Medien dauerhaft. Die Einstellung zum Datumsvergleich entscheidet nicht darüber, welche Brücke verwendet wird; sie gilt weiterhin beim Import der Dateien in den Tresor.</string>
     <string name="cli_bridge_prepare_success">CLI-Brücke bereit: %1$s</string>
     <string name="cli_bridge_conflict_title">CLI-Brücke bereits vorhanden</string>
-    <string name="cli_bridge_conflict_message">Für diesen Tresor existiert bereits eine CLI-Brücke. Was soll passieren?\n\nDie Einstellung zum Datumsvergleich gilt nicht für Brückenordner.</string>
+    <string name="cli_bridge_conflict_message">Für diesen Tresor existiert bereits eine CLI-Brücke. Was soll passieren?\n\nDie Einstellung zum Datumsvergleich entscheidet nicht darüber, welche Brücke verwendet wird; sie gilt weiterhin beim Import der Dateien in den Tresor.</string>
     <string name="cli_bridge_conflict_skip">Überspringen</string>
     <string name="cli_bridge_conflict_use_existing">Vorhandene Brücke verwenden</string>
     <string name="cli_bridge_conflict_create_new">Neue Brücke erstellen</string>

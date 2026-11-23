@@ -864,10 +864,10 @@
     <!-- CLI bridge UX strings (this revision) -->
     <string name="cli_bridge_prepare_label">CLI körpüsünü hazırla</string>
     <string name="cli_bridge_prepare_info_title">CLI körpüsü</string>
-    <string name="cli_bridge_prepare_info_message">Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri körpü qovluqlarına təsir etmir.</string>
+    <string name="cli_bridge_prepare_info_message">Aktiv seyf üçün Calypso Gallery/CLI altında, seyf başlığı (vault) və cli_bridge işarə faylını ehtiva edən qovluq yaradır. Windows və Linux-da run.bat / run.sh işlətdiyinizdə ötürmə avtomatik olur; macOS-da qovluğu OpenMTP ilə kopyalayın. Körpü yalnız ötürmə sahəsidir, şifrələnmiş medianı daimi saxlamaz. Tarix müqayisəsi parametri hansı körpünün istifadə olunacağına qərar vermir; fayllar seyfə idxal edilərkən tətbiq olunur.</string>
     <string name="cli_bridge_prepare_success">CLI körpüsü hazırdır: %1$s</string>
     <string name="cli_bridge_conflict_title">CLI körpüsü artıq var</string>
-    <string name="cli_bridge_conflict_message">Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri körpü qovluqlarına təsir etmir.</string>
+    <string name="cli_bridge_conflict_message">Bu seyf üçün CLI körpüsü artıq var. Nə edilsin?\n\nTarix müqayisəsi parametri hansı körpünün istifadə olunacağına qərar vermir; fayllar seyfə idxal edilərkən tətbiq olunur.</string>
     <string name="cli_bridge_conflict_skip">Ötür</string>
     <string name="cli_bridge_conflict_use_existing">Mövcud körpüdən istifadə et</string>
     <string name="cli_bridge_conflict_create_new">Yeni körpü yarat</string>

@@ -123,4 +123,4 @@ Bridge deduplication follows the existing **`conflictHandlingMode`** setting rat
 | Smart dialog | Silently reuse the bridge when the KEK fingerprint matches; ask only when it differs |
 | Automatic (experimental) | Silently reuse when it matches; create a new bridge automatically when it does not |
 
-The **date comparison** setting (`dateTieBreakMode`) does **not** apply to bridge folders — the decision is based on the marker fingerprint, not on timestamps. The existing normalization `AUTO + ASK → KEEP_TARGET` in `Config.kt` is unchanged.
+The **date comparison** setting (`dateTieBreakMode`) does **not** decide which bridge folder is used — that decision is based on the marker fingerprint. It **does** apply when files from the bridge are imported into the vault, because each `.bin` header carries the original `dateTaken`/`lastModified` values. The import path must therefore honour `DateTieBreakPolicy` (currently it only copies the staged file's filesystem mtime in `CryptoManagerExportSync.kt`). The existing normalization `AUTO + ASK → KEEP_TARGET` in `Config.kt` is unchanged.
