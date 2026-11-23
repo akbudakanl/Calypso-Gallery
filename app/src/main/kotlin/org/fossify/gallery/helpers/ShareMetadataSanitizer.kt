@@ -95,7 +95,15 @@ object ShareMetadataSanitizer {
             }
             recordPendingUri(context, published.second)
             scheduleCleanup(context.applicationContext, published.second)
-            published.first
+            // Return a content://media URI, NOT a file path. Commons resolves a public path by
+            // querying MediaStore's deprecated DATA column; when that fails on modern Android it
+            // falls back to our own FileProvider URI, which messaging apps reject as a private
+            // file. A MediaStore URI is accepted everywhere. The displayName query parameter is
+            // ignored by MediaStore but lets commons derive image/* MIME for multi-share.
+            published.second.buildUpon()
+                .appendQueryParameter("displayName", source.name)
+                .build()
+                .toString()
         } catch (e: ShareMetadataSanitizationException) {
             throw e
         } catch (_: Throwable) {
