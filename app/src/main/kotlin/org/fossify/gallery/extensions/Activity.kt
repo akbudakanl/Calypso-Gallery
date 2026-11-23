@@ -525,7 +525,11 @@ fun BaseSimpleActivity.promptUnavailableExternalVault(
 
 fun BaseSimpleActivity.promptCreateVault(
     onCreated: () -> Unit,
-    onCancelled: () -> Unit = {}
+    onCancelled: () -> Unit = {},
+    // Fired as soon as the vault exists on disk, before the post-creation dialogs. Callers such
+    // as Settings use it to refresh their rows even if the user backs out of / leaves those
+    // dialogs instead of acknowledging the final tutorial.
+    onVaultCreated: () -> Unit = {},
 ) {
     if (CryptoManager.isConfiguredVaultTemporarilyUnavailable(this)) {
         promptUnavailableExternalVault(
@@ -545,14 +549,16 @@ fun BaseSimpleActivity.promptCreateVault(
     promptVaultSetupChoice(
         confirmBeforeCreatingNew = false,
         onCreated = onCreated,
-        onCancelled = onCancelled
+        onCancelled = onCancelled,
+        onVaultCreated = onVaultCreated,
     )
 }
 
 fun BaseSimpleActivity.promptVaultSetupChoice(
     confirmBeforeCreatingNew: Boolean,
     onCreated: () -> Unit,
-    onCancelled: () -> Unit = {}
+    onCancelled: () -> Unit = {},
+    onVaultCreated: () -> Unit = {},
 ) {
     val items = arrayListOf(
         RadioItem(VAULT_ACTION_CREATE_NEW, getString(R.string.create_new_vault_option)),
@@ -572,14 +578,15 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
         }
     ) { selected ->
         val reopenStage1 = {
-            promptVaultSetupChoice(confirmBeforeCreatingNew, onCreated, onCancelled)
+            promptVaultSetupChoice(confirmBeforeCreatingNew, onCreated, onCancelled, onVaultCreated)
         }
         when (selected) {
             VAULT_ACTION_CREATE_NEW -> {
                 promptWhereToCreateVault(
                     confirmBeforeCreatingNew = confirmBeforeCreatingNew,
                     onVaultReady = onCreated,
-                    onBack = reopenStage1
+                    onBack = reopenStage1,
+                    onVaultCreated = onVaultCreated,
                 )
             }
             VAULT_ACTION_USE_EXISTING -> {
@@ -701,7 +708,8 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
 fun BaseSimpleActivity.promptWhereToCreateVault(
     confirmBeforeCreatingNew: Boolean = false,
     onVaultReady: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onVaultCreated: () -> Unit = {},
 ) {
     val items = arrayListOf(
         RadioItem(VAULT_LOCATION_OPTION_STANDARD, getString(R.string.vault_location_default_short)),
@@ -718,7 +726,7 @@ fun BaseSimpleActivity.promptWhereToCreateVault(
         }
     ) { selected ->
         val reopenStage2 = {
-            promptWhereToCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack)
+            promptWhereToCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack, onVaultCreated)
         }
         when (selected) {
             VAULT_LOCATION_OPTION_STANDARD -> {
@@ -727,14 +735,16 @@ fun BaseSimpleActivity.promptWhereToCreateVault(
                     confirmBeforeCreatingNew = confirmBeforeCreatingNew,
                     onVaultReady = onVaultReady,
                     onBack = reopenStage2,
-                    onPickAnother = reopenStage2
+                    onPickAnother = reopenStage2,
+                    onVaultCreated = onVaultCreated,
                 )
             }
             VAULT_LOCATION_OPTION_CUSTOM -> {
                 pickCustomFolderForCreateVault(
                     confirmBeforeCreatingNew = confirmBeforeCreatingNew,
                     onVaultReady = onVaultReady,
-                    onBack = reopenStage2
+                    onBack = reopenStage2,
+                    onVaultCreated = onVaultCreated,
                 )
             }
             else -> onBack()
@@ -745,7 +755,8 @@ fun BaseSimpleActivity.promptWhereToCreateVault(
 private fun BaseSimpleActivity.pickCustomFolderForCreateVault(
     confirmBeforeCreatingNew: Boolean,
     onVaultReady: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onVaultCreated: () -> Unit,
 ) {
     pickCustomVaultDirectory(
         initialPath = defaultCustomVaultPickerPath(),
@@ -756,8 +767,14 @@ private fun BaseSimpleActivity.pickCustomFolderForCreateVault(
                 onVaultReady = onVaultReady,
                 onBack = onBack,
                 onPickAnother = {
-                    pickCustomFolderForCreateVault(confirmBeforeCreatingNew, onVaultReady, onBack)
-                }
+                    pickCustomFolderForCreateVault(
+                        confirmBeforeCreatingNew,
+                        onVaultReady,
+                        onBack,
+                        onVaultCreated,
+                    )
+                },
+                onVaultCreated = onVaultCreated,
             )
         },
         onCancelled = onBack
@@ -994,7 +1011,8 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
     confirmBeforeCreatingNew: Boolean,
     onVaultReady: () -> Unit,
     onBack: () -> Unit,
-    onPickAnother: () -> Unit
+    onPickAnother: () -> Unit,
+    onVaultCreated: () -> Unit,
 ) {
     val lookupDir = targetDir ?: CryptoManager.getDefaultVaultRoot()
     val existingVault = CryptoManager.resolveExistingVaultInDirectory(lookupDir)
@@ -1044,6 +1062,10 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
                     VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
                     runOnUiThread {
                         toast(org.fossify.commons.R.string.protection_setup_successfully)
+                        // Refresh callers (e.g. Settings) as soon as the vault really exists on disk.
+                        // The post-creation dialogs below can be backed out of or abandoned, so the
+                        // final tutorial's callback is not a reliable place to sync the UI state.
+                        onVaultCreated()
                         showVaultPasswordSavedDialog(isInitialCreation = true) { onVaultReady() }
                     }
                 }

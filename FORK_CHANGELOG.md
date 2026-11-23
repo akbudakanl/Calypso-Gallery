@@ -15,7 +15,7 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ### Fixed
 
-- Pressing Back on the "Have you saved your password?" dialog after vault creation now continues to the one-time biometric offer instead of skipping it. This also keeps the Security & encrypted vault settings in sync, so the "create vault" row no longer stays visible until the settings category is reopened.
+- Pressing Back on the "Have you saved your password?" dialog after vault creation now continues to the one-time biometric offer instead of skipping it. The Security & encrypted vault settings are also refreshed as soon as the vault is created, so the "create vault" row no longer stays visible until the settings category is reopened, regardless of how the follow-up dialogs are dismissed.
 - Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
 - Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
 

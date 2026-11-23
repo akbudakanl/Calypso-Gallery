@@ -1500,7 +1500,11 @@ class SettingsActivity : SimpleActivity() {
                 onCancelled = {
                     VaultSessionManager.lockVaultIfOutsideSession(this)
                     setupVaultSettings()
-                }
+                },
+                // Refresh the rows as soon as the vault is on disk. The following dialogs can be
+                // dismissed with Back (or abandoned), so their completion is not a reliable
+                // signal for updating the settings screen.
+                onVaultCreated = { setupVaultSettings() },
             )
         }
     }
