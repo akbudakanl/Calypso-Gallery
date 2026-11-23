@@ -220,7 +220,9 @@ object ShareMetadataSanitizer {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val updated = (prefs.getStringSet(PENDING_MEDIA_URIS, null) ?: emptySet()) +
             "${uri}|${System.currentTimeMillis()}"
-        prefs.edit().putStringSet(PENDING_MEDIA_URIS, updated).apply()
+        // Called on the background share thread: persist synchronously so a killed process
+        // cannot leave behind an untracked MediaStore copy.
+        prefs.edit().putStringSet(PENDING_MEDIA_URIS, updated).commit()
     }
 
     private fun scheduleCleanup(context: Context, uri: Uri) {

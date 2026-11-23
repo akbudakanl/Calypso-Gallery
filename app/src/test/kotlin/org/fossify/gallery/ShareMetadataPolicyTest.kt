@@ -94,6 +94,10 @@ class ShareMetadataPolicyTest {
                 sanitizer.contains("Uri.parse(entry.substringBefore('|'))") &&
                 sanitizer.contains("CLEANUP_DELAY_MS = 30 * 60 * 1000L")
         )
+        assertTrue(
+            "The cleanup record must be persisted synchronously",
+            sanitizer.contains("PENDING_MEDIA_URIS, updated).commit()")
+        )
     }
 
     @Test
