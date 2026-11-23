@@ -12,6 +12,7 @@ import org.fossify.gallery.dialogs.resolveSkippedCryptoMessageRes
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.ALBUM_CRYPTO_CONFLICT_MERGE
 import org.fossify.gallery.helpers.CIPHER_APP_DIR_NAME
+import org.fossify.gallery.helpers.CLI_STAGING_DIR_NAME
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_ASK
 import org.fossify.gallery.helpers.DATE_TIE_BREAK_KEEP_TARGET
@@ -313,6 +314,17 @@ class CustomVaultLocationTest {
         val namedSub = File(plainDeltaRoot, "Vacation").apply { mkdirs() }
         File(namedSub, "efgh5678.bin").writeBytes(byteArrayOf(4, 5))
         assertEquals(plainDeltaRoot.absolutePath, CryptoManager.resolveSyncSourceRoot(plainDeltaRoot).absolutePath)
+
+        // 6. CLI staging wins over a sibling Secrets folder (no "Secrets" assumption).
+        val stagingRoot = File(tempRoot, "StagingRoot").apply { mkdirs() }
+        File(File(stagingRoot, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME).apply { mkdirs() }
+        val cliFolder = File(File(stagingRoot, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME).apply { mkdirs() }
+        assertEquals(cliFolder.absolutePath, CryptoManager.resolveSyncSourceRoot(stagingRoot).absolutePath)
+
+        // 7. CLI folder directly under the picked root, arbitrary vault location.
+        val customRoot = File(tempRoot, "CustomVaultHost").apply { mkdirs() }
+        val directCli = File(customRoot, CLI_STAGING_DIR_NAME).apply { mkdirs() }
+        assertEquals(directCli.absolutePath, CryptoManager.resolveSyncSourceRoot(customRoot).absolutePath)
     }
 
     @Test
@@ -1151,19 +1163,19 @@ class CustomVaultLocationTest {
         File(extSecrets, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         val extAlbum = File(extSecrets, "PendingAlbum").apply { mkdirs() }
 
-        // Unlisted corrupt .bin in archive (bit-rot) must be ignored when .pending_sync is used
+        // Unlisted corrupt .bin in archive (bit-rot) must be ignored when pending_sync is used
         val corruptArchiveBin = File(extAlbum, "corrupt_old.bin").apply { writeBytes(ByteArray(256) { 7 }) }
         assertTrue(corruptArchiveBin.exists())
 
         val newBin = encryptBytesForTest(extAlbum, "new_pending.jpg", "fresh-cli-photo".toByteArray())
 
-        // 1. Without .pending_sync, strict sync returns 0/0/0/0 and refuses to scan archive
+        // 1. Without pending_sync, strict sync returns 0/0/0/0 and refuses to scan archive
         val withoutManifest = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
         assertEquals(0, withoutManifest.copiedCount)
         assertEquals(0, withoutManifest.failedCount)
 
-        // 2. Write .pending_sync listing ONLY the newly encrypted .bin
-        val pendingFile = File(extSecrets, ".pending_sync")
+        // 2. Write pending_sync listing ONLY the newly encrypted .bin
+        val pendingFile = File(extSecrets, "pending_sync")
         pendingFile.writeText("PendingAlbum/${newBin.name}\n", Charsets.UTF_8)
 
         val withManifest = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
@@ -1175,6 +1187,30 @@ class CustomVaultLocationTest {
         val repeatAfterClear = CryptoManager.syncVaultFromExternalDirectory(testContext, extSecrets)!!
         assertEquals(0, repeatAfterClear.copiedCount)
         assertEquals(0, repeatAfterClear.failedCount)
+    }
+
+    @Test
+    fun syncVaultFromExternalDirectory_acceptsVisibleManifestWhenMtpDropsDotFiles() {
+        val masterKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        setMasterKey(masterKey)
+
+        val phoneVault = File(tempRoot, "mtp_phone/Calypso Gallery/$SECRETS_DIR_NAME").apply { mkdirs() }
+        File(phoneVault, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
+        CryptoManager.setVaultRootLocation(testContext, phoneVault)
+
+        val cliFolder = File(tempRoot, "mtp_stage/$CLI_STAGING_DIR_NAME").apply { mkdirs() }
+        val album = File(cliFolder, "MtpAlbum").apply { mkdirs() }
+        writeMetaV2(album, masterKey, "MtpAlbum")
+        val newBin = encryptBytesForTest(album, "mtp.jpg", "mtp-photo".toByteArray())
+
+        // MTP commonly skips dot-files: only the visible manifest survives the copy.
+        val visibleManifest = File(cliFolder, "pending_sync")
+        visibleManifest.writeText("MtpAlbum/${newBin.name}\n", Charsets.UTF_8)
+
+        val result = CryptoManager.syncVaultFromExternalDirectory(testContext, cliFolder)!!
+        assertEquals(1, result.copiedCount)
+        assertEquals(0, result.failedCount)
+        assertFalse(visibleManifest.exists())
     }
 
     @Test
@@ -1403,7 +1439,7 @@ class CustomVaultLocationTest {
     }
 
     @Test
-    fun syncVaultFromExternalDirectory_keepsDifferentTimestampCopyAsCollisionVariant_andSkipsRepeat() {
+    fun syncVaultFromExternalDirectory_skipsDifferentTimestampIdenticalContent_andKeepsTargetLastModified() {
         val masterKey = ByteArray(32) { (it + 19).toByte() }
         setMasterKey(masterKey)
 
@@ -1417,13 +1453,14 @@ class CustomVaultLocationTest {
         val ts2021 = 1_620_000_000_000L
         val ts2026 = 1_770_000_000_000L
 
-        encryptBytesForTest(
+        val targetBin = encryptBytesForTest(
             targetDir = vaultAlbum,
             originalName = "photo.jpg",
             payload = payload,
             lastModifiedOverride = ts2021,
             dateTakenOverride = ts2021
         )
+        targetBin.setLastModified(ts2021)
 
         val extRoot = File(tempRoot, "ext_sync").apply { mkdirs() }
         val extAlbum = File(extRoot, "ef99aa").apply { mkdirs() }
@@ -1442,9 +1479,10 @@ class CustomVaultLocationTest {
             requirePendingManifest = false
         )
         assertNotNull(firstSync)
-        assertEquals(0, firstSync!!.skippedDuplicateCount)
-        assertEquals(1, firstSync.renamedCount)
-        assertEquals(2, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+        assertEquals(1, firstSync!!.skippedDuplicateCount)
+        assertEquals(0, firstSync.copiedCount + firstSync.renamedCount)
+        assertEquals(1, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+        assertEquals(ts2021, targetBin.lastModified())
 
         val secondSync = CryptoManager.syncVaultFromExternalDirectory(
             context = testContext,
@@ -1454,7 +1492,8 @@ class CustomVaultLocationTest {
         assertNotNull(secondSync)
         assertEquals(1, secondSync!!.skippedDuplicateCount)
         assertEquals(0, secondSync.copiedCount + secondSync.renamedCount)
-        assertEquals(2, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+        assertEquals(1, vaultAlbum.listFiles()?.count { it.name.endsWith(ENCRYPTED_BIN_EXT) })
+        assertEquals(ts2021, targetBin.lastModified())
     }
 
     @Test

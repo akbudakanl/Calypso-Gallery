@@ -107,7 +107,7 @@ object CryptoManager {
 
     const val VAULT_RESTORE_INFO_FILE = ".restore_info"
 
-    const val TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 2_000L
+    const val TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 10_000L
 
 
     // Cryptographic Key Separation Domains & MAC Specifications
@@ -527,7 +527,8 @@ object CryptoManager {
     )
 
 
-    internal const val PENDING_SYNC_FILE_NAME = ".pending_sync"
+    /** Batch manifest written by the CLI; no leading dot so it survives MTP transfers. */
+    internal const val PENDING_SYNC_FILE_NAME = "pending_sync"
 
 
     /**

@@ -21,7 +21,7 @@ The upstream project and its contributors retain their copyright in the inherite
 - **Smart conflict handling** — byte-by-byte comparison with side-by-side previews, plus automatic deduplication and album merge modes.
 - **Local password strength** — an on-device estimator guides vault password creation; nothing is uploaded or sent anywhere.
 - **Tablet-ready layouts** — responsive grids, large-screen dialogs and landscape corrections across the app.
-- **Desktop tooling** — a companion CLI for Windows, macOS and Linux that encrypts media on the computer with your vault key and adds only the resulting `.bin`/`.meta` files to the phone's `Secrets` vault (over USB or through an external drive). Plaintext is never written to the phone's disk. As a special use case, the source can also be kept in RAM on a live OS such as Tails, leaving no unencrypted copy on any disk.
+- **Desktop tooling** — a companion CLI for Windows, macOS and Linux that encrypts media on the computer with your vault key and writes only ciphertext into a neutral `CLI` staging folder. The app imports that batch into the currently active vault (which may be at a custom path), merging albums and skipping identical files. Plaintext is never written to the phone's disk. As a special use case, the source can also be kept in RAM on a live OS such as Tails, leaving no unencrypted copy on any disk.
 
 ## How it differs from Fossify Gallery
 
@@ -43,6 +43,8 @@ Requires Android 8.0 (API 26) or newer. Build the FOSS variant with:
 Release builds use the application ID `com.calypso.gallery`; the Kotlin namespace stays `org.fossify.gallery` for compatibility with inherited sources. Debug builds use `com.calypso.gallery.debug`. See [tools/calypso-cli/README.md](tools/calypso-cli/README.md) for the desktop CLI.
 
 ## Documentation
+
+**Start here for the desktop CLI workflow:** [Windows & Linux (EN)](docs/manuals/windows-linux/user-manual-EN.md) · [macOS (EN)](docs/manuals/macos/user-manual-EN.md) · [Windows & Linux (TR)](docs/manuals/windows-linux/kullanim-kilavuzu-TR.md) · [macOS (TR)](docs/manuals/macos/kullanim-kilavuzu-TR.md). Read the manual for your platform before starting.
 
 - [DOCS.md](DOCS.md) — architecture, cryptography, vault design and user guide
 - [FORK_CHANGELOG.md](FORK_CHANGELOG.md) — fork changes, grouped by release

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 """
-CLI ile uretilen .bin dosyalarini Android tarafi icin test fixture'i olarak uretir.
+Generates .bin files produced by the CLI as test fixtures for the Android side.
 
-Amac: "CLI'da sifrele -> telefonda ac" akisini regresyon testiyle sabitlemek.
-Uretilen konteynerler kanonik FGVLTENC v1 formatindadir:
-  - KEK'ten turetilen anahtarla AES-256-GCM sifreli header (AAD = cleartext prefix),
-  - Tink AES256_GCM_HKDF uyumlu akis (AAD = fileId, 256 KiB segment).
+Goal: lock down the "encrypt in CLI -> open on phone" flow as a regression test.
+Generated containers use the canonical FGVLTENC v1 format:
+  - AES-256-GCM encrypted header with a key derived from the KEK (AAD = cleartext prefix),
+  - Tink-compatible AES256_GCM_HKDF stream (AAD = fileId, 256 KiB segments).
 
-Kullanim:
+Usage:
     cd tools/calypso-cli
     python make_fixtures.py
 
-Cikti:
+Output:
     app/src/test/resources/fixtures/cli/*.bin
     app/src/test/resources/fixtures/cli/manifest.json
 
-NOT: Uretilen dosyalar deterministik DEGILDIR (IV, fileId, salt, noncePrefix ve dosya adi
-rastgeledir). Bu yuzden bir kez uretilip repoya commit edilir; testler bu sabit
-fixture'lari kullanir. manifest.json icindeki kek_hex, konteyner header'larini cozmek
-icin kullanilan anahtari kaydeder.
+NOTE: Generated files are NOT deterministic (IV, fileId, salt, noncePrefix and filename
+are random). They are generated once and committed to the repo; tests use these fixed
+fixtures. The kek_hex in manifest.json is the key used to decrypt container headers
+and is recorded there.
 """
 
 import hashlib
@@ -143,8 +143,8 @@ def main() -> int:
     )
 
     shutil.rmtree(TMP_DIR, ignore_errors=True)
-    print(f"\n{len(cases)} fixture uretildi -> {OUT_DIR}")
-    print("Bu dosyalari repoya commit etmeyi unutma.")
+    print(f"\nGenerated {len(cases)} fixtures -> {OUT_DIR}")
+    print("Remember to commit these files to the repo.")
     return 0
 
 

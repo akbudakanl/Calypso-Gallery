@@ -1,0 +1,8 @@
+# Shell scripts must keep Unix line endings (bash breaks on CRLF)
+*.sh text eol=lf
+
+# Windows launcher uses CRLF
+*.bat text eol=crlf
+
+# Default: let Git normalize other text files
+* text=auto

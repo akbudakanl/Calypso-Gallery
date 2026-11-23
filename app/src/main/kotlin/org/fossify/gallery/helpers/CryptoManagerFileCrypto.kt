@@ -859,7 +859,13 @@ fun CryptoManager.resolveSyncSourceRoot(selectedDir: File): File {
         return selectedDir
     }
 
+    // CLI staging folders are checked first: when both a staging folder and a
+    // vault folder live under the same parent, the user is importing a CLI batch.
+    // No assumption is made that the active vault is named "Secrets" — it may be
+    // at a custom path, and several vaults may exist on the device.
     val nestedContainerCandidates = mutableListOf(
+        File(File(selectedDir, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME),
+        File(selectedDir, CLI_STAGING_DIR_NAME),
         File(File(selectedDir, CIPHER_APP_DIR_NAME), SECRETS_DIR_NAME),
         File(selectedDir, SECRETS_DIR_NAME)
     )
