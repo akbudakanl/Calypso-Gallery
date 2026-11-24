@@ -12,6 +12,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.allViews
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListUpdateCallback
 import com.bumptech.glide.Glide
 import com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
 import org.fossify.commons.activities.BaseSimpleActivity
@@ -172,6 +174,10 @@ class MediaAdapter(
     private val ITEM_MEDIUM_VIDEO_PORTRAIT = 1
     private val ITEM_MEDIUM_PHOTO = 2
 
+    companion object {
+        private const val PAYLOAD_METADATA_ONLY = "metadata_only"
+    }
+
     private val config = activity.config
     private val viewType = config.getFolderViewType(if (config.showAll || path.isEmpty()) SHOW_ALL else path)
     private val isListViewType = viewType == VIEW_TYPE_LIST
@@ -269,22 +275,32 @@ class MediaAdapter(
             }
         }
 
-        fun applyListUpdate(
+        fun applyDiffUpdate(
             adapter: MyRecyclerViewAdapter,
+            diffResult: DiffUtil.DiffResult,
             samePaths: Boolean,
-            changedVisualIndices: List<Int>,
             positionOffset: Int,
             isSelectable: Boolean,
             selectedKeysCount: Int,
             actMode: android.view.ActionMode?
         ) {
-            if (!samePaths) {
-                adapter.notifyDataSetChanged()
-            } else {
-                for (idx in changedVisualIndices) {
-                    adapter.notifyItemChanged(idx + positionOffset)
+            diffResult.dispatchUpdatesTo(object : ListUpdateCallback {
+                override fun onInserted(position: Int, count: Int) {
+                    adapter.notifyItemRangeInserted(position + positionOffset, count)
                 }
-            }
+
+                override fun onRemoved(position: Int, count: Int) {
+                    adapter.notifyItemRangeRemoved(position + positionOffset, count)
+                }
+
+                override fun onMoved(fromPosition: Int, toPosition: Int) {
+                    adapter.notifyItemMoved(fromPosition + positionOffset, toPosition + positionOffset)
+                }
+
+                override fun onChanged(position: Int, count: Int, payload: Any?) {
+                    adapter.notifyItemRangeChanged(position + positionOffset, count, payload)
+                }
+            })
 
             if (isSelectable) {
                 if (selectedKeysCount == 0) {
@@ -343,7 +359,6 @@ class MediaAdapter(
 
     override fun onBindViewHolder(holder: MyRecyclerViewAdapter.ViewHolder, position: Int) {
         val tmbItem = media.getOrNull(position) ?: return
-        val allowLongPress = (!isAGetIntent || allowMultiplePicks) && tmbItem is Medium
         holder.bindView(tmbItem, false, false) { itemView, _ ->
             if (tmbItem is Medium) {
                 setupThumbnail(itemView, tmbItem)
@@ -352,22 +367,41 @@ class MediaAdapter(
             }
         }
         if (tmbItem is Medium) {
-            val itemKey = tmbItem.path.hashCode()
-            SelectionSync.bindSafeClickAndLongClick(
-                adapter = this,
-                holder = holder,
-                item = tmbItem,
-                itemKey = itemKey,
-                allowLongPress = allowLongPress,
-                positionOffset = positionOffset,
-                isSelectable = { actModeCallback.isSelectable },
-                isSelected = { selectedKeys.contains(itemKey) },
-                startSelectionMode = { activity.startActionMode(actModeCallback) },
-                toggleSelection = { select, pos -> toggleItemSelection(select, pos, true) },
-                setLastLongPressedKey = { lastLongPressedSelectionKey = it }
-            )
+            bindMediumClickListeners(holder, tmbItem)
         }
         bindViewHolder(holder)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNotEmpty() && payloads.all { it == PAYLOAD_METADATA_ONLY }) {
+            val tmbItem = media.getOrNull(position) as? Medium ?: run {
+                super.onBindViewHolder(holder, position, payloads)
+                return
+            }
+            setupThumbnailMetadata(bindItem(holder.itemView, tmbItem), tmbItem)
+            bindMediumClickListeners(holder, tmbItem)
+            bindViewHolder(holder)
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
+    private fun bindMediumClickListeners(holder: ViewHolder, medium: Medium) {
+        val allowLongPress = !isAGetIntent || allowMultiplePicks
+        val itemKey = medium.path.hashCode()
+        SelectionSync.bindSafeClickAndLongClick(
+            adapter = this,
+            holder = holder,
+            item = medium,
+            itemKey = itemKey,
+            allowLongPress = allowLongPress,
+            positionOffset = positionOffset,
+            isSelectable = { actModeCallback.isSelectable },
+            isSelected = { selectedKeys.contains(itemKey) },
+            startSelectionMode = { activity.startActionMode(actModeCallback) },
+            toggleSelection = { select, pos -> toggleItemSelection(select, pos, true) },
+            setLastLongPressedKey = { lastLongPressedSelectionKey = it }
+        )
     }
 
     override fun getItemCount() = media.size
@@ -495,11 +529,11 @@ class MediaAdapter(
 
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
-        if (!activity.isDestroyed) {
-            val itemView = holder.itemView
-            val tmb = itemView.allViews.firstOrNull { it.id == R.id.medium_thumbnail }
-            if (tmb != null) {
-                Glide.with(activity).clear(tmb)
+        val tmb = holder.itemView.allViews.firstOrNull { it.id == R.id.medium_thumbnail }
+        if (tmb != null) {
+            tmb.setTag(R.id.medium_thumbnail, null)
+            if (!activity.isDestroyed) {
+                Glide.with(activity.applicationContext).clear(tmb)
             }
         }
     }
@@ -1623,22 +1657,64 @@ class MediaAdapter(
         val thumbnailItems = newMedia.clone() as ArrayList<ThumbnailItem>
         val newMediaHash = MediaUpdatePolicy.computeMediaContentHash(thumbnailItems)
         if (newMediaHash != currentMediaHash) {
-            val samePaths = MediaUpdatePolicy.haveSameMediaPaths(media, thumbnailItems)
-            val changedVisualIndices = if (samePaths) {
-                MediaUpdatePolicy.findVisualChangedMediaIndices(media, thumbnailItems)
-            } else {
-                emptyList()
-            }
+            val oldMedia = media
+            val samePaths = MediaUpdatePolicy.haveSameMediaPaths(oldMedia, thumbnailItems)
+            val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize() = oldMedia.size
+
+                override fun getNewListSize() = thumbnailItems.size
+
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    val oldItem = oldMedia[oldItemPosition]
+                    val newItem = thumbnailItems[newItemPosition]
+                    return when {
+                        oldItem is Medium && newItem is Medium -> oldItem.path == newItem.path
+                        oldItem is ThumbnailSection && newItem is ThumbnailSection -> oldItem.title == newItem.title
+                        else -> false
+                    }
+                }
+
+                override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    val oldItem = oldMedia[oldItemPosition]
+                    val newItem = thumbnailItems[newItemPosition]
+                    return when {
+                        oldItem is Medium && newItem is Medium -> {
+                            oldItem.name == newItem.name &&
+                                oldItem.modified == newItem.modified &&
+                                oldItem.size == newItem.size &&
+                                oldItem.type == newItem.type &&
+                                oldItem.videoDuration == newItem.videoDuration &&
+                                oldItem.isFavorite == newItem.isFavorite &&
+                                oldItem.gridPosition == newItem.gridPosition
+                        }
+
+                        oldItem is ThumbnailSection && newItem is ThumbnailSection -> oldItem.title == newItem.title
+                        else -> false
+                    }
+                }
+
+                override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+                    val oldItem = oldMedia[oldItemPosition]
+                    val newItem = thumbnailItems[newItemPosition]
+                    return if (oldItem is Medium && newItem is Medium &&
+                        MediaUpdatePolicy.hasSameVisualThumbnail(oldItem, newItem)
+                    ) {
+                        PAYLOAD_METADATA_ONLY
+                    } else {
+                        null
+                    }
+                }
+            })
             currentMediaHash = newMediaHash
             media = thumbnailItems
             lastLongPressedSelectionKey = SelectionSync.remapLastLongPressedItem(this, lastLongPressedSelectionKey)
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedKeys(selectedKeys, thumbnailItems)
             }
-            SelectionSync.applyListUpdate(
+            SelectionSync.applyDiffUpdate(
                 adapter = this,
+                diffResult = diffResult,
                 samePaths = samePaths,
-                changedVisualIndices = changedVisualIndices,
                 positionOffset = positionOffset,
                 isSelectable = actModeCallback.isSelectable,
                 selectedKeysCount = selectedKeys.size,
@@ -1667,9 +1743,9 @@ class MediaAdapter(
         notifyDataSetChanged()
     }
 
-    private fun setupThumbnail(view: View, medium: Medium) {
+    private fun setupThumbnailMetadata(binding: MediaItemBinding, medium: Medium) {
         val isSelected = selectedKeys.contains(medium.path.hashCode())
-        bindItem(view, medium).apply {
+        binding.apply {
             val padding = if (config.thumbnailSpacing <= 1) {
                 config.thumbnailSpacing
             } else {
@@ -1719,6 +1795,8 @@ class MediaAdapter(
             videoDuration?.beVisibleIf(showVideoDuration)
             if (isListViewType) {
                 videoDuration?.setTextColor(textColor)
+                mediumName.setTextColor(textColor)
+                playPortraitOutline?.applyColorFilter(textColor)
             }
 
             mediumCheck.beVisibleIf(isSelected)
@@ -1730,6 +1808,12 @@ class MediaAdapter(
             if (isListViewType) {
                 mediaItemHolder.isSelected = isSelected
             }
+        }
+    }
+
+    private fun setupThumbnail(view: View, medium: Medium) {
+        bindItem(view, medium).apply {
+            setupThumbnailMetadata(this, medium)
 
             var path = medium.path
             if (hasOTGConnected && root.context.isPathOnOTG(path)) {
@@ -1742,6 +1826,14 @@ class MediaAdapter(
                 else -> ROUNDED_CORNERS_NONE
             }
 
+            val thumbKey = "$path|${medium.getSignature()}|$cropThumbnails|$roundedCorners|$animateGifs|${medium.type}"
+            if (mediumThumbnail.drawable != null &&
+                mediumThumbnail.getTag(R.id.medium_thumbnail) == thumbKey &&
+                !rotatedImagePaths.contains(path)
+            ) {
+                return@apply
+            }
+
             mediumThumbnail.setBackgroundResource(
                 when (roundedCorners) {
                     ROUNDED_CORNERS_SMALL -> R.drawable.placeholder_rounded_small
@@ -1749,6 +1841,7 @@ class MediaAdapter(
                     else -> R.drawable.placeholder_square
                 }
             )
+            mediumThumbnail.setTag(R.id.medium_thumbnail, thumbKey)
 
             activity.loadImage(
                 type = medium.type,
@@ -1761,15 +1854,13 @@ class MediaAdapter(
                 signature = medium.getKey(),
                 skipMemoryCacheAtPaths = rotatedImagePaths,
                 onError = {
+                    if (mediumThumbnail.getTag(R.id.medium_thumbnail) == thumbKey) {
+                        mediumThumbnail.setTag(R.id.medium_thumbnail, null)
+                    }
                     mediumThumbnail.scaleType = ImageView.ScaleType.CENTER
                     mediumThumbnail.setImageDrawable(AppCompatResources.getDrawable(activity, R.drawable.ic_vector_warning_colored))
                 }
             )
-
-            if (isListViewType) {
-                mediumName.setTextColor(textColor)
-                playPortraitOutline?.applyColorFilter(textColor)
-            }
         }
     }
 

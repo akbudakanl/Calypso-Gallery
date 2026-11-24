@@ -304,4 +304,87 @@ class MediaUpdatePolicyTest {
             )
         )
     }
+
+    @Test
+    fun mergeCachedMediaMetadataReconcilesMillisecondVsSecondDrift() {
+        val cachedSeconds = medium(id = 1L, path = "/a/sec.jpg", modified = 1000L)
+        val freshMillis = medium(id = null, path = "/a/sec.jpg", modified = 1450L).copy(taken = 1450L)
+
+        MediaUpdatePolicy.mergeCachedMediaMetadata(listOf(freshMillis), listOf(cachedSeconds))
+
+        assertEquals(1000L, freshMillis.modified)
+        assertEquals(1000L, freshMillis.taken)
+
+        val cachedMillis = medium(id = 2L, path = "/a/ms.jpg", modified = 1450L)
+        val freshSeconds = medium(id = null, path = "/a/ms.jpg", modified = 1000L).copy(taken = 0L)
+
+        MediaUpdatePolicy.mergeCachedMediaMetadata(listOf(freshSeconds), listOf(cachedMillis))
+
+        assertEquals(1450L, freshSeconds.modified)
+        assertEquals(1450L, freshSeconds.taken)
+
+        val cachedOlder = medium(id = 3L, path = "/a/real_change.jpg", modified = 1000L)
+        val freshNewer = medium(id = null, path = "/a/real_change.jpg", modified = 2000L)
+
+        MediaUpdatePolicy.mergeCachedMediaMetadata(listOf(freshNewer), listOf(cachedOlder))
+
+        assertEquals(2000L, freshNewer.modified)
+    }
+
+    @Test
+    fun hasSameVisualThumbnailChecksPathTypeSizeAndModifiedOnly() {
+        val base = medium(id = 1L, path = "/a/1.jpg", modified = 1000L, isFavorite = false, gridPosition = 0)
+        val metadataOnlyChange = base.copy(
+            id = 99L,
+            name = "renamed.jpg",
+            taken = 500L,
+            videoDuration = 12,
+            isFavorite = true,
+            mediaStoreId = 999L,
+            gridPosition = 4
+        )
+        assertTrue(MediaUpdatePolicy.hasSameVisualThumbnail(base, metadataOnlyChange))
+        assertFalse(MediaUpdatePolicy.hasSameVisualThumbnail(base, base.copy(path = "/a/2.jpg")))
+        assertFalse(MediaUpdatePolicy.hasSameVisualThumbnail(base, base.copy(type = TYPE_IMAGES + 1)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualThumbnail(base, base.copy(size = base.size + 1L)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualThumbnail(base, base.copy(modified = base.modified + 1000L)))
+    }
+
+    @Test
+    fun hasSameVisualDirectoryChecksVisualFieldsOnly() {
+        val base = directory(id = 1L, path = "/d0", tmb = "/d0/1.jpg", mediaCnt = 5, modified = 1000L, sortValue = "1000")
+        val nonVisualChange = base.copy(id = 42L, modified = 9999L, taken = 8888L, size = 123456L, sortValue = "9999")
+        assertTrue(MediaUpdatePolicy.hasSameVisualDirectory(base, nonVisualChange))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(tmb = "/d0/2.jpg")))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(name = "Other")))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(mediaCnt = 6)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(subfoldersCount = 2)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(subfoldersMediaCount = 10)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(location = LOCATION_INTERNAL + 1)))
+        assertFalse(MediaUpdatePolicy.hasSameVisualDirectory(base, base.copy(types = TYPE_IMAGES + 2)))
+    }
+
+    @Test
+    fun computeViewerMediaContentHashIgnoresTransientFieldsAndDetectsContentChanges() {
+        val a = medium(id = 1L, path = "/a/1.jpg", modified = 1000L, isFavorite = false, gridPosition = 0)
+        val b = medium(id = 2L, path = "/a/2.mp4", modified = 2000L, isFavorite = true, gridPosition = 1)
+            .copy(videoDuration = 15, size = 4096L)
+
+        val transientChanged = listOf(
+            a.copy(id = 50L, gridPosition = 10, mediaStoreId = 500L, taken = 999L),
+            b.copy(id = 51L, gridPosition = 11, mediaStoreId = 501L, taken = 888L)
+        )
+        assertEquals(
+            MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a, b)),
+            MediaUpdatePolicy.computeViewerMediaContentHash(transientChanged)
+        )
+
+        val baseHash = MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a, b))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(b, a)))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a.copy(path = "/a/3.jpg"), b)))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a.copy(isFavorite = true), b)))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a, b.copy(videoDuration = 20))))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a.copy(size = 9999L), b)))
+        assertNotEquals(baseHash, MediaUpdatePolicy.computeViewerMediaContentHash(listOf(a.copy(modified = 5000L), b)))
+    }
 }

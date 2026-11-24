@@ -1,5 +1,6 @@
 package org.fossify.gallery.helpers
 
+import kotlin.math.abs
 import org.fossify.gallery.models.Directory
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
@@ -44,8 +45,30 @@ object MediaUpdatePolicy {
     }
 
     /**
+     * Computes a content hash of [items] for viewer refreshes, ignoring [Medium.id],
+     * [Medium.gridPosition], [Medium.mediaStoreId], and [Medium.taken].
+     */
+    fun computeViewerMediaContentHash(items: List<Medium>): Int {
+        var result = 1
+        for (item in items) {
+            var h = item.name.hashCode()
+            h = 31 * h + item.path.hashCode()
+            h = 31 * h + item.parentPath.hashCode()
+            h = 31 * h + item.modified.hashCode()
+            h = 31 * h + item.size.hashCode()
+            h = 31 * h + item.type
+            h = 31 * h + item.videoDuration
+            h = 31 * h + item.isFavorite.hashCode()
+            h = 31 * h + item.deletedTS.hashCode()
+            result = 31 * result + h
+        }
+        return result
+    }
+
+    /**
      * Merges non-zero cached metadata from [cachedItems] into [freshItems] when the live scan
-     * skipped fetching a field (e.g. modified, taken, size, videoDuration, mediaStoreId == 0).
+     * skipped fetching a field (e.g. modified, taken, size, videoDuration, mediaStoreId == 0),
+     * and reconciles sub-second millisecond-vs-second timestamp drift.
      */
     fun mergeCachedMediaMetadata(freshItems: List<ThumbnailItem>, cachedItems: List<ThumbnailItem>) {
         if (freshItems.isEmpty() || cachedItems.isEmpty()) {
@@ -62,11 +85,24 @@ object MediaUpdatePolicy {
         for (item in freshItems) {
             if (item is Medium) {
                 val cached = cachedByPath[item.path] ?: continue
+                val previousModified = item.modified
                 if (item.modified == 0L && cached.modified != 0L) {
                     item.modified = cached.modified
+                } else if (item.modified > 0L &&
+                    cached.modified > 0L &&
+                    abs(item.modified - cached.modified) < 1000L &&
+                    (cached.modified % 1000L == 0L || item.modified % 1000L == 0L)
+                ) {
+                    item.modified = cached.modified
                 }
-                if ((item.taken == 0L || (item.taken == item.modified && cached.taken != cached.modified)) && cached.taken != 0L) {
-                    item.taken = cached.taken
+                if (cached.taken != 0L) {
+                    val hasTakenDrift = item.taken > 0L &&
+                        abs(item.taken - cached.taken) < 1000L &&
+                        (cached.taken % 1000L == 0L || item.taken % 1000L == 0L)
+                    val hadModifiedFallback = item.taken == previousModified && cached.taken != cached.modified
+                    if (item.taken == 0L || hadModifiedFallback || hasTakenDrift) {
+                        item.taken = cached.taken
+                    }
                 }
                 if (item.size == 0L && cached.size != 0L) {
                     item.size = cached.size
@@ -79,6 +115,29 @@ object MediaUpdatePolicy {
                 }
             }
         }
+    }
+
+    /**
+     * Returns true when [oldItem] and [newItem] render the exact same thumbnail bitmap.
+     */
+    fun hasSameVisualThumbnail(oldItem: Medium, newItem: Medium): Boolean {
+        return oldItem.path == newItem.path &&
+            oldItem.type == newItem.type &&
+            oldItem.size == newItem.size &&
+            oldItem.modified == newItem.modified
+    }
+
+    /**
+     * Returns true when [oldDir] and [newDir] have identical visual directory display fields.
+     */
+    fun hasSameVisualDirectory(oldDir: Directory, newDir: Directory): Boolean {
+        return oldDir.tmb == newDir.tmb &&
+            oldDir.name == newDir.name &&
+            oldDir.mediaCnt == newDir.mediaCnt &&
+            oldDir.subfoldersCount == newDir.subfoldersCount &&
+            oldDir.subfoldersMediaCount == newDir.subfoldersMediaCount &&
+            oldDir.location == newDir.location &&
+            oldDir.types == newDir.types
     }
 
     /**

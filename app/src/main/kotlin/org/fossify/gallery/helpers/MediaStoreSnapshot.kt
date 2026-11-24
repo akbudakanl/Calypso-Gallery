@@ -1,6 +1,7 @@
 package org.fossify.gallery.helpers
 
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 
 /**
@@ -17,13 +18,27 @@ import android.provider.MediaStore
 data class MediaStoreSnapshot(
     val count: Long = 0L,
     val maxId: Long = 0L,
-    val maxDateModified: Long = 0L
+    val maxDateModified: Long = 0L,
+    val generation: Long = -1L
 ) {
-    fun differsFrom(other: MediaStoreSnapshot) =
-        count != other.count || maxId != other.maxId || maxDateModified != other.maxDateModified
+    fun differsFrom(other: MediaStoreSnapshot): Boolean {
+        return if (generation >= 0L || other.generation >= 0L) {
+            generation != other.generation
+        } else {
+            count != other.count || maxId != other.maxId || maxDateModified != other.maxDateModified
+        }
+    }
 }
 
 fun Context.getMediaStoreSnapshot(): MediaStoreSnapshot {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        return try {
+            MediaStoreSnapshot(generation = MediaStore.getGeneration(this, MediaStore.VOLUME_EXTERNAL))
+        } catch (_: Exception) {
+            MediaStoreSnapshot()
+        }
+    }
+
     val projection = arrayOf(
         "COUNT(${MediaStore.MediaColumns._ID})",
         "MAX(${MediaStore.MediaColumns._ID})",

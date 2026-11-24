@@ -15,6 +15,7 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -184,6 +185,10 @@ class DirectoryAdapter(
     MyRecyclerViewAdapter(activity, recyclerView, itemClick), ItemTouchHelperContract,
     RecyclerViewFastScroller.OnPopupTextUpdate {
 
+    companion object {
+        private const val PAYLOAD_METADATA_ONLY = "metadata_only"
+    }
+
     private val config = activity.config
     private val isListViewType = config.viewTypeFolders == VIEW_TYPE_LIST
     private var pinnedFolders = config.pinnedFolders
@@ -211,6 +216,8 @@ class DirectoryAdapter(
     private var showHiddenAlbumIcon = config.showHiddenAlbumIcon
     private var excludedFolderPaths = HashSet<String>()
     private var hiddenFolderPaths = HashSet<String>()
+    private var boundLockedFolderPaths = HashSet<String>()
+    private var boundPinnedFolders = HashSet<String>()
     private val badgeCheckGeneration = AtomicInteger(0)
     var directorySorting = config.directorySorting
     var dateFormat = config.dateFormat
@@ -219,6 +226,8 @@ class DirectoryAdapter(
     init {
         setupDragListener(true)
         fillLockedFolders()
+        boundLockedFolderPaths = lockedFolderPaths.toHashSet()
+        boundPinnedFolders = pinnedFolders.toHashSet()
         fillAlbumBadgeStates()
     }
 
@@ -239,6 +248,25 @@ class DirectoryAdapter(
         holder.bindView(dir, false, false) { itemView, _ ->
             setupView(itemView, dir, holder)
         }
+        bindDirectoryClickListeners(holder, dir)
+        bindViewHolder(holder)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNotEmpty() && payloads.all { it == PAYLOAD_METADATA_ONLY }) {
+            val dir = dirs.getOrNull(position) ?: run {
+                super.onBindViewHolder(holder, position, payloads)
+                return
+            }
+            setupMetadataViews(bindItem(holder.itemView), dir, holder)
+            bindDirectoryClickListeners(holder, dir)
+            bindViewHolder(holder)
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
+    private fun bindDirectoryClickListeners(holder: ViewHolder, dir: Directory) {
         val itemKey = dir.path.hashCode()
         MediaAdapter.SelectionSync.bindSafeClickAndLongClick(
             adapter = this,
@@ -253,7 +281,6 @@ class DirectoryAdapter(
             toggleSelection = { select, pos -> toggleItemSelection(select, pos, true) },
             setLastLongPressedKey = { lastLongPressedSelectionKey = it }
         )
-        bindViewHolder(holder)
     }
 
     override fun getItemCount() = dirs.size
@@ -419,8 +446,10 @@ class DirectoryAdapter(
 
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)
+        val dirThumbnail = bindItem(holder.itemView).dirThumbnail
+        dirThumbnail.setTag(R.id.dir_thumbnail, null)
         if (!activity.isDestroyed) {
-            Glide.with(activity).clear(bindItem(holder.itemView).dirThumbnail)
+            Glide.with(activity.applicationContext).clear(dirThumbnail)
         }
     }
 
@@ -1126,6 +1155,7 @@ class DirectoryAdapter(
                     lockedFolderPaths.add(it)
                 }
 
+                currentDirectoriesHash = 0
                 listener?.refreshItems()
                 finishActMode()
             }
@@ -1147,6 +1177,7 @@ class DirectoryAdapter(
 
         fun unlockNextGroup() {
             if (!credentialGroups.hasNext()) {
+                currentDirectoriesHash = 0
                 listener?.refreshItems()
                 finishActMode()
                 return
@@ -1165,6 +1196,7 @@ class DirectoryAdapter(
                 } else if (unlockedAny) {
                     // A later prompt was cancelled: keep the groups already unlocked, leave the
                     // remaining ones locked and show the partial result.
+                    currentDirectoriesHash = 0
                     listener?.refreshItems()
                     finishActMode()
                 }
@@ -1669,8 +1701,13 @@ class DirectoryAdapter(
             }
             activity.runOnUiThread {
                 if (generation == badgeCheckGeneration.get() && detectedHidden != hiddenFolderPaths) {
+                    val previousHidden = hiddenFolderPaths
                     hiddenFolderPaths = detectedHidden
-                    notifyDataSetChanged()
+                    dirs.forEachIndexed { index, dir ->
+                        if (previousHidden.contains(dir.path) != detectedHidden.contains(dir.path)) {
+                            notifyItemChanged(index + positionOffset, PAYLOAD_METADATA_ONLY)
+                        }
+                    }
                 }
             }
         }
@@ -1680,12 +1717,13 @@ class DirectoryAdapter(
         val directories = newDirs.clone() as ArrayList<Directory>
         val newDirsHash = MediaUpdatePolicy.computeDirectoryContentHash(directories)
         if (newDirsHash != currentDirectoriesHash) {
-            val samePaths = MediaUpdatePolicy.haveSameDirectoryPaths(dirs, directories)
-            val changedVisualIndices = if (samePaths) {
-                MediaUpdatePolicy.findVisualChangedDirectoryIndices(dirs, directories)
-            } else {
-                emptyList()
-            }
+            val oldDirs = dirs
+            val oldLockedPaths = boundLockedFolderPaths
+            val oldExcludedPaths = excludedFolderPaths.toHashSet()
+            val oldHiddenPaths = hiddenFolderPaths.toHashSet()
+            val oldPinnedFolders = boundPinnedFolders
+            val samePaths = MediaUpdatePolicy.haveSameDirectoryPaths(oldDirs, directories)
+
             currentDirectoriesHash = newDirsHash
             dirs = directories
             pinnedFolders = config.pinnedFolders
@@ -1695,14 +1733,51 @@ class DirectoryAdapter(
             showHiddenAlbumIcon = config.showHiddenAlbumIcon
             fillLockedFolders()
             fillAlbumBadgeStates()
+
+            val newLockedPaths = lockedFolderPaths.toHashSet()
+            val newPinnedFolders = pinnedFolders.toHashSet()
+            val diffResult = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+                override fun getOldListSize() = oldDirs.size
+
+                override fun getNewListSize() = directories.size
+
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    return oldDirs[oldItemPosition].path == directories[newItemPosition].path
+                }
+
+                override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    val oldDir = oldDirs[oldItemPosition]
+                    val newDir = directories[newItemPosition]
+                    return MediaUpdatePolicy.hasSameVisualDirectory(oldDir, newDir) &&
+                        oldLockedPaths.contains(oldDir.path) == newLockedPaths.contains(newDir.path) &&
+                        oldExcludedPaths.contains(oldDir.path) == excludedFolderPaths.contains(newDir.path) &&
+                        oldHiddenPaths.contains(oldDir.path) == hiddenFolderPaths.contains(newDir.path) &&
+                        oldPinnedFolders.contains(oldDir.path) == newPinnedFolders.contains(newDir.path)
+                }
+
+                override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+                    val oldDir = oldDirs[oldItemPosition]
+                    val newDir = directories[newItemPosition]
+                    return if (oldDir.tmb == newDir.tmb &&
+                        oldLockedPaths.contains(oldDir.path) == newLockedPaths.contains(newDir.path)
+                    ) {
+                        PAYLOAD_METADATA_ONLY
+                    } else {
+                        null
+                    }
+                }
+            })
+
+            boundLockedFolderPaths = newLockedPaths
+            boundPinnedFolders = newPinnedFolders
             lastLongPressedSelectionKey = MediaAdapter.SelectionSync.remapLastLongPressedItem(this, lastLongPressedSelectionKey)
             if (actModeCallback.isSelectable) {
                 MediaUpdatePolicy.reconcileSelectedDirectoryKeys(selectedKeys, directories)
             }
-            MediaAdapter.SelectionSync.applyListUpdate(
+            MediaAdapter.SelectionSync.applyDiffUpdate(
                 adapter = this,
+                diffResult = diffResult,
                 samePaths = samePaths,
-                changedVisualIndices = changedVisualIndices,
                 positionOffset = positionOffset,
                 isSelectable = actModeCallback.isSelectable,
                 selectedKeysCount = selectedKeys.size,
@@ -1721,18 +1796,10 @@ class DirectoryAdapter(
         notifyDataSetChanged()
     }
 
-    private fun setupView(view: View, directory: Directory, holder: ViewHolder) {
+    private fun setupMetadataViews(binding: DirectoryItemBinding, directory: Directory, holder: ViewHolder) {
         val isSelected = selectedKeys.contains(directory.path.hashCode())
-        bindItem(view).apply {
+        binding.apply {
             dirPath?.text = "${directory.path.substringBeforeLast("/")}/"
-            val tmbDisplayName = CryptoManager.getDisplayName(directory.tmb)
-            val thumbnailType = when {
-                tmbDisplayName.isVideoFast() -> TYPE_VIDEOS
-                tmbDisplayName.isGif() -> TYPE_GIFS
-                tmbDisplayName.isRawFast() -> TYPE_RAWS
-                tmbDisplayName.isSvg() -> TYPE_SVGS
-                else -> TYPE_IMAGES
-            }
 
             dirCheck.beVisibleIf(isSelected)
             if (isSelected) {
@@ -1744,48 +1811,12 @@ class DirectoryAdapter(
                 dirHolder.isSelected = isSelected
             }
 
-            if (scrollHorizontally && !isListViewType && folderStyle == FOLDER_STYLE_ROUNDED_CORNERS) {
-                (dirThumbnail.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.ABOVE, dirName.id)
-
-                val nameParams = (dirName.layoutParams as RelativeLayout.LayoutParams)
-                nameParams.removeRule(RelativeLayout.BELOW)
-                nameParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
-            }
-
             if (lockedFolderPaths.contains(directory.path)) {
                 dirLock.beVisible()
                 dirLock.background = ColorDrawable(root.context.getProperBackgroundColor())
                 dirLock.applyColorFilter(root.context.getProperBackgroundColor().getContrastColor())
             } else {
                 dirLock.beGone()
-                val roundedCorners = when {
-                    isListViewType -> ROUNDED_CORNERS_SMALL
-                    folderStyle == FOLDER_STYLE_SQUARE -> ROUNDED_CORNERS_NONE
-                    else -> ROUNDED_CORNERS_BIG
-                }
-
-                dirThumbnail.setBackgroundResource(
-                    when (roundedCorners) {
-                        ROUNDED_CORNERS_SMALL -> R.drawable.placeholder_rounded_small
-                        ROUNDED_CORNERS_BIG -> R.drawable.placeholder_rounded_big
-                        else -> R.drawable.placeholder_square
-                    }
-                )
-
-                activity.loadImage(
-                    type = thumbnailType,
-                    path = directory.tmb,
-                    target = dirThumbnail,
-                    horizontalScroll = scrollHorizontally,
-                    animateGifs = animateGifs,
-                    cropThumbnails = cropThumbnails,
-                    roundCorners = roundedCorners,
-                    signature = directory.getKey(),
-                    onError = {
-                        dirThumbnail.scaleType = ImageView.ScaleType.CENTER
-                        dirThumbnail.setImageDrawable(AppCompatResources.getDrawable(activity, R.drawable.ic_vector_warning_colored))
-                    }
-                )
             }
 
             dirPin.beVisibleIf(pinnedFolders.contains(directory.path))
@@ -1873,6 +1904,74 @@ class DirectoryAdapter(
                     }
                     false
                 }
+            }
+        }
+    }
+
+    private fun setupView(view: View, directory: Directory, holder: ViewHolder) {
+        bindItem(view).apply {
+            setupMetadataViews(this, directory, holder)
+
+            if (scrollHorizontally && !isListViewType && folderStyle == FOLDER_STYLE_ROUNDED_CORNERS) {
+                (dirThumbnail.layoutParams as RelativeLayout.LayoutParams).addRule(RelativeLayout.ABOVE, dirName.id)
+
+                val nameParams = (dirName.layoutParams as RelativeLayout.LayoutParams)
+                nameParams.removeRule(RelativeLayout.BELOW)
+                nameParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
+            }
+
+            if (lockedFolderPaths.contains(directory.path)) {
+                dirThumbnail.setTag(R.id.dir_thumbnail, null)
+                if (!activity.isDestroyed) {
+                    Glide.with(activity.applicationContext).clear(dirThumbnail)
+                }
+            } else {
+                val roundedCorners = when {
+                    isListViewType -> ROUNDED_CORNERS_SMALL
+                    folderStyle == FOLDER_STYLE_SQUARE -> ROUNDED_CORNERS_NONE
+                    else -> ROUNDED_CORNERS_BIG
+                }
+
+                val tmbDisplayName = CryptoManager.getDisplayName(directory.tmb)
+                val thumbnailType = when {
+                    tmbDisplayName.isVideoFast() -> TYPE_VIDEOS
+                    tmbDisplayName.isGif() -> TYPE_GIFS
+                    tmbDisplayName.isRawFast() -> TYPE_RAWS
+                    tmbDisplayName.isSvg() -> TYPE_SVGS
+                    else -> TYPE_IMAGES
+                }
+
+                val thumbKey = "${directory.path}|${directory.tmb}|${directory.modified}|$cropThumbnails|$roundedCorners|$animateGifs|$thumbnailType"
+                if (dirThumbnail.drawable != null && dirThumbnail.getTag(R.id.dir_thumbnail) == thumbKey) {
+                    return@apply
+                }
+
+                dirThumbnail.setBackgroundResource(
+                    when (roundedCorners) {
+                        ROUNDED_CORNERS_SMALL -> R.drawable.placeholder_rounded_small
+                        ROUNDED_CORNERS_BIG -> R.drawable.placeholder_rounded_big
+                        else -> R.drawable.placeholder_square
+                    }
+                )
+                dirThumbnail.setTag(R.id.dir_thumbnail, thumbKey)
+
+                activity.loadImage(
+                    type = thumbnailType,
+                    path = directory.tmb,
+                    target = dirThumbnail,
+                    horizontalScroll = scrollHorizontally,
+                    animateGifs = animateGifs,
+                    cropThumbnails = cropThumbnails,
+                    roundCorners = roundedCorners,
+                    signature = directory.getKey(),
+                    onError = {
+                        if (dirThumbnail.getTag(R.id.dir_thumbnail) == thumbKey) {
+                            dirThumbnail.setTag(R.id.dir_thumbnail, null)
+                        }
+                        dirThumbnail.scaleType = ImageView.ScaleType.CENTER
+                        dirThumbnail.setImageDrawable(AppCompatResources.getDrawable(activity, R.drawable.ic_vector_warning_colored))
+                    }
+                )
             }
         }
     }

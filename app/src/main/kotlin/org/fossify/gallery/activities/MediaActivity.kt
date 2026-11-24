@@ -1298,7 +1298,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             isPickImage = mIsGetImageIntent && !mIsGetVideoIntent,
             isPickVideo = mIsGetVideoIntent && !mIsGetImageIntent,
             showAll = mShowAll,
-            isSecretVaultView = mIsVaultFilesView
+            isSecretVaultView = mIsVaultFilesView,
+            cachedMediaSnapshot = mMedia.clone() as ArrayList<ThumbnailItem>
         ) {
             ensureBackgroundThread {
                 val oldMedia = mMedia.clone() as ArrayList<ThumbnailItem>

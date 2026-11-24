@@ -2,9 +2,11 @@ package org.fossify.gallery.asynctasks
 
 import android.content.Context
 import android.os.AsyncTask
+import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.getFavoritePaths
+import org.fossify.gallery.extensions.getVirtualAlbumPaths
 import org.fossify.gallery.extensions.isHiddenVirtualAlbumPath
 import org.fossify.gallery.extensions.isVirtualAlbumPath
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
@@ -14,7 +16,9 @@ import org.fossify.gallery.models.ThumbnailItem
 
 class GetMediaAsynctask(
     val context: Context, val mPath: String, val isPickImage: Boolean = false, val isPickVideo: Boolean = false,
-    val showAll: Boolean, val isSecretVaultView: Boolean = false, val callback: (media: ArrayList<ThumbnailItem>) -> Unit
+    val showAll: Boolean, val isSecretVaultView: Boolean = false,
+    val cachedMediaSnapshot: List<ThumbnailItem> = emptyList(),
+    val callback: (media: ArrayList<ThumbnailItem>) -> Unit
 ) :
     AsyncTask<Void, Void, ArrayList<ThumbnailItem>>() {
     private val mediaFetcher = MediaFetcher(context, isSecretVaultView)
@@ -32,7 +36,25 @@ class GetMediaAsynctask(
         val isVirtualAlbum = mPath.isVirtualAlbumPath()
         val lastModifieds = when {
             showAll || mPath == FAVORITES -> mediaFetcher.getLastModifieds()
-            isVirtualAlbum -> HashMap()
+            isVirtualAlbum -> {
+                if (context.isHiddenVirtualAlbumPath(mPath)) {
+                    HashMap()
+                } else {
+                    val parentFolders = context.getVirtualAlbumPaths(mPath)
+                        .map { it.getParentPath() }
+                        .filter { it.isNotEmpty() }
+                        .distinct()
+                    if (parentFolders.size > 8) {
+                        mediaFetcher.getLastModifieds()
+                    } else {
+                        val merged = HashMap<String, Long>()
+                        parentFolders.forEach { parent ->
+                            merged.putAll(mediaFetcher.getFolderLastModifieds(parent))
+                        }
+                        merged
+                    }
+                }
+            }
             mPath != RECYCLE_BIN -> mediaFetcher.getFolderLastModifieds(mPath)
             else -> HashMap()
         }
@@ -78,11 +100,14 @@ class GetMediaAsynctask(
                 media.addAll(newMedia)
             }
 
+            if (cachedMediaSnapshot.isNotEmpty()) {
+                MediaUpdatePolicy.mergeCachedMediaMetadata(media, cachedMediaSnapshot)
+            }
             val scopeKey = if (isSecretVaultView) "vault_show_all" else SHOW_ALL
             mediaFetcher.sortMedia(media, context.config.filesSorting, enableRandom = true, scopeKey = scopeKey)
             media
         } else {
-            mediaFetcher.getFilesFrom(
+            val newMedia = mediaFetcher.getFilesFrom(
                 curPath = mPath,
                 isPickImage = isPickImage,
                 isPickVideo = isPickVideo,
@@ -94,8 +119,19 @@ class GetMediaAsynctask(
                 lastModifieds = lastModifieds,
                 dateTakens = dateTakens,
                 android11Files = null,
-                enableRandom = true
+                enableRandom = true,
+                shouldSort = false
             )
+            if (cachedMediaSnapshot.isNotEmpty()) {
+                MediaUpdatePolicy.mergeCachedMediaMetadata(newMedia, cachedMediaSnapshot)
+            }
+            mediaFetcher.sortMedia(
+                newMedia,
+                context.config.getEffectiveMediaSorting(mPath),
+                enableRandom = true,
+                scopeKey = mPath.ifEmpty { SHOW_ALL }
+            )
+            newMedia
         }
 
         return mediaFetcher.groupMedia(media, pathToUse)
