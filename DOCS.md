@@ -29,8 +29,8 @@ Internal Storage/
         ├── .nomedia                     (Placed at vault container root, not inside normal album subfolders)
         ├── .vault
         ├── JSON/
-        │   ├── 8f4b1e2a9c3d4e5f.json
-        │   └── 3a7d9e1f5b6c8a2e.json
+        │   ├── fva_8f4b1e2a9c3d4e5f.json
+        │   └── fva_3a7d9e1f5b6c8a2e.json
         │
         ├── a1b2c3/                      (Encrypted Physical Vault Album 1)
         │   ├── .meta
@@ -73,10 +73,10 @@ Created when the user enables password protection for hidden items in Settings o
 
 > **Vault folder.** The canonical vault container is `Calypso Gallery/Secrets`; a custom external location hosts `Secrets/` directly on the mounted drive. Vault detection (`resolveExistingVaultInDirectory`, `internalVaultCandidates`), custom-location creation, external sync source resolution (`resolveSyncSourceRoot`), export targeting, deletion, and stealth `JSON/` manifest path remapping all operate on this canonical layout.
 - **`.nomedia` Placement Rules:** `.nomedia` belongs at the **vault container root** (`Secrets/.nomedia`), instructing Android's `MediaScanner` to ignore the entire directory tree without marking individual physical albums as excluded. Normal physical albums and the Default Secret Album (`__VAULT_DEFAULT_ALBUM__`) do **not** receive an inner `.nomedia`. In accordance with `ExcludedMenuPolicy.isEncryptedAlbumExcluded`, only explicitly `.`-prefixed hidden albums inside the vault receive an inner `.nomedia` (created by `CryptoManager.createHiddenPhysicalAlbum` or the Desktop CLI's `write_encrypted_folder_meta`), keeping normal vault albums directly visible once unlocked (while the Encrypted Vault Recycle Bin is always exempted from exclusion by `isVaultRecycleBin`).
-- **`.vault` (Master Vault Header):** Stores the encrypted 256-bit Master Encryption Key (MEK), protected via `Argon2id` v1.3 (RFC 9106 safe floor `64 MiB / 3 iterations / 2 threads`, scaling up to `256 MiB` and `3..100` rounds via device calibration) and `AES-256-GCM`.
+- **`.vault` (Master Vault Header):** Stores the two-layer vault key hierarchy protected via `Argon2id` v1.3 (RFC 9106 safe floor `64 MiB / 3 iterations / 2 threads`, scaling up to `256 MiB` and `3..100` rounds via device calibration) and `AES-256-GCM`: the password-derived key (PDK) wraps the Vault Master Key (VMK), which in turn wraps the KEK keyring (`activeKeyId | KEK`).
 - **`JSON/` (Stealth Encrypted Virtual Albums):**
   - When a virtual album is created from contents of a hidden/encrypted physical album, it automatically gains **Stealth Virtual Album** status.
-  - The filename is an obfuscated 16-character hexadecimal identifier (`fva_8f4b1e2a9c3d4e5f.json`), derived via HMAC-SHA256 with MEK.
+  - The filename is an obfuscated 16-character hexadecimal identifier (`fva_8f4b1e2a9c3d4e5f.json`), derived from the first 8 bytes (16 hex characters) of unkeyed `SHA-256("FVA_STEALTH_" + albumName)`.
   - The album title, member file paths (`fullPath` + vault-relative `relativeVaultPath`), and parent folder reference (`relativeParentVaultPath`) within the JSON payload are encrypted via `AES-256-GCM` with the `FVSTR:` prefix. Inspecting the file on disk reveals neither the album name nor any media paths, while relative paths allow external USB/SD vaults to resolve seamlessly across different mount points/UUIDs (see [Section 5](#5-backup-restore--vault-auto-detection)). `tools/calypso-cli/calypso_vault.py` never reads, writes, or modifies `JSON/`.
 - **Randomized Vault Subfolders (`a1b2c3/`):**
   - Encrypted physical albums are moved inside `Secrets` under randomized 6-character hex subfolder names.
@@ -104,7 +104,7 @@ Calypso Gallery employs a defense-in-depth cryptographic pipeline designed to pr
 
 > **Canonical container format (accepted ADR [0001](docs/adr/0001-tink-streaming-aead-migration.md)):** every `.bin` is a self-contained `FGVLTENC` version 1 container — an AES-256-GCM authenticated header wrapping a random per-file DEK, followed by a Tink `AES256_GCM_HKDF` streaming payload (256 KiB segments). Vault-level strings use `FVSTR:` records with per-purpose HKDF keys and context-binding AAD. The complete corruption / bit-rot behaviour is specified in [§2.4](#24-corruption--bit-rot-behaviour).
 
-> **Operational security (accepted [ADR 0002](docs/adr/0002-operational-security-hardening.md) & [ADR 0004 §11.1](docs/adr/0004-argon2-memory-and-cross-device-kdf.md#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented)):** OS CSPRNG only (no user-movement entropy); **"Brute-Force direnci"** setting (`T_std_64 .. 10.0 s` slider in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`, executed by native Rust `argon2` over JNI with `64 → 128 → 256 MiB` physical-RAM + 64-bit tiering and a conditional 256 MiB warning) whose calibrated KDF parameters are stored in `.vault` alongside the encrypted payload — see [the calibration methodology](docs/argon2-calibration-methodology.md); trace-hygiene audit (thumbnail cache, recents snapshot, MediaStore, temp files, backups, clipboard, keyboard); immediate key zeroization except while a registered foreground file operation is active; durable/resumable secure wipe.
+> **Operational security (accepted [ADR 0002](docs/adr/0002-operational-security-hardening.md) & [ADR 0004 §11.1](docs/adr/0004-argon2-memory-and-cross-device-kdf.md#111-update-2026-11-21--rust-native-argon2id-jni-9-implemented)):** OS CSPRNG only (no user-movement entropy); **"Targeted vault unlock time"** (`"Hedeflenen kasa açılış süresi"`) setting (`T_std_64 .. 10.0 s` slider in `0.1 s` steps, defaulting to `max(1.0 s, T_std_64)`, executed by native Rust `argon2` over JNI with `64 → 128 → 256 MiB` physical-RAM + 64-bit tiering and a conditional 256 MiB warning) whose calibrated KDF parameters are stored in `.vault` alongside the encrypted payload — see [the calibration methodology](docs/argon2-calibration-methodology.md); trace-hygiene audit (thumbnail cache, recents snapshot, MediaStore, temp files, backups, clipboard, keyboard); immediate key zeroization except while a registered foreground file operation is active; durable/resumable secure wipe.
 
 > [!WARNING]
 > **No formal cryptographic audit has been performed on this format.** It uses well-vetted primitives — Tink's streaming AEAD and HKDF, AES-256-GCM, Argon2id — with domain-separated keys and AEAD-bound context, but the container layout, AAD construction and key hierarchy are project-specific and have not been reviewed by an external cryptographer. Do not treat this vault as a substitute for independently audited encryption at rest. Cross-language golden-fixture tests guard against implementation regressions, not against flaws in the design itself.
@@ -192,7 +192,7 @@ A damaged segment appears as a failed image / video load, not as a badge. A dama
 
 | Operation | Behaviour on a corrupted file |
 | :--- | :--- |
-| Normal export (`decryptFileToDirectory`) | `verifyFileIntegrity()` gate → the operation fails (`smart_conflict_integrity_failed`); no plaintext is written and the `.bin` is untouched. |
+| Normal export (`decryptFileToDirectory`) | `verifyFileIntegrity()` gate → `decryptFileToDirectory` marks the operation failed in `OperationJournal` and returns `null` (`smart_conflict_integrity_failed` is used in `SmartFileConflictDialog`); no plaintext is written and the `.bin` is untouched. |
 | Copy / move of an encrypted `.bin` | `verifyFileIntegrity()` gate in `CryptoManagerConflict` → the item is rejected and the source is kept. |
 | Conflict / dedup comparison | Strict; a damaged file is never treated as bit-identical, so it cannot be auto-deduplicated or merged as an identical copy. |
 | Pre-wipe verification (before wiping a plaintext source during a new encryption) | Returns `false`; damaged plaintext is not accepted as a verified duplicate. Note this is **not** about forbidding deletion of a file — deleting a `.bin` is always allowed. |
@@ -207,7 +207,7 @@ There is no corruption dialog and no "Dosyanın şifresini çöz" unverified-dec
 
 #### 2.4.7 Why this is engineered this way
 
-Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external Encrypted Vault use case. The design assumes corruption is *exceptional*: it detects it loudly and never silently propagates or "launters" damaged bytes. The current build surfaces a load error for a damaged file; the tolerant-display alternative was rejected in ADR 0001 §7.3.
+Bit-rot on phone eMMC/UFS is **rare** — ECC handles normal errors — and is more plausible on cheap USB/SD media, after unsafe removal, interrupted writes or power loss, which is exactly the external Encrypted Vault use case. The design assumes corruption is *exceptional*: it detects it loudly and never silently propagates or "launders" damaged bytes. The current build surfaces a load error for a damaged file; the tolerant-display alternative was rejected in ADR 0001 §7.3.
 
 A plain **move** is already trace-free when source and target share a filesystem — `rename(2)` changes only the directory entry, and the app uses this for atomic temp-file replacement. Encryption/decryption are *transformations*, not moves: two different byte sequences must coexist until the new one is verified, which is what preserves the only good copy if the process is interrupted. In-place overwrite is non-atomic (a crash leaves half-plaintext/half-ciphertext with no original), and external vaults are usually on a different filesystem where `rename` degrades to copy+delete anyway. "Forensic trace-free deletion" is not achievable at app level on flash (FTL wear-leveling, journal metadata); CSPRNG overwrite + `fsync` remains best effort as stated in §2.
 
@@ -246,7 +246,7 @@ This is a **relative**, same-machine measurement, not a phone result.
 
 #### Measurement 2 — real read pattern on a device
 
-`MediaReadPatternProbe` (§2.4) records Media3's actual `read()` sizes, open/seek counts and bytes transferred. It is **always enabled in debug builds** — no `adb shell setprop` is needed (custom `cipher.*` properties are rejected by SELinux on many devices with "see dmesg for error reason"). Release builds require `cipher.measure_reads=1`.
+`MediaReadPatternProbe` records Media3's actual `read()` sizes, open/seek counts and bytes transferred. It is **always enabled in debug builds** — no `adb shell setprop` is needed (custom `cipher.*` properties are rejected by SELinux on many devices with "see dmesg for error reason"). Release builds require `cipher.measure_reads=1`.
 
 Procedure:
 
@@ -256,7 +256,7 @@ Procedure:
    ```
 2. Install it (uninstall the previous APK first if signatures differ — vault files on shared storage survive, but app-private settings do not):
    ```powershell
-   adb install -r app\build\outputs\apk\foss\debug\gallery-39-foss-debug.apk
+   adb install -r app\build\outputs\apk\foss\debug\gallery-1-foss-debug.apk
    ```
 3. Clear the log, then in the app unlock the Encrypted Vault, open an **encrypted video** and scrub forward/backward several times. **Exit the player** — the probe logs on `DataSource.close()`.
    ```powershell
@@ -286,74 +286,70 @@ Tink's buffering coalesces Media3's many tiny reads into **fewer, larger** reads
 
 ---
 
-## 3. Application Operating Modes (Mode 1, Mode 2, Mode 3)
+## 3. Application Operating Modes (Standard Mode & Secret Vault Mode)
 
-The application transitions through three distinct operational states to balance convenience and privacy:
+The application operates in two distinct modes—**Standard Mode** and **Secret Vault Mode**—keeping encrypted vault media strictly isolated while allowing unencrypted `.nomedia` hidden folders to be toggled independently in Standard Mode:
 
-```
-                  ┌────────────────────────────────────────┐
-                  │          MODE 1: Standard Mode         │
-                  │   (Normal Albums, Vaults Locked)       │
-                  └───────────────────┬────────────────────┘
-                                      │ Enter Password /
-                                      │ 3x Bottom Scroll
-                                      ▼
-                  ┌────────────────────────────────────────┐
-                  │          MODE 2: Secret Vault          │
-                  │  (Isolated View: Encrypted Physical    │
-                  │     & Stealth Virtual Albums Only)     │
-                  └───────────────┬────────▲───────────────┘
-                         Back Key │        │ 3x Bottom
-                                  │        │ Scroll Gesture
-                                  ▼        │
-                  ┌────────────────────────┴───────────────┐
-                  │          MODE 3: Extended View         │
-                  │  (Unified Grid: Standard Albums +      │
-                  │    .nomedia Folders + Vault Folders)   │
-                  └───────────────────┬────────────────────┘
-                                      │ Swipe-kill App /
-                                      │ "Stop showing hidden"
-                                      ▼
-                  ┌────────────────────────────────────────┐
-                  │           MEMORY ZEROIZATION           │
-                  │ (RAM fill(0), Clear Bitmaps & Caches)  │
-                  └────────────────────────────────────────┘
+```text
+                  ┌──────────────────────────────────────────────────────────┐
+                  │                 STANDARD MODE (Default)                  │
+                  │  Normal Albums & Standard Virtual Albums; Vault Locked   │
+                  │  • Independent overflow toggles for .nomedia & Excluded  │
+                  │    folders (5-minute / onDestroy auto-reset)             │
+                  └───────────────────────┬──────────────────────────▲───────┘
+                                          │                          │
+        Pull Down at Top (≥95dp,          │                          │ Double-Back (2s window) /
+        hold 880ms, release) + Auth       ▼                          │ finish() / "Stop showing
+                  ┌──────────────────────────────────────────────────┴───────┐  encrypted media"
+                  │              SECRET VAULT MODE (Isolated View)           │
+                  │  Encrypted Physical & Stealth Virtual Albums Only        │
+                  │  (Folders or Files view preserved via VaultViewPolicy)   │
+                  └───────────────────────┬──────────────────────────────────┘
+                                          │ Background / Screen Off
+                                          ▼
+                  ┌──────────────────────────────────────────────────────────┐
+                  │               LOCK & MEMORY ZEROIZATION                  │
+                  │  • Immediate RAM key fill(0) & cache secure-wipe         │
+                  │    (deferred if ForegroundOperationRegistry.isActive)    │
+                  │  • Vault UI resumable behind VaultLockActivity (30 min)  │
+                  └──────────────────────────────────────────────────────────┘
 ```
 
-### 🔹 Mode 1: Standard / Locked Mode (Default)
-- The state upon cold app startup when credentials have not been entered.
-- System `.nomedia` directories (e.g., sticker caches, app thumbnails) and encrypted vault folders under `Secrets` are **completely hidden**.
+### 🔹 Standard Mode (Default / Locked)
+- The state upon cold app startup when vault credentials have not been entered.
+- Encrypted vault folders under `Secrets` and unencrypted `.nomedia` directories are **completely hidden** by default.
 - Only unencrypted physical albums and standard virtual albums appear in the gallery grid.
+- **Independent Hidden & Excluded Folder Toggles (Standard Mode Only):**
+  - Unencrypted `.nomedia` folders are toggled **independently of the encrypted vault** via the overflow menu items **"Temporarily show hidden folders"** / **"Stop showing hidden folders"** (`config.temporarilyShowHiddenFolders`). This option appears only in Standard Mode when normal hidden folders exist, requires All Files Access on Android 11+, and automatically resets after 5 minutes (`SHOW_TEMP_HIDDEN_DURATION = 300000L`) or on `onDestroy`.
+  - Excluded folders have their own independent temporary toggle (`config.temporarilyShowExcluded`, with optional password protection and the same 5-minute / `onDestroy` auto-reset).
 
-### 🔹 Mode 2: Secret Vault Mode
-- Activated by entering the vault password in Settings or performing a **3x bottom overscroll gesture** at the bottom of the main gallery list.
-- **Isolated Vault View:** Standard photos and normal albums are completely filtered out. The user is presented with a dedicated vault screen containing **only encrypted physical albums and stealth virtual albums**.
-- Action bars update to indicate active Secret Vault mode.
+### 🔹 Secret Vault Mode (Isolated View)
+- **Activation (Pull-to-Open Gesture):** When scrolled to the top of the gallery list (`!canScrollVertically(-1)`), pulling down past `95dp`, holding for `880ms` until armed, and releasing (`VaultPullGestureHandler`) launches vault authentication (`openSecretVaultPrompt`). Secret Vault Mode cannot be entered from Settings (Settings only creates and configures the vault).
+- **View Continuity (`VaultViewPolicy`):** Pulling down from the Folders view (`MainActivity`) opens Secret Vault in Folders view; pulling down from the All-Files view (`MediaActivity`) opens Secret Vault in Files view (`EXTRA_SECRET_VAULT_FILES = true`).
+- **Isolated Vault View:** Standard photos, normal albums, and unencrypted `.nomedia` folders are completely filtered out. The user sees a dedicated vault screen containing **only encrypted physical albums and stealth virtual albums**. Action bars update to indicate active Secret Vault mode.
+- **Exiting Secret Vault (Double-Back Confirmation):** Pressing the Android Back button inside Secret Vault triggers **double-back confirmation** (`VaultExitBackHelper`, 2-second window `VAULT_EXIT_DOUBLE_BACK_WINDOW_MS = 2000L`): the first press displays a toast (`press_back_again_to_exit_vault`), and the second press immediately returns to Standard Mode, locks the vault, zeroizes RAM keys, and wipes image caches. Encrypted vault contents never remain visible after exiting the vault.
 - **Encrypted Vault Recycle Bin:**
-  - In Mode 2, deleted encrypted files are sent to a dedicated **Encrypted Vault Recycle Bin** inside `Secrets/` (unless permanent delete or skip recycle bin is selected).
+  - Inside Secret Vault Mode, deleted encrypted files are sent to a dedicated **Encrypted Vault Recycle Bin** inside `Secrets/` (unless permanent delete or skip recycle bin is selected).
   - Like all other vaults in `Secrets/`, its on-disk subfolder name is fully obfuscated (random 6-character hex identifier, e.g. `e8d2a1/`), protected with `.nomedia`, and its folder title is encrypted with `AES-256-GCM` in `.meta` as `$$VAULT_RECYCLE_BIN$$` (localized dynamically to "Recycle Bin" in memory).
-  - Original folder locations are preserved in an encrypted `.restore_info` manifest (`AES-256-GCM`). Restoring items returns `.bin` files to their original parent vault subfolders (with auto-fallback to an active vault folder if the original directory was deleted).
+  - Original folder locations are preserved in an encrypted `.restore_info` manifest (`AES-256-GCM`). Restoring items returns `.bin` files to their original parent vault subfolders (with auto-fallback to an active vault folder or `"Restored"` if the original directory was deleted).
   - Permanent deletion performs a secure CSPRNG wipe (`CryptoManager.secureWipeAndDeleteFile`) with 1 MiB block overwrites, truncation, and `fsync`.
-  - Appears in the directory grid at position 0 (or bottom if "Show recycle bin last" is enabled) only when non-empty (`mediaCnt > 0`). Automatically hidden when empty or when outside Mode 2.
-  - Fully compatible with the *"Always skip delete confirmation dialog"* preference (configured in the deletion dialog remember checkbox or under **Settings > File operations**).
+  - Appears in the directory grid at position 0 (or bottom if "Show recycle bin last" is enabled) only inside Secret Vault view when `config.showRecycleBinAtFolders == true` and non-empty (`mediaCnt > 0`); when `showRecycleBinAtFolders` is disabled, it is accessible from the overflow menu (**Open recycle bin**). Automatically hidden when empty or outside Secret Vault Mode.
+  - Fully compatible with the *"Skip delete confirmation dialog"* (`skip_delete_confirmation` / `config.skipDeleteConfirmation`) preference as well as the session-scoped `config.tempSkipDeleteConfirmation` (cleared on vault exit).
 
-### 🔹 Mode 3: Extended / Unified View Mode
-- Activated when the user presses the **Android Back button** while inside Mode 2 (Secret Vault).
-- The user returns to the primary gallery grid; however, normal albums, system `.nomedia` folders, and decrypted vault albums are displayed **together in a single unified view**.
-- Performing the **3x bottom overscroll gesture** while in Mode 3 instantly transitions the user back into the isolated **Mode 2 (Secret Vault)**.
-- **Unified Copy / Move Directory Picker (Mode 2 & Mode 3):**
-  - When hidden items are unlocked, destination folder selection dialogs (`PickDirectoryDialog`) display **all three folder categories**:
-    1. **Standard non-hidden directories** (Camera, Pictures, Downloads, etc.)
-    2. **Unencrypted hidden directories** (folders with `.nomedia` or starting with `.`)
-    3. **Encrypted hidden vaults** (physical vaults under `Secrets/` with decrypted names)
-    4. *(If copying)* All virtual albums, no matter which physical folder the source files live in.
-  - Safeguards ensure recycle bins are excluded from destination pickers, and Android 11+ SAF path restrictions are bypassed for internal encrypted vault directories.
+### 🔹 Mode-Partitioned Copy / Move Directory Picker (`PickDirectoryDialog` & `CopyMovePolicy`)
+- Destination folder selection dialogs for Copy and Move are **strictly mode-partitioned** rather than unified:
+  1. **`ENCRYPTED_COPY` / `ENCRYPTED_MOVE`:** Displays **only encrypted physical vault albums** (when the vault is unlocked).
+  2. **`UNENCRYPTED_COPY` / `UNENCRYPTED_MOVE` / `DECRYPT_MOVE`:** Displays **only unencrypted physical folders** (`!isEncryptedAlbum && !isVirtualAlbum`); attempting to target an encrypted vault folder via "Other folder" is explicitly rejected (`cannot_target_encrypted_album`).
+  3. **Virtual Albums Excluded from Copy/Move:** Virtual albums are never listed in Copy/Move `PickDirectoryDialog` (`includeVirtualAlbums = false`). Adding media to virtual albums uses the separate **"Add to virtual album"** (`PickVirtualAlbumDialog`) flow scoped to matching encryption state (public vs. stealth).
+- Safeguards ensure both standard and vault recycle bins are excluded from destination pickers, and Android 11+ SAF path restrictions are bypassed for internal encrypted vault directories.
 
 ### 🛑 Lock & Memory Zeroization (RAM Purge)
-- When the user closes the app (swiping away from Android's Recents overview) or taps *"Stop showing hidden items"*:
-  - The app locks immediately and returns to Mode 1.
-  - In-memory Master Keys and cached file keys are zeroized (`fill(0)`).
-  - Glide memory and disk caches are wiped to ensure decrypted frames do not persist in flash storage.
+- **Immediate Full Lock & Wipe Triggers:** Double-back exit from Secret Vault, activity `finish()` / `onDestroy`, or tapping **"Stop showing encrypted media"** (`R.id.stop_showing_hidden`, shown outside Secret Vault view) immediately locks the vault and returns to Standard Mode.
+- **Background & Screen-Off Auto-Wipe (`VaultSessionManager`):** When the app moves to the background (`onAppBackgrounded`) or the screen turns off (`ACTION_SCREEN_OFF`), RAM keys and image caches are **wiped immediately**—unless a registered foreground file operation is running (`ForegroundOperationRegistry.isActive`), in which case wiping runs as soon as the operation finishes. If the user was inside Secret Vault, the UI session remains resumable behind `VaultLockActivity` for up to **30 minutes** (`VAULT_AUTO_LOCK_TIMEOUT_MS`) before expiring back to Standard Mode.
+- **Zeroization & Cache Wipe Scope:**
+  - In-memory Master Keys (`unlockedMasterKey`, `unlockedKek`) and cached `EncryptedFileMetadata.fileKey`s are zeroized (`fill(0)`).
+  - In-memory `metadataCache`, `folderNameCache`, `encryptedFolderCache`, `VideoFragment` frame cache, and the system clipboard (if `vaultClipboardTouched` was set) are cleared.
+  - Glide memory and disk caches plus temporary/cache directories (`image_manager_disk_cache`, `picasso-cache`, `glide`, `externalCacheDir`, `TEMP_FOLDER_NAME`) are **secure-wiped** and deleted so decrypted frames do not persist in flash storage.
 
 ---
 
@@ -379,7 +375,7 @@ an encrypt/decrypt round trip, or a restore from the Recycle Bin. The resolver r
 file and rewrites the cached path; it never needs the user to re-add the file. Conversely, when
 the file is genuinely gone (permanent deletion), the relationship is removed outright and a
 same-named file appearing later at the old path is a *different* file, so it is not re-linked
-(items 2 and 3 below). The only thing that is deliberately not forgiving is identity: an
+(item 4 below). The only thing that is deliberately not forgiving is identity: an
 identical-looking copy elsewhere on disk is never substituted for the original.
 
 This model also has a direct UI consequence: **when a file is opened from a virtual album, the
@@ -388,13 +384,13 @@ folder** (see item 6).
 
 1. **Multi-Source Albums:**
    - A virtual album may hold items from **any number of physical folders**, exactly like the favorites do.
-   - The folder the items came from is only remembered as a hint for the copy dialog. It never rejects new items, so a folder that was renamed or moved can no longer leave an album that refuses to accept any file.
-   - The directory picker offers every virtual album as a copy destination, no matter which folder the source files live in.
+   - The folder the items came from is only remembered as a hint for the copy/add dialog. It never rejects new items, so a folder that was renamed or moved can no longer leave an album that refuses to accept any file.
+   - Copy/Move directory pickers (`PickDirectoryDialog`) exclude virtual albums; instead, the dedicated **"Add to virtual album"** (`PickVirtualAlbumDialog`) flow offers virtual albums within the matching encryption scope (public vs. stealth), regardless of which physical folder the source files live in.
 2. **"Move" Action Disabled:**
    - Because virtual albums only reference media without altering disk locations, the "Move" action is removed from virtual albums; only non-destructive "Copy" operations are permitted.
-3. **Copy Flows from Virtual Albums:**
+3. **Copy & Add Flows from Virtual Albums:**
    - Media cannot be copied from a virtual album to its own owning physical album (the media already exists there).
-   - Creating a new virtual album during a copy flow remembers the source folder as a hint for later copy flows.
+   - Creating a new virtual album during the **"Add to virtual album"** flow remembers the source folder as a hint for later copy/add flows.
 4. **File & Zero-Pollution Folder Identity Architecture:**
    - **Design Principle:** Filesystem paths are treated strictly as a *mutable cache*. Every Favorite (`favorites` table) and virtual album item (`virtual_album_items` table) persists a two-tier identity descriptor and lifecycle `state` (`OK`, `UNRESOLVED`, `ENCRYPTED`, `DECRYPTED`) without ever writing hidden marker files (such as `.folder_id`) into shared user directories (**Zero-Pollution**):
 
@@ -402,8 +398,8 @@ folder** (see item 6).
    ┌───────────────────────────────────────────────────────────────────────────┐
    │ 1. CAPTURE (MediaIdentity + FolderIdentity + FolderIdentity.CaptureSession)│
    │    • File:   mediaStoreId, size, lastModified, fingerprint (64KB head+tail)│
-   │    • Folder: folderInode (Os.stat.st_ino), capturedAtSec,                  │
-   │              folderSignature (up to 5 sorted sibling <size>:<sha256>)      │
+   │    • Folder: dirInode (Os.stat.st_ino), capturedAtSec (on MediaIdentity), │
+   │              anchorSignatures (up to 5 sorted sibling <size>:<sha256>)    │
    └───────────────────────────────────────┬───────────────────────────────────┘
                                            ▼
    ┌───────────────────────────────────────────────────────────────────────────┐
@@ -437,11 +433,11 @@ folder** (see item 6).
 
      | Tier | Fields | How It Works & Cost |
      | :--- | :--- | :--- |
-     | **File Identity** (`MediaIdentity`) | `mediaStoreId`, `fileSize`, `lastModified`, `fingerprint` | `fingerprint` hashes the first 64 KB and last 64 KB via `SHA-256` (`O(1)` I/O regardless of video size). |
-     | **Folder Identity** (`FolderIdentity`) | `folderInode`, `folderSignature`, `capturedAtSec` | Reads `Os.stat(parent).st_ino` plus up to `5` sorted non-hidden sibling `<size>:<sha256>` anchor tokens (excluding the item itself; directory child scan capped at `2000`). `CaptureSession` caches directory metadata per batch so bulk operations hash sibling anchors once per folder. |
+     | **File Identity** (`MediaIdentity`) | `mediaStoreId`, `size`, `lastModified`, `fingerprint`, plus `folderInode`, `folderSignature`, `capturedAtSec` | `fingerprint` hashes the first 64 KB and last 64 KB via `SHA-256` (`O(1)` I/O regardless of video size). Room entities (`Favorite`, `VirtualAlbumItem`) store `size` as `fileSize` alongside the folder identity columns. |
+     | **Folder Identity** (`FolderIdentity`) | `dirInode`, `anchorSignatures` (`serializedSignature`) | Reads `Os.stat(parent).st_ino` plus up to `5` sorted non-hidden sibling `<size>:<sha256>` anchor tokens (excluding the item itself; directory child scan capped at `2000`), persisted on `MediaIdentity` and Room entities as `folderInode` / `folderSignature`. `CaptureSession` caches directory metadata per batch so bulk operations hash sibling anchors once per folder. |
 
    - **Persistence, Dormant Encrypt/Decrypt Trace Preservation & Explicit Deletion (`GalleryDatabase` & JSON Sync):**
-     - `FavoritesDao.updateFavoriteIdentity` and `VirtualAlbumsDao.updateItemIdentity` update relocated paths and file identity while preserving existing non-zero/non-empty `folder_inode`, `folder_signature`, and `captured_at_sec` values.
+     - `FavoritesDao.updateFavoriteIdentity` and `VirtualAlbumsDao.updateItemIdentity` update file/folder identity columns for an existing path while preserving existing non-zero/non-empty `folder_inode`, `folder_signature`, and `captured_at_sec` values (relocated paths are updated separately via `updateFavorite` / `updateItemPath` / `updateItemPathInAlbum`).
      - Both `ReferenceBackupManager` (`favorites.json`) and `VirtualAlbumSyncManager` (`Virtual Album Saves/*.json` and encrypted `Secrets/JSON/*.json` manifests) serialize all folder identity columns and dormant lifecycle states (`ENCRYPTED`, `DECRYPTED`) with defined defaults. For encrypted `Secrets/JSON/fva_<hash>.json` manifests, `VirtualAlbumSyncManager` also stores vault-relative descriptors (`relativeVaultPath` / `relativeParentVaultPath`) alongside `fullPath` so `syncVirtualAlbums` automatically remaps Room DB paths across external vault remounts (see [Section 5](#5-backup-restore--vault-auto-detection)).
      - **Dormant Encrypt <-> Decrypt Lifecycle (`markReferencesOnEncrypt` / `markReferencesOnDecrypt`):**
        - Encrypting a plaintext album or file into the vault wipes MediaStore/thumbnail/mediaDB traces (`purgeMediaTracesPreservingReferences`) while transitioning matching active **Favorites** and **public Virtual Album** entries to dormant `ITEM_STATE_ENCRYPTED` (hidden from gallery UI, ZIP exports, and relocation scans). Decrypting that file back to plaintext—even into a different folder—automatically restores those references to `ITEM_STATE_OK`.
@@ -460,7 +456,7 @@ folder** (see item 6).
        2. `inodeMatches` (parent directory `st_ino` match)
        3. `matchedAnchorCount` (count of matching sibling `<size>:<sha256>` anchors)
        4. `trailingFolderMatches` (longest shared trailing path segments)
-       5. `lastModifiedMatch` (exact millisecond mtime match)
+       5. `lastModifiedMatch` (equivalent mtime within the 10-second tolerance via `CryptoManager.areTimestampsEquivalent`)
        6. `folderNameSimilarity` (token-aware similarity with word-boundary guards)
        7. `commonPrefixSegments` -> `exactFileNameMatch` -> shortest normalized path.
    - **Existing-Folder, Deleted-Folder & Pre-Existing Foreign Copy Protections (`Pictures/A` vs `Pictures/B`):**
@@ -492,9 +488,10 @@ folder** (see item 6).
     1. **Stage 1 (`promptVaultSetupChoice` — *"Encrypted vault"*):**
        - **`1) Create new vault`** (`create_new_vault_option` / *"Yeni kasa oluştur"*)
        - **`2) Use existing vault`** (`use_existing_vault_option` / *"Mevcut kasayı kullan"*)
+       - **`3) Select archived vault`** (`select_archived_vault`, shown conditionally whenever `VaultArchiveManager.archivedEntries` is non-empty)
     2. **`Use existing vault` Branch (`pickExistingVaultAndUnlock` -> `unlockCandidateVault`):**
        - Opens `FilePickerDialog` (`enforceStorageRestrictions = false`), pre-seeding the starting directory from `CryptoManager.findCandidateExternalVaultRoots` -> `config.vaultRootPath` -> `listExternalStorageVolumeRoots` -> `internalStoragePath`.
-       - Uses `CryptoManager.resolveExistingVaultInDirectory` to check for a valid `.vault` header directly inside `<picked>` or `<picked>/Calypso Gallery/Secrets`. If found (and confirmed via `unlockCandidateVault`), it prompts for the vault password or PIN and **connects to and unlocks that existing vault** instead of overwriting it (`setupOrUpdateCredentialsInternal` explicitly guards against overwriting an existing `.vault`). If none is found, `showNoExistingVaultDialog` informs the user and lets them re-pick or go back.
+       - Uses `CryptoManager.resolveExistingVaultInDirectory` to check for a valid `.vault` header directly inside `<picked>`, `<picked>/Secrets`, or `<picked>/Calypso Gallery/Secrets`. If found (and confirmed via `unlockCandidateVault`), it prompts for the vault password or PIN and **connects to and unlocks that existing vault** instead of overwriting it (`setupOrUpdateCredentialsInternal` explicitly guards against overwriting an existing `.vault`). If none is found, `showNoExistingVaultDialog` informs the user and lets them re-pick or go back.
        - Canceling or pressing **Back** at any step (`FilePickerDialog`, confirmation, or PIN/password unlock) rolls back via `VaultConfigSnapshot` + `CryptoManager.clearCachedVaultRoot()` and navigates cleanly back to the previous step.
     3. **`Create new vault` Branch -> Stage 2 (`promptWhereToCreateVault` — *"Where should the vault be created?"* / *"Kasa nerede oluşturulsun?"*):**
        - **`1) Default Location`** (`vault_location_default_short` / *"Varsayılan Konum"*): Creates `Internal Storage > Calypso Gallery > Secrets`.
@@ -512,32 +509,30 @@ folder** (see item 6).
 - **Vault-Relative Stealth Virtual Album Manifests (`VirtualAlbumSyncManager`, `VirtualAlbumsDao`):**
   - Encrypted `Secrets/JSON/fva_<hash>.json` manifests persist vault-relative `relativeVaultPath` (`VirtualAlbumItemBackup`) and `relativeParentVaultPath` (`VirtualAlbumBackup`) alongside `fullPath` (extracted by `extractRelativeVaultPath`, normalizing `\` to `/`, preferring the active `vaultRoot` prefix with `/Secrets/`, ignoring `JSON/`, and rejecting `.` / `..` traversal segments).
   - When an external USB or SD vault mounts at a different path or UUID across sessions or devices, `syncVirtualAlbums` resolves each member via `resolveVaultItemPath` relative to the active `vaultRoot`, automatically rewrites stale Room DB paths (`VirtualAlbumsDao.updateItemPathInAlbum`, `updateAlbumParentPhysicalPath`), and re-saves the manifest cleanly. Desktop `tools/calypso-cli/calypso_vault.py` maintains strict separation and never reads or modifies `JSON/`.
-- **Native External-to-Phone Vault Synchronization (`Settings > Encrypted vault > Sync vault from external drive`):**
-  - Users who keep their primary `Secrets` vault on internal phone storage while encrypting media on Tails OS onto USB/SD drives can merge external ciphertext directly inside the unlocked Android app via **Settings > Encrypted vault > Sync vault from external drive** (*"Harici diskten kasayı eşitle"*, `settings_sync_vault_holder` -> `SettingsActivity.setupSyncVault` -> `Activity.promptSyncVaultFromExternal` -> `CryptoManager.syncVaultFromExternalDirectory`).
-  - **Unified `Secrets` USB Layout & Read-Only Mount Support:** `promptSyncVaultFromExternal` passes `requireWritable = false` to `validatePickedVaultDirectory` so read-only external USB/SD mounts can be synced cleanly (`vault_location_not_readable` if unreadable). Both Tails OS USB setups work identically under `<USB>/Secrets/`:
-    1. **Full external `Secrets` copy on USB:** Holds `.vault` plus existing `<hex>/.meta` folders updated by `calypso_vault.py`.
-    2. **Header-only `<USB>/Secrets/.vault` (zero media mirror on USB):** Holds only the small `.vault` key-header file (or `<USB>/.vault`, which `choose_encrypt_output_dir` auto-targets to `<USB>/Secrets/`), receiving only newly encrypted `.meta` subfolders and `.bin` files. *(Explicit `-o` directories or the Desktop fallback `Encrypted_Output` are also supported.)*
-  - **Flexible Source Resolution (`CryptoManager.resolveSyncSourceRoot`):** Normalizes the selected folder—whether you pick `<USB>/Secrets`, a USB drive root holding `Secrets` / `Calypso Gallery/Secrets` / `Encrypted_Output` (legacy `Sifreli_Cikti` still recognized), a single `.meta` album folder (`hasFolderMetaFile`), or a flat folder of bare `.bin` files. Rejects self-sync against the active phone vault (`vault_sync_same_folder_error`).
+- **CLI & External Encrypted Media Import (`Settings > Encrypted vault > Import encrypted media from CLI`):**
+  - Users who keep their primary `Secrets` vault on the phone while encrypting media on Tails OS can merge external ciphertext directly inside the unlocked Android app via **Settings > Encrypted vault > Import encrypted media from CLI** (`settings_sync_vault_holder` -> `SettingsActivity.setupSyncVault` -> `Activity.promptSyncVaultFromExternal` -> `CryptoManager.syncVaultFromExternalDirectory`).
+  - **Automatic `CliBridgeManager` & `CLI` Bridge Resolution (No Folder Picker):** `promptSyncVaultFromExternal` does **not** open a folder picker or call `validatePickedVaultDirectory(..., requireWritable = false)`. Instead, it ensures an active bridge via `CliBridgeManager.ensureActiveBridge` and checks registered `CliBridgeManager` bridges and `Calypso Gallery/CLI` for `pending_sync` (toasting `vault_sync_nothing_to_sync` if nothing is pending).
+  - **CLI Staging Output Separation:** `calypso_vault.py`'s `choose_encrypt_output_dir` never writes into `Secrets/`; it writes to a sibling `CLI` staging/bridge folder via `derive_staging_dir` unless `-o` is explicitly passed (see [Section 8](#8-offline-zero-disk-media-ingestion-desktop-linux-cli)).
+  - **Flexible Source Resolution (`CryptoManager.resolveSyncSourceRoot`):** Normalizes the source root, checking `Calypso Gallery/CLI` and `CLI` **before** `Calypso Gallery/Secrets`, `Secrets`, `Encrypted_Output`, `Sifreli_Cikti`, a single `.meta` album folder (`hasFolderMetaFile`), or a flat folder of bare `.bin` files. Rejects self-sync against the active phone vault (`vault_sync_same_folder_error`).
   - **Automatic Album Routing & Lazy Integrity-Guarded Creation:**
     - Bare root `.bin` files and subdirectories whose decrypted `.meta` name satisfies `isDefaultAlbumRawName` route to the phone vault's **Default Secret Album** (`getOrCreateDefaultHiddenAlbum`).
     - Named `.meta` or plain subdirectories match existing destination encrypted albums (exact decrypted `.meta` name first, then trimmed case-insensitive match via `matchExistingDestinationAlbum`) or **lazily create** a new 6-character hex encrypted album (`createHiddenPhysicalAlbum`) only after an incoming `.bin` passes `readMetadata` and canonical `verifyFileIntegrity` (preventing empty orphan folders when corrupt or foreign-key files fail).
-    - `JSON/`, `$$VAULT_RECYCLE_BIN$$` (`VAULT_RECYCLE_BIN_NAME`), and dot-prefixed folders without `.meta` are ignored. Source files remain untouched on external media; writes stream to `.sync_tmp_*.bin`, flush via `fd.sync()`, and atomically move into place.
-  - **Incremental `pending_sync` Manifest (`CryptoManager.PENDING_SYNC_FILE_NAME`):** When encrypting new media into `Secrets`, `calypso_vault.py` appends relative `.bin` paths to `Secrets/pending_sync`. `syncVaultFromExternalDirectory(..., requirePendingManifest = true)` strictly reads only those pending entries (refusing to scan the whole archive when `pending_sync` is absent or empty), clears succeeded entries, retains only failed entries, and deletes `pending_sync` once empty—preventing repeated re-scans and unrelated archive bit-rot failures. Future desktop clients must track their own independent pending-sync manifest so phone and desktop sync states do not interfere.
+    - `JSON/`, `$$VAULT_RECYCLE_BIN$$` (`VAULT_RECYCLE_BIN_NAME`), and dot-prefixed folders without `.meta` are ignored. Source files remain untouched on external media; writes copy to a `.sync_tmp_*.bin` temp file, atomically move into place after verification, and call `syncDir` on touched target albums.
+  - **Incremental `pending_sync` Manifest (`CryptoManager.PENDING_SYNC_FILE_NAME`):** When encrypting new media into a `CLI` staging/bridge folder, `calypso_vault.py` appends relative `.bin` paths to `pending_sync`. `syncVaultFromExternalDirectory(..., requirePendingManifest = true)` strictly reads only those pending entries (refusing to scan the whole archive when `pending_sync` is absent or empty), clears succeeded entries, retains only failed entries, and deletes `pending_sync` once empty—preventing repeated re-scans and unrelated archive bit-rot failures. Future desktop clients must track their own independent pending-sync manifest so phone and desktop sync states do not interfere.
   - **Album Encryption / Decryption Conflict Resolution (`AlbumCryptoConflictDialog`, `ALBUM_CRYPTO_CONFLICT_MODE`, `EncryptConfirmationDialog`):**
     - Encrypt and Decrypt confirmation dialogs include an inline `i` info button explaining folder/file encryption, album renaming vs. merging, and conflict rules.
-    - When encrypting or decrypting an album whose name already exists at the destination, `resolveAlbumCryptoOptions` honors **Settings > File operations > Album conflict (Encrypt / Decrypt)** (`Always ask` default, `Merge into existing album`, `Merge into existing album and auto-delete identical sources`, or `Create new album as (1)`).
-    - Choosing `Create new album as (1)` creates `<Album>(1)`, `<Album>(2)`, etc. without modifying existing albums; choosing `Merge into existing album` prompts once per batch whether 100% bit-identical + timestamp-equivalent source files should be deleted or kept, while `Merge into existing album and auto-delete identical sources` (`ALBUM_CRYPTO_CONFLICT_MERGE_DELETE_IDENTICAL`) deletes matching identical source files automatically without a prompt.
-  - **Single-Pass Sync Optimization, Cached Indexes & Optional Fast Large-File Check (`CryptoManager.syncVaultFromExternalDirectory`, `CopyMoveHelper`, `SettingsActivity`):**
+    - When encrypting or decrypting an album whose name already exists at the destination, `resolveAlbumCryptoOptions` honors **Settings > File operations > Album conflict (Encrypt / Decrypt)** (`Always ask` default, `Merge into existing album`, or `Create new album as (1)`).
+    - Choosing `Create new album as (1)` creates `<Album>(1)`, `<Album>(2)`, etc. without modifying existing albums; choosing `Merge into existing album` merges into the existing album with `deleteIdenticalSource = false` (source files are not auto-deleted during album merge).
+  - **Sync Pipeline, Cached Indexes & Duplicate Handling (`CryptoManager.syncVaultFromExternalDirectory`, `CopyMoveHelper`, `SettingsActivity`):**
     - **Cached Target Directory Indexes (`TargetPlainIndex` & `TargetEncryptedIndex`):** Both external vault sync and Copy/Move/Encrypt/Decrypt batch operations cache destination directory listings and AES-GCM metadata headers in memory once per folder rather than re-scanning directories and re-decrypting headers per file. Batch folder encrypt/decrypt operations pass `preExistingPaths` snapshots so siblings in the same source folder (`photo.jpg` and `photo(1).jpg`) cannot deduplicate against one another mid-batch.
-    - **Stage 0 (`O(1)` mirrored `.bin` fast-skip):** Inside an already-existing destination album, `albumBinNameIndex` checks for same-named `.bin` files and compares authenticated container headers (magic `FGVLTENC`, version, `fileId` and declared ciphertext length) plus byte length. Unchanged mirror files skip in `O(1)` seeks without decrypting AES-GCM headers or hashing gigabytes of video.
-    - **Stage 1 (Authenticated Header Filter & Symmetric Collision Family):** Resolves `originalName`, `lastModified`, and `dateTaken` via cached headers and filters collision candidates via symmetric `isSameOrCollisionVariant` (`<stem>(k)<ext>`). Distinct filenames skip payload comparison and stream-copy + Tink integrity verification in a **single I/O pass** (`copyBinAndVerifyIntegritySinglePass`).
+    - **Stage 1 (Authenticated Header Filter & Symmetric Collision Family):** Resolves `originalName`, `lastModified`, and `dateTaken` via cached headers and filters collision candidates via symmetric `isSameOrCollisionVariant` (`<stem>(k)<ext>`). Distinct filenames skip payload comparison, copy `sourceBin` to a temp file (`copyTo`), verify integrity via `verifyFileIntegrity`, and flush the target directory with `syncDir`.
     - **Stage 2 (`O(1)` authenticated-container filter):** Filters candidates by `originalSize > 0L`, `mediaType`, file length, declared ciphertext length and authenticated header bounds. Timestamps no longer gate duplicate skipping during vault sync.
-    - **Stage 3/4 (Single-Pass Integrity + Content Comparison):** Verifies the source container and compares decrypted streams in a **single pass** using `64 KB` buffers. Two files are deduplicated (`skippedDuplicateCount`) when `originalSize`, `mediaType` and **all plaintext bits** match — regardless of `lastModified` / `dateTaken` differences. A re-uploaded bit-identical file with a different timestamp is skipped and the target's `lastModified` stays untouched.
+    - **Stage 3/4 (Integrity + Content Comparison):** Verifies the source container and compares decrypted streams using `64 KB` buffers. Two files are deduplicated (`skippedDuplicateCount`) when `originalSize`, `mediaType` and **all plaintext bits** match — regardless of `lastModified` / `dateTaken` differences. Under the default `DATE_TIE_BREAK_KEEP_TARGET`, the target's `lastModified` stays untouched; if `DATE_TIE_BREAK_USE_SOURCE` is selected, `CryptoManager.applyDuplicateDateToEncryptedFile` updates the surviving target's timestamp.
   - **Conflict-Safe `<name>(1)` Renaming (`formatCollisionFileName` + `CryptoManager.renameEncryptedFile`):** Only same-named files with **differing plaintext bits** in the same target album (including Default Secret Album) are imported and renamed inside their encrypted header to `<stem>(1)<ext>`, `<stem>(2)<ext>`, etc., never overwriting or shadowing existing media. Timestamp differences alone never create a `(1)` variant. Reports `VaultSyncResult` (`copiedCount`, `renamedCount`, `skippedDuplicateCount`, `failedCount`, `syncedAlbumsCount`). For the full **Bit-to-Bit + Metadata Equivalence Architecture** and timestamp guarantees, see [Section 10](#10-timestamp-preservation-lastmodified--datetaken--metadata-risks).
-- **Destructive Vault Reset Protection (`DeleteCipherSecretsDialog`):** Tapping **Empty encrypted vault** runs a mandatory 10-second countdown, requires ticking an explicit confirmation checkbox after the timer expires, and positions the "Yes" button on the left to prevent accidental muscle-memory taps. When a custom vault path is configured, `CryptoManager.deleteExistingVault` scopes deletion strictly to the active custom vault rather than touching unrelated default internal directories.
+- **Destructive Vault Reset Protection (`DeleteSecretsDialog`):** Tapping **Empty encrypted vault** runs a mandatory 10-second countdown, requires ticking an explicit confirmation checkbox after the timer expires, and positions the "Yes" button on the left to prevent accidental muscle-memory taps. When a custom vault path is configured, `CryptoManager.deleteExistingVault` scopes deletion strictly to the active custom vault rather than touching unrelated default internal directories.
 - **External Vault Unplug Protection (`isConfiguredVaultTemporarilyUnavailable`):**
   - If a configured custom vault resides on an external USB drive or SD card (outside internal storage) and the drive is temporarily disconnected, `CryptoManager.isConfiguredVaultTemporarilyUnavailable` detects the missing external volume.
-  - `CryptoManager.verifyVaultOnDisk` locks the active RAM session (`lockVault()`), clears in-memory folder caches, and prompts the user with **External vault unavailable** (`promptUnavailableExternalVault` with **Retry**, **Change location**, and **Cancel**) **without** wiping `config.vaultRootPath`, wrapped key state (`vaultWrappedKeyData`, `vaultPublicKey`), or biometric unlock state (`isVaultBiometricEnabled`, `vaultBiometricWrappedBundle`).
+  - `CryptoManager.verifyVaultOnDisk` locks the active RAM session (`lockVault()`), clears in-memory folder caches, and prompts the user with **External vault unavailable** (`promptUnavailableExternalVault` with **Retry**, **Change location**, and **Cancel**) **without** wiping `config.vaultRootPath`, wrapped key state (`vaultWrappedKeyData`), or biometric unlock state (`isVaultBiometricEnabled`, `vaultBiometricWrappedBundle`).
   - Once the external drive or SD card is plugged back in, tapping **Retry** or reopening the vault automatically locates the vault at `config.vaultRootPath` and resumes normal unlocking (including biometric unlock if enrolled).
 
 ---
@@ -545,17 +540,17 @@ folder** (see item 6).
 ## 6. Video Player Architecture, Gestures & Playback Optimizations
 
 - **Instant Resume (`sVideoFrameCache`):** When pausing or swiping away from a video, the current hardware `TextureView` frame is captured into an in-memory LRU cache. Swiping back from any distance (3+, 5, 10+ items) displays the exact paused frame immediately instead of falling back to the 00:00 cover photo.
-- **Pre-Warming:** Adjacent fragments with stored session playback positions initialize and seek ExoPlayer in the background before the page settles, eliminating buffering delays upon centering.
+- **Shared ExoPlayer & Idle-Deferred Initialization:** Adjacent off-screen fragments do **not** pre-initialize ExoPlayer in the background (preventing decoder and I/O contention). Instead, `VideoFragment` shares a single `ViewPagerActivity`-owned `ExoPlayer` instance (`acquireSharedExoPlayer`, released on swipe-away) and defers initialization/autoplay until `ViewPager.SCROLL_STATE_IDLE`.
 - **Configurable Double-Tap Seek Duration:**
-  - Users can customize the double-tap forward and rewind jump duration under **Settings > Videos > Double-tap seek duration** (`3`, `5`, `10`, or `15` seconds).
-  - The default seek duration is set to **5 seconds** (previously hardcoded to 10 seconds).
+  - Users can customize the double-tap forward and rewind jump duration under **Settings > Gestures and tap > Video playback > Double-tap seek duration** (`3`, `5`, `10`, or `15` seconds).
+  - The default seek duration is **10 seconds** (`DEFAULT_DOUBLE_TAP_SEEK_DURATION = 10`).
   - This configuration applies consistently to double-tap seeking on both sides of the screen, tap-to-skip on the current time and duration labels, and side scroll controller actions across both the in-app pager player (`VideoFragment`) and standalone player (`VideoPlayerActivity`).
 - **Interactive Control Bar & Auto-Hide:**
   - The playback bar features a dedicated playback speed selector button (top-left) and audio mute/unmute toggle (top-right).
   - Tapping the video to focus or waiting for the playback timeout automatically fades out the entire control bar (including speed and mute buttons); single-tapping again smoothly restores all controls together.
 - **Natural Swipe-Down to Dismiss:**
   - Swiping down from top to bottom when viewing media at original size (unzoomed 1:1 scale) dismisses the viewer and returns to the album grid view, mirroring the back button.
-  - The gesture discriminator cleanly isolates intentional downward pulls from horizontal page swipes, using density-aware thresholds (40dp) and natural gesture duration (up to 500ms).
+  - The gesture discriminator cleanly isolates intentional downward pulls from horizontal page swipes, using density-aware thresholds (`40dp` in `ViewPagerFragment`; fixed `100px` in standalone `VideoPlayerActivity`) and natural gesture duration (up to 500ms).
   - When content is zoomed in—via 2-finger pinch in videos or photos, or double-tap in photos—downward swipe dismiss is automatically disabled to allow free panning.
 
 ---
@@ -568,7 +563,7 @@ folder** (see item 6).
 > **Why:** Android grants `INTERNET` per Linux UID (whole APK), not per Activity. Because a media gallery bundles numerous third-party and native media decoders, keeping `INTERNET` inside the gallery APK leaves a theoretical supply-chain exfiltration vector. By making the gallery **100% offline at the kernel UID boundary**, no library or dependency can transmit gallery media over the network.
 >
 > **Recommended Ingestion & Roadmap:**
-> - **Offline Desktop CLI (Recommended):** Run `tools/calypso-cli/run.sh` (`calypso_vault.py`) inside a RAM-only live-boot Linux OS such as **Tails OS** (or a `toram noswap` Live ISO) in **Encrypt-Only** mode to encrypt plaintext files from RAM directly into `<USB>/Secrets/` (using either a full vault copy or only your `.vault` header file), which can then be played directly from external storage or merged into a phone vault via **Sync vault from external drive** (and remains compatible with a planned RAM-only desktop viewer).
+> - **Offline Desktop CLI (Recommended):** Run `tools/calypso-cli/run.sh` (`calypso_vault.py`) inside a RAM-only live-boot Linux OS such as **Tails OS** (or a `toram noswap` Live ISO) in **Encrypt-Only** mode to encrypt plaintext files from RAM into a `CLI` staging/bridge folder next to your exported vault header, which can then be imported into the phone vault via **Settings > Encrypted vault > Import encrypted media from CLI** (and remains compatible with a planned RAM-only desktop viewer).
 > - **Standalone External WebView Browser (In Development):** For direct mobile encrypted downloads without a PC, an independent external WebView downloader application (separate APK / separate Linux UID) is currently being developed.
 
 ---
@@ -579,29 +574,28 @@ Calypso Gallery prioritizes **air-gapped offline encryption** so unencrypted pla
 
 | Option | Environment | Target Use Case | Security Model |
 | :--- | :--- | :--- | :--- |
-| **Desktop Linux CLI (Recommended)** | Desktop Linux ([tools/calypso-cli/](tools/calypso-cli/README.md)) — **Tails OS** or `toram noswap` Live ISO ideal | **Encrypt-Only** offline batch imports, direct external USB/SD vault encryption, unified `<USB>/Secrets` phone sync | Encrypts plaintext from volatile RAM (`tmpfs`) straight into unified `Secrets/` (or Desktop fallback `Encrypted_Output`) with per-process `bubblewrap` (`bwrap`) network/disk isolation. Contains no decryption code; Gallery APK has zero network permissions. |
+| **Desktop Linux CLI (Recommended)** | Desktop Linux ([tools/calypso-cli/](tools/calypso-cli/README.md)) — **Tails OS** or `toram noswap` Live ISO ideal | **Encrypt-Only** offline batch imports, `CLI` staging/bridge folder workflow, phone import | Encrypts plaintext from volatile RAM (`tmpfs`) into a neutral `CLI` staging/bridge folder (never modifying `Secrets/` directly) with per-process `bubblewrap` (`bwrap`) network/disk isolation. Contains no decryption code; Gallery APK has zero network permissions. |
 | **Standalone Mobile Browser APK (In Development)** | Separate Android APK (External WebView) | On-device encrypted downloads without a PC | Isolated Linux UID with `INTERNET` only; zero access to gallery storage or decryption keys. |
 
-### Recommended Workflows: Tails OS (RAM-Only Live Boot) + Unified `Secrets` USB Drive
+### Recommended Workflows: Tails OS (RAM-Only Live Boot) + `CLI` Staging / Bridge Workflow
 
 1. **Download / Stage Plaintext Media in Volatile RAM (`tmpfs`):**
    - Boot into **Tails OS** (or another Linux Live ISO with `toram noswap`, e.g., Debian Live `boot=live toram noswap`). `run.sh` checks `/proc/swaps` at startup and warns if any non-`zram` disk-backed swap partition is active (`sudo swapoff -a`).
    - Place plaintext media in `~/Desktop/To_Encrypt`, which resides in volatile RAM (`tmpfs`).
-2. **Mount the External USB / SD Drive Holding `Secrets/` (Full Vault OR `.vault`-Only):**
-   - On the external USB/SD drive, export either a **full copy** of your vault or **only your small `.vault` header file** (the app export creates `<picked>/Calypso Gallery/Secrets`; a custom location is equally valid). Pass that header with `-v`; if `-v` is omitted and several valid `.vault` headers are found, the CLI refuses to guess. `find_vault_files` scans `/media`, `/run/media`, `/mnt` and `Persistent`.
-   - When launched via [`run.sh`](tools/calypso-cli/run.sh), `bubblewrap` (`bwrap`) isolates `calypso_vault.py` with `--unshare-net --unshare-ipc --unshare-pid --die-with-parent --clearenv --seccomp 21` (minimal environment, syscall filter), binds `$DESKTOP_DIR`, `/media`, `/mnt`, `/run/media`, `$HOME/Persistent`, `/home/amnesia/Persistent`, and custom `-i` / `-o` / directory `-v` arguments writable (`--bind`), while binding `$DIR`, system directories, and `.vault` files read-only (`--ro-bind`). If `bwrap` is missing, the launcher tries to install it with the detected package manager; `firejail --net=none` and `unshare --user --net` remain as fallbacks, and the launcher **refuses to run unsandboxed**. The Python `sys.addaudithook` independently blocks sockets, subprocess execution and dynamic library loading on every OS. There is no `--adb` bypass: all transfer happens outside the CLI via USB file sharing or an external drive.
+2. **Mount the External USB / SD Drive or Phone MTP Bridge Holding the Exported `vault` Header:**
+   - Export your small vault header file onto an external USB/SD drive or phone bridge folder. Note that while Android stores `.vault` (with a leading dot) inside `Secrets/`, `calypso_vault.py` searches for and reads the exported header file named **`vault`** (without a leading dot, `VAULT_HEADER_FILE_NAME = "vault"`). Pass that header with `-v`; if `-v` is omitted and several valid `vault` headers are found, the CLI refuses to guess. `find_vault_files` scans `/media`, `/run/media`, `/mnt`, `Persistent`, `Calypso Gallery/CLI/<id>/vault`, `Desktop/Calypso CLI/<id>/vault`, and `CALYPSO_BRIDGE_ROOT`.
+   - When launched via [`run.sh`](tools/calypso-cli/run.sh), `bubblewrap` (`bwrap`) isolates `calypso_vault.py` with `--unshare-net --unshare-ipc --unshare-pid --die-with-parent --clearenv --seccomp 21` (minimal environment, syscall filter), binds `$DESKTOP_DIR`, `/media`, `/mnt`, `/run/media`, `$HOME/Persistent`, `/home/amnesia/Persistent`, and custom `-i` / `-o` / directory `-v` arguments writable (`--bind`), while binding `$DIR`, system directories, and `vault` files read-only (`--ro-bind`). If `bwrap` is missing, the launcher tries to install it with the detected package manager; `firejail --net=none` and `unshare --user --net` remain as fallbacks. If no sandbox tool is available, `run.sh` warns and prompts (`Continue anyway? [y/N]`) before running unsandboxed. The Python `sys.addaudithook` independently blocks sockets, subprocess execution, and dynamic library loading (`ctypes.dlopen`/`dlsym`) on every OS. On Linux, `run.sh` also performs automatic MTP phone bridge sync via `gio mount` / `gio copy` into a temporary `CALYPSO_BRIDGE_ROOT`, pulling `Calypso Gallery/CLI` from the phone and pushing encrypted staging output back.
 3. **Run `./run.sh` (Zero Output Prompt — Unified Auto-Routing via `choose_encrypt_output_dir`):**
-   - Unlock `.vault` via `unlock_master_key_with_path` (supporting interactive retry prompts on empty or wrong secrets, or non-interactive `--secret` / `--pattern` / `-v` / `-k` flags). `choose_encrypt_output_dir` asks **no interactive destination prompt** and resolves automatically in order:
+   - Unlock the `vault` header via `unlock_master_key_with_path` (supporting interactive retry prompts on empty or wrong secrets, or non-interactive `--secret` / `--pattern` / `-v` / `-k` flags). `choose_encrypt_output_dir` asks **no interactive destination prompt** and resolves automatically in order:
      1. Explicit `-o` / `--output` path (if passed on the CLI).
-     2. Otherwise a sibling **`CLI` staging folder** derived from the exported `.vault` location (`derive_staging_dir`), independent of folder names — the active phone vault may be at a custom path and several vaults may exist. Examples: `<USB>/Calypso Gallery/Secrets/.vault` -> `<USB>/Calypso Gallery/CLI`; `<USB>/MyCustomVault/.vault` -> `<USB>/CLI`; `<USB>/.vault` -> `<USB>/CLI`. Output is never written into the folder holding `.vault`.
-     3. Desktop fallback (`~/Desktop/Encrypted_Output`) only when no vault header is known at all.
-   - Choose either end-to-end USB workflow (optionally wiping RAM sources via `--delete-source`; transfer happens via USB file sharing or an external drive):
+     2. Otherwise a sibling **`CLI` staging folder** (or the bridge folder itself) derived from the exported `vault` header location (`derive_staging_dir`), independent of folder names — the active phone vault may be at a custom path and several vaults may exist. Examples: `<USB>/Calypso Gallery/Secrets/vault` -> `<USB>/Calypso Gallery/CLI`; `<USB>/MyCustomVault/vault` -> `<USB>/CLI`; `<USB>/vault` -> `<USB>/CLI`. Output is never written into the folder holding `vault` (passing `-v` or having a discoverable `vault` header is required unless `-o` is explicitly specified).
+   - Choose either end-to-end workflow (optionally wiping RAM sources via `--delete-source`; transfer happens via USB file sharing, MTP bridge sync, or an external drive):
      - **Workflow A — External vault used directly:** Keep the active vault on the external drive (any folder, not necessarily `Secrets`). The CLI never writes into it; use the app's own encryption UI for that vault.
      - **Workflow B — CLI staging -> active vault import:** The CLI writes a batch into a neutral `CLI` folder next to the exported header; the app merges it into the currently configured vault at `config.vaultRootPath` (custom path allowed). Three export variants are equivalent:
-       - **Header-only export on USB:** `<USB>/Calypso Gallery/Secrets/.vault` plus CLI output in `<USB>/Calypso Gallery/CLI`.
+       - **Header-only export on USB:** `<USB>/Calypso Gallery/Secrets/vault` plus CLI output in `<USB>/Calypso Gallery/CLI`.
        - **Full vault backup on USB:** the exported `Secrets/` tree is left untouched as a backup; CLI output again goes to the sibling `CLI/` folder.
-       - **No USB (MTP):** export to a computer folder, run the CLI there, then copy only the resulting `CLI` folder into phone storage at `Calypso Gallery/CLI`. The app auto-detects it (do **not** copy a whole `Calypso Gallery` tree over the phone's active vault).
-     Import is reached from **Settings > Encrypted vault > Import CLI / external encrypted media**. The internal `CLI` folder is chosen automatically when it contains `pending_sync`; otherwise the picker opens (external `CLI` folders are offered). A `cli_writing` sentinel blocks import while the CLI is running. Albums merge by decrypted `.meta` name; bit-identical files are skipped and different-content collisions become `<name>(1)`. Only the app-owned internal staging folder is cleared after a fully successful import.
+       - **MTP / Computer Bridge:** export to a computer folder (or let `run.sh` sync via `gio`), run the CLI there, then place the resulting `CLI` folder into phone storage at `Calypso Gallery/CLI` (do **not** copy a whole `Calypso Gallery` tree over the phone's active vault).
+     Import is reached from **Settings > Encrypted vault > Import encrypted media from CLI**. `promptSyncVaultFromExternal` checks active/registered `CliBridgeManager` bridges and `Calypso Gallery/CLI` automatically for `pending_sync` without opening a folder picker (toasting if nothing is pending). A `cli_writing` sentinel blocks import while the CLI is running (if stale for more than 30 minutes, a removal dialog is offered). Albums merge by decrypted `.meta` name; bit-identical files are skipped and different-content collisions become `<name>(1)`. Only the app-owned internal staging folder is cleared after a fully successful import.
 
 ### CLI Behavior, Media Validation & Album Routing
 
@@ -618,13 +612,13 @@ Calypso Gallery prioritizes **air-gapped offline encryption** so unencrypted pla
   - Before creating folders, `calypso_vault.py` unwraps `.meta` names of immediate subdirectories in the target vault (ignoring `.`-prefixed directories, `JSON/`, and `$$VAULT_RECYCLE_BIN$$`).
   - Input subfolders match existing encrypted albums cleanly (**exact match first**, then trimmed **case-insensitive match**) to append new `.bin` files into the existing 6-character hex folder, or create a new randomized 6-character hex subfolder with `FGMETA` `.meta` when absent.
   - Nested subdirectories (e.g., `To_Encrypt/Vacation/Day1/img.jpg`) flatten to their top-level album name (`Vacation`) to match Android's single-level vault hierarchy.
-  - `.nomedia` is placed at `Secrets/.nomedia` rather than inside normal or default album subfolders (only `.`-prefixed hidden albums receive an inner `.nomedia`), matching `ExcludedMenuPolicy.isEncryptedAlbumExcluded`.
+  - `.nomedia` is placed at `output_dir/.nomedia` (the `CLI` staging/bridge root) rather than inside normal or default album subfolders (only `.`-prefixed hidden albums receive an inner `.nomedia`), matching `ExcludedMenuPolicy.isEncryptedAlbumExcluded`.
   - Mixed root-level files and album subfolders are processed seamlessly in a single pass.
 - **Virtual Albums (`JSON/`) Isolation:**
   - `Secrets/JSON/` Stealth Virtual Albums have **no connection** to `calypso_vault.py`. They are completely ignored during vault album scanning and encryption, and are managed solely inside the Android application.
 - **Android-Compatible Encrypt-Only Stream Pipeline (`encrypt_file`):**
   - `calypso_vault.py` is strictly **Encrypt-Only** (all decryption commands, `.zip` extraction/decryption, and plaintext readback helpers have been removed so media is decrypted solely inside the offline Android app).
-  - Encryption (`encrypt_file`) unwraps `.vault` via `Argon2id` + `AES-256-GCM`, derives `CalypsoGallery:` HKDF subkeys from the KEK (`DOMAIN_HEADER_KEY`, `DOMAIN_METADATA_KEY`), encrypts per-file headers (including 320px JPEG thumbnails for photos via Pillow) with `AES-256-GCM`, and streams payloads with Tink `AES256_GCM_HKDF` into canonical `FGVLTENC` version 1 containers.
+  - Encryption (`encrypt_file`) unwraps the `vault` header via `Argon2id` + `AES-256-GCM`, derives `CalypsoGallery:` HKDF subkeys from the KEK (`DOMAIN_HEADER_KEY`, `DOMAIN_METADATA_KEY`), encrypts per-file headers (including 320px JPEG thumbnails for photos via Pillow) with `AES-256-GCM`, and streams payloads with Tink `AES256_GCM_HKDF` into canonical `FGVLTENC` version 1 containers.
 
 ---
 
@@ -650,7 +644,7 @@ Backups are stored as **JSON files packaged inside a `.zip` archive** (`applicat
 ```
 
 - **`Favorites/favorites.json`**: Created when at least one valid favorite exists. Serialized from `ReferenceBackupManager.FavoritesBackup`.
-- **`Virtual albums/<album>.json`**: Created for each non-hidden virtual album. Serialized from `VirtualAlbumSyncManager.VirtualAlbumBackup`. If two albums produce the same filename, `FavoritesAndVirtualAlbumsBackupManager.resolveUniqueZipFileName` appends a numeric suffix (`Album(1).json`, `Album(2).json`, etc.).
+- **`Virtual albums/<album>.json`**: Created for each non-hidden virtual album. Serialized from top-level `VirtualAlbumBackup` (defined in `VirtualAlbumSyncManager.kt`). If two albums produce the same filename, `FavoritesAndVirtualAlbumsBackupManager.resolveUniqueZipFileName` appends a numeric suffix (`Album(1).json`, `Album(2).json`, etc.).
 - **Excluded Data:** Hidden/stealth virtual albums (`isHidden == true`), encrypted vault media (`Secrets/`), and items in the recycle bin (`recycleBinPath`) are **never** included in exports.
 
 ### Export Flow
@@ -663,7 +657,7 @@ Implemented across `SettingsActivity` (`setupExportFavorites`, `startExportFavor
    - **Android 9 and below:** Requests `PERMISSION_WRITE_STORAGE`, opens `ExportFavoritesDialog` for the destination path, and writes directly to the chosen file.
 3. **Data Collection (`exportToStream`):**
    - **Favorites:** Queries `favoritesDB.getAll()` and filters to paths present in `favoritesDB.getValidFavoritePaths()`.
-   - **Virtual Albums:** Queries `virtualAlbumsDB.getAllAlbums().filter { !it.isHidden }`, excluding paths marked as deleted for each album (`getDeletedPathsForAlbum`) and any path under `recycleBinPath`.
+   - **Virtual Albums:** Queries `virtualAlbumsDB.getAllAlbums().filter { !it.isHidden }`, excluding dormant `ITEM_STATE_ENCRYPTED` and `ITEM_STATE_DECRYPTED` items, paths marked as deleted for each album (`getDeletedPathsForAlbum`), and any path under `recycleBinPath`.
 4. **JSON Serialization & ZIP Packaging (`writeExportPackage`):**
    - Uses `GsonBuilder().setPrettyPrinting().create()` to serialize `FavoritesBackup` (`version`, `favorites`) and `VirtualAlbumBackup` (`version`, `name`, `createdTs`, `isHidden`, `parentPhysicalPath`, `items`) into UTF-8 entries inside a `ZipOutputStream`.
    - The exported `.zip` output is identical whether or not all-files storage access is granted.
@@ -692,7 +686,7 @@ Implemented across `SettingsActivity` (`setupImportFavorites`, `importFavorites`
    - If shared-storage write access is granted (`canWriteInternalBackups`), syncs `Calypso Gallery/Favorites/favorites.json` via `ReferenceBackupManager.saveFavorites(context)`.
 5. **Restoring Virtual Albums (`importVirtualAlbumsList` & `insertImportedVirtualAlbum`):**
    - Assigns collision-safe album names via `resolveUniqueVirtualAlbumName` (appending `(1)`, `(2)`, etc.) so existing virtual albums are never overwritten.
-   - Inserts a new non-hidden `VirtualAlbum` (`isHidden = false`) and bulk-inserts resolved `VirtualAlbumItem` rows (rejecting `recycleBinPath` and vault paths, deduplicating case-insensitively, and preserving `UNRESOLVED` paths when the parent directory does not exist on disk).
+   - Inserts a new non-hidden `VirtualAlbum` (`isHidden = false`) and bulk-inserts resolved `VirtualAlbumItem` rows (rejecting `recycleBinPath` and vault paths, deduplicating case-insensitively, and retaining raw paths with default `ITEM_STATE_OK` when the parent directory does not exist on disk).
    - If shared-storage write access is granted (`canWriteInternalBackups`), writes `Calypso Gallery/Virtual Album Saves/<album>.json` via `VirtualAlbumSyncManager.saveAlbumToFile(context, newAlbumId)`; otherwise imported data stays safely in the app's internal Room database.
 
 ---
@@ -706,26 +700,26 @@ This section documents how `lastModified` and `dateTaken` are handled across cop
 | Operation | `lastModified` Preserved? | `dateTaken` Preserved? | Governing Code Path |
 | :--- | :--- | :--- | :--- |
 | **Unencrypted Move (same storage, `renameTo`)** | **Yes** if `keepLastModified = true`; reset to `now` if `false` | **Yes** across `media` and `date_takens` (`DateTakensDao.updateDateTakenPath` via `updateDBMediaPath`); MediaStore rescans on move | [`CopyMoveHelper.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CopyMoveHelper.kt), [`Context.kt`](app/src/main/kotlin/org/fossify/gallery/extensions/Context.kt), [`DateTakensDao.kt`](app/src/main/kotlin/org/fossify/gallery/interfaces/DateTakensDao.kt) |
-| **Unencrypted Copy / Stream Move (SAF, SD, OTG)** | **Conditional** on `keepLastModified = true` and POSIX `File.setLastModified()` support (fails silently on SAF-only targets) | **Yes** when `keepLastModified = true`: `CopyMoveRunner.copyFile` captures `dateTaken` and `lastModified` before deleting source, persists `DateTakensDao` (`persistDecryptedDateTaken`), rescans before updating MediaStore timestamps (`finalizeCopiedFile`), and updates `DateTakensDao` path on move | [`CopyMoveHelper.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CopyMoveHelper.kt) (`copyFile`, `finalizeCopiedFile`, `updateLastModifiedValues`), [`CryptoManager.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManager.kt) |
-| **Encrypt (`Plaintext -> .bin`)** | **Yes** (`sourceFile.lastModified()` saved in encrypted `.bin` header) | **Yes:** `resolvePlaintextDateTaken` resolves `DateTakensDao` -> `MediaStore.DATE_TAKEN` -> EXIF (`TAG_DATETIME_ORIGINAL` / `DIGITIZED` / `DATETIME`) -> video `METADATA_KEY_DATE` -> fallback `lastModified` into the `FGMETA` header (`encryptStreamToDirectory` also supports explicit `lastModifiedOverride` / `dateTakenOverride`) | [`CryptoManager.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManager.kt) (`resolvePlaintextDateTaken`, `encryptFileToDirectory`, `encryptStreamToDirectory`), [`MediaFetcher.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/MediaFetcher.kt) |
-| **Decrypt (`.bin -> Plaintext`)** | **Yes** (`outFile.setLastModified(meta.lastModified)` regardless of `keepLastModified`, subject to target filesystem POSIX support) | **Yes:** writes `meta.dateTaken` to `DateTakensDao` synchronously (`persistDecryptedDateTaken`) and updates MediaStore `DATE_TAKEN` / `DATE_MODIFIED` in the `rescanPath` completion callback | [`CryptoManager.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManager.kt) (`decryptFileToDirectory`, `persistDecryptedDateTaken`, `updateMediaStoreTimestamps`) |
-| **Encrypted Copy / Move (inside Vault)** | **Yes** (header `meta.lastModified` and `.bin` mtime copied; preserved across `renameEncryptedFile`) | **Yes** (header `meta.dateTaken` copied verbatim, including across `renameEncryptedFile`) | [`CryptoManager.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManager.kt) (`copyOrMoveEncryptedFileToDirectory`, `renameEncryptedFile`) |
+| **Unencrypted Copy / Stream Move (SAF, SD, OTG)** | **Conditional** on `keepLastModified = true` and POSIX `File.setLastModified()` support (fails silently on SAF-only targets) | **Yes** when `keepLastModified = true`: `CopyMoveRunner.copyFile` captures `dateTaken` and `lastModified` before deleting source, persists `DateTakensDao` (`persistDecryptedDateTaken`), rescans before updating MediaStore timestamps (`finalizeCopiedFile`), and updates `DateTakensDao` path on move | [`CopyMoveHelper.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CopyMoveHelper.kt) (`copyFile`, `finalizeCopiedFile`, `updateLastModifiedValues`), [`CryptoManagerTimestamps.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerTimestamps.kt) |
+| **Encrypt (`Plaintext -> .bin`)** | **Yes** (`sourceFile.lastModified()` saved in encrypted `.bin` header) | **Yes:** `resolvePlaintextDateTaken` resolves `DateTakensDao` -> `MediaStore.DATE_TAKEN` -> EXIF (`TAG_DATETIME_ORIGINAL` / `DIGITIZED` / `DATETIME`) -> video `METADATA_KEY_DATE` -> fallback `lastModified` into the `FGMETA` header (`encryptStreamToDirectory` also supports explicit `lastModifiedOverride` / `dateTakenOverride`) | [`CryptoManagerTimestamps.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerTimestamps.kt) (`resolvePlaintextDateTaken`), [`CryptoManagerFileCrypto.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerFileCrypto.kt) (`encryptFileToDirectory`, `encryptStreamToDirectory`), [`MediaFetcher.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/MediaFetcher.kt) |
+| **Decrypt (`.bin -> Plaintext`)** | **Yes** (`outFile.setLastModified(meta.lastModified)` regardless of `keepLastModified`, subject to target filesystem POSIX support) | **Yes:** writes `meta.dateTaken` to `DateTakensDao` synchronously (`persistDecryptedDateTaken`) and updates MediaStore `DATE_TAKEN` / `DATE_MODIFIED` in the `rescanPath` completion callback | [`CryptoManagerFileCrypto.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerFileCrypto.kt) (`decryptFileToDirectory`), [`CryptoManagerTimestamps.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerTimestamps.kt) (`persistDecryptedDateTaken`, `updateMediaStoreTimestamps`) |
+| **Encrypted Copy / Move (inside Vault)** | **Yes** (header `meta.lastModified` and `.bin` mtime copied; preserved across `renameEncryptedFile`) | **Yes** (header `meta.dateTaken` copied verbatim, including across `renameEncryptedFile`) | [`CryptoManagerConflict.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerConflict.kt) (`copyOrMoveEncryptedFileToDirectory`), [`CryptoManagerFileCrypto.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerFileCrypto.kt) (`renameEncryptedFile`) |
 | **Desktop CLI Encrypt (`calypso_vault.py`)** | **Yes** (`int(stat.st_mtime * 1000)` stored in `.bin` header + `os.utime`) | **Yes:** `extract_date_taken_ms` reads EXIF capture tags (`36867` `DateTimeOriginal`, `36868` `DateTimeDigitized`, `306` `DateTime`, including EXIF IFD `0x8769`) via Pillow with fallback to `last_mod` | [`calypso_vault.py`](tools/calypso-cli/calypso_vault.py) (`extract_date_taken_ms`, `encrypt_file`) |
-| **External Drive Vault Sync (`USB/SD -> Phone Vault`)** | **Yes** (source `.bin` header copied verbatim via single-pass stream or preserved across `renameEncryptedFile`) | **Yes** (source `.bin` header `dateTaken` preserved verbatim) | [`CryptoManager.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManager.kt) (`syncVaultFromExternalDirectory`) |
+| **External Drive Vault Sync (`USB/SD -> Phone Vault`)** | **Yes** (source `.bin` header copied verbatim or preserved across `renameEncryptedFile`) | **Yes** (source `.bin` header `dateTaken` preserved verbatim) | [`CryptoManagerExportSync.kt`](app/src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerExportSync.kt) (`syncVaultFromExternalDirectory`) |
 
 ### Bit-to-Bit + Metadata Equivalence Architecture
 
 When a user holds both an historical copy (e.g., `2021`) and a re-uploaded/re-downloaded copy (e.g., `2026`) of the exact same bit-identical image or video, pure payload byte equality treats the two files as redundant duplicates. Across operations that skip conflicts (`Copy`, `External Sync`) or delete identical sources (`Encrypt`, `Decrypt`, `Move`), pure bit-to-bit matching would either drop the second timestamped copy or wipe one version in favor of the other.
 
-To prevent this while preserving idempotency on repeated operations, deduplication across the codebase enforces **Dual-Criterion Equivalence (Payload Bits + Timestamp Metadata)**:
+To prevent this while preserving idempotency on repeated operations, deduplication across transfer and encrypt/decrypt paths supports **Dual-Criterion Equivalence (Payload Bits + Timestamp Metadata)** whenever `context.shouldGateDuplicatesByDate()` is enabled (`DATE_TIE_BREAK_ASK` in non-Standard conflict modes):
 
 1. **Timestamp Equivalence Helpers (`TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 10_000L`):**
    - `CryptoManager.areTimestampsEquivalent(tsA, tsB)` treats two positive timestamps as equivalent if and only if $|tsA - tsB| \le 10000\text{ ms}$. The `10,000 ms` window absorbs FAT32/exFAT 2-second `mtime` granularity, MediaStore second-level rounding (`* 1000`) and CLI download/re-upload skew while still separating distinct historical captures. Vault sync dedup no longer depends on this window (it compares plaintext bits only); the tolerance remains in effect for copy/move, smart conflict and reference identity logic.
    - `CryptoManager.areMediaTimestampsEquivalent(lastModA, dateTakenA, lastModB, dateTakenB)` and `areEncryptedTimestampsEquivalent(metaA, metaB)` require equivalent `lastModified` **and**—whenever both sides carry a positive `dateTaken`—equivalent `dateTaken`.
 2. **Gated Operations (Duplicate Skip, Wipe/Delete & Conflict Inspection):**
-   - **`encryptFileToDirectory` / `decryptFileToDirectory` / `copyOrMoveEncryptedFileToDirectory`:** Only trigger `IDENTICAL_SKIP` or `deleteSourceOnIdentical` source removal when **both** bit-for-bit bytes and `areMediaTimestampsEquivalent` match. Differing-timestamp copies with identical bits proceed cleanly into `CONFLICT_KEEP_BOTH` collision naming (`<stem>(1)<ext>`).
-   - **`inspectTransferConflict`, `findContentConflictInTarget`, `findIdenticalPlainFileInDir` & `CopyMoveRunner` (`isDuplicatePlainInTarget`):** Smart conflict detection and inline copy/move conflict checks return `IDENTICAL_SKIP` only when both bytes and timestamps match within tolerance; otherwise an exact-name collision with different timestamps surfaces as `NAME_CONFLICT`, and repeated transfers find the matching timestamped `(n)` variant across the collision family for idempotent skipping.
-   - **`syncVaultFromExternalDirectory` (Stages 2 & 3/4):** duplicate skipping now depends only on `originalSize`, `mediaType` and bit-for-bit plaintext equality; `areEncryptedTimestampsEquivalent` is no longer consulted here. A re-uploaded external `.bin` with identical bits but a different timestamp is skipped and the target's `lastModified` is preserved. A `(1)` variant is created only for differing plaintext bits.
+   - **`encryptFileToDirectory` / `decryptFileToDirectory` / `copyOrMoveEncryptedFileToDirectory`:** When `shouldGateDuplicatesByDate()` is `true`, `IDENTICAL_SKIP` or `deleteSourceOnIdentical` source removal triggers only when **both** bit-for-bit bytes and `areMediaTimestampsEquivalent` match, while differing-timestamp copies with identical bits proceed into `CONFLICT_KEEP_BOTH` collision naming (`<stem>(1)<ext>`). Under the default `DATE_TIE_BREAK_KEEP_TARGET` or `DATE_TIE_BREAK_USE_SOURCE` (and in Automatic mode, where `shouldGateDuplicatesByDate()` is `false`), bit-identical copies with differing timestamps are deduplicated/skipped (and `DATE_TIE_BREAK_USE_SOURCE` updates the surviving target's timestamp).
+   - **`inspectTransferConflict`, `findContentConflictInTarget`, `findIdenticalPlainFileInDir` & `CopyMoveRunner` (`isDuplicatePlainInTarget`):** Smart conflict detection and inline copy/move conflict checks return `IDENTICAL_SKIP` for differing-timestamp bit-identical files unless `shouldGateDuplicatesByDate()` is `true`—in which case an exact-name collision with different timestamps surfaces as `NAME_CONFLICT`, and repeated transfers find the matching timestamped `(n)` variant across the collision family for idempotent skipping.
+   - **`syncVaultFromExternalDirectory` (Stages 2 & 3/4):** duplicate skipping depends only on `originalSize`, `mediaType` and bit-for-bit plaintext equality; `areEncryptedTimestampsEquivalent` is no longer consulted here. Under default `DATE_TIE_BREAK_KEEP_TARGET`, a re-uploaded external `.bin` with identical bits but a different timestamp is skipped and the target's `lastModified` is preserved; under `DATE_TIE_BREAK_USE_SOURCE`, `CryptoManager.applyDuplicateDateToEncryptedFile` updates the surviving `.bin` mtime. A `(1)` variant is created only for differing plaintext bits.
 3. **Symmetric Collision Family & `preExistingPaths` Sibling Protection:**
    - `CryptoManager.isSameOrCollisionVariant` compares `stripCollisionIndex(candidateName)` and `stripCollisionIndex(incomingOriginalName)` symmetrically (`photo.jpg` matches `photo(1).jpg` in both directions), and `TargetPlainIndex` / `TargetEncryptedIndex` key `byFamilyLower` by stripped base name.
    - Because batch operations (`encryptFolder`, `decryptFolder`, `CopyMoveRunner`) reuse a shared index per destination folder, `TargetPlainIndex` and `TargetEncryptedIndex` accept an optional `preExistingPaths` snapshot. Only **exact** filename collisions or collision variants already present before the batch started can participate in duplicate skipping—so legitimate same-folder siblings sharing identical bytes and timestamps (`photo.jpg` and `photo(1).jpg`) never cannibalize each other mid-batch.
@@ -754,7 +748,7 @@ To prevent this while preserving idempotency on repeated operations, deduplicati
 
 - **Built-in Appearance Preset Themes (7 Presets):**
   - Alongside Light, Dark, Midnight Blue, Warm Paper, and Deep Forest, Appearance includes **Velvet Violet** (`#0E0A18` background, `#1A132B` surface, `#A78BFA` primary) and **Soft Coral** (`#FFF7F5` background, `#FFFFFF` surface, `#C44047` primary).
-- **Pull-to-Open Vault Indicator (`VaultPullIndicatorView` & `VaultPullTonePalette`):**
+- **Pull-to-Open Vault Indicator (`VaultPullIndicatorView`, `VaultPullTonePalette` & `VaultPullGestureHandler`):**
   - Implements the AD-1 sequential light handoff: an elliptical top light slit feeds into a unified `palette.surface` circular glass disc with a backlit `primary` aura.
   - Uses a constant-hue tonal transition with contrast safeguards for Custom themes, calmer animation timing, and `95dp` → `115dp` asymptotic rubber-band damping.
 - **Overflow Menu Icon Tinting (`CalypsoOverflowMenuPopup`):**
