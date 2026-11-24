@@ -4,6 +4,9 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+### Fixed
+
+- **Video mute state and icon consistency** — each video now keeps its own mute state, matching upstream Fossify Gallery where every page has its own player. Toggling mute on one video no longer re-applies the preference to other videos while swiping, and the speaker icon always reflects the audio the player actually produces.
 
 ## [1.0.1] - 2026-11-24
 

@@ -185,6 +185,10 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mOriginalPlaybackSpeed = 1f
     private var mIsLongPressActive = false
     private var mHasAudio = true
+    // Upstream Gallery gives every video its own player, so each one keeps its own audio state.
+    // The fork shares one player across pages, so remember the state per fragment and restore it
+    // only when that video starts, instead of re-applying the global preference on every swipe.
+    private var mIsMuted = false
 
     private val mTouchHoldRunnable = Runnable {
         mView.parent.requestDisallowInterceptTouchEvent(true)
@@ -225,6 +229,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mIsViewDestroyed = false
         mMedium = arguments.getSerializable(MEDIUM) as Medium
         mConfig = context.config
+        // Each page inherits the preference as it was when it was created, just like a fresh
+        // ExoPlayer would in upstream. Later changes on other pages do not affect this page.
+        mIsMuted = mConfig.muteVideos
         mTouchSlop = (ViewConfiguration.get(context).scaledTouchSlop) / TOUCH_SLOP_DIVIDER
         binding = PagerVideoItemBinding.inflate(inflater, container, false).apply {
             panoramaOutline.setOnClickListener { openPanorama() }
@@ -234,7 +241,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             videoPreview.setOnClickListener { toggleFullscreen() }
             bottomVideoTimeHolder.videoPlaybackSpeed.setOnClickListener { showPlaybackSpeedPicker() }
             bottomVideoTimeHolder.videoToggleMute.setOnClickListener {
-                mConfig.muteVideos = !mConfig.muteVideos
+                mIsMuted = !mIsMuted
+                mConfig.muteVideos = mIsMuted
                 updatePlayerMuteState(showToast = true)
             }
 
@@ -1232,16 +1240,19 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun updatePlayerMuteState(showToast: Boolean = false) {
-        val isMuted = mConfig.muteVideos
         if (mHasAudio) {
-            if (isMuted) mExoPlayer?.mute() else mExoPlayer?.unmute()
+            if (mIsMuted) mExoPlayer?.mute() else mExoPlayer?.unmute()
         } else if (showToast && mWasVideoStarted) {
             activity?.toast(R.string.video_no_sound)
         }
 
+        // The icon must describe the audio the user will actually hear. Reading the player keeps
+        // it correct after the shared player was detached (which resets its volume to 0) and
+        // re-acquired by another page; fall back to this page's state before a player exists.
+        val isMutedNow = mExoPlayer?.volume?.let { it == 0f } ?: mIsMuted
         val drawableId = when {
             !mHasAudio -> R.drawable.ic_vector_no_sound
-            isMuted -> R.drawable.ic_vector_speaker_off
+            isMutedNow -> R.drawable.ic_vector_speaker_off
             else -> R.drawable.ic_vector_speaker_on
         }
 
