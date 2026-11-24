@@ -25,6 +25,7 @@ import org.fossify.commons.extensions.isGone
 import org.fossify.commons.extensions.isInDownloadDir
 import org.fossify.commons.extensions.isMediaFile
 import org.fossify.commons.extensions.isRestrictedWithSAFSdk30
+import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
@@ -38,11 +39,15 @@ import org.fossify.gallery.extensions.*
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.LOCATION_INTERNAL
+import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.PickDirectoryMode
 import org.fossify.gallery.helpers.TYPE_IMAGES
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.models.Directory
 import java.io.File
+import java.util.Locale
+import java.util.concurrent.atomic.AtomicInteger
 import org.fossify.gallery.helpers.getHiddenPhysicalAlbums
 import org.fossify.gallery.helpers.getVaultDestinationAlbums
 import org.fossify.gallery.helpers.isEncryptedFolderPath
@@ -75,6 +80,10 @@ class PickDirectoryDialog(
     private val allowedDirectoryCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
     private var openedSubfolders = arrayListOf("")
     private var hasLoadedDirectories = false
+    @Volatile
+    private var isDismissed = false
+    private val directoryDispatchSeq = AtomicInteger(0)
+    private val dirsUpdateLock = Any()
     private var binding = DialogDirectoryPickerBinding.inflate(activity.layoutInflater)
     private var isGridViewType = activity.config.viewTypeFolders == VIEW_TYPE_GRID
     private var showHidden = activity.config.shouldShowHidden
@@ -112,6 +121,7 @@ class PickDirectoryDialog(
         builder.apply {
             activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.select_destination) { alertDialog -> alertDialog.secureVaultWindow()
                 dialog = alertDialog
+                alertDialog.setOnDismissListener { isDismissed = true }
                 binding.directoriesShowHidden.beGone()
 
                 alertDialog.onBackPressedDispatcher.addCallback(alertDialog) {
@@ -201,8 +211,10 @@ class PickDirectoryDialog(
     private fun checkPlaceholderVisibility(dirs: ArrayList<Directory>) = with(binding) {
         directoriesEmptyPlaceholder.beVisibleIf(dirs.isEmpty())
 
-        if (folderSearchView.isSearchOpen) {
-            directoriesEmptyPlaceholder.text = root.context.getString(org.fossify.commons.R.string.no_items_found)
+        directoriesEmptyPlaceholder.text = if (folderSearchView.isSearchOpen || isPickingCopyMoveDestination) {
+            root.context.getString(org.fossify.commons.R.string.no_items_found)
+        } else {
+            root.context.getString(R.string.no_media_with_filters)
         }
 
         directoriesFastscroller.beVisibleIf(directoriesEmptyPlaceholder.isGone())
@@ -244,13 +256,21 @@ class PickDirectoryDialog(
 
     private fun fetchDirectories(forceShowHiddenAndExcluded: Boolean) {
         val isEncryptedMode = CopyMovePolicy.isEncryptedTargetMode(effectiveMode)
+        val ignoreMediaFilter = CopyMovePolicy.shouldIgnoreMediaFilterForPicker(isPickingCopyMoveDestination)
         activity.getCachedDirectories(
             forceShowHidden = forceShowHiddenAndExcluded || isEncryptedMode,
             forceShowExcluded = forceShowHiddenAndExcluded,
             includeVirtualAlbums = false,
-            isSecretVaultView = isEncryptedMode
-        ) {
-            val allDirs = ArrayList(it)
+            isSecretVaultView = isEncryptedMode,
+            ignoreMediaFilter = ignoreMediaFilter
+        ) { cachedDirs ->
+            if (isDismissed || activity.isDestroyed || activity.isFinishing) {
+                return@getCachedDirectories
+            }
+
+            val cachedDbKeys = cachedDirs.mapTo(HashSet()) { d -> d.path.getDistinctPath() }
+            val allDirs = ArrayList(cachedDirs)
+            val noMediaFolders = if (isEncryptedMode) ArrayList() else activity.getNoMediaFoldersSync()
             if (isEncryptedMode) {
                 if (CryptoManager.isVaultUnlocked) {
                     val encryptedAlbums = CryptoManager.getVaultDestinationAlbums(activity)
@@ -282,34 +302,33 @@ class PickDirectoryDialog(
             } else {
                 val canShowHidden = activity.config.shouldShowHidden &&
                     (!activity.config.isHiddenPasswordProtectionOn || CryptoManager.isVaultUnlocked)
-                if (canShowHidden) {
-                    if (effectiveMode == PickDirectoryMode.DEFAULT) {
-                        val encryptedAlbums = CryptoManager.getHiddenPhysicalAlbums(activity)
-                        encryptedAlbums.forEach { album ->
-                            if (!CryptoManager.isVaultRecycleBin(album.folder) &&
-                                !allDirs.any { d -> d.path.equals(album.fullPath, true) }
-                            ) {
-                                allDirs.add(
-                                    Directory(
-                                        id = null,
-                                        path = album.fullPath,
-                                        tmb = "",
-                                        name = album.name,
-                                        mediaCnt = album.itemCount,
-                                        modified = album.folder.lastModified(),
-                                        taken = album.folder.lastModified(),
-                                        size = 0L,
-                                        location = LOCATION_INTERNAL,
-                                        types = TYPE_IMAGES or TYPE_VIDEOS,
-                                        sortValue = ""
-                                    )
+                if (canShowHidden && effectiveMode == PickDirectoryMode.DEFAULT) {
+                    val encryptedAlbums = CryptoManager.getHiddenPhysicalAlbums(activity)
+                    encryptedAlbums.forEach { album ->
+                        if (!CryptoManager.isVaultRecycleBin(album.folder) &&
+                            !allDirs.any { d -> d.path.equals(album.fullPath, true) }
+                        ) {
+                            allDirs.add(
+                                Directory(
+                                    id = null,
+                                    path = album.fullPath,
+                                    tmb = "",
+                                    name = album.name,
+                                    mediaCnt = album.itemCount,
+                                    modified = album.folder.lastModified(),
+                                    taken = album.folder.lastModified(),
+                                    size = 0L,
+                                    location = LOCATION_INTERNAL,
+                                    types = TYPE_IMAGES or TYPE_VIDEOS,
+                                    sortValue = ""
                                 )
-                            }
+                            )
                         }
                     }
+                }
 
+                if (canShowHidden || activity.config.temporarilyShowHiddenFolders || forceShowHiddenAndExcluded) {
                     // Add unencrypted hidden folders (e.g. .nomedia folders)
-                    val noMediaFolders = activity.getNoMediaFoldersSync()
                     noMediaFolders.forEach { folderPath ->
                         if (!allDirs.any { d -> d.path.equals(folderPath, true) } &&
                             !CryptoManager.isEncryptedFolderPath(activity, folderPath) &&
@@ -339,25 +358,177 @@ class PickDirectoryDialog(
                 }
             }
 
-            // Exclude recycle bins and any destinations disallowed for the current mode
-            allDirs.removeAll { d -> !isDirectoryAllowedForMode(d) }
-
-            allDirs.forEach { d ->
-                d.subfoldersMediaCount = d.mediaCnt
+            fun prepareDisplayDirs(sourceDirs: ArrayList<Directory>): ArrayList<Directory> {
+                val allowedDirs = ArrayList<Directory>(sourceDirs.size)
+                sourceDirs.forEach { d ->
+                    if (isDirectoryAllowedForMode(d)) {
+                        d.subfoldersMediaCount = d.mediaCnt
+                        allowedDirs.add(d)
+                    }
+                }
+                return if (CopyMovePolicy.isCopyMode(effectiveMode) || isEncryptedMode) {
+                    allowedDirs
+                } else {
+                    val withTemp = activity.addTempFolderIfNeeded(allowedDirs)
+                    if (effectiveMode == PickDirectoryMode.DEFAULT) {
+                        withTemp
+                    } else {
+                        ArrayList(withTemp.filter { isDirectoryAllowedForMode(it) })
+                    }
+                }
             }
 
             allDirectories.clear()
-            val dirs = if (CopyMovePolicy.isCopyMode(effectiveMode) || isEncryptedMode) {
-                allDirs
-            } else {
-                val withTemp = activity.addTempFolderIfNeeded(allDirs)
-                if (effectiveMode == PickDirectoryMode.DEFAULT) {
-                    withTemp
-                } else {
-                    ArrayList(withTemp.filter { isDirectoryAllowedForMode(it) })
+            if (isEncryptedMode) {
+                val dirs = prepareDisplayDirs(allDirs)
+                gotDirectories(
+                    newDirs = dirs,
+                    replaceAllDirectories = true,
+                    allowEmptyPlaceholder = true,
+                    dispatchSeq = directoryDispatchSeq.incrementAndGet()
+                )
+                return@getCachedDirectories
+            }
+
+            val initialDirs = prepareDisplayDirs(allDirs)
+            if (initialDirs.isNotEmpty()) {
+                gotDirectories(
+                    newDirs = initialDirs,
+                    replaceAllDirectories = true,
+                    allowEmptyPlaceholder = false,
+                    dispatchSeq = directoryDispatchSeq.incrementAndGet()
+                )
+            }
+
+            if (isDismissed || activity.isDestroyed || activity.isFinishing) {
+                return@getCachedDirectories
+            }
+
+            val snapshot = MediaFetcher(activity, isSecretVaultView = false).loadMediaStoreSnapshot(
+                isPickImage = false,
+                isPickVideo = false,
+                favoritePaths = ArrayList(),
+                getProperDateTaken = false,
+                filterMediaOverride = if (ignoreMediaFilter) CopyMovePolicy.allMediaTypesFilter() else null
+            )
+
+            if (isDismissed || activity.isDestroyed || activity.isFinishing) {
+                return@getCachedDirectories
+            }
+
+            val showExcludedInScope = activity.config.temporarilyShowExcluded || forceShowHiddenAndExcluded
+            val showHiddenFoldersInScope = activity.config.temporarilyShowHiddenFolders || forceShowHiddenAndExcluded
+            val excludedPaths = if (showExcludedInScope) HashSet() else activity.config.excludedFolders
+            val includedPaths = activity.config.includedFolders
+            val folderNoMediaStatuses = HashMap<String, Boolean>(noMediaFolders.size)
+            noMediaFolders.forEach { folder ->
+                folderNoMediaStatuses["$folder/$NOMEDIA"] = true
+            }
+            val albumCovers = activity.config.parseAlbumCovers()
+            val hiddenString = activity.getString(R.string.hidden)
+            val defaultLocale = Locale.getDefault()
+
+            val liveDirs = ArrayList<Directory>()
+            val liveDistinctKeys = HashSet<String>()
+            for (folderPath in snapshot.mediaFolders) {
+                if (CryptoManager.isEncryptedFolderPath(activity, folderPath) ||
+                    activity.isEncryptedVaultAlbum(folderPath) ||
+                    activity.isCipherSystemPath(folderPath) ||
+                    CryptoManager.isVaultRecycleBinPath(activity, folderPath)
+                ) {
+                    continue
+                }
+                val isVisible = folderPath.shouldFolderBeVisible(
+                    excludedPaths = excludedPaths,
+                    includedPaths = includedPaths,
+                    showHidden = showHiddenFoldersInScope,
+                    folderNoMediaStatuses = folderNoMediaStatuses
+                ) { p, hasNoMedia ->
+                    folderNoMediaStatuses[p] = hasNoMedia
+                }
+                if (!isVisible) {
+                    continue
+                }
+                val folderMedia = snapshot.folderMedia[folderPath.lowercase(defaultLocale)]
+                if (folderMedia.isNullOrEmpty()) {
+                    continue
+                }
+                val dir = activity.createDirectoryFromMedia(
+                    path = folderPath,
+                    curMedia = folderMedia,
+                    albumCovers = albumCovers,
+                    hiddenString = hiddenString,
+                    includedFolders = includedPaths,
+                    getProperFileSize = false,
+                    noMediaFolders = noMediaFolders
+                )
+                if (liveDistinctKeys.add(dir.path.getDistinctPath())) {
+                    liveDirs.add(dir)
                 }
             }
-            gotDirectories(dirs)
+
+            for (includedPath in includedPaths) {
+                if (includedPath.isEmpty() ||
+                    CryptoManager.isEncryptedFolderPath(activity, includedPath) ||
+                    activity.isEncryptedVaultAlbum(includedPath) ||
+                    activity.isCipherSystemPath(includedPath) ||
+                    CryptoManager.isVaultRecycleBinPath(activity, includedPath)
+                ) {
+                    continue
+                }
+                val distinctKey = includedPath.getDistinctPath()
+                if (distinctKey in liveDistinctKeys) {
+                    continue
+                }
+                val folder = File(includedPath)
+                if (folder.exists() && folder.isDirectory) {
+                    val mediaFiles = folder.listFiles()?.filter { f -> f.isFile && f.path.isMediaFile() }.orEmpty()
+                    val firstTmb = mediaFiles.firstOrNull()?.absolutePath ?: ""
+                    liveDistinctKeys.add(distinctKey)
+                    liveDirs.add(
+                        Directory(
+                            id = null,
+                            path = includedPath,
+                            tmb = firstTmb,
+                            name = activity.getFolderNameFromPath(includedPath),
+                            mediaCnt = mediaFiles.size,
+                            modified = folder.lastModified(),
+                            taken = folder.lastModified(),
+                            size = 0L,
+                            location = activity.getPathLocation(includedPath),
+                            types = CopyMovePolicy.allMediaTypesFilter(),
+                            sortValue = ""
+                        )
+                    )
+                }
+            }
+
+            val newFoldersToCache = liveDirs.filterTo(ArrayList()) { dir ->
+                !dir.isVirtualAlbum() &&
+                    !CryptoManager.isEncryptedFolderPath(activity, dir.path) &&
+                    dir.path != activity.config.tempFolderPath &&
+                    dir.path.getDistinctPath() !in cachedDbKeys
+            }
+            if (newFoldersToCache.isNotEmpty()) {
+                activity.storeDirectoryItems(newFoldersToCache)
+            }
+
+            if (isDismissed || activity.isDestroyed || activity.isFinishing) {
+                return@getCachedDirectories
+            }
+
+            val mergedDirs = CopyMovePolicy.mergeDestinationDirectories(
+                cachedDirs = allDirs,
+                liveDirs = liveDirs,
+                keyOf = { it.getDistinctPath() }
+            )
+            val finalDirs = prepareDisplayDirs(mergedDirs)
+            gotDirectories(
+                newDirs = finalDirs,
+                replaceAllDirectories = true,
+                allowEmptyPlaceholder = true,
+                dispatchSeq = directoryDispatchSeq.incrementAndGet()
+            )
         }
     }
 
@@ -428,41 +599,63 @@ class PickDirectoryDialog(
         }
     }
 
-    private fun gotDirectories(newDirs: ArrayList<Directory>) {
+    private fun gotDirectories(
+        newDirs: ArrayList<Directory>,
+        replaceAllDirectories: Boolean = false,
+        allowEmptyPlaceholder: Boolean = true,
+        dispatchSeq: Int = directoryDispatchSeq.incrementAndGet()
+    ) {
         ensureBackgroundThread {
-            if (allDirectories.isEmpty()) {
-                allDirectories = newDirs.clone() as ArrayList<Directory>
-            }
-
-            val isCopyMode = CopyMovePolicy.isCopyMode(effectiveMode) || (effectiveMode == PickDirectoryMode.DEFAULT && isCopyOperation)
-            val effectiveSource = if (isPickingCopyMoveDestination && isCopyMode) {
-                activity.resolveEffectiveSourcePhysicalPath(sourcePath)
-            } else {
-                sourcePath
-            }
-
-            val distinctDirs = newDirs.filter { dir ->
-                if (!isDirectoryAllowedForMode(dir)) {
-                    return@filter false
+            val dirs: ArrayList<Directory>
+            synchronized(dirsUpdateLock) {
+                if (dispatchSeq != directoryDispatchSeq.get() || isDismissed || activity.isDestroyed || activity.isFinishing) {
+                    return@ensureBackgroundThread
                 }
 
-                if (isPickingCopyMoveDestination && isCopyMode && sourcePath.isVirtualAlbumPath()) {
-                    if (effectiveSource.isNotEmpty() && dir.path.trimEnd('/').equals(effectiveSource.trimEnd('/'), ignoreCase = true)) {
+                val isCopyMode = CopyMovePolicy.isCopyMode(effectiveMode) || (effectiveMode == PickDirectoryMode.DEFAULT && isCopyOperation)
+                val effectiveSource = if (isPickingCopyMoveDestination && isCopyMode) {
+                    activity.resolveEffectiveSourcePhysicalPath(sourcePath)
+                } else {
+                    sourcePath
+                }
+
+                val distinctDirs = newDirs.filter { dir ->
+                    if (!isDirectoryAllowedForMode(dir)) {
                         return@filter false
                     }
+
+                    if (isPickingCopyMoveDestination && isCopyMode && sourcePath.isVirtualAlbumPath()) {
+                        if (effectiveSource.isNotEmpty() && dir.path.trimEnd('/').equals(effectiveSource.trimEnd('/'), ignoreCase = true)) {
+                            return@filter false
+                        }
+                    }
+
+                    true
+                }.distinctBy { it.path.getDistinctPath() }.toMutableList() as ArrayList<Directory>
+
+                if (replaceAllDirectories || allDirectories.isEmpty()) {
+                    allDirectories = ArrayList(distinctDirs)
                 }
 
-                true
-            }.distinctBy { it.path.getDistinctPath() }.toMutableList() as ArrayList<Directory>
-            val sortedDirs = activity.getSortedDirectories(distinctDirs)
-            val dirs = activity.getDirsToShow(sortedDirs, allDirectories, currentPathPrefix).clone() as ArrayList<Directory>
-            if (hasLoadedDirectories && dirs.hashCode() == shownDirectories.hashCode()) {
-                return@ensureBackgroundThread
-            }
+                val sortedDirs = activity.getSortedDirectories(distinctDirs)
+                dirs = activity.getDirsToShow(sortedDirs, allDirectories, currentPathPrefix).clone() as ArrayList<Directory>
+                if (dirs.isEmpty() && !allowEmptyPlaceholder) {
+                    return@ensureBackgroundThread
+                }
+                if (hasLoadedDirectories &&
+                    dirs.size == shownDirectories.size &&
+                    MediaUpdatePolicy.computeDirectoryContentHash(dirs) == MediaUpdatePolicy.computeDirectoryContentHash(shownDirectories)
+                ) {
+                    return@ensureBackgroundThread
+                }
 
-            hasLoadedDirectories = true
-            shownDirectories = dirs
+                hasLoadedDirectories = true
+                shownDirectories = dirs
+            }
             activity.runOnUiThread {
+                if (dispatchSeq != directoryDispatchSeq.get() || isDismissed || activity.isDestroyed || activity.isFinishing) {
+                    return@runOnUiThread
+                }
                 checkPlaceholderVisibility(dirs)
                 val adapter = DirectoryAdapter(activity, dirs.clone() as ArrayList<Directory>, null, binding.directoriesGrid, true) {
                     val clickedDir = it as Directory
@@ -502,6 +695,10 @@ class PickDirectoryDialog(
                 binding.apply {
                     directoriesGrid.adapter = adapter
                     directoriesFastscroller.setScrollVertically(!scrollHorizontally)
+                }
+                val currentQuery = searchView.getCurrentQuery()
+                if (searchView.isSearchOpen && currentQuery.isNotEmpty()) {
+                    filterFolderListBySearchQuery(currentQuery)
                 }
             }
         }

@@ -6,9 +6,11 @@ import org.fossify.gallery.helpers.PickDirectoryMode
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.TYPE_GIFS
 import org.fossify.gallery.helpers.TYPE_IMAGES
+import org.fossify.gallery.helpers.TYPE_PORTRAITS
 import org.fossify.gallery.helpers.TYPE_RAWS
 import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
+import org.fossify.gallery.models.Directory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -167,6 +169,86 @@ class CopyMovePolicyTest {
         assertFalse(collect(fileName = ".nomedia", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
         assertFalse(collect(fileName = "photo.jpg", isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
         assertFalse(collect(fileName = "sub", isDirectory = true, isEncryptedFolder = true, showHidden = true, filterMedia = allMediaFilter))
+    }
+
+    @Test
+    fun shouldIgnoreMediaFilterForPickerOnlyForCopyMoveDestinations() {
+        assertTrue(CopyMovePolicy.shouldIgnoreMediaFilterForPicker(isPickingCopyMoveDestination = true))
+        assertFalse(CopyMovePolicy.shouldIgnoreMediaFilterForPicker(isPickingCopyMoveDestination = false))
+    }
+
+    @Test
+    fun allMediaTypesFilterIncludesAllGalleryMediaTypes() {
+        val allTypes = CopyMovePolicy.allMediaTypesFilter()
+        assertTrue(allTypes and TYPE_IMAGES != 0)
+        assertTrue(allTypes and TYPE_VIDEOS != 0)
+        assertTrue(allTypes and TYPE_GIFS != 0)
+        assertTrue(allTypes and TYPE_RAWS != 0)
+        assertTrue(allTypes and TYPE_SVGS != 0)
+        assertTrue(allTypes and TYPE_PORTRAITS != 0)
+    }
+
+    @Test
+    fun mergeDestinationDirectoriesPopulatesEmptyCacheFromLiveScan() {
+        val live = listOf(
+            dir("/storage/emulated/0/DCIM/Camera", mediaCnt = 12),
+            dir("/storage/emulated/0/Pictures/Screenshots", mediaCnt = 4)
+        )
+
+        val merged = CopyMovePolicy.mergeDestinationDirectories(emptyList(), live)
+        assertEquals(2, merged.size)
+        assertEquals(listOf("/storage/emulated/0/DCIM/Camera", "/storage/emulated/0/Pictures/Screenshots"), merged.map { it.path })
+    }
+
+    @Test
+    fun mergeDestinationDirectoriesDeduplicatesCaseInsensitivelyAndKeepsCachedOnly() {
+        val cached = listOf(
+            dir("/storage/emulated/0/DCIM/Camera", mediaCnt = 10, tmb = "/old.jpg"),
+            dir("/storage/emulated/0/HiddenNoMedia", mediaCnt = 3)
+        )
+        val live = listOf(
+            dir("/storage/emulated/0/dcim/camera/", mediaCnt = 15, tmb = "/new.jpg"),
+            dir("/storage/emulated/0/Download", mediaCnt = 7)
+        )
+
+        val merged = CopyMovePolicy.mergeDestinationDirectories(cached, live)
+        assertEquals(3, merged.size)
+        assertEquals(15, merged[0].mediaCnt)
+        assertEquals("/new.jpg", merged[0].tmb)
+        assertEquals("/storage/emulated/0/HiddenNoMedia", merged[1].path)
+        assertEquals("/storage/emulated/0/Download", merged[2].path)
+    }
+
+    @Test
+    fun findUnpersistedDirectoriesReturnsOnlyMissingRows() {
+        val displayed = listOf(
+            dir("/storage/emulated/0/DCIM/Camera", mediaCnt = 10),
+            dir("/storage/emulated/0/Pictures", mediaCnt = 5),
+            dir("/storage/emulated/0/Pictures/", mediaCnt = 5)
+        )
+        val cached = listOf(
+            dir("/storage/emulated/0/dcim/camera", mediaCnt = 9)
+        )
+
+        val unpersisted = CopyMovePolicy.findUnpersistedDirectories(displayed, cached)
+        assertEquals(1, unpersisted.size)
+        assertEquals("/storage/emulated/0/Pictures", unpersisted[0].path)
+    }
+
+    private fun dir(path: String, mediaCnt: Int = 1, tmb: String = ""): Directory {
+        return Directory(
+            id = null,
+            path = path,
+            tmb = tmb,
+            name = path.trimEnd('/').substringAfterLast('/'),
+            mediaCnt = mediaCnt,
+            modified = 0L,
+            taken = 0L,
+            size = 0L,
+            location = 0,
+            types = TYPE_IMAGES,
+            sortValue = ""
+        )
     }
 
     private fun collect(

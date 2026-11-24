@@ -44,7 +44,8 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         isPickImage: Boolean,
         isPickVideo: Boolean,
         favoritePaths: ArrayList<String>,
-        getProperDateTaken: Boolean
+        getProperDateTaken: Boolean,
+        filterMediaOverride: Int? = null
     ): MediaStoreSnapshot {
         cachedFileSizes.clear()
         cachedVideoDurations.clear()
@@ -70,7 +71,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
         }
 
-        val filterMedia = context.config.filterMedia
+        val filterMedia = filterMediaOverride ?: context.config.filterMedia
         if (filterMedia == 0) {
             if (dbOverrideDateTakens.isNotEmpty()) {
                 dateTakens.putAll(dbOverrideDateTakens)

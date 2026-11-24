@@ -8,6 +8,7 @@ import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
 import org.fossify.commons.helpers.FAVORITES
 import org.fossify.gallery.extensions.isVirtualAlbumPath
+import org.fossify.gallery.models.Directory
 
 enum class PickDirectoryMode {
     DEFAULT,
@@ -161,5 +162,64 @@ object CopyMovePolicy {
             (fileName.isGif() && filterMedia and TYPE_GIFS != 0) ||
             (fileName.isRawFast() && filterMedia and TYPE_RAWS != 0) ||
             (fileName.isSvg() && filterMedia and TYPE_SVGS != 0)
+    }
+
+    fun shouldIgnoreMediaFilterForPicker(isPickingCopyMoveDestination: Boolean): Boolean {
+        return isPickingCopyMoveDestination
+    }
+
+    fun allMediaTypesFilter(): Int {
+        return TYPE_IMAGES or TYPE_VIDEOS or TYPE_GIFS or TYPE_RAWS or TYPE_SVGS or TYPE_PORTRAITS
+    }
+
+    fun mergeDestinationDirectories(
+        cachedDirs: List<Directory>,
+        liveDirs: List<Directory>,
+        keyOf: (String) -> String = { it.trimEnd('/').lowercase() }
+    ): ArrayList<Directory> {
+        val merged = ArrayList<Directory>(cachedDirs.size + liveDirs.size)
+        val indexByKey = HashMap<String, Int>(cachedDirs.size + liveDirs.size)
+
+        for (dir in cachedDirs) {
+            val key = keyOf(dir.path)
+            if (!indexByKey.containsKey(key)) {
+                indexByKey[key] = merged.size
+                merged.add(dir)
+            }
+        }
+
+        for (liveDir in liveDirs) {
+            val key = keyOf(liveDir.path)
+            val existingIndex = indexByKey[key]
+            if (existingIndex != null) {
+                merged[existingIndex] = liveDir
+            } else {
+                indexByKey[key] = merged.size
+                merged.add(liveDir)
+            }
+        }
+
+        return merged
+    }
+
+    fun findUnpersistedDirectories(
+        displayedDirs: List<Directory>,
+        cachedDirs: List<Directory>,
+        keyOf: (String) -> String = { it.trimEnd('/').lowercase() }
+    ): ArrayList<Directory> {
+        val cachedKeys = HashSet<String>(cachedDirs.size)
+        for (dir in cachedDirs) {
+            cachedKeys.add(keyOf(dir.path))
+        }
+
+        val missing = ArrayList<Directory>()
+        val seenKeys = HashSet<String>()
+        for (dir in displayedDirs) {
+            val key = keyOf(dir.path)
+            if (key !in cachedKeys && seenKeys.add(key)) {
+                missing.add(dir)
+            }
+        }
+        return missing
     }
 }

@@ -1174,6 +1174,18 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                         mergedDirs.add(dir.copy())
                     }
                 }
+                val unpersistedDirs = CopyMovePolicy.findUnpersistedDirectories(
+                    displayedDirs = mergedDirs.filterNot {
+                        it.isVirtualAlbum() ||
+                            CryptoManager.isEncryptedFolderPath(this, it.path) ||
+                            it.path == config.tempFolderPath
+                    },
+                    cachedDirs = cachedDirs,
+                    keyOf = { it.getDistinctPath() }
+                )
+                if (unpersistedDirs.isNotEmpty()) {
+                    storeDirectoryItems(unpersistedDirs)
+                }
                 gotDirectories(addTempFolderIfNeeded(mergedDirs), generation, prioritySet, isIncremental = false, forceRepair = forceRepair)
             }
         } else {
@@ -2138,6 +2150,16 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         val newDirsToInsert = ArrayList<Directory>()
         val folderMediaToSync = ArrayList<Pair<Directory, List<Medium>>>()
 
+        fun flushNewDirsToDb() {
+            if (newDirsToInsert.isNotEmpty()) {
+                try {
+                    directoryDB.insertAll(ArrayList(newDirsToInsert))
+                } catch (_: Exception) {
+                }
+                newDirsToInsert.clear()
+            }
+        }
+
         // Phase 1: check newly discovered / uncached folders FIRST so new albums appear immediately
         var newFoldersAdded = false
         for (folder in newFolders) {
@@ -2157,6 +2179,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
             }
             if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
+                flushNewDirsToDb()
                 return
             }
 
@@ -2220,6 +2243,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
                 }
             }
         }
+
+        flushNewDirsToDb()
 
         if (newFoldersAdded) {
             val sortedDirs = getSortedDirectories(dirs)
@@ -2427,6 +2452,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             var diskFoldersAdded = false
             for (folder in discoveredDiskFolders) {
                 if (generation != mFetchGeneration.get() || mShouldStopFetching || isDestroyed || isFinishing) {
+                    flushNewDirsToDb()
                     return
                 }
                 val distinctKey = folder.getDistinctPath()

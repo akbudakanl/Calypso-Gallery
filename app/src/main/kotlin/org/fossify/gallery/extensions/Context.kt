@@ -1476,6 +1476,7 @@ fun Context.getCachedDirectories(
     forceShowExcluded: Boolean = false,
     includeVirtualAlbums: Boolean = false,
     isSecretVaultView: Boolean = false,
+    ignoreMediaFilter: Boolean = false,
     callback: (ArrayList<Directory>) -> Unit,
 ) {
     ensureBackgroundThread {
@@ -1534,6 +1535,7 @@ fun Context.getCachedDirectories(
 
             val filterMedia = config.filterMedia
             (when {
+                ignoreMediaFilter -> visibleDirectories
                 getVideosOnly -> visibleDirectories.filter { it.types and TYPE_VIDEOS != 0 }
                 getImagesOnly -> visibleDirectories.filter { it.types and TYPE_IMAGES != 0 }
                 else -> visibleDirectories.filter {
