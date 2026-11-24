@@ -1350,7 +1350,38 @@
   }
 
   .bp-left .vault-lock-body {
-    padding-top: 130px;
+    padding-top: 96px;
+  }
+
+  .bp-left .vault-lock-title {
+    margin-bottom: 12px;
+  }
+
+  .bp-left .vault-lock-sub {
+    margin: 0 0 30px;
+    font-size: 22px;
+    font-weight: 500;
+    color: #A1A1AA;
+    letter-spacing: 0.02em;
+  }
+
+  .bp-left .pin-dot.empty {
+    background: transparent;
+    border: 2px solid #52525B;
+  }
+
+  .bp-left .vault-unlock-btn {
+    width: 100%;
+    height: 78px;
+    border-radius: 39px;
+    background: #FAFAFA;
+    color: #09090B;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 6px;
   }
 
   .bp-center {
@@ -1518,11 +1549,11 @@
             <h2 class="art-headline js-editable"><span class="muted-line">Private photos,</span><br>truly encrypted.</h2>
           </div>
 
-          <div class="float-pill" style="left:58px;top:526px;">
+          <div class="float-pill" style="left:56px;top:452px;">
             <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1" fill="#FAFAFA"/></svg>
-            AES-256-GCM
+            AES-256-GCM · Argon2id
           </div>
-          <div class="float-pill" style="right:58px;top:636px;">
+          <div class="float-pill" style="right:56px;top:636px;">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             Screen Shield
           </div>
@@ -1607,14 +1638,14 @@
       <div class="slide-scaler" data-scale-target="1080">
         <div class="artboard" id="slide-3">
           <div class="bg-grid"></div>
-          <div class="bg-glow" style="width:920px;height:920px;left:120px;top:400px;background:radial-gradient(circle, rgba(217,175,118,0.11) 0%, rgba(217,175,118,0.025) 45%, transparent 72%);"></div>
+          <div class="bg-glow" style="width:920px;height:920px;left:80px;top:400px;background:radial-gradient(circle, rgba(217,175,118,0.11) 0%, rgba(217,175,118,0.025) 45%, transparent 72%);"></div>
 
           <div class="art-header">
             <div class="eyebrow">VIRTUAL ALBUMS</div>
             <h2 class="art-headline js-editable"><span class="muted-line">Playlists for</span><br>your photos.</h2>
           </div>
 
-          <div class="device-wrap" style="left:44%;">
+          <div class="device-wrap">
             <div class="device-frame">
               <div class="device-screen">
                 <div class="punch-hole"></div>
@@ -1630,6 +1661,10 @@
                   <div class="album-topbar-text">
                     <h3>Golden Hour</h3>
                     <p>Virtual album · 6 items</p>
+                  </div>
+                  <div class="album-topbar-actions">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="#FAFAFA" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="#FAFAFA" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="#FAFAFA" stroke="none"/></svg>
                   </div>
                 </div>
 
@@ -1886,13 +1921,19 @@
               <div class="device-frame">
                 <div class="device-screen">
                   <div class="punch-hole"></div>
-                  
-                  <div class="vault-bg-blur">
-                    <img data-photo="5" src="photos/photo-5.jpg" alt="">
-                    <img data-photo="2" src="photos/photo-2.jpg" alt="">
-                    <img data-photo="6" src="photos/photo-6.jpg" alt="">
-                    <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                  <div class="and-status">
+                    <div class="and-status-icons">
+                      <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                    </div>
                   </div>
+                  <div class="vault-bg-blur">
+                    <img data-photo="5" src="photos/photo-5.jpg" alt="" style="width:100%;aspect-ratio:1/1.18;object-fit:cover;border-radius:34px;">
+                    <img data-photo="2" src="photos/photo-2.jpg" alt="" style="width:100%;aspect-ratio:1/1.18;object-fit:cover;border-radius:34px;">
+                    <img data-photo="6" src="photos/photo-6.jpg" alt="" style="width:100%;aspect-ratio:1/1.18;object-fit:cover;border-radius:34px;">
+                    <img data-photo="1" src="photos/photo-1.jpg" alt="" style="width:100%;aspect-ratio:1/1.18;object-fit:cover;border-radius:34px;">
+                  </div>
+                  <div class="vault-vignette"></div>
                   <div class="vault-lock-body">
                     <div class="vault-emblem-ring">
                       <svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="16" r="1.2" fill="#FAFAFA"/></svg>
@@ -1913,14 +1954,25 @@
               <div class="device-frame">
                 <div class="device-screen">
                   <div class="punch-hole"></div>
-                  
+                  <div class="and-status">
+                    <div class="and-status-icons">
+                      <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                    </div>
+                  </div>
                   <div class="cal-search-bar">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span>Search folders</span>
+                    <span class="spacer"></span>
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
                   </div>
                   <div class="folder-grid">
                     <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
+                      <div class="folder-thumb-wrap">
+                        <img data-photo="3" src="photos/photo-3.jpg" alt="">
+                        <div class="folder-badge"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                      </div>
                       <div class="folder-meta"><span class="folder-name">Favorites</span><span class="folder-count">24</span></div>
                     </div>
                     <div class="folder-tile">
@@ -1928,7 +1980,10 @@
                       <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
                     </div>
                     <div class="folder-tile">
-                      <div class="folder-thumb-wrap"><img data-photo="1" src="photos/photo-1.jpg" alt=""></div>
+                      <div class="folder-thumb-wrap">
+                        <img data-photo="1" src="photos/photo-1.jpg" alt="">
+                        <div class="folder-badge"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="14" rx="2.5"/><path d="M7 7V5.5A2.5 2.5 0 0 1 9.5 3h9A2.5 2.5 0 0 1 21 5.5v9a2.5 2.5 0 0 1-2.5 2.5H17"/></svg></div>
+                      </div>
                       <div class="folder-meta"><span class="folder-name">Architecture</span><span class="folder-count">19</span></div>
                     </div>
                     <div class="folder-tile">
@@ -1953,9 +2008,18 @@
               <div class="device-frame">
                 <div class="device-screen light">
                   <div class="punch-hole"></div>
+                  <div class="and-status" style="color:#18181B;">
+                    <div class="and-status-icons">
+                      <svg viewBox="0 0 24 24"><path d="M2 20h20V4L2 20z"/></svg>
+                      <svg viewBox="0 0 24 24"><path d="M16 7V5a1 1 0 0 0-1-1h-2V2h-2v2H9a1 1 0 0 0-1 1v2H6v15h12V7h-2z"/></svg>
+                    </div>
+                  </div>
                   <div class="cal-search-bar">
                     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <span>Search folders</span>
+                    <span class="spacer"></span>
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="19" r="1.4" fill="currentColor"/></svg>
                   </div>
                   <div class="folder-grid">
                     <div class="folder-tile">
@@ -1973,6 +2037,14 @@
                     <div class="folder-tile">
                       <div class="folder-thumb-wrap"><img data-photo="3" src="photos/photo-3.jpg" alt=""></div>
                       <div class="folder-meta"><span class="folder-name">Favorites</span><span class="folder-count">24</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="2" src="photos/photo-2.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Nordic Coast</span><span class="folder-count">48</span></div>
+                    </div>
+                    <div class="folder-tile">
+                      <div class="folder-thumb-wrap"><img data-photo="5" src="photos/photo-5.jpg" alt=""></div>
+                      <div class="folder-meta"><span class="folder-name">Kyoto Nights</span><span class="folder-count">16</span></div>
                     </div>
                   </div>
                 </div>
