@@ -60,6 +60,25 @@ object ShareMetadataSanitizer {
 
     private val SANITIZABLE_EXTENSIONS = setOf("jpg", "jpeg", "png", "webp")
 
+    @Suppress("DEPRECATION")
+    fun getPublicShareDirectory(): File {
+        val pictures = runCatching {
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        }.getOrNull()
+        return if (pictures != null) {
+            File(pictures, "Calypso/Shared")
+        } else {
+            File(Environment.getExternalStorageDirectory(), MEDIA_RELATIVE_PATH)
+        }
+    }
+
+    fun isShareTempPath(path: String): Boolean {
+        val clean = path.trimEnd('/').replace('\\', '/')
+        if (clean.isEmpty()) return false
+        return clean.endsWith("/$MEDIA_RELATIVE_PATH", ignoreCase = true) ||
+            clean.contains("/$MEDIA_RELATIVE_PATH/", ignoreCase = true)
+    }
+
     fun sanitizedPaths(context: Context, paths: List<String>): List<String> {
         val mode = context.config.shareMetadataMode
         if (mode == SHARE_METADATA_MODE_OFF || paths.isEmpty()) return paths
@@ -147,6 +166,9 @@ object ShareMetadataSanitizer {
                 } ?: error("MediaStore returned no output stream")
                 // Keep IS_PENDING=1 until EXIF rewriting is finished, so MediaStore/other apps
                 // never observe a half-written or rewritten file.
+                if (!File(getPublicShareDirectory(), ".nomedia").exists()) {
+                    ensureNoMediaMarker(context)
+                }
                 @Suppress("DEPRECATION")
                 val publicPath = File(
                     Environment.getExternalStorageDirectory(),
@@ -214,9 +236,20 @@ object ShareMetadataSanitizer {
     /** One-time hidden marker for the dedicated share folder. Never deleted with the copies. */
     private fun ensureNoMediaMarker(context: Context) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (prefs.getBoolean(NOMEDIA_CREATED, false)) return
+        val dir = getPublicShareDirectory()
+        val noMediaFile = File(dir, ".nomedia")
+        if (noMediaFile.exists()) {
+            if (!prefs.getBoolean(NOMEDIA_CREATED, false)) {
+                prefs.edit().putBoolean(NOMEDIA_CREATED, true).apply()
+            }
+            return
+        }
 
-        val created = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val directCreated = runCatching {
+            (dir.exists() || dir.mkdirs()) && (noMediaFile.exists() || noMediaFile.createNewFile())
+        }.getOrDefault(false)
+
+        val fallbackCreated = if (!directCreated && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
                 put(MediaStore.MediaColumns.DISPLAY_NAME, ".nomedia")
                 put(MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
@@ -226,16 +259,11 @@ object ShareMetadataSanitizer {
                 context.contentResolver.insert(MediaStore.Files.getContentUri("external"), values) != null
             }.getOrDefault(false)
         } else {
-            @Suppress("DEPRECATION")
-            val dir = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                "Calypso/Shared"
-            )
-            runCatching {
-                (dir.exists() || dir.mkdirs()) && File(dir, ".nomedia").createNewFile()
-            }.getOrDefault(false)
+            false
         }
-        if (created) prefs.edit().putBoolean(NOMEDIA_CREATED, true).apply()
+        if (directCreated || fallbackCreated) {
+            prefs.edit().putBoolean(NOMEDIA_CREATED, true).apply()
+        }
     }
 
     private fun recordPendingUri(context: Context, uri: Uri) {
@@ -264,6 +292,9 @@ object ShareMetadataSanitizer {
 
     /** Called on app start so copies left behind by a killed process are removed as well. */
     fun clearTemp(context: Context) {
+        if (getPublicShareDirectory().exists()) {
+            ensureNoMediaMarker(context)
+        }
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         prefs.getStringSet(PENDING_MEDIA_URIS, null).orEmpty().forEach { entry ->
             runCatching { context.contentResolver.delete(Uri.parse(entry.substringBefore('|')), null, null) }

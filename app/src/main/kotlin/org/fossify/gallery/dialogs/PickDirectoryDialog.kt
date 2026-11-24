@@ -25,6 +25,7 @@ import org.fossify.commons.extensions.isGone
 import org.fossify.commons.extensions.isInDownloadDir
 import org.fossify.commons.extensions.isMediaFile
 import org.fossify.commons.extensions.isRestrictedWithSAFSdk30
+import org.fossify.commons.helpers.FAVORITES
 import org.fossify.commons.helpers.NOMEDIA
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.extensions.setupDialogStuff
@@ -42,6 +43,8 @@ import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.MediaFetcher
 import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.PickDirectoryMode
+import org.fossify.gallery.helpers.RECYCLE_BIN
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.TYPE_IMAGES
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.models.Directory
@@ -332,7 +335,8 @@ class PickDirectoryDialog(
                     noMediaFolders.forEach { folderPath ->
                         if (!allDirs.any { d -> d.path.equals(folderPath, true) } &&
                             !CryptoManager.isEncryptedFolderPath(activity, folderPath) &&
-                            !activity.isEncryptedVaultAlbum(folderPath)
+                            !activity.isEncryptedVaultAlbum(folderPath) &&
+                            !activity.isCipherSystemPath(folderPath)
                         ) {
                             val folder = File(folderPath)
                             if (folder.exists() && folder.isDirectory) {
@@ -503,6 +507,72 @@ class PickDirectoryDialog(
                 }
             }
 
+            val candidateDiskFolders = LinkedHashSet<String>().apply {
+                addAll(activity.config.everShownFolders)
+                add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString())
+                add("${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera")
+                add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString())
+                if (showExcludedInScope) {
+                    addAll(activity.config.excludedFolders)
+                }
+            }
+            for (folderPath in candidateDiskFolders) {
+                if (folderPath.isEmpty() ||
+                    folderPath == FAVORITES ||
+                    folderPath == RECYCLE_BIN ||
+                    folderPath.isVirtualAlbumPath()
+                ) {
+                    continue
+                }
+                if (CryptoManager.isEncryptedFolderPath(activity, folderPath) ||
+                    activity.isEncryptedVaultAlbum(folderPath) ||
+                    activity.isCipherSystemPath(folderPath) ||
+                    CryptoManager.isVaultRecycleBinPath(activity, folderPath) ||
+                    ShareMetadataSanitizer.isShareTempPath(folderPath)
+                ) {
+                    continue
+                }
+                val distinctKey = folderPath.getDistinctPath()
+                if (distinctKey in liveDistinctKeys) {
+                    continue
+                }
+                val isVisible = folderPath.shouldFolderBeVisible(
+                    excludedPaths = excludedPaths,
+                    includedPaths = includedPaths,
+                    showHidden = showHiddenFoldersInScope,
+                    folderNoMediaStatuses = folderNoMediaStatuses
+                ) { p, hasNoMedia ->
+                    folderNoMediaStatuses[p] = hasNoMedia
+                }
+                if (!isVisible) {
+                    continue
+                }
+                val folder = File(folderPath)
+                if (folder.exists() && folder.isDirectory) {
+                    val mediaFiles = folder.listFiles()?.filter { f ->
+                        f.isFile && f.path.isMediaFile() && (activity.config.shouldShowHidden || !f.name.startsWith('.'))
+                    }.orEmpty()
+                    if (mediaFiles.isNotEmpty()) {
+                        liveDistinctKeys.add(distinctKey)
+                        liveDirs.add(
+                            Directory(
+                                id = null,
+                                path = folderPath,
+                                tmb = mediaFiles.first().absolutePath,
+                                name = activity.getFolderNameFromPath(folderPath),
+                                mediaCnt = mediaFiles.size,
+                                modified = folder.lastModified(),
+                                taken = folder.lastModified(),
+                                size = 0L,
+                                location = activity.getPathLocation(folderPath),
+                                types = CopyMovePolicy.allMediaTypesFilter(),
+                                sortValue = ""
+                            )
+                        )
+                    }
+                }
+            }
+
             val newFoldersToCache = liveDirs.filterTo(ArrayList()) { dir ->
                 !dir.isVirtualAlbum() &&
                     !CryptoManager.isEncryptedFolderPath(activity, dir.path) &&
@@ -543,12 +613,8 @@ class PickDirectoryDialog(
             }
 
             PickDirectoryMode.UNENCRYPTED_COPY -> {
-                ensureBackgroundThread {
-                    val effectiveSource = activity.resolveEffectiveSourcePhysicalPath(sourcePath)
-                    activity.runOnUiThread {
-                        openPhysicalFolderPicker(effectiveSource)
-                    }
-                }
+                val excluded = if (sourcePath.isVirtualAlbumPath()) "" else sourcePath.trimEnd('/')
+                openPhysicalFolderPicker(excluded)
             }
 
             PickDirectoryMode.UNENCRYPTED_MOVE -> {
@@ -612,25 +678,8 @@ class PickDirectoryDialog(
                     return@ensureBackgroundThread
                 }
 
-                val isCopyMode = CopyMovePolicy.isCopyMode(effectiveMode) || (effectiveMode == PickDirectoryMode.DEFAULT && isCopyOperation)
-                val effectiveSource = if (isPickingCopyMoveDestination && isCopyMode) {
-                    activity.resolveEffectiveSourcePhysicalPath(sourcePath)
-                } else {
-                    sourcePath
-                }
-
                 val distinctDirs = newDirs.filter { dir ->
-                    if (!isDirectoryAllowedForMode(dir)) {
-                        return@filter false
-                    }
-
-                    if (isPickingCopyMoveDestination && isCopyMode && sourcePath.isVirtualAlbumPath()) {
-                        if (effectiveSource.isNotEmpty() && dir.path.trimEnd('/').equals(effectiveSource.trimEnd('/'), ignoreCase = true)) {
-                            return@filter false
-                        }
-                    }
-
-                    true
+                    isDirectoryAllowedForMode(dir)
                 }.distinctBy { it.path.getDistinctPath() }.toMutableList() as ArrayList<Directory>
 
                 if (replaceAllDirectories || allDirectories.isEmpty()) {

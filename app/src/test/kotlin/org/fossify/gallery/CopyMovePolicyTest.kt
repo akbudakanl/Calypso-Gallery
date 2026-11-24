@@ -235,6 +235,51 @@ class CopyMovePolicyTest {
         assertEquals("/storage/emulated/0/Pictures", unpersisted[0].path)
     }
 
+    @Test
+    fun resolveVirtualAlbumCopyPhysicalSourceAllowsMixedAndOtherFolders() {
+        val camera = "/storage/emulated/0/DCIM/Camera"
+        val screenshots = "/storage/emulated/0/Pictures/Screenshots"
+        val downloads = "/storage/emulated/0/Download"
+
+        // All items already reside in destination -> returns same folder to trigger source_and_destination_same
+        assertEquals(
+            camera,
+            CopyMovePolicy.resolveVirtualAlbumCopyPhysicalSource(
+                itemParentPaths = listOf(camera, "$camera/"),
+                destinationPath = camera,
+                fallbackSource = virtualAlbum
+            )
+        )
+
+        // Single or mixed items where at least one is outside destination -> returns non-destination parent
+        assertEquals(
+            screenshots,
+            CopyMovePolicy.resolveVirtualAlbumCopyPhysicalSource(
+                itemParentPaths = listOf(camera, screenshots),
+                destinationPath = camera,
+                fallbackSource = virtualAlbum
+            )
+        )
+        assertEquals(
+            screenshots,
+            CopyMovePolicy.resolveVirtualAlbumCopyPhysicalSource(
+                itemParentPaths = listOf(screenshots),
+                destinationPath = downloads,
+                fallbackSource = virtualAlbum
+            )
+        )
+
+        // Empty list falls back cleanly
+        assertEquals(
+            virtualAlbum,
+            CopyMovePolicy.resolveVirtualAlbumCopyPhysicalSource(
+                itemParentPaths = emptyList(),
+                destinationPath = camera,
+                fallbackSource = virtualAlbum
+            )
+        )
+    }
+
     private fun dir(path: String, mediaCnt: Int = 1, tmb: String = ""): Directory {
         return Directory(
             id = null,

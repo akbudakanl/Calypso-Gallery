@@ -1,5 +1,7 @@
 package org.fossify.gallery
 
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -86,7 +88,12 @@ class ShareMetadataPolicyTest {
         assertTrue(
             "The share folder must be hidden from the gallery before copies appear",
             sanitizer.contains("ensureNoMediaMarker(context)") &&
-                sanitizer.contains("\".nomedia\"")
+                sanitizer.contains("\".nomedia\"") &&
+                sanitizer.contains("noMediaFile.createNewFile()")
+        )
+        assertTrue(
+            "Existing share folders missing .nomedia must be repaired on clearTemp",
+            sanitizer.substringAfter("fun clearTemp(").contains("ensureNoMediaMarker(context)")
         )
         assertTrue(
             "Published copies must be cleaned up shortly after sharing and on app start",
@@ -132,5 +139,16 @@ class ShareMetadataPolicyTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun isShareTempPathMatchesPublicShareDirectoryAndRejectsOthers() {
+        assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Calypso/Shared"))
+        assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/pictures/calypso/shared/"))
+        assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Calypso/Shared/calypso_shared_1.jpg"))
+
+        assertFalse(ShareMetadataSanitizer.isShareTempPath(""))
+        assertFalse(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Shared"))
+        assertFalse(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/DCIM/Camera"))
     }
 }

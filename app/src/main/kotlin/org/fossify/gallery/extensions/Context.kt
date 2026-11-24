@@ -106,6 +106,7 @@ import org.fossify.gallery.helpers.ROUNDED_CORNERS_SMALL
 import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ReferenceBackupManager
 import org.fossify.gallery.helpers.SHOW_ALL
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.THUMBNAIL_FADE_DURATION_MS
 import org.fossify.gallery.helpers.TYPE_GIFS
 import org.fossify.gallery.helpers.TYPE_IMAGES
@@ -711,6 +712,9 @@ fun Context.isEncryptedVaultAlbum(directory: Directory): Boolean = isEncryptedVa
 fun Context.isCipherSystemPath(path: String): Boolean {
     val clean = path.trimEnd('/')
     if (clean.isEmpty()) return false
+    if (ShareMetadataSanitizer.isShareTempPath(clean)) {
+        return true
+    }
 
     val cipherRoot = CryptoManager.getCipherRootDirectory().absolutePath.trimEnd('/')
     if (clean.equals(cipherRoot, ignoreCase = true) || clean.startsWith("$cipherRoot/", ignoreCase = true)) {
@@ -1519,7 +1523,9 @@ fun Context.getCachedDirectories(
             }
 
             val visibleDirectories = directories.filter {
-                if (CryptoManager.isEncryptedFolderPath(this, it.path)) {
+                if (ShareMetadataSanitizer.isShareTempPath(it.path)) {
+                    false
+                } else if (CryptoManager.isEncryptedFolderPath(this, it.path)) {
                     shouldShowHidden && CryptoManager.isVaultUnlocked
                 } else {
                     it.path.shouldFolderBeVisible(
@@ -1644,7 +1650,12 @@ fun Context.getCachedMedia(
                 val visibleFoldersLower = HashSet<String>(cachedDirs.size)
                 for (dir in cachedDirs) {
                     val dirPath = dir.path
-                    if (dir.isRecycleBin() || dir.areFavorites() || dir.isVirtualAlbum() || config.isFolderProtected(dirPath)) {
+                    if (dir.isRecycleBin() ||
+                        dir.areFavorites() ||
+                        dir.isVirtualAlbum() ||
+                        config.isFolderProtected(dirPath) ||
+                        ShareMetadataSanitizer.isShareTempPath(dirPath)
+                    ) {
                         continue
                     }
                     val isVisible = if (CryptoManager.isEncryptedFolderPath(this, dirPath)) {

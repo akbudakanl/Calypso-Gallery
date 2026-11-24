@@ -184,6 +184,7 @@ import org.fossify.gallery.helpers.SET_WALLPAPER_INTENT
 import org.fossify.gallery.helpers.SHOW_ALL
 import org.fossify.gallery.helpers.SHOW_TEMP_HIDDEN_DURATION
 import org.fossify.gallery.helpers.SKIP_AUTHENTICATION
+import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.TYPE_GIFS
 import org.fossify.gallery.helpers.TYPE_IMAGES
 import org.fossify.gallery.helpers.TYPE_PORTRAITS
@@ -2004,7 +2005,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             }
             newDirs.removeAll { dir ->
                 val path = dir.path
-                if (isEncryptedVaultAlbum(path)) {
+                if (ShareMetadataSanitizer.isShareTempPath(path)) {
+                    true
+                } else if (isEncryptedVaultAlbum(path)) {
                     false
                 } else {
                     val isExcluded = !config.temporarilyShowExcluded &&
@@ -2978,6 +2981,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             }
             val excludedPrefixes = ArrayList<String>().apply {
                 add(CryptoManager.getCipherRootDirectory().absolutePath)
+                add(ShareMetadataSanitizer.getPublicShareDirectory().absolutePath)
                 CryptoManager.findVaultRoot(this@MainActivity)?.absolutePath?.let { add(it) }
                 config.vaultRootPath.takeIf { it.isNotEmpty() }?.let { add(it) }
                 addAll(config.encryptedFolders)

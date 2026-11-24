@@ -431,7 +431,9 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
 
             distinctPaths.filter {
-                if (CryptoManager.isEncryptedFolderPath(context, it)) {
+                if (ShareMetadataSanitizer.isShareTempPath(it)) {
+                    false
+                } else if (CryptoManager.isEncryptedFolderPath(context, it)) {
                     config.temporarilyShowHidden && CryptoManager.isVaultUnlocked
                 } else if (isSecretVaultView) {
                     context.isEncryptedVaultAlbum(it)

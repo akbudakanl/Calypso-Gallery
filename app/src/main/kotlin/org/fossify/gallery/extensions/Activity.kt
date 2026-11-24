@@ -3217,7 +3217,11 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                 }
             } else {
                 val physicalSource = if (source.isVirtualAlbumPath()) {
-                    fileDirItems.firstOrNull()?.getParentPath() ?: source
+                    CopyMovePolicy.resolveVirtualAlbumCopyPhysicalSource(
+                        itemParentPaths = fileDirItems.map { it.getParentPath() },
+                        destinationPath = destination,
+                        fallbackSource = source
+                    )
                 } else {
                     source
                 }

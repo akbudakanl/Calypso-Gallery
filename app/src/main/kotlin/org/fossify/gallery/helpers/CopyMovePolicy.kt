@@ -222,4 +222,16 @@ object CopyMovePolicy {
         }
         return missing
     }
+
+    fun resolveVirtualAlbumCopyPhysicalSource(
+        itemParentPaths: List<String>,
+        destinationPath: String,
+        fallbackSource: String
+    ): String {
+        val cleanDest = destinationPath.trimEnd('/')
+        val differentParent = itemParentPaths.firstOrNull { parent ->
+            parent.isNotEmpty() && !parent.trimEnd('/').equals(cleanDest, ignoreCase = true)
+        }
+        return differentParent ?: itemParentPaths.firstOrNull { it.isNotEmpty() } ?: fallbackSource
+    }
 }
