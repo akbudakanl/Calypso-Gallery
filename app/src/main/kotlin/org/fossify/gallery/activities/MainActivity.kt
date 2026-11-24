@@ -190,6 +190,7 @@ import org.fossify.gallery.helpers.TYPE_RAWS
 import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.helpers.VaultExitBackHelper
+import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.VaultPullGestureHandler
 import org.fossify.gallery.helpers.VaultViewPolicy
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
@@ -386,10 +387,8 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         VaultPullGestureHandler(
             containerView = binding.directoriesRefreshLayout,
             indicatorView = binding.vaultPullIndicator,
-            iconView = binding.vaultPullIcon,
             isListAtTop = { !binding.directoriesGrid.canScrollVertically(-1) },
-            primaryColor = { getProperPrimaryColor() },
-            textColor = { getProperTextColor() },
+            paletteProvider = { AppearanceManager.resolve(this, config) },
             dispatchToChildren = { event -> super.dispatchTouchEvent(event) },
             onVaultOpen = {
                 triggerSecretVaultMenu()

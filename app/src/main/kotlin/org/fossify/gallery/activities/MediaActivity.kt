@@ -230,10 +230,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         VaultPullGestureHandler(
             containerView = binding.mediaRefreshLayout,
             indicatorView = binding.vaultPullIndicator,
-            iconView = binding.vaultPullIcon,
             isListAtTop = { !binding.mediaGrid.canScrollVertically(-1) },
-            primaryColor = { getProperPrimaryColor() },
-            textColor = { getProperTextColor() },
+            paletteProvider = { AppearanceManager.resolve(this, config) },
             dispatchToChildren = { event -> super.dispatchTouchEvent(event) },
             onVaultOpen = {
                 mIsVaultOpening = true

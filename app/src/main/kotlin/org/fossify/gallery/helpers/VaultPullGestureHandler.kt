@@ -1,46 +1,43 @@
 package org.fossify.gallery.helpers
 
 import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.animation.ObjectAnimator
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
-import android.view.animation.OvershootInterpolator
-import android.widget.ImageView
-import androidx.core.graphics.ColorUtils
-import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
+import org.fossify.gallery.views.VaultPullIndicatorView
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.sin
 
 /**
- * Pull-to-open gesture for the encrypted vault.
+ * Pull-to-open gesture for the encrypted vault (AD-1 sequential light handoff).
  *
- * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. At that moment the framed
- * badge appears and the lock icon drops in from above with a single spring settle (the approved
- * target motion); the gesture only arms once the drop has completed.
- * The lock stays locked - no shackle opening, because nothing has been decrypted at this point.
- * Short/early releases only snap back.
+ * 1. While pulling past [PRE_PULL_START_DP], a thin horizontal light slit softly opens at the top
+ *    edge under the search bar in the active theme's `primary` hue.
+ * 2. Crossing [HOLD_OPEN_THRESHOLD_DP] drops the lock icon smoothly through the slit with a single
+ *    spring settle; the top slit closes completely before the ringless radial aura blooms around
+ *    the settled lock so only one light focus is active at a time.
+ * 3. Throughout the motion the lock keeps a constant theme hue, shifting smoothly from a calmer
+ *    muted shade while descending to the vivid armed tone when ready.
+ * 4. Short/early releases only snap back; releasing once armed opens the vault.
  */
 class VaultPullGestureHandler(
     private val containerView: View,
-    private val indicatorView: View,
-    private val iconView: ImageView,
+    private val indicatorView: VaultPullIndicatorView,
     private val isListAtTop: () -> Boolean,
-    private val primaryColor: () -> Int,
-    private val textColor: () -> Int,
+    private val paletteProvider: () -> AppearancePalette,
     private val dispatchToChildren: (MotionEvent) -> Unit,
     private val onVaultOpen: () -> Unit,
 ) {
     private val touchSlop = ViewConfiguration.get(containerView.context).scaledTouchSlop
     private val density = containerView.context.resources.displayMetrics.density
-    private val maxTranslation = MAX_TRANSLATION_DP * density
+    private val prePullStart = PRE_PULL_START_DP * density
     private val holdThreshold = HOLD_OPEN_THRESHOLD_DP * density
     private val retractThreshold = RETRACT_HIDE_THRESHOLD_DP * density
 
@@ -49,11 +46,24 @@ class VaultPullGestureHandler(
     private var gestureStarted = false
     private var cancelDispatched = false
     private var thresholdMet = false
-    private var armRunnable: Runnable? = null
-    private var dropAnimators = mutableListOf<Animator>()
-    private var armAnimators = mutableListOf<Animator>()
-    private var badgeDrawable: GradientDrawable? = null
     private var armed = false
+    private var armRunnable: Runnable? = null
+    private val choreographyAnimators = mutableListOf<Animator>()
+    private var breatheAnimator: ValueAnimator? = null
+
+    private val easeOutInterpolator = DecelerateInterpolator(1.5f)
+
+    private val dropSettleInterpolator = TimeInterpolator { t ->
+        if (t < DROP_SETTLE_SPLIT) {
+            val u = t / DROP_SETTLE_SPLIT
+            val quad = if (u < 0.5f) 2f * u * u else 1f - (-2f * u + 2f) * (-2f * u + 2f) / 2f
+            quad * (1f + DROP_SETTLE_OVERSHOOT)
+        } else {
+            val u = (t - DROP_SETTLE_SPLIT) / (1f - DROP_SETTLE_SPLIT)
+            val inv = 1f - u
+            (1f + DROP_SETTLE_OVERSHOOT) - DROP_SETTLE_OVERSHOOT * (1f - inv * inv * inv)
+        }
+    }
 
     fun handleTouchEvent(ev: MotionEvent): Boolean {
         when (ev.actionMasked) {
@@ -62,6 +72,7 @@ class VaultPullGestureHandler(
                 if (gestureStarted) {
                     startRawX = ev.rawX
                     startRawY = ev.rawY
+                    refreshPalette()
                 }
                 resetThresholdState()
                 cancelDispatched = false
@@ -72,7 +83,7 @@ class VaultPullGestureHandler(
                     val deltaX = abs(ev.rawX - startRawX)
                     val deltaY = ev.rawY - startRawY
                     if (deltaY > 0 && (cancelDispatched || deltaY > deltaX)) {
-                        val translation = (deltaY * TRANSLATION_FACTOR).coerceIn(0f, maxTranslation)
+                        val translation = computeRubberBandTranslationPx(deltaY, density)
                         if (translation > touchSlop || cancelDispatched) {
                             if (!cancelDispatched) {
                                 cancelDispatched = true
@@ -81,21 +92,43 @@ class VaultPullGestureHandler(
                                 cancelEvent.recycle()
                             }
                             containerView.translationY = translation
+                            indicatorView.pullTranslationPx = translation
 
-                            if (translation >= holdThreshold) {
-                                if (!thresholdMet) {
-                                    thresholdMet = true
-                                    showIndicator(translation)
-                                } else {
-                                    updateIndicatorPosition(translation)
+                            when {
+                                translation >= holdThreshold -> {
+                                    if (!thresholdMet) {
+                                        thresholdMet = true
+                                        triggerThresholdEnter(translation)
+                                    }
                                 }
-                            } else if (armed && translation >= retractThreshold) {
-                                updateIndicatorPosition(translation)
-                            } else {
-                                // Hide before the shrinking gap reaches the icon so it never overlaps albums.
-                                thresholdMet = false
-                                armed = false
-                                hideIndicator()
+
+                                thresholdMet && translation >= retractThreshold -> {
+                                    // Stay active within the 76..95dp hysteresis band so minor
+                                    // finger jitter near the threshold never cancels an in-progress arm.
+                                }
+
+                                translation >= prePullStart -> {
+                                    if (thresholdMet || armed) {
+                                        thresholdMet = false
+                                        armed = false
+                                        cancelChoreography()
+                                        indicatorView.thresholdActive = false
+                                        indicatorView.dropProgress = 0f
+                                        indicatorView.toneProgress = 0f
+                                        indicatorView.auraProgress = 0f
+                                        indicatorView.breathePhase = 0f
+                                        indicatorView.armPopScale = 1f
+                                    }
+                                    val preFraction = ((translation - prePullStart) / (holdThreshold - prePullStart))
+                                        .coerceIn(0f, 1f)
+                                    showPrePullSlit(preFraction)
+                                }
+
+                                else -> {
+                                    thresholdMet = false
+                                    armed = false
+                                    hideIndicator()
+                                }
                             }
                             return true
                         }
@@ -129,116 +162,140 @@ class VaultPullGestureHandler(
         return false
     }
 
-    /**
-     * Sizes the icon like the target emblem but keeps the background transparent. The circle
-     * exists only while the one-shot glow is playing; afterwards the icon sits on the bare screen.
-     */
-    private fun styleBadge() {
-        val badgeSize = (BADGE_SIZE_DP * density).toInt()
-        val inset = ((BADGE_SIZE_DP - ICON_SIZE_DP) * density / 2f).toInt()
-        iconView.layoutParams = iconView.layoutParams.apply {
-            width = badgeSize
-            height = badgeSize
-        }
-        iconView.setPadding(inset, inset, inset, inset)
-        iconView.scaleType = ImageView.ScaleType.FIT_CENTER
-        badgeDrawable = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(Color.TRANSPARENT)
-            setStroke(0, Color.TRANSPARENT)
-        }
-        iconView.background = badgeDrawable
+    private fun refreshPalette() {
+        indicatorView.applyTonePalette(VaultPullTonePalette.resolve(paletteProvider()))
     }
 
-    private fun updateIndicatorPosition(translation: Float) {
-        val badgeSize = BADGE_SIZE_DP * density
-        indicatorView.translationY = ((translation - badgeSize) / 2f).coerceAtLeast(0f)
-    }
-
-    private fun showIndicator(translation: Float) {
-        cancelEnter()
-        styleBadge()
-        val idleColor = textColor()
-        iconView.applyColorFilter(idleColor)
-        iconView.alpha = START_ALPHA
-        iconView.translationY = -DROP_TRAVEL_DP * density
-        iconView.scaleX = 1f
-        iconView.scaleY = 1f
-
+    private fun showPrePullSlit(preFraction: Float) {
         indicatorView.animate().cancel()
         indicatorView.alpha = 1f
-        updateIndicatorPosition(translation)
-        indicatorView.beVisible()
-        indicatorView.bringToFront()
+        if (indicatorView.visibility != View.VISIBLE) {
+            indicatorView.beVisible()
+            indicatorView.bringToFront()
+        }
+        indicatorView.thresholdActive = false
+        indicatorView.slitEnergy = preFraction * PRE_SLIT_MAX_ENERGY
+        indicatorView.slitToneBoost = preFraction * PRE_SLIT_TONE_BOOST
+    }
 
-        // One-shot drop: badge is already visible, the locked icon springs into place.
-        dropAnimators += ObjectAnimator.ofFloat(iconView, View.TRANSLATION_Y, -DROP_TRAVEL_DP * density, 0f).apply {
+    private fun triggerThresholdEnter(translation: Float) {
+        cancelChoreography()
+        refreshPalette()
+        indicatorView.animate().cancel()
+        indicatorView.alpha = 1f
+        indicatorView.pullTranslationPx = translation
+        indicatorView.thresholdActive = true
+        indicatorView.armPopScale = 1f
+        indicatorView.breathePhase = 0f
+        if (indicatorView.visibility != View.VISIBLE) {
+            indicatorView.beVisible()
+            indicatorView.bringToFront()
+        }
+
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            indicatorView.dropProgress = 1f
+            indicatorView.slitEnergy = 0f
+            indicatorView.toneProgress = 1f
+            indicatorView.auraProgress = 1f
+            armed = true
+            indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            return
+        }
+
+        indicatorView.dropProgress = 0f
+        indicatorView.toneProgress = 0f
+        indicatorView.auraProgress = 0f
+        indicatorView.slitEnergy = SLIT_PEAK_ENERGY
+        indicatorView.slitToneBoost = 1f
+
+        // 1. Lock drops through the top light slit and settles calmly into the gap center (0..690ms)
+        choreographyAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
             duration = DROP_DURATION_MS
-            interpolator = OvershootInterpolator(1.45f)
+            interpolator = dropSettleInterpolator
+            addUpdateListener { indicatorView.dropProgress = it.animatedValue as Float }
         }
-        dropAnimators += ObjectAnimator.ofFloat(iconView, View.ALPHA, START_ALPHA, 1f).apply {
-            duration = FADE_IN_MS
+
+        // 2. Top slit closes completely (140..460ms) BEFORE the center aura begins (480ms)
+        choreographyAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
+            startDelay = SLIT_CLOSE_DELAY_MS
+            duration = SLIT_CLOSE_DURATION_MS
+            interpolator = easeOutInterpolator
+            addUpdateListener { anim ->
+                val t = anim.animatedValue as Float
+                indicatorView.slitEnergy = SLIT_PEAK_ENERGY * (1f - t)
+                indicatorView.slitToneBoost = 0.75f + 0.25f * (1f - t)
+            }
         }
-        dropAnimators.forEach { it.start() }
-        playBadgeGlow()
+
+        // 3. Constant-hue tonal rise from calmer descending shade to vivid armed shade (380..900ms)
+        choreographyAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
+            startDelay = TONE_RISE_DELAY_MS
+            duration = TONE_RISE_DURATION_MS
+            interpolator = easeOutInterpolator
+            addUpdateListener { indicatorView.toneProgress = it.animatedValue as Float }
+        }
+
+        // 4. Ringless soft radial aura blooms only after the top slit has closed (480..980ms)
+        choreographyAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
+            startDelay = AURA_BLOOM_DELAY_MS
+            duration = AURA_BLOOM_DURATION_MS
+            interpolator = easeOutInterpolator
+            addUpdateListener { indicatorView.auraProgress = it.animatedValue as Float }
+        }
+
+        choreographyAnimators.forEach { it.start() }
         armAfterDelay()
     }
 
-    /** Single soft ring burst when the badge lands - no repeated or looping glow. */
-    private fun playBadgeGlow() {
-        val badge = badgeDrawable ?: return
-        val maxStroke = (14f * density).toInt()
-        armAnimators += ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = GLOW_DURATION_MS
-            addUpdateListener { animator ->
-                val t = animator.animatedValue as Float
-                val alpha = (110 * (1f - t)).toInt().coerceIn(0, 255)
-                badge.setStroke(
-                    (maxStroke * t).toInt().coerceAtLeast(0),
-                    ColorUtils.setAlphaComponent(primaryColor(), alpha)
-                )
-            }
-            addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    badge.setStroke(0, Color.TRANSPARENT)
-                }
-            })
-        }.also { it.start() }
-    }
-
-    private fun hideIndicator() {
-        cancelEnter()
-        cancelArm()
-        indicatorView.animate().cancel()
-        indicatorView.beGone()
-        indicatorView.alpha = 1f
-        indicatorView.translationY = 0f
-    }
-
-    /** Arms only after the drop has settled - releasing earlier just snaps back. */
     private fun armAfterDelay() {
         val runnable = Runnable {
             armRunnable = null
             if (thresholdMet) {
                 armed = true
                 indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                playArmedFeedback()
             }
         }
         armRunnable = runnable
-        // Arm exactly when the drop and glow finish - no extra hold window after the settle.
-        iconView.postDelayed(runnable, maxOf(DROP_DURATION_MS, GLOW_DURATION_MS))
+        indicatorView.postDelayed(runnable, ARM_DELAY_MS)
+    }
+
+    private fun playArmedFeedback() {
+        if (!ValueAnimator.areAnimatorsEnabled()) return
+
+        val popAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = ARM_POP_DURATION_MS
+            addUpdateListener { anim ->
+                val t = anim.animatedValue as Float
+                indicatorView.armPopScale = 1f + ARM_POP_AMPLITUDE * sin(t * PI).toFloat()
+            }
+        }
+        choreographyAnimators += popAnimator
+        popAnimator.start()
+
+        breatheAnimator?.cancel()
+        breatheAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = BREATHE_HALF_CYCLE_MS
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = easeOutInterpolator
+            addUpdateListener { indicatorView.breathePhase = it.animatedValue as Float }
+            start()
+        }
+    }
+
+    private fun hideIndicator() {
+        cancelChoreography()
+        indicatorView.animate().cancel()
+        indicatorView.resetVisualState()
+        indicatorView.beGone()
     }
 
     private fun resetThresholdState() {
         thresholdMet = false
         armed = false
-        cancelEnter()
-        cancelArm()
-        iconView.scaleX = 1f
-        iconView.scaleY = 1f
-        iconView.alpha = 1f
-        iconView.translationY = 0f
-        indicatorView.translationY = 0f
+        cancelChoreography()
+        indicatorView.resetVisualState()
     }
 
     private fun resetGesture() {
@@ -248,54 +305,78 @@ class VaultPullGestureHandler(
             .setInterpolator(DecelerateInterpolator())
             .start()
 
-        cancelEnter()
-        cancelArm()
-        indicatorView.animate()
-            .alpha(0f)
-            .translationY(indicatorView.translationY - 8f * density)
-            .setDuration(RESET_ANIM_MS)
-            .setInterpolator(DecelerateInterpolator())
-            .withEndAction {
-                indicatorView.beGone()
-                indicatorView.alpha = 1f
-                indicatorView.translationY = 0f
-            }
-            .start()
+        cancelChoreography()
+        if (indicatorView.visibility == View.VISIBLE) {
+            indicatorView.animate()
+                .alpha(0f)
+                .setDuration(RESET_ANIM_MS)
+                .setInterpolator(DecelerateInterpolator())
+                .withEndAction {
+                    indicatorView.resetVisualState()
+                    indicatorView.beGone()
+                }
+                .start()
+        } else {
+            indicatorView.resetVisualState()
+        }
 
         thresholdMet = false
         armed = false
-        iconView.scaleX = 1f
-        iconView.scaleY = 1f
-        iconView.alpha = 1f
-        iconView.translationY = 0f
     }
 
-    private fun cancelEnter() {
-        dropAnimators.forEach { it.cancel() }
-        dropAnimators.clear()
-    }
-
-    private fun cancelArm() {
-        armRunnable?.let { iconView.removeCallbacks(it) }
+    private fun cancelChoreography() {
+        armRunnable?.let { indicatorView.removeCallbacks(it) }
         armRunnable = null
-        armAnimators.forEach { it.cancel() }
-        armAnimators.clear()
-        badgeDrawable?.setStroke(0, Color.TRANSPARENT)
-        iconView.applyColorFilter(textColor())
+        choreographyAnimators.forEach { it.cancel() }
+        choreographyAnimators.clear()
+        breatheAnimator?.cancel()
+        breatheAnimator = null
     }
 
     companion object {
-        private const val MAX_TRANSLATION_DP = 160f
-        private const val HOLD_OPEN_THRESHOLD_DP = 95f
-        private const val RETRACT_HIDE_THRESHOLD_DP = 76f
-        private const val TRANSLATION_FACTOR = 0.45f
-        private const val BADGE_SIZE_DP = 64f
-        private const val ICON_SIZE_DP = 34f
-        private const val DROP_TRAVEL_DP = 72f
-        private const val DROP_DURATION_MS = 720L
-        private const val FADE_IN_MS = 120L
-        private const val START_ALPHA = 0.35f
-        private const val GLOW_DURATION_MS = 700L
-        private const val RESET_ANIM_MS = 220L
+        const val MAX_TRANSLATION_DP = 115f
+        private const val PRE_PULL_START_DP = 26f
+        const val HOLD_OPEN_THRESHOLD_DP = 95f
+        const val RETRACT_HIDE_THRESHOLD_DP = 76f
+        const val TRANSLATION_FACTOR = 0.45f
+        private const val RUBBER_BAND_RESISTANCE = 0.45f
+
+        /**
+         * Linear pull up to [HOLD_OPEN_THRESHOLD_DP] (95dp), then smooth asymptotic rubber-band
+         * damping toward [MAX_TRANSLATION_DP] (115dp) so the list feels cushioned instead of
+         * hitting a hard wall or sagging unnecessarily far down the screen.
+         */
+        fun computeRubberBandTranslationPx(deltaYPx: Float, density: Float): Float {
+            if (deltaYPx <= 0f || density <= 0f) return 0f
+            val rawDp = (deltaYPx / density) * TRANSLATION_FACTOR
+            if (rawDp <= HOLD_OPEN_THRESHOLD_DP) {
+                return rawDp * density
+            }
+            val extraDp = rawDp - HOLD_OPEN_THRESHOLD_DP
+            val budgetDp = MAX_TRANSLATION_DP - HOLD_OPEN_THRESHOLD_DP
+            val scaledExtra = extraDp * RUBBER_BAND_RESISTANCE
+            val dampedExtra = budgetDp * scaledExtra / (budgetDp + scaledExtra)
+            return (HOLD_OPEN_THRESHOLD_DP + dampedExtra)
+                .coerceAtMost(MAX_TRANSLATION_DP) * density
+        }
+
+        private const val PRE_SLIT_MAX_ENERGY = 0.72f
+        private const val PRE_SLIT_TONE_BOOST = 0.50f
+        private const val SLIT_PEAK_ENERGY = 0.88f
+
+        private const val DROP_DURATION_MS = 690L
+        private const val DROP_SETTLE_SPLIT = 0.62f
+        private const val DROP_SETTLE_OVERSHOOT = 0.04f
+        private const val SLIT_CLOSE_DELAY_MS = 140L
+        private const val SLIT_CLOSE_DURATION_MS = 320L
+        private const val TONE_RISE_DELAY_MS = 380L
+        private const val TONE_RISE_DURATION_MS = 520L
+        private const val AURA_BLOOM_DELAY_MS = 480L
+        private const val AURA_BLOOM_DURATION_MS = 500L
+        private const val ARM_DELAY_MS = 880L
+        private const val ARM_POP_DURATION_MS = 340L
+        private const val ARM_POP_AMPLITUDE = 0.045f
+        private const val BREATHE_HALF_CYCLE_MS = 2100L
+        private const val RESET_ANIM_MS = 270L
     }
 }

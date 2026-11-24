@@ -85,24 +85,14 @@
             android:textSize="@dimen/bigger_text_size"
             android:visibility="gone" />
 
-        <LinearLayout
+        <org.fossify.gallery.views.VaultPullIndicatorView
             android:id="@+id/vault_pull_indicator"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="180dp"
             android:layout_below="@+id/directories_switch_searching"
-            android:clipChildren="false"
-            android:clipToPadding="false"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:elevation="8dp"
-            android:paddingBottom="@dimen/activity_margin"
-            android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/vault_pull_icon"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:src="@drawable/ic_onboarding_vault_lock" />
-        </LinearLayout>
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
     </RelativeLayout>
 </LinearLayout>

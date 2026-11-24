@@ -4,16 +4,19 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.RectF
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
-import android.view.animation.OvershootInterpolator
 import android.view.animation.PathInterpolator
 import androidx.core.graphics.ColorUtils
 import org.fossify.gallery.helpers.AppearancePalette
+import org.fossify.gallery.helpers.VaultPullTonePalette
 
 /**
  * Live mini gallery & top-scroll pull gesture simulation (Template A / Screen 3c).
@@ -36,6 +39,8 @@ class VaultPullTutorialView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private var palette: AppearancePalette = AppearancePalette.LIGHT
+    private var tonePalette: VaultPullTonePalette = VaultPullTonePalette.resolve(AppearancePalette.LIGHT)
+    private val shaderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
     // Viewport & surface colors
     private var viewportBgColor = Color.LTGRAY
@@ -68,11 +73,23 @@ class VaultPullTutorialView @JvmOverloads constructor(
     private var progress: Float = 0f
 
     private val pullInterpolator = PathInterpolator(0.22f, 1f, 0.36f, 1f)
-    private val dropInterpolator = OvershootInterpolator(1.45f)
     private val easeOutInterpolator = DecelerateInterpolator()
+
+    private fun dropSettleFraction(t: Float): Float {
+        return if (t < 0.62f) {
+            val u = t / 0.62f
+            val quad = if (u < 0.5f) 2f * u * u else 1f - (-2f * u + 2f) * (-2f * u + 2f) / 2f
+            quad * 1.04f
+        } else {
+            val u = (t - 0.62f) / 0.38f
+            val inv = 1f - u
+            1.04f - 0.04f * (1f - inv * inv * inv)
+        }
+    }
 
     fun applyPalette(newPalette: AppearancePalette) {
         palette = newPalette
+        tonePalette = VaultPullTonePalette.resolve(newPalette)
         val isLight = AppearancePalette.isLightBackground(newPalette.background)
 
         viewportBgColor = newPalette.background
@@ -187,51 +204,139 @@ class VaultPullTutorialView @JvmOverloads constructor(
         val maxPullPx = dp(66f)
         val gridTranslationY = gridPullFraction * maxPullPx
 
-        // 3. Vault pull indicator (lock icon drop + ring burst)
+        // 3. Vault pull indicator (AD-1 sequential light handoff + constant-hue tonal shift)
         val indicatorCenterY = searchBottom + (dp(8f) + gridTranslationY) / 2f
         val centerX = w / 2f
+        val slitY = searchBottom + dp(2f)
+
+        // Phase 1: Horizontal light slit under search bar opens on pull and closes BEFORE aura begins
+        val slitEnergy = when {
+            progress in 0.16f..0.26f -> ((progress - 0.16f) / 0.10f).coerceIn(0f, 1f) * 0.72f
+            progress in 0.26f..0.37f -> {
+                val closeT = easeOutInterpolator.getInterpolation(((progress - 0.26f) / 0.11f).coerceIn(0f, 1f))
+                0.88f * (1f - closeT)
+            }
+            else -> 0f
+        }
+        if (slitEnergy > 0.005f) {
+            val slitW = dp(20f + slitEnergy * 44f)
+            val rx = (slitW * 0.56f).coerceAtLeast(1f)
+            val ry = dp(22f * (0.65f + 0.35f * slitEnergy)).coerceAtLeast(1f)
+            val slitColor = VaultPullTonePalette.blendRgb(
+                tonePalette.mutedColor,
+                tonePalette.glowColor,
+                if (progress >= 0.26f) 0.85f else 0.5f,
+            )
+            canvas.save()
+            canvas.clipRect(0f, slitY, w, h)
+            canvas.translate(centerX, slitY)
+            canvas.scale(1f, ry / rx)
+            shaderPaint.shader = RadialGradient(
+                0f,
+                0f,
+                rx,
+                intArrayOf(
+                    VaultPullTonePalette.withAlpha(slitColor, tonePalette.slitPeakAlpha * slitEnergy),
+                    VaultPullTonePalette.withAlpha(slitColor, tonePalette.slitMidAlpha * slitEnergy),
+                    Color.TRANSPARENT,
+                ),
+                floatArrayOf(0f, 0.50f, 1f),
+                Shader.TileMode.CLAMP,
+            )
+            canvas.drawCircle(0f, 0f, rx, shaderPaint)
+            canvas.restore()
+
+            val halfSlit = slitW / 2f
+            shaderPaint.shader = LinearGradient(
+                centerX - halfSlit,
+                slitY,
+                centerX + halfSlit,
+                slitY,
+                intArrayOf(
+                    Color.TRANSPARENT,
+                    VaultPullTonePalette.withAlpha(slitColor, (if (tonePalette.isLightBackground) 0.84f else 0.92f) * slitEnergy),
+                    Color.TRANSPARENT,
+                ),
+                floatArrayOf(0f, 0.5f, 1f),
+                Shader.TileMode.CLAMP,
+            )
+            canvas.drawRect(centerX - halfSlit, slitY, centerX + halfSlit, slitY + dp(1.5f), shaderPaint)
+            shaderPaint.shader = null
+        }
 
         if (progress in 0.26f..0.85f) {
             val lockAlpha: Float
-            val lockOffsetY: Float
+            val lockY: Float
             when {
                 progress < 0.42f -> {
                     val t = ((progress - 0.26f) / 0.16f).coerceIn(0f, 1f)
-                    lockAlpha = (t * 1.6f).coerceIn(0f, 1f)
-                    val dropT = dropInterpolator.getInterpolation(t)
-                    lockOffsetY = dp(-28f) * (1f - dropT)
+                    val dropT = dropSettleFraction(t)
+                    val startY = slitY - dp(10f)
+                    lockY = startY + (indicatorCenterY - startY) * dropT
+                    lockAlpha = ((lockY - (slitY - dp(2f))) / dp(14f)).coerceIn(0f, 1f)
                 }
                 progress < 0.74f -> {
                     lockAlpha = 1f
-                    lockOffsetY = 0f
+                    lockY = indicatorCenterY
                 }
                 else -> {
                     val t = ((progress - 0.74f) / 0.11f).coerceIn(0f, 1f)
                     lockAlpha = 1f - t
-                    lockOffsetY = dp(-8f) * t
+                    lockY = indicatorCenterY
                 }
             }
 
-            // Single soft ring burst when the badge lands (0.29..0.48)
-            if (progress in 0.29f..0.48f) {
-                val glowT = easeOutInterpolator.getInterpolation(
-                    ((progress - 0.29f) / 0.19f).coerceIn(0f, 1f)
+            // Phase 2: Ringless soft radial aura blooms AFTER the top slit has closed (0.39..0.74)
+            val auraProgress = when {
+                progress < 0.39f -> 0f
+                progress < 0.52f -> easeOutInterpolator.getInterpolation(((progress - 0.39f) / 0.13f).coerceIn(0f, 1f))
+                progress < 0.74f -> 1f
+                else -> 1f - ((progress - 0.74f) / 0.11f).coerceIn(0f, 1f)
+            }
+            if (auraProgress > 0.005f) {
+                val discR = dp(15f * (0.86f + 0.14f * auraProgress))
+                val auraR = dp(28f * (0.76f + 0.24f * auraProgress)).coerceAtLeast(1f)
+                val auraColor = VaultPullTonePalette.blendRgb(
+                    tonePalette.mutedColor,
+                    tonePalette.glowColor,
+                    0.55f + 0.45f * auraProgress,
                 )
-                val glowAlpha = (120 * (1f - glowT)).toInt().coerceIn(0, 255)
-                val glowStroke = (dp(9f) * glowT).coerceAtLeast(dp(1f))
-                strokePaint.strokeWidth = glowStroke
-                strokePaint.color = ColorUtils.setAlphaComponent(palette.primary, glowAlpha)
-                canvas.drawCircle(centerX, indicatorCenterY, dp(16f) + glowStroke * 0.35f, strokePaint)
+                val innerStop = ((discR * 0.72f) / auraR).coerceIn(0.15f, 0.55f)
+                val midStop = (innerStop + (1f - innerStop) * 0.48f).coerceIn(innerStop + 0.05f, 0.88f)
+                shaderPaint.shader = RadialGradient(
+                    centerX,
+                    lockY,
+                    auraR,
+                    intArrayOf(
+                        VaultPullTonePalette.withAlpha(auraColor, tonePalette.auraPeakAlpha * auraProgress),
+                        VaultPullTonePalette.withAlpha(auraColor, tonePalette.auraPeakAlpha * auraProgress),
+                        VaultPullTonePalette.withAlpha(auraColor, tonePalette.auraMidAlpha * auraProgress),
+                        Color.TRANSPARENT,
+                    ),
+                    floatArrayOf(0f, innerStop, midStop, 1f),
+                    Shader.TileMode.CLAMP,
+                )
+                canvas.drawCircle(centerX, lockY, auraR, shaderPaint)
+                shaderPaint.shader = null
+
+                fillPaint.color = VaultPullTonePalette.withAlpha(tonePalette.surfaceColor, 0.96f * auraProgress)
+                canvas.drawCircle(centerX, lockY, discR, fillPaint)
+                strokePaint.strokeWidth = dp(0.9f)
+                strokePaint.color = VaultPullTonePalette.withAlpha(tonePalette.glowColor, tonePalette.rimAlpha * auraProgress)
+                canvas.drawCircle(centerX, lockY, discR, strokePaint)
             }
 
-            // Lock glyph
-            val isArmed = progress >= 0.54f
-            val baseLockColor = if (isArmed) palette.primary else palette.text
-            val lockColor = ColorUtils.setAlphaComponent(
-                baseLockColor,
-                (lockAlpha * 255f).toInt().coerceIn(0, 255),
+            // Constant-hue tonal shift: muted primary while dropping -> vivid primary when armed
+            val toneProgress = easeOutInterpolator.getInterpolation(
+                ((progress - 0.36f) / 0.16f).coerceIn(0f, 1f)
             )
-            drawLockGlyph(canvas, centerX, indicatorCenterY + lockOffsetY, dp(22f), lockColor)
+            val baseLockColor = VaultPullTonePalette.blendRgb(
+                tonePalette.mutedColor,
+                tonePalette.armedColor,
+                toneProgress,
+            )
+            val lockColor = VaultPullTonePalette.withAlpha(baseLockColor, lockAlpha)
+            drawLockGlyph(canvas, centerX, lockY, dp(22f), lockColor)
         }
 
         // 4. Album grid (3 columns x 2 rows) shifted downward by gridTranslationY
@@ -368,6 +473,6 @@ class VaultPullTutorialView @JvmOverloads constructor(
     }
 
     private companion object {
-        const val CYCLE_DURATION_MS = 4200L
+        const val CYCLE_DURATION_MS = 5000L
     }
 }
