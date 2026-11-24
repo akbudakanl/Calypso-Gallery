@@ -40,9 +40,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.ContentDataSource
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
@@ -97,8 +95,10 @@ import org.fossify.gallery.helpers.ROTATE_BY_DEVICE_ROTATION
 import org.fossify.gallery.helpers.ROTATE_BY_SYSTEM_SETTING
 import org.fossify.gallery.helpers.SHOW_NEXT_ITEM
 import org.fossify.gallery.helpers.SHOW_PREV_ITEM
+import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VideoGestureCallbacks
 import org.fossify.gallery.helpers.VideoGestureHelper
+import org.fossify.gallery.helpers.VideoPlaybackUtils
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
 import java.text.DecimalFormat
 import kotlin.math.max
@@ -399,22 +399,15 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
 
     private fun initExoPlayer() {
         val rawPath = mUri?.path ?: ""
+        val extractorsFactory = SeekableExtractorsFactory()
         val mediaSource: MediaSource = if (CryptoManager.isEncryptedFile(rawPath)) {
             val factory = EncryptedMediaDataSource.Factory()
-            ProgressiveMediaSource.Factory(factory)
+            ProgressiveMediaSource.Factory(factory, extractorsFactory)
                 .createMediaSource(MediaItem.fromUri(mUri!!))
         } else {
-            val dataSpec = DataSpec(mUri!!)
-            val fileDataSource = ContentDataSource(applicationContext)
-            try {
-                fileDataSource.open(dataSpec)
-            } catch (e: Exception) {
-                showErrorToast(e)
-            }
-
-            val factory = DataSource.Factory { fileDataSource }
-            ProgressiveMediaSource.Factory(factory)
-                .createMediaSource(MediaItem.fromUri(fileDataSource.uri!!))
+            val factory = DefaultDataSource.Factory(applicationContext)
+            ProgressiveMediaSource.Factory(factory, extractorsFactory)
+                .createMediaSource(MediaItem.fromUri(mUri!!))
         }
 
         val loadControl = DefaultLoadControl.Builder()
@@ -507,8 +500,8 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
             binding.bottomVideoTimeHolder.videoToggleMute.beVisible()
             binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
                 "${DecimalFormat("#.##").format(config.playbackSpeed)}x"
-            mDuration = mExoPlayer!!.duration
-            binding.bottomVideoTimeHolder.videoSeekbar.max = mDuration.toInt()
+            mDuration = VideoPlaybackUtils.sanitizeDurationMs(mExoPlayer!!.duration)
+            binding.bottomVideoTimeHolder.videoSeekbar.max = VideoPlaybackUtils.toSeekBarMax(mDuration)
             binding.bottomVideoTimeHolder.videoDuration.text = mDuration.getFormattedDuration()
             if (mCurrTime > 0L) {
                 setPosition(mCurrTime)
@@ -594,11 +587,13 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun setPosition(milliseconds: Long) {
+        val safeMs = milliseconds.coerceAtLeast(0L)
         mSkippedToEnd = false
-        mCurrTime = milliseconds
-        mExoPlayer?.seekTo(milliseconds)
-        binding.bottomVideoTimeHolder.videoSeekbar.progress = milliseconds.toInt()
-        binding.bottomVideoTimeHolder.videoCurrTime.text = milliseconds.getFormattedDuration()
+        mCurrTime = safeMs
+        mExoPlayer?.seekTo(safeMs)
+        val seekbar = binding.bottomVideoTimeHolder.videoSeekbar
+        seekbar.progress = VideoPlaybackUtils.toSeekBarProgress(safeMs, seekbar.max)
+        binding.bottomVideoTimeHolder.videoCurrTime.text = safeMs.getFormattedDuration()
     }
 
     private fun setLastVideoSavedPosition() {
@@ -609,23 +604,35 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun videoCompleted() {
-        if (mExoPlayer == null) {
-            return
-        }
+        val player = mExoPlayer ?: return
 
         clearLastVideoSavedProgress()
-        mCurrTime = mExoPlayer!!.duration
+        val completedDuration = VideoPlaybackUtils.effectiveDurationMs(
+            player.duration,
+            maxOf(mDuration, player.currentPosition.coerceAtLeast(0L)),
+        )
+        if (completedDuration > 0L && mDuration <= 0L) {
+            mDuration = completedDuration
+            binding.bottomVideoTimeHolder.videoSeekbar.max = VideoPlaybackUtils.toSeekBarMax(mDuration)
+            binding.bottomVideoTimeHolder.videoDuration.text = mDuration.getFormattedDuration()
+        }
+        mCurrTime = completedDuration
         binding.bottomVideoTimeHolder.videoSeekbar.progress =
             binding.bottomVideoTimeHolder.videoSeekbar.max
-        binding.bottomVideoTimeHolder.videoCurrTime.text = mDuration.getFormattedDuration()
+        binding.bottomVideoTimeHolder.videoCurrTime.text = completedDuration.getFormattedDuration()
         pauseVideo()
     }
 
     private fun didVideoEnd(): Boolean {
-        if (mSkippedToEnd) return true
-        val currentPos = mExoPlayer?.currentPosition ?: 0
-        val duration = mExoPlayer?.duration ?: 0
-        return currentPos != 0L && currentPos >= duration
+        val player = mExoPlayer
+        val currentPos = player?.currentPosition ?: 0L
+        val duration = VideoPlaybackUtils.effectiveDurationMs(player?.duration ?: C.TIME_UNSET, mDuration)
+        return VideoPlaybackUtils.isVideoEnded(
+            skippedToEnd = mSkippedToEnd,
+            playbackState = player?.playbackState,
+            currentPosMs = currentPos,
+            durationMs = duration,
+        )
     }
 
     private fun saveVideoProgress() {
@@ -761,9 +768,10 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun initTimeHolder() {
+        val safeDuration = VideoPlaybackUtils.sanitizeDurationMs(mDuration)
         binding.bottomVideoTimeHolder.videoSeekbar.setOnSeekBarChangeListener(this)
-        binding.bottomVideoTimeHolder.videoSeekbar.max = mDuration.toInt()
-        binding.bottomVideoTimeHolder.videoDuration.text = mDuration.getFormattedDuration()
+        binding.bottomVideoTimeHolder.videoSeekbar.max = VideoPlaybackUtils.toSeekBarMax(safeDuration)
+        binding.bottomVideoTimeHolder.videoDuration.text = safeDuration.getFormattedDuration()
         binding.bottomVideoTimeHolder.videoCurrTime.text = mCurrTime.getFormattedDuration()
         applyProperHorizontalInsets(binding.bottomVideoTimeHolder.videoTimeHolder)
         setupTimer()
@@ -773,8 +781,9 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         runOnUiThread(object : Runnable {
             override fun run() {
                 if (mExoPlayer != null && !mIsDragged && mIsPlaying) {
-                    mCurrTime = mExoPlayer!!.currentPosition
-                    binding.bottomVideoTimeHolder.videoSeekbar.progress = mCurrTime.toInt()
+                    mCurrTime = mExoPlayer!!.currentPosition.coerceAtLeast(0L)
+                    val seekbar = binding.bottomVideoTimeHolder.videoSeekbar
+                    seekbar.progress = VideoPlaybackUtils.toSeekBarProgress(mCurrTime, seekbar.max)
                     binding.bottomVideoTimeHolder.videoCurrTime.text =
                         mCurrTime.getFormattedDuration()
                 }
@@ -785,33 +794,35 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     private fun doSkip(forward: Boolean) {
-        if (mExoPlayer == null) {
-            return
-        }
+        val player = mExoPlayer ?: return
 
-        val curr = mExoPlayer!!.currentPosition
-        val duration = mExoPlayer!!.duration
+        val curr = player.currentPosition.coerceAtLeast(0L)
+        val duration = VideoPlaybackUtils.effectiveDurationMs(player.duration, mDuration)
         val skipMs = config.videoDoubleTapFastForward * 1000L
-        val isLooping = config.loopVideos || mExoPlayer?.repeatMode == Player.REPEAT_MODE_ONE
+        val isLooping = config.loopVideos || player.repeatMode == Player.REPEAT_MODE_ONE
 
-        if (forward && duration > 0L && curr + skipMs >= duration) {
+        val skipResult = VideoPlaybackUtils.computeSkipResult(
+            currentPosMs = curr,
+            skipMs = skipMs,
+            durationMs = duration,
+            forward = forward,
+        )
+
+        if (skipResult.reachedEnd) {
             if (isLooping) {
                 setPosition(0L)
             } else {
                 // ExoPlayer clamps a seek-to-end to the last frame and keeps playing, so drive the
                 // completed state ourselves: pause, show the play icon, and treat it as ended so
                 // pressing play restarts from 0.
-                mExoPlayer?.playWhenReady = false
+                player.playWhenReady = false
                 mSkippedToEnd = true
                 videoCompleted()
             }
             return
         }
 
-        var newPosition =
-            if (forward) curr + skipMs else curr - skipMs
-        newPosition = newPosition.coerceIn(0, maxOf(duration, 0L))
-        setPosition(newPosition)
+        setPosition(skipResult.targetPositionMs)
     }
 
     private fun handleEvent(event: MotionEvent) {
@@ -848,11 +859,17 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
                     var percent = ((diffX / mScreenWidth) * 100).toInt()
                     percent = min(100, max(-100, percent))
 
-                    val skipLength = mDuration * (percent.toDouble() / 100)
-                    var newProgress = mProgressAtDown + skipLength
-                    newProgress = newProgress.coerceIn(0.0, mExoPlayer!!.duration.toDouble())
-                    setPosition(newProgress.toLong())
-                    resetPlayWhenReady()
+                    val effectiveDuration = VideoPlaybackUtils.effectiveDurationMs(
+                        mExoPlayer?.duration ?: C.TIME_UNSET,
+                        mDuration,
+                    )
+                    if (effectiveDuration > 0L) {
+                        val skipLength = effectiveDuration * (percent.toDouble() / 100)
+                        var newProgress = mProgressAtDown + skipLength
+                        newProgress = newProgress.coerceIn(0.0, effectiveDuration.toDouble())
+                        setPosition(newProgress.toLong())
+                        resetPlayWhenReady()
+                    }
                 }
             }
 

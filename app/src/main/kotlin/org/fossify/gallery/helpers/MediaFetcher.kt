@@ -794,7 +794,16 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
                 val videoDuration = if (knownDuration > 0) {
                     knownDuration
                 } else if (getVideoDurations && isVideo) {
-                    context.getDuration(path) ?: 0
+                    val systemDuration = context.getDuration(path) ?: 0
+                    if (systemDuration > 0) {
+                        systemDuration
+                    } else {
+                        probeContainerDurationSeconds(file).also {
+                            if (it > 0) {
+                                cachedVideoDurations[path] = it
+                            }
+                        }
+                    }
                 } else {
                     0
                 }

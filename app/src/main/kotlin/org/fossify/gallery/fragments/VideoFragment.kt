@@ -90,6 +90,8 @@ import org.fossify.gallery.helpers.MAX_ZOOM_EQUALITY_TOLERANCE
 import org.fossify.gallery.helpers.MEDIUM
 import org.fossify.gallery.helpers.ROTATE_BY_ASPECT_RATIO
 import org.fossify.gallery.helpers.SHOULD_INIT_FRAGMENT
+import org.fossify.gallery.helpers.SeekableExtractorsFactory
+import org.fossify.gallery.helpers.VideoPlaybackUtils
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.views.MediaSideScroll
@@ -632,8 +634,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private val mTimerRunnable = object : Runnable {
         override fun run() {
             if (mExoPlayer != null && !mIsDragged && mIsPlaying) {
-                mCurrTime = mExoPlayer!!.currentPosition
-                mSeekBar.progress = mCurrTime.toInt()
+                mCurrTime = mExoPlayer!!.currentPosition.coerceAtLeast(0L)
+                mSeekBar.progress = VideoPlaybackUtils.toSeekBarProgress(mCurrTime, mSeekBar.max)
                 mCurrTimeView.text = mCurrTime.getFormattedDuration()
                 mTimerHandler.postDelayed(this, UPDATE_INTERVAL_MS)
             }
@@ -662,8 +664,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun setupTimeHolder() {
-        mSeekBar.max = mDuration.toInt()
-        binding.bottomVideoTimeHolder.videoDuration.text = mDuration.getFormattedDuration()
+        val safeDuration = VideoPlaybackUtils.sanitizeDurationMs(mDuration)
+        mSeekBar.max = VideoPlaybackUtils.toSeekBarMax(safeDuration)
+        binding.bottomVideoTimeHolder.videoDuration.text = safeDuration.getFormattedDuration()
     }
 
     private fun initExoPlayer(playOnInit: Boolean = false) {
@@ -681,13 +684,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
         val uri = if (isContentUri) Uri.parse(mMedium.path) else Uri.fromFile(File(mMedium.path))
 
+        val extractorsFactory = SeekableExtractorsFactory()
         val mediaSource: MediaSource = if (isEncrypted) {
             val factory = EncryptedMediaDataSource.Factory()
-            ProgressiveMediaSource.Factory(factory)
+            ProgressiveMediaSource.Factory(factory, extractorsFactory)
                 .createMediaSource(MediaItem.fromUri(uri))
         } else {
             val factory = androidx.media3.datasource.DefaultDataSource.Factory(requireContext())
-            ProgressiveMediaSource.Factory(factory)
+            ProgressiveMediaSource.Factory(factory, extractorsFactory)
                 .createMediaSource(MediaItem.fromUri(uri))
         }
 
@@ -958,33 +962,35 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun doSkip(forward: Boolean) {
-        if (mExoPlayer == null) {
-            return
-        }
+        val player = mExoPlayer ?: return
 
-        val curr = mExoPlayer!!.currentPosition
-        val duration = mExoPlayer!!.duration
+        val curr = player.currentPosition.coerceAtLeast(0L)
+        val duration = VideoPlaybackUtils.effectiveDurationMs(player.duration, mDuration)
         val skipMs = mConfig.videoDoubleTapFastForward * 1000L
         val isLooping = (mConfig.loopVideos && listener?.isSlideShowActive() != true) ||
-            mExoPlayer?.repeatMode == Player.REPEAT_MODE_ONE
+            player.repeatMode == Player.REPEAT_MODE_ONE
 
-        if (forward && duration > 0L && curr + skipMs >= duration) {
+        val skipResult = VideoPlaybackUtils.computeSkipResult(
+            currentPosMs = curr,
+            skipMs = skipMs,
+            durationMs = duration,
+            forward = forward,
+        )
+
+        if (skipResult.reachedEnd) {
             if (isLooping) {
                 setPosition(0L)
             } else {
                 // ExoPlayer clamps a seek-to-end to the last frame and keeps playing. Finish the
                 // video ourselves so the play icon appears and pressing play restarts from 0.
-                mExoPlayer?.playWhenReady = false
+                player.playWhenReady = false
                 mSkippedToEnd = true
                 videoCompleted()
             }
             return
         }
 
-        var newPosition =
-            if (forward) curr + skipMs else curr - skipMs
-        newPosition = newPosition.coerceIn(0, maxOf(duration, 0L))
-        setPosition(newPosition)
+        setPosition(skipResult.targetPositionMs)
     }
 
     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
@@ -1221,20 +1227,27 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun videoEnded(): Boolean {
-        if (mSkippedToEnd) return true
-        val currentPos = mExoPlayer?.currentPosition ?: 0L
-        val duration = mExoPlayer?.duration ?: 0L
-        return currentPos > 0L && duration > 0L && currentPos >= duration
+        val player = mExoPlayer
+        val currentPos = player?.currentPosition ?: 0L
+        val duration = VideoPlaybackUtils.effectiveDurationMs(player?.duration ?: C.TIME_UNSET, mDuration)
+        return VideoPlaybackUtils.isVideoEnded(
+            skippedToEnd = mSkippedToEnd,
+            playbackState = player?.playbackState,
+            currentPosMs = currentPos,
+            durationMs = duration,
+        )
     }
 
     private fun setPosition(milliseconds: Long) {
+        val safeMs = milliseconds.coerceAtLeast(0L)
         mSkippedToEnd = false
-        mExoPlayer?.seekTo(milliseconds)
-        mSeekBar.progress = milliseconds.toInt()
-        mCurrTimeView.text = milliseconds.getFormattedDuration()
+        mCurrTime = safeMs
+        mExoPlayer?.seekTo(safeMs)
+        mSeekBar.progress = VideoPlaybackUtils.toSeekBarProgress(safeMs, mSeekBar.max)
+        mCurrTimeView.text = safeMs.getFormattedDuration()
 
         if (!mIsPlaying) {
-            mPositionAtPause = milliseconds
+            mPositionAtPause = safeMs
         }
     }
 
@@ -1256,35 +1269,54 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
 
         ensureBackgroundThread {
-            mDuration = if (CryptoManager.isEncryptedFile(mMedium.path)) {
+            val probedDuration = if (CryptoManager.isEncryptedFile(mMedium.path)) {
                 (CryptoManager.readMetadata(File(mMedium.path))?.videoDuration ?: 0).times(1000L).coerceAtLeast(0L)
             } else {
                 context?.getDuration(mMedium.path)?.times(1000L)?.coerceAtLeast(0L) ?: 0L
             }
 
             activity?.runOnUiThread {
-                setupTimeHolder()
-                val targetPosition = when {
-                    mPositionWhenInit > 0L -> mPositionWhenInit
-                    mPositionAtPause > 0L -> mPositionAtPause
-                    mCurrTime > 0L -> mCurrTime
-                    else -> 0L
+                if (!isAdded) {
+                    return@runOnUiThread
                 }
-                if (targetPosition > 0L) {
-                    setPosition(targetPosition)
+                if (probedDuration > 0L && mDuration <= 0L) {
+                    mDuration = probedDuration
+                    setupTimeHolder()
+                } else if (mDuration <= 0L) {
+                    setupTimeHolder()
+                }
+                if (!mIsPlayerPrepared && !mWasVideoStarted) {
+                    val targetPosition = when {
+                        mPositionWhenInit > 0L -> mPositionWhenInit
+                        mPositionAtPause > 0L -> mPositionAtPause
+                        mCurrTime > 0L -> mCurrTime
+                        else -> 0L
+                    }
+                    if (targetPosition > 0L) {
+                        if (mExoPlayer == null) {
+                            setPosition(targetPosition)
+                        } else {
+                            mSeekBar.progress = VideoPlaybackUtils.toSeekBarProgress(targetPosition, mSeekBar.max)
+                            mCurrTimeView.text = targetPosition.getFormattedDuration()
+                        }
+                    }
                 }
             }
         }
     }
 
     private fun videoPrepared() {
-        if (mDuration == 0L) {
-            mDuration = mExoPlayer?.duration ?: 0L
+        val playerDuration = VideoPlaybackUtils.sanitizeDurationMs(mExoPlayer?.duration ?: C.TIME_UNSET)
+        if (playerDuration > 0L && (mDuration <= 0L || abs(mDuration - playerDuration) >= 1000L)) {
+            mDuration = playerDuration
             setupTimeHolder()
-            val currentPos = mExoPlayer?.currentPosition ?: mCurrTime
-            mSeekBar.progress = currentPos.toInt()
-            mCurrTimeView.text = currentPos.getFormattedDuration()
+        } else if (mDuration <= 0L) {
+            setupTimeHolder()
         }
+        val currentPos = (mExoPlayer?.currentPosition ?: mCurrTime).coerceAtLeast(0L)
+        mCurrTime = currentPos
+        mSeekBar.progress = VideoPlaybackUtils.toSeekBarProgress(currentPos, mSeekBar.max)
+        mCurrTimeView.text = currentPos.getFormattedDuration()
 
         mIsPlayerPrepared = true
         val shouldStart = mPlayOnPrepared || mExoPlayer?.playWhenReady == true
@@ -1297,16 +1329,25 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         binding.videoPreview.beGone()
     }
     private fun videoCompleted() {
-        if (!isAdded || mExoPlayer == null) {
+        val player = mExoPlayer
+        if (!isAdded || player == null) {
             return
         }
 
-        mCurrTime = mExoPlayer!!.duration
+        val completedDuration = VideoPlaybackUtils.effectiveDurationMs(
+            player.duration,
+            maxOf(mDuration, player.currentPosition.coerceAtLeast(0L)),
+        )
+        if (completedDuration > 0L && mDuration <= 0L) {
+            mDuration = completedDuration
+            setupTimeHolder()
+        }
+        mCurrTime = completedDuration
         if (listener?.videoEnded() == false && mConfig.loopVideos) {
             playVideo()
         } else {
             mSeekBar.progress = mSeekBar.max
-            mCurrTimeView.text = mDuration.getFormattedDuration()
+            mCurrTimeView.text = completedDuration.getFormattedDuration()
             pauseVideo()
         }
     }

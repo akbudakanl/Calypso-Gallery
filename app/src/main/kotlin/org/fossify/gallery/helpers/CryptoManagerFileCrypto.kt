@@ -248,7 +248,12 @@ fun CryptoManager.encryptFileToDirectory(
     val dateTaken = getSourceDateTaken()
     val mediaType = sourceMediaType
     val videoDuration = if (mediaType == TYPE_VIDEOS) {
-        runCatching { context.getDuration(sourceFile.absolutePath) }.getOrNull() ?: 0
+        val systemDuration = runCatching { context.getDuration(sourceFile.absolutePath) }.getOrNull() ?: 0
+        if (systemDuration > 0) {
+            systemDuration
+        } else {
+            runCatching { probeContainerDurationSeconds(sourceFile) }.getOrDefault(0)
+        }
     } else {
         0
     }
