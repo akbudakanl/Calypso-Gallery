@@ -41,7 +41,7 @@
             android:paddingBottom="28dp"
             app:maxWidth="@dimen/settings_max_content_width">
 
-            <!-- HUB MODE (10 categories inside a single rounded rectangle, About first) -->
+            <!-- HUB MODE (11 categories split into 4 spacing-separated rounded cards) -->
             <LinearLayout
                 android:id="@+id/settings_hub_container"
                 android:layout_width="match_parent"
@@ -91,10 +91,38 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/settings_hub_card"
+                    android:id="@+id/settings_hub_cards"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:id="@+id/settings_hub_general_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical" />
+
+                    <LinearLayout
+                        android:id="@+id/settings_hub_media_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical" />
+
+                    <LinearLayout
+                        android:id="@+id/settings_hub_security_storage_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical" />
+
+                    <LinearLayout
+                        android:id="@+id/settings_hub_about_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="vertical" />
+                </LinearLayout>
 
                 <!-- Search results -->
                 <TextView

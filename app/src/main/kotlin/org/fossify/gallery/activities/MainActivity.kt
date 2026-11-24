@@ -387,7 +387,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             containerView = binding.directoriesRefreshLayout,
             indicatorView = binding.vaultPullIndicator,
             iconView = binding.vaultPullIcon,
-            textView = binding.vaultPullText,
             isListAtTop = { !binding.directoriesGrid.canScrollVertically(-1) },
             primaryColor = { getProperPrimaryColor() },
             textColor = { getProperTextColor() },

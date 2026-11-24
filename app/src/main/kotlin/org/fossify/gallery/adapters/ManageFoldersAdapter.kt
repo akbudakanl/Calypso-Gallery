@@ -1,10 +1,8 @@
 package org.fossify.gallery.adapters
 
 import android.view.*
-import androidx.appcompat.widget.PopupMenu
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.adapters.MyRecyclerViewAdapter
-import org.fossify.commons.extensions.getPopupMenuTheme
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.setupViewBackground
 import org.fossify.commons.interfaces.RefreshRecyclerViewListener
@@ -12,6 +10,7 @@ import org.fossify.commons.views.MyRecyclerView
 import org.fossify.gallery.databinding.ItemManageFolderBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CalypsoActionModeController
+import org.fossify.gallery.helpers.CalypsoOverflowMenuPopup
 
 class ManageFoldersAdapter(
     activity: BaseSimpleActivity, var folders: ArrayList<String>, val isShowingExcludedFolders: Boolean, val listener: RefreshRecyclerViewListener?,
@@ -19,6 +18,7 @@ class ManageFoldersAdapter(
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
 
     private val config = activity.config
+    private val overflowPopup = CalypsoOverflowMenuPopup(activity)
     private val calypsoActionMode = CalypsoActionModeController(
         activity = activity,
         adapter = this,
@@ -95,23 +95,15 @@ class ManageFoldersAdapter(
 
     private fun showPopupMenu(view: View, folder: String) {
         finishActMode()
-        val theme = activity.getPopupMenuTheme()
-        val contextTheme = ContextThemeWrapper(activity, theme)
-
-        PopupMenu(contextTheme, view, Gravity.END).apply {
-            inflate(getActionMenuId())
-            setOnMenuItemClickListener { item ->
-                val eventTypeId = folder.hashCode()
-                when (item.itemId) {
-                    org.fossify.commons.R.id.cab_remove -> {
-                        executeItemMenuOperation(eventTypeId) {
-                            removeSelection()
-                        }
+        overflowPopup.showMenu(view, getActionMenuId()) { item ->
+            val eventTypeId = folder.hashCode()
+            when (item.itemId) {
+                org.fossify.commons.R.id.cab_remove -> {
+                    executeItemMenuOperation(eventTypeId) {
+                        removeSelection()
                     }
                 }
-                true
             }
-            show()
         }
     }
 

@@ -80,6 +80,7 @@ import org.fossify.gallery.extensions.openPath
 import org.fossify.gallery.extensions.shareMediumPath
 import org.fossify.gallery.extensions.showSystemUI
 import org.fossify.gallery.fragments.PlaybackSpeedFragment
+import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DRAG_THRESHOLD
 import org.fossify.gallery.helpers.EXOPLAYER_MAX_BUFFER_MS
@@ -123,6 +124,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     private var mDuration = 0L
     private var mDragThreshold = 0f
     private var mTouchDownX = 0f
+    private var mMenuController: CalypsoToolbarMenuController? = null
     private var mTouchDownY = 0f
     private var mTouchDownTime = 0L
     private var mProgressAtDown = 0L
@@ -193,6 +195,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
 
     override fun onPause() {
         super.onPause()
+        mMenuController?.dismiss()
         pauseVideo()
 
         if (config.rememberLastVideoPosition && mWasVideoStarted) {
@@ -215,32 +218,39 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     private fun setupOptionsMenu() {
         binding.videoToolbar.apply {
             setTitleTextColor(Color.WHITE)
-            overflowIcon = resources.getColoredDrawableWithColor(
-                R.drawable.ic_more_vertical_calypso_vector,
-                Color.WHITE
-            )
             navigationIcon = resources.getColoredDrawableWithColor(
                 org.fossify.commons.R.drawable.ic_arrow_left_vector,
                 Color.WHITE
             )
         }
 
-        updateMenuItemColors(binding.videoToolbar.menu, forceWhiteIcons = true)
-        // Android 16 ignores force-orientation requests on large screens (sw >= 600dp).
-        if (isLargeScreen) {
-            binding.videoToolbar.menu.findItem(R.id.menu_change_orientation)?.isVisible = false
-        }
-        binding.videoToolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_force_portrait -> toggleOrientation(SCREEN_ORIENTATION_PORTRAIT)
-                R.id.menu_force_landscape -> toggleOrientation(SCREEN_ORIENTATION_LANDSCAPE)
-                R.id.menu_force_landscape_reverse -> toggleOrientation(SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
-                R.id.menu_default_orientation -> toggleOrientation(SCREEN_ORIENTATION_UNSPECIFIED)
-                R.id.menu_open_with -> openPath(mUri!!.toString(), true)
-                R.id.menu_share -> shareMediumPath(mUri!!.toString())
-                else -> return@setOnMenuItemClickListener false
+        mMenuController?.dismiss()
+        mMenuController = CalypsoToolbarMenuController(
+            activity = this,
+            toolbar = binding.videoToolbar,
+            menuRes = R.menu.menu_video_player,
+            isBarAction = { item -> item.itemId == R.id.menu_share },
+            anchorViewProvider = { binding.videoToolbar },
+            alignRightInsetDpProvider = { 12f },
+            barIconColorProvider = { Color.WHITE },
+            onItemSelected = { itemId ->
+                when (itemId) {
+                    R.id.menu_force_portrait -> toggleOrientation(SCREEN_ORIENTATION_PORTRAIT)
+                    R.id.menu_force_landscape -> toggleOrientation(SCREEN_ORIENTATION_LANDSCAPE)
+                    R.id.menu_force_landscape_reverse -> toggleOrientation(SCREEN_ORIENTATION_REVERSE_LANDSCAPE)
+                    R.id.menu_default_orientation -> toggleOrientation(SCREEN_ORIENTATION_UNSPECIFIED)
+                    R.id.menu_open_with -> openPath(mUri!!.toString(), true)
+                    R.id.menu_share -> shareMediumPath(mUri!!.toString())
+                    else -> return@CalypsoToolbarMenuController false
+                }
+                true
             }
-            return@setOnMenuItemClickListener true
+        ).apply {
+            // Android 16 ignores force-orientation requests on large screens (sw >= 600dp).
+            if (isLargeScreen) {
+                menu.findItem(R.id.menu_change_orientation)?.isVisible = false
+            }
+            syncToolbar()
         }
 
         binding.videoToolbar.setNavigationOnClickListener {

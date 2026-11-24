@@ -65,6 +65,7 @@ import org.fossify.gallery.helpers.BOTTOM_ACTION_PROPERTIES
 import org.fossify.gallery.helpers.BOTTOM_ACTION_SET_AS
 import org.fossify.gallery.helpers.BOTTOM_ACTION_SHARE
 import org.fossify.gallery.helpers.BOTTOM_ACTION_SHOW_ON_MAP
+import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
 import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.IS_VIEW_INTENT
@@ -89,6 +90,7 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
     private var mFragment: ViewPagerFragment? = null
     private var mUri: Uri? = null
     private var mOriginalBrightness: Float? = null
+    private var mMenuController: CalypsoToolbarMenuController? = null
 
     var mIsVideo = false
 
@@ -123,6 +125,11 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        mMenuController?.dismiss()
+    }
+
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         initBottomActionsLayout()
@@ -130,8 +137,9 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
 
     fun refreshMenuItems() {
         val visibleBottomActions = if (config.bottomActions) config.visibleBottomActions else 0
+        val menu = mMenuController?.menu ?: binding.fragmentViewerToolbar.menu
 
-        binding.fragmentViewerToolbar.menu.apply {
+        menu.apply {
             findItem(R.id.menu_set_as).isVisible = mMedium?.isImage() == true && visibleBottomActions and BOTTOM_ACTION_SET_AS == 0
             findItem(R.id.menu_edit).isVisible = mMedium?.isImage() == true && mUri?.scheme == "file" && visibleBottomActions and BOTTOM_ACTION_EDIT == 0
             findItem(R.id.menu_properties).isVisible = mUri?.scheme == "file" && visibleBottomActions and BOTTOM_ACTION_PROPERTIES == 0
@@ -148,32 +156,46 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
                 findItem(R.id.menu_show_on_map).isVisible = false
             }
         }
+        mMenuController?.syncToolbar()
     }
 
     private fun setupOptionsMenu() {
         binding.fragmentViewerToolbar.apply {
             setTitleTextColor(Color.WHITE)
-            overflowIcon = resources.getColoredDrawableWithColor(org.fossify.commons.R.drawable.ic_three_dots_vector, Color.WHITE)
             navigationIcon = resources.getColoredDrawableWithColor(org.fossify.commons.R.drawable.ic_arrow_left_vector, Color.WHITE)
         }
 
-        updateMenuItemColors(binding.fragmentViewerToolbar.menu, forceWhiteIcons = true)
-        binding.fragmentViewerToolbar.setOnMenuItemClickListener { menuItem ->
-            if (mMedium == null || mUri == null) {
-                return@setOnMenuItemClickListener true
-            }
+        mMenuController?.dismiss()
+        mMenuController = CalypsoToolbarMenuController(
+            activity = this,
+            toolbar = binding.fragmentViewerToolbar,
+            menuRes = R.menu.photo_video_menu,
+            isBarAction = { item ->
+                item.itemId == R.id.menu_share ||
+                    item.itemId == R.id.menu_properties ||
+                    item.itemId == R.id.menu_edit
+            },
+            anchorViewProvider = { binding.fragmentViewerToolbar },
+            alignRightInsetDpProvider = { 12f },
+            barIconColorProvider = { Color.WHITE },
+            onItemSelected = { itemId ->
+                if (mMedium == null || mUri == null) {
+                    return@CalypsoToolbarMenuController true
+                }
 
-            when (menuItem.itemId) {
-                R.id.menu_set_as -> setAs(mUri!!.toString())
-                R.id.menu_open_with -> openPath(mUri!!.toString(), true)
-                R.id.menu_share -> sharePath(mUri!!.toString())
-                R.id.menu_edit -> openEditor(mUri!!.toString())
-                R.id.menu_properties -> showProperties()
-                R.id.menu_show_on_map -> showFileOnMap(mUri!!.toString())
-                else -> return@setOnMenuItemClickListener false
+                when (itemId) {
+                    R.id.menu_set_as -> setAs(mUri!!.toString())
+                    R.id.menu_open_with -> openPath(mUri!!.toString(), true)
+                    R.id.menu_share -> sharePath(mUri!!.toString())
+                    R.id.menu_edit -> openEditor(mUri!!.toString())
+                    R.id.menu_properties -> showProperties()
+                    R.id.menu_show_on_map -> showFileOnMap(mUri!!.toString())
+                    else -> return@CalypsoToolbarMenuController false
+                }
+                true
             }
-            return@setOnMenuItemClickListener true
-        }
+        )
+        mMenuController?.syncToolbar()
 
         binding.fragmentViewerToolbar.setNavigationOnClickListener {
             finish()

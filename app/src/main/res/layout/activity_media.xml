@@ -96,11 +96,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/media_album_header"
-            android:gravity="center"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
             android:elevation="8dp"
-            android:paddingTop="@dimen/medium_margin"
-            android:paddingBottom="@dimen/medium_margin"
+            android:paddingBottom="@dimen/activity_margin"
             android:visibility="gone">
 
             <ImageView
@@ -108,14 +109,6 @@
                 android:layout_width="28dp"
                 android:layout_height="28dp"
                 android:src="@drawable/ic_onboarding_vault_lock" />
-
-            <org.fossify.commons.views.MyTextView
-                android:id="@+id/vault_pull_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/pull_down_to_open_vault"
-                android:textSize="@dimen/normal_text_size" />
         </LinearLayout>
 
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

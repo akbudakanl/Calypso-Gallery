@@ -7,14 +7,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
-import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.view.animation.PathInterpolator
 import androidx.core.graphics.ColorUtils
-import org.fossify.gallery.R
 import org.fossify.gallery.helpers.AppearancePalette
 
 /**
@@ -24,10 +22,9 @@ import org.fossify.gallery.helpers.AppearancePalette
  *  1. The finger touch indicator appears below the pinned search bar and pulls the 3x2 album grid
  *     downward across the hold threshold.
  *  2. Once the threshold is crossed, the lock glyph drops in from above with an overshoot settle
- *     and a one-shot primary-colored circular ring burst while the label shows
- *     [R.string.keep_holding_to_open_vault].
- *  3. When the drop and ring settle, the label pulses and switches to
- *     [R.string.release_to_open_vault] in [AppearancePalette.primary], then the finger releases.
+ *     and a one-shot primary-colored circular ring burst.
+ *  3. When the drop and ring settle, the lock glyph switches to [AppearancePalette.primary] and
+ *     the finger releases.
  *
  * Every color is derived dynamically from [AppearancePalette] so Light, Dark, Midnight Blue,
  * Warm Paper, Deep Forest, and user-created Custom themes all render with proper contrast.
@@ -65,10 +62,6 @@ class VaultPullTutorialView @JvmOverloads constructor(
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
-    }
-    private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     }
 
     private var animator: ValueAnimator? = null
@@ -194,8 +187,8 @@ class VaultPullTutorialView @JvmOverloads constructor(
         val maxPullPx = dp(66f)
         val gridTranslationY = gridPullFraction * maxPullPx
 
-        // 3. Vault pull indicator (lock icon drop + ring burst + status text)
-        val indicatorCenterY = searchBottom + dp(24f)
+        // 3. Vault pull indicator (lock icon drop + ring burst)
+        val indicatorCenterY = searchBottom + (dp(8f) + gridTranslationY) / 2f
         val centerX = w / 2f
 
         if (progress in 0.26f..0.85f) {
@@ -239,27 +232,6 @@ class VaultPullTutorialView @JvmOverloads constructor(
                 (lockAlpha * 255f).toInt().coerceIn(0, 255),
             )
             drawLockGlyph(canvas, centerX, indicatorCenterY + lockOffsetY, dp(22f), lockColor)
-
-            // Label ("Keep holding..." -> pulses -> "Release to open...")
-            val labelPulse = if (progress in 0.53f..0.61f) {
-                val pt = (progress - 0.53f) / 0.08f
-                // 1 -> 0.45 -> 1 pulse
-                1f - 0.55f * kotlin.math.sin(pt * Math.PI.toFloat())
-            } else {
-                1f
-            }
-            val labelAlpha = (lockAlpha * labelPulse * 255f).toInt().coerceIn(0, 255)
-            val labelText = context.getString(
-                if (isArmed) R.string.release_to_open_vault else R.string.keep_holding_to_open_vault
-            )
-            labelPaint.textSize = dp(10.5f)
-            labelPaint.isFakeBoldText = isArmed
-            labelPaint.color = ColorUtils.setAlphaComponent(
-                if (isArmed) palette.primary else palette.text,
-                labelAlpha,
-            )
-            val labelY = indicatorCenterY + dp(25f)
-            canvas.drawText(labelText, centerX, labelY, labelPaint)
         }
 
         // 4. Album grid (3 columns x 2 rows) shifted downward by gridTranslationY

@@ -147,10 +147,10 @@ class CalypsoOverflowMenuTest {
     }
 
     @Test
-    fun popupSizingUsesNativeProportionedScaleAndIdentifiesSettingsFooter() {
-        assertTrue(CalypsoOverflowMenuPopup.POPUP_WIDTH_DP >= 270f)
-        assertTrue(CalypsoOverflowMenuPopup.ROW_MIN_HEIGHT_DP >= 44f)
-        assertTrue(CalypsoOverflowMenuPopup.ROW_TEXT_SIZE_SP >= 14f)
+    fun popupSizingUsesMinimalistSlimScaleAndIdentifiesSettingsFooter() {
+        assertEquals(258f, CalypsoOverflowMenuPopup.POPUP_WIDTH_DP)
+        assertEquals(43f, CalypsoOverflowMenuPopup.ROW_MIN_HEIGHT_DP)
+        assertEquals(14f, CalypsoOverflowMenuPopup.ROW_TEXT_SIZE_SP)
         assertTrue(CalypsoOverflowMenuPopup.isSettingsItem(R.id.settings))
         assertFalse(CalypsoOverflowMenuPopup.isSettingsItem(R.id.sort))
     }

@@ -231,7 +231,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             containerView = binding.mediaRefreshLayout,
             indicatorView = binding.vaultPullIndicator,
             iconView = binding.vaultPullIcon,
-            textView = binding.vaultPullText,
             isListAtTop = { !binding.mediaGrid.canScrollVertically(-1) },
             primaryColor = { getProperPrimaryColor() },
             textColor = { getProperTextColor() },

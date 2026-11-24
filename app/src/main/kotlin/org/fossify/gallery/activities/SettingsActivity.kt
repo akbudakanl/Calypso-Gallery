@@ -505,14 +505,14 @@ class SettingsActivity : SimpleActivity() {
         val query = activeSettingsSearch.lowercase()
         binding.settingsSearchClear.isVisible = query.isNotEmpty()
         if (query.isEmpty()) {
-            binding.settingsHubCard.isVisible = true
+            binding.settingsHubCards.isVisible = true
             binding.settingsSearchResultsEyebrow.isVisible = false
             binding.settingsSearchResultsCard.isVisible = false
             binding.settingsSearchEmpty.isVisible = false
             return
         }
 
-        binding.settingsHubCard.isVisible = false
+        binding.settingsHubCards.isVisible = false
         val palette = AppearanceManager.resolve(this, config)
         val results = collectSearchResults(query)
         val card = binding.settingsSearchResultsCard
@@ -714,9 +714,9 @@ class SettingsActivity : SimpleActivity() {
     }
 
     /**
-     * Styles the active screen: in Hub mode, renders the 10-row single rounded card with squircle
-     * icon chips and chevrons; in Category mode, adds truthful chevrons on sub-screen rows and
-     * renders each logical section inside its own rounded card with hairline dividers.
+     * Styles the active screen: in Hub mode, renders the 11 categories across 4 spacing-separated
+     * rounded cards with squircle icon chips and chevrons; in Category mode, adds truthful chevrons
+     * on sub-screen rows and renders each logical section inside its own rounded card with hairline dividers.
      */
     private fun refreshRowDecorations() {
         val palette = AppearanceManager.resolve(this, config)
@@ -724,28 +724,10 @@ class SettingsActivity : SimpleActivity() {
         val chevronTint = ColorStateList.valueOf(mutedColor)
 
         if (activeCategory == null) {
-            val hubCard = binding.settingsHubCard
-            hubCard.removeAllViews()
-            hubCard.addView(
-                buildHubCardRow(
-                    iconRes = R.drawable.ic_section_about,
-                    title = getString(org.fossify.commons.R.string.about),
-                    subtitle = null,
-                    palette = palette,
-                    onClick = { launchAbout() },
-                ),
-            )
-            hubCard.addView(
-                buildHubCardRow(
-                    iconRes = R.drawable.ic_section_appearance,
-                    title = getString(R.string.appearance_title),
-                    subtitle = null,
-                    palette = palette,
-                    onClick = { startActivity(Intent(this, AppearanceActivity::class.java)) },
-                ),
-            )
-            for (spec in categorySpecs) {
-                hubCard.addView(
+            val specByKey = categorySpecs.associateBy { it.key }
+            fun addCategoryRow(card: LinearLayout, key: String) {
+                val spec = specByKey.getValue(key)
+                card.addView(
                     buildHubCardRow(
                         iconRes = spec.iconRes,
                         title = getString(spec.titleRes),
@@ -756,7 +738,46 @@ class SettingsActivity : SimpleActivity() {
                 )
             }
 
-            SettingsCardUi.styleCardGroup(hubCard, palette, insetStartDp = 60f)
+            val hubCards = listOf(
+                binding.settingsHubGeneralCard,
+                binding.settingsHubMediaCard,
+                binding.settingsHubSecurityStorageCard,
+                binding.settingsHubAboutCard,
+            )
+            hubCards.forEach { it.removeAllViews() }
+
+            binding.settingsHubGeneralCard.addView(
+                buildHubCardRow(
+                    iconRes = R.drawable.ic_section_appearance,
+                    title = getString(R.string.appearance_title),
+                    subtitle = null,
+                    palette = palette,
+                    onClick = { startActivity(Intent(this, AppearanceActivity::class.java)) },
+                ),
+            )
+            addCategoryRow(binding.settingsHubGeneralCard, CATEGORY_APPLICATION)
+            addCategoryRow(binding.settingsHubGeneralCard, CATEGORY_NOTIFICATIONS)
+
+            addCategoryRow(binding.settingsHubMediaCard, CATEGORY_VIEWER)
+            addCategoryRow(binding.settingsHubMediaCard, CATEGORY_VIDEO)
+            addCategoryRow(binding.settingsHubMediaCard, CATEGORY_THUMBNAILS)
+
+            addCategoryRow(binding.settingsHubSecurityStorageCard, CATEGORY_SECURITY)
+            addCategoryRow(binding.settingsHubSecurityStorageCard, CATEGORY_FILES)
+            addCategoryRow(binding.settingsHubSecurityStorageCard, CATEGORY_RECYCLE)
+            addCategoryRow(binding.settingsHubSecurityStorageCard, CATEGORY_MIGRATING)
+
+            binding.settingsHubAboutCard.addView(
+                buildHubCardRow(
+                    iconRes = R.drawable.ic_section_about,
+                    title = getString(org.fossify.commons.R.string.about),
+                    subtitle = null,
+                    palette = palette,
+                    onClick = { launchAbout() },
+                ),
+            )
+
+            hubCards.forEach { SettingsCardUi.styleCardGroup(it, palette, insetStartDp = 60f) }
             refreshSettingsFont()
             return
         }

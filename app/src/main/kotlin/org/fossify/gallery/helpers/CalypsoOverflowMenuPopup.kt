@@ -43,11 +43,11 @@ import org.fossify.gallery.extensions.config
  * - Multi-select Contextual Action Bar (`CalypsoActionModeController`)
  *
  * Design guarantees:
- * - Comfortable, native-proportioned scale (274dp width, 46dp rows, 14.5sp medium text, 20dp icons).
+ * - Balanced minimalist scale (258dp width, 43dp rows, 14sp regular text, 17dp icons).
  * - Always unfolds cleanly downward from the top-right anchor within screen bounds (never jumps to
  *   random screen coordinates).
  * - Clean left-aligned icons with zero inner dividers.
- * - Distinct tinted bottom footer band for Settings (`Ayarlar`) with primary-tinted icon and bold
+ * - Distinct tinted bottom footer band for Settings (`Ayarlar`) with primary-tinted icon and medium
  *   label. It intentionally has no trailing chevron: Settings is a direct page, not a submenu.
  */
 class CalypsoOverflowMenuPopup(private val activity: Activity) {
@@ -75,6 +75,22 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
         if (isShowing) {
             dismiss()
             return
+        }
+        show(anchor, items, alignRightInsetDp, onItemSelected)
+    }
+
+    fun showMenu(
+        anchor: View,
+        @MenuRes menuRes: Int,
+        alignRightInsetDp: Float = 0f,
+        onItemSelected: (MenuItem) -> Unit
+    ) {
+        val backingMenu = PopupMenu(activity, anchor).apply {
+            activity.menuInflater.inflate(menuRes, menu)
+        }.menu
+        val items = ArrayList<MenuItem>(backingMenu.size())
+        for (i in 0 until backingMenu.size()) {
+            items.add(backingMenu.getItem(i))
         }
         show(anchor, items, alignRightInsetDp, onItemSelected)
     }
@@ -129,13 +145,13 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             orientation = LinearLayout.VERTICAL
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = 18f * density
+                cornerRadius = 16f * density
                 setColor(palette.surface)
                 setStroke(strokeWidth, palette.border)
             }
             outlineProvider = ViewOutlineProvider.BACKGROUND
             clipToOutline = true
-            elevation = 16f * density
+            elevation = 12f * density
         }
 
         val scrollView = MaxHeightScrollView(activity).apply {
@@ -143,7 +159,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
         }
 
-        val listPad = (7f * density).toInt()
+        val listPad = (6f * density).toInt()
         val listLayout = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(listPad, listPad, listPad, listPad)
@@ -185,7 +201,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             isOutsideTouchable = true
             isClippingEnabled = true
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            elevation = 18f * density
+            elevation = 12f * density
             animationStyle = 0
             setOnDismissListener {
                 if (popupWindow === this) {
@@ -204,7 +220,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             val settingsItem = rootItems.firstOrNull { isSettingsItem(it.itemId) }
             val mainItems = rootItems.filterNot { isSettingsItem(it.itemId) }
 
-            val footerReservePx = if (settingsItem != null) (64f * density).toInt() else 0
+            val footerReservePx = if (settingsItem != null) (56f * density).toInt() else 0
             scrollView.maxHeightPx = (availableBelow - footerReservePx).coerceAtLeast((120f * density).toInt())
 
             var previousGroup: String? = null
@@ -267,11 +283,11 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     (1f * density).toInt().coerceAtLeast(1)
                 ).apply {
-                    val mH = (10f * density).toInt()
-                    val mV = (4f * density).toInt()
+                    val mH = (12f * density).toInt()
+                    val mV = (3.5f * density).toInt()
                     setMargins(mH, mV, mH, mV)
                 }
-                setBackgroundColor(palette.border)
+                setBackgroundColor(ColorUtils.setAlphaComponent(palette.border, 0xB0))
             }
             listLayout.addView(divider)
 
@@ -315,8 +331,8 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
     }
 
     private fun buildInsetDivider(palette: AppearancePalette, density: Float): View {
-        val hMargin = (13f * density).toInt()
-        val vMargin = (4f * density).toInt()
+        val hMargin = (12f * density).toInt()
+        val vMargin = (3.5f * density).toInt()
         return View(activity).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -324,7 +340,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             ).apply {
                 setMargins(hMargin, vMargin, hMargin, vMargin)
             }
-            setBackgroundColor(ColorUtils.setAlphaComponent(palette.border, 0xE6))
+            setBackgroundColor(ColorUtils.setAlphaComponent(palette.border, 0xB0))
         }
     }
 
@@ -355,13 +371,13 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 (1f * density).toInt().coerceAtLeast(1)
             )
-            setBackgroundColor(palette.border)
+            setBackgroundColor(ColorUtils.setAlphaComponent(palette.border, 0xB0))
         }
         wrapper.addView(topRule)
 
         val rowHost = FrameLayout(activity).apply {
-            val hPad = (7f * density).toInt()
-            val vPad = (6f * density).toInt()
+            val hPad = (6f * density).toInt()
+            val vPad = (4.5f * density).toInt()
             setPadding(hPad, vPad, hPad, vPad)
         }
         rowHost.addView(
@@ -383,14 +399,14 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
         density: Float,
         onBack: () -> Unit
     ): View {
-        val padH = (13f * density).toInt()
-        val padV = (10f * density).toInt()
-        val iconSize = (18f * density).toInt()
+        val padH = (12f * density).toInt()
+        val padV = (9f * density).toInt()
+        val iconSize = (17f * density).toInt()
 
         return LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = (44f * density).toInt()
+            minimumHeight = (ROW_MIN_HEIGHT_DP * density).toInt()
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -415,12 +431,12 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
 
             val titleView = MyTextView(activity).apply {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    marginStart = (13f * density).toInt()
+                    marginStart = (12f * density).toInt()
                 }
                 text = title
                 setTextColor(palette.text)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 14.5f)
-                setTypeface(typeface, Typeface.BOLD)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, ROW_TEXT_SIZE_SP)
+                typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
             }
@@ -437,9 +453,9 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
         isSettingsFooter: Boolean,
         onClick: () -> Unit
     ): View {
-        val padH = (13f * density).toInt()
-        val padV = (10.5f * density).toInt()
-        val iconSize = (18f * density).toInt()
+        val padH = (12f * density).toInt()
+        val padV = (9f * density).toInt()
+        val iconSize = (17f * density).toInt()
         val iconTint = if (isSettingsFooter) palette.primary else palette.secondary
 
         return LinearLayout(activity).apply {
@@ -464,15 +480,15 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
 
             val titleView = MyTextView(activity).apply {
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
-                    marginStart = (13f * density).toInt()
+                    marginStart = (12f * density).toInt()
                 }
                 text = item.title
                 setTextColor(palette.text)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, ROW_TEXT_SIZE_SP)
                 typeface = if (isSettingsFooter) {
-                    Typeface.create("sans-serif-medium", Typeface.BOLD)
-                } else {
                     Typeface.create("sans-serif-medium", Typeface.NORMAL)
+                } else {
+                    Typeface.create("sans-serif", Typeface.NORMAL)
                 }
                 maxLines = 2
                 ellipsize = TextUtils.TruncateAt.END
@@ -480,7 +496,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
             addView(titleView)
 
             if (item.hasSubMenu()) {
-                val chevronSize = (15f * density).toInt()
+                val chevronSize = (14.5f * density).toInt()
                 val chevronView = ImageView(activity).apply {
                     layoutParams = LinearLayout.LayoutParams(chevronSize, chevronSize).apply {
                         marginStart = (8f * density).toInt()
@@ -506,7 +522,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
         val rippleColor = ColorUtils.blendARGB(palette.surface, palette.primary, if (isLight) 0.12f else 0.18f)
         val mask = GradientDrawable().apply {
             shape = GradientDrawable.RECTANGLE
-            cornerRadius = 12f * density
+            cornerRadius = 11f * density
             setColor(Color.WHITE)
         }
         return RippleDrawable(ColorStateList.valueOf(rippleColor), null, mask)
@@ -526,9 +542,9 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
     }
 
     companion object {
-        const val POPUP_WIDTH_DP = 274f
-        const val ROW_MIN_HEIGHT_DP = 46f
-        const val ROW_TEXT_SIZE_SP = 14.5f
+        const val POPUP_WIDTH_DP = 258f
+        const val ROW_MIN_HEIGHT_DP = 43f
+        const val ROW_TEXT_SIZE_SP = 14f
 
         fun isSettingsItem(itemId: Int): Boolean {
             return itemId == R.id.settings

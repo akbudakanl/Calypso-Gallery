@@ -1,15 +1,11 @@
 package org.fossify.gallery.adapters
 
-import android.view.ContextThemeWrapper
-import android.view.Gravity
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.adapters.MyRecyclerViewAdapter
 import org.fossify.commons.dialogs.ConfirmationDialog
-import org.fossify.commons.extensions.getPopupMenuTheme
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isPathOnSD
@@ -24,6 +20,7 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.isThisOrParentFolderHidden
 import org.fossify.gallery.extensions.removeNoMedia
 import org.fossify.gallery.helpers.CalypsoActionModeController
+import org.fossify.gallery.helpers.CalypsoOverflowMenuPopup
 import org.fossify.gallery.helpers.HiddenFoldersPolicy
 
 class ManageHiddenFoldersAdapter(
@@ -34,6 +31,7 @@ class ManageHiddenFoldersAdapter(
     itemClick: (Any) -> Unit
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick) {
 
+    private val overflowPopup = CalypsoOverflowMenuPopup(activity)
     private val calypsoActionMode = CalypsoActionModeController(
         activity = activity,
         adapter = this,
@@ -110,23 +108,15 @@ class ManageHiddenFoldersAdapter(
 
     private fun showPopupMenu(view: View, folder: String) {
         finishActMode()
-        val theme = activity.getPopupMenuTheme()
-        val contextTheme = ContextThemeWrapper(activity, theme)
-
-        PopupMenu(contextTheme, view, Gravity.END).apply {
-            inflate(getActionMenuId())
-            setOnMenuItemClickListener { item ->
-                val folderId = folder.hashCode()
-                when (item.itemId) {
-                    R.id.cab_unhide -> {
-                        executeItemMenuOperation(folderId) {
-                            tryUnhideFolders()
-                        }
+        overflowPopup.showMenu(view, getActionMenuId()) { item ->
+            val folderId = folder.hashCode()
+            when (item.itemId) {
+                R.id.cab_unhide -> {
+                    executeItemMenuOperation(folderId) {
+                        tryUnhideFolders()
                     }
                 }
-                true
             }
-            show()
         }
     }
 

@@ -13,12 +13,10 @@ import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
-import org.fossify.gallery.R
 import kotlin.math.abs
 
 /**
@@ -26,7 +24,7 @@ import kotlin.math.abs
  *
  * Nothing is shown until the pull crosses [HOLD_OPEN_THRESHOLD_DP]. At that moment the framed
  * badge appears and the lock icon drops in from above with a single spring settle (the approved
- * target motion); the label only switches to "release to open" once the drop has completed.
+ * target motion); the gesture only arms once the drop has completed.
  * The lock stays locked - no shackle opening, because nothing has been decrypted at this point.
  * Short/early releases only snap back.
  */
@@ -34,7 +32,6 @@ class VaultPullGestureHandler(
     private val containerView: View,
     private val indicatorView: View,
     private val iconView: ImageView,
-    private val textView: TextView,
     private val isListAtTop: () -> Boolean,
     private val primaryColor: () -> Int,
     private val textColor: () -> Int,
@@ -45,6 +42,7 @@ class VaultPullGestureHandler(
     private val density = containerView.context.resources.displayMetrics.density
     private val maxTranslation = MAX_TRANSLATION_DP * density
     private val holdThreshold = HOLD_OPEN_THRESHOLD_DP * density
+    private val retractThreshold = RETRACT_HIDE_THRESHOLD_DP * density
 
     private var startRawX = 0f
     private var startRawY = 0f
@@ -73,9 +71,9 @@ class VaultPullGestureHandler(
                 if (gestureStarted) {
                     val deltaX = abs(ev.rawX - startRawX)
                     val deltaY = ev.rawY - startRawY
-                    if (deltaY > 0 && deltaY > deltaX) {
+                    if (deltaY > 0 && (cancelDispatched || deltaY > deltaX)) {
                         val translation = (deltaY * TRANSLATION_FACTOR).coerceIn(0f, maxTranslation)
-                        if (translation > touchSlop) {
+                        if (translation > touchSlop || cancelDispatched) {
                             if (!cancelDispatched) {
                                 cancelDispatched = true
                                 val cancelEvent = MotionEvent.obtain(ev).apply { action = MotionEvent.ACTION_CANCEL }
@@ -87,16 +85,24 @@ class VaultPullGestureHandler(
                             if (translation >= holdThreshold) {
                                 if (!thresholdMet) {
                                     thresholdMet = true
-                                    showIndicator()
+                                    showIndicator(translation)
+                                } else {
+                                    updateIndicatorPosition(translation)
                                 }
-                            } else if (!armed) {
-                                // Keep the pull completely silent until the vault threshold.
+                            } else if (armed && translation >= retractThreshold) {
+                                updateIndicatorPosition(translation)
+                            } else {
+                                // Hide before the shrinking gap reaches the icon so it never overlaps albums.
+                                thresholdMet = false
+                                armed = false
                                 hideIndicator()
                             }
                             return true
                         }
-                    } else if (deltaY < 0 && containerView.translationY > 0f) {
+                    } else if (deltaY <= 0 && containerView.translationY > 0f) {
                         containerView.translationY = 0f
+                        thresholdMet = false
+                        armed = false
                         hideIndicator()
                         if (isListAtTop()) gestureStarted = false
                     }
@@ -144,23 +150,24 @@ class VaultPullGestureHandler(
         iconView.background = badgeDrawable
     }
 
-    private fun showIndicator() {
+    private fun updateIndicatorPosition(translation: Float) {
+        val badgeSize = BADGE_SIZE_DP * density
+        indicatorView.translationY = ((translation - badgeSize) / 2f).coerceAtLeast(0f)
+    }
+
+    private fun showIndicator(translation: Float) {
         cancelEnter()
         styleBadge()
         val idleColor = textColor()
         iconView.applyColorFilter(idleColor)
-        iconView.alpha = 0f
+        iconView.alpha = START_ALPHA
         iconView.translationY = -DROP_TRAVEL_DP * density
         iconView.scaleX = 1f
         iconView.scaleY = 1f
 
-        textView.text = textView.context.getString(R.string.keep_holding_to_open_vault)
-        textView.setTextColor(idleColor)
-        textView.alpha = 1f
-
         indicatorView.animate().cancel()
         indicatorView.alpha = 1f
-        indicatorView.translationY = 0f
+        updateIndicatorPosition(translation)
         indicatorView.beVisible()
         indicatorView.bringToFront()
 
@@ -169,7 +176,7 @@ class VaultPullGestureHandler(
             duration = DROP_DURATION_MS
             interpolator = OvershootInterpolator(1.45f)
         }
-        dropAnimators += ObjectAnimator.ofFloat(iconView, View.ALPHA, 0f, 1f).apply {
+        dropAnimators += ObjectAnimator.ofFloat(iconView, View.ALPHA, START_ALPHA, 1f).apply {
             duration = FADE_IN_MS
         }
         dropAnimators.forEach { it.start() }
@@ -208,19 +215,13 @@ class VaultPullGestureHandler(
         indicatorView.translationY = 0f
     }
 
-    /** The label flips only after the drop has settled - releasing earlier just snaps back. */
+    /** Arms only after the drop has settled - releasing earlier just snaps back. */
     private fun armAfterDelay() {
         val runnable = Runnable {
             armRunnable = null
             if (thresholdMet) {
                 armed = true
                 indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                textView.text = textView.context.getString(R.string.release_to_open_vault)
-                textView.setTextColor(primaryColor())
-                armAnimators += ObjectAnimator.ofFloat(textView, View.ALPHA, 1f, 0.45f, 1f).apply {
-                    duration = LABEL_PULSE_MS
-                    interpolator = DecelerateInterpolator()
-                }.also { it.start() }
             }
         }
         armRunnable = runnable
@@ -237,7 +238,6 @@ class VaultPullGestureHandler(
         iconView.scaleY = 1f
         iconView.alpha = 1f
         iconView.translationY = 0f
-        textView.alpha = 1f
         indicatorView.translationY = 0f
     }
 
@@ -252,7 +252,7 @@ class VaultPullGestureHandler(
         cancelArm()
         indicatorView.animate()
             .alpha(0f)
-            .translationY(-8f * density)
+            .translationY(indicatorView.translationY - 8f * density)
             .setDuration(RESET_ANIM_MS)
             .setInterpolator(DecelerateInterpolator())
             .withEndAction {
@@ -268,7 +268,6 @@ class VaultPullGestureHandler(
         iconView.scaleY = 1f
         iconView.alpha = 1f
         iconView.translationY = 0f
-        textView.alpha = 1f
     }
 
     private fun cancelEnter() {
@@ -288,14 +287,15 @@ class VaultPullGestureHandler(
     companion object {
         private const val MAX_TRANSLATION_DP = 160f
         private const val HOLD_OPEN_THRESHOLD_DP = 95f
+        private const val RETRACT_HIDE_THRESHOLD_DP = 76f
         private const val TRANSLATION_FACTOR = 0.45f
         private const val BADGE_SIZE_DP = 64f
         private const val ICON_SIZE_DP = 34f
         private const val DROP_TRAVEL_DP = 72f
         private const val DROP_DURATION_MS = 720L
-        private const val FADE_IN_MS = 260L
+        private const val FADE_IN_MS = 120L
+        private const val START_ALPHA = 0.35f
         private const val GLOW_DURATION_MS = 700L
-        private const val LABEL_PULSE_MS = 340L
         private const val RESET_ANIM_MS = 220L
     }
 }
