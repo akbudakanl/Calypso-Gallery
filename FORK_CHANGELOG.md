@@ -4,7 +4,8 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-11-22
+
+## [1.0.0] - 2026-11-24
 
 The first public release. The entries below summarize, by concept rather than by individual commit, the changes accumulated throughout the fork.
 
@@ -23,7 +24,7 @@ The first public release. The entries below summarize, by concept rather than by
 ### Changed and redesigned
 
 - **App design revised** — color palette, icon set, top and bottom bars, selection action bar, welcome cards, vault lock screen and overflow menus were redesigned around one visual language.
-- **Cryptography rebuilt** — asymmetric RSA was removed and the vault container format reduced to a single version. Key derivation moved first to BouncyCastle, then to native Rust/Argon2id via JNI; Poly1305 verification and Tink streaming AEAD were adopted. The password strength estimator runs entirely on-device.
+- **Cryptography rebuilt** — asymmetric RSA was removed and the vault container format reduced to a single version. Key derivation moved first to BouncyCastle, then to native Rust/Argon2id via JNI. The password strength estimator runs entirely on-device.
 - **Storage layout** — vault data moved to the `Secrets` folder, favorites and virtual-album backups into app storage; an external vault location and phone synchronization were added.
 - **Distribution and identity** — the application ID changed to `com.calypso.gallery`; the project name and icon were rebranded and GPLv3 / third-party license screens were added.
 - **Pull-to-open vault indicator** — updated `VaultPullIndicatorView` with `VaultPullTonePalette` for the AD-1 sequential light handoff: an elliptical top light slit, a unified `palette.surface` circular glass disc with a backlit `primary` aura, constant-hue tonal transitions with Custom theme contrast safeguards, calmer timing, and `95dp` → `115dp` asymptotic rubber-band damping.
@@ -44,7 +45,7 @@ The first public release. The entries below summarize, by concept rather than by
 
 ### Translations and verification
 
-- The interface is translated into up to 34 locales; blind translation audits and one-to-one comparison reports are kept in `translation-blind-tests`.
+- The new interface dialogs are translated into up to 11 locales; blind translation audits and one-to-one comparison reports are kept in `translation-blind-tests`.
 - Unit tests cover crypto vectors, vault format, file identity, conflict resolution and UI behavior.
 - Architecture decision records live in `docs/adr`; security audit and design documents are available in multiple languages.
 
