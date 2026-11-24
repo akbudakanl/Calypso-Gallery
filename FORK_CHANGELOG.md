@@ -6,9 +6,15 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 
 ## [1.0.1] - 2026-11-24
+
+### Changed
+
+- **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and continuous breathing pulse animation while preserving the exact top light slit, lock descent, surface disc, rim, backlit radial glow, and haptic arming feedback.
+
 ### Fixed
 
-- **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders exist. `MainActivity` now persists newly discovered folders to the directory cache immediately instead of dropping them on early scan cancellation, `PickDirectoryDialog` falls back to a live MediaStore scan (including included folders) when the cache is empty or stale (such as when launching directly into Files view), and active media type filters no longer hide valid copy/move/decrypt destination folders.
+- **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders exist. `MainActivity` now persists newly discovered folders to the directory cache immediately instead of dropping them on early scan cancellation, `PickDirectoryDialog` falls back to a live MediaStore scan (including disk-only and included folders) when the cache is empty or stale (such as when launching directly into Files view), active media type filters no longer hide valid copy/move/decrypt destination folders, and copying from a virtual album now displays all valid real albums instead of excluding the stale owner folder.
+- **Share metadata temp folder** — `Pictures/Calypso/Shared` now creates a `.nomedia` marker directly on all Android versions (and repairs existing folders missing `.nomedia` on startup) and is excluded as an internal path so it never appears as a gallery album.
 
 ## [1.0.0] - 2026-11-24
 

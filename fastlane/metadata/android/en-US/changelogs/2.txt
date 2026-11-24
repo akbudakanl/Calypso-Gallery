@@ -1,6 +1,10 @@
+Changed:
+
+• **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and continuous breathing pulse…
+
 Fixed:
 
-• **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders…
+• **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found…
 
 Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.1
 Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.0.1.tar.gz
