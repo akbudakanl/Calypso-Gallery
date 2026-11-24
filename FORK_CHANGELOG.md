@@ -5,6 +5,11 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 ## [Unreleased]
 
 
+## [1.0.1] - 2026-11-24
+### Fixed
+
+- **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders exist. `MainActivity` now persists newly discovered folders to the directory cache immediately instead of dropping them on early scan cancellation, `PickDirectoryDialog` falls back to a live MediaStore scan (including included folders) when the cache is empty or stale (such as when launching directly into Files view), and active media type filters no longer hide valid copy/move/decrypt destination folders.
+
 ## [1.0.0] - 2026-11-24
 
 The first public release. The entries below summarize, by concept rather than by individual commit, the changes accumulated throughout the fork.
@@ -66,5 +71,6 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
+[1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
