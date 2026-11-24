@@ -278,6 +278,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     private var mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
     private val mDeferredPlayerReleases = ArrayList<() -> Unit>()
+    private var mLastPageVaultProtection: Boolean? = null
     private var mVaultResumeBlob: String? = null
     private var mFavoritePaths = ArrayList<String>()
     private var mIgnoredPaths = ArrayList<String>()
@@ -2391,9 +2392,18 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         if (mDeferredPlayerReleases.isEmpty()) {
             return
         }
-        val actions = mDeferredPlayerReleases.toList()
-        mDeferredPlayerReleases.clear()
-        actions.forEach { it.invoke() }
+        // One release per frame: ExoPlayer.release() tears down MediaCodec/audio resources and
+        // can block. Releasing several pages in a single frame is a visible hitch during fast
+        // video swipes.
+        val action = mDeferredPlayerReleases.removeAt(0)
+        action.invoke()
+        if (mDeferredPlayerReleases.isNotEmpty()) {
+            if (isDestroyed || isFinishing) {
+                mDeferredPlayerReleases.clear()
+            } else {
+                binding.viewPager.post { flushDeferredPlayerReleases() }
+            }
+        }
     }
 
     override fun saveVideoPlaybackPosition(path: String, position: Long) {
@@ -2501,7 +2511,12 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     override fun onPageSelected(position: Int) {
         val path = mMediaFiles.getOrNull(position)?.path ?: mPath
         val requiresVault = CryptoManager.isEncryptedFile(path) || isCurrentDirectoryVaultProtected()
-        applyVaultScreenProtection(requiresVault)
+        // Window flag changes force a new window/surface configuration. Only do that when the
+        // protection state actually changes between pages.
+        if (mLastPageVaultProtection != requiresVault) {
+            mLastPageVaultProtection = requiresVault
+            applyVaultScreenProtection(requiresVault)
+        }
         if (mPos != position) {
             mPos = position
             updateActionbarTitle()
@@ -2513,12 +2528,22 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     override fun onPageScrollStateChanged(state: Int) {
         mPagerScrollState = state
         if (state == ViewPager.SCROLL_STATE_IDLE) {
-            flushDeferredPlayerReleases()
-            if (getCurrentMedium() != null) {
-                checkOrientation()
+            // Player construction, decoder teardown and frame capture are all synchronous on the
+            // main thread. Running them in this callback makes the settle frame of every video
+            // swipe stutter. Move them to the next frame so the pager can finish its animation;
+            // the work itself is unchanged.
+            binding.viewPager.post {
+                if (!isDestroyed && !isFinishing) {
+                    flushDeferredPlayerReleases()
+                    if (getCurrentMedium() != null) {
+                        checkOrientation()
+                    }
+                    (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
+                }
             }
+        } else {
+            (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
         }
-        (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
     }
 
     private fun isExternalIntent(): Boolean {

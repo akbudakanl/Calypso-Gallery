@@ -47,7 +47,6 @@ import androidx.media3.datasource.FileDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.bumptech.glide.Glide
@@ -160,6 +159,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mPendingAutoplayOnIdle = false
     private var mPendingInitOnIdle = false
     private var mPendingFrameCaptureOnIdle = false
+    private var mPendingPreviewOnIdle = false
     private var mVideoSize = Point(1, 1)
     private var mTimerHandler = Handler(Looper.getMainLooper())
 
@@ -347,11 +347,15 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             binding.videoPreview.setImageBitmap(cachedFrame)
             binding.videoPreview.beVisible()
         } else if (!startsPlayingImmediately) {
-            Glide.with(context)
-                .load(mMedium.path)
-                .diskCacheStrategy(if (isEncrypted) com.bumptech.glide.load.engine.DiskCacheStrategy.NONE else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC)
-                .skipMemoryCache(isEncrypted)
-                .into(binding.videoPreview)
+            // A video preview is decoded by MediaMetadataRetriever, unlike the cached bitmap
+            // decodes used by photos/GIFs. Starting that decode while the pager is being dragged
+            // competes with the page animation for I/O and CPU. Defer it until the pager settles;
+            // pages the user only swipes past never pay for the decode at all.
+            if (listener?.isPagerScrolling() == true) {
+                mPendingPreviewOnIdle = true
+            } else {
+                loadVideoPreview()
+            }
         } else {
             binding.videoPreview.beGone()
         }
@@ -502,6 +506,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPendingAutoplayOnIdle = false
         mPendingInitOnIdle = false
         mPendingFrameCaptureOnIdle = false
+        mPendingPreviewOnIdle = false
         pauseVideo(deferFrameCapture = false)
         if (mStoredRememberLastVideoPosition && mIsFragmentVisible && mWasVideoStarted) {
             saveVideoProgress()
@@ -520,6 +525,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         if (mIsFragmentVisible && !menuVisible) {
             mPendingAutoplayOnIdle = false
             mPendingInitOnIdle = false
+            mPendingPreviewOnIdle = false
             pauseVideo(deferFrameCapture = listener?.isPagerScrolling() == true)
         }
 
@@ -564,6 +570,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             ViewPager.SCROLL_STATE_IDLE -> {
                 if (mIsFragmentVisible) {
                     mPendingFrameCaptureOnIdle = false
+                    if (mPendingPreviewOnIdle) {
+                        loadVideoPreview()
+                    }
                     if (mPendingAutoplayOnIdle) {
                         mPendingAutoplayOnIdle = false
                         if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
@@ -669,6 +678,23 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         binding.bottomVideoTimeHolder.videoDuration.text = safeDuration.getFormattedDuration()
     }
 
+    /** Decodes the paused-video preview. Called off the swipe path so the pager stays smooth. */
+    private fun loadVideoPreview() {
+        mPendingPreviewOnIdle = false
+        if (!isAdded || mPendingAutoplayOnIdle) {
+            return
+        }
+        val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
+        Glide.with(this)
+            .load(mMedium.path)
+            .diskCacheStrategy(
+                if (isEncrypted) com.bumptech.glide.load.engine.DiskCacheStrategy.NONE
+                else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC
+            )
+            .skipMemoryCache(isEncrypted)
+            .into(binding.videoPreview)
+    }
+
     private fun initExoPlayer(playOnInit: Boolean = false) {
         val shouldSkipInit = activity == null || mConfig.gestureVideoPlayer || mIsPanorama || mExoPlayer != null
         if (shouldSkipInit) return
@@ -716,7 +742,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             .build()
 
         mExoPlayer = ExoPlayer.Builder(requireContext())
-            .setMediaSourceFactory(DefaultMediaSourceFactory(requireContext()))
             // EXACT is required for correct skips: CLOSEST_SYNC snaps to the nearest keyframe,
             // so a 10 s forward skip could land at 8 s. Restore seeks are already skipped when
             // not needed below, so there is no redundant seek on setup.
@@ -854,11 +879,23 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private fun checkExtendedDetails() {
         // Encrypted files never show any extended details, no matter how the setting is configured.
         if (mConfig.showExtendedDetails && !CryptoManager.isEncryptedFile(mMedium.path)) {
-            binding.videoDetails.apply {
-                text = getMediumExtendedDetails(mMedium)
-                beVisibleIf(text.isNotEmpty())
-                alpha = if (!mConfig.hideExtendedDetails || !mIsFullscreen) 1f else 0f
-                (activity as? BaseViewerActivity)?.applyProperHorizontalInsets(this)
+            // getMediumExtendedDetails() reads Exif and queries MediaStore. Doing that in onResume
+            // blocks the main thread exactly when a new video page settles; PhotoFragment already
+            // does the same work in the background.
+            val path = mMedium.path
+            ensureBackgroundThread {
+                val details = getMediumExtendedDetails(mMedium)
+                activity?.runOnUiThread {
+                    if (!isAdded || mMedium.path != path) {
+                        return@runOnUiThread
+                    }
+                    binding.videoDetails.apply {
+                        text = details
+                        beVisibleIf(details.isNotEmpty())
+                        alpha = if (!mConfig.hideExtendedDetails || !mIsFullscreen) 1f else 0f
+                        (activity as? BaseViewerActivity)?.applyProperHorizontalInsets(this)
+                    }
+                }
             }
         } else {
             binding.videoDetails.beGone()
@@ -1199,6 +1236,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         if (!mWasFragmentInit || !mTextureView.isAvailable || mTextureView.width <= 0 || mTextureView.height <= 0) {
             return
         }
+        // The cache is keyed by path; re-reading the GPU frame on every swipe-away is pure overhead
+        // for a video we have already captured.
+        if (sVideoFrameCache.get(mMedium.path)?.let { !it.isRecycled } == true) {
+            return
+        }
 
         try {
             // Use ONE scale factor for both axes so aspect ratio is always preserved, and keep
@@ -1356,6 +1398,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPendingAutoplayOnIdle = false
         mPendingInitOnIdle = false
         mPendingFrameCaptureOnIdle = false
+        mPendingPreviewOnIdle = false
         pauseVideo(allowFrameCapture = false)
         releaseExoPlayer(allowDefer = true)
 

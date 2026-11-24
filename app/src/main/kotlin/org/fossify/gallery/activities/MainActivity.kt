@@ -31,8 +31,6 @@ import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFileCount
 import org.fossify.commons.extensions.getFilePublicUri
 import org.fossify.commons.extensions.getFilenameFromPath
-import org.fossify.commons.extensions.getLatestMediaByDateId
-import org.fossify.commons.extensions.getLatestMediaId
 import org.fossify.commons.extensions.getMimeType
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperPrimaryColor
@@ -173,7 +171,9 @@ import org.fossify.gallery.helpers.LOCATION_INTERNAL
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MONTH_MILLISECONDS
 import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaStoreSnapshot
 import org.fossify.gallery.helpers.MediaUpdatePolicy
+import org.fossify.gallery.helpers.getMediaStoreSnapshot
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.RandomOrderManager
@@ -308,7 +308,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private var mWasDefaultFolderChecked = false
     private var mWasMediaManagementPromptShown = false
     private var mAwaitingOnboardingResult = false
-    private var mLatestMediaId = 0L
+    private var mMediaStoreSnapshot = MediaStoreSnapshot()
 
     private val onboardingLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         mAwaitingOnboardingResult = false
@@ -320,7 +320,6 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             finish()
         }
     }
-    private var mLatestMediaDateId = 0L
 
     // used at "Group direct subfolders" for navigation
     private var mCurrentPathPrefix = ""
@@ -2563,8 +2562,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mLoadedInitialPhotos = true
         mActiveInitialScanGeneration = 0L
         if (hasAllPermissions(getPermissionsToRequest())) {
-            mLatestMediaId = getLatestMediaId()
-            mLatestMediaDateId = getLatestMediaByDateId()
+            mMediaStoreSnapshot = getMediaStoreSnapshot()
         }
         if (config.appRunCount > 1) {
             checkLastMediaChanged()
@@ -2846,8 +2844,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     private fun setupLatestMediaId() {
         ensureBackgroundThread {
             if (hasPermission(PERMISSION_READ_STORAGE)) {
-                mLatestMediaId = getLatestMediaId()
-                mLatestMediaDateId = getLatestMediaByDateId()
+                mMediaStoreSnapshot = getMediaStoreSnapshot()
             }
         }
     }
@@ -2860,11 +2857,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         mLastMediaHandler.removeCallbacksAndMessages(null)
         mLastMediaHandler.postDelayed({
             ensureBackgroundThread {
-                val mediaId = getLatestMediaId()
-                val mediaDateId = getLatestMediaByDateId()
-                if (mLatestMediaId != mediaId || mLatestMediaDateId != mediaDateId) {
-                    mLatestMediaId = mediaId
-                    mLatestMediaDateId = mediaDateId
+                val snapshot = getMediaStoreSnapshot()
+                if (mMediaStoreSnapshot.differsFrom(snapshot)) {
+                    mMediaStoreSnapshot = snapshot
                     runOnUiThread {
                         getDirectories()
                     }

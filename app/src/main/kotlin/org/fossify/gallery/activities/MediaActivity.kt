@@ -36,8 +36,6 @@ import org.fossify.commons.extensions.deleteFiles
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getIsPathDirectory
-import org.fossify.commons.extensions.getLatestMediaByDateId
-import org.fossify.commons.extensions.getLatestMediaId
 import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getTimeFormat
@@ -132,7 +130,9 @@ import org.fossify.gallery.helpers.GridSpacingItemDecoration
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaStoreSnapshot
 import org.fossify.gallery.helpers.MediaUpdatePolicy
+import org.fossify.gallery.helpers.getMediaStoreSnapshot
 import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PICKED_PATHS
 import org.fossify.gallery.helpers.RECYCLE_BIN
@@ -204,8 +204,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var defaultTopBarPaddingEnd = -1
     private var defaultContentInsetStart = -1
     private var defaultContentInsetEnd = -1
-    private var mLatestMediaId = 0L
-    private var mLatestMediaDateId = 0L
+    private var mMediaStoreSnapshot = MediaStoreSnapshot()
+    private var mLastObserverChangeMs = 0L
+    private var mLastScanStartedMs = 0L
     private var mLastMediaHandler = Handler()
     private var mTempShowHiddenHandler = Handler()
     private var mCurrAsyncTask: GetMediaAsynctask? = null
@@ -554,6 +555,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         if (isDestroyed || isFinishing) {
             return
         }
+        mLastObserverChangeMs = android.os.SystemClock.elapsedRealtime()
         val affectsCurrentView = isWildcardChange ||
             mShowAll ||
             mPath == FAVORITES ||
@@ -1105,11 +1107,9 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         mLastMediaHandler.removeCallbacksAndMessages(null)
         mLastMediaHandler.postDelayed({
             ensureBackgroundThread {
-                val mediaId = getLatestMediaId()
-                val mediaDateId = getLatestMediaByDateId()
-                if (mLatestMediaId != mediaId || mLatestMediaDateId != mediaDateId) {
-                    mLatestMediaId = mediaId
-                    mLatestMediaDateId = mediaDateId
+                val snapshot = getMediaStoreSnapshot()
+                if (mMediaStoreSnapshot.differsFrom(snapshot)) {
+                    mMediaStoreSnapshot = snapshot
                     runOnUiThread {
                         getMedia()
                     }
@@ -1291,6 +1291,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun startAsyncTask() {
         mCurrAsyncTask?.stopFetching()
+        mLastScanStartedMs = android.os.SystemClock.elapsedRealtime()
         mCurrAsyncTask = GetMediaAsynctask(
             context = applicationContext,
             mPath = mPath,
@@ -1731,12 +1732,17 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
             if (!isFromCache && mPendingMediaRefresh) {
                 mPendingMediaRefresh = false
-                getMedia()
+                // The scan that just finished already read MediaStore after the observer fired,
+                // so it already contains that change. Re-scan only when a *new* change arrived
+                // while the scan was running; otherwise this is the redundant second indexing
+                // pass that made all thumbnails go black right after the first render.
+                if (mLastObserverChangeMs > mLastScanStartedMs) {
+                    getMedia()
+                }
             }
         }
 
-        mLatestMediaId = getLatestMediaId()
-        mLatestMediaDateId = getLatestMediaByDateId()
+        mMediaStoreSnapshot = getMediaStoreSnapshot()
         if (!isFromCache && !mPath.isVirtualAlbumPath() && !mIsVaultFilesView) {
             val mediaToInsert = media
                 .asSequence()
