@@ -750,5 +750,15 @@ To prevent this while preserving idempotency on repeated operations, deduplicati
    - **External `MediaStore._ID` Breakage on Source Cleanup:** Deleting a true duplicate source copy removes its original `MediaStore` row/path, which can break third-party shortcuts pinned specifically to that path.
    - **Destructive Deduplication Must Never Use `fastSampling`:** `encryptFolder` and `decryptFolder` force `fastSampling = false` (full byte-by-byte stream verification + Tink integrity check) whenever deleting source files, avoiding false positives on large videos sharing identical headers/trailers.
 
+## 11. Appearance & Vault UI Architecture
+
+- **Built-in Appearance Preset Themes (7 Presets):**
+  - Alongside Light, Dark, Midnight Blue, Warm Paper, and Deep Forest, Appearance includes **Velvet Violet** (`#0E0A18` background, `#1A132B` surface, `#A78BFA` primary) and **Soft Coral** (`#FFF7F5` background, `#FFFFFF` surface, `#C44047` primary).
+- **Pull-to-Open Vault Indicator (`VaultPullIndicatorView` & `VaultPullTonePalette`):**
+  - Implements the AD-1 sequential light handoff: an elliptical top light slit feeds into a unified `palette.surface` circular glass disc with a backlit `primary` aura.
+  - Uses a constant-hue tonal transition with contrast safeguards for Custom themes, calmer animation timing, and `95dp` → `115dp` asymptotic rubber-band damping.
+- **Overflow Menu Icon Tinting (`CalypsoOverflowMenuPopup`):**
+  - Applies `palette.secondary` consistently across all overflow menu rows, including the Settings item.
+
 
 

@@ -18,6 +18,7 @@ The first public release. The entries below summarize, by concept rather than by
 - **Settings and interface** — in-app language selector, light/dark/custom theme palettes, settings search, category cards, Calypso overflow menu and a first-run welcome flow.
 - **Tablet and large-screen support** — responsive grid columns, large-screen dialogs and landscape layout improvements.
 - **Desktop tooling** — a CLI for creating and decrypting vaults, syncing an external vault and offline use with Tails OS.
+- **New Appearance preset themes** — added **Velvet Violet** (`#0E0A18` background, `#1A132B` surface, `#A78BFA` primary) and **Soft Coral** (`#FFF7F5` background, `#FFFFFF` surface, `#C44047` primary), expanding the built-in presets from 5 to 7 (alongside Light, Dark, Midnight Blue, Warm Paper, and Deep Forest).
 
 ### Changed and redesigned
 
@@ -25,6 +26,8 @@ The first public release. The entries below summarize, by concept rather than by
 - **Cryptography rebuilt** — asymmetric RSA was removed and the vault container format reduced to a single version. Key derivation moved first to BouncyCastle, then to native Rust/Argon2id via JNI; Poly1305 verification and Tink streaming AEAD were adopted. The password strength estimator runs entirely on-device.
 - **Storage layout** — vault data moved to the `Secrets` folder, favorites and virtual-album backups into app storage; an external vault location and phone synchronization were added.
 - **Distribution and identity** — the application ID changed to `com.calypso.gallery`; the project name and icon were rebranded and GPLv3 / third-party license screens were added.
+- **Pull-to-open vault indicator** — updated `VaultPullIndicatorView` with `VaultPullTonePalette` for the AD-1 sequential light handoff: an elliptical top light slit, a unified `palette.surface` circular glass disc with a backlit `primary` aura, constant-hue tonal transitions with Custom theme contrast safeguards, calmer timing, and `95dp` → `115dp` asymptotic rubber-band damping.
+- **Appearance preset layout** — the dark presets (Dark, Midnight Blue, Velvet Violet, Deep Forest) are grouped in the left column and the light presets plus Custom in the right column.
 
 ### Upstream (Fossify Gallery) compatibility and fixes
 
@@ -59,6 +62,8 @@ The first public release. The entries below summarize, by concept rather than by
 - Pressing Back on the "Have you saved your password?" dialog after vault creation now continues to the one-time biometric offer instead of skipping it. The Security & encrypted vault settings are also refreshed as soon as the vault is created, so the "create vault" row no longer stays visible until the settings category is reopened, regardless of how the follow-up dialogs are dismissed.
 - Video playback no longer stops when swiping left or right without actually changing to the neighbouring item; the current video now pauses only once the page really changes.
 - Forward/backward skips, seek bar and horizontal gesture seeks are frame-accurate again: a 10-second skip advances 10 seconds instead of snapping to a nearby keyframe.
+- **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
+- **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
 [Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
