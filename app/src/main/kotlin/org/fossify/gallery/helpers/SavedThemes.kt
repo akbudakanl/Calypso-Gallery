@@ -47,6 +47,8 @@ object SavedThemes {
             Triple(AppearancePalette.NAVY_TEXT, AppearancePalette.NAVY_BACKGROUND, AppearancePalette.NAVY_PRIMARY),
             Triple(AppearancePalette.PAPER_TEXT, AppearancePalette.PAPER_BACKGROUND, AppearancePalette.PAPER_PRIMARY),
             Triple(AppearancePalette.FOREST_TEXT, AppearancePalette.FOREST_BACKGROUND, AppearancePalette.FOREST_PRIMARY),
+            Triple(AppearancePalette.VIOLET_TEXT, AppearancePalette.VIOLET_BACKGROUND, AppearancePalette.VIOLET_PRIMARY),
+            Triple(AppearancePalette.CORAL_TEXT, AppearancePalette.CORAL_BACKGROUND, AppearancePalette.CORAL_PRIMARY),
         )
         return builtIns.any { (t, b, p) -> t == text && b == background && p == primary }
     }

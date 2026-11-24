@@ -744,6 +744,8 @@
     <string name="theme_midnight_blue">Gece Mavisi</string>
     <string name="theme_warm_paper">Sıcak Kağıt</string>
     <string name="theme_deep_forest">Derin Orman</string>
+    <string name="theme_velvet_violet">Kadife Mor</string>
+    <string name="theme_soft_coral">Yumuşak Mercan</string>
     <string name="appearance_contrast_ok">Kontrast uygun · Metin %1$.1f:1 · Düğme %2$.1f:1</string>
     <string name="appearance_backup_section">Yedekleme</string>
     <string name="backup_saved_themes_to_storage">Kayıtlı temaları cihaz hafızasında yedekle</string>

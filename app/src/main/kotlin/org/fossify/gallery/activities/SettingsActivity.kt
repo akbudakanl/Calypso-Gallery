@@ -585,6 +585,8 @@ class SettingsActivity : SimpleActivity() {
             R.string.theme_midnight_blue to org.fossify.commons.R.string.theme,
             R.string.theme_warm_paper to org.fossify.commons.R.string.theme,
             R.string.theme_deep_forest to org.fossify.commons.R.string.theme,
+            R.string.theme_velvet_violet to org.fossify.commons.R.string.theme,
+            R.string.theme_soft_coral to org.fossify.commons.R.string.theme,
             R.string.custom_colors to R.string.custom_colors,
             R.string.saved_themes to R.string.custom_colors,
             org.fossify.commons.R.string.app_font to org.fossify.commons.R.string.font,

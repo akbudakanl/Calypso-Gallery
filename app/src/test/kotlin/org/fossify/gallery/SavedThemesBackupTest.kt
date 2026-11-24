@@ -24,6 +24,8 @@ class SavedThemesBackupTest {
         assertTrue(SavedThemes.isBuiltIn(AppearancePalette.NAVY_TEXT, AppearancePalette.NAVY_BACKGROUND, AppearancePalette.NAVY_PRIMARY, 0))
         assertTrue(SavedThemes.isBuiltIn(AppearancePalette.PAPER_TEXT, AppearancePalette.PAPER_BACKGROUND, AppearancePalette.PAPER_PRIMARY, 0))
         assertTrue(SavedThemes.isBuiltIn(AppearancePalette.FOREST_TEXT, AppearancePalette.FOREST_BACKGROUND, AppearancePalette.FOREST_PRIMARY, 0))
+        assertTrue(SavedThemes.isBuiltIn(AppearancePalette.VIOLET_TEXT, AppearancePalette.VIOLET_BACKGROUND, AppearancePalette.VIOLET_PRIMARY, 0))
+        assertTrue(SavedThemes.isBuiltIn(AppearancePalette.CORAL_TEXT, AppearancePalette.CORAL_BACKGROUND, AppearancePalette.CORAL_PRIMARY, 0))
 
         assertFalse(SavedThemes.isBuiltIn(0xFF112233.toInt(), 0xFF445566.toInt(), 0xFF778899.toInt(), 0))
     }

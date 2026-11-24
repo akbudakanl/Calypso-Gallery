@@ -719,6 +719,8 @@
     <string name="theme_midnight_blue">午夜藍</string>
     <string name="theme_warm_paper">暖色紙張</string>
     <string name="theme_deep_forest">深邃森林</string>
+    <string name="theme_velvet_violet">絲絨紫</string>
+    <string name="theme_soft_coral">柔和珊瑚</string>
     <string name="appearance_contrast_ok">對比度良好 · 文字 %1$.1f:1 · 按鈕 %2$.1f:1</string>
     <string name="appearance_backup_section">備份</string>
     <string name="backup_saved_themes_to_storage">將已儲存的主題備份至裝置儲存空間</string>

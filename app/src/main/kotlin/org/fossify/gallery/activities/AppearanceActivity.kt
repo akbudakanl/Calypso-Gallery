@@ -51,6 +51,16 @@ import org.fossify.gallery.helpers.SettingsCardUi
  * font selection, and album-type icon toggles.
  */
 class AppearanceActivity : SimpleActivity() {
+    private data class ThemeTileSpec(
+        val tile: View,
+        val swatchBg: View,
+        val swatchSurface: View,
+        val swatchPrimary: View,
+        val radio: View,
+        val entryPalette: AppearancePalette,
+        val mode: Int,
+    )
+
     private val binding by viewBinding(ActivityAppearanceBinding::inflate)
     private var isRefreshing = false
 
@@ -128,6 +138,8 @@ class AppearanceActivity : SimpleActivity() {
             binding.appearanceNavyRow to Config.APPEARANCE_NAVY,
             binding.appearancePaperRow to Config.APPEARANCE_PAPER,
             binding.appearanceForestRow to Config.APPEARANCE_FOREST,
+            binding.appearanceVioletRow to Config.APPEARANCE_VIOLET,
+            binding.appearanceCoralRow to Config.APPEARANCE_CORAL,
             binding.appearanceCustomRow to Config.APPEARANCE_CUSTOM,
         )
         for ((row, mode) in rows) {
@@ -227,25 +239,27 @@ class AppearanceActivity : SimpleActivity() {
             secondary = config.customAccentColor,
             appIcon = config.customAppIconColor,
         )
-        val themeEntries = listOf(
-            Triple(binding.appearanceLightRow, binding.appearanceLightSwatch1 to binding.appearanceLightSwatch2, AppearancePalette.LIGHT to (binding.appearanceLightRadio to Config.APPEARANCE_LIGHT)),
-            Triple(binding.appearanceDarkRow, binding.appearanceDarkSwatch1 to binding.appearanceDarkSwatch2, AppearancePalette.DARK to (binding.appearanceDarkRadio to Config.APPEARANCE_DARK)),
-            Triple(binding.appearanceNavyRow, binding.appearanceNavySwatch1 to binding.appearanceNavySwatch2, AppearancePalette.NAVY to (binding.appearanceNavyRadio to Config.APPEARANCE_NAVY)),
-            Triple(binding.appearancePaperRow, binding.appearancePaperSwatch1 to binding.appearancePaperSwatch2, AppearancePalette.PAPER to (binding.appearancePaperRadio to Config.APPEARANCE_PAPER)),
-            Triple(binding.appearanceForestRow, binding.appearanceForestSwatch1 to binding.appearanceForestSwatch2, AppearancePalette.FOREST to (binding.appearanceForestRadio to Config.APPEARANCE_FOREST)),
-            Triple(binding.appearanceCustomRow, binding.appearanceCustomSwatch1 to binding.appearanceCustomSwatch2, customPreviewPalette to (binding.appearanceCustomRadio to Config.APPEARANCE_CUSTOM)),
+        val themeTiles = listOf(
+            ThemeTileSpec(binding.appearanceLightRow, binding.appearanceLightSwatch1, binding.appearanceLightSwatch2, binding.appearanceLightSwatch3, binding.appearanceLightRadio, AppearancePalette.LIGHT, Config.APPEARANCE_LIGHT),
+            ThemeTileSpec(binding.appearanceDarkRow, binding.appearanceDarkSwatch1, binding.appearanceDarkSwatch2, binding.appearanceDarkSwatch3, binding.appearanceDarkRadio, AppearancePalette.DARK, Config.APPEARANCE_DARK),
+            ThemeTileSpec(binding.appearanceNavyRow, binding.appearanceNavySwatch1, binding.appearanceNavySwatch2, binding.appearanceNavySwatch3, binding.appearanceNavyRadio, AppearancePalette.NAVY, Config.APPEARANCE_NAVY),
+            ThemeTileSpec(binding.appearancePaperRow, binding.appearancePaperSwatch1, binding.appearancePaperSwatch2, binding.appearancePaperSwatch3, binding.appearancePaperRadio, AppearancePalette.PAPER, Config.APPEARANCE_PAPER),
+            ThemeTileSpec(binding.appearanceForestRow, binding.appearanceForestSwatch1, binding.appearanceForestSwatch2, binding.appearanceForestSwatch3, binding.appearanceForestRadio, AppearancePalette.FOREST, Config.APPEARANCE_FOREST),
+            ThemeTileSpec(binding.appearanceVioletRow, binding.appearanceVioletSwatch1, binding.appearanceVioletSwatch2, binding.appearanceVioletSwatch3, binding.appearanceVioletRadio, AppearancePalette.VIOLET, Config.APPEARANCE_VIOLET),
+            ThemeTileSpec(binding.appearanceCoralRow, binding.appearanceCoralSwatch1, binding.appearanceCoralSwatch2, binding.appearanceCoralSwatch3, binding.appearanceCoralRadio, AppearancePalette.CORAL, Config.APPEARANCE_CORAL),
+            ThemeTileSpec(binding.appearanceCustomRow, binding.appearanceCustomSwatch1, binding.appearanceCustomSwatch2, binding.appearanceCustomSwatch3, binding.appearanceCustomRadio, customPreviewPalette, Config.APPEARANCE_CUSTOM),
         )
-        for ((row, swatches, paletteAndRadio) in themeEntries) {
-            val (entryPalette, radioAndMode) = paletteAndRadio
-            val (radioView, entryMode) = radioAndMode
-            val selected = !isSystem && mode == entryMode
-            row.isEnabled = !isSystem
-            row.isClickable = !isSystem
-            row.isFocusable = !isSystem
-            row.alpha = if (isSystem) 0.45f else 1f
-            swatches.first.background = SettingsCardUi.createSwatchDrawable(this, entryPalette.background, palette.border, 5f)
-            swatches.second.background = SettingsCardUi.createSwatchDrawable(this, entryPalette.primary, palette.border, 5f)
-            radioView.background = SettingsCardUi.createRadioCircleDrawable(this, selected, palette)
+        for (spec in themeTiles) {
+            val selected = !isSystem && mode == spec.mode
+            spec.tile.isEnabled = !isSystem
+            spec.tile.isClickable = !isSystem
+            spec.tile.isFocusable = !isSystem
+            spec.tile.alpha = if (isSystem) 0.45f else 1f
+            spec.tile.background = SettingsCardUi.createThemeTileBackground(this, selected, palette)
+            spec.swatchBg.background = SettingsCardUi.createSwatchDrawable(this, spec.entryPalette.background, palette.border, 5f)
+            spec.swatchSurface.background = SettingsCardUi.createSwatchDrawable(this, spec.entryPalette.surface, palette.border, 5f)
+            spec.swatchPrimary.background = SettingsCardUi.createSwatchDrawable(this, spec.entryPalette.primary, palette.border, 5f)
+            spec.radio.background = SettingsCardUi.createRadioCircleDrawable(this, selected, palette)
         }
 
         binding.appearanceCustomColorsSectionLabel.isVisible = isCustom
@@ -271,7 +285,7 @@ class AppearanceActivity : SimpleActivity() {
         binding.appearanceFontChevron.imageTintList = chevronTint
 
         SettingsCardUi.styleCardGroup(binding.appearanceAutoCard, palette, eyebrow = binding.appearanceAutoSectionLabel)
-        SettingsCardUi.styleCardGroup(binding.appearanceThemeCard, palette, eyebrow = binding.appearanceThemeSectionLabel)
+        SettingsCardUi.styleEyebrow(binding.appearanceThemeSectionLabel, palette)
         if (isCustom) {
             SettingsCardUi.styleCardGroup(binding.appearanceCustomColorsCard, palette, eyebrow = binding.appearanceCustomColorsSectionLabel)
         }

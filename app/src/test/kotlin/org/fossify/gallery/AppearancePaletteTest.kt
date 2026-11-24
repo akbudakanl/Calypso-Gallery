@@ -43,6 +43,22 @@ class AppearancePaletteTest {
     }
 
     @Test
+    fun violetPaletteKeepsDetailsInVioletFamilyWithAccessibleContrast() {
+        val violet = AppearancePalette.VIOLET
+        assertHueInRange("VIOLET.secondary", violet.secondary, 245f, 275f)
+        assertHueInRange("VIOLET.surface", violet.surface, 245f, 275f)
+        assertHueInRange("VIOLET.border", violet.border, 245f, 275f)
+        assertWcagAa("VIOLET", violet)
+    }
+
+    @Test
+    fun coralPaletteKeepsDetailsInWarmCoralFamilyWithAccessibleContrast() {
+        val coral = AppearancePalette.CORAL
+        assertHueInRange("CORAL.secondary", coral.secondary, 0f, 20f)
+        assertWcagAa("CORAL", coral)
+    }
+
+    @Test
     fun fromCustomReturnsPresetsVerbatimAndDerivesHarmoniousCustomSecondary() {
         val presets = listOf(
             AppearancePalette.LIGHT,
@@ -50,6 +66,8 @@ class AppearancePaletteTest {
             AppearancePalette.NAVY,
             AppearancePalette.PAPER,
             AppearancePalette.FOREST,
+            AppearancePalette.VIOLET,
+            AppearancePalette.CORAL,
         )
         for (preset in presets) {
             assertEquals(

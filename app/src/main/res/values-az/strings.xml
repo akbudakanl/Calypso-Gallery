@@ -793,6 +793,8 @@
     <string name="theme_midnight_blue">Gecə Mavisi</string>
     <string name="theme_warm_paper">İsti Kağız</string>
     <string name="theme_deep_forest">Dərin Meşə</string>
+    <string name="theme_velvet_violet">Məxmər Bənövşəyi</string>
+    <string name="theme_soft_coral">Yumşaq Mərcan</string>
     <string name="appearance_contrast_ok">Uyğun kontrast · Mətn %1$.1f:1 · Düymə %2$.1f:1</string>
     <string name="appearance_backup_section">Ehtiyat nüsxə</string>
     <string name="backup_saved_themes_to_storage">Saxlanılmış temaların ehtiyat nüsxəsini cihaz yaddaşına çıxar</string>

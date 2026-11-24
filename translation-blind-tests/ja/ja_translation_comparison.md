@@ -1261,3 +1261,12 @@ New fork-only strings for the bridge preparation, mode-aware deduplication (alig
 | `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | このブリッジには %1$s の書き込みマーカーがあります。CLI は動作していないようです。マーカーを削除してインポートを続けますか？ |
 | `vault_sync_stale_marker_remove` | Remove and continue | 削除して続行 |
 | `vault_sync_stale_marker_keep` | Keep it | 保持する |
+
+## Appearance preset theme strings (this revision)
+
+Added the two new built-in Appearance preset theme names next to `theme_deep_forest` in `values-ja/strings.xml` (Japanese). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|---|---|---|---|
+| `theme_velvet_violet` | Velvet Violet | ベルベットバイオレット | Dark purple preset theme (`#0E0A18` bg, `#A78BFA` primary) |
+| `theme_soft_coral` | Soft Coral | ソフトコーラル | Light coral preset theme (`#FFF7F5` bg, `#C44047` primary) |

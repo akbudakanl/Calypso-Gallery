@@ -1275,3 +1275,12 @@ New fork-only strings for the bridge preparation, mode-aware deduplication (alig
 | `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Denne brua inneheld ein skrivemarkør frå %1$s. CLI ser ikkje ut til å køyre. Fjerne markøren og halde fram importen? |
 | `vault_sync_stale_marker_remove` | Remove and continue | Fjern og hald fram |
 | `vault_sync_stale_marker_keep` | Keep it | Behald |
+
+## Appearance preset theme strings (this revision)
+
+Added the two new built-in Appearance preset theme names next to `theme_deep_forest` in `values-nn/strings.xml` (Norwegian Nynorsk). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|---|---|---|---|
+| `theme_velvet_violet` | Velvet Violet | Fløyelsfiolett | Dark purple preset theme (`#0E0A18` bg, `#A78BFA` primary) |
+| `theme_soft_coral` | Soft Coral | Mjuk korall | Light coral preset theme (`#FFF7F5` bg, `#C44047` primary) |

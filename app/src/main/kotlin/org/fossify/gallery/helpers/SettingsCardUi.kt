@@ -1,11 +1,13 @@
 package org.fossify.gallery.helpers
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
+import android.graphics.drawable.RippleDrawable
 import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
@@ -50,6 +52,30 @@ object SettingsCardUi {
             setColor(palette.surface)
             setStroke(strokePx, palette.border)
         }
+    }
+
+    fun createThemeTileBackground(
+        context: Context,
+        selected: Boolean,
+        palette: AppearancePalette,
+    ): Drawable {
+        val density = context.resources.displayMetrics.density
+        val cornerRadiusPx = 14f * density
+        val strokePx = ((if (selected) 2f else 1f) * density).toInt().coerceAtLeast(1)
+        val content = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = cornerRadiusPx
+            setColor(palette.surface)
+            setStroke(strokePx, if (selected) palette.primary else palette.border)
+        }
+        val isLight = AppearancePalette.isLightBackground(palette.background)
+        val rippleColor = ColorUtils.blendARGB(palette.surface, palette.primary, if (isLight) 0.12f else 0.18f)
+        val mask = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = cornerRadiusPx
+            setColor(Color.WHITE)
+        }
+        return RippleDrawable(ColorStateList.valueOf(rippleColor), content, mask)
     }
 
     fun createSearchBackground(context: Context, palette: AppearancePalette): GradientDrawable =

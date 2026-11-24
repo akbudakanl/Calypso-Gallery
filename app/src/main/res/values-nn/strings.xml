@@ -796,6 +796,8 @@
     <string name="theme_midnight_blue">Midnattsblå</string>
     <string name="theme_warm_paper">Varmt papir</string>
     <string name="theme_deep_forest">Djup skog</string>
+    <string name="theme_velvet_violet">Fløyelsfiolett</string>
+    <string name="theme_soft_coral">Mjuk korall</string>
     <string name="appearance_contrast_ok">God kontrast · Tekst %1$.1f:1 · Knapp %2$.1f:1</string>
     <string name="appearance_backup_section">Tryggingskopi</string>
     <string name="backup_saved_themes_to_storage">Tryggingskopier lagra tema til einingslager</string>

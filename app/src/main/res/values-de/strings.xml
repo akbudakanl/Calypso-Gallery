@@ -722,6 +722,8 @@
     <string name="theme_midnight_blue">Mitternachtsblau</string>
     <string name="theme_warm_paper">Warmes Papier</string>
     <string name="theme_deep_forest">Tiefer Wald</string>
+    <string name="theme_velvet_violet">Samtviolett</string>
+    <string name="theme_soft_coral">Sanftes Koralle</string>
     <string name="appearance_contrast_ok">Guter Kontrast · Text %1$.1f:1 · Schaltfläche %2$.1f:1</string>
     <string name="appearance_backup_section">Sicherung</string>
     <string name="backup_saved_themes_to_storage">Gespeicherte Designs im Gerätespeicher sichern</string>

@@ -812,6 +812,8 @@
     <string name="theme_midnight_blue">Midnight Blue</string>
     <string name="theme_warm_paper">Warm Paper</string>
     <string name="theme_deep_forest">Deep Forest</string>
+    <string name="theme_velvet_violet">Velvet Violet</string>
+    <string name="theme_soft_coral">Soft Coral</string>
     <string name="appearance_contrast_ok">Good contrast · Text %1$.1f:1 · Button %2$.1f:1</string>
     <string name="appearance_backup_section">Backup</string>
     <string name="backup_saved_themes_to_storage">Back up saved themes to device storage</string>

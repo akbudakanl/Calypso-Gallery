@@ -728,6 +728,8 @@
     <string name="theme_midnight_blue">Azul medianoche</string>
     <string name="theme_warm_paper">Papel cálido</string>
     <string name="theme_deep_forest">Bosque profundo</string>
+    <string name="theme_velvet_violet">Violeta terciopelo</string>
+    <string name="theme_soft_coral">Coral suave</string>
     <string name="appearance_contrast_ok">Buen contraste · Texto %1$.1f:1 · Botón %2$.1f:1</string>
     <string name="appearance_backup_section">Copia de seguridad</string>
     <string name="backup_saved_themes_to_storage">Respaldar temas guardados en el almacenamiento del dispositivo</string>

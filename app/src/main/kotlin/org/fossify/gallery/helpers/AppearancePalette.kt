@@ -51,6 +51,14 @@ data class AppearancePalette(
         const val FOREST_BACKGROUND = 0xFF0C1713.toInt()
         const val FOREST_PRIMARY = 0xFF6EE7B7.toInt()
 
+        const val VIOLET_TEXT = 0xFFF5F3FF.toInt()
+        const val VIOLET_BACKGROUND = 0xFF0E0A18.toInt()
+        const val VIOLET_PRIMARY = 0xFFA78BFA.toInt()
+
+        const val CORAL_TEXT = 0xFF2B1A18.toInt()
+        const val CORAL_BACKGROUND = 0xFFFFF7F5.toInt()
+        const val CORAL_PRIMARY = 0xFFC44047.toInt()
+
         val LIGHT = AppearancePalette(
             text = LIGHT_TEXT,
             background = LIGHT_BACKGROUND,
@@ -112,6 +120,30 @@ data class AppearancePalette(
             onSecondary = PURE_BLACK,
         )
 
+        val VIOLET = AppearancePalette(
+            text = VIOLET_TEXT,
+            background = VIOLET_BACKGROUND,
+            primary = VIOLET_PRIMARY,
+            secondary = 0xFFA697CC.toInt(),
+            appIcon = DARK.appIcon,
+            surface = 0xFF1A132B.toInt(),
+            border = 0xFF2F234B.toInt(),
+            onPrimary = PURE_BLACK,
+            onSecondary = PURE_BLACK,
+        )
+
+        val CORAL = AppearancePalette(
+            text = CORAL_TEXT,
+            background = CORAL_BACKGROUND,
+            primary = CORAL_PRIMARY,
+            secondary = 0xFF7D5350.toInt(),
+            appIcon = LIGHT.appIcon,
+            surface = PURE_WHITE,
+            border = 0xFFF1DDD8.toInt(),
+            onPrimary = PURE_WHITE,
+            onSecondary = PURE_WHITE,
+        )
+
         fun isLightBackground(color: Int): Boolean = isLight(color)
 
         /** Build a coherent palette from the four user-editable Custom colors. */
@@ -120,7 +152,7 @@ data class AppearancePalette(
             // custom fields. Deriving surface/border/secondary from those values would NOT reproduce
             // the hand-tuned preset, so return the matching preset verbatim. Any real edit falls
             // through to the derived palette below and is reported as an unsaved change.
-            val builtInPresets = listOf(LIGHT, DARK, NAVY, PAPER, FOREST)
+            val builtInPresets = listOf(LIGHT, DARK, NAVY, PAPER, FOREST, VIOLET, CORAL)
             for (preset in builtInPresets) {
                 if ((secondary == 0 || secondary == preset.secondary) &&
                     text == preset.text &&
@@ -219,6 +251,8 @@ object AppearanceManager {
         Config.APPEARANCE_NAVY -> AppearancePalette.NAVY
         Config.APPEARANCE_PAPER -> AppearancePalette.PAPER
         Config.APPEARANCE_FOREST -> AppearancePalette.FOREST
+        Config.APPEARANCE_VIOLET -> AppearancePalette.VIOLET
+        Config.APPEARANCE_CORAL -> AppearancePalette.CORAL
         Config.APPEARANCE_CUSTOM -> AppearancePalette.fromCustom(
             text = config.customTextColor,
             background = config.customBackgroundColor,

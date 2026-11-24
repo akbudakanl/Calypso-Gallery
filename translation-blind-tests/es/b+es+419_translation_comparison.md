@@ -1258,3 +1258,12 @@ New fork-only strings for the bridge preparation, mode-aware deduplication (alig
 | `vault_sync_stale_marker_message` | This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer? | Este puente tiene un marcador de escritura de %1$s. La CLI parece no estar corriendo. ¿Eliminar el marcador y continuar la importación? |
 | `vault_sync_stale_marker_remove` | Remove and continue | Eliminar y continuar |
 | `vault_sync_stale_marker_keep` | Keep it | Conservar |
+
+## Appearance preset theme strings (this revision)
+
+Added the two new built-in Appearance preset theme names next to `theme_deep_forest` in `values-b+es+419/strings.xml` (Spanish Latin America). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Spanish (LA) (`values-b+es+419/strings.xml`) | Notes |
+|---|---|---|---|
+| `theme_velvet_violet` | Velvet Violet | Violeta terciopelo | Dark purple preset theme (`#0E0A18` bg, `#A78BFA` primary) |
+| `theme_soft_coral` | Soft Coral | Coral suave | Light coral preset theme (`#FFF7F5` bg, `#C44047` primary) |

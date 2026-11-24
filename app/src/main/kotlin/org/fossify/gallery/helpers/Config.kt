@@ -25,6 +25,8 @@ class Config(context: Context) : BaseConfig(context) {
         const val APPEARANCE_NAVY = 4
         const val APPEARANCE_PAPER = 5
         const val APPEARANCE_FOREST = 6
+        const val APPEARANCE_VIOLET = 7
+        const val APPEARANCE_CORAL = 8
 
         const val MIN_UNLOCK_TARGET_MS = 100
         const val SWEET_SPOT_UNLOCK_TARGET_MS = 1_000
