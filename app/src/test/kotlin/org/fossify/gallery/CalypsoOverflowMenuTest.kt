@@ -167,6 +167,17 @@ class CalypsoOverflowMenuTest {
     }
 
     @Test
+    fun settingsFooterIconUsesSameTintAsSiblingRows() {
+        val candidates = listOf(
+            File("src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt"),
+            File("app/src/main/kotlin/org/fossify/gallery/helpers/CalypsoOverflowMenuPopup.kt")
+        )
+        val source = candidates.first { it.exists() }.readText()
+        assertFalse(source.contains("if (isSettingsFooter) palette.primary"))
+        assertTrue(source.contains("val iconTint = palette.secondary"))
+    }
+
+    @Test
     fun semanticGroupsSeparatePrimaryViewVisibilityAndManageSections() {
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.show_albums))
         assertEquals("primary", CalypsoOverflowMenuPopup.resolveMenuItemGroup(R.id.refresh_menu))

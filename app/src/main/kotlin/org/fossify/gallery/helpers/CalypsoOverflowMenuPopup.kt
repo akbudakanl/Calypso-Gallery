@@ -47,8 +47,8 @@ import org.fossify.gallery.extensions.config
  * - Always unfolds cleanly downward from the top-right anchor within screen bounds (never jumps to
  *   random screen coordinates).
  * - Clean left-aligned icons with zero inner dividers.
- * - Distinct tinted bottom footer band for Settings (`Ayarlar`) with primary-tinted icon and medium
- *   label. It intentionally has no trailing chevron: Settings is a direct page, not a submenu.
+ * - Distinct tinted bottom footer band for Settings (`Ayarlar`) with matching secondary-tinted icon
+ *   and medium label. It intentionally has no trailing chevron: Settings is a direct page, not a submenu.
  */
 class CalypsoOverflowMenuPopup(private val activity: Activity) {
 
@@ -456,7 +456,7 @@ class CalypsoOverflowMenuPopup(private val activity: Activity) {
         val padH = (12f * density).toInt()
         val padV = (9f * density).toInt()
         val iconSize = (17f * density).toInt()
-        val iconTint = if (isSettingsFooter) palette.primary else palette.secondary
+        val iconTint = palette.secondary
 
         return LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
