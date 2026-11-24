@@ -10,7 +10,6 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.ColorStateList
-import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -428,29 +427,9 @@ class SettingsActivity : SimpleActivity() {
         refreshSettingsSearchColors()
     }
 
-    /**
-     * Commons' applyFontToTextView returns early for Typeface.DEFAULT, so returning from a custom
-     * font to the system font would leave the old typeface on already inflated views. Apply the
-     * typeface explicitly here, preserving each view's bold/italic style.
-     */
+    /** Re-apply the font to views inflated before the font was changed in Appearance. */
     private fun refreshSettingsFont() {
-        val typeface = if (config.fontType == FONT_TYPE_SYSTEM_DEFAULT && config.fontName.isEmpty()) {
-            Typeface.DEFAULT
-        } else {
-            FontHelper.getTypeface(this, config.fontType, config.fontName) ?: Typeface.DEFAULT
-        }
-        fun apply(view: View) {
-            if (view is TextView) {
-                val style = view.typeface?.style ?: Typeface.NORMAL
-                view.typeface = Typeface.create(typeface, style)
-            }
-            if (view is ViewGroup) {
-                for (i in 0 until view.childCount) {
-                    apply(view.getChildAt(i))
-                }
-            }
-        }
-        apply(binding.root)
+        binding.root.refreshFontRecursively()
     }
 
     private fun refreshSettingsSearchColors() {

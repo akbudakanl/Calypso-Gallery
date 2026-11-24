@@ -96,6 +96,7 @@ import org.fossify.gallery.dialogs.GrantAllFilesDialog
 import org.fossify.gallery.extensions.addTempFolderIfNeeded
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
+import org.fossify.gallery.extensions.refreshFontRecursively
 import org.fossify.gallery.extensions.resolveCalypsoSearchIconColor
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
@@ -536,6 +537,9 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
         }
         maybeShowVaultPasswordReminder()
         updateMenuColors()
+        // Appearance changes the font without recreating this activity, so the search bar and
+        // other inflated text views would otherwise keep the previous typeface.
+        binding.root.refreshFontRecursively()
         config.isThirdPartyIntent = false
         mDateFormat = config.dateFormat
         mTimeFormat = getTimeFormat()

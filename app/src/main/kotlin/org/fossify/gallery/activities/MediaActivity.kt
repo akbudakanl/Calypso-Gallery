@@ -82,6 +82,7 @@ import org.fossify.gallery.extensions.hasHiddenNormalFolders
 import org.fossify.gallery.extensions.hasVaultCreated
 import org.fossify.gallery.extensions.applyCalypsoSearchBarStyle
 import org.fossify.gallery.extensions.keepHeaderPinned
+import org.fossify.gallery.extensions.refreshFontRecursively
 import org.fossify.gallery.extensions.resolveCalypsoSearchIconColor
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.captureScrollOffset
@@ -330,6 +331,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         }
 
         updateMenuColors()
+        // The font can be changed in Appearance while this activity stays alive.
+        binding.root.refreshFontRecursively()
         updateExcludedFoldersAvailability()
         if (mStoredAnimateGifs != config.animateGifs) {
             getMediaAdapter()?.updateAnimateGifs(config.animateGifs)
