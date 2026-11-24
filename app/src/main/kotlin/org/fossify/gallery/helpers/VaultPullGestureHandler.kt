@@ -11,9 +11,7 @@ import android.view.animation.DecelerateInterpolator
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.gallery.views.VaultPullIndicatorView
-import kotlin.math.PI
 import kotlin.math.abs
-import kotlin.math.sin
 
 /**
  * Pull-to-open gesture for the encrypted vault (AD-1 sequential light handoff).
@@ -49,7 +47,6 @@ class VaultPullGestureHandler(
     private var armed = false
     private var armRunnable: Runnable? = null
     private val choreographyAnimators = mutableListOf<Animator>()
-    private var breatheAnimator: ValueAnimator? = null
 
     private val easeOutInterpolator = DecelerateInterpolator(1.5f)
 
@@ -116,8 +113,6 @@ class VaultPullGestureHandler(
                                         indicatorView.dropProgress = 0f
                                         indicatorView.toneProgress = 0f
                                         indicatorView.auraProgress = 0f
-                                        indicatorView.breathePhase = 0f
-                                        indicatorView.armPopScale = 1f
                                     }
                                     val preFraction = ((translation - prePullStart) / (holdThreshold - prePullStart))
                                         .coerceIn(0f, 1f)
@@ -185,8 +180,6 @@ class VaultPullGestureHandler(
         indicatorView.alpha = 1f
         indicatorView.pullTranslationPx = translation
         indicatorView.thresholdActive = true
-        indicatorView.armPopScale = 1f
-        indicatorView.breathePhase = 0f
         if (indicatorView.visibility != View.VISIBLE) {
             indicatorView.beVisible()
             indicatorView.bringToFront()
@@ -253,35 +246,10 @@ class VaultPullGestureHandler(
             if (thresholdMet) {
                 armed = true
                 indicatorView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                playArmedFeedback()
             }
         }
         armRunnable = runnable
         indicatorView.postDelayed(runnable, ARM_DELAY_MS)
-    }
-
-    private fun playArmedFeedback() {
-        if (!ValueAnimator.areAnimatorsEnabled()) return
-
-        val popAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = ARM_POP_DURATION_MS
-            addUpdateListener { anim ->
-                val t = anim.animatedValue as Float
-                indicatorView.armPopScale = 1f + ARM_POP_AMPLITUDE * sin(t * PI).toFloat()
-            }
-        }
-        choreographyAnimators += popAnimator
-        popAnimator.start()
-
-        breatheAnimator?.cancel()
-        breatheAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = BREATHE_HALF_CYCLE_MS
-            repeatCount = ValueAnimator.INFINITE
-            repeatMode = ValueAnimator.REVERSE
-            interpolator = easeOutInterpolator
-            addUpdateListener { indicatorView.breathePhase = it.animatedValue as Float }
-            start()
-        }
     }
 
     private fun hideIndicator() {
@@ -329,8 +297,6 @@ class VaultPullGestureHandler(
         armRunnable = null
         choreographyAnimators.forEach { it.cancel() }
         choreographyAnimators.clear()
-        breatheAnimator?.cancel()
-        breatheAnimator = null
     }
 
     companion object {
@@ -374,9 +340,6 @@ class VaultPullGestureHandler(
         private const val AURA_BLOOM_DELAY_MS = 480L
         private const val AURA_BLOOM_DURATION_MS = 500L
         private const val ARM_DELAY_MS = 880L
-        private const val ARM_POP_DURATION_MS = 340L
-        private const val ARM_POP_AMPLITUDE = 0.045f
-        private const val BREATHE_HALF_CYCLE_MS = 2100L
         private const val RESET_ANIM_MS = 270L
     }
 }
