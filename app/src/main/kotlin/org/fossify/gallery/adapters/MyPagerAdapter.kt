@@ -63,6 +63,20 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
         super.destroyItem(container, position, any)
     }
 
+    fun syncMediaMetadata(newMedia: List<Medium>) {
+        if (newMedia.size != media.size) {
+            return
+        }
+        for (i in newMedia.indices) {
+            if (media[i].path != newMedia[i].path) {
+                return
+            }
+        }
+        for (i in newMedia.indices) {
+            media[i] = newMedia[i]
+        }
+    }
+
     /**
      * Updates the backing media list on shuffle while keeping the currently visible fragment
      * alive (so an active video continues playing without recreating ExoPlayer), only replacing
@@ -86,6 +100,14 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
             }
             fragments.remove(activeOldPos)
 
+            // Clear stale saved states so new items at old positions do not inherit unrelated state.
+            runCatching {
+                val mSavedStateField = FragmentStatePagerAdapter::class.java.getDeclaredField("mSavedState").apply {
+                    isAccessible = true
+                }
+                (mSavedStateField.get(this) as? ArrayList<*>)?.clear()
+            }
+
             media.clear()
             media.addAll(newMedia)
 
@@ -102,6 +124,7 @@ class MyPagerAdapter(val activity: ViewPagerActivity, fm: FragmentManager, val m
                 internalFragments.add(null)
             }
             internalFragments[activeNewPos] = activeFragment
+            activeFragment.listener = activity
             fragments[activeNewPos] = activeFragment
             true
         } catch (_: Throwable) {

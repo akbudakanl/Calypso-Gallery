@@ -270,6 +270,8 @@ const val FAST_FORWARD_VIDEO_MS = 10000
 
 const val EXOPLAYER_MIN_BUFFER_MS = 2000
 const val EXOPLAYER_MAX_BUFFER_MS = 8000
+const val EXOPLAYER_PLAYBACK_BUFFER_MS = 250
+const val EXOPLAYER_REBUFFER_BUFFER_MS = 500
 
 const val DIRECTORY = "directory"
 const val MEDIUM = "medium"

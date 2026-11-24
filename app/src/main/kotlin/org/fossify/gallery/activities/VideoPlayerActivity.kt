@@ -95,6 +95,7 @@ import org.fossify.gallery.helpers.ROTATE_BY_DEVICE_ROTATION
 import org.fossify.gallery.helpers.ROTATE_BY_SYSTEM_SETTING
 import org.fossify.gallery.helpers.SHOW_NEXT_ITEM
 import org.fossify.gallery.helpers.SHOW_PREV_ITEM
+import org.fossify.gallery.helpers.SeekIndexCacheKey
 import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VideoGestureCallbacks
 import org.fossify.gallery.helpers.VideoGestureHelper
@@ -399,7 +400,12 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
 
     private fun initExoPlayer() {
         val rawPath = mUri?.path ?: ""
-        val extractorsFactory = SeekableExtractorsFactory()
+        val cachePath = if (mUri?.scheme == null || mUri?.scheme == "file") {
+            rawPath
+        } else {
+            mUri?.toString() ?: ""
+        }
+        val extractorsFactory = SeekableExtractorsFactory(SeekIndexCacheKey.fromPath(cachePath))
         val mediaSource: MediaSource = if (CryptoManager.isEncryptedFile(rawPath)) {
             val factory = EncryptedMediaDataSource.Factory()
             ProgressiveMediaSource.Factory(factory, extractorsFactory)

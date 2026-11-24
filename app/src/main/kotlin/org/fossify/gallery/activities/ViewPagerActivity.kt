@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
+
 package org.fossify.gallery.activities
 
 import android.animation.Animator
@@ -28,6 +30,10 @@ import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.core.graphics.drawable.toDrawable
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.SeekParameters
 import androidx.print.PrintHelper
 import androidx.viewpager.widget.ViewPager
 import com.bumptech.glide.Glide
@@ -174,10 +180,16 @@ import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DeleteBehaviorHelper
 import org.fossify.gallery.helpers.DeleteOriginType
+import org.fossify.gallery.helpers.EXOPLAYER_MAX_BUFFER_MS
+import org.fossify.gallery.helpers.EXOPLAYER_MIN_BUFFER_MS
+import org.fossify.gallery.helpers.EXOPLAYER_PLAYBACK_BUFFER_MS
+import org.fossify.gallery.helpers.EXOPLAYER_REBUFFER_BUFFER_MS
 import org.fossify.gallery.helpers.MediaFetcher
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ReferenceBackupManager
+import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VAULT_RESUME_STATE
 import org.fossify.gallery.helpers.VaultResumeState
 import org.fossify.gallery.helpers.DefaultPageTransformer
@@ -278,9 +290,14 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     private var mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
     private val mDeferredPlayerReleases = ArrayList<() -> Unit>()
+    private var mSharedExoPlayer: ExoPlayer? = null
+    private var mSharedPlayerOwner: VideoFragment? = null
+    private var mVideoKeepScreenOn = false
     private var mLastPageVaultProtection: Boolean? = null
     private var mVaultResumeBlob: String? = null
     private var mFavoritePaths = ArrayList<String>()
+    @Volatile
+    private var mFavoritesLoaded = false
     private var mIgnoredPaths = ArrayList<String>()
     private val mVideoPlaybackPositions = mutableMapOf<String, Long>()
     private var mOriginalBrightness: Float? = null
@@ -352,6 +369,11 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         super.onPause()
         mMenuController?.dismiss()
         stopSlideshow()
+        mSharedExoPlayer?.playWhenReady = false
+        if (!mIsSlideshowActive && mVideoKeepScreenOn) {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            mVideoKeepScreenOn = false
+        }
         flushPendingMediaOrderIfNeeded()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
@@ -407,8 +429,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         mMenuController?.dismiss()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
+        destroySharedExoPlayer()
         super.onDestroy()
         VideoFragment.clearFrameCache()
+        SeekableExtractorsFactory.clearCache()
         ColorModeHelper.resetColorMode(this)
 
         if (intent.extras?.containsKey(IS_VIEW_INTENT) == true) {
@@ -427,7 +451,9 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     fun refreshMenuItems() {
         val currentMedium = getCurrentMedium() ?: return
         val controller = mMenuController ?: return
-        currentMedium.isFavorite = mFavoritePaths.contains(currentMedium.path)
+        if (mFavoritesLoaded) {
+            currentMedium.isFavorite = mFavoritePaths.contains(currentMedium.path)
+        }
         val visibleBottomActions = getVisibleBottomActions()
         val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this@ViewPagerActivity, mDirectory) ||
             CryptoManager.isVaultRecycleBinPath(currentMedium.path)
@@ -663,6 +689,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         stopSlideshow()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
+        destroySharedExoPlayer()
         binding.viewPager.removeOnPageChangeListener(this)
         binding.viewPager.adapter = null
         binding.viewPager.visibility = View.INVISIBLE
@@ -868,7 +895,14 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     private fun initFavorites() {
         ensureBackgroundThread {
-            mFavoritePaths = getFavoritePaths()
+            val favoritePaths = getFavoritePaths()
+            runOnUiThread {
+                mFavoritePaths = favoritePaths
+                mFavoritesLoaded = true
+                if (!isDestroyed && !isFinishing) {
+                    refreshMenuItems()
+                }
+            }
         }
     }
 
@@ -1019,6 +1053,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             showSystemUI()
             mSlideshowHandler.removeCallbacksAndMessages(null)
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            mVideoKeepScreenOn = false
             mAreSlideShowMediaVisible = false
 
             if (config.slideshowRandomOrder) {
@@ -2106,7 +2141,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         } while (attempts < 5 && hasSamePathsOrder(shuffled, previousSnapshot))
 
         mMediaFiles = shuffled
-        mPrevHashcode = mMediaFiles.hashCode()
+        mPrevHashcode = MediaUpdatePolicy.computeViewerMediaContentHash(mMediaFiles)
         mPos = shuffled.indexOfFirst { it.path == currentPath }.takeIf { it != -1 } ?: 0
 
         if (!isExternalIntent()) {
@@ -2170,8 +2205,50 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             it is Medium && !mIgnoredPaths.contains(it.path)
         }.map { it as Medium }.toMutableList() as ArrayList<Medium>
 
-        if (isDirEmpty(media) || media.hashCode() == mPrevHashcode) {
+        MediaUpdatePolicy.mergeCachedMediaMetadata(media, mMediaFiles)
+        val newHash = MediaUpdatePolicy.computeViewerMediaContentHash(media)
+        if (isDirEmpty(media) || newHash == mPrevHashcode) {
             return
+        }
+
+        val existingAdapter = binding.viewPager.adapter as? MyPagerAdapter
+        if (existingAdapter != null && !mAreSlideShowMediaVisible && !mRandomSlideshowStopped) {
+            if (hasSamePathsOrder(mMediaFiles, media)) {
+                mPrevHashcode = newHash
+                mMediaFiles = media
+                existingAdapter.syncMediaMetadata(media)
+                updateActionbarTitle()
+                refreshMenuItems()
+                return
+            }
+
+            val currentPath = getCurrentPath()
+            val oldPos = binding.viewPager.currentItem
+            val newPos = if (currentPath.isNotEmpty()) {
+                media.indexOfFirst { it.path.equals(currentPath, ignoreCase = true) }
+            } else {
+                -1
+            }
+            if (newPos >= 0 && !isDestroyed) {
+                binding.viewPager.removeOnPageChangeListener(this)
+                val updatedInPlace = existingAdapter.updateItemsKeepingActiveFragment(media, oldPos, newPos)
+                if (updatedInPlace) {
+                    mPrevHashcode = newHash
+                    mMediaFiles = media
+                    mPos = newPos
+                    if (newPos != oldPos) {
+                        binding.viewPager.setCurrentItem(newPos, false)
+                    }
+                    binding.viewPager.addOnPageChangeListener(this)
+                    updateActionbarTitle()
+                    refreshMenuItems()
+                    checkOrientation()
+                    initBottomActions()
+                    return
+                } else {
+                    binding.viewPager.addOnPageChangeListener(this)
+                }
+            }
         }
 
         val isPlaying = (getCurrentFragment() as? VideoFragment)?.mIsPlaying == true
@@ -2183,7 +2260,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     }
 
     private fun refreshUI(media: ArrayList<Medium>, refetchViewPagerPosition: Boolean) {
-        mPrevHashcode = media.hashCode()
+        mPrevHashcode = MediaUpdatePolicy.computeViewerMediaContentHash(media)
         mMediaFiles = media
 
         if (refetchViewPagerPosition || mPos == -1) {
@@ -2412,6 +2489,69 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
 
     override fun getVideoPlaybackPosition(path: String) = mVideoPlaybackPositions[path]
 
+    override fun acquireSharedExoPlayer(owner: VideoFragment): ExoPlayer? {
+        if (isDestroyed || isFinishing) {
+            return null
+        }
+        if (mSharedPlayerOwner != null && mSharedPlayerOwner !== owner) {
+            mSharedPlayerOwner?.detachFromSharedPlayer()
+        }
+        if (mSharedExoPlayer == null) {
+            val loadControl = DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    EXOPLAYER_MIN_BUFFER_MS,
+                    EXOPLAYER_MAX_BUFFER_MS,
+                    EXOPLAYER_PLAYBACK_BUFFER_MS,
+                    EXOPLAYER_REBUFFER_BUFFER_MS
+                )
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build()
+            mSharedExoPlayer = ExoPlayer.Builder(this)
+                .setSeekParameters(SeekParameters.EXACT)
+                .setLoadControl(loadControl)
+                .build()
+        }
+        mSharedPlayerOwner = owner
+        return mSharedExoPlayer
+    }
+
+    override fun releaseSharedExoPlayerOwnership(owner: VideoFragment) {
+        if (mSharedPlayerOwner === owner) {
+            mSharedExoPlayer?.apply {
+                playWhenReady = false
+                volume = 0f
+                setVideoSurface(null)
+                stop()
+                clearMediaItems()
+            }
+            mSharedPlayerOwner = null
+        }
+    }
+
+    private fun destroySharedExoPlayer() {
+        mSharedPlayerOwner?.detachFromSharedPlayer()
+        mSharedPlayerOwner = null
+        mSharedExoPlayer?.setVideoSurface(null)
+        mSharedExoPlayer?.release()
+        mSharedExoPlayer = null
+    }
+
+    override fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean {
+        if (keepOn) {
+            if (!mVideoKeepScreenOn) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                mVideoKeepScreenOn = true
+            }
+            return true
+        } else {
+            if (!isPagerScrolling() && !mIsSlideshowActive && mVideoKeepScreenOn) {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                mVideoKeepScreenOn = false
+            }
+            return true
+        }
+    }
+
     override fun goToPrevItem() {
         binding.viewPager.setCurrentItem(binding.viewPager.currentItem - 1, false)
         checkOrientation()
@@ -2539,6 +2679,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                         checkOrientation()
                     }
                     (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
+                    if (!mIsSlideshowActive && mVideoKeepScreenOn && (getCurrentFragment() as? VideoFragment)?.shouldKeepScreenOn() != true) {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        mVideoKeepScreenOn = false
+                    }
                 }
             }
         } else {

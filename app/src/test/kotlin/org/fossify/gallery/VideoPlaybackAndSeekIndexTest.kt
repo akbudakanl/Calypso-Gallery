@@ -14,24 +14,39 @@ import androidx.media3.extractor.TrackOutput
 import androidx.media3.extractor.mp4.FragmentedMp4Extractor
 import org.fossify.gallery.extensions.getFormattedDuration
 import org.fossify.gallery.helpers.RandomAccessFileExtractorInput
+import org.fossify.gallery.helpers.SeekIndexCacheKey
+import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.SeekableFragmentedMp4Extractor
 import org.fossify.gallery.helpers.SeekableMatroskaExtractor
 import org.fossify.gallery.helpers.VideoPlaybackUtils
 import org.fossify.gallery.helpers.probeContainerDurationMs
 import org.fossify.gallery.helpers.probeContainerDurationSeconds
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.io.File
+import java.io.IOException
 import java.io.RandomAccessFile
 
 @OptIn(UnstableApi::class)
 class VideoPlaybackAndSeekIndexTest {
+
+    @Before
+    fun clearSeekIndexCacheBefore() {
+        SeekableExtractorsFactory.clearCache()
+    }
+
+    @After
+    fun clearSeekIndexCacheAfter() {
+        SeekableExtractorsFactory.clearCache()
+    }
 
     @Test
     fun getFormattedDurationGuardsTimeUnsetAndNegativeValues() {
@@ -352,6 +367,267 @@ class VideoPlaybackAndSeekIndexTest {
         assertEquals(seekPoint.position to seekPoint.timeUs, recordedDelegateSeeks.last())
     }
 
+    @Test
+    fun fragmentedMp4CachesChunkIndexAndReusesWithoutRescanning() {
+        val built = buildSyntheticFmp4(
+            timescale = 90_000,
+            defaultSampleDuration = 3_000,
+            fragments = listOf(
+                Triple(0L, 90, 256),
+                Triple(270_000L, 90, 96 * 1024),
+                Triple(540_000L, 60, 512),
+            ),
+            includeSidx = false,
+        )
+        val key = SeekIndexCacheKey(path = "/vault/video.mp4", size = built.bytes.size.toLong(), lastModified = 12345L)
+
+        fun runWithKey(cacheKey: SeekIndexCacheKey): Triple<SeekMap?, InMemoryExtractorInput, Int> {
+            var emittedSeekMap: SeekMap? = null
+            val delegate = object : Extractor {
+                private lateinit var out: ExtractorOutput
+                override fun sniff(input: ExtractorInput): Boolean = true
+                override fun init(output: ExtractorOutput) {
+                    out = output
+                }
+                override fun read(input: ExtractorInput, seekPosition: PositionHolder): Int {
+                    out.seekMap(SeekMap.Unseekable(C.TIME_UNSET))
+                    return Extractor.RESULT_END_OF_INPUT
+                }
+                override fun seek(position: Long, timeUs: Long) {}
+                override fun release() {}
+            }
+            val extractor = SeekableFragmentedMp4Extractor(delegate, cacheKey)
+            extractor.init(object : ExtractorOutput {
+                override fun track(id: Int, type: Int): TrackOutput = throw UnsupportedOperationException()
+                override fun endTracks() {}
+                override fun seekMap(seekMap: SeekMap) {
+                    emittedSeekMap = seekMap
+                }
+            })
+            extractor.seek(0L, 0L)
+            val input = InMemoryExtractorInput(built.bytes)
+            val holder = PositionHolder()
+            var seekResults = 0
+            while (true) {
+                val res = extractor.read(input, holder)
+                if (res == Extractor.RESULT_SEEK) {
+                    seekResults++
+                    input.seekTo(holder.position)
+                } else if (res == Extractor.RESULT_END_OF_INPUT) {
+                    break
+                }
+            }
+            return Triple(emittedSeekMap, input, seekResults)
+        }
+
+        // First run: cache miss -> scans container and populates cache
+        val (firstMap, firstInput, firstSeeks) = runWithKey(key)
+        val firstChunk = firstMap as? ChunkIndex
+        assertNotNull(firstChunk)
+        assertEquals(8_000_000L, firstChunk!!.durationUs)
+        assertTrue(firstInput.bytesRead > 0L)
+        assertTrue(firstSeeks > 0)
+        assertEquals(1, SeekableExtractorsFactory.cacheSizeForTesting())
+
+        // Second run with same key: cache hit -> zero scan bytes read and replaces Unseekable seekMap
+        val (secondMap, secondInput, secondSeeks) = runWithKey(key)
+        val secondChunk = secondMap as? ChunkIndex
+        assertNotNull("Cached ChunkIndex must still replace SeekMap.Unseekable", secondChunk)
+        assertEquals(8_000_000L, secondChunk!!.durationUs)
+        assertEquals(3, secondChunk.length)
+        assertEquals(0L, secondInput.bytesRead)
+        assertEquals(0L, secondInput.bytesSkipped)
+        assertEquals(0, secondSeeks)
+
+        // Changing size or lastModified causes cache miss and fresh scan
+        val (_, sizeMissInput, sizeMissSeeks) = runWithKey(key.copy(size = key.size + 1L))
+        assertTrue(sizeMissInput.bytesRead > 0L)
+        assertTrue(sizeMissSeeks > 0)
+        assertEquals(2, SeekableExtractorsFactory.cacheSizeForTesting())
+
+        val (_, mtimeMissInput, mtimeMissSeeks) = runWithKey(key.copy(lastModified = key.lastModified + 1000L))
+        assertTrue(mtimeMissInput.bytesRead > 0L)
+        assertTrue(mtimeMissSeeks > 0)
+        assertEquals(3, SeekableExtractorsFactory.cacheSizeForTesting())
+
+        // clearCache() wipes all entries and forces fresh scan on next run
+        SeekableExtractorsFactory.clearCache()
+        assertEquals(0, SeekableExtractorsFactory.cacheSizeForTesting())
+        val (_, afterClearInput, afterClearSeeks) = runWithKey(key)
+        assertTrue(afterClearInput.bytesRead > 0L)
+        assertTrue(afterClearSeeks > 0)
+        assertEquals(1, SeekableExtractorsFactory.cacheSizeForTesting())
+    }
+
+    @Test
+    fun matroskaCachesChunkIndexAndReusesWithoutRescanning() {
+        val built = buildSyntheticWebmWithoutCuesOrDuration(
+            clusters = listOf(
+                Triple(0L, 256, 2000),
+                Triple(2_500L, 96 * 1024, 2400),
+                Triple(5_000L, 512, 1_500),
+            )
+        )
+        val key = SeekIndexCacheKey(path = "/vault/clip.webm", size = built.bytes.size.toLong(), lastModified = 98765L)
+
+        fun runWithKey(cacheKey: SeekIndexCacheKey): Triple<SeekMap?, InMemoryExtractorInput, Int> {
+            var emittedSeekMap: SeekMap? = null
+            val delegate = object : Extractor {
+                private lateinit var out: ExtractorOutput
+                override fun sniff(input: ExtractorInput): Boolean = true
+                override fun init(output: ExtractorOutput) {
+                    out = output
+                }
+                override fun read(input: ExtractorInput, seekPosition: PositionHolder): Int {
+                    out.seekMap(SeekMap.Unseekable(C.TIME_UNSET))
+                    return Extractor.RESULT_END_OF_INPUT
+                }
+                override fun seek(position: Long, timeUs: Long) {}
+                override fun release() {}
+            }
+            val extractor = SeekableMatroskaExtractor(delegate, cacheKey)
+            extractor.init(object : ExtractorOutput {
+                override fun track(id: Int, type: Int): TrackOutput = throw UnsupportedOperationException()
+                override fun endTracks() {}
+                override fun seekMap(seekMap: SeekMap) {
+                    emittedSeekMap = seekMap
+                }
+            })
+            val input = InMemoryExtractorInput(built.bytes)
+            val holder = PositionHolder()
+            var seekResults = 0
+            while (true) {
+                val res = extractor.read(input, holder)
+                if (res == Extractor.RESULT_SEEK) {
+                    seekResults++
+                    input.seekTo(holder.position)
+                } else if (res == Extractor.RESULT_END_OF_INPUT) {
+                    break
+                }
+            }
+            return Triple(emittedSeekMap, input, seekResults)
+        }
+
+        val (firstMap, firstInput, firstSeeks) = runWithKey(key)
+        val firstChunk = firstMap as? ChunkIndex
+        assertNotNull(firstChunk)
+        assertEquals(6_500_000L, firstChunk!!.durationUs)
+        assertTrue(firstInput.bytesRead > 0L)
+        assertTrue(firstSeeks > 0)
+
+        // Cache hit: zero scan bytes read and ChunkIndex still replaces Unseekable seekMap
+        val (secondMap, secondInput, secondSeeks) = runWithKey(key)
+        val secondChunk = secondMap as? ChunkIndex
+        assertNotNull(secondChunk)
+        assertEquals(6_500_000L, secondChunk!!.durationUs)
+        assertEquals(3, secondChunk.length)
+        assertEquals(0L, secondInput.bytesRead)
+        assertEquals(0L, secondInput.bytesSkipped)
+        assertEquals(0, secondSeeks)
+    }
+
+    @Test
+    fun seekIndexCacheHandlesNoFallbackIoFailureFromPathAndLruEviction() {
+        // 1. NoFallbackNeeded cached for fMP4 with sidx, skipped on second run
+        val withSidx = buildSyntheticFmp4(
+            timescale = 90_000,
+            defaultSampleDuration = 3_000,
+            fragments = listOf(Triple(0L, 90, 256)),
+            includeSidx = true,
+        )
+        val sidxKey = SeekIndexCacheKey("/vault/sidx.mp4", withSidx.bytes.size.toLong(), 100L)
+        repeat(2) { runIndex ->
+            val extractor = SeekableFragmentedMp4Extractor(
+                delegate = object : Extractor {
+                    override fun sniff(input: ExtractorInput): Boolean = true
+                    override fun init(output: ExtractorOutput) {}
+                    override fun read(input: ExtractorInput, seekPosition: PositionHolder): Int = Extractor.RESULT_END_OF_INPUT
+                    override fun seek(position: Long, timeUs: Long) {}
+                    override fun release() {}
+                },
+                cacheKey = sidxKey,
+            )
+            extractor.init(object : ExtractorOutput {
+                override fun track(id: Int, type: Int): TrackOutput = throw UnsupportedOperationException()
+                override fun endTracks() {}
+                override fun seekMap(seekMap: SeekMap) {}
+            })
+            val input = InMemoryExtractorInput(withSidx.bytes)
+            val holder = PositionHolder()
+            while (true) {
+                val res = extractor.read(input, holder)
+                if (res == Extractor.RESULT_SEEK) input.seekTo(holder.position)
+                else if (res == Extractor.RESULT_END_OF_INPUT) break
+            }
+            if (runIndex == 0) {
+                assertTrue(input.bytesRead > 0L)
+            } else {
+                assertEquals(0L, input.bytesRead)
+            }
+            assertNull(extractor.buildFallbackSeekMapForTesting())
+        }
+
+        // 2. Unexpected IOException during scan must NOT cache NoFallbackNeeded
+        SeekableExtractorsFactory.clearCache()
+        val ioFailKey = SeekIndexCacheKey("/vault/iofail.mp4", 1024L, 200L)
+        val failingInput = object : ExtractorInput by InMemoryExtractorInput(ByteArray(1024)) {
+            override fun readFully(target: ByteArray, offset: Int, length: Int, allowEndOfInput: Boolean): Boolean {
+                throw IOException("simulated read failure")
+            }
+        }
+        val failingExtractor = SeekableFragmentedMp4Extractor(
+            delegate = object : Extractor {
+                override fun sniff(input: ExtractorInput): Boolean = true
+                override fun init(output: ExtractorOutput) {}
+                override fun read(input: ExtractorInput, seekPosition: PositionHolder): Int = Extractor.RESULT_END_OF_INPUT
+                override fun seek(position: Long, timeUs: Long) {}
+                override fun release() {}
+            },
+            cacheKey = ioFailKey,
+        )
+        failingExtractor.init(object : ExtractorOutput {
+            override fun track(id: Int, type: Int): TrackOutput = throw UnsupportedOperationException()
+            override fun endTracks() {}
+            override fun seekMap(seekMap: SeekMap) {}
+        })
+        assertEquals(Extractor.RESULT_END_OF_INPUT, failingExtractor.read(failingInput, PositionHolder()))
+        assertEquals(0, SeekableExtractorsFactory.cacheSizeForTesting())
+
+        // 3. SeekIndexCacheKey.fromPath guards and valid file handling
+        assertNull(SeekIndexCacheKey.fromPath(""))
+        assertNull(SeekIndexCacheKey.fromPath("content://media/external/video/media/123"))
+        assertNull(SeekIndexCacheKey.fromPath("android.resource://org.fossify.gallery/raw/sample"))
+        val emptyFile = File.createTempFile("seek_key_empty_", ".mp4")
+        val nonEmptyFile = File.createTempFile("seek_key_valid_", ".mp4")
+        try {
+            nonEmptyFile.writeBytes(byteArrayOf(1, 2, 3, 4))
+            assertNull(SeekIndexCacheKey.fromPath(emptyFile.absolutePath))
+            assertNull(SeekIndexCacheKey.fromPath(nonEmptyFile.absolutePath + ".missing"))
+            val validKey = SeekIndexCacheKey.fromPath(nonEmptyFile.absolutePath)
+            assertNotNull(validKey)
+            assertEquals(nonEmptyFile.absolutePath, validKey!!.path)
+            assertEquals(4L, validKey.size)
+            assertEquals(nonEmptyFile.lastModified(), validKey.lastModified)
+        } finally {
+            emptyFile.delete()
+            nonEmptyFile.delete()
+        }
+
+        // 4. LRU capacity capped at 128 entries
+        SeekableExtractorsFactory.clearCache()
+        val dummyChunk = ChunkIndex(intArrayOf(100), longArrayOf(0L), longArrayOf(1_000_000L), longArrayOf(0L))
+        for (i in 0 until 130) {
+            SeekableExtractorsFactory.putCachedResult(
+                SeekIndexCacheKey("/vault/v_$i.mp4", 100L + i, 500L),
+                org.fossify.gallery.helpers.CachedSeekResult.Hit(dummyChunk),
+            )
+        }
+        assertEquals(128, SeekableExtractorsFactory.cacheSizeForTesting())
+        assertNull(SeekableExtractorsFactory.getCachedResult(SeekIndexCacheKey("/vault/v_0.mp4", 100L, 500L)))
+        assertNull(SeekableExtractorsFactory.getCachedResult(SeekIndexCacheKey("/vault/v_1.mp4", 101L, 500L)))
+        assertNotNull(SeekableExtractorsFactory.getCachedResult(SeekIndexCacheKey("/vault/v_2.mp4", 102L, 500L)))
+    }
+
     private fun buildPlayableSyntheticFmp4(): SyntheticMp4 {
         val timescale = 15_360 // matches user's Lavf ffprobe output!
         val sampleDuration = 512 // 30 fps (15360 / 512 = 30)
@@ -528,6 +804,10 @@ class VideoPlaybackAndSeekIndexTest {
     private class InMemoryExtractorInput(private val data: ByteArray) : ExtractorInput {
         private var pos = 0
         private var peekPos = 0
+        var bytesRead = 0L
+            private set
+        var bytesSkipped = 0L
+            private set
 
         fun seekTo(position: Long) {
             pos = position.toInt().coerceIn(0, data.size)
@@ -540,6 +820,7 @@ class VideoPlaybackAndSeekIndexTest {
             System.arraycopy(data, pos, buffer, offset, toRead)
             pos += toRead
             peekPos = pos
+            bytesRead += toRead
             return toRead
         }
 
@@ -551,6 +832,7 @@ class VideoPlaybackAndSeekIndexTest {
             System.arraycopy(data, pos, target, offset, length)
             pos += length
             peekPos = pos
+            bytesRead += length
             return true
         }
 
@@ -563,6 +845,7 @@ class VideoPlaybackAndSeekIndexTest {
             val skipped = minOf(length, data.size - pos)
             pos += skipped
             peekPos = pos
+            bytesSkipped += skipped
             return skipped
         }
 
@@ -573,6 +856,7 @@ class VideoPlaybackAndSeekIndexTest {
             }
             pos += length
             peekPos = pos
+            bytesSkipped += length
             return true
         }
 

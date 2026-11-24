@@ -1,3 +1,5 @@
+@file:androidx.annotation.OptIn(markerClass = [UnstableApi::class])
+
 package org.fossify.gallery.fragments
 
 import android.graphics.Point
@@ -7,6 +9,8 @@ import android.provider.MediaStore.Images
 import android.view.MotionEvent
 import androidx.exifinterface.media.ExifInterface
 import androidx.fragment.app.Fragment
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
 import org.fossify.commons.extensions.*
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.*
@@ -62,6 +66,12 @@ abstract class ViewPagerFragment : Fragment() {
         fun saveVideoPlaybackPosition(path: String, position: Long) {}
 
         fun getVideoPlaybackPosition(path: String): Long? = null
+
+        fun acquireSharedExoPlayer(owner: VideoFragment): ExoPlayer? = null
+
+        fun releaseSharedExoPlayerOwnership(owner: VideoFragment) {}
+
+        fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean = false
 
         /**
          * Applies the screen orientation that matches the aspect ratio of the media with the given

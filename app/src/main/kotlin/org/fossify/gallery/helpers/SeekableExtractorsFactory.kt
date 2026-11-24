@@ -21,6 +21,31 @@ import java.io.RandomAccessFile
 import kotlin.math.roundToInt
 
 /**
+ * Cache key identifying a local video file's exact size and modification timestamp so
+ * cached [ChunkIndex] seek tables are invalidated automatically if the file changes.
+ */
+data class SeekIndexCacheKey(val path: String, val size: Long, val lastModified: Long) {
+    companion object {
+        fun fromPath(path: String): SeekIndexCacheKey? {
+            if (path.isEmpty() || path.startsWith("content://") || path.startsWith("android.resource://")) {
+                return null
+            }
+            val file = File(path)
+            if (!file.isFile) return null
+            val size = file.length()
+            if (size <= 0L) return null
+            return SeekIndexCacheKey(path = path, size = size, lastModified = file.lastModified())
+        }
+    }
+}
+
+@UnstableApi
+internal sealed interface CachedSeekResult {
+    class Hit(val chunkIndex: ChunkIndex) : CachedSeekResult
+    data object NoFallbackNeeded : CachedSeekResult
+}
+
+/**
  * [ExtractorsFactory] that improves duration detection and seekability for local and
  * encrypted videos whose containers lack a seek table or duration header:
  * - Enables constant-bitrate seeking and fragmented `sidx` merging on [DefaultExtractorsFactory].
@@ -30,7 +55,9 @@ import kotlin.math.roundToInt
  *   or `Duration` metadata is missing.
  */
 @UnstableApi
-class SeekableExtractorsFactory : ExtractorsFactory {
+class SeekableExtractorsFactory(
+    private val cacheKey: SeekIndexCacheKey? = null,
+) : ExtractorsFactory {
     private val baseFactory = DefaultExtractorsFactory()
         .setConstantBitrateSeekingEnabled(true)
         .setFragmentedMp4ExtractorFlags(FragmentedMp4Extractor.FLAG_MERGE_FRAGMENTED_SIDX)
@@ -45,9 +72,47 @@ class SeekableExtractorsFactory : ExtractorsFactory {
     private fun wrap(extractors: Array<Extractor>): Array<Extractor> {
         return Array(extractors.size) { index ->
             when (val extractor = extractors[index]) {
-                is FragmentedMp4Extractor -> SeekableFragmentedMp4Extractor(extractor)
-                is MatroskaExtractor -> SeekableMatroskaExtractor(extractor)
+                is FragmentedMp4Extractor -> SeekableFragmentedMp4Extractor(extractor, cacheKey)
+                is MatroskaExtractor -> SeekableMatroskaExtractor(extractor, cacheKey)
                 else -> extractor
+            }
+        }
+    }
+
+    companion object {
+        private const val MAX_CACHE_ENTRIES = 128
+        private val lock = Any()
+        private val cache = object : LinkedHashMap<SeekIndexCacheKey, CachedSeekResult>(
+            MAX_CACHE_ENTRIES,
+            0.75f,
+            true,
+        ) {
+            override fun removeEldestEntry(
+                eldest: MutableMap.MutableEntry<SeekIndexCacheKey, CachedSeekResult>?,
+            ): Boolean = size > MAX_CACHE_ENTRIES
+        }
+
+        fun clearCache() {
+            synchronized(lock) {
+                cache.clear()
+            }
+        }
+
+        internal fun cacheSizeForTesting(): Int = synchronized(lock) {
+            cache.size
+        }
+
+        internal fun getCachedResult(key: SeekIndexCacheKey?): CachedSeekResult? {
+            if (key == null) return null
+            return synchronized(lock) {
+                cache[key]
+            }
+        }
+
+        internal fun putCachedResult(key: SeekIndexCacheKey?, result: CachedSeekResult) {
+            if (key == null) return
+            synchronized(lock) {
+                cache[key] = result
             }
         }
     }
@@ -82,6 +147,7 @@ private const val MAX_INLINE_SKIP_BYTES = 64 * 1024L
 @UnstableApi
 internal class SeekableFragmentedMp4Extractor(
     private val delegate: Extractor,
+    private val cacheKey: SeekIndexCacheKey? = null,
 ) : Extractor {
 
     private enum class Phase { SCAN, RETURN_TO_START, DELEGATE }
@@ -129,6 +195,10 @@ internal class SeekableFragmentedMp4Extractor(
             return delegate.read(input, seekPosition)
         }
 
+        if (!scanCompleted && scanPos == 0L && applyCachedResultIfPresent()) {
+            return delegate.read(input, seekPosition)
+        }
+
         val inputLength = input.length
         if (inputLength == C.LENGTH_UNSET.toLong() || inputLength < 8L) {
             scanCompleted = true
@@ -150,6 +220,10 @@ internal class SeekableFragmentedMp4Extractor(
 
     override fun seek(position: Long, timeUs: Long) {
         if (!scanCompleted && position == 0L) {
+            if (applyCachedResultIfPresent()) {
+                delegate.seek(position, timeUs)
+                return
+            }
             // ProgressiveMediaPeriod$ExtractingLoadable starts with pendingExtractorSeek=true
             // and calls seek(0, 0) before the very first read(). Keep Phase.SCAN active (and
             // reset any partial scan state from an aborted load) so the fallback index is built.
@@ -165,6 +239,24 @@ internal class SeekableFragmentedMp4Extractor(
         scanCompleted = true
         phase = Phase.DELEGATE
         delegate.seek(position, timeUs)
+    }
+
+    private fun applyCachedResultIfPresent(): Boolean {
+        return when (val cached = SeekableExtractorsFactory.getCachedResult(cacheKey)) {
+            is CachedSeekResult.Hit -> {
+                fallbackSeekMap = cached.chunkIndex
+                scanCompleted = true
+                phase = Phase.DELEGATE
+                true
+            }
+            is CachedSeekResult.NoFallbackNeeded -> {
+                fallbackSeekMap = null
+                scanCompleted = true
+                phase = Phase.DELEGATE
+                true
+            }
+            null -> false
+        }
     }
 
     override fun release() {
@@ -225,6 +317,7 @@ internal class SeekableFragmentedMp4Extractor(
                     if (sidxHasReferences(input, payloadSize)) {
                         // Native FragmentedMp4Extractor (with FLAG_MERGE_FRAGMENTED_SIDX) handles sidx.
                         fallbackSeekMap = null
+                        SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
                         return abortToDelegate(input, seekPosition)
                     }
                 }
@@ -445,7 +538,13 @@ internal class SeekableFragmentedMp4Extractor(
         input: ExtractorInput,
         seekPosition: PositionHolder,
     ): Int {
-        fallbackSeekMap = buildChunkIndex(fragments, inputLength)
+        val chunkIndex = buildChunkIndex(fragments, inputLength)
+        fallbackSeekMap = chunkIndex
+        if (chunkIndex != null) {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.Hit(chunkIndex))
+        } else {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
+        }
         return abortToDelegate(input, seekPosition)
     }
 
@@ -561,6 +660,7 @@ internal class SeekableFragmentedMp4Extractor(
 @UnstableApi
 internal class SeekableMatroskaExtractor(
     private val delegate: Extractor,
+    private val cacheKey: SeekIndexCacheKey? = null,
 ) : Extractor {
 
     private enum class Phase { FIND_SEGMENT, SCAN_LEVEL1, SCAN_LAST_CLUSTER, RETURN_TO_START, DELEGATE }
@@ -605,6 +705,10 @@ internal class SeekableMatroskaExtractor(
             return delegate.read(input, seekPosition)
         }
 
+        if (!scanCompleted && phase == Phase.FIND_SEGMENT && scanPos == 0L && applyCachedResultIfPresent()) {
+            return delegate.read(input, seekPosition)
+        }
+
         val inputLength = input.length
         if (inputLength == C.LENGTH_UNSET.toLong() || inputLength < 16L) {
             scanCompleted = true
@@ -631,6 +735,10 @@ internal class SeekableMatroskaExtractor(
 
     override fun seek(position: Long, timeUs: Long) {
         if (!scanCompleted && position == 0L) {
+            if (applyCachedResultIfPresent()) {
+                delegate.seek(position, timeUs)
+                return
+            }
             phase = Phase.FIND_SEGMENT
             scanPos = 0L
             segmentEnd = 0L
@@ -646,6 +754,24 @@ internal class SeekableMatroskaExtractor(
         scanCompleted = true
         phase = Phase.DELEGATE
         delegate.seek(position, timeUs)
+    }
+
+    private fun applyCachedResultIfPresent(): Boolean {
+        return when (val cached = SeekableExtractorsFactory.getCachedResult(cacheKey)) {
+            is CachedSeekResult.Hit -> {
+                fallbackSeekMap = cached.chunkIndex
+                scanCompleted = true
+                phase = Phase.DELEGATE
+                true
+            }
+            is CachedSeekResult.NoFallbackNeeded -> {
+                fallbackSeekMap = null
+                scanCompleted = true
+                phase = Phase.DELEGATE
+                true
+            }
+            null -> false
+        }
     }
 
     override fun release() {
@@ -702,6 +828,7 @@ internal class SeekableMatroskaExtractor(
             if (id == ID_CLUSTER && hasCues && hasDuration) {
                 // Standard Matroska file with both Cues and Duration: let MatroskaExtractor handle natively.
                 fallbackSeekMap = null
+                SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
                 return abortToDelegate(input, seekPosition)
             }
 
@@ -769,6 +896,7 @@ internal class SeekableMatroskaExtractor(
 
         if (clusters.isEmpty() || (hasCues && hasDuration)) {
             fallbackSeekMap = null
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
             return abortToDelegate(input, seekPosition)
         }
 
@@ -781,7 +909,13 @@ internal class SeekableMatroskaExtractor(
             return Extractor.RESULT_SEEK
         }
 
-        fallbackSeekMap = buildChunkIndex(lastBlockMaxRelUs = 0L)
+        val chunkIndex = buildChunkIndex(lastBlockMaxRelUs = 0L)
+        fallbackSeekMap = chunkIndex
+        if (chunkIndex != null) {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.Hit(chunkIndex))
+        } else {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
+        }
         return abortToDelegate(input, seekPosition)
     }
 
@@ -796,7 +930,13 @@ internal class SeekableMatroskaExtractor(
         } else {
             0L
         }
-        fallbackSeekMap = buildChunkIndex(maxRelUs)
+        val chunkIndex = buildChunkIndex(maxRelUs)
+        fallbackSeekMap = chunkIndex
+        if (chunkIndex != null) {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.Hit(chunkIndex))
+        } else {
+            SeekableExtractorsFactory.putCachedResult(cacheKey, CachedSeekResult.NoFallbackNeeded)
+        }
         return abortToDelegate(input, seekPosition)
     }
 
