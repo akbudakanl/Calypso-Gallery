@@ -2229,6 +2229,23 @@ class SettingsActivity : SimpleActivity() {
             handleNotificationPermission { refreshNotificationPermissionRow() }
         }
 
+        val categoryRows = listOf(
+            binding.settingsNotifyCopyMoveHolder to binding.settingsNotifyCopyMove,
+            binding.settingsNotifyCryptoHolder to binding.settingsNotifyCrypto,
+            binding.settingsNotifyDeleteHolder to binding.settingsNotifyDelete,
+            binding.settingsNotifyVirtualAlbumHolder to binding.settingsNotifyVirtualAlbum
+        )
+
+        fun updateCategoryRowsState(enabled: Boolean) {
+            val rowAlpha = if (enabled) 1f else 0.45f
+            categoryRows.forEach { (holder, switch) ->
+                holder.alpha = rowAlpha
+                holder.isEnabled = enabled
+                holder.isClickable = enabled
+                switch.isEnabled = enabled
+            }
+        }
+
         fun bindSwitch(
             holder: android.view.View,
             switch: org.fossify.commons.views.MyMaterialSwitch,
@@ -2237,6 +2254,7 @@ class SettingsActivity : SimpleActivity() {
         ) {
             switch.isChecked = getValue()
             holder.setOnClickListener {
+                if (!holder.isEnabled) return@setOnClickListener
                 switch.toggle()
                 setValue(switch.isChecked)
             }
@@ -2246,7 +2264,10 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsNotificationsEnabledHolder,
             binding.settingsNotificationsEnabled,
             { config.notificationsEnabled },
-            { config.notificationsEnabled = it }
+            {
+                config.notificationsEnabled = it
+                updateCategoryRowsState(it)
+            }
         )
         bindSwitch(
             binding.settingsNotifyCopyMoveHolder,
@@ -2272,6 +2293,8 @@ class SettingsActivity : SimpleActivity() {
             { config.notifyVirtualAlbum },
             { config.notifyVirtualAlbum = it }
         )
+
+        updateCategoryRowsState(config.notificationsEnabled)
     }
 
     private fun setupAllowPhotoGestures() {
