@@ -67,6 +67,42 @@ class CliBridgeCleanupTest {
     }
 
     @Test
+    fun unarchiveRestoresTheBridgeFromBothVaultPaths() {
+        val archiveManager = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/VaultArchiveManager.kt"
+        ).readText()
+        assertTrue(
+            "Unarchive must restore the bridge after moving the vault",
+            archiveManager.contains("CliBridgeManager.restoreFromArchive(context, target)")
+        )
+        val activation = archiveManager.substringAfter("fun activateArchivedVault(")
+        assertTrue(
+            "Activating in place must never restore the bridge out of the archive",
+            !activation.contains("CliBridgeManager.restoreFromArchive(")
+        )
+        val bridges = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/CliBridgeManager.kt"
+        ).readText()
+        val identityBody = bridges.substringAfter("private fun findBridgeForVault(")
+            .substringBefore("fun markActiveForVaultPath(")
+        assertTrue(
+            "Bridge identity must use the copied vault header",
+            identityBody.contains("VAULT_HEADER_FILE") &&
+                identityBody.contains("contentEquals(header)")
+        )
+        assertTrue(
+            "A shared path must never identify a bridge on its own",
+            identityBody.contains("pathMatches.singleOrNull()")
+        )
+        val restoreBody = bridges.substringAfter("fun restoreFromArchive(")
+            .substringBefore("private fun moveFor(")
+        assertTrue(
+            "All bridges of the vault must be moved back",
+            restoreBody.contains("matches.forEach")
+        )
+    }
+
+    @Test
     fun bridgeCleanupCoversArchivedCopiesAndWipesTheHeader() {
         val source = locateAppFile(
             "src/main/kotlin/org/fossify/gallery/helpers/CliBridgeManager.kt"

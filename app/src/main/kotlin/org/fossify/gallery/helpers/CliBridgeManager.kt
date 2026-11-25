@@ -165,17 +165,45 @@ object CliBridgeManager {
     }
 
     /**
+     * Finds the bridge that belongs to [vaultRoot]. A path is NOT an identity: after a
+     * vault is archived, a different vault can be created at the very same location, so
+     * several bridges may carry the same source path. The copied vault header is the
+     * reliable identifier; the KEK fingerprint and an unambiguous path are fallbacks.
+     */
+    private fun findBridgeForVault(
+        context: Context,
+        vaultRoot: File,
+        candidates: List<Bridge>
+    ): Bridge? {
+        val header = runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
+        if (header != null) {
+            candidates.firstOrNull { bridge ->
+                runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
+                    .getOrNull()?.contentEquals(header) == true
+            }?.let { return it }
+        }
+        val fingerprint = currentFingerprint()
+        if (fingerprint != null) {
+            candidates.firstOrNull { it.fingerprint.equals(fingerprint, ignoreCase = true) }
+                ?.let { return it }
+        }
+        val target = runCatching { vaultRoot.canonicalPath }.getOrNull() ?: return null
+        val pathMatches = candidates.filter { candidate ->
+            candidate.sourcePath.isNotEmpty() &&
+                runCatching { File(candidate.sourcePath).canonicalPath }.getOrNull()
+                    ?.equals(target, ignoreCase = true) == true
+        }
+        return pathMatches.singleOrNull()
+    }
+
+    /**
      * Marks the bridge of [vaultRoot] as the active one without moving it. Used when an
      * archived vault is activated in place: its bridge stays in CLI/Archived but must
      * still be the bridge the CLI selects automatically.
      */
     fun markActiveForVaultPath(context: Context, vaultRoot: File): Boolean {
-        val target = runCatching { vaultRoot.canonicalPath }.getOrNull() ?: return false
-        val bridge = bridges(context, includeArchived = true).firstOrNull { candidate ->
-            candidate.sourcePath.isNotEmpty() &&
-                runCatching { File(candidate.sourcePath).canonicalPath }.getOrNull()
-                    ?.equals(target, ignoreCase = true) == true
-        } ?: return false
+        val bridge = findBridgeForVault(context, vaultRoot, bridges(context, includeArchived = true))
+            ?: return false
         setActiveFor(context, bridge.fingerprint, preferred = bridge.dir)
         return true
     }
@@ -254,16 +282,39 @@ object CliBridgeManager {
         return moved
     }
 
+    /**
+     * Moves the bridge(s) of a vault back out of CLI/Archived after the vault itself has
+     * been unarchived. Bridges are identified by their copied vault header, never by path
+     * alone: another vault may have been created at the original path while this one was
+     * archived, so a path can legitimately belong to two different bridges.
+     */
     fun restoreFromArchive(context: Context, vaultRoot: File): Boolean {
-        val bridge = bridges(context, includeArchived = true).firstOrNull {
-            it.sourcePath.equals(vaultRoot.absolutePath, ignoreCase = true) &&
-                it.dir.parentFile == archiveRoot(context)
-        } ?: return true
-        val moved = moveFor(context, bridge.fingerprint, archiveRoot(context), root(context))
+        val archived = bridges(context, includeArchived = true)
+            .filter { it.dir.parentFile == archiveRoot(context) }
+        if (archived.isEmpty()) return true
+
+        val header = runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
+        var matches = if (header != null) archived.filter { bridge ->
+            runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
+                .getOrNull()?.contentEquals(header) == true
+        } else emptyList()
+        if (matches.isEmpty()) {
+            findBridgeForVault(context, vaultRoot, archived)?.let { matches = listOf(it) }
+        }
+        if (matches.isEmpty()) return true
+
+        var movedAny = false
+        matches.forEach { bridge ->
+            val target = File(root(context), bridge.vaultId)
+            if (!target.exists() && runCatching { bridge.dir.renameTo(target) }.getOrDefault(false)) {
+                movedAny = true
+            }
+        }
         // The vault is active again, so its bridge is the active CLI bridge as well.
-        bridges(context).firstOrNull { it.dir == File(root(context), bridge.vaultId) }
-            ?.let { restored -> setActiveFor(context, restored.fingerprint, preferred = restored.dir) }
-        return moved
+        bridges(context).firstOrNull { dir ->
+            matches.any { it.vaultId == dir.vaultId }
+        }?.let { restored -> setActiveFor(context, restored.fingerprint, preferred = restored.dir) }
+        return movedAny || matches.all { !File(root(context), it.vaultId).exists() }
     }
 
     private fun moveFor(context: Context, fingerprint: String, from: File, to: File): Boolean {
