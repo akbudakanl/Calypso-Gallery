@@ -8,11 +8,14 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Point
 import android.graphics.SurfaceTexture
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.DisplayMetrics
 import android.view.GestureDetector
 import android.view.HapticFeedbackConstants
@@ -52,6 +55,10 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource as GlideDataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beGoneIf
 import org.fossify.commons.extensions.beVisible
@@ -60,6 +67,7 @@ import org.fossify.commons.extensions.fadeIn
 import org.fossify.commons.extensions.fadeOut
 import org.fossify.commons.extensions.getDuration
 import org.fossify.commons.extensions.getFormattedDuration
+import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getVideoResolution
 import org.fossify.commons.extensions.isVisible
@@ -94,6 +102,8 @@ import org.fossify.gallery.helpers.ROTATE_BY_ASPECT_RATIO
 import org.fossify.gallery.helpers.SHOULD_INIT_FRAGMENT
 import org.fossify.gallery.helpers.SeekIndexCacheKey
 import org.fossify.gallery.helpers.SeekableExtractorsFactory
+import org.fossify.gallery.helpers.VIDEO_FRAME_CACHE_TTL_MS
+import org.fossify.gallery.helpers.VIDEO_FRAME_POSITION_TOLERANCE_MS
 import org.fossify.gallery.helpers.VideoPlaybackUtils
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
 import org.fossify.gallery.models.Medium
@@ -112,14 +122,104 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         private const val TOUCH_HOLD_SPEED_MULTIPLIER = 2.0f
         private const val TOUCH_SLOP_DIVIDER = 3
         private const val CACHED_FRAME_MAX_DIMENSION = 720f
+        private const val PREVIEW_REVEAL_FADE_DURATION_MS = 60L
+        private val RESUME_SEEK_PARAMETERS = SeekParameters(350_000L, 150_000L)
 
-        val sVideoFrameCache = object : androidx.collection.LruCache<String, Bitmap>(6 * 1024 * 1024) {
+        /** Position of the frame stored for each path, so a stale frame is never reused. */
+        private val sVideoFramePositions = HashMap<String, Long>()
+        private val sVideoFrameTimestamps = HashMap<String, Long>()
+
+        @Volatile
+        private var sEncryptedCacheGeneration = 0L
+
+        val sVideoFrameCache = object : androidx.collection.LruCache<String, Bitmap>(16 * 1024 * 1024) {
             override fun sizeOf(key: String, value: Bitmap): Int {
                 return value.byteCount
             }
         }
 
+        private fun elapsedNowMs(): Long =
+            runCatching { SystemClock.elapsedRealtime() }.getOrElse { System.currentTimeMillis() }
+
+        internal fun putCachedFrame(
+            path: String,
+            bitmap: Bitmap,
+            positionMs: Long,
+            nowElapsedMs: Long = elapsedNowMs(),
+        ) {
+            pruneExpiredFrameCache(nowElapsedMs)
+            sVideoFrameCache.put(path, bitmap)
+            sVideoFramePositions[path] = positionMs
+            sVideoFrameTimestamps[path] = nowElapsedMs
+        }
+
+        internal fun getCachedFrame(path: String, nowElapsedMs: Long = elapsedNowMs()): Bitmap? {
+            val bitmap = sVideoFrameCache.get(path) ?: run {
+                sVideoFramePositions.remove(path)
+                sVideoFrameTimestamps.remove(path)
+                return null
+            }
+            if (bitmap.isRecycled) {
+                sVideoFrameCache.remove(path)
+                sVideoFramePositions.remove(path)
+                sVideoFrameTimestamps.remove(path)
+                return null
+            }
+            val capturedAt = sVideoFrameTimestamps[path]
+            if (VideoPlaybackUtils.isFrameCacheEntryExpired(capturedAt, nowElapsedMs, VIDEO_FRAME_CACHE_TTL_MS)) {
+                sVideoFrameCache.remove(path)
+                sVideoFramePositions.remove(path)
+                sVideoFrameTimestamps.remove(path)
+                if (CryptoManager.isEncryptedFile(path)) {
+                    runCatching { bitmap.eraseColor(0) }
+                }
+                return null
+            }
+            return bitmap
+        }
+
+        fun pruneExpiredFrameCache(nowElapsedMs: Long = elapsedNowMs()) {
+            val snapshot = sVideoFrameCache.snapshot()
+            for ((key, bmp) in snapshot) {
+                val capturedAt = sVideoFrameTimestamps[key]
+                if (bmp.isRecycled || VideoPlaybackUtils.isFrameCacheEntryExpired(capturedAt, nowElapsedMs, VIDEO_FRAME_CACHE_TTL_MS)) {
+                    sVideoFrameCache.remove(key)
+                    sVideoFramePositions.remove(key)
+                    sVideoFrameTimestamps.remove(key)
+                    if (!bmp.isRecycled && CryptoManager.isEncryptedFile(key)) {
+                        runCatching { bmp.eraseColor(0) }
+                    }
+                }
+            }
+        }
+
+        internal fun removeCachedFrame(path: String) {
+            val bitmap = sVideoFrameCache.remove(path)
+            sVideoFramePositions.remove(path)
+            sVideoFrameTimestamps.remove(path)
+            if (bitmap != null && !bitmap.isRecycled && CryptoManager.isEncryptedFile(path)) {
+                runCatching { bitmap.eraseColor(0) }
+            }
+        }
+
+        /** Zeroizes and evicts only encrypted vault frames (ADR 0002) while preserving normal gallery frames. */
+        fun clearEncryptedFrameCache() {
+            sEncryptedCacheGeneration++
+            val snapshot = sVideoFrameCache.snapshot()
+            for ((key, bmp) in snapshot) {
+                if (CryptoManager.isEncryptedFile(key)) {
+                    if (!bmp.isRecycled) {
+                        runCatching { bmp.eraseColor(0) }
+                    }
+                    sVideoFrameCache.remove(key)
+                    sVideoFramePositions.remove(key)
+                    sVideoFrameTimestamps.remove(key)
+                }
+            }
+        }
+
         fun clearFrameCache() {
+            sEncryptedCacheGeneration++
             try {
                 sVideoFrameCache.snapshot().values.forEach { bmp ->
                     if (!bmp.isRecycled) {
@@ -130,6 +230,121 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 // Ignore
             }
             sVideoFrameCache.evictAll()
+            sVideoFramePositions.clear()
+            sVideoFrameTimestamps.clear()
+        }
+    }
+
+    /** Last captured frame for this video. Kept stable so it never visibly refreshes. */
+    private fun cachedFrame(): Bitmap? = getCachedFrame(mMedium.path)
+
+    /** Show a non-null bitmap on the preview cover without flickering or resetting the same bitmap. */
+    private fun showPreviewBitmap(bitmap: Bitmap) {
+        if (!::binding.isInitialized || mIsViewDestroyed || mConfig.gestureVideoPlayer || mIsPanorama || bitmap.isRecycled) {
+            return
+        }
+        if (mIsShowingDefaultPreview) {
+            if (isAdded) {
+                Glide.with(this).clear(binding.videoPreview)
+            }
+            mIsShowingDefaultPreview = false
+        }
+        if (CryptoManager.isEncryptedFile(mMedium.path)) {
+            mShownEncryptedCacheGeneration = sEncryptedCacheGeneration
+        }
+        mIsRevealingSurface = false
+        binding.videoPreview.animate().cancel()
+        binding.videoPreview.alpha = 1f
+        if ((binding.videoPreview.drawable as? BitmapDrawable)?.bitmap !== bitmap) {
+            binding.videoPreview.setImageBitmap(bitmap)
+        }
+        binding.videoPreview.beVisible()
+    }
+
+    /** Always keep a real frame on the cover when available: never a blank cover on first autoplay. */
+    private fun ensureCachedPreviewShown() {
+        if (!::binding.isInitialized || mIsViewDestroyed || mConfig.gestureVideoPlayer || mIsPanorama) return
+        if (CryptoManager.isEncryptedFile(mMedium.path) && mShownEncryptedCacheGeneration != sEncryptedCacheGeneration) {
+            mShownEncryptedCacheGeneration = sEncryptedCacheGeneration
+            mIsShowingDefaultPreview = false
+            if (binding.videoPreview.drawable != null) {
+                binding.videoPreview.setImageDrawable(null)
+                binding.videoPreview.beGone()
+            }
+        }
+        val bitmap = cachedFrame()
+        if (bitmap != null) {
+            showPreviewBitmap(bitmap)
+        } else if (binding.videoPreview.drawable != null) {
+            if (VideoPlaybackUtils.shouldKeepExistingPreviewDrawable(
+                    hasCachedFrame = false,
+                    isShowingDefaultPreview = mIsShowingDefaultPreview,
+                    hasNonZeroPlaybackPosition = hasNonZeroPlaybackPosition(),
+                )
+            ) {
+                mIsRevealingSurface = false
+                binding.videoPreview.animate().cancel()
+                binding.videoPreview.alpha = 1f
+                binding.videoPreview.beVisible()
+            } else {
+                if (isAdded) {
+                    Glide.with(this).clear(binding.videoPreview)
+                }
+                binding.videoPreview.setImageDrawable(null)
+                mIsShowingDefaultPreview = false
+                binding.videoPreview.beGone()
+            }
+        }
+    }
+
+    /** Keep videoPreview non-clickable in normal playback so all touches pass through to videoSurfaceFrame. */
+    private fun updatePreviewOverlayStyle() {
+        if (!::binding.isInitialized) return
+        val previewHandlesTouch = mConfig.gestureVideoPlayer || mIsPanorama
+        binding.videoPreview.isClickable = previewHandlesTouch
+        binding.videoPreview.isFocusable = previewHandlesTouch
+        val bgColor = if (mConfig.blackBackground) Color.BLACK else requireContext().getProperBackgroundColor()
+        binding.videoPreview.setBackgroundColor(bgColor)
+    }
+
+    /** Cross-fade the preview cover out once ExoPlayer renders a real frame onto videoSurfaceFrame. */
+    private fun revealRenderedSurface() {
+        if (!::binding.isInitialized || mIsViewDestroyed || mConfig.gestureVideoPlayer || mIsPanorama) return
+        binding.videoSurfaceFrame.alpha = 1f
+        if (!binding.videoPreview.isVisible()) {
+            mIsRevealingSurface = false
+            return
+        }
+        if (mIsRevealingSurface) {
+            return
+        }
+        binding.videoPreview.animate().cancel()
+        if (binding.videoPreview.drawable != null) {
+            mIsRevealingSurface = true
+            binding.videoPreview.animate()
+                .alpha(0f)
+                .setDuration(PREVIEW_REVEAL_FADE_DURATION_MS)
+                .withEndAction {
+                    mIsRevealingSurface = false
+                    if (!mIsViewDestroyed && ::binding.isInitialized && mIsFragmentVisible && mHasRenderedFirstFrame) {
+                        binding.videoPreview.beGone()
+                        binding.videoPreview.alpha = 1f
+                        if (mIsShowingDefaultPreview) {
+                            binding.videoPreview.setImageDrawable(null)
+                            mIsShowingDefaultPreview = false
+                        }
+                    }
+                }
+                .start()
+        } else {
+            if (mIsShowingDefaultPreview) {
+                if (isAdded) {
+                    Glide.with(this).clear(binding.videoPreview)
+                }
+                mIsShowingDefaultPreview = false
+            }
+            binding.videoPreview.beGone()
+            binding.videoPreview.alpha = 1f
         }
     }
 
@@ -168,6 +383,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mPendingPreviewOnIdle = false
     private var mPendingMetadataProbe = false
     private var mIsCapturingFrame = false
+    private var mHasRenderedFirstFrame = false
+    private var mIsRevealingSurface = false
+    private var mIsShowingDefaultPreview = false
+    private var mShownEncryptedCacheGeneration = -1L
+
+    private fun hasNonZeroPlaybackPosition(): Boolean = mPositionWhenInit > 0L || mPositionAtPause > 0L || mCurrTime > 0L
+    private var mCapturePendingTexture: SurfaceTexture? = null
+    private var mPendingCaptureCompletion: (() -> Unit)? = null
     private var mIsViewDestroyed = false
     private var mVideoSize = Point(1, 1)
     private var mTimerHandler = Handler(Looper.getMainLooper())
@@ -236,7 +459,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             bottomVideoTimeHolder.videoCurrTime.setOnClickListener { skip(false) }
             bottomVideoTimeHolder.videoDuration.setOnClickListener { skip(true) }
             videoHolder.setOnClickListener { toggleFullscreen() }
-            videoPreview.setOnClickListener { toggleFullscreen() }
+            videoPreview.setOnClickListener {
+                if (mConfig.gestureVideoPlayer || mIsPanorama) {
+                    toggleFullscreen()
+                }
+            }
             bottomVideoTimeHolder.videoPlaybackSpeed.setOnClickListener { showPlaybackSpeedPicker() }
             bottomVideoTimeHolder.videoToggleMute.setOnClickListener {
                 mIsMuted = !mIsMuted
@@ -298,7 +525,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 })
 
             videoPreview.setOnTouchListener { view, event ->
-                if (mConfig.allowDownGesture) {
+                if ((mConfig.gestureVideoPlayer || mIsPanorama) && mConfig.allowDownGesture) {
                     handleEvent(event)
                 }
                 false
@@ -337,6 +564,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
 
         mView = binding.root
+        // Keep videoSurfaceFrame visible with alpha=1f so TextureView always allocates its SurfaceTexture.
+        // videoPreview sits on top of videoSurfaceFrame as the temporary cover until a frame renders.
+        binding.videoSurfaceFrame.alpha = 1f
+        binding.videoSurfaceFrame.beGoneIf(mConfig.gestureVideoPlayer || mIsPanorama)
+        updatePreviewOverlayStyle()
 
         if (!arguments.getBoolean(SHOULD_INIT_FRAGMENT, true)) {
             return mView
@@ -344,33 +576,53 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         storeStateVariables()
 
-        // Starting Glide's video-frame decoder and ExoPlayer at the same time makes both
-        // compete for I/O and the hardware decoder. That was introduced by player
-        // pre-warming and is most visible during the first seconds of autoplay.
-        // A paused video still gets its normal preview; an autoplaying one lets the
-        // player render its own first frame instead.
         // setMenuVisibility is not called at VideoActivity (third party intent)
         if (!mIsFragmentVisible && activity is VideoActivity) {
             mIsFragmentVisible = true
         }
 
-        val startsPlayingImmediately = mIsFragmentVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
+        // Restore any previously saved or session playback position BEFORE choosing a preview cover:
+        // unvisited videos (position 0, no cached frame) show their default frame-0 thumbnail
+        // instead of a black screen, whereas videos resuming mid-playback without a cached snapshot
+        // avoid flashing frame 0.
+        if (!mIsPanorama && savedInstanceState != null) {
+            val savedProgress = savedInstanceState.getLong(PROGRESS, 0L)
+            if (savedProgress > 0L) {
+                mCurrTime = savedProgress
+                mPositionWhenInit = savedProgress
+                mPositionAtPause = savedProgress
+            }
+        }
+        if (mStoredRememberLastVideoPosition) {
+            restoreLastVideoSavedPosition()
+        }
+        restoreSessionPlaybackPosition()
+
+        mIsShowingDefaultPreview = false
         val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
-        val cachedFrame = sVideoFrameCache.get(mMedium.path)
-        if (cachedFrame != null && !cachedFrame.isRecycled) {
-            binding.videoPreview.setImageBitmap(cachedFrame)
-            binding.videoPreview.beVisible()
-        } else if (!startsPlayingImmediately) {
-            // A video preview is decoded by MediaMetadataRetriever, unlike the cached bitmap
-            // decodes used by photos/GIFs. Starting that decode while the pager is being dragged
-            // competes with the page animation for I/O and CPU. Defer it until the pager settles;
-            // pages the user only swipes past never pay for the decode at all.
+        val cachedFrame = cachedFrame()
+        val shouldLoadDefaultPreview = VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
+            hasCachedFrame = cachedFrame != null,
+            hasRestoredPosition = hasNonZeroPlaybackPosition(),
+            isAutoplay = mConfig.autoplayVideos,
+            isGesturePlayer = mConfig.gestureVideoPlayer,
+            isPanorama = mIsPanorama,
+        )
+        if (cachedFrame != null) {
+            showPreviewBitmap(cachedFrame)
+            mPendingPreviewOnIdle = false
+        } else if (shouldLoadDefaultPreview) {
+            // Defer starting Glide while the pager is actively scrolling so drag animations never
+            // contend for I/O or CPU; once settled, offscreen neighbors decode immediately so the
+            // starting thumbnail is ready before the user swipes into an unvisited video.
             if (listener?.isPagerScrolling() == true) {
                 mPendingPreviewOnIdle = true
+                binding.videoPreview.beGone()
             } else {
                 loadVideoPreview()
             }
         } else {
+            mPendingPreviewOnIdle = false
             binding.videoPreview.beGone()
         }
 
@@ -402,15 +654,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
 
         if (!mIsPanorama) {
-            if (savedInstanceState != null) {
-                val savedProgress = savedInstanceState.getLong(PROGRESS, 0L)
-                if (savedProgress > 0L) {
-                    mCurrTime = savedProgress
-                    mPositionWhenInit = savedProgress
-                    mPositionAtPause = savedProgress
-                }
-            }
-
             mWasFragmentInit = true
             setVideoSize()
 
@@ -448,10 +691,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             }
         }
 
-        if (mStoredRememberLastVideoPosition) {
-            restoreLastVideoSavedPosition()
-        }
-        restoreSessionPlaybackPosition()
         setupVideoDuration()
 
         if (mIsFragmentVisible) {
@@ -481,6 +720,16 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         val allowVideoGestures = mConfig.allowVideoGestures
         mTextureView?.beGoneIf(mConfig.gestureVideoPlayer || mIsPanorama)
         binding.videoSurfaceFrame.beGoneIf(mConfig.gestureVideoPlayer || mIsPanorama)
+        binding.videoSurfaceFrame.alpha = 1f
+        updatePreviewOverlayStyle()
+        if (CryptoManager.isEncryptedFile(mMedium.path) && mShownEncryptedCacheGeneration != sEncryptedCacheGeneration) {
+            mShownEncryptedCacheGeneration = sEncryptedCacheGeneration
+            mIsShowingDefaultPreview = false
+            if (binding.videoPreview.drawable != null) {
+                binding.videoPreview.setImageDrawable(null)
+                binding.videoPreview.beGone()
+            }
+        }
 
         mVolumeSideScroll.beVisibleIf(allowVideoGestures && !mIsPanorama)
         mBrightnessSideScroll.beVisibleIf(allowVideoGestures && !mIsPanorama)
@@ -489,6 +738,15 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         checkExtendedDetails()
         initTimeHolder()
         storeStateVariables()
+
+        // Recovery for a start request that got stranded while the activity was in the
+        // background: bring the app back and the video resumes instead of staying black.
+        if (mIsFragmentVisible && mIsPlayerPrepared && mPlayOnPrepared &&
+            mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
+        ) {
+            mPlayOnPrepared = false
+            playVideo()
+        }
     }
 
     override fun onPause() {
@@ -506,14 +764,23 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
     override fun onDestroyView() {
         mIsViewDestroyed = true
+        mHasRenderedFirstFrame = false
+        mIsRevealingSurface = false
+        mIsShowingDefaultPreview = false
+        if (::binding.isInitialized) {
+            binding.videoPreview.animate().cancel()
+        }
         mPendingAutoplayOnIdle = false
         mPendingInitOnIdle = false
-        mPendingFrameCaptureOnIdle = false
         mPendingPreviewOnIdle = false
         mPendingMetadataProbe = false
         if (mUsingSharedPlayer) {
             releaseExoPlayer(allowDefer = false)
+        } else if (mPendingFrameCaptureOnIdle) {
+            mPendingFrameCaptureOnIdle = false
+            captureFrameSnapshot()
         }
+        mPendingFrameCaptureOnIdle = false
         detachTextureView()
         super.onDestroyView()
     }
@@ -531,7 +798,13 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             mPendingAutoplayOnIdle = false
             mPendingInitOnIdle = false
             mPendingPreviewOnIdle = false
-            pauseVideo(deferFrameCapture = listener?.isPagerScrolling() == true)
+            pauseVideo(deferFrameCapture = false)
+            // Freeze the last real frame on screen while this page is offscreen if no live frame
+            // is currently displayed. Otherwise keep the live paused TextureView until PixelCopy
+            // finishes and detachTextureView() replaces it with the cached frame.
+            if (VideoPlaybackUtils.shouldShowPreviewCoverOnVisibilityChange(mHasRenderedFirstFrame, mTextureView != null)) {
+                ensureCachedPreviewShown()
+            }
         }
 
         mIsFragmentVisible = menuVisible
@@ -539,13 +812,24 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             return
         }
 
+        // On the way back the cached frame is visible immediately when the surface is not yet ready.
+        if (VideoPlaybackUtils.shouldShowPreviewCoverOnVisibilityChange(mHasRenderedFirstFrame, mTextureView != null)) {
+            ensureCachedPreviewShown()
+        }
         mPendingFrameCaptureOnIdle = false
         val isScrolling = listener?.isPagerScrolling() == true
-        if (!isScrolling && mWasFragmentInit) {
+        if (mWasFragmentInit) {
             ensureTextureViewAttached()
         }
-        val shouldPlayVideo = mWasFragmentInit && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer
-        if (shouldPlayVideo) {
+        if (mPlayOnPrepared && mIsPlayerPrepared) {
+            // A playback request that became ready while the page was hidden must resume here.
+            if (isScrolling) {
+                mPendingAutoplayOnIdle = true
+            } else {
+                mPlayOnPrepared = false
+                playVideo()
+            }
+        } else if (mWasFragmentInit && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
             if (isScrolling) {
                 mPendingAutoplayOnIdle = true
             } else {
@@ -590,6 +874,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                         if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
                             playVideo()
                         }
+                    } else if (mPlayOnPrepared && mIsPlayerPrepared) {
+                        mPlayOnPrepared = false
+                        playVideo()
                     } else if (mPendingInitOnIdle) {
                         mPendingInitOnIdle = false
                         if (mPositionAtPause > 0L && mExoPlayer == null) {
@@ -600,6 +887,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 } else {
                     mPendingAutoplayOnIdle = false
                     mPendingInitOnIdle = false
+                    if (mPendingPreviewOnIdle) {
+                        loadVideoPreview()
+                    }
                     if (mPendingFrameCaptureOnIdle) {
                         mPendingFrameCaptureOnIdle = false
                         captureFrameSnapshot {
@@ -658,6 +948,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun restoreLastVideoSavedPosition() {
+        mWasLastPositionRestored = true
         val seconds = mConfig.getLastVideoPosition(mMedium.path)
         if (seconds > 0) {
             mPositionAtPause = seconds * 1000L
@@ -703,13 +994,30 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         binding.bottomVideoTimeHolder.videoDuration.text = safeDuration.getFormattedDuration()
     }
 
-    /** Decodes the paused-video preview. Called off the swipe path so the pager stays smooth. */
+    /** Decodes the default starting thumbnail off the swipe path when appropriate. */
     private fun loadVideoPreview() {
         mPendingPreviewOnIdle = false
-        if (!isAdded || mPendingAutoplayOnIdle) {
+        if (!isAdded || mIsViewDestroyed || !::binding.isInitialized ||
+            mHasRenderedFirstFrame || mIsPlaying || mPendingAutoplayOnIdle
+        ) {
+            return
+        }
+        if (!VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
+                hasCachedFrame = cachedFrame() != null,
+                hasRestoredPosition = hasNonZeroPlaybackPosition(),
+                isAutoplay = mConfig.autoplayVideos,
+                isGesturePlayer = mConfig.gestureVideoPlayer,
+                isPanorama = mIsPanorama,
+            )
+        ) {
             return
         }
         val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
+        mIsShowingDefaultPreview = true
+        mIsRevealingSurface = false
+        binding.videoPreview.animate().cancel()
+        binding.videoPreview.alpha = 1f
+        binding.videoPreview.beVisible()
         Glide.with(this)
             .load(mMedium.path)
             .diskCacheStrategy(
@@ -717,6 +1025,45 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 else com.bumptech.glide.load.engine.DiskCacheStrategy.AUTOMATIC
             )
             .skipMemoryCache(isEncrypted)
+            .listener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Drawable>,
+                    isFirstResource: Boolean,
+                ): Boolean {
+                    if (mIsShowingDefaultPreview && ::binding.isInitialized && binding.videoPreview.drawable == null) {
+                        mIsShowingDefaultPreview = false
+                    }
+                    return false
+                }
+
+                override fun onResourceReady(
+                    resource: Drawable,
+                    model: Any,
+                    target: Target<Drawable>?,
+                    dataSource: GlideDataSource,
+                    isFirstResource: Boolean,
+                ): Boolean {
+                    val isObsolete = mIsViewDestroyed ||
+                        !::binding.isInitialized ||
+                        mHasRenderedFirstFrame ||
+                        mIsPlaying ||
+                        cachedFrame() != null ||
+                        (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer && hasNonZeroPlaybackPosition())
+                    if (isObsolete) {
+                        mIsShowingDefaultPreview = false
+                        return true
+                    }
+                    mIsShowingDefaultPreview = true
+                    if (isEncrypted) {
+                        mShownEncryptedCacheGeneration = sEncryptedCacheGeneration
+                    }
+                    binding.videoPreview.alpha = 1f
+                    binding.videoPreview.beVisible()
+                    return false
+                }
+            })
             .into(binding.videoPreview)
     }
 
@@ -736,6 +1083,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             surfaceTextureListener = this@VideoFragment
         }
         mTextureView = textureView
+        binding.videoSurfaceFrame.beVisible()
+        binding.videoSurfaceFrame.alpha = 1f
         binding.videoSurfaceFrame.addView(textureView)
         setVideoSize()
         binding.videoSurfaceFrame.controller.resetState()
@@ -744,12 +1093,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
     private fun detachTextureView() {
         val textureView = mTextureView ?: return
-        textureView.surfaceTextureListener = null
+        mHasRenderedFirstFrame = false
+        if (!mIsCapturingFrame) {
+            textureView.surfaceTextureListener = null
+        }
         if (!mIsViewDestroyed && ::binding.isInitialized) {
             binding.videoSurfaceFrame.removeView(textureView)
-            if (binding.videoPreview.drawable != null) {
-                binding.videoPreview.beVisible()
-            }
+            // Keep the cached last frame visible instead of an empty/black surface frame.
+            ensureCachedPreviewShown()
         }
         mTextureView = null
     }
@@ -771,6 +1122,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             if (ended) {
                 mCurrTime = 0L
                 mPositionWhenInit = 0L
+                removeCachedFrame(mMedium.path)
             }
             listener?.saveVideoPlaybackPosition(mMedium.path, pos)
             player.playWhenReady = false
@@ -778,7 +1130,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             player.setVideoSurface(null)
         }
 
-        val shouldCaptureBeforeRelease = mPendingFrameCaptureOnIdle
+        val shouldCaptureBeforeRelease = mPendingFrameCaptureOnIdle || mIsCapturingFrame
         if (shouldCaptureBeforeRelease) {
             mPendingFrameCaptureOnIdle = false
             val surfaceToRelease = mVideoSurface
@@ -818,10 +1170,12 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPendingPlayStart = false
         mIsPlaying = false
         mUsingSharedPlayer = false
+        mHasRenderedFirstFrame = false
 
         if (mWasFragmentInit && !mIsViewDestroyed && ::mPlayPauseButton.isInitialized) {
             mPlayPauseButton.setImageResource(org.fossify.commons.R.drawable.ic_play_outline_vector)
         }
+        ensureCachedPreviewShown()
     }
 
     private fun initExoPlayer(playOnInit: Boolean = false) {
@@ -834,6 +1188,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         // the same file. If Glide already produced a drawable, keep it visible until
         // ExoPlayer renders its first frame to avoid a black flash.
         if (binding.videoPreview.drawable == null) {
+            mIsShowingDefaultPreview = false
             Glide.with(this).clear(binding.videoPreview)
         }
 
@@ -868,9 +1223,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             mUsingSharedPlayer = true
             shared.apply {
                 playWhenReady = false
-                setVideoSurface(null)
-                stop()
-                clearMediaItems()
+                if (textureView?.surfaceTexture == null) {
+                    setVideoSurface(null)
+                }
             }
         } else {
             mUsingSharedPlayer = false
@@ -893,6 +1248,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 .build()
         }
 
+        val startImmediately = shouldStartPlayback && !shouldWaitForOrientation()
         mExoPlayer = player.apply {
             repeatMode = if (mConfig.loopVideos && listener?.isSlideShowActive() == false) {
                 Player.REPEAT_MODE_ONE
@@ -900,10 +1256,10 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 Player.REPEAT_MODE_OFF
             }
             setPlaybackSpeed(mConfig.playbackSpeed)
-            setMediaSource(mediaSource)
-            if (initialPosition > 0L) {
-                seekTo(initialPosition)
-            }
+            // Use slightly relaxed seek tolerance when resuming mid-video so ExoPlayer starts on a
+            // nearby keyframe instead of decoding an entire GOP before rendering the first frame.
+            setSeekParameters(if (initialPosition > 0L) RESUME_SEEK_PARAMETERS else SeekParameters.EXACT)
+            setMediaSource(mediaSource, initialPosition)
             setAudioAttributes(
                 AudioAttributes
                     .Builder()
@@ -911,33 +1267,42 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                     .build(), false
             )
             initListeners()
+            mHasRenderedFirstFrame = false
             textureView?.surfaceTexture?.let { surfaceTexture ->
                 attachSurface(this, surfaceTexture)
-            }
-            prepare()
-
-            if (shouldStartPlayback) {
-                mWasVideoStarted = true
-                mPlayPauseButton.setImageResource(org.fossify.commons.R.drawable.ic_pause_outline_vector)
-                showVideoControls()
-                if (listener?.updateVideoKeepScreenOn(true) != true) {
-                    activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                }
-                // The playback itself is started once the player is ready. It waits for the
-                // screen to be rotated to the aspect ratio of the video, so that the video
-                // does not start playing in the wrong orientation.
-                mPlayOnPrepared = true
             }
         }
 
         syncMuteStateOnStart()
+
+        if (shouldStartPlayback) {
+            mWasVideoStarted = true
+            mPlayPauseButton.setImageResource(org.fossify.commons.R.drawable.ic_pause_outline_vector)
+            showVideoControls()
+            if (listener?.updateVideoKeepScreenOn(true) != true) {
+                activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+            // The playback itself is started once the player is ready. If orientation rotation is
+            // not blocking us, set playWhenReady=true before prepare() to avoid an extra UI-thread
+            // round-trip on STATE_READY.
+            mPlayOnPrepared = true
+            if (startImmediately) {
+                player.playWhenReady = true
+            }
+        }
+
+        player.prepare()
     }
 
     private fun ExoPlayer.initListeners() {
         mPlayerListener?.let { removeListener(it) }
         val playerListener = object : Player.Listener {
             override fun onRenderedFirstFrame() {
-                binding.videoPreview.beGone()
+                mHasRenderedFirstFrame = true
+                // Fade the preview cover out over the real frame once this page is visible.
+                if (mIsFragmentVisible) {
+                    revealRenderedSurface()
+                }
                 if (mIsPlaying || mPlayOnPrepared || mExoPlayer?.isPlaying == true || mWasVideoStarted) {
                     binding.videoPlayOutline.beGone()
                 } else if (mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
@@ -972,6 +1337,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 if (isPlaying) {
                     mIsPlaying = true
                     startTimer()
+                    if (VideoPlaybackUtils.shouldRevealOnPlaybackResume(
+                            isFragmentVisible = mIsFragmentVisible,
+                            hasRenderedFirstFrame = mHasRenderedFirstFrame,
+                            hasValidSurface = mVideoSurface?.isValid == true,
+                        )
+                    ) {
+                        revealRenderedSurface()
+                    }
                 }
             }
 
@@ -990,6 +1363,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             override fun onPlayerErrorChanged(error: PlaybackException?) {
                 binding.errorMessageHolder.errorMessage.apply {
                     if (error != null) {
+                        mIsRevealingSurface = false
+                        binding.videoPreview.animate().cancel()
+                        binding.videoPreview.alpha = 1f
                         binding.videoPreview.beGone()
                         binding.videoPlayOutline.beGone()
                         text = error.getFriendlyMessage(context)
@@ -1168,6 +1544,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         if (skipResult.reachedEnd) {
             if (isLooping) {
+                player.setSeekParameters(SeekParameters.EXACT)
                 setPosition(0L)
             } else {
                 // ExoPlayer clamps a seek-to-end to the last frame and keeps playing. Finish the
@@ -1179,6 +1556,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             return
         }
 
+        player.setSeekParameters(SeekParameters.EXACT)
         setPosition(skipResult.targetPositionMs)
     }
 
@@ -1189,6 +1567,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 if (!mWasPlayerInited) {
                     mPositionWhenInit = newPosition
                 }
+                mExoPlayer?.setSeekParameters(SeekParameters.EXACT)
                 setPosition(newPosition)
             }
 
@@ -1338,6 +1717,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         // not only once the first frame is rendered.
         binding.videoPlayOutline.beGone()
 
+        val textureView = ensureTextureViewAttached()
+        val player = mExoPlayer
+        if (player != null && mVideoSurface?.isValid != true) {
+            textureView?.surfaceTexture?.let { surfaceTexture ->
+                attachSurface(player, surfaceTexture)
+            }
+        }
+
         val wasEnded = videoEnded()
         if (wasEnded) {
             setPosition(0)
@@ -1369,6 +1756,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             mExoPlayer?.prepare()
         }
         mExoPlayer?.playWhenReady = true
+        if (VideoPlaybackUtils.shouldRevealOnPlaybackResume(
+                isFragmentVisible = mIsFragmentVisible,
+                hasRenderedFirstFrame = mHasRenderedFirstFrame,
+                hasValidSurface = mVideoSurface?.isValid == true,
+            )
+        ) {
+            revealRenderedSurface()
+        }
         startTimer()
         if (listener?.updateVideoKeepScreenOn(true) != true) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1397,7 +1792,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPositionAtPause = if (ended) 0L else (mExoPlayer?.currentPosition ?: 0L)
         listener?.saveVideoPlaybackPosition(mMedium.path, mPositionAtPause)
 
-        if (!ended && mPositionAtPause > 0L && allowFrameCapture) {
+        if (ended) {
+            removeCachedFrame(mMedium.path)
+        } else if ((mPositionAtPause > 0L || mHasRenderedFirstFrame) && allowFrameCapture) {
             if (deferFrameCapture) {
                 mPendingFrameCaptureOnIdle = true
             } else {
@@ -1416,13 +1813,34 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             onComplete?.invoke()
             return
         }
-        // The cache is keyed by path; re-reading the GPU frame on every swipe-away is pure overhead
-        // for a video we have already captured.
-        val cached = sVideoFrameCache.get(mMedium.path)
-        if (cached != null && !cached.isRecycled) {
-            if (!mIsFragmentVisible && !mIsViewDestroyed && ::binding.isInitialized && binding.videoPreview.drawable == null) {
-                binding.videoPreview.setImageBitmap(cached)
-                binding.videoPreview.beVisible()
+        if (mIsCapturingFrame) {
+            // Never issue a second PixelCopy against the same surface; queue the follow-up
+            // (surface release / detach) until the in-flight readback has completed.
+            val pending = mPendingCaptureCompletion
+            mPendingCaptureCompletion = if (pending != null && onComplete != null) {
+                { pending(); onComplete() }
+            } else {
+                onComplete ?: pending
+            }
+            return
+        }
+        // Reuse a snapshot only when it still matches the position we are leaving at. A frame
+        // captured during an earlier visit is stale and caused the "old thumbnail -> new
+        // thumbnail" flash when swiping back to the video.
+        val capturePosition = if (mPositionAtPause > 0L) mPositionAtPause else mCurrTime
+        val cached = getCachedFrame(mMedium.path)
+        val cachedPosition = sVideoFramePositions[mMedium.path]
+        if (cached != null && !cached.isRecycled &&
+            VideoPlaybackUtils.isCachedFramePositionFresh(
+                cachedPositionMs = cachedPosition,
+                capturePositionMs = capturePosition,
+                toleranceMs = VIDEO_FRAME_POSITION_TOLERANCE_MS,
+            )
+        ) {
+            // Replace even an already loaded generic thumbnail: the cached bitmap is the frame
+            // at the real last position, which is what must be shown on the way back.
+            if (!mIsFragmentVisible && !mIsViewDestroyed && ::binding.isInitialized) {
+                showPreviewBitmap(cached)
             }
             onComplete?.invoke()
             return
@@ -1450,21 +1868,38 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 { result ->
                     mIsCapturingFrame = false
                     if (result == android.view.PixelCopy.SUCCESS) {
-                        sVideoFrameCache.put(path, bmp)
+                        putCachedFrame(path, bmp, capturePosition)
                         if (!mIsFragmentVisible && !mIsViewDestroyed && isAdded && ::binding.isInitialized) {
-                            binding.videoPreview.setImageBitmap(bmp)
-                            binding.videoPreview.beVisible()
+                            showPreviewBitmap(bmp)
                         }
                     } else {
                         bmp.recycle()
                     }
+                    // The TextureView may have been removed while PixelCopy was pending. Release
+                    // the retained SurfaceTexture only if it was not reused by a reattached view.
+                    releaseCaptureTextureIfDetached()
+                    val queued = mPendingCaptureCompletion
+                    mPendingCaptureCompletion = null
+                    queued?.invoke()
                     onComplete?.invoke()
                 },
                 mTimerHandler
             )
         } catch (_: Throwable) {
             mIsCapturingFrame = false
+            releaseCaptureTextureIfDetached()
             onComplete?.invoke()
+        }
+    }
+
+    private fun releaseCaptureTextureIfDetached() {
+        val texture = mCapturePendingTexture ?: return
+        mCapturePendingTexture = null
+        if (texture !== mTextureView?.surfaceTexture) {
+            try {
+                texture.release()
+            } catch (_: Throwable) {
+            }
         }
     }
 
@@ -1525,6 +1960,14 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         if (!mPendingMetadataProbe || !isAdded) {
             return
         }
+        // On an autoplay page ExoPlayer itself reports duration and video size a moment later.
+        // Running MediaMetadataRetriever/getVideoResolution at the same time just competes with
+        // the player for I/O and delays the first rendered frame after every swipe-back.
+        if (mIsFragmentVisible && mConfig.autoplayVideos && !mConfig.gestureVideoPlayer) {
+            mPendingMetadataProbe = false
+            return
+        }
+
         mPendingMetadataProbe = false
 
         val needResolution = !mVideoSizeKnown && mExoPlayer == null
@@ -1589,6 +2032,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     private fun videoPrepared() {
+        mExoPlayer?.setSeekParameters(SeekParameters.EXACT)
         val playerDuration = VideoPlaybackUtils.sanitizeDurationMs(mExoPlayer?.duration ?: C.TIME_UNSET)
         if (playerDuration > 0L && (mDuration <= 0L || abs(mDuration - playerDuration) >= 1000L)) {
             mDuration = playerDuration
@@ -1603,13 +2047,23 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         mIsPlayerPrepared = true
         val shouldStart = mPlayOnPrepared || mExoPlayer?.playWhenReady == true
-        mPlayOnPrepared = false
-        if (shouldStart && !mIsPlaying && mIsFragmentVisible) {
-            updatePlaybackSpeed(mConfig.playbackSpeed)
-            playVideo()
+        if (shouldStart && !mIsPlaying) {
+            if (mIsFragmentVisible) {
+                mPlayOnPrepared = false
+                updatePlaybackSpeed(mConfig.playbackSpeed)
+                playVideo()
+            } else {
+                // The page was left while the player was preparing. Keep the request so
+                // setMenuVisibility(true) can start it instead of dropping it forever.
+                mPlayOnPrepared = true
+            }
+        } else {
+            mPlayOnPrepared = false
         }
         mWasPlayerInited = true
-        binding.videoPreview.beGone()
+        // Do NOT hide the preview here: STATE_READY can arrive before the (possibly new)
+        // TextureView has rendered anything. Hiding it now is the black-flash source.
+        // onRenderedFirstFrame() is the only place that may remove the preview.
     }
     private fun videoCompleted() {
         val player = mExoPlayer
@@ -1655,6 +2109,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         val oldSurface = mVideoSurface
         val oldDeferredTexture = mDeferredSurfaceTexture
         val surface = Surface(surfaceTexture)
+        mHasRenderedFirstFrame = false
         mVideoSurface = surface
         mDeferredSurfaceTexture = null
         player.setVideoSurface(surface)
@@ -1673,6 +2128,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
 
         mIsPlayerPrepared = false
         mPlayOnPrepared = false
+        mHasRenderedFirstFrame = false
         val player = mExoPlayer ?: return
         mPlayerListener?.let { player.removeListener(it) }
         mPlayerListener = null
@@ -1713,26 +2169,62 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         } else {
             releaseAction()
         }
+        ensureCachedPreviewShown()
     }
 
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
 
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
+    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
+        if (VideoPlaybackUtils.shouldRevealOnSurfaceTextureUpdated(
+                isFragmentVisible = mIsFragmentVisible,
+                isViewDestroyed = mIsViewDestroyed,
+                hasPlayer = mExoPlayer != null,
+                isPlaying = mIsPlaying,
+                isPlayerPrepared = mIsPlayerPrepared,
+                playWhenReady = mExoPlayer?.playWhenReady == true,
+                hasValidSurface = mVideoSurface?.isValid == true,
+                isMatchingTexture = surface === mTextureView?.surfaceTexture,
+            )
+        ) {
+            mHasRenderedFirstFrame = true
+            revealRenderedSurface()
+        }
+    }
 
     override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+        mHasRenderedFirstFrame = false
         val deferred = mActiveDeferredRelease
         if (deferred != null) {
             deferred.surfaceTexture = surface
+            if (!mIsViewDestroyed && ::binding.isInitialized) {
+                ensureCachedPreviewShown()
+            }
+            return false
+        }
+        // PixelCopy is asynchronous. Destroying the SurfaceTexture while a readback is still in
+        // flight makes it fail, so the cached last frame is never produced and the next visit
+        // falls back to the generic thumbnail / black. Keep it until the callback releases it.
+        if (mIsCapturingFrame) {
+            mCapturePendingTexture = surface
+            if (!mIsViewDestroyed && ::binding.isInitialized) {
+                ensureCachedPreviewShown()
+            }
             return false
         }
         if (mExoPlayer != null && !mUsingSharedPlayer) {
             mDeferredSurfaceTexture = surface
+            if (!mIsViewDestroyed && ::binding.isInitialized) {
+                ensureCachedPreviewShown()
+            }
             return false
         }
         if (mUsingSharedPlayer) {
             mExoPlayer?.setVideoSurface(null)
             mVideoSurface?.release()
             mVideoSurface = null
+        }
+        if (!mIsViewDestroyed && ::binding.isInitialized) {
+            ensureCachedPreviewShown()
         }
         return true
     }

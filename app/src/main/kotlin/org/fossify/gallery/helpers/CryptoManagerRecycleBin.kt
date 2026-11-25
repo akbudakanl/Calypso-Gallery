@@ -180,6 +180,7 @@ fun CryptoManager.moveEncryptedFilesToVaultRecycleBin(context: Context, paths: L
         }
 
         saveVaultRecycleBinRestoreMap(context, restoreMap)
+        MediaIndexCoordinator.markPathsDirty(paths, destinationFolder = binFolder.absolutePath)
         success
     } ?: false
 }
@@ -192,6 +193,7 @@ fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<Stri
         val restoreMap = getVaultRecycleBinRestoreMap(context)
         val vaultRoot = findVaultRoot(context) ?: return@withOperation 0
         var restoredCount = 0
+        val restoredFolders = LinkedHashSet<String>()
 
         for (path in paths) {
             if (ForegroundOperationRegistry.isCancelled) break
@@ -228,11 +230,15 @@ fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<Stri
                 metadataCache.remove(path)?.let { meta ->
                     metadataCache[targetPath] = meta
                 }
+                restoredFolders.add(targetFolder.absolutePath)
                 restoredCount++
             }
         }
 
         saveVaultRecycleBinRestoreMap(context, restoreMap)
+        if (restoredCount > 0) {
+            MediaIndexCoordinator.markFoldersDirty(restoredFolders + binFolder.absolutePath)
+        }
         restoredCount
     } ?: 0
 }
@@ -258,6 +264,9 @@ fun CryptoManager.permanentlyDeleteVaultRecycleBinFiles(context: Context, paths:
         }
 
         saveVaultRecycleBinRestoreMap(context, restoreMap)
+        if (deletedCount > 0) {
+            MediaIndexCoordinator.markFoldersDirty(listOf(binFolder.absolutePath))
+        }
         deletedCount
     } ?: 0
 }
@@ -282,6 +291,7 @@ fun CryptoManager.emptyVaultRecycleBin(context: Context): Boolean {
         if (!cancelled && restoreFile.exists()) {
             restoreFile.delete()
         }
+        MediaIndexCoordinator.markFoldersDirty(listOf(binFolder.absolutePath))
         !cancelled
     } ?: false
 }

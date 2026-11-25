@@ -471,6 +471,7 @@ private fun CryptoManager.encryptFolderRegistered(
     } else if (shouldMergeIntoExisting) {
         batchOperation.operationId?.let { OperationJournal.markSourceAlbumFolded(it, folderPath) }
     }
+    MediaIndexCoordinator.markFoldersDirty(listOf(folder.absolutePath, subfolder.absolutePath))
 
     return subfolder.absolutePath
 }
@@ -747,5 +748,6 @@ private fun CryptoManager.decryptFolderRegistered(
     } else if (options.resolution == AlbumConflictResolution.MERGE && targetExistedBefore) {
         batchOperation.operationId?.let { OperationJournal.markSourceAlbumFolded(it, folderPath) }
     }
+    MediaIndexCoordinator.markFoldersDirty(listOf(folder.absolutePath, targetFolder.absolutePath))
     return targetFolder.absolutePath
 }

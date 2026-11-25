@@ -22,6 +22,7 @@ import org.fossify.gallery.activities.VaultLockActivity
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
 import org.fossify.gallery.helpers.Config
+import org.fossify.gallery.helpers.MediaIndexCoordinator
 import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.SideloadCheck
@@ -118,17 +119,29 @@ class App : FossifyApp() {
         installCodeLevelNetworkBlocker()
 
         runCatching {
+            val screenFilter = IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_USER_PRESENT)
+            }
             ContextCompat.registerReceiver(
                 this,
                 object : BroadcastReceiver() {
                     override fun onReceive(context: Context, intent: Intent?) {
-                        if (intent?.action == Intent.ACTION_SCREEN_OFF) {
-                            VaultSessionManager.onScreenOff(this@App)
-                            syncPrivacyCurtainForTrackedActivities()
+                        when (intent?.action) {
+                            Intent.ACTION_SCREEN_OFF -> {
+                                VaultSessionManager.onScreenOff(this@App)
+                                syncPrivacyCurtainForTrackedActivities()
+                            }
+                            Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
+                                if (isAppInForeground) {
+                                    MediaIndexCoordinator.notifyForegroundOrScreenOn()
+                                }
+                            }
                         }
                     }
                 },
-                IntentFilter(Intent.ACTION_SCREEN_OFF),
+                screenFilter,
                 ContextCompat.RECEIVER_NOT_EXPORTED
             )
         }
@@ -148,7 +161,11 @@ class App : FossifyApp() {
                 if (startedActivities == 1) {
                     // Back in the foreground: expire session only if the 30 minute background deadline passed.
                     VaultSessionManager.onAppForegrounded(this@App)
+                    runCatching {
+                        org.fossify.gallery.fragments.VideoFragment.pruneExpiredFrameCache()
+                    }
                     RandomOrderManager.onAppForegrounded()
+                    MediaIndexCoordinator.notifyForegroundOrScreenOn()
                     if (pendingWipeJournalScheduled.compareAndSet(false, true)) {
                         runCatching {
                             org.fossify.gallery.helpers.CryptoManager.processPendingWipeJournal(this@App)

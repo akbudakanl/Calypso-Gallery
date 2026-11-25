@@ -130,6 +130,7 @@ import org.fossify.gallery.helpers.GridSpacingItemDecoration
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
 import org.fossify.gallery.helpers.MAX_COLUMN_COUNT
 import org.fossify.gallery.helpers.MediaFetcher
+import org.fossify.gallery.helpers.MediaIndexCoordinator
 import org.fossify.gallery.helpers.MediaStoreSnapshot
 import org.fossify.gallery.helpers.MediaUpdatePolicy
 import org.fossify.gallery.helpers.getMediaStoreSnapshot
@@ -207,6 +208,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mMediaStoreSnapshot = MediaStoreSnapshot()
     private var mLastObserverChangeMs = 0L
     private var mLastScanStartedMs = 0L
+    private var mLastScanWasObserverDriven = false
     private var mLastMediaHandler = Handler()
     private var mTempShowHiddenHandler = Handler()
     private var mCurrAsyncTask: GetMediaAsynctask? = null
@@ -221,6 +223,51 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private var mHasNormalExcludedFolders = false
     private var mHasNormalHiddenFolders = false
     private var mExcludedCheckGeneration = 0
+    private var mLastConsumedMutationGen = MediaIndexCoordinator.getMutationGeneration()
+    private var mLastConsumedForegroundGen = MediaIndexCoordinator.getForegroundCheckGeneration()
+    private var mIsActivityResumed = false
+
+    private val mMediaIndexListener = object : MediaIndexCoordinator.Listener {
+        override fun onMediaIndexMutation(mutationGeneration: Long, dirtyFolders: Set<String>) {
+            if (!mIsActivityResumed || isDestroyed || isFinishing || binding.mediaMenu.isSearchOpen) {
+                return
+            }
+            if (MediaIndexCoordinator.matchesFolderScope(dirtyFolders, mPath, mShowAll)) {
+                mLastConsumedMutationGen = mutationGeneration
+                if (mIsGettingMedia) {
+                    mPendingMediaRefresh = true
+                } else {
+                    getMedia()
+                }
+            }
+        }
+
+        override fun onForegroundOrScreenOnCheck(checkGeneration: Long) {
+            if (!mIsActivityResumed || isDestroyed || isFinishing || binding.mediaMenu.isSearchOpen) {
+                return
+            }
+            mLastConsumedForegroundGen = checkGeneration
+            ensureBackgroundThread {
+                val snapshot = getMediaStoreSnapshot()
+                val mediaStoreChanged = mMediaStoreSnapshot.differsFrom(snapshot)
+                val dirtySnapshot = MediaIndexCoordinator.getDirtyFoldersSince(mLastConsumedMutationGen)
+                val scopeDirty = MediaIndexCoordinator.matchesFolderScope(dirtySnapshot.folders, mPath, mShowAll)
+                if (mediaStoreChanged || scopeDirty) {
+                    mMediaStoreSnapshot = snapshot
+                    mLastConsumedMutationGen = dirtySnapshot.generation
+                    runOnUiThread {
+                        if (!isDestroyed && !isFinishing && mIsActivityResumed && !binding.mediaMenu.isSearchOpen) {
+                            if (mIsGettingMedia) {
+                                mPendingMediaRefresh = true
+                            } else {
+                                getMedia()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // "Continue where I left off" after the vault keys were wiped from RAM (30 min in background / process restart).
     // mVaultResumeBlob is the encrypted state from savedInstanceState, mVaultResume the decrypted/live one.
@@ -308,10 +355,12 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     override fun onStart() {
         super.onStart()
         mTempShowHiddenHandler.removeCallbacksAndMessages(null)
+        MediaIndexCoordinator.registerListener(mMediaIndexListener)
     }
 
     override fun onResume() {
         super.onResume()
+        mIsActivityResumed = true
         if (VaultSessionManager.isReauthPending()) {
             return
         }
@@ -404,6 +453,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             setupAdapter()
         }
 
+        mLastConsumedMutationGen = MediaIndexCoordinator.getMutationGeneration()
+        mLastConsumedForegroundGen = MediaIndexCoordinator.getForegroundCheckGeneration()
         if (shouldSkipAuthentication()) {
             tryLoadGallery()
         } else {
@@ -422,6 +473,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     override fun onPause() {
         super.onPause()
+        mIsActivityResumed = false
         mMenuController?.dismiss()
         mVaultBackHelper.cancelToast()
         mIsGettingMedia = false
@@ -437,6 +489,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     override fun onStop() {
         super.onStop()
+        MediaIndexCoordinator.unregisterListener(mMediaIndexListener)
 
         if (config.tempSkipDeleteConfirmation) {
             mTempShowHiddenHandler.postDelayed({
@@ -551,6 +604,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         super.onDestroy()
     }
 
+    override fun shouldObserveScreenshotFolders(): Boolean = !mIsVaultFilesView
+
+    override fun getExtraScreenshotWatchPaths(): Collection<String> {
+        return if (!mShowAll &&
+            mPath.isNotEmpty() &&
+            mPath.getFilenameFromPath().equals("Screenshots", ignoreCase = true) &&
+            !CryptoManager.isEncryptedFolderPath(this, mPath)
+        ) {
+            listOf(mPath)
+        } else {
+            emptyList()
+        }
+    }
+
     override fun onMediaStoreContentChanged(changedFolderPaths: Set<String>, isWildcardChange: Boolean) {
         if (isDestroyed || isFinishing) {
             return
@@ -563,6 +630,7 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             changedFolderPaths.any { it.equals(mPath, ignoreCase = true) }
 
         if (affectsCurrentView && !binding.mediaMenu.isSearchOpen) {
+            mLastScanWasObserverDriven = true
             if (mIsGettingMedia) {
                 mPendingMediaRefresh = true
             } else {
@@ -1731,13 +1799,15 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             setupAdapter()
             applyPendingScroll()
 
-            if (!isFromCache && mPendingMediaRefresh) {
+            if (!isFromCache && (mPendingMediaRefresh || mLastScanWasObserverDriven)) {
                 mPendingMediaRefresh = false
-                // The scan that just finished already read MediaStore after the observer fired,
-                // so it already contains that change. Re-scan only when a *new* change arrived
-                // while the scan was running; otherwise this is the redundant second indexing
-                // pass that made all thumbnails go black right after the first render.
-                if (mLastObserverChangeMs > mLastScanStartedMs) {
+                // MediaStore can lag a moment behind the observer notification, so a scan that
+                // started right after the event can still miss the change. Do exactly one
+                // follow-up scan for observer-driven changes; the cached last-frame preview now
+                // keeps thumbnails visible during it, so it no longer causes a black flash.
+                val wasObserverDriven = mLastScanWasObserverDriven
+                mLastScanWasObserverDriven = false
+                if (wasObserverDriven || mLastObserverChangeMs > mLastScanStartedMs) {
                     getMedia()
                 }
             }
@@ -1870,6 +1940,22 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                         }
                     }
 
+                    if (encItems.isNotEmpty()) {
+                        MediaIndexCoordinator.markPathsDirty(
+                            filePaths = encItems.map { it.path },
+                            includeRecycleBin = mPath == RECYCLE_BIN
+                        )
+                    }
+                    if (plainItems.isNotEmpty()) {
+                        val hiddenOrVirtualPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
+                        if (hiddenOrVirtualPlain.isNotEmpty()) {
+                            MediaIndexCoordinator.markPathsDirty(
+                                filePaths = hiddenOrVirtualPlain.map { it.path },
+                                includeRecycleBin = mPath == RECYCLE_BIN
+                            )
+                        }
+                    }
+
                     runOnUiThread {
                         progressDialog.updateProgress(filtered.size, filtered.size)
                         progressDialog.dismiss()
@@ -1951,6 +2037,22 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
                         }
                     }
 
+                    if (encItems.isNotEmpty()) {
+                        MediaIndexCoordinator.markPathsDirty(
+                            filePaths = encItems.map { it.path },
+                            includeRecycleBin = mPath == RECYCLE_BIN
+                        )
+                    }
+                    if (plainItems.isNotEmpty()) {
+                        val hiddenOrVirtualPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
+                        if (hiddenOrVirtualPlain.isNotEmpty()) {
+                            MediaIndexCoordinator.markPathsDirty(
+                                filePaths = hiddenOrVirtualPlain.map { it.path },
+                                includeRecycleBin = mPath == RECYCLE_BIN
+                            )
+                        }
+                    }
+
                     runOnUiThread {
                         progressDialog.updateProgress(filtered.size, filtered.size)
                         progressDialog.dismiss()
@@ -1998,6 +2100,10 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
             }
 
             mMedia.removeAll { filtered.map { it.path }.contains((it as? Medium)?.path) }
+            MediaIndexCoordinator.markPathsDirty(
+                filePaths = filtered.map { item -> item.path },
+                includeRecycleBin = mPath == RECYCLE_BIN
+            )
 
             ensureBackgroundThread {
                 filtered.forEach {

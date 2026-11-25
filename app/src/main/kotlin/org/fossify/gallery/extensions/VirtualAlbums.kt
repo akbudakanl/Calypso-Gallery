@@ -621,6 +621,7 @@ fun Context.addFileDirItemsToVirtualAlbum(
         }
         virtualAlbumsDB.insertItems(items)
         VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+        MediaIndexCoordinator.markFoldersDirty(listOf(getVirtualAlbumPath(albumId)))
         allowedItems.size - alreadyInAlbum
     } catch (e: Exception) {
         0
@@ -631,6 +632,7 @@ fun Context.removePathsFromVirtualAlbum(albumId: Long, paths: Collection<String>
     try {
         paths.forEach { virtualAlbumsDB.removeItemFromAlbum(albumId, it) }
         VirtualAlbumSyncManager.saveAlbumToFile(this, albumId)
+        MediaIndexCoordinator.markFoldersDirty(listOf(getVirtualAlbumPath(albumId)))
     } catch (ignored: Exception) {
     }
 }

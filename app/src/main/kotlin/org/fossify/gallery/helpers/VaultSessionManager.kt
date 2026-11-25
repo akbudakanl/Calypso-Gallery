@@ -148,8 +148,15 @@ object VaultSessionManager {
         if (ForegroundOperationRegistry.isActive) return
         try {
             val appContext = context.applicationContext
+            val hadVaultSessionData = CryptoManager.isVaultUnlocked ||
+                requiresVaultReauth ||
+                appContext.config.temporarilyShowHidden ||
+                appContext.config.temporarilyShowVaultExcluded ||
+                CryptoManager.metadataCache.isNotEmpty()
             CryptoManager.clearKeys(appContext)
-            CryptoManager.clearAppImageCaches(appContext)
+            if (hadVaultSessionData) {
+                CryptoManager.clearAppImageCaches(appContext)
+            }
             if (!requiresVaultReauth) {
                 preserveVaultOnSwitch = false
                 appContext.config.temporarilyShowHidden = false
@@ -205,6 +212,11 @@ object VaultSessionManager {
         }
         try {
             val appContext = context.applicationContext
+            val hadVaultSessionData = CryptoManager.isVaultUnlocked ||
+                requiresVaultReauth ||
+                appContext.config.temporarilyShowHidden ||
+                appContext.config.temporarilyShowVaultExcluded ||
+                CryptoManager.metadataCache.isNotEmpty()
             if (CryptoManager.isVaultUnlocked || requiresVaultReauth) {
                 autoWiped = true
                 if (appContext.config.temporarilyShowHidden) {
@@ -214,7 +226,9 @@ object VaultSessionManager {
             requiresVaultReauth = false
             preserveVaultOnSwitch = false
             CryptoManager.clearKeys(appContext)
-            CryptoManager.clearAppImageCaches(appContext)
+            if (hadVaultSessionData) {
+                CryptoManager.clearAppImageCaches(appContext)
+            }
             appContext.config.temporarilyShowHidden = false
             appContext.config.temporarilyShowVaultExcluded = false
         } catch (_: Throwable) {

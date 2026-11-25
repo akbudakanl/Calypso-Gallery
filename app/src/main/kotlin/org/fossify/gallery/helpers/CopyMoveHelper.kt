@@ -486,6 +486,10 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
                     identicalSkippedCount = result.identicalSkippedCount
                 )
                 if (result.succeeded) {
+                    val sourceFolders = fileDirItems.mapNotNull { item ->
+                        if (item.isDirectory) item.path else item.getParentPath()
+                    }.filter { it.isNotEmpty() }
+                    MediaIndexCoordinator.markFoldersDirty(sourceFolders + destination)
                     callback(destination)
                 }
             }

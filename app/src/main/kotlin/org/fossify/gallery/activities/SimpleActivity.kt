@@ -5,9 +5,11 @@ import android.app.assist.AssistContent
 import android.content.Intent
 import android.database.ContentObserver
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
 import android.view.WindowManager
@@ -23,8 +25,8 @@ import org.fossify.gallery.extensions.addPathToDB
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.isPathHiddenOrEncrypted
-import org.fossify.gallery.extensions.updateDirectoryPath
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.ScreenshotFolderObserver
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.getPermissionsToRequest
 
@@ -34,6 +36,7 @@ open class SimpleActivity : BaseSimpleActivity() {
     private val mediaObserverHandler = Handler(Looper.getMainLooper())
     private val pendingObserverFolders = LinkedHashSet<String>()
     private var hasPendingWildcardObserverChange = false
+    private var screenshotFolderObserver: ScreenshotFolderObserver? = null
 
     private val dispatchObserverChangeRunnable = Runnable {
         val folders: Set<String>
@@ -49,6 +52,11 @@ open class SimpleActivity : BaseSimpleActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        refreshScreenshotFolderWatchers()
+    }
+
     override fun onResume() {
         super.onResume()
         val isVaultActive = CryptoManager.isVaultUnlocked || VaultSessionManager.isReauthPending()
@@ -57,6 +65,11 @@ open class SimpleActivity : BaseSimpleActivity() {
         } else {
             applyVaultScreenProtection(false)
         }
+    }
+
+    override fun onStop() {
+        screenshotFolderObserver?.stop()
+        super.onStop()
     }
 
     protected open fun isVaultAssistProtectionActive(): Boolean {
@@ -88,7 +101,75 @@ open class SimpleActivity : BaseSimpleActivity() {
         dialog?.dismiss()
         dialog = null
         mediaObserverHandler.removeCallbacks(dispatchObserverChangeRunnable)
+        screenshotFolderObserver?.stop()
+        screenshotFolderObserver = null
         super.onDestroy()
+    }
+
+    protected open fun shouldObserveScreenshotFolders(): Boolean = false
+
+    protected open fun getExtraScreenshotWatchPaths(): Collection<String> = emptyList()
+
+    protected fun refreshScreenshotFolderWatchers() {
+        if (!shouldObserveScreenshotFolders() || isDestroyed || isFinishing) {
+            return
+        }
+        if (!hasAllPermissions(getPermissionsToRequest())) {
+            return
+        }
+        val watcher = screenshotFolderObserver ?: ScreenshotFolderObserver { changedFolders ->
+            if (!isDestroyed && !isFinishing && changedFolders.isNotEmpty()) {
+                onMediaStoreContentChanged(changedFolders, isWildcardChange = false)
+            }
+        }.also { screenshotFolderObserver = it }
+        watcher.start(getExtraScreenshotWatchPaths())
+    }
+
+    protected fun findRecentlyChangedMediaFolders(lookbackSeconds: Long = 15L): Set<String> {
+        val cutoffSec = (System.currentTimeMillis() / 1000L) - lookbackSeconds
+        val projection = arrayOf(
+            MediaStore.MediaColumns.DATA,
+            MediaStore.MediaColumns.DATE_MODIFIED
+        )
+        val selection = buildString {
+            append(
+                "${MediaStore.Files.FileColumns.MEDIA_TYPE} IN " +
+                    "(${MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE}, ${MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO})"
+            )
+            append(" AND ${MediaStore.MediaColumns.DATE_MODIFIED} >= ?")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                append(" AND ${MediaStore.MediaColumns.IS_PENDING} = 0")
+            }
+        }
+        val sortOrder = "${MediaStore.MediaColumns.DATE_MODIFIED} DESC, ${MediaStore.MediaColumns._ID} DESC"
+        val folders = LinkedHashSet<String>()
+        return try {
+            contentResolver.query(
+                MediaStore.Files.getContentUri("external"),
+                projection,
+                selection,
+                arrayOf(cutoffSec.toString()),
+                sortOrder
+            )?.use { cursor ->
+                val dataIdx = cursor.getColumnIndex(MediaStore.MediaColumns.DATA)
+                if (dataIdx < 0) return@use
+                var seen = 0
+                while (cursor.moveToNext() && seen < 5) {
+                    seen++
+                    val path = cursor.getString(dataIdx) ?: continue
+                    if (path.isBlank()) continue
+                    val name = path.getFilenameFromPath()
+                    if (name.startsWith(".") || isPathHiddenOrEncrypted(path)) continue
+                    val parent = path.getParentPath().trimEnd('/')
+                    if (parent.isNotEmpty()) {
+                        folders.add(parent)
+                    }
+                }
+            }
+            folders
+        } catch (_: Exception) {
+            emptySet()
+        }
     }
 
     protected open fun onMediaStoreContentChanged(changedFolderPaths: Set<String>, isWildcardChange: Boolean) {}
@@ -97,30 +178,42 @@ open class SimpleActivity : BaseSimpleActivity() {
         override fun onChange(selfChange: Boolean, uri: Uri?) {
             super.onChange(selfChange, uri)
             ensureBackgroundThread {
-                if (uri != null) {
-                    val path = getRealPathFromURI(uri)
-                    if (path != null) {
-                        if (!isPathHiddenOrEncrypted(path)) {
-                            val parentPath = path.getParentPath()
-                            updateDirectoryPath(parentPath)
-                            addPathToDB(path)
+                var insertedPath: String? = null
+                val resolvedPath = if (uri != null) getRealPathFromURI(uri) else null
+                if (resolvedPath != null) {
+                    val fileName = resolvedPath.getFilenameFromPath()
+                    if (!fileName.startsWith(".") && !isPathHiddenOrEncrypted(resolvedPath)) {
+                        val parentPath = resolvedPath.getParentPath().trimEnd('/')
+                        if (parentPath.isNotEmpty()) {
                             synchronized(pendingObserverFolders) {
                                 pendingObserverFolders.add(parentPath)
                             }
+                            insertedPath = resolvedPath
                         }
-                    } else {
+                    } else if (fileName.startsWith(".")) {
+                        val recentFolders = findRecentlyChangedMediaFolders()
                         synchronized(pendingObserverFolders) {
-                            hasPendingWildcardObserverChange = true
+                            if (recentFolders.isNotEmpty()) {
+                                pendingObserverFolders.addAll(recentFolders)
+                            } else {
+                                hasPendingWildcardObserverChange = true
+                            }
                         }
                     }
                 } else {
+                    val recentFolders = findRecentlyChangedMediaFolders()
                     synchronized(pendingObserverFolders) {
-                        hasPendingWildcardObserverChange = true
+                        if (recentFolders.isNotEmpty()) {
+                            pendingObserverFolders.addAll(recentFolders)
+                        } else {
+                            hasPendingWildcardObserverChange = true
+                        }
                     }
                 }
 
                 mediaObserverHandler.removeCallbacks(dispatchObserverChangeRunnable)
-                mediaObserverHandler.postDelayed(dispatchObserverChangeRunnable, 300L)
+                mediaObserverHandler.postDelayed(dispatchObserverChangeRunnable, 100L)
+                insertedPath?.let { addPathToDB(it) }
             }
         }
     }

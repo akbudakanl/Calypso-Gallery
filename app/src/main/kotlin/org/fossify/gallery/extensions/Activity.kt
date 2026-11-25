@@ -103,6 +103,7 @@ import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.clearBiometricKey
 import org.fossify.gallery.helpers.clearCachedVaultRoot
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.MediaIndexCoordinator
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
 import org.fossify.gallery.helpers.operations.AtomicStaging
@@ -1578,6 +1579,7 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                             }
                             val resultPath = decryptedFile?.absolutePath ?: oldPath
                             CryptoManager.clearAppImageCaches(this)
+                            MediaIndexCoordinator.markFoldersDirty(listOfNotNull(srcFile.parent, targetDir.absolutePath))
                             runOnUiThread {
                                 progressDialog.updateProgress(if (isSkipped || decryptedFile != null) 1 else 0, 1)
                                 progressDialog.dismiss()
@@ -1792,6 +1794,7 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
                             }
                         }
                         val resultPath = encryptedFile?.absolutePath ?: oldPath
+                        MediaIndexCoordinator.markFoldersDirty(listOfNotNull(srcFile.parent, targetDir.absolutePath))
                         runOnUiThread {
                             progressDialog.updateProgress(if (isSkipped || (encryptedFile != null && encryptedFile.exists())) 1 else 0, 1)
                             progressDialog.dismiss()
@@ -2464,6 +2467,10 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
                             }
 
                             CryptoManager.clearAppImageCaches(this)
+                            MediaIndexCoordinator.markFoldersDirty(
+                                sourceDirs.map { it.absolutePath } + destination,
+                                includeFavorites = anyFavoriteUpdated
+                            )
                             runOnUiThread {
                                 try {
                                     progressDialog.dismiss()
@@ -3163,6 +3170,10 @@ fun BaseSimpleActivity.tryCopyMoveFilesTo(
                             if (anyPlaintextWiped) {
                                 CryptoManager.clearAppImageCaches(this)
                             }
+                            MediaIndexCoordinator.markFoldersDirty(
+                                sourceDirs.map { it.absolutePath } + destination,
+                                includeFavorites = anyFavoriteUpdated
+                            )
                             runOnUiThread {
                                 progressDialog.updateProgress(cryptoItems.size, cryptoItems.size)
                                 progressDialog.dismiss()
@@ -3262,6 +3273,9 @@ fun BaseSimpleActivity.tryDeleteFileDirItem(
     callback: ((wasSuccess: Boolean) -> Unit)? = null
 ) {
     deleteFile(fileDirItem, allowDeleteFolder, isDeletingMultipleFiles = false) {
+        if (it) {
+            MediaIndexCoordinator.markPathsDirty(listOf(fileDirItem.path))
+        }
         if (deleteFromDatabase) {
             ensureBackgroundThread {
                 deleteDBPath(fileDirItem.path)
@@ -3335,6 +3349,7 @@ fun BaseSimpleActivity.movePathsInRecycleBin(paths: ArrayList<String>, callback:
                     }
                 }
             }
+            MediaIndexCoordinator.markPathsDirty(paths, includeRecycleBin = true)
             callback?.invoke(pathsCnt == 0)
         }
     }
@@ -3422,6 +3437,9 @@ fun BaseSimpleActivity.restoreRecycleBinPaths(paths: ArrayList<String>, callback
             if (restoredPairs.isNotEmpty()) {
                 restoreReferencesAfterRecycleBinRestore(restoredPairs)
             }
+            if (newPaths.isNotEmpty()) {
+                MediaIndexCoordinator.markPathsDirty(newPaths, includeRecycleBin = true)
+            }
 
             runOnUiThread {
                 callback()
@@ -3450,6 +3468,7 @@ fun BaseSimpleActivity.emptyTheRecycleBin(callback: (() -> Unit)? = null) {
                     deleteDBPaths(deletedOrigPaths)
                 }
                 toast(org.fossify.commons.R.string.recycle_bin_emptied)
+                MediaIndexCoordinator.markFoldersDirty(listOf(RECYCLE_BIN))
                 callback?.invoke()
             } catch (e: Exception) {
                 toast(org.fossify.commons.R.string.unknown_error_occurred)

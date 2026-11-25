@@ -74,7 +74,9 @@ class GetMediaAsynctask(
                 getProperDateTaken = getProperDateTaken,
                 dateTakens = dateTakens
             )
-            val foldersToScan = mediaFetcher.getFoldersToScan().filter {
+            val foldersToScan = mediaFetcher.getFoldersToScan(
+                extraFolders = MediaIndexCoordinator.getRecentDirtyPhysicalFolders()
+            ).filter {
                 it != RECYCLE_BIN &&
                     it != FAVORITES &&
                     !context.config.isFolderProtected(it) &&
@@ -134,7 +136,11 @@ class GetMediaAsynctask(
             newMedia
         }
 
-        return mediaFetcher.groupMedia(media, pathToUse)
+        // A single scan can still see the same file twice (duplicate MediaStore rows, a folder
+        // listed under two paths, symlinks). Deleting by path would then remove both entries, so
+        // keep exactly one Medium per path before grouping.
+        val distinctMedia = media.distinctBy { it.path.lowercase() }.toCollection(ArrayList())
+        return mediaFetcher.groupMedia(distinctMedia, pathToUse)
     }
 
     override fun onPostExecute(media: ArrayList<ThumbnailItem>) {

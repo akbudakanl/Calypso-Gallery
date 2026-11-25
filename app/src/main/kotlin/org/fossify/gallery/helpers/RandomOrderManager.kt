@@ -88,12 +88,12 @@ object RandomOrderManager {
             known.sortBy { indexByPath[it.path] }
             if (unknown.isNotEmpty()) {
                 unknown.shuffle(random)
-                unknown.mapTo(stored) { it.path }
+                stored.addAll(0, unknown.map { it.path })
             }
 
             return ArrayList<Directory>(known.size + unknown.size).apply {
-                addAll(known)
                 addAll(unknown)
+                addAll(known)
             }
         }
     }
@@ -134,12 +134,12 @@ object RandomOrderManager {
             known.sortBy { indexByPath[it.path] }
             if (unknown.isNotEmpty()) {
                 unknown.shuffle(random)
-                unknown.mapTo(stored) { it.path }
+                stored.addAll(0, unknown.map { it.path })
             }
 
             media.clear()
-            media.addAll(known)
             media.addAll(unknown)
+            media.addAll(known)
         }
     }
 

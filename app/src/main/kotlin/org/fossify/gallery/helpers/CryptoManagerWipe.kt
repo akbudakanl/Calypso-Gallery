@@ -232,7 +232,7 @@ fun CryptoManager.purgeFolderTraces(context: Context, folderPath: String) {
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 fun CryptoManager.clearAppImageCaches(context: Context) {
-    runCatching { SeekableExtractorsFactory.clearCache() }
+    runCatching { SeekableExtractorsFactory.clearEncryptedCache() }
     val appContext = context.applicationContext
     val clearMemory = {
         try {

@@ -70,7 +70,7 @@ class RandomOrderManagerTest {
 
         val withNew = arrayListOf(dir("/e"), dir("/a"), dir("/b"), dir("/c"), dir("/d"))
         val third = RandomOrderManager.sortDirectoriesRandomly(withNew, random = Random(123))
-        assertEquals(first.map { it.path } + "/e", third.map { it.path })
+        assertEquals(listOf("/e") + first.map { it.path }, third.map { it.path })
     }
 
     @Test
@@ -83,6 +83,16 @@ class RandomOrderManagerTest {
         val scanned = arrayListOf(med("$albumPath/4.jpg"), med("$albumPath/3.jpg"), med("$albumPath/2.jpg"), med("$albumPath/1.jpg"))
         RandomOrderManager.sortMediaRandomly(scanned, "$albumPath/", random = Random(999))
         assertEquals(firstOrder, scanned.map { it.path })
+
+        val withNewMedia = arrayListOf(
+            med("$albumPath/1.jpg"),
+            med("$albumPath/2.jpg"),
+            med("$albumPath/3.jpg"),
+            med("$albumPath/4.jpg"),
+            med("$albumPath/5_screenshot.jpg")
+        )
+        RandomOrderManager.sortMediaRandomly(withNewMedia, albumPath, random = Random(456))
+        assertEquals(listOf("$albumPath/5_screenshot.jpg") + firstOrder, withNewMedia.map { it.path })
 
         val allFilesEmptyScope = arrayListOf(med("/a/1.jpg"), med("/b/2.jpg"), med("/c/3.jpg"))
         RandomOrderManager.sortMediaRandomly(allFilesEmptyScope, "", random = Random(11))

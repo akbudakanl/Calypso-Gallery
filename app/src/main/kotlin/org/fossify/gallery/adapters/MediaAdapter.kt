@@ -970,6 +970,9 @@ class MediaAdapter(
 
                         batchOp.operationId?.let { OperationJournal.clear(it) }
                         CryptoManager.clearAppImageCaches(activity)
+                        org.fossify.gallery.helpers.MediaIndexCoordinator.markFoldersDirty(
+                            selectedMedia.mapNotNull { File(it.path).parent } + targetIndexes.keys
+                        )
 
                         activity.runOnUiThread {
                             try {
@@ -1174,6 +1177,10 @@ class MediaAdapter(
 
                         batchOp.operationId?.let { OperationJournal.clear(it) }
                         CryptoManager.clearAppImageCaches(activity)
+                        org.fossify.gallery.helpers.MediaIndexCoordinator.markPathsDirty(
+                            filePaths = selectedMedia.map { it.path },
+                            destinationFolder = targetDir.absolutePath
+                        )
 
                         activity.runOnUiThread {
                             try {

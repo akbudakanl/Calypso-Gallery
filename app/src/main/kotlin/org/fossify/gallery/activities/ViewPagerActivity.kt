@@ -155,6 +155,7 @@ import org.fossify.gallery.fragments.PhotoFragment
 import org.fossify.gallery.fragments.VideoFragment
 import org.fossify.gallery.fragments.ViewPagerFragment
 import org.fossify.gallery.helpers.AspectRatioOrientation
+import org.fossify.gallery.helpers.MediaIndexCoordinator
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_CREATE_SHORTCUT
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_PRINT
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_RESIZE
@@ -289,6 +290,9 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     private var mIsVaultResumePrompting = false
 
     private var mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
+    // Only a real back exit drops the last-frame thumbnails. Swipes, backgrounding and
+    // screen-off/on keep the in-memory cache so returning to a video is seamless.
+    private var mExitingViaBack = false
     private val mDeferredPlayerReleases = ArrayList<() -> Unit>()
     private var mSharedExoPlayer: ExoPlayer? = null
     private var mSharedPlayerOwner: VideoFragment? = null
@@ -425,14 +429,23 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
+    override fun onBackPressedCompat(): Boolean {
+        mExitingViaBack = true
+        return super.onBackPressedCompat()
+    }
+
     override fun onDestroy() {
         mMenuController?.dismiss()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
         destroySharedExoPlayer()
         super.onDestroy()
-        VideoFragment.clearFrameCache()
-        SeekableExtractorsFactory.clearCache()
+        if (mExitingViaBack) {
+            VideoFragment.clearFrameCache()
+        }
+        if (mExitingViaBack || isFinishing) {
+            SeekableExtractorsFactory.clearCache()
+        }
         ColorModeHelper.resetColorMode(this)
 
         if (intent.extras?.containsKey(IS_VIEW_INTENT) == true) {
@@ -1987,6 +2000,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 ensureBackgroundThread {
                     CryptoManager.secureWipeAndDeleteFile(this, File(path))
                     deleteVirtualAlbumItemFromAllAlbums(path)
+                    MediaIndexCoordinator.markPathsDirty(listOf(path))
                     runOnUiThread {
                         mIgnoredPaths.add(path)
                         val media = mMediaFiles.filter { !mIgnoredPaths.contains(it.path) } as ArrayList<Medium>
@@ -2014,6 +2028,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                     try { File(path).delete() } catch (_: Exception) {}
                     deleteDBPath(path)
                     CryptoManager.purgeTracesForFile(this, path)
+                    MediaIndexCoordinator.markPathsDirty(listOf(path))
                     runOnUiThread {
                         mIgnoredPaths.add(path)
                         val media = mMediaFiles.filter { !mIgnoredPaths.contains(it.path) } as ArrayList<Medium>
@@ -2673,7 +2688,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             // swipe stutter. Move them to the next frame so the pager can finish its animation;
             // the work itself is unchanged.
             binding.viewPager.post {
-                if (!isDestroyed && !isFinishing) {
+                if (!isDestroyed && !isFinishing && mPagerScrollState == ViewPager.SCROLL_STATE_IDLE) {
                     flushDeferredPlayerReleases()
                     if (getCurrentMedium() != null) {
                         checkOrientation()

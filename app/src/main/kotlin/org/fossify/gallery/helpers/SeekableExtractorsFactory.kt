@@ -98,6 +98,17 @@ class SeekableExtractorsFactory(
             }
         }
 
+        fun clearEncryptedCache() {
+            synchronized(lock) {
+                val iter = cache.entries.iterator()
+                while (iter.hasNext()) {
+                    if (CryptoManager.isEncryptedFile(iter.next().key.path)) {
+                        iter.remove()
+                    }
+                }
+            }
+        }
+
         internal fun cacheSizeForTesting(): Int = synchronized(lock) {
             cache.size
         }

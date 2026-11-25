@@ -230,7 +230,10 @@ object CryptoManager {
         vaultRecycleBinResolved = false
         VirtualAlbumSyncManager.invalidateDirectoryCache()
         try {
-            VideoFragment.clearFrameCache()
+            VideoFragment.clearEncryptedFrameCache()
+        } catch (_: Throwable) {}
+        try {
+            MediaIndexCoordinator.clearVaultPaths(cachedVaultRoot?.absolutePath)
         } catch (_: Throwable) {}
         if (context != null && vaultClipboardTouched) {
             vaultClipboardTouched = false
