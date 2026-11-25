@@ -24,16 +24,19 @@ fun TextView.applyThemedCursor(color: Int) {
         setSize((2f * density).toInt().coerceAtLeast(1), 0)
     }
 
-    if (Build.VERSION.SDK_INT >= 36) {
+    // TextView.setTextCursorDrawable(Drawable) is public from API 29 and also clears the XML
+    // resource id, so the platform cannot recreate the green caret on focus. Reflection into
+    // TextView/Editor internals is blocked by hidden-API rules for apps targeting modern Android
+    // and silently left the library default in place, which is why release builds stayed green.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         textCursorDrawable = cursor
     } else {
-        // A non-zero resource id makes TextView recreate the library's green cursor later.
+        // API 26-28 have no public setter; retain the legacy fallback.
         runCatching {
             val resField = TextView::class.java.getDeclaredField("mCursorDrawableRes")
             resField.isAccessible = true
             resField.setInt(this, 0)
         }
-        // Pre-36 the cursor lives in TextView's private Editor, not in TextView itself.
         val applied = runCatching {
             val editorField = TextView::class.java.getDeclaredField("mEditor")
             editorField.isAccessible = true

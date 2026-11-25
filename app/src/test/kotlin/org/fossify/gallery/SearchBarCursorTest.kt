@@ -60,6 +60,15 @@ class SearchBarCursorTest {
     }
 
     @Test
+    fun cursorThemingUsesPublicApiFromApi29() {
+        val helper = locateAppFile("src/main/kotlin/org/fossify/gallery/extensions/EditTextCursor.kt").readText()
+        assertTrue(
+            "setTextCursorDrawable must be used from API 29; hidden-field reflection is blocked on modern Android",
+            helper.contains("Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q") && helper.contains("textCursorDrawable = cursor"),
+        )
+    }
+
+    @Test
     fun appLayoutsNeverUseNullCursorDrawable() {
         val layoutDir = locateAppFile("src/main/res/layout")
         val offenders = layoutDir.walkTopDown().filter { it.isFile && it.extension == "xml" }
