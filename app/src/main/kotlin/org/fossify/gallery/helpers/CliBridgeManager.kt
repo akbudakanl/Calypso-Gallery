@@ -201,11 +201,26 @@ object CliBridgeManager {
      * archived vault is activated in place: its bridge stays in CLI/Archived but must
      * still be the bridge the CLI selects automatically.
      */
-    fun markActiveForVaultPath(context: Context, vaultRoot: File): Boolean {
-        val bridge = findBridgeForVault(context, vaultRoot, bridges(context, includeArchived = true))
-            ?: return false
+    fun markActiveForVaultPath(context: Context, vaultRoot: File, bridgeId: String = ""): Boolean {
+        val candidates = bridges(context, includeArchived = true)
+        val bridge = if (bridgeId.isNotEmpty()) {
+            candidates.firstOrNull { it.vaultId.equals(bridgeId, ignoreCase = true) }
+        } else {
+            findBridgeForVault(context, vaultRoot, candidates)
+        } ?: return false
         setActiveFor(context, bridge.fingerprint, preferred = bridge.dir)
         return true
+    }
+
+    /** Recovers the archived bridge id for entries discovered from disk (no prefs record). */
+    fun archivedBridgeIdFor(context: Context, archivedVaultRoot: File): String {
+        val header = runCatching { File(archivedVaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
+            ?: return ""
+        return bridges(context, includeArchived = true).firstOrNull { bridge ->
+            bridge.dir.parentFile == archiveRoot(context) &&
+                runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
+                    .getOrNull()?.contentEquals(header) == true
+        }?.vaultId ?: ""
     }
 
     /**
@@ -267,19 +282,19 @@ object CliBridgeManager {
         if (children.isEmpty()) runCatching { dir.delete() }
     }
 
-    fun moveToArchive(context: Context, vaultRoot: File): Boolean {
+    fun moveToArchive(context: Context, vaultRoot: File): Bridge? {
         val bridge = bridges(context).firstOrNull {
             it.sourcePath.equals(vaultRoot.absolutePath, ignoreCase = true)
-        } ?: return true
+        } ?: return null
         val moved = moveFor(context, bridge.fingerprint, root(context), archiveRoot(context))
+        if (!moved) return null
         // While archived, the bridge is discoverable by the CLI but is not the
         // automatically selected one (the app clears the active vault on archival).
-        bridges(context, includeArchived = true)
+        return bridges(context, includeArchived = true)
             .firstOrNull {
                 it.fingerprint.equals(bridge.fingerprint, ignoreCase = true) &&
                     it.dir.parentFile == archiveRoot(context)
-            }?.let { writeMarker(it, active = false) }
-        return moved
+            }?.also { writeMarker(it, active = false) }
     }
 
     /**
@@ -288,16 +303,22 @@ object CliBridgeManager {
      * alone: another vault may have been created at the original path while this one was
      * archived, so a path can legitimately belong to two different bridges.
      */
-    fun restoreFromArchive(context: Context, vaultRoot: File): Boolean {
+    fun restoreFromArchive(context: Context, vaultRoot: File, bridgeId: String = ""): Boolean {
         val archived = bridges(context, includeArchived = true)
             .filter { it.dir.parentFile == archiveRoot(context) }
         if (archived.isEmpty()) return true
 
-        val header = runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
-        var matches = if (header != null) archived.filter { bridge ->
-            runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
-                .getOrNull()?.contentEquals(header) == true
+        // The id recorded at archive time is exact; use it whenever available.
+        var matches = if (bridgeId.isNotEmpty()) {
+            archived.filter { it.vaultId.equals(bridgeId, ignoreCase = true) }
         } else emptyList()
+        val header = runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
+        if (matches.isEmpty() && header != null) {
+            matches = archived.filter { bridge ->
+                runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
+                    .getOrNull()?.contentEquals(header) == true
+            }
+        }
         if (matches.isEmpty()) {
             findBridgeForVault(context, vaultRoot, archived)?.let { matches = listOf(it) }
         }

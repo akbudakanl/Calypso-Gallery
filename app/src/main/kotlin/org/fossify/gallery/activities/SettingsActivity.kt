@@ -1755,7 +1755,7 @@ class SettingsActivity : SimpleActivity() {
     private fun setupUnarchiveVault() {
         binding.settingsUnarchiveVaultHolder.setOnClickListener {
             val entry = VaultArchiveManager.activeArchivedEntry(this) ?: return@setOnClickListener
-            if (!VaultArchiveManager.canUnarchive(entry)) {
+            if (!VaultArchiveManager.canUnarchive(this, entry)) {
                 VaultNoticeDialog(
                     activity = this,
                     title = getString(R.string.unarchive_vault),

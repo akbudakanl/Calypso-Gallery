@@ -73,7 +73,7 @@ class CliBridgeCleanupTest {
         ).readText()
         assertTrue(
             "Unarchive must restore the bridge after moving the vault",
-            archiveManager.contains("CliBridgeManager.restoreFromArchive(context, target)")
+            archiveManager.contains("CliBridgeManager.restoreFromArchive(context, target, entry.bridgeId.orEmpty())")
         )
         val activation = archiveManager.substringAfter("fun activateArchivedVault(")
         assertTrue(
@@ -99,6 +99,19 @@ class CliBridgeCleanupTest {
         assertTrue(
             "All bridges of the vault must be moved back",
             restoreBody.contains("matches.forEach")
+        )
+        assertTrue(
+            "The recorded bridge id must take precedence over paths",
+            restoreBody.contains("it.vaultId.equals(bridgeId, ignoreCase = true)")
+        )
+        assertTrue(
+            "Archived entries must remember their bridge id",
+            archiveManager.contains("entry.copy(bridgeId = archivedBridge.vaultId)") &&
+                archiveManager.contains("bridgeId = CliBridgeManager.archivedBridgeIdFor(context, dir)")
+        )
+        assertTrue(
+            "Disk-discovered entries must still be activatable",
+            archiveManager.contains("archivedEntries(context).firstOrNull")
         )
     }
 

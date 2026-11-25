@@ -109,12 +109,18 @@ object VaultArchiveManager {
         }
 
         runCatching { File(destination, ARCHIVE_INFO_FILE).writeText(infoText) }
-        CliBridgeManager.moveToArchive(context, source)
+        val archivedBridge = CliBridgeManager.moveToArchive(context, source)
+        val recorded = if (archivedBridge != null) entry.copy(bridgeId = archivedBridge.vaultId) else entry
+        if (archivedBridge != null) {
+            context.config.archivedVaults = ArrayList(
+                context.config.archivedVaults.map { if (it.id == id) recorded else it }
+            )
+        }
         context.config.vaultRootPath = ""
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""
         CryptoManager.clearBiometricKey(context)
-        return entry
+        return recorded
     }
 
     data class ArchivedEntry(val vault: ArchivedVault, val dateKnown: Boolean)
@@ -128,7 +134,12 @@ object VaultArchiveManager {
             if (stored.containsKey(dir.name)) return@forEach
             val info = File(dir, ARCHIVE_INFO_FILE)
             val date = if (info.isFile) info.lastModified() else 0L
-            stored[dir.name] = ArchivedVault(dir.name, dir.absolutePath, date)
+            stored[dir.name] = ArchivedVault(
+                dir.name,
+                dir.absolutePath,
+                date,
+                bridgeId = CliBridgeManager.archivedBridgeIdFor(context, dir),
+            )
         }
 
         return stored.values
@@ -145,25 +156,42 @@ object VaultArchiveManager {
 
     enum class UnarchiveResult { OK, BLOCKED, FAILED }
 
-    /** Original location recorded at archive time, or the default location after a reinstall. */
-    fun restoreTarget(entry: ArchivedVault): File {
-        return if (entry.originalPath.isNotEmpty()) File(entry.originalPath) else CryptoManager.getDefaultVaultRoot()
+    /**
+     * Original location recorded at archive time. For entries discovered from disk without
+     * that record, the archived bridge's source path is the next best source of truth.
+     */
+    fun restoreTarget(context: Context, entry: ArchivedVault): File {
+        if (entry.originalPath.isNotEmpty()) return File(entry.originalPath)
+        val bridgeId = entry.bridgeId.orEmpty()
+        if (bridgeId.isNotEmpty()) {
+            val sourcePath = CliBridgeManager.bridges(context, includeArchived = true)
+                .firstOrNull { it.vaultId.equals(bridgeId, ignoreCase = true) }
+                ?.sourcePath
+            if (!sourcePath.isNullOrEmpty()) return File(sourcePath)
+        }
+        return CryptoManager.getDefaultVaultRoot()
     }
 
     fun activeArchivedEntry(context: Context): ArchivedVault? {
         val path = context.config.vaultRootPath
         if (path.isEmpty()) return null
-        return context.config.archivedVaults.firstOrNull { it.path.equals(path, ignoreCase = true) }
+        val fromPrefs = context.config.archivedVaults.firstOrNull { it.path.equals(path, ignoreCase = true) }
+        if (fromPrefs != null) return fromPrefs
+        // Entries discovered from disk after a reinstall are not in prefs; without this
+        // fallback the "Unarchive vault" row silently does nothing.
+        return archivedEntries(context).firstOrNull {
+            it.vault.path.equals(path, ignoreCase = true)
+        }?.vault
     }
 
     /**
      * Unarchive is a move back to the recorded original location. It is blocked when that
      * location already holds another vault — no swap, no overwrite (ADR 0007).
      */
-    fun canUnarchive(entry: ArchivedVault): Boolean {
+    fun canUnarchive(context: Context, entry: ArchivedVault): Boolean {
         val source = File(entry.path)
         if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return false
-        val target = restoreTarget(entry)
+        val target = restoreTarget(context, entry)
         if (source.absolutePath.equals(target.absolutePath, ignoreCase = true)) return true
         return !target.exists() || !CryptoManager.hasValidVaultHeader(target)
     }
@@ -173,7 +201,7 @@ object VaultArchiveManager {
         val source = File(entry.path)
         if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return UnarchiveResult.FAILED
 
-        val target = restoreTarget(entry)
+        val target = restoreTarget(context, entry)
         val alreadyThere = source.absolutePath.equals(target.absolutePath, ignoreCase = true)
         if (!alreadyThere && target.exists() && CryptoManager.hasValidVaultHeader(target)) {
             return UnarchiveResult.BLOCKED
@@ -183,7 +211,7 @@ object VaultArchiveManager {
         val entries = ArrayList(context.config.archivedVaults)
         entries.removeAll { it.id == entry.id }
         context.config.archivedVaults = entries
-        CliBridgeManager.restoreFromArchive(context, target)
+        CliBridgeManager.restoreFromArchive(context, target, entry.bridgeId.orEmpty())
         context.config.vaultRootPath = target.absolutePath
         context.config.isVaultBiometricEnabled = false
         context.config.vaultBiometricWrappedBundle = ""
@@ -198,7 +226,7 @@ object VaultArchiveManager {
         // The vault stays in the archive, so its bridge must stay in CLI/Archived too.
         // It is still the active vault now, hence the active marker moves to that bridge.
         // Never call restoreFromArchive() here: activation is not an unarchive.
-        if (!CliBridgeManager.markActiveForVaultPath(context, File(entry.path)) &&
+        if (!CliBridgeManager.markActiveForVaultPath(context, source, entry.bridgeId.orEmpty()) &&
             entry.originalPath.isNotEmpty()
         ) {
             CliBridgeManager.markActiveForVaultPath(context, File(entry.originalPath))
