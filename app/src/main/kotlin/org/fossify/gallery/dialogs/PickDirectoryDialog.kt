@@ -257,6 +257,29 @@ class PickDirectoryDialog(
         )
     }
 
+    /**
+     * A real folder that contains no displayable media (only .txt, etc.) is "empty" for the
+     * gallery as well, even if a stale DB entry still claims an old media count.
+     */
+    private fun hasDisplayableMedia(folderPath: String): Boolean {
+        if (folderPath.isEmpty() ||
+            folderPath == FAVORITES ||
+            folderPath == RECYCLE_BIN ||
+            folderPath.isVirtualAlbumPath() ||
+            CryptoManager.isEncryptedFolderPath(activity, folderPath) ||
+            activity.isEncryptedVaultAlbum(folderPath) ||
+            CryptoManager.isVaultRecycleBinPath(activity, folderPath)
+        ) {
+            return true
+        }
+        val folder = File(folderPath)
+        if (!folder.exists() || !folder.isDirectory) return false
+        val showHiddenFiles = activity.config.shouldShowHidden
+        return folder.listFiles()?.any { file ->
+            file.isFile && file.path.isMediaFile() && (showHiddenFiles || !file.name.startsWith('.'))
+        } == true
+    }
+
     private fun fetchDirectories(forceShowHiddenAndExcluded: Boolean) {
         val isEncryptedMode = CopyMovePolicy.isEncryptedTargetMode(effectiveMode)
         val ignoreMediaFilter = CopyMovePolicy.shouldIgnoreMediaFilterForPicker(isPickingCopyMoveDestination)
@@ -359,6 +382,14 @@ class PickDirectoryDialog(
                             }
                         }
                     }
+                }
+            }
+
+            if (!isEncryptedMode) {
+                // Cached/no-media/included folder entries can be stale or empty. Drop every real
+                // folder that currently has no media file before it reaches the destination list.
+                allDirs.removeAll { dir ->
+                    dir.path != FAVORITES && !dir.isRecycleBin() && !hasDisplayableMedia(dir.path)
                 }
             }
 
@@ -487,6 +518,9 @@ class PickDirectoryDialog(
                 val folder = File(includedPath)
                 if (folder.exists() && folder.isDirectory) {
                     val mediaFiles = folder.listFiles()?.filter { f -> f.isFile && f.path.isMediaFile() }.orEmpty()
+                    if (mediaFiles.isEmpty()) {
+                        continue
+                    }
                     val firstTmb = mediaFiles.firstOrNull()?.absolutePath ?: ""
                     liveDistinctKeys.add(distinctKey)
                     liveDirs.add(
@@ -706,7 +740,14 @@ class PickDirectoryDialog(
                     return@runOnUiThread
                 }
                 checkPlaceholderVisibility(dirs)
-                val adapter = DirectoryAdapter(activity, dirs.clone() as ArrayList<Directory>, null, binding.directoriesGrid, true) {
+                val adapter = DirectoryAdapter(
+                    activity,
+                    dirs.clone() as ArrayList<Directory>,
+                    null,
+                    binding.directoriesGrid,
+                    true,
+                    showEmptyFolderIcon = isPickingCopyMoveDestination || effectiveMode != PickDirectoryMode.DEFAULT
+                ) {
                     val clickedDir = it as Directory
                     val path = clickedDir.path
                     if (!isDirectoryAllowedForMode(clickedDir)) {

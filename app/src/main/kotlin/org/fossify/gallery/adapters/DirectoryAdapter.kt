@@ -180,6 +180,7 @@ class DirectoryAdapter(
     recyclerView: MyRecyclerView,
     val isPickIntent: Boolean,
     val swipeRefreshLayout: SwipeRefreshLayout? = null,
+    val showEmptyFolderIcon: Boolean = false,
     itemClick: (Any) -> Unit
 ) :
     MyRecyclerViewAdapter(activity, recyclerView, itemClick), ItemTouchHelperContract,
@@ -1925,6 +1926,15 @@ class DirectoryAdapter(
                 if (!activity.isDestroyed) {
                     Glide.with(activity.applicationContext).clear(dirThumbnail)
                 }
+            } else if (showEmptyFolderIcon && directory.tmb.isEmpty()) {
+                // Empty folders have no thumbnail, so Glide would fail into the warning icon.
+                // Use the same folder glyph as Settings > File operations instead.
+                dirThumbnail.setTag(R.id.dir_thumbnail, null)
+                if (!activity.isDestroyed) {
+                    Glide.with(activity.applicationContext).clear(dirThumbnail)
+                }
+                dirThumbnail.scaleType = ImageView.ScaleType.CENTER
+                dirThumbnail.setImageDrawable(AppCompatResources.getDrawable(activity, R.drawable.ic_empty_folder_picker))
             } else {
                 val roundedCorners = when {
                     isListViewType -> ROUNDED_CORNERS_SMALL
