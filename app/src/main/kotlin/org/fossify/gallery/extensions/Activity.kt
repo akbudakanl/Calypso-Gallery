@@ -2594,22 +2594,52 @@ fun BaseSimpleActivity.tryDecryptFoldersTo(
     }
 }
 
+private fun BaseSimpleActivity.openPhysicalDecryptParentPicker(
+    sourcePath: String,
+    onPicked: (destinationPath: String) -> Unit
+) {
+    val pickerShowHidden = CopyMovePolicy.shouldShowHiddenMediaInPicker(
+        mode = PickDirectoryMode.DECRYPT_MOVE,
+        showHiddenMedia = config.showHiddenMedia,
+        shouldShowHidden = config.shouldShowHidden
+    )
+    val rawDefaultPath = getDefaultCopyDestinationPath(pickerShowHidden, sourcePath)
+    val defaultPath = if (
+        CryptoManager.isEncryptedFolderPath(this, rawDefaultPath) ||
+        isEncryptedVaultAlbum(rawDefaultPath)
+    ) {
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)?.absolutePath
+            ?: internalStoragePath
+    } else {
+        rawDefaultPath
+    }
+    FilePickerDialog(
+        this,
+        defaultPath,
+        false,
+        pickerShowHidden,
+        true,
+        true
+    ) { picked ->
+        if (CryptoManager.isEncryptedFolderPath(this, picked) || isEncryptedVaultAlbum(picked)) {
+            toast(R.string.cannot_target_encrypted_album)
+            return@FilePickerDialog
+        }
+        config.lastCopyPath = picked
+        handleLockedFolderOpening(picked) { success ->
+            if (success) {
+                onPicked(picked)
+            }
+        }
+    }
+}
+
 private fun BaseSimpleActivity.openDecryptFolderPickerWithConfirmation(
     folderPaths: List<String>,
     callback: (destinationPath: String) -> Unit
 ) {
     val source = if (folderPaths.size == 1) folderPaths.first() else ""
-    PickDirectoryDialog(
-        activity = this,
-        sourcePath = source,
-        showOtherFolderButton = true,
-        showFavoritesBin = false,
-        isPickingCopyMoveDestination = true,
-        isPickingFolderForWidget = false,
-        isCopyOperation = false,
-        isHiddenCopySource = false,
-        mode = PickDirectoryMode.DECRYPT_MOVE
-    ) { destination ->
+    openPhysicalDecryptParentPicker(source) { destination ->
         val pickedDir = CryptoManager.resolvePickedPathToFile(this, destination) ?: File(destination)
         val resolved = folderPaths.associateWith { path ->
             val folder = File(path)
@@ -2671,17 +2701,7 @@ private fun BaseSimpleActivity.pickDecryptDestinationAndExecute(
     callback: (destinationPath: String) -> Unit
 ) {
     val source = if (folderPaths.size == 1) folderPaths.first() else ""
-    PickDirectoryDialog(
-        activity = this,
-        sourcePath = source,
-        showOtherFolderButton = true,
-        showFavoritesBin = false,
-        isPickingCopyMoveDestination = true,
-        isPickingFolderForWidget = false,
-        isCopyOperation = false,
-        isHiddenCopySource = false,
-        mode = PickDirectoryMode.DECRYPT_MOVE
-    ) { destination ->
+    openPhysicalDecryptParentPicker(source) { destination ->
         val pickedDir = CryptoManager.resolvePickedPathToFile(this, destination) ?: File(destination)
         val resolved = folderPaths.associateWith { path ->
             val existingOrigin = if (overrideAll) null else originTargets[path]

@@ -31,6 +31,7 @@ class FileOperationService : Service() {
 
     companion object {
         private const val TAG = "FileOperationService"
+        internal const val ANDROID_NOTIFICATIONS_SUSPENDED = true
         internal const val CHANNEL_ID = "cipher_file_operations_v2"
         private const val LEGACY_CHANNEL_ID = "cipher_file_operations"
         private const val NOTIFICATION_ID = 4103
@@ -45,6 +46,9 @@ class FileOperationService : Service() {
 
         @Volatile
         private var activeInstance: FileOperationService? = null
+
+        @Volatile
+        private var suspendedWakeLock: PowerManager.WakeLock? = null
 
         @Volatile
         private var currentLabel: String = ""
@@ -64,6 +68,25 @@ class FileOperationService : Service() {
         @Volatile
         private var lastNotifyElapsedMs = 0L
 
+        private fun acquireSuspendedWakeLock(context: Context) {
+            runCatching {
+                val lock = suspendedWakeLock ?: run {
+                    val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "cipher:file_operation").apply {
+                        setReferenceCounted(false)
+                    }.also { suspendedWakeLock = it }
+                }
+                lock.acquire(WAKE_LOCK_TIMEOUT_MS)
+            }
+        }
+
+        private fun releaseSuspendedWakeLock() {
+            runCatching {
+                suspendedWakeLock?.let { if (it.isHeld) it.release() }
+            }
+            suspendedWakeLock = null
+        }
+
         fun start(context: Context, label: String, showProgress: Boolean = true) {
             val appContext = context.applicationContext
             shouldRun = true
@@ -73,6 +96,10 @@ class FileOperationService : Service() {
             progressMax = 0
             progressText = null
             lastNotifyElapsedMs = 0L
+            if (ANDROID_NOTIFICATIONS_SUSPENDED) {
+                acquireSuspendedWakeLock(appContext)
+                return
+            }
             val instance = activeInstance
             if (instance != null && instance.foregroundStarted) {
                 instance.refreshNotification()
@@ -95,7 +122,7 @@ class FileOperationService : Service() {
 
         fun updateStatus(context: Context, label: String) {
             currentLabel = label
-            if (!shouldRun) return
+            if (ANDROID_NOTIFICATIONS_SUSPENDED || !shouldRun) return
             val instance = activeInstance
             if (instance != null && instance.foregroundStarted) {
                 instance.refreshNotification()
@@ -107,7 +134,7 @@ class FileOperationService : Service() {
         /** Re-renders the notification when the app moves between foreground and background. */
         fun refreshVisibility(context: Context) {
             lastNotifyElapsedMs = 0L
-            if (!shouldRun) return
+            if (ANDROID_NOTIFICATIONS_SUSPENDED || !shouldRun) return
             val instance = activeInstance
             if (instance != null && instance.foregroundStarted) {
                 instance.refreshNotification()
@@ -118,7 +145,7 @@ class FileOperationService : Service() {
 
         /** Publishes progress for the currently registered operation. */
         fun updateProgress(context: Context, current: Int, max: Int, text: String?) {
-            if (!shouldRun || !progressEnabled) return
+            if (ANDROID_NOTIFICATIONS_SUSPENDED || !shouldRun || !progressEnabled) return
             progressCurrent = current.coerceAtLeast(0)
             progressMax = max.coerceAtLeast(0)
             // Defense in depth: only the anonymous "n / total (x%)" summary may reach a
@@ -142,6 +169,7 @@ class FileOperationService : Service() {
         fun stop(context: Context) {
             val appContext = context.applicationContext
             shouldRun = false
+            releaseSuspendedWakeLock()
             val instance = activeInstance
             if (instance != null) {
                 runCatching { instance.stopSelfSafe() }

@@ -5,6 +5,7 @@ import org.fossify.commons.extensions.hasPermission
 import org.fossify.commons.helpers.PERMISSION_POST_NOTIFICATIONS
 import org.fossify.commons.helpers.isTiramisuPlus
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.operations.FileOperationService
 
 /**
  * Pure formatting helpers shared by the progress dialog and the foreground-service notification.
@@ -56,6 +57,10 @@ object OperationProgressFormatter {
  * notification is actually visible when the user backgrounds the app.
  */
 fun BaseSimpleActivity.ensureNotificationPermissionThenRun(onReady: (notificationsAllowed: Boolean) -> Unit) {
+    if (FileOperationService.ANDROID_NOTIFICATIONS_SUSPENDED) {
+        onReady(false)
+        return
+    }
     if (!isTiramisuPlus() || hasPermission(PERMISSION_POST_NOTIFICATIONS)) {
         onReady(true)
         return

@@ -2,7 +2,6 @@ package org.fossify.gallery.activities
 
 import android.app.Activity
 import android.app.KeyguardManager
-import android.app.NotificationManager
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,10 +10,8 @@ import android.content.ClipboardManager
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.ColorStateList
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
@@ -54,7 +51,6 @@ import org.fossify.gallery.databinding.ActivitySettingsBinding
 import org.fossify.gallery.dialogs.*
 import org.fossify.gallery.extensions.*
 import org.fossify.gallery.helpers.*
-import org.fossify.gallery.helpers.operations.FileOperationService
 import org.fossify.gallery.models.AlbumCover
 import java.io.File
 import java.io.InputStream
@@ -136,15 +132,6 @@ class SettingsActivity : SimpleActivity() {
                 groups = listOf(
                     binding.settingsApplicationGeneralCard to binding.settingsApplicationGeneralEyebrow,
                     binding.settingsApplicationFoldersCard to binding.settingsApplicationFoldersEyebrow,
-                ),
-            ),
-            CategorySpec(
-                key = CATEGORY_NOTIFICATIONS,
-                titleRes = R.string.notifications_settings,
-                iconRes = R.drawable.ic_section_notifications,
-                container = binding.settingsCategoryNotifications,
-                groups = listOf(
-                    binding.settingsNotificationsCard to binding.settingsNotificationsEyebrow,
                 ),
             ),
             CategorySpec(
@@ -401,7 +388,6 @@ class SettingsActivity : SimpleActivity() {
             setupShowRecycleBin()
             setupShowRecycleBinLast()
             setupEmptyRecycleBin()
-            setupNotifications()
             updateTextColors(binding.settingsHolder)
             setupClearCache()
             setupExportFavorites()
@@ -741,7 +727,6 @@ class SettingsActivity : SimpleActivity() {
                 ),
             )
             addCategoryRow(binding.settingsHubGeneralCard, CATEGORY_APPLICATION)
-            addCategoryRow(binding.settingsHubGeneralCard, CATEGORY_NOTIFICATIONS)
 
             addCategoryRow(binding.settingsHubMediaCard, CATEGORY_VIEWER)
             addCategoryRow(binding.settingsHubMediaCard, CATEGORY_VIDEO)
@@ -2229,145 +2214,6 @@ class SettingsActivity : SimpleActivity() {
             binding.settingsKeepScreenOnFullscreenPhotos.toggle()
             config.keepScreenOn = binding.settingsKeepScreenOnFullscreenPhotos.isChecked
         }
-    }
-
-    private fun setupNotifications() {
-        fun areSystemNotificationsBlocked(): Boolean {
-            if (isTiramisuPlus() && !hasPermission(PERMISSION_POST_NOTIFICATIONS)) {
-                return true
-            }
-            val nm = getSystemService(NotificationManager::class.java) ?: return false
-            if (!nm.areNotificationsEnabled()) {
-                return true
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = nm.getNotificationChannel(FileOperationService.CHANNEL_ID)
-                if (channel != null && channel.importance == NotificationManager.IMPORTANCE_NONE) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        fun openAppNotificationSettings() {
-            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                    putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                }
-            } else {
-                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", packageName, null)
-                }
-            }
-            try {
-                startActivity(intent)
-            } catch (_: Exception) {
-                runCatching {
-                    startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                            data = Uri.fromParts("package", packageName, null)
-                        }
-                    )
-                }
-            }
-        }
-
-        fun refreshNotificationPermissionRow() {
-            val needsPermission = areSystemNotificationsBlocked()
-            binding.settingsNotificationPermissionHolder.isVisible = needsPermission
-            binding.settingsNotificationPermissionAction.setText(
-                if (needsPermission) R.string.notification_permission_request else R.string.notification_permission_granted
-            )
-        }
-
-        fun requestNotificationAccess() {
-            if (isTiramisuPlus() && !hasPermission(PERMISSION_POST_NOTIFICATIONS)) {
-                config.wasNotificationPermissionAsked = true
-                handleNotificationPermission { granted ->
-                    refreshNotificationPermissionRow()
-                    if (!granted) {
-                        openAppNotificationSettings()
-                    }
-                }
-            } else if (areSystemNotificationsBlocked()) {
-                openAppNotificationSettings()
-            }
-        }
-
-        refreshNotificationPermissionRow()
-        binding.settingsNotificationPermissionHolder.setOnClickListener {
-            requestNotificationAccess()
-        }
-
-        val categoryRows = listOf(
-            binding.settingsNotifyCopyMoveHolder to binding.settingsNotifyCopyMove,
-            binding.settingsNotifyCryptoHolder to binding.settingsNotifyCrypto,
-            binding.settingsNotifyDeleteHolder to binding.settingsNotifyDelete,
-            binding.settingsNotifyVirtualAlbumHolder to binding.settingsNotifyVirtualAlbum
-        )
-
-        fun updateCategoryRowsState(enabled: Boolean) {
-            val rowAlpha = if (enabled) 1f else 0.45f
-            categoryRows.forEach { (holder, switch) ->
-                holder.alpha = rowAlpha
-                holder.isEnabled = enabled
-                holder.isClickable = enabled
-                switch.isEnabled = enabled
-            }
-        }
-
-        fun bindSwitch(
-            holder: android.view.View,
-            switch: org.fossify.commons.views.MyMaterialSwitch,
-            getValue: () -> Boolean,
-            setValue: (Boolean) -> Unit
-        ) {
-            switch.isChecked = getValue()
-            holder.setOnClickListener {
-                if (!holder.isEnabled) return@setOnClickListener
-                switch.toggle()
-                setValue(switch.isChecked)
-            }
-        }
-
-        bindSwitch(
-            binding.settingsNotificationsEnabledHolder,
-            binding.settingsNotificationsEnabled,
-            { config.notificationsEnabled },
-            {
-                config.notificationsEnabled = it
-                updateCategoryRowsState(it)
-                if (it && areSystemNotificationsBlocked()) {
-                    requestNotificationAccess()
-                }
-            }
-        )
-        bindSwitch(
-            binding.settingsNotifyCopyMoveHolder,
-            binding.settingsNotifyCopyMove,
-            { config.notifyCopyMove },
-            { config.notifyCopyMove = it }
-        )
-        bindSwitch(
-            binding.settingsNotifyCryptoHolder,
-            binding.settingsNotifyCrypto,
-            { config.notifyCrypto },
-            { config.notifyCrypto = it }
-        )
-        bindSwitch(
-            binding.settingsNotifyDeleteHolder,
-            binding.settingsNotifyDelete,
-            { config.notifyDelete },
-            { config.notifyDelete = it }
-        )
-        bindSwitch(
-            binding.settingsNotifyVirtualAlbumHolder,
-            binding.settingsNotifyVirtualAlbum,
-            { config.notifyVirtualAlbum },
-            { config.notifyVirtualAlbum = it }
-        )
-
-        updateCategoryRowsState(config.notificationsEnabled)
     }
 
     private fun setupAllowPhotoGestures() {
