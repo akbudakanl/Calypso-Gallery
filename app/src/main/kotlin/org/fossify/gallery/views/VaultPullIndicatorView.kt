@@ -101,6 +101,16 @@ class VaultPullIndicatorView @JvmOverloads constructor(
             }
         }
 
+    /** 0..1 calm breathing oscillation while armed and held (ambient pulse, no size pop). */
+    var breathePhase: Float = 0f
+        set(value) {
+            val clamped = value.coerceIn(0f, 1f)
+            if (field != clamped) {
+                field = clamped
+                invalidate()
+            }
+        }
+
     private val shaderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val discFillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val discRimPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -137,6 +147,7 @@ class VaultPullIndicatorView @JvmOverloads constructor(
         slitToneBoost = 0f
         toneProgress = 0f
         auraProgress = 0f
+        breathePhase = 0f
         alpha = 1f
         invalidate()
     }
@@ -246,7 +257,7 @@ class VaultPullIndicatorView @JvmOverloads constructor(
     ) {
         val ea = auraProgress
         val discRadius = (DISC_RADIUS_DP * (0.86f + 0.14f * ea)) * density
-        val outerRadius = (AURA_RADIUS_DP * (0.76f + 0.24f * ea)) * density
+        val outerRadius = ((AURA_RADIUS_DP * (0.76f + 0.24f * ea)) + breathePhase * AURA_BREATHE_DP) * density
         if (outerRadius <= 1f) return
 
         val auraColor = VaultPullTonePalette.blendRgb(
@@ -254,8 +265,9 @@ class VaultPullIndicatorView @JvmOverloads constructor(
             pal.glowColor,
             0.55f + 0.45f * ea,
         )
-        val peakAlpha = pal.auraPeakAlpha * ea
-        val midAlpha = pal.auraMidAlpha * ea
+        val breatheBoost = if (pal.isLightBackground) 0.05f else 0.08f
+        val peakAlpha = (pal.auraPeakAlpha + breatheBoost * breathePhase) * ea
+        val midAlpha = (pal.auraMidAlpha + breatheBoost * 0.40f * breathePhase) * ea
 
         // Backlit radial aura radiating cleanly from behind the elevated surface disc
         val innerStop = ((discRadius * 0.72f) / outerRadius).coerceIn(0.15f, 0.55f)
@@ -281,7 +293,7 @@ class VaultPullIndicatorView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, discRadius, discFillPaint)
 
         // Delicate theme-tinted hairline rim around the disc
-        val rimAlpha = pal.rimAlpha * ea
+        val rimAlpha = (pal.rimAlpha + (if (pal.isLightBackground) 0.06f else 0.08f) * breathePhase) * ea
         discRimPaint.strokeWidth = DISC_RIM_STROKE_DP * density
         discRimPaint.color = VaultPullTonePalette.withAlpha(pal.glowColor, rimAlpha)
         canvas.drawCircle(cx, cy, discRadius, discRimPaint)
@@ -364,6 +376,7 @@ class VaultPullIndicatorView @JvmOverloads constructor(
         const val SLIT_BEAM_DEPTH_DP = 42f
         const val SLIT_THICKNESS_DP = 2f
         const val AURA_RADIUS_DP = 46f
+        const val AURA_BREATHE_DP = 4.5f
         const val TOP_MASK_HEIGHT_DP = 12f
     }
 }
