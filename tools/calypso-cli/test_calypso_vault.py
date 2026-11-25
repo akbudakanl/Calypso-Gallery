@@ -91,6 +91,24 @@ class TestCalypsoVaultCLI(unittest.TestCase):
     def tearDown(self):
         self.tmpdir.cleanup()
 
+    def test_find_vault_files_discovers_archived_bridge_header(self):
+        """An archived vault keeps its bridge in CLI/Archived; the CLI must still find it."""
+        bridge_root = self.root / cv.LOCAL_BRIDGE_DIR_NAME
+        regular = bridge_root / "a1b2c3d4"
+        archived = bridge_root / cv.CLI_BRIDGE_ARCHIVED_DIR_NAME / "e5f6a7b8"
+        for bridge_dir in (regular, archived):
+            bridge_dir.mkdir(parents=True, exist_ok=True)
+            create_test_vault_file(bridge_dir / cv.VAULT_HEADER_FILE_NAME, self.secret)
+
+        with mock.patch.object(cv, "get_desktop_dir", return_value=self.desktop), \
+                mock.patch.object(cv, "_external_mount_roots", return_value=[]), \
+                mock.patch.dict(os.environ, {"CALYPSO_BRIDGE_ROOT": str(bridge_root)}):
+            found = cv.find_vault_files()
+
+        resolved = {p.resolve() for p in found}
+        self.assertIn((regular / cv.VAULT_HEADER_FILE_NAME).resolve(), resolved)
+        self.assertIn((archived / cv.VAULT_HEADER_FILE_NAME).resolve(), resolved)
+
     def _make_encrypt_args(
         self,
         input_dir: Path,

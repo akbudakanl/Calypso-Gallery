@@ -191,7 +191,7 @@ Example:
 | **I changed my password** | Nothing to do. The bridge keeps the password from when it was created and the same encryption key, so it stays valid. Keep using the **old password** in the CLI. |
 | **Multiple vaults** | If exactly one is marked active it is selected automatically; otherwise a menu shows the vault paths. Selecting a non-active vault makes the import fail in the app. |
 | **Second bridge for the same vault** | Blocked with a "folder already exists" warning. |
-| **I archived the vault** | The bridge moves to `Calypso Gallery/CLI/Archived/<vault-id>/` and is hidden from the automatic flow. It returns when the vault is restored. |
+| **I archived the vault** | The bridge moves to `Calypso Gallery/CLI/Archived/<vault-id>/` and stays there as long as the vault is archived. The CLI discovers it there too, so you can keep encrypting files for it. It moves back to `Calypso Gallery/CLI/<vault-id>/` only when you unarchive the vault. |
 | **I deleted the vault** | The bridge is deleted too. |
 | **Backup / moving to another device** | Settings → **"Export encrypted vault"**. Only one option remains: the full vault. "Header only" has been removed. |
 | **"Folder busy"** | The CLI is still writing; wait for it to finish. |

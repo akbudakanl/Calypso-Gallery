@@ -193,7 +193,7 @@ Example:
 | **Looking for the phone in Finder** | Finder has no MTP support; use OpenMTP. |
 | **Multiple vaults** | If exactly one is marked active it is selected automatically; otherwise a menu shows the vault paths. Selecting a non-active vault makes the import fail in the app. |
 | **Second bridge for the same vault** | Blocked with a "folder already exists" warning. |
-| **I archived the vault** | The bridge moves to `CLI/Archived/<vault-id>/` and returns when the vault is restored. |
+| **I archived the vault** | The bridge moves to `CLI/Archived/<vault-id>/` and stays there as long as the vault is archived. The CLI discovers it there too, so you can keep encrypting files for it. It moves back to `CLI/<vault-id>/` only when you unarchive the vault. |
 | **I deleted the vault** | The bridge is deleted too. |
 | **Backup / moving to another device** | Settings → **"Export encrypted vault"**; only the full-vault option remains. |
 | **"Folder busy"** | The CLI is still writing; wait. |

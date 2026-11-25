@@ -317,14 +317,30 @@ else
 fi
 
 # ---- Copy the processed bridge back to the phone -------------------------------
-if [ -n "$BRIDGE_TEMP" ] && [ -n "$PHONE_CLI" ] && [ "$CLI_RC" -eq 0 ] && [ -n "$CALYPSO_BRIDGE_ROOT" ]; then
-    for bridge_dir in "$CALYPSO_BRIDGE_ROOT"/*; do
-        [ -d "$bridge_dir" ] || continue
-        if ! gio copy -r "$bridge_dir" "$PHONE_CLI/"; then
-            echo "[Phone] Could not copy a bridge back; copy it manually."
-            CLI_RC=1
+# Merge recursively so that CLI/Archived/<id>/ keeps its place on the phone
+# instead of being copied as a second top-level "Archived" folder.
+copy_bridge_tree() {
+    local src="$1" dst="$2" entry name
+    for entry in "$src"/*; do
+        [ -e "$entry" ] || continue
+        name="$(basename "$entry")"
+        if [ -d "$entry" ]; then
+            if gio list "$dst/$name" >/dev/null 2>&1; then
+                copy_bridge_tree "$entry" "$dst/$name" || return 1
+            else
+                gio copy -r "$entry" "$dst/" || return 1
+            fi
+        else
+            gio copy "$entry" "$dst/" || return 1
         fi
     done
+    return 0
+}
+if [ -n "$BRIDGE_TEMP" ] && [ -n "$PHONE_CLI" ] && [ "$CLI_RC" -eq 0 ] && [ -n "$CALYPSO_BRIDGE_ROOT" ]; then
+    if ! copy_bridge_tree "$CALYPSO_BRIDGE_ROOT" "$PHONE_CLI"; then
+        echo "[Phone] Could not copy a bridge back; copy it manually."
+        CLI_RC=1
+    fi
     rm -rf "$BRIDGE_TEMP"
 elif [ -n "$BRIDGE_TEMP" ]; then
     echo "[Phone] Temporary workspace kept at $BRIDGE_TEMP (copy failed or CLI error)."

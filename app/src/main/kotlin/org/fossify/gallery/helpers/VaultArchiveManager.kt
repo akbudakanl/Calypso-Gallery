@@ -196,10 +196,12 @@ object VaultArchiveManager {
         val source = File(entry.path)
         if (!source.exists() || !CryptoManager.hasValidVaultHeader(source)) return false
         CliBridgeManager.restoreFromArchive(context, source)
-        context.config.vaultRootPath = source.absolutePath
-        context.config.isVaultBiometricEnabled = false
-        context.config.vaultBiometricWrappedBundle = ""
-        CryptoManager.clearBiometricKey(context)
-        return true
+        // The vault stays in the archive, so its bridge must stay in CLI/Archived too.
+        // It is still the active vault now, hence the active marker moves to that bridge.
+        if (entry.originalPath.isNotEmpty()) {
+            CliBridgeManager.markActiveForVaultPath(context, File(entry.originalPath))
+        }
+        // In-place activation is a selection, not an unlock: no password prompt here.
+        return CryptoManager.selectVaultWithoutUnlock(context, source)
     }
 }

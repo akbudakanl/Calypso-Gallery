@@ -278,6 +278,37 @@ fun CryptoManager.setVaultRootLocation(context: Context, vaultDir: File) {
 }
 
 
+/**
+ * Registers an existing on-disk vault as the active one WITHOUT asking for or
+ * unlocking its password. Selecting a vault only needs its public header; the
+ * password is required later, when the vault is actually opened. Doing the KDF
+ * during selection would be pointless (and left a half-selected vault behind
+ * when the credential prompt was cancelled).
+ */
+fun CryptoManager.selectVaultWithoutUnlock(context: Context, vaultRoot: File): Boolean {
+    if (!hasValidVaultHeader(vaultRoot)) return false
+    setVaultRootLocation(context, vaultRoot)
+    val cfg = context.config
+    cfg.isHiddenPasswordProtectionOn = true
+    cfg.hiddenPasswordHash = "argon2id_aes256_gcm"
+    cfg.hiddenProtectionType = getVaultProtectionType(context) ?: PROTECTION_PASSWORD
+    readVaultKdfParams(context)?.let { params ->
+        cfg.lastCalibratedMemoryKb = params.memoryKb
+        cfg.lastCalibratedIterations = params.iterations
+    }
+    // PIN length is only known after a successful authentication.
+    cfg.showVaultPinDots = false
+    cfg.vaultPinLength = 0
+    // Biometric keys and legacy wrapped-key data belong to the previously selected
+    // vault; a header-based vault must never inherit them.
+    cfg.vaultWrappedKeyData = ""
+    cfg.isVaultBiometricEnabled = false
+    cfg.vaultBiometricWrappedBundle = ""
+    clearBiometricKey(context)
+    return true
+}
+
+
 fun CryptoManager.clearCachedVaultRoot() {
     cachedVaultRoot = null
     encryptedFolderCache.clear()
@@ -547,7 +578,8 @@ fun CryptoManager.deleteExistingVault(context: Context) {
         findVaultRoot(context)?.let { targets.add(it) }
     }
 
-    for (dir in targets.distinct()) {
+    val uniqueTargets = targets.distinct()
+    for (dir in uniqueTargets) {
         if (dir.exists()) {
             try {
                 dir.walkBottomUp().forEach { file ->
@@ -561,6 +593,11 @@ fun CryptoManager.deleteExistingVault(context: Context) {
             } catch (_: Exception) {}
         }
     }
+
+    // The CLI bridges are siblings of the vault root, not part of it. Remove the
+    // ones carrying a copy of this vault's header (including archived bridges)
+    // while the KEK fingerprint is still available, before the keys are cleared.
+    CliBridgeManager.deleteBridgesForVaultRoots(context, uniqueTargets)
 
     clearKeys(context)
     cachedVaultRoot = null

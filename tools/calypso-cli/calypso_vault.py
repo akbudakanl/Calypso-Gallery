@@ -50,6 +50,7 @@ APP_DIR_NAME = "Calypso Gallery"
 VAULT_DIR_NAME = "Secrets"
 VAULT_DIR_NAMES = (VAULT_DIR_NAME,)
 CLI_DIR_NAME = "CLI"
+CLI_BRIDGE_ARCHIVED_DIR_NAME = "Archived"
 LOCAL_BRIDGE_DIR_NAME = "Calypso CLI"
 CLI_BRIDGE_MARKER_FILE = "cli_bridge"
 VAULT_HEADER_FILE_NAME = "vault"
@@ -524,25 +525,33 @@ def find_vault_files() -> list[Path]:
     ])
     standalone_candidates = local_standalone + standalone_candidates
 
-    # CLI bridge folders: <root>/Calypso Gallery/CLI/<id>/vault and the
-    # local mirror <Desktop>/Calypso CLI/<id>/vault.
+    # CLI bridge folders: <root>/Calypso Gallery/CLI/<id>/vault, the archived
+    # copies in CLI/Archived/<id>/vault, and the local mirror <Desktop>/Calypso CLI/.
+    # An archived vault keeps its bridge inside CLI/Archived, so it stays usable
+    # here instead of being duplicated into the regular CLI folder.
+    def add_bridge_headers(base: Path):
+        try:
+            children = sorted(base.iterdir(), key=lambda p: p.name)
+        except Exception:
+            return
+        for child in children:
+            standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
+        try:
+            archived = base / CLI_BRIDGE_ARCHIVED_DIR_NAME
+            for child in sorted(archived.iterdir(), key=lambda p: p.name):
+                standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
+        except Exception:
+            pass
+
     env_root = os.environ.get("CALYPSO_BRIDGE_ROOT")
     discovery_bases = [desktop / LOCAL_BRIDGE_DIR_NAME]
     if env_root:
         discovery_bases.insert(0, Path(env_root).expanduser())
     for base in discovery_bases:
-        try:
-            for child in sorted(base.iterdir(), key=lambda p: p.name):
-                standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
-        except Exception:
-            pass
+        add_bridge_headers(base)
     for mount_root in _external_mount_roots():
         for cli_root in [mount_root / APP_DIR_NAME / CLI_DIR_NAME, mount_root / CLI_DIR_NAME]:
-            try:
-                for child in sorted(cli_root.iterdir(), key=lambda p: p.name):
-                    standalone_candidates.append(child / VAULT_HEADER_FILE_NAME)
-            except Exception:
-                pass
+            add_bridge_headers(cli_root)
 
     found: list[Path] = []
     seen: set[str] = set()

@@ -191,7 +191,7 @@ Normal kullanımda **hiçbir parametre gerekmez**. Gerekirse:
 | **Parolayı değiştirdim** | Hiçbir şey yapmanız gerekmez. Köprü, oluşturulduğu andaki parolayı ve aynı şifreleme anahtarını taşır; geçerli kalır. CLI'da **eski parolanızı** kullanın. |
 | **Birden fazla kasa** | Tam biri aktif işaretliyse otomatik seçilir; belirsizse menü çıkar (sadece kasa yolu). Aktif olmayan kasayı seçerseniz aktarım uygulama tarafından reddedilir. |
 | **Aynı kasa için ikinci köprü** | Engellenir; "klasör zaten mevcut" uyarısı döner. |
-| **Kasayı arşivledim** | Köprü `Calypso Gallery/CLI/Archived/<vault-id>/` içine taşınır ve otomatik akışta görünmez. Kasa geri açılınca eski yerine döner. |
+| **Kasayı arşivledim** | Köprü `Calypso Gallery/CLI/Archived/<vault-id>/` içine taşınır ve kasa arşivde kaldığı sürece orada kalır. CLI onu oradan da bulur, böylece şifrelemeye devam edebilirsiniz. Köprü yalnızca kasayı arşivden çıkarınca `Calypso Gallery/CLI/<vault-id>/` içine döner. |
 | **Kasayı sildim** | Köprü de silinir; geçici kopya bir sonraki turda oluşmaz. |
 | **Yedekleme / cihaz değiştirme** | Ayarlar → **"Şifreli kasayı dışa aktar"**. Artık yalnızca kasanın tamamı seçeneği vardır; "sadece başlık" kaldırılmıştır. |
 | **"Klasör meşgul"** | CLI hâlâ yazıyor; bitmesini bekleyin. |

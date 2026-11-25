@@ -193,7 +193,7 @@ Normal kullanımda **parametre gerekmez**:
 | **Finder'da telefonu arıyorum** | macOS Finder MTP göstermez; OpenMTP'yi kullanın. |
 | **Birden fazla kasa** | Tam biri aktif işaretliyse otomatik seçilir; belirsizse menü (sadece yol). Aktif olmayan kasayı seçerseniz aktarım reddedilir. |
 | **Aynı kasa için ikinci köprü** | "Klasör zaten mevcut" uyarısıyla engellenir. |
-| **Kasayı arşivledim** | Köprü `CLI/Archived/<vault-id>/` içine taşınır; kasa geri açılınca döner. |
+| **Kasayı arşivledim** | Köprü `CLI/Archived/<vault-id>/` içine taşınır ve kasa arşivde kaldığı sürece orada kalır. CLI onu oradan da bulur, böylece şifrelemeye devam edebilirsiniz. Köprü yalnızca kasayı arşivden çıkarınca `CLI/<vault-id>/` içine döner. |
 | **Kasayı sildim** | Köprü de silinir. |
 | **Yedekleme / cihaz değiştirme** | Ayarlar → **"Şifreli kasayı dışa aktar"**; yalnızca tam kasa seçeneği vardır. |
 | **"Klasör meşgul"** | CLI yazıyor; bitmesini bekleyin. |

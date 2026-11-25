@@ -3,7 +3,12 @@
 User-facing release notes for Calypso Gallery. The original Fossify Gallery release history is kept in [CHANGELOG.md](CHANGELOG.md).
 
 ## [Unreleased]
+### Fixed
 
+- **CLI bridge cleanup on vault deletion** — deleting an encrypted vault now also removes every CLI bridge folder that carries a copy of its header, including the bridges under `Calypso Gallery/CLI/Archived/`. The copied `.vault` header is securely wiped and empty bridge folders are pruned; bridges of other vaults are preserved.
+- **Archived bridges stay usable** — the CLI now discovers bridge headers in `CLI/Archived/<vault-id>/`, so an archived vault can keep receiving encrypted files. Its bridge stays in `CLI/Archived` while the vault is archived (never duplicated into `CLI/`), and moves back to `CLI/<vault-id>/` only when the vault is unarchived. The app's import flow and active-bridge markers follow the same rule.
+- **No password prompt just for selecting a vault** — choosing an existing or archived vault now only registers its path and public header metadata; the password is asked when the vault is actually opened. Backing out of a later prompt no longer leaves an inconsistent "selected but unlocked with another vault's credentials" state.
+- **Device-owner gate when switching vaults** — replacing an already active vault with another one (existing or archived) now requires the device credential / biometric, the same check used by archiving, and is skipped when the device has no secure lock. First-time selection into an empty vault slot stays ungated.
 
 ## [1.0.3] - 2026-11-25
 ### Fixed

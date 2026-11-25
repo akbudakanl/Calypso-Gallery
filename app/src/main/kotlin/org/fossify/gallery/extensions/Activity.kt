@@ -133,6 +133,7 @@ import org.fossify.gallery.helpers.findVaultRoot
 import org.fossify.gallery.helpers.getCipherRootDirectory
 import org.fossify.gallery.helpers.getDecryptedFolderName
 import org.fossify.gallery.helpers.getDefaultVaultRoot
+import org.fossify.gallery.helpers.hasExistingVault
 import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
 import org.fossify.gallery.helpers.getVaultProtectionType
 import org.fossify.gallery.helpers.inspectStandardFilenameConflict
@@ -155,6 +156,7 @@ import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.ShareMetadataSanitizationException
 import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.setVaultRootLocation
+import org.fossify.gallery.helpers.selectVaultWithoutUnlock
 import org.fossify.gallery.helpers.showSkippedIdenticalToast
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.verifyVaultOnDisk
@@ -409,15 +411,6 @@ private const val INVALID_ARCHIVE_ITEM_ID_BASE = 2000
 private const val DIALOG_MESSAGE_TEXT_SIZE_SP = 14f
 private const val VAULT_LOCATION_OPTION_STANDARD = 1
 private const val VAULT_LOCATION_OPTION_CUSTOM = 2
-
-private data class VaultConfigSnapshot(
-    val vaultRootPath: String,
-    val wrappedKeyData: String,
-    val hiddenPasswordHash: String,
-    val isHiddenPasswordProtectionOn: Boolean,
-    val isVaultBiometricEnabled: Boolean,
-    val biometricWrappedBundle: String
-)
 
 fun BaseSimpleActivity.hasVaultCreated(): Boolean {
     // The vault exists only while its .vault header is physically on disk. This is re-checked on
@@ -682,23 +675,15 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
 
         val entry = valid[id - ARCHIVED_ITEM_ID_BASE].vault
         // Activation happens in place; moving back is a separate, explicit "Unarchive vault" action.
-        if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
-            toast(R.string.archive_vault_failed)
-            onBack()
-            return
-        }
-        VaultSecurityDialog(
-            activity = this,
-            requiredHash = config.hiddenPasswordHash,
-            showTabIndex = SHOW_ALL_TABS,
-            minimalist = false,
-        ) { _, _, success ->
-            if (success) {
-                toast(R.string.archived_vault_activated)
-                onVaultReady()
-            } else {
-                showArchivedVaultPicker(onVaultReady, onBack)
+        requireDeviceOwnerForVaultSwitch(File(entry.path)) {
+            if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
+                toast(R.string.archive_vault_failed)
+                onBack()
+                return@requireDeviceOwnerForVaultSwitch
             }
+            // The vault is only selected here; its password is asked when it is opened.
+            toast(R.string.archived_vault_activated)
+            finishVaultSelection(onVaultReady)
         }
     }
 
@@ -839,11 +824,13 @@ private fun BaseSimpleActivity.pickExistingVaultAndUnlock(
                     onBack = onBack
                 )
             } else {
-                unlockCandidateVault(
-                    existingVault = existingVault,
-                    onVaultReady = onVaultReady,
-                    onBack = { pickExistingVaultAndUnlock(onVaultReady, onBack) }
-                )
+                requireDeviceOwnerForVaultSwitch(existingVault) {
+                    selectCandidateVault(
+                        existingVault = existingVault,
+                        onVaultReady = onVaultReady,
+                        onBack = { pickExistingVaultAndUnlock(onVaultReady, onBack) }
+                    )
+                }
             }
         },
         onCancelled = onBack
@@ -961,76 +948,64 @@ private fun BaseSimpleActivity.showVaultLocationNoticeDialog(messageResId: Int, 
     )
 }
 
-private fun BaseSimpleActivity.unlockCandidateVault(
+/**
+ * Switching the active vault changes the app's configuration, not vault contents, so it
+ * uses the same device-owner check as archiving. An empty vault slot (first setup) is free:
+ * selecting an existing or archived vault then needs no verification. Selecting the vault
+ * that is already active is also a no-op and needs none.
+ */
+private fun BaseSimpleActivity.requireDeviceOwnerForVaultSwitch(
+    targetVault: File?,
+    onConfirmed: () -> Unit
+) {
+    if (targetVault == null || !CryptoManager.hasExistingVault(this)) {
+        onConfirmed()
+        return
+    }
+    val activeRoot = CryptoManager.findVaultRoot(this)
+    val sameVault = activeRoot != null && runCatching {
+        activeRoot.canonicalPath.equals(targetVault.canonicalPath, ignoreCase = true)
+    }.getOrDefault(false)
+    if (sameVault) {
+        onConfirmed()
+        return
+    }
+    verifyDeviceOwner(onConfirmed)
+}
+
+private fun BaseSimpleActivity.selectCandidateVault(
     existingVault: File,
     onVaultReady: () -> Unit,
     onBack: () -> Unit
 ) {
     val currentActiveRoot = CryptoManager.findVaultRoot(this)?.absolutePath
-    if (currentActiveRoot != null && currentActiveRoot.equals(existingVault.absolutePath, ignoreCase = true) && CryptoManager.isVaultUnlocked) {
+    if (currentActiveRoot != null && currentActiveRoot.equals(existingVault.absolutePath, ignoreCase = true) &&
+        CryptoManager.isVaultUnlocked
+    ) {
         onVaultReady()
         return
     }
 
-    val snapshot = VaultConfigSnapshot(
-        vaultRootPath = config.vaultRootPath,
-        wrappedKeyData = config.vaultWrappedKeyData,
-        hiddenPasswordHash = config.hiddenPasswordHash,
-        isHiddenPasswordProtectionOn = config.isHiddenPasswordProtectionOn,
-        isVaultBiometricEnabled = config.isVaultBiometricEnabled,
-        biometricWrappedBundle = config.vaultBiometricWrappedBundle
-    )
-    val switchingToDifferentVault = snapshot.vaultRootPath.isNotEmpty() &&
-        !snapshot.vaultRootPath.trimEnd('/', '\\').equals(existingVault.absolutePath.trimEnd('/', '\\'), ignoreCase = true)
-
+    // Selecting a vault only registers its path and public header metadata. The password is
+    // asked when the vault is opened, so no credential prompt is shown at this point.
     CryptoManager.lockVault(this)
-    CryptoManager.setVaultRootLocation(this, existingVault)
-    if (switchingToDifferentVault) {
-        // Keep previous biometric bundle out of the unlock prompt for the candidate vault;
-        // restored in full if the user backs out before unlocking.
-        config.isVaultBiometricEnabled = false
+    if (!CryptoManager.selectVaultWithoutUnlock(this, existingVault)) {
+        onBack()
+        return
     }
-
     toast(getString(R.string.existing_vault_detected_at_location, humanizePath(existingVault.absolutePath)))
+    finishVaultSelection(onVaultReady)
+}
 
-    val initialType = CryptoManager.getVaultProtectionType(this)
-        ?: if (config.hiddenProtectionType == PROTECTION_PASSWORD) PROTECTION_PASSWORD else PROTECTION_PIN
-
-    VaultSecurityDialog(
-        activity = this,
-        requiredHash = "existing_vault",
-        showTabIndex = initialType,
-        minimalist = false,
-        onCancelCallback = {
-            CryptoManager.lockVault(this)
-            config.vaultRootPath = snapshot.vaultRootPath
-            config.vaultWrappedKeyData = snapshot.wrappedKeyData
-            config.hiddenPasswordHash = snapshot.hiddenPasswordHash
-            config.isHiddenPasswordProtectionOn = snapshot.isHiddenPasswordProtectionOn
-            config.isVaultBiometricEnabled = snapshot.isVaultBiometricEnabled
-            config.vaultBiometricWrappedBundle = snapshot.biometricWrappedBundle
-            if (snapshot.vaultRootPath.isNotEmpty()) {
-                CryptoManager.setVaultRootLocation(this, File(snapshot.vaultRootPath))
-            } else {
-                CryptoManager.clearCachedVaultRoot()
-            }
-            onBack()
-        }
-    ) { _, type, success ->
-        if (success) {
-            config.hiddenProtectionType = type
-            ensureBackgroundThread {
-                if (switchingToDifferentVault) {
-                    CryptoManager.clearBiometricKey(this)
-                    VirtualAlbumSyncManager.evictHiddenVirtualAlbumsFromDbCache(this)
-                    CryptoManager.clearAppImageCaches(this)
-                }
-                CryptoManager.getOrCreateDefaultHiddenAlbum(this)
-                VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
-                runOnUiThread {
-                    onVaultReady()
-                }
-            }
+/** Shared post-selection work; safe to run while the vault is still locked. */
+private fun BaseSimpleActivity.finishVaultSelection(onVaultReady: () -> Unit) {
+    ensureBackgroundThread {
+        VirtualAlbumSyncManager.evictHiddenVirtualAlbumsFromDbCache(this)
+        CryptoManager.clearAppImageCaches(this)
+        CryptoManager.getOrCreateDefaultHiddenAlbum(this)
+        VirtualAlbumSyncManager.syncVirtualAlbums(this, force = true)
+        runOnUiThread {
+            if (!isFinishing && !isDestroyed) onVaultReady()
         }
     }
 }
@@ -1054,11 +1029,13 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
             negativeText = getString(org.fossify.commons.R.string.no),
             cancelable = true,
             onPositive = {
-                unlockCandidateVault(
-                    existingVault = existingVault,
-                    onVaultReady = onVaultReady,
-                    onBack = onPickAnother
-                )
+                requireDeviceOwnerForVaultSwitch(existingVault) {
+                    selectCandidateVault(
+                        existingVault = existingVault,
+                        onVaultReady = onVaultReady,
+                        onBack = onPickAnother
+                    )
+                }
             },
             onNegative = { onPickAnother() },
             onCancel = { onBack() },
@@ -1180,6 +1157,18 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
         // The bridge is prepared on demand: no separate settings row is needed.
         CliBridgeManager.ensureActiveBridge(this)
         val internalCli = File(File(internalStoragePath, CIPHER_APP_DIR_NAME), CLI_STAGING_DIR_NAME)
+        // Both CLI/ and CLI/Archived/ are app-owned transfer areas, including the
+        // per-vault bridge folders directly below them. External disks are excluded.
+        val cliRoots = listOf(CliBridgeManager.root(this), CliBridgeManager.archiveRoot(this))
+        val isAppOwnedStaging = { dir: File ->
+            val canonical = runCatching { dir.canonicalPath }.getOrDefault(dir.path)
+            cliRoots.any { root ->
+                runCatching {
+                    val rootPath = root.canonicalPath
+                    canonical == rootPath || canonical.startsWith(rootPath + File.separator)
+                }.getOrDefault(false)
+            }
+        }
 
         // Removes ONLY the files listed in the consumed manifest and their
         // now-empty album folders. Unrelated files in the staging folder stay.
@@ -1281,7 +1270,7 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
                         // disk (possibly a full vault backup) is never modified by import.
                         if (result != null && result.failedCount == 0 &&
                             result.copiedCount + result.renamedCount + result.skippedDuplicateCount > 0 &&
-                            runCatching { sourceDir.canonicalPath == internalCli.canonicalPath }.getOrDefault(false)
+                            isAppOwnedStaging(sourceDir)
                         ) {
                             clearStagedEntries(sourceDir, manifestEntries)
                         }
@@ -1292,8 +1281,12 @@ fun BaseSimpleActivity.promptSyncVaultFromExternal(
         }
 
         val activeFingerprint = CliBridgeManager.currentFingerprint()
-        val pendingBridges = CliBridgeManager.bridges(this).filter {
-            File(it.dir, CryptoManager.PENDING_SYNC_FILE_NAME).isFile
+        // Archived bridges stay usable: a vault that is active from the archive
+        // keeps its bridge under CLI/Archived instead of being copied to CLI/.
+        val pendingBridges = CliBridgeManager.bridges(this, includeArchived = true).filter {
+            File(it.dir, CryptoManager.PENDING_SYNC_FILE_NAME).isFile &&
+                (activeFingerprint == null ||
+                    it.fingerprint.equals(activeFingerprint, ignoreCase = true))
         }
 
         fun importBridge(bridge: CliBridgeManager.Bridge) {
