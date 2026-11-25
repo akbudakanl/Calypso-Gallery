@@ -274,7 +274,11 @@ class PickDirectoryDialog(
         }
         val folder = File(folderPath)
         if (!folder.exists() || !folder.isDirectory) return false
-        val showHiddenFiles = activity.config.shouldShowHidden
+        val showHiddenFiles = CopyMovePolicy.shouldShowHiddenMediaInPicker(
+            mode = effectiveMode,
+            showHiddenMedia = activity.config.showHiddenMedia,
+            shouldShowHidden = activity.config.shouldShowHidden
+        )
         return folder.listFiles()?.any { file ->
             file.isFile && file.path.isMediaFile() && (showHiddenFiles || !file.name.startsWith('.'))
         } == true
@@ -353,7 +357,16 @@ class PickDirectoryDialog(
                     }
                 }
 
-                if (canShowHidden || activity.config.temporarilyShowHiddenFolders || forceShowHiddenAndExcluded) {
+                val showUnencryptedHiddenFolders = CopyMovePolicy.shouldIncludeUnencryptedHiddenFoldersInPicker(
+                    mode = effectiveMode,
+                    temporarilyShowHiddenFolders = activity.config.temporarilyShowHiddenFolders,
+                    showHiddenMedia = activity.config.showHiddenMedia,
+                    temporarilyShowHidden = activity.config.temporarilyShowHidden,
+                    isVaultUnlocked = CryptoManager.isVaultUnlocked,
+                    isHiddenPasswordProtectionOn = activity.config.isHiddenPasswordProtectionOn,
+                    forceShowHiddenAndExcluded = forceShowHiddenAndExcluded
+                )
+                if (showUnencryptedHiddenFolders) {
                     // Add unencrypted hidden folders (e.g. .nomedia folders)
                     noMediaFolders.forEach { folderPath ->
                         if (!allDirs.any { d -> d.path.equals(folderPath, true) } &&
@@ -583,8 +596,13 @@ class PickDirectoryDialog(
                 }
                 val folder = File(folderPath)
                 if (folder.exists() && folder.isDirectory) {
+                    val showHiddenMedia = CopyMovePolicy.shouldShowHiddenMediaInPicker(
+                        mode = effectiveMode,
+                        showHiddenMedia = activity.config.showHiddenMedia,
+                        shouldShowHidden = activity.config.shouldShowHidden
+                    )
                     val mediaFiles = folder.listFiles()?.filter { f ->
-                        f.isFile && f.path.isMediaFile() && (activity.config.shouldShowHidden || !f.name.startsWith('.'))
+                        f.isFile && f.path.isMediaFile() && (showHiddenMedia || !f.name.startsWith('.'))
                     }.orEmpty()
                     if (mediaFiles.isNotEmpty()) {
                         liveDistinctKeys.add(distinctKey)
@@ -662,7 +680,11 @@ class PickDirectoryDialog(
     }
 
     private fun openPhysicalFolderPicker(excludedPath: String) {
-        val pickerShowHidden = if (effectiveMode == PickDirectoryMode.DEFAULT) showHidden else activity.config.showHiddenMedia
+        val pickerShowHidden = CopyMovePolicy.shouldShowHiddenMediaInPicker(
+            mode = effectiveMode,
+            showHiddenMedia = activity.config.showHiddenMedia,
+            shouldShowHidden = showHidden
+        )
         val rawDefaultPath = activity.getDefaultCopyDestinationPath(pickerShowHidden, sourcePath)
         val defaultPath = if (effectiveMode != PickDirectoryMode.DEFAULT &&
             (CryptoManager.isEncryptedFolderPath(activity, rawDefaultPath) || activity.isEncryptedVaultAlbum(rawDefaultPath))

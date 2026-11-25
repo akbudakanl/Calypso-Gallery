@@ -126,6 +126,84 @@ class CopyMovePolicyTest {
     }
 
     @Test
+    fun decryptMoveMatchesUnencryptedCopyMoveForHiddenFoldersVisibility() {
+        val modes = listOf(
+            PickDirectoryMode.UNENCRYPTED_COPY,
+            PickDirectoryMode.UNENCRYPTED_MOVE,
+            PickDirectoryMode.DECRYPT_MOVE
+        )
+        for (mode in modes) {
+            // Vault session open (temporarilyShowHidden=true) alone must NOT expose .nomedia folders
+            assertFalse(
+                CopyMovePolicy.shouldIncludeUnencryptedHiddenFoldersInPicker(
+                    mode = mode,
+                    temporarilyShowHiddenFolders = false,
+                    showHiddenMedia = false,
+                    temporarilyShowHidden = true,
+                    isVaultUnlocked = true,
+                    isHiddenPasswordProtectionOn = true,
+                    forceShowHiddenAndExcluded = false
+                )
+            )
+            // When "Temporarily show hidden folders" is active, .nomedia folders ARE shown
+            assertTrue(
+                CopyMovePolicy.shouldIncludeUnencryptedHiddenFoldersInPicker(
+                    mode = mode,
+                    temporarilyShowHiddenFolders = true,
+                    showHiddenMedia = false,
+                    temporarilyShowHidden = true,
+                    isVaultUnlocked = true,
+                    isHiddenPasswordProtectionOn = true,
+                    forceShowHiddenAndExcluded = false
+                )
+            )
+            assertTrue(
+                CopyMovePolicy.shouldIncludeUnencryptedHiddenFoldersInPicker(
+                    mode = mode,
+                    temporarilyShowHiddenFolders = true,
+                    showHiddenMedia = false,
+                    temporarilyShowHidden = false,
+                    isVaultUnlocked = false,
+                    isHiddenPasswordProtectionOn = true,
+                    forceShowHiddenAndExcluded = false
+                )
+            )
+        }
+    }
+
+    @Test
+    fun pickerHiddenMediaFollowsShowHiddenMediaOutsideDefaultMode() {
+        assertTrue(
+            CopyMovePolicy.shouldShowHiddenMediaInPicker(
+                mode = PickDirectoryMode.DEFAULT,
+                showHiddenMedia = false,
+                shouldShowHidden = true
+            )
+        )
+        assertFalse(
+            CopyMovePolicy.shouldShowHiddenMediaInPicker(
+                mode = PickDirectoryMode.DECRYPT_MOVE,
+                showHiddenMedia = false,
+                shouldShowHidden = true
+            )
+        )
+        assertFalse(
+            CopyMovePolicy.shouldShowHiddenMediaInPicker(
+                mode = PickDirectoryMode.UNENCRYPTED_COPY,
+                showHiddenMedia = false,
+                shouldShowHidden = true
+            )
+        )
+        assertTrue(
+            CopyMovePolicy.shouldShowHiddenMediaInPicker(
+                mode = PickDirectoryMode.DECRYPT_MOVE,
+                showHiddenMedia = true,
+                shouldShowHidden = true
+            )
+        )
+    }
+
+    @Test
     fun isEncryptedVaultFileNameMatchesVaultItemsAndExcludesTempStaging() {
         assertTrue(CopyMovePolicy.isEncryptedVaultFileName("a1b2c3d4.bin"))
         assertTrue(CopyMovePolicy.isEncryptedVaultFileName("ABCDEF01.BIN"))

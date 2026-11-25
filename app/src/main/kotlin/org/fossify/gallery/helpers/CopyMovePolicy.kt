@@ -107,6 +107,40 @@ object CopyMovePolicy {
         return mode == PickDirectoryMode.ENCRYPTED_COPY || mode == PickDirectoryMode.ENCRYPTED_MOVE
     }
 
+    /**
+     * Unencrypted copy/move and vault decrypt all target normal storage folders, so `.nomedia`
+     * hidden folders must follow [temporarilyShowHiddenFolders] (plus explicit [showHiddenMedia] /
+     * [forceShowHiddenAndExcluded]), never the vault-unlock session flag [temporarilyShowHidden].
+     */
+    fun shouldIncludeUnencryptedHiddenFoldersInPicker(
+        mode: PickDirectoryMode,
+        temporarilyShowHiddenFolders: Boolean,
+        showHiddenMedia: Boolean,
+        temporarilyShowHidden: Boolean,
+        isVaultUnlocked: Boolean,
+        isHiddenPasswordProtectionOn: Boolean,
+        forceShowHiddenAndExcluded: Boolean
+    ): Boolean {
+        if (temporarilyShowHiddenFolders || showHiddenMedia || forceShowHiddenAndExcluded) {
+            return true
+        }
+        return mode == PickDirectoryMode.DEFAULT &&
+            temporarilyShowHidden &&
+            (!isHiddenPasswordProtectionOn || isVaultUnlocked)
+    }
+
+    /**
+     * In copy/move/decrypt pickers, dot-prefixed media files follow [showHiddenMedia] rather than
+     * the vault-unlock session flag inside [shouldShowHidden].
+     */
+    fun shouldShowHiddenMediaInPicker(
+        mode: PickDirectoryMode,
+        showHiddenMedia: Boolean,
+        shouldShowHidden: Boolean
+    ): Boolean {
+        return if (mode == PickDirectoryMode.DEFAULT) shouldShowHidden else showHiddenMedia
+    }
+
     fun isAllowedDestination(
         mode: PickDirectoryMode,
         isVirtualAlbum: Boolean,
