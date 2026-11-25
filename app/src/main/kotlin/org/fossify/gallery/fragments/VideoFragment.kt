@@ -1067,7 +1067,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             .into(binding.videoPreview)
     }
 
-    fun shouldKeepScreenOn(): Boolean = mIsPlaying || mPlayOnPrepared
+    fun shouldKeepScreenOn(): Boolean =
+        mIsPlaying || mPlayOnPrepared || mPendingPlayStart || mPendingAutoplayOnIdle
 
     private fun ensureTextureViewAttached(): TextureView? {
         mTextureView?.let { return it }
@@ -2059,6 +2060,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             }
         } else {
             mPlayOnPrepared = false
+            listener?.updateVideoKeepScreenOn(shouldKeepScreenOn())
         }
         mWasPlayerInited = true
         // Do NOT hide the preview here: STATE_READY can arrive before the (possibly new)

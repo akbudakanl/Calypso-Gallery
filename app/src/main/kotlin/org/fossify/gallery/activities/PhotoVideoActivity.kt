@@ -69,6 +69,7 @@ import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.IS_IN_RECYCLE_BIN
 import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.IS_VIEW_INTENT
+import org.fossify.gallery.helpers.KeepScreenOnPolicy
 import org.fossify.gallery.helpers.MEDIUM
 import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.SHOW_FAVORITES
@@ -79,6 +80,7 @@ import org.fossify.gallery.helpers.TYPE_PORTRAITS
 import org.fossify.gallery.helpers.TYPE_RAWS
 import org.fossify.gallery.helpers.TYPE_SVGS
 import org.fossify.gallery.helpers.TYPE_VIDEOS
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.models.Medium
 import java.io.File
 import org.fossify.gallery.helpers.isVaultMediaPath
@@ -299,6 +301,7 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
             mFragment!!.arguments = bundle
             supportFragmentManager.beginTransaction().replace(R.id.fragment_placeholder, mFragment!!).commit()
         }
+        syncKeepScreenOn()
 
         if (config.blackBackground) {
             binding.fragmentHolder.background = Color.BLACK.toDrawable()
@@ -476,6 +479,29 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
     override fun goToNextItem() {}
 
     override fun launchViewVideoIntent(path: String) {}
+
+    override fun shouldKeepScreenOnForContent(): Boolean {
+        val fragment = mFragment
+        val isCurrentItemVideo = when (fragment) {
+            is VideoFragment -> true
+            is PhotoFragment -> false
+            else -> mIsVideo
+        }
+        val isCurrentVideoActive = (fragment as? VideoFragment)?.shouldKeepScreenOn() == true
+        return KeepScreenOnPolicy.shouldKeepViewerScreenOn(
+            isActivityResumed = isViewerResumed,
+            isForegroundOperationActive = ForegroundOperationRegistry.isActive,
+            isSlideshowActive = false,
+            keepScreenOnSetting = config.keepScreenOn,
+            isCurrentItemVideo = isCurrentItemVideo,
+            isCurrentVideoActive = isCurrentVideoActive,
+        )
+    }
+
+    override fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean {
+        syncKeepScreenOn()
+        return true
+    }
 
     override fun isSlideShowActive() = false
 

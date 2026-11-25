@@ -26,7 +26,6 @@ import android.os.Handler
 import android.provider.MediaStore
 import android.view.MenuItem
 import android.view.View
-import android.view.WindowManager
 import android.view.animation.DecelerateInterpolator
 import android.widget.Toast
 import androidx.core.graphics.drawable.toDrawable
@@ -155,7 +154,9 @@ import org.fossify.gallery.fragments.PhotoFragment
 import org.fossify.gallery.fragments.VideoFragment
 import org.fossify.gallery.fragments.ViewPagerFragment
 import org.fossify.gallery.helpers.AspectRatioOrientation
+import org.fossify.gallery.helpers.KeepScreenOnPolicy
 import org.fossify.gallery.helpers.MediaIndexCoordinator
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_CREATE_SHORTCUT
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_PRINT
 import org.fossify.gallery.helpers.EXTRA_VIEWER_ACTION_RESIZE
@@ -296,7 +297,6 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
     private val mDeferredPlayerReleases = ArrayList<() -> Unit>()
     private var mSharedExoPlayer: ExoPlayer? = null
     private var mSharedPlayerOwner: VideoFragment? = null
-    private var mVideoKeepScreenOn = false
     private var mLastPageVaultProtection: Boolean? = null
     private var mVaultResumeBlob: String? = null
     private var mFavoritePaths = ArrayList<String>()
@@ -374,13 +374,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         mMenuController?.dismiss()
         stopSlideshow()
         mSharedExoPlayer?.playWhenReady = false
-        if (!mIsSlideshowActive && mVideoKeepScreenOn) {
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            mVideoKeepScreenOn = false
-        }
         flushPendingMediaOrderIfNeeded()
         mPagerScrollState = ViewPager.SCROLL_STATE_IDLE
         flushDeferredPlayerReleases()
+        syncKeepScreenOn()
     }
 
     private fun ensureDirectoryFlagsCached() {
@@ -943,6 +940,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                 addOnPageChangeListener(this@ViewPagerActivity)
                 currentItem = mPos
             }
+            syncKeepScreenOn()
         }
     }
 
@@ -975,7 +973,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                     mSlideshowInterval = config.slideshowInterval
                     mSlideshowMoveBackwards = config.slideshowMoveBackwards
                     mIsSlideshowActive = true
-                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                    syncKeepScreenOn()
                     scheduleSwipe()
                 }
             }
@@ -1065,9 +1063,8 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             mIsSlideshowActive = false
             showSystemUI()
             mSlideshowHandler.removeCallbacksAndMessages(null)
-            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            mVideoKeepScreenOn = false
             mAreSlideShowMediaVisible = false
+            syncKeepScreenOn()
 
             if (config.slideshowRandomOrder) {
                 mRandomSlideshowStopped = true
@@ -2193,6 +2190,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
         updateActionbarTitle()
         refreshMenuItems()
+        syncKeepScreenOn()
     }
 
     private fun hasSamePathsOrder(a: List<Medium>, b: List<Medium>): Boolean {
@@ -2259,6 +2257,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                     refreshMenuItems()
                     checkOrientation()
                     initBottomActions()
+                    syncKeepScreenOn()
                     return
                 } else {
                     binding.viewPager.addOnPageChangeListener(this)
@@ -2551,20 +2550,29 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         mSharedExoPlayer = null
     }
 
-    override fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean {
-        if (keepOn) {
-            if (!mVideoKeepScreenOn) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                mVideoKeepScreenOn = true
-            }
-            return true
-        } else {
-            if (!isPagerScrolling() && !mIsSlideshowActive && mVideoKeepScreenOn) {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                mVideoKeepScreenOn = false
-            }
-            return true
+    override fun shouldKeepScreenOnForContent(): Boolean {
+        val currentFragment = getCurrentFragment()
+        val isCurrentItemVideo = when (currentFragment) {
+            is VideoFragment -> true
+            is PhotoFragment -> false
+            else -> getCurrentViewerMedium()?.isVideo() == true
         }
+        val isCurrentVideoActive = (currentFragment as? VideoFragment)?.shouldKeepScreenOn() == true
+        return KeepScreenOnPolicy.shouldKeepViewerScreenOn(
+            isActivityResumed = isViewerResumed,
+            isForegroundOperationActive = ForegroundOperationRegistry.isActive,
+            isSlideshowActive = mIsSlideshowActive,
+            keepScreenOnSetting = config.keepScreenOn,
+            isCurrentItemVideo = isCurrentItemVideo,
+            isCurrentVideoActive = isCurrentVideoActive,
+            isPagerScrolling = isPagerScrolling(),
+            wasKeepScreenOnActive = hasKeepScreenOnFlag(),
+        )
+    }
+
+    override fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean {
+        syncKeepScreenOn()
+        return true
     }
 
     override fun goToPrevItem() {
@@ -2649,6 +2657,17 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         }
     }
 
+    private fun getCurrentViewerMedium(): Medium? {
+        val media = getCurrentMedia()
+        if (media.isEmpty()) {
+            return null
+        }
+        val index = binding.viewPager.currentItem.takeIf { it in media.indices }
+            ?: mPos.takeIf { it in media.indices }
+            ?: return null
+        return media[index]
+    }
+
     private fun getCurrentMedium(): Medium? {
         return if (getCurrentMedia().isEmpty() || mPos == -1) {
             null
@@ -2678,6 +2697,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
             refreshMenuItems()
             scheduleSwipe()
         }
+        syncKeepScreenOn()
     }
 
     override fun onPageScrollStateChanged(state: Int) {
@@ -2694,10 +2714,7 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                         checkOrientation()
                     }
                     (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
-                    if (!mIsSlideshowActive && mVideoKeepScreenOn && (getCurrentFragment() as? VideoFragment)?.shouldKeepScreenOn() != true) {
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        mVideoKeepScreenOn = false
-                    }
+                    syncKeepScreenOn()
                 }
             }
         } else {

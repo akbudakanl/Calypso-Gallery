@@ -2,6 +2,7 @@ package org.fossify.gallery.activities
 
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type
@@ -13,11 +14,15 @@ import kotlinx.coroutines.launch
 import org.fossify.commons.extensions.updateMarginWithBase
 import org.fossify.commons.extensions.updatePaddingWithBase
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 
 abstract class BaseViewerActivity : SimpleActivity() {
     override val padCutout: Boolean = false
     abstract val contentHolder: View
     abstract val appBarLayout: AppBarLayout
+
+    protected var isViewerResumed: Boolean = false
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +32,38 @@ abstract class BaseViewerActivity : SimpleActivity() {
             insets
         }
         registerShowNotchCollector(contentRoot)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isViewerResumed = true
+        syncKeepScreenOn()
+    }
+
+    override fun onPause() {
+        isViewerResumed = false
+        super.onPause()
+        syncKeepScreenOn()
+    }
+
+    protected open fun shouldKeepScreenOnForContent(): Boolean = false
+
+    protected fun hasKeepScreenOnFlag(): Boolean {
+        return (window?.attributes?.flags?.and(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) ?: 0) != 0
+    }
+
+    fun syncKeepScreenOn() {
+        if (isFinishing || isDestroyed) {
+            return
+        }
+        val currentWindow = window ?: return
+        val shouldKeepOn = ForegroundOperationRegistry.isActive || (isViewerResumed && shouldKeepScreenOnForContent())
+        val hasFlag = (currentWindow.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0
+        if (shouldKeepOn && !hasFlag) {
+            currentWindow.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else if (!shouldKeepOn && hasFlag) {
+            currentWindow.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
     }
 
     private fun registerShowNotchCollector(view: View) {

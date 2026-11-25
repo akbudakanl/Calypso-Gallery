@@ -25,7 +25,6 @@ import android.view.Surface
 import android.view.TextureView
 import android.view.View
 import android.view.ViewConfiguration
-import android.view.WindowManager
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -88,6 +87,7 @@ import org.fossify.gallery.helpers.FAST_FORWARD_VIDEO_MS
 import org.fossify.gallery.helpers.GO_TO_NEXT_ITEM
 import org.fossify.gallery.helpers.GO_TO_PREV_ITEM
 import org.fossify.gallery.helpers.HIDE_SYSTEM_UI_DELAY
+import org.fossify.gallery.helpers.KeepScreenOnPolicy
 import org.fossify.gallery.helpers.MAX_CLOSE_DOWN_GESTURE_DURATION
 import org.fossify.gallery.helpers.MAX_ZOOM_EQUALITY_TOLERANCE
 import org.fossify.gallery.helpers.ROTATE_BY_ASPECT_RATIO
@@ -100,6 +100,7 @@ import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VideoGestureCallbacks
 import org.fossify.gallery.helpers.VideoGestureHelper
 import org.fossify.gallery.helpers.VideoPlaybackUtils
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
 import java.text.DecimalFormat
 import kotlin.math.max
@@ -535,6 +536,17 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         }
     }
 
+    override fun shouldKeepScreenOnForContent(): Boolean {
+        return KeepScreenOnPolicy.shouldKeepViewerScreenOn(
+            isActivityResumed = isViewerResumed,
+            isForegroundOperationActive = ForegroundOperationRegistry.isActive,
+            isSlideshowActive = false,
+            keepScreenOnSetting = config.keepScreenOn,
+            isCurrentItemVideo = true,
+            isCurrentVideoActive = mIsPlaying,
+        )
+    }
+
     private fun resumeVideo() {
         binding.bottomVideoTimeHolder.videoTogglePlayPause.setImageResource(org.fossify.commons.R.drawable.ic_pause_outline_vector)
         if (mExoPlayer == null) {
@@ -549,7 +561,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
         mWasVideoStarted = true
         mIsPlaying = true
         mExoPlayer?.playWhenReady = true
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        syncKeepScreenOn()
     }
 
     private fun pauseVideo() {
@@ -563,7 +575,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
             mExoPlayer?.playWhenReady = false
         }
 
-        window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        syncKeepScreenOn()
     }
 
     private fun togglePlayPause() {

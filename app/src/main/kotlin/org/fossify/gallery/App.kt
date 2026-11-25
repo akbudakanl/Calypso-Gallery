@@ -17,6 +17,7 @@ import org.fossify.commons.FossifyApp
 import org.fossify.commons.extensions.appLockManager
 import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.gallery.activities.AppUnlockActivity
+import org.fossify.gallery.activities.BaseViewerActivity
 import org.fossify.gallery.activities.SplashActivity
 import org.fossify.gallery.activities.VaultLockActivity
 import org.fossify.gallery.extensions.config
@@ -234,6 +235,11 @@ class App : FossifyApp() {
     private fun syncKeepScreenOn(activity: Activity, active: Boolean) {
         if (activity.isFinishing || activity.isDestroyed) {
             operationKeepScreenOnActivities.remove(activity)
+            return
+        }
+        if (activity is BaseViewerActivity) {
+            operationKeepScreenOnActivities.remove(activity)
+            activity.syncKeepScreenOn()
             return
         }
         val window = activity.window ?: return
