@@ -2614,21 +2614,19 @@ class SettingsActivity : SimpleActivity() {
     private fun setupEmptyRecycleBin() {
         ensureBackgroundThread {
             try {
-                val plainSize = mediaDB.getDeletedMedia().sumByLong { medium ->
-                    val size = medium.size
-                    if (size == 0L) {
-                        val path = medium.path.removePrefix(RECYCLE_BIN).prependIndent(recycleBinPath)
-                        File(path).length()
-                    } else {
-                        size
-                    }
-                }
-                val vaultSize = if (CryptoManager.isVaultUnlocked) {
+                mRecycleBinContentSize = if (CryptoManager.isVaultUnlocked) {
                     CryptoManager.getVaultRecycleBinSize(this)
                 } else {
-                    0L
+                    mediaDB.getDeletedMedia().sumByLong { medium ->
+                        val size = medium.size
+                        if (size == 0L) {
+                            val path = medium.path.removePrefix(RECYCLE_BIN).prependIndent(recycleBinPath)
+                            File(path).length()
+                        } else {
+                            size
+                        }
+                    }
                 }
-                mRecycleBinContentSize = plainSize + vaultSize
             } catch (ignored: Exception) {
             }
 
@@ -2642,14 +2640,27 @@ class SettingsActivity : SimpleActivity() {
                 toast(org.fossify.commons.R.string.recycle_bin_empty)
             } else {
                 showRecycleBinEmptyingDialog {
-                    emptyTheRecycleBin()
                     if (CryptoManager.isVaultUnlocked) {
                         ensureBackgroundThread {
-                            CryptoManager.emptyVaultRecycleBin(this)
+                            val emptied = CryptoManager.emptyVaultRecycleBin(this)
+                            if (emptied) {
+                                toast(org.fossify.commons.R.string.recycle_bin_emptied)
+                            }
+                            val remainingSize = if (emptied) {
+                                0L
+                            } else {
+                                CryptoManager.getVaultRecycleBinSize(this)
+                            }
+                            runOnUiThread {
+                                mRecycleBinContentSize = remainingSize
+                                binding.settingsEmptyRecycleBinSize.text = remainingSize.formatSize()
+                            }
                         }
+                    } else {
+                        emptyTheRecycleBin()
+                        mRecycleBinContentSize = 0L
+                        binding.settingsEmptyRecycleBinSize.text = 0L.formatSize()
                     }
-                    mRecycleBinContentSize = 0L
-                    binding.settingsEmptyRecycleBinSize.text = 0L.formatSize()
                 }
             }
         }
