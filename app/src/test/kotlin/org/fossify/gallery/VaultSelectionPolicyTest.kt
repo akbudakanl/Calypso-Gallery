@@ -42,31 +42,27 @@ class VaultSelectionPolicyTest {
     }
 
     @Test
-    fun switchingVaultsRequiresDeviceOwnerButFirstSelectionDoesNot() {
+    fun deviceOwnerGateRunsOnVaultLocationEntryNotOnSelection() {
         val activity = locateAppFile(
             "src/main/kotlin/org/fossify/gallery/extensions/Activity.kt"
         ).readText()
-        val gate = activity.substringAfter("private fun BaseSimpleActivity.requireDeviceOwnerForVaultSwitch(")
-            .substringBefore("private fun BaseSimpleActivity.selectCandidateVault(")
+        val entry = activity.substringAfter("fun BaseSimpleActivity.promptVaultSetupChoice(")
+            .substringBefore("private fun BaseSimpleActivity.showArchivedVaultPicker(")
         assertTrue(
             "An empty vault slot must not require verification",
-            gate.contains("!CryptoManager.hasExistingVault(this)")
+            entry.contains("config.vaultRootPath.isNotEmpty() && CryptoManager.hasExistingVault(this)")
         )
         assertTrue(
-            "Selecting the already active vault must not require verification",
-            gate.contains("sameVault")
+            "Verification must happen before the vault choice is shown",
+            entry.contains("verifyDeviceOwner {")
         )
         assertTrue(
-            "A real switch must ask the device owner",
-            gate.contains("verifyDeviceOwner(onConfirmed)")
+            "Back must not re-trigger verification",
+            entry.contains("verifyDeviceOwnerOnEntry = false")
         )
         assertTrue(
-            "Existing-vault selection must be gated",
-            activity.contains("requireDeviceOwnerForVaultSwitch(existingVault)")
-        )
-        assertTrue(
-            "Archived-vault selection must be gated",
-            activity.contains("requireDeviceOwnerForVaultSwitch(File(entry.path))")
+            "Selection must stay free of a second gate",
+            !activity.contains("requireDeviceOwnerForVaultSwitch")
         )
         val verification = locateAppFile(
             "src/main/kotlin/org/fossify/gallery/extensions/DeviceOwnerVerification.kt"

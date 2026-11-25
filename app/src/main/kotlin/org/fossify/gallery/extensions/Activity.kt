@@ -581,7 +581,26 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
     onCreated: () -> Unit,
     onCancelled: () -> Unit = {},
     onVaultCreated: () -> Unit = {},
+    // Recursive re-openings after Back must not ask again.
+    verifyDeviceOwnerOnEntry: Boolean = true,
 ) {
+    // While a vault is active, merely opening "vault location" is a configuration change
+    // entry point. Verify the device owner here, before any choice is made, instead of
+    // waiting until a different vault has been picked.
+    if (verifyDeviceOwnerOnEntry &&
+        config.vaultRootPath.isNotEmpty() && CryptoManager.hasExistingVault(this)
+    ) {
+        verifyDeviceOwner {
+            promptVaultSetupChoice(
+                confirmBeforeCreatingNew,
+                onCreated,
+                onCancelled,
+                onVaultCreated,
+                verifyDeviceOwnerOnEntry = false,
+            )
+        }
+        return
+    }
     val items = arrayListOf(
         RadioItem(VAULT_ACTION_CREATE_NEW, getString(R.string.create_new_vault_option)),
         RadioItem(VAULT_ACTION_USE_EXISTING, getString(R.string.use_existing_vault_option))
@@ -600,7 +619,13 @@ fun BaseSimpleActivity.promptVaultSetupChoice(
         }
     ) { selected ->
         val reopenStage1 = {
-            promptVaultSetupChoice(confirmBeforeCreatingNew, onCreated, onCancelled, onVaultCreated)
+            promptVaultSetupChoice(
+                confirmBeforeCreatingNew,
+                onCreated,
+                onCancelled,
+                onVaultCreated,
+                verifyDeviceOwnerOnEntry = false,
+            )
         }
         when (selected) {
             VAULT_ACTION_CREATE_NEW -> {
@@ -675,16 +700,14 @@ private fun BaseSimpleActivity.showArchivedVaultPicker(onVaultReady: () -> Unit,
 
         val entry = valid[id - ARCHIVED_ITEM_ID_BASE].vault
         // Activation happens in place; moving back is a separate, explicit "Unarchive vault" action.
-        requireDeviceOwnerForVaultSwitch(File(entry.path)) {
-            if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
-                toast(R.string.archive_vault_failed)
-                onBack()
-                return@requireDeviceOwnerForVaultSwitch
-            }
-            // The vault is only selected here; its password is asked when it is opened.
-            toast(R.string.archived_vault_activated)
-            finishVaultSelection(onVaultReady)
+        if (!VaultArchiveManager.activateArchivedVault(this, entry)) {
+            toast(R.string.archive_vault_failed)
+            onBack()
+            return
         }
+        // The vault is only selected here; its password is asked when it is opened.
+        toast(R.string.archived_vault_activated)
+        finishVaultSelection(onVaultReady)
     }
 
     fun showArchiveSizeInfo() {
@@ -824,13 +847,11 @@ private fun BaseSimpleActivity.pickExistingVaultAndUnlock(
                     onBack = onBack
                 )
             } else {
-                requireDeviceOwnerForVaultSwitch(existingVault) {
-                    selectCandidateVault(
-                        existingVault = existingVault,
-                        onVaultReady = onVaultReady,
-                        onBack = { pickExistingVaultAndUnlock(onVaultReady, onBack) }
-                    )
-                }
+                selectCandidateVault(
+                    existingVault = existingVault,
+                    onVaultReady = onVaultReady,
+                    onBack = { pickExistingVaultAndUnlock(onVaultReady, onBack) }
+                )
             }
         },
         onCancelled = onBack
@@ -948,31 +969,6 @@ private fun BaseSimpleActivity.showVaultLocationNoticeDialog(messageResId: Int, 
     )
 }
 
-/**
- * Switching the active vault changes the app's configuration, not vault contents, so it
- * uses the same device-owner check as archiving. An empty vault slot (first setup) is free:
- * selecting an existing or archived vault then needs no verification. Selecting the vault
- * that is already active is also a no-op and needs none.
- */
-private fun BaseSimpleActivity.requireDeviceOwnerForVaultSwitch(
-    targetVault: File?,
-    onConfirmed: () -> Unit
-) {
-    if (targetVault == null || !CryptoManager.hasExistingVault(this)) {
-        onConfirmed()
-        return
-    }
-    val activeRoot = CryptoManager.findVaultRoot(this)
-    val sameVault = activeRoot != null && runCatching {
-        activeRoot.canonicalPath.equals(targetVault.canonicalPath, ignoreCase = true)
-    }.getOrDefault(false)
-    if (sameVault) {
-        onConfirmed()
-        return
-    }
-    verifyDeviceOwner(onConfirmed)
-}
-
 private fun BaseSimpleActivity.selectCandidateVault(
     existingVault: File,
     onVaultReady: () -> Unit,
@@ -1029,13 +1025,11 @@ private fun BaseSimpleActivity.handleCreateTargetSelected(
             negativeText = getString(org.fossify.commons.R.string.no),
             cancelable = true,
             onPositive = {
-                requireDeviceOwnerForVaultSwitch(existingVault) {
-                    selectCandidateVault(
-                        existingVault = existingVault,
-                        onVaultReady = onVaultReady,
-                        onBack = onPickAnother
-                    )
-                }
+                selectCandidateVault(
+                    existingVault = existingVault,
+                    onVaultReady = onVaultReady,
+                    onBack = onPickAnother
+                )
             },
             onNegative = { onPickAnother() },
             onCancel = { onBack() },
