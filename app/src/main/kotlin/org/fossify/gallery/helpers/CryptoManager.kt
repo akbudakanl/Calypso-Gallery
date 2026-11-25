@@ -107,6 +107,8 @@ object CryptoManager {
 
     const val VAULT_RESTORE_INFO_FILE = ".restore_info"
 
+    internal const val FOLDER_ORIGIN_PURPOSE = "folder_origin"
+
     const val TIMESTAMP_EQUIVALENCE_TOLERANCE_MS = 10_000L
 
 
@@ -561,7 +563,8 @@ object CryptoManager {
 
     data class AlbumConflictPreview(
         val existingName: String,
-        val renamedPreview: String
+        val renamedPreview: String,
+        val targetPath: String? = null
     )
 
 

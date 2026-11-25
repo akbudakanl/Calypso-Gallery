@@ -1,7 +1,6 @@
 package org.fossify.gallery.helpers
 
 import android.content.Context
-import android.os.Environment
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import java.io.*
@@ -446,21 +445,36 @@ internal fun CryptoManager.resolveExistingEncryptTargetAlbum(vaultRoot: File, ra
 }
 
 
+fun CryptoManager.resolveOriginDecryptTargetFolder(context: Context, folder: File): File? {
+    val parentDir = resolveValidOriginParentDir(context, folder) ?: return null
+    val originalFolderName = getDecryptedFolderName(folder) ?: folder.name
+    return resolveNonFileCollisionCandidate(parentDir, originalFolderName)
+}
+
+
+fun CryptoManager.resolveDecryptTargetInPickedDirectory(pickedDir: File, albumName: String): File {
+    if (pickedDir.name.equals(albumName, ignoreCase = true)) {
+        return pickedDir
+    }
+    return resolveNonFileCollisionCandidate(pickedDir, albumName)
+}
+
+
 internal fun CryptoManager.resolveDecryptTargetFolder(
     context: Context,
     folder: File,
     targetFolderOverride: File?
-): File {
+): File? {
     if (targetFolderOverride != null) return targetFolderOverride
-    val originalFolderName = getDecryptedFolderName(folder) ?: folder.name
-    val picturesDir = File(context.internalStoragePath, Environment.DIRECTORY_PICTURES)
-    if (!picturesDir.exists()) {
-        picturesDir.mkdirs()
-    }
-    var candidate = File(picturesDir, originalFolderName)
+    return resolveOriginDecryptTargetFolder(context, folder)
+}
+
+
+private fun resolveNonFileCollisionCandidate(parentDir: File, folderName: String): File {
+    var candidate = File(parentDir, folderName)
     var idx = 1
     while (candidate.exists() && !candidate.isDirectory) {
-        candidate = File(picturesDir, "$originalFolderName($idx)")
+        candidate = File(parentDir, "$folderName($idx)")
         idx++
     }
     return candidate
@@ -509,7 +523,7 @@ fun CryptoManager.findMergeTargetForDecryptFolder(
 ): Pair<File, List<File>>? {
     val folder = File(folderPath)
     if (!folder.exists() || !folder.isDirectory) return null
-    val targetFolder = resolveDecryptTargetFolder(context, folder, targetFolderOverride)
+    val targetFolder = resolveDecryptTargetFolder(context, folder, targetFolderOverride) ?: return null
     if (!targetFolder.exists() || !targetFolder.isDirectory) return null
     return targetFolder to getSortedEncryptedFilesForDecrypt(folder)
 }
@@ -560,15 +574,13 @@ fun CryptoManager.previewDecryptAlbumConflict(
 ): AlbumConflictPreview? {
     val folder = File(folderPath)
     if (!folder.exists() || !folder.isDirectory) return null
-    val targetFolder = if (targetFolderOverride != null) {
-        targetFolderOverride
-    } else {
-        val originalFolderName = getDecryptedFolderName(folder) ?: folder.name
-        val picturesDir = File(context.internalStoragePath, Environment.DIRECTORY_PICTURES)
-        File(picturesDir, originalFolderName)
-    }
+    val targetFolder = resolveDecryptTargetFolder(context, folder, targetFolderOverride) ?: return null
     if (!targetFolder.exists() || !targetFolder.isDirectory) return null
     val parent = targetFolder.parentFile ?: return null
     val renamed = resolveUniquePlainFolder(parent, targetFolder.name)
-    return AlbumConflictPreview(existingName = targetFolder.name, renamedPreview = renamed.name)
+    return AlbumConflictPreview(
+        existingName = targetFolder.name,
+        renamedPreview = renamed.name,
+        targetPath = targetFolder.absolutePath
+    )
 }

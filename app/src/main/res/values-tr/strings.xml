@@ -376,8 +376,13 @@
     <string name="secret_vault_empty">Şifreli Kasa boş</string>
     <string name="press_back_again_to_exit_vault">Çıkmak için geri tuşuna basın</string>
     <string name="confirm_decrypt_hidden_file">Gizli dosyaların şifresini çözmek istediğinizden emin misiniz?</string>
+    <string name="confirm_decrypt_album">\"%s\" albümünün şifresi çözülsün mü?</string>
+    <string name="confirm_decrypt_albums">Seçilen %d albümün şifresi çözülsün mü?</string>
+    <string name="decrypt_destination_label">Hedef konum:</string>
+    <string name="decrypt_destination_to_be_selected">Konum seçilecek</string>
+    <string name="decrypt_to_other_location">Başka yere çöz</string>
     <string name="decrypt_info_title">Şifre Çözme Nasıl Çalışır?</string>
-    <string name="decrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifreli bir albüm veya dosyanın şifresi çözüldüğünde, orijinal adı ve biçimiyle seçilen hedef klasöre aktarılır ve şifreli kasadan çıkarılır.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir klasör mü oluşturulacağını yoksa mevcut klasörle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan şifreli dosyaların kasadan silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
+    <string name="decrypt_info_message" formatted="false">Klasör ve Dosya Şeması:\n• Şifreli bir albümün şifresi çözüldüğünde, güncel albüm adıyla şifreleme öncesi orijinal konumuna geri çıkarılır ve şifreli kasadan silinir.\n• Kayıtlı bir orijinal konum yoksa, ilgili depolama erişilebilir değilse veya başka bir konum seçerseniz, albümün çıkarılacağı yeri belirlemeniz için hedef seçici açılır.\n• Tekil dosyaların şifresi çözüldüğünde ise orijinal adı ve biçimiyle seçilen hedef klasöre aktarılır.\n\nHedefte Aynı İsimli Albüm Varsa:\n• Varsayılan olarak uygulama Albüm(1) gibi yeni bir klasör mü oluşturulacağını yoksa mevcut klasörle mi birleştirileceğini sorar (Ayarlardan değiştirilebilir).\n• Birleştirme seçildiğinde hedefte %100 bit-bit aynı olduğu doğrulanan şifreli dosyaların kasadan silinip silinmeyeceğini seçebilirsiniz.\n• Aynı isimde fakat farklı içerikteki dosyalar (örn. download.jpg), çakışma ayarınıza göre download(1).jpg olarak korunur veya size sorulur.</string>
     <string name="copy_to_clipboard_disabled_in_vault">Kasa açıkken güvenlik nedeniyle panoya kopyalama devre dışıdır.</string>
     <string name="stop_showing_hidden">Şifreli medyayı göstermeyi bırak</string>
     <string name="system_default">Sistem varsayılanı</string>

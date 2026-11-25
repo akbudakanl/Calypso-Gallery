@@ -139,8 +139,10 @@ import org.fossify.gallery.helpers.isVaultMediaPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
 import org.fossify.gallery.helpers.listExternalStorageVolumeRoots
 import org.fossify.gallery.helpers.previewDecryptAlbumConflict
+import org.fossify.gallery.helpers.resolveDecryptTargetInPickedDirectory
 import org.fossify.gallery.helpers.resolveExistingVaultInDirectory
 import org.fossify.gallery.helpers.resolveExportVaultTargetDir
+import org.fossify.gallery.helpers.resolveOriginDecryptTargetFolder
 import org.fossify.gallery.helpers.resolvePickedPathToFile
 import org.fossify.gallery.helpers.resolveSyncSourceRoot
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
@@ -2528,6 +2530,8 @@ fun BaseSimpleActivity.tryDecryptFilesTo(
         }
     }
 
+private const val MAX_DECRYPT_PREVIEW_ALBUMS = 4
+
 fun BaseSimpleActivity.tryDecryptFolders(
     folderPaths: List<String>,
     callback: (destinationPath: String) -> Unit
@@ -2538,7 +2542,35 @@ fun BaseSimpleActivity.tryDecryptFolders(
     }
 
     ensureVaultUnlocked {
-        confirmAndDecryptFolders(folderPaths, targetDir = null, callback = callback)
+        val singlePath = folderPaths.singleOrNull()
+        val singleOrigin = singlePath?.let { CryptoManager.resolveOriginDecryptTargetFolder(this, File(it)) }
+        if (singlePath == null || singleOrigin == null) {
+            openDecryptFolderPickerWithConfirmation(folderPaths, callback)
+            return@ensureVaultUnlocked
+        }
+
+        val originTargets = mapOf<String, File?>(singlePath to singleOrigin)
+        val (message, destinationSummary) = buildDecryptConfirmationText(folderPaths, originTargets)
+        EncryptConfirmationDialog(
+            activity = this,
+            message = message,
+            infoTitleResId = R.string.decrypt_info_title,
+            infoMessageResId = R.string.decrypt_info_message,
+            isDecrypt = true,
+            destinationLabel = getString(R.string.decrypt_destination_label),
+            destinationValue = destinationSummary,
+            neutralButtonTextResId = R.string.decrypt_to_other_location,
+            onNeutralClick = {
+                pickDecryptDestinationAndExecute(
+                    folderPaths = folderPaths,
+                    originTargets = originTargets,
+                    overrideAll = true,
+                    callback = callback
+                )
+            }
+        ) {
+            executeFolderDecryption(folderPaths, mapOf(singlePath to singleOrigin), callback)
+        }
     }
 }
 
@@ -2552,168 +2584,254 @@ fun BaseSimpleActivity.tryDecryptFoldersTo(
     }
 
     ensureVaultUnlocked {
-        val source = if (folderPaths.size == 1) folderPaths.first() else ""
-        PickDirectoryDialog(
+        openDecryptFolderPickerWithConfirmation(folderPaths, callback)
+    }
+}
+
+private fun BaseSimpleActivity.openDecryptFolderPickerWithConfirmation(
+    folderPaths: List<String>,
+    callback: (destinationPath: String) -> Unit
+) {
+    val source = if (folderPaths.size == 1) folderPaths.first() else ""
+    PickDirectoryDialog(
+        activity = this,
+        sourcePath = source,
+        showOtherFolderButton = true,
+        showFavoritesBin = false,
+        isPickingCopyMoveDestination = true,
+        isPickingFolderForWidget = false,
+        isCopyOperation = false,
+        isHiddenCopySource = false,
+        mode = PickDirectoryMode.DECRYPT_MOVE
+    ) { destination ->
+        val pickedDir = CryptoManager.resolvePickedPathToFile(this, destination) ?: File(destination)
+        val resolved = folderPaths.associateWith { path ->
+            val folder = File(path)
+            val albumName = CryptoManager.getDecryptedFolderName(folder, this) ?: folder.name
+            CryptoManager.resolveDecryptTargetInPickedDirectory(pickedDir, albumName)
+        }
+        val (message, destinationSummary) = buildDecryptConfirmationText(folderPaths, resolved)
+        EncryptConfirmationDialog(
             activity = this,
-            sourcePath = source,
-            showOtherFolderButton = true,
-            showFavoritesBin = false,
-            isPickingCopyMoveDestination = true,
-            isPickingFolderForWidget = false,
-            isCopyOperation = false,
-            isHiddenCopySource = false,
-            mode = PickDirectoryMode.DECRYPT_MOVE
-        ) { destination ->
-            confirmAndDecryptFolders(folderPaths, targetDir = File(destination), callback = callback)
+            message = message,
+            infoTitleResId = R.string.decrypt_info_title,
+            infoMessageResId = R.string.decrypt_info_message,
+            isDecrypt = true,
+            destinationLabel = getString(R.string.decrypt_destination_label),
+            destinationValue = destinationSummary
+        ) {
+            executeFolderDecryption(folderPaths, resolved, callback)
         }
     }
 }
 
-private fun BaseSimpleActivity.confirmAndDecryptFolders(
+private fun BaseSimpleActivity.buildDecryptConfirmationText(
     folderPaths: List<String>,
-    targetDir: File?,
+    resolvedTargets: Map<String, File?>
+): Pair<String, String> {
+    val firstFolder = File(folderPaths.first())
+    val firstAlbumName = CryptoManager.getDecryptedFolderName(firstFolder, this) ?: firstFolder.name
+    val message = if (folderPaths.size == 1) {
+        getString(R.string.confirm_decrypt_album, firstAlbumName)
+    } else {
+        getString(R.string.confirm_decrypt_albums, folderPaths.size)
+    }
+
+    val toBeSelected = getString(R.string.decrypt_destination_to_be_selected)
+    val destinationSummary = if (folderPaths.size == 1) {
+        resolvedTargets[folderPaths.first()]?.let { humanizePath(it.absolutePath) } ?: toBeSelected
+    } else if (resolvedTargets.values.all { it == null }) {
+        toBeSelected
+    } else {
+        val shown = folderPaths.take(MAX_DECRYPT_PREVIEW_ALBUMS).joinToString("\n") { path ->
+            val folder = File(path)
+            val albumName = CryptoManager.getDecryptedFolderName(folder, this) ?: folder.name
+            val dest = resolvedTargets[path]?.let { humanizePath(it.absolutePath) } ?: toBeSelected
+            "• $albumName → $dest"
+        }
+        if (folderPaths.size > MAX_DECRYPT_PREVIEW_ALBUMS) {
+            "$shown\n+${folderPaths.size - MAX_DECRYPT_PREVIEW_ALBUMS}"
+        } else {
+            shown
+        }
+    }
+    return message to destinationSummary
+}
+
+private fun BaseSimpleActivity.pickDecryptDestinationAndExecute(
+    folderPaths: List<String>,
+    originTargets: Map<String, File?>,
+    overrideAll: Boolean,
     callback: (destinationPath: String) -> Unit
 ) {
-    EncryptConfirmationDialog(
+    val source = if (folderPaths.size == 1) folderPaths.first() else ""
+    PickDirectoryDialog(
         activity = this,
-        message = getString(R.string.confirm_decrypt_hidden_file),
-        infoTitleResId = R.string.decrypt_info_title,
-        infoMessageResId = R.string.decrypt_info_message,
-        isDecrypt = true
-    ) {
-        val conflicts = folderPaths.mapNotNull {
-            CryptoManager.previewDecryptAlbumConflict(this, it, targetDir)
+        sourcePath = source,
+        showOtherFolderButton = true,
+        showFavoritesBin = false,
+        isPickingCopyMoveDestination = true,
+        isPickingFolderForWidget = false,
+        isCopyOperation = false,
+        isHiddenCopySource = false,
+        mode = PickDirectoryMode.DECRYPT_MOVE
+    ) { destination ->
+        val pickedDir = CryptoManager.resolvePickedPathToFile(this, destination) ?: File(destination)
+        val resolved = folderPaths.associateWith { path ->
+            val existingOrigin = if (overrideAll) null else originTargets[path]
+            if (existingOrigin != null) {
+                existingOrigin
+            } else {
+                val folder = File(path)
+                val albumName = CryptoManager.getDecryptedFolderName(folder, this) ?: folder.name
+                CryptoManager.resolveDecryptTargetInPickedDirectory(pickedDir, albumName)
+            }
         }
-        resolveAlbumCryptoOptions(this, conflicts) { albumOptions ->
-            val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
-            val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
-            val initialProgressDialog = CryptoProgressDialog(
+        executeFolderDecryption(folderPaths, resolved, callback)
+    }
+}
+
+private fun BaseSimpleActivity.executeFolderDecryption(
+    folderPaths: List<String>,
+    resolvedTargets: Map<String, File>,
+    callback: (destinationPath: String) -> Unit
+) {
+    val conflicts = folderPaths.mapNotNull { path ->
+        CryptoManager.previewDecryptAlbumConflict(this, path, resolvedTargets[path])
+    }
+    resolveAlbumCryptoOptions(this, conflicts) { albumOptions ->
+        val isMerge = albumOptions.resolution == CryptoManager.AlbumConflictResolution.MERGE
+        val isStandardMode = config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+        val initialProgressDialog = CryptoProgressDialog(
+            activity = this,
+            max = 0,
+            titleId = R.string.decrypting_folder,
+            enableNotification = false
+        )
+        resolveCryptoTransferConflicts(
+            progressDialog = initialProgressDialog,
+            buildPairs = {
+                if (!isMerge) {
+                    emptyList()
+                } else {
+                    val pairs = ArrayList<TransferPairSpec>()
+                    for (folderPath in folderPaths) {
+                        val mergeTarget = CryptoManager.findMergeTargetForDecryptFolder(
+                            this,
+                            folderPath,
+                            resolvedTargets[folderPath]
+                        )
+                        if (mergeTarget != null) {
+                            val (resolvedTargetDir, encFiles) = mergeTarget
+                            for (encFile in encFiles) {
+                                pairs.add(TransferPairSpec(encFile, resolvedTargetDir, isTargetEncrypted = false))
+                            }
+                        }
+                    }
+                    pairs
+                }
+            }
+        ) { scan, activeProgressDialog ->
+            val progressDialog = activeProgressDialog ?: CryptoProgressDialog(
                 activity = this,
                 max = 0,
                 titleId = R.string.decrypting_folder,
                 enableNotification = false
             )
-            resolveCryptoTransferConflicts(
-                progressDialog = initialProgressDialog,
-                buildPairs = {
-                    if (!isMerge) {
-                        emptyList()
-                    } else {
-                        val pairs = ArrayList<TransferPairSpec>()
-                        for (folderPath in folderPaths) {
-                            val mergeTarget = CryptoManager.findMergeTargetForDecryptFolder(this, folderPath, targetDir)
-                            if (mergeTarget != null) {
-                                val (resolvedTargetDir, encFiles) = mergeTarget
-                                for (encFile in encFiles) {
-                                    pairs.add(TransferPairSpec(encFile, resolvedTargetDir, isTargetEncrypted = false))
-                                }
-                            }
-                        }
-                        pairs
-                    }
-                }
-            ) { scan, activeProgressDialog ->
-                val progressDialog = activeProgressDialog ?: CryptoProgressDialog(
-                    activity = this,
-                    max = 0,
-                    titleId = R.string.decrypting_folder,
-                    enableNotification = false
-                )
-                ensureNotificationPermissionThenRun { notificationsAllowed ->
-                    progressDialog.ensureNotificationStarted(notificationsAllowed)
-                    ensureBackgroundThread {
-                        val acquired = ForegroundOperationRegistry.acquire(this, "album-decrypt")
-                        if (!acquired) {
-                            runOnUiThread {
-                                try { progressDialog.dismiss() } catch (_: Exception) {}
-                                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                            }
-                            return@ensureBackgroundThread
-                        }
-                        try {
-                        val totalFilesCount = folderPaths.sumOf { folderPath ->
-                            File(folderPath).listFiles()?.count { it.isFile && CryptoManager.isEncryptedFile(it.name) } ?: 0
-                        }
+            ensureNotificationPermissionThenRun { notificationsAllowed ->
+                progressDialog.ensureNotificationStarted(notificationsAllowed)
+                ensureBackgroundThread {
+                    val acquired = ForegroundOperationRegistry.acquire(this, "album-decrypt")
+                    if (!acquired) {
                         runOnUiThread {
-                            progressDialog.updateProgress(0, totalFilesCount)
+                            try { progressDialog.dismiss() } catch (_: Exception) {}
+                            toast(org.fossify.commons.R.string.unknown_error_occurred)
                         }
-                        var globalProcessed = 0
-                        var allSuccess = true
-                        var lastDestination = targetDir?.absolutePath ?: ""
-                        val deferredSkippedFiles = java.util.Collections.synchronizedList(ArrayList<File>())
-                        val deferredIdenticalTargets = java.util.Collections.synchronizedMap(LinkedHashMap<String, File>())
+                        return@ensureBackgroundThread
+                    }
+                    try {
+                    val totalFilesCount = folderPaths.sumOf { folderPath ->
+                        File(folderPath).listFiles()?.count { it.isFile && CryptoManager.isEncryptedFile(it.name) } ?: 0
+                    }
+                    runOnUiThread {
+                        progressDialog.updateProgress(0, totalFilesCount)
+                    }
+                    var globalProcessed = 0
+                    var allSuccess = true
+                    var lastDestination = ""
+                    val deferredSkippedFiles = java.util.Collections.synchronizedList(ArrayList<File>())
+                    val deferredIdenticalTargets = java.util.Collections.synchronizedMap(LinkedHashMap<String, File>())
 
-                        for (folderPath in folderPaths) {
-                            if (ForegroundOperationRegistry.isCancelled) {
-                                allSuccess = false
-                                break
-                            }
-                            var folderLastCurrent = 0
-                            val folderOptions = albumOptions.copy(
-                                deleteIdenticalSource = false,
-                                conflictResolutions = scan.resolutions,
-                                skipDuplicateCheck = isStandardMode,
-                                precheckedNonIdenticalPaths = scan.nonIdenticalPaths,
-                                deferredSkippedSourceCollector = if (isMerge) deferredSkippedFiles else null,
-                                deferredIdenticalTargetMap = if (isMerge) deferredIdenticalTargets else null
-                            )
-                            val result = try {
-                                CryptoManager.decryptFolder(
-                                    context = this,
-                                    folderPath = folderPath,
-                                    targetFolderOverride = targetDir,
-                                    options = folderOptions
-                                ) { current, _ ->
-                                    val diff = current - folderLastCurrent
-                                    if (diff > 0) {
-                                        globalProcessed += diff
-                                        folderLastCurrent = current
-                                        runOnUiThread {
-                                            progressDialog.updateProgress(globalProcessed, totalFilesCount)
-                                        }
+                    for (folderPath in folderPaths) {
+                        if (ForegroundOperationRegistry.isCancelled) {
+                            allSuccess = false
+                            break
+                        }
+                        var folderLastCurrent = 0
+                        val folderOptions = albumOptions.copy(
+                            deleteIdenticalSource = false,
+                            conflictResolutions = scan.resolutions,
+                            skipDuplicateCheck = isStandardMode,
+                            precheckedNonIdenticalPaths = scan.nonIdenticalPaths,
+                            deferredSkippedSourceCollector = if (isMerge) deferredSkippedFiles else null,
+                            deferredIdenticalTargetMap = if (isMerge) deferredIdenticalTargets else null
+                        )
+                        val result = try {
+                            CryptoManager.decryptFolder(
+                                context = this,
+                                folderPath = folderPath,
+                                targetFolderOverride = resolvedTargets[folderPath],
+                                options = folderOptions
+                            ) { current, _ ->
+                                val diff = current - folderLastCurrent
+                                if (diff > 0) {
+                                    globalProcessed += diff
+                                    folderLastCurrent = current
+                                    runOnUiThread {
+                                        progressDialog.updateProgress(globalProcessed, totalFilesCount)
                                     }
                                 }
-                            } catch (e: Exception) {
-                                if (OperationFaults.isSimulatedAbort(e)) throw e
-                                null
                             }
-                            if (result == null) {
-                                allSuccess = false
-                            } else if (lastDestination.isEmpty()) {
-                                lastDestination = result
-                            }
+                        } catch (e: Exception) {
+                            if (OperationFaults.isSimulatedAbort(e)) throw e
+                            null
                         }
+                        if (result == null) {
+                            allSuccess = false
+                        } else if (lastDestination.isEmpty()) {
+                            lastDestination = result
+                        }
+                    }
 
-                        CryptoManager.clearAppImageCaches(this)
-                        val skippedSnapshot = deferredSkippedFiles.toList()
-                        val identicalMapSnapshot = HashMap(deferredIdenticalTargets)
-                        runOnUiThread {
-                            try {
-                                progressDialog.dismiss()
-                            } catch (_: Exception) {}
+                    CryptoManager.clearAppImageCaches(this)
+                    val skippedSnapshot = deferredSkippedFiles.toList()
+                    val identicalMapSnapshot = HashMap(deferredIdenticalTargets)
+                    runOnUiThread {
+                        try {
+                            progressDialog.dismiss()
+                        } catch (_: Exception) {}
 
-                            if (allSuccess && totalFilesCount > skippedSnapshot.size) {
-                                toast(R.string.folder_decrypted_successfully)
-                            } else if (allSuccess && skippedSnapshot.isNotEmpty()) {
-                                // Skipped files handled by post-operation prompt below
-                            } else if (allSuccess) {
-                                toast(R.string.folder_decrypted_successfully)
-                            } else {
-                                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                            }
-                            showSkippedIdenticalToast(identicalMapSnapshot.size)
-                            resolveSkippedCryptoFiles(
-                                isEncrypt = false,
-                                skippedFiles = skippedSnapshot,
-                                identicalTargetMap = identicalMapSnapshot,
-                                forceCleanupEmptyAlbum = true
-                            ) {
-                                callback(lastDestination)
-                            }
+                        if (allSuccess && totalFilesCount > skippedSnapshot.size) {
+                            toast(R.string.folder_decrypted_successfully)
+                        } else if (allSuccess && skippedSnapshot.isNotEmpty()) {
+                            // Skipped files handled by post-operation prompt below
+                        } else if (allSuccess) {
+                            toast(R.string.folder_decrypted_successfully)
+                        } else {
+                            toast(org.fossify.commons.R.string.unknown_error_occurred)
                         }
-                        } finally {
-                            ForegroundOperationRegistry.release(this, "album-decrypt")
+                        showSkippedIdenticalToast(identicalMapSnapshot.size)
+                        resolveSkippedCryptoFiles(
+                            isEncrypt = false,
+                            skippedFiles = skippedSnapshot,
+                            identicalTargetMap = identicalMapSnapshot,
+                            forceCleanupEmptyAlbum = true
+                        ) {
+                            callback(lastDestination)
                         }
+                    }
+                    } finally {
+                        ForegroundOperationRegistry.release(this, "album-decrypt")
                     }
                 }
             }

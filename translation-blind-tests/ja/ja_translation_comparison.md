@@ -1270,3 +1270,16 @@ Added the two new built-in Appearance preset theme names next to `theme_deep_for
 |---|---|---|---|
 | `theme_velvet_violet` | Velvet Violet | ベルベットバイオレット | Dark purple preset theme (`#0E0A18` bg, `#A78BFA` primary) |
 | `theme_soft_coral` | Soft Coral | ソフトコーラル | Light coral preset theme (`#FFF7F5` bg, `#C44047` primary) |
+
+## Album decryption destination strings (this revision)
+
+Added the 5 new fork-only album decryption destination keys and updated `decrypt_info_message` in `values-ja/strings.xml` (Japanese). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|---|---|---|---|
+| `confirm_decrypt_album` | Decrypt \"%s\"? | 「%s」を復号しますか？ | Confirmation dialog for decrypting a single encrypted album (`%s` = album name; Japanese corner brackets `「%s」`) |
+| `confirm_decrypt_albums` | Decrypt %d selected albums? | 選択した %d 個のアルバムを復号しますか？ | Confirmation dialog for decrypting multiple encrypted albums (`%d` = count) |
+| `decrypt_destination_label` | Destination: | 保存先: | Short label above resolved destination path(s) |
+| `decrypt_destination_to_be_selected` | Location to be selected | 場所は後で選択 | Shown when no `.origin` is recorded or external storage is unmounted |
+| `decrypt_to_other_location` | Other location | 別の場所 | Concise neutral button to pick a custom destination |
+| `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album is decrypted, it is restored to its original location with its current album name and removed from the encrypted vault.\n• If no original location was recorded or that storage is unavailable, or if you choose another location, the destination picker opens so you can choose where to extract it.\n• Individual decrypted files are restored with their original name and format to the selected destination folder.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | フォルダーとファイルの構造:\n• 暗号化されたアルバムを復号すると、現在のアルバム名のまま元の場所に復元され、暗号化された保管庫から削除されます。\n• 元の場所が記録されていない場合、そのストレージが利用できない場合、または別の場所を選択した場合は、保存先選択画面が開き、展開先を選択できます。\n• 個別に復号されたファイルは、元の名前と形式で選択した保存先フォルダーに復元されます。\n\n同じ名前のアルバムが既に存在する場合:\n• 既定では、Album(1) のような新しいフォルダーを作成するか、既存の保存先フォルダーに統合するかを確認します（設定で変更可能）。\n• 統合時は、保存先とビット単位で100%一致することが確認された暗号化コピーを保管庫から削除するか残すかを選択できます。\n• 同名で内容が異なるファイル（例: download.jpg）は download(1).jpg として保持されるか、競合解決の設定に従って処理されます。 | Updated (`formatted="false"` in XML); reflects automatic `.origin` restore vs. destination picker fallback |

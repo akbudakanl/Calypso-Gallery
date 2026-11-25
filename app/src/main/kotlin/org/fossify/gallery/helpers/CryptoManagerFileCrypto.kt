@@ -46,6 +46,7 @@ fun CryptoManager.isEncryptableMediaFile(file: File): Boolean {
     return file.isFile &&
         file.name != NOMEDIA &&
         file.name != VAULT_SUBFOLDER_META_FILE &&
+        file.name != VAULT_SUBFOLDER_ORIGIN_FILE &&
         file.name != VAULT_HEADER_FILE &&
         !isEncryptedFile(file.name) &&
         isSupportedMediaName(file.name)

@@ -135,3 +135,18 @@ Two fork-only Appearance preset theme keys were added next to `theme_deep_forest
 | `theme_soft_coral` | Soft Coral | Yumuşak Mercan | Light coral preset (`#FFF7F5` bg, `#C44047` primary) |
 
 Each `<lang>_translation_comparison.md` ends with an `## Appearance preset theme strings (this revision)` table pairing the English source and localized counterpart.
+
+### Album decryption destination strings (this revision)
+
+Six fork-only keys (`5` new + `1` updated) document the album-decryption destination flow across all 11 audited locales (`values/`, `values-tr/`, and the 9 blind-test locales):
+
+| Key (`name`) | Change | English (`values/strings.xml`) | Turkish (`values-tr/strings.xml`) | Purpose |
+|---|---|---|---|---|
+| `confirm_decrypt_album` | **New** | `Decrypt \"%s\"?` | `\"%s\" albümünün şifresi çözülsün mü?` | Single encrypted album decryption confirmation (`%s` = album name) |
+| `confirm_decrypt_albums` | **New** | `Decrypt %d selected albums?` | `Seçilen %d albümün şifresi çözülsün mü?` | Multi-album decryption confirmation (`%d` = count) |
+| `decrypt_destination_label` | **New** | `Destination:` | `Hedef konum:` | Label above resolved destination path(s) in the decrypt dialog |
+| `decrypt_destination_to_be_selected` | **New** | `Location to be selected` | `Konum seçilecek` | Fallback text when `.origin` is missing or external storage is unmounted |
+| `decrypt_to_other_location` | **New** | `Other location` | `Başka yere çöz` | Concise neutral AlertDialog button to pick a custom destination |
+| `decrypt_info_message` | **Updated** | Restores to original `.origin` location or opens destination picker | Orijinal konuma geri çıkarma / hedef seçici açıklaması | Keeps `formatted="false"`; separates album `.origin` restore from individual file decryption |
+
+Each `<lang>_translation_comparison.md` ends with an `## Album decryption destination strings (this revision)` table pairing the English source and localized counterpart.

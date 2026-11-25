@@ -1278,3 +1278,16 @@ Added the two new built-in Appearance preset theme names next to `theme_deep_for
 |---|---|---|---|
 | `theme_velvet_violet` | Velvet Violet | 絲絨紫 | Dark purple preset theme (`#0E0A18` bg, `#A78BFA` primary) |
 | `theme_soft_coral` | Soft Coral | 柔和珊瑚 | Light coral preset theme (`#FFF7F5` bg, `#C44047` primary) |
+
+## Album decryption destination strings (this revision)
+
+Added the 5 new fork-only album decryption destination keys and updated `decrypt_info_message` in `values-zh-rTW/strings.xml` (Traditional Chinese — Taiwan). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|---|---|---|---|
+| `confirm_decrypt_album` | Decrypt \"%s\"? | 確定要解密「%s」嗎？ | Confirmation dialog for decrypting a single encrypted album (`%s` = album name; Taiwanese corner brackets `「%s」`) |
+| `confirm_decrypt_albums` | Decrypt %d selected albums? | 確定要解密所選的 %d 個相簿嗎？ | Confirmation dialog for decrypting multiple encrypted albums (`%d` = count) |
+| `decrypt_destination_label` | Destination: | 目的地： | Short label above resolved destination path(s) |
+| `decrypt_destination_to_be_selected` | Location to be selected | 待選擇位置 | Shown when no `.origin` is recorded or external storage is unmounted |
+| `decrypt_to_other_location` | Other location | 其他位置 | Concise neutral button to pick a custom destination |
+| `decrypt_info_message` | Folder & File Structure:\n• When an encrypted album is decrypted, it is restored to its original location with its current album name and removed from the encrypted vault.\n• If no original location was recorded or that storage is unavailable, or if you choose another location, the destination picker opens so you can choose where to extract it.\n• Individual decrypted files are restored with their original name and format to the selected destination folder.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting. | 資料夾與檔案結構：\n• 將加密相簿解密時，會以目前的相簿名稱還原至其原始位置，並從加密保險箱中移除。\n• 若未記錄原始位置、該儲存空間無法使用，或您選擇其他位置，系統會開啟目的地選擇器，讓您選擇要提取至何處。\n• 單獨解密的檔案會以原始名稱與格式還原至所選的目的地資料夾。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。 | Updated (`formatted="false"` in XML); reflects automatic `.origin` restore vs. destination picker fallback |

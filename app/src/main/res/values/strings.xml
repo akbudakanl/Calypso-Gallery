@@ -431,8 +431,13 @@
     <string name="secret_vault_empty">Encrypted Vault is empty</string>
     <string name="press_back_again_to_exit_vault">Press back again to exit</string>
     <string name="confirm_decrypt_hidden_file">Are you sure you want to decrypt the hidden file(s)?</string>
+    <string name="confirm_decrypt_album">Decrypt \"%s\"?</string>
+    <string name="confirm_decrypt_albums">Decrypt %d selected albums?</string>
+    <string name="decrypt_destination_label">Destination:</string>
+    <string name="decrypt_destination_to_be_selected">Location to be selected</string>
+    <string name="decrypt_to_other_location">Other location</string>
     <string name="decrypt_info_title">How Decryption Works</string>
-    <string name="decrypt_info_message" formatted="false">Folder &amp; File Structure:\n• When an encrypted album or file is decrypted, it is restored with its original name and format to the selected destination folder and removed from the encrypted vault.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting.</string>
+    <string name="decrypt_info_message" formatted="false">Folder &amp; File Structure:\n• When an encrypted album is decrypted, it is restored to its original location with its current album name and removed from the encrypted vault.\n• If no original location was recorded or that storage is unavailable, or if you choose another location, the destination picker opens so you can choose where to extract it.\n• Individual decrypted files are restored with their original name and format to the selected destination folder.\n\nIf an Album with the Same Name Already Exists:\n• By default, the app asks whether to create a new folder such as Album(1) or merge into the existing destination folder (configurable in Settings).\n• When merging, you can choose whether encrypted copies verified 100% bit-identical to the destination are removed from the vault or kept.\n• Different files with the same name (e.g. download.jpg) are kept as download(1).jpg or handled according to your conflict resolution setting.</string>
     <string name="copy_to_clipboard_disabled_in_vault">Copying to clipboard is disabled while vault is unlocked for security.</string>
     <string name="stop_showing_hidden">Stop showing encrypted media</string>
     <string name="system_default">System default</string>

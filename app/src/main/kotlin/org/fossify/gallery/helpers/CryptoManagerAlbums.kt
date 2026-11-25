@@ -1,9 +1,11 @@
 package org.fossify.gallery.helpers
 
 import android.content.Context
+import com.google.gson.Gson
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.helpers.CryptoManager.FOLDER_ORIGIN_PURPOSE
 import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
@@ -11,6 +13,14 @@ import java.io.*
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+
+private const val ORIGIN_STORAGE_INTERNAL = "internal"
+private const val ORIGIN_STORAGE_EXTERNAL = "external"
+
+internal data class EncryptedFolderOrigin(
+    val storageType: String,
+    val parentPath: String
+)
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerAlbums.
@@ -286,4 +296,263 @@ fun CryptoManager.getVaultDestinationAlbums(context: Context): List<VaultPhysica
     otherAlbums.sortBy { it.name.lowercase() }
     albums.addAll(otherAlbums)
     return albums
+}
+
+// ==================== FOLDER ORIGIN METADATA (.origin) ====================
+
+private fun normalizeOriginPath(path: String): String {
+    val forward = path.trim().replace('\\', '/')
+    if (forward == "/") return "/"
+    return forward.trimEnd('/')
+}
+
+private fun isSameOrChildPath(pathNorm: String, rootNorm: String): Boolean {
+    if (rootNorm.isEmpty()) return false
+    return pathNorm.equals(rootNorm, ignoreCase = true) ||
+        pathNorm.startsWith("$rootNorm/", ignoreCase = true)
+}
+
+private fun hasValidRelativeSegments(relPath: String): Boolean {
+    if (relPath.isEmpty()) return true
+    if (relPath.startsWith('/') || relPath.contains('\\') || relPath.contains('\u0000')) return false
+    return relPath.split('/').none { it.isEmpty() || it == "." || it == ".." }
+}
+
+private fun extractRelativeSubpath(pathNorm: String, rootNorm: String): String? {
+    if (!isSameOrChildPath(pathNorm, rootNorm)) return null
+    return if (pathNorm.equals(rootNorm, ignoreCase = true)) {
+        ""
+    } else {
+        pathNorm.substring(rootNorm.length + 1).takeIf { hasValidRelativeSegments(it) }
+    }
+}
+
+internal fun CryptoManager.buildEncryptedFolderOrigin(
+    context: Context,
+    sourceFolder: File
+): EncryptedFolderOrigin? {
+    val parentFile = sourceFolder.parentFile ?: return null
+    val parentNorm = normalizeOriginPath(parentFile.absolutePath)
+    if (parentNorm.isEmpty()) return null
+
+    val internalRootRaw = runCatching { context.internalStoragePath }.getOrDefault("")
+    val internalRootNorm = normalizeOriginPath(internalRootRaw)
+    var internalRel: String? = null
+    if (internalRootNorm.isNotEmpty()) {
+        internalRel = extractRelativeSubpath(parentNorm, internalRootNorm)
+        if (internalRel == null) {
+            val parentCanon = runCatching { normalizeOriginPath(parentFile.canonicalPath) }.getOrNull()
+            val internalCanon = runCatching {
+                normalizeOriginPath(File(internalRootRaw).canonicalPath)
+            }.getOrNull()
+            if (parentCanon != null && internalCanon != null) {
+                internalRel = extractRelativeSubpath(parentCanon, internalCanon)
+            }
+        }
+    }
+
+    return if (internalRel != null) {
+        EncryptedFolderOrigin(ORIGIN_STORAGE_INTERNAL, internalRel)
+    } else {
+        EncryptedFolderOrigin(ORIGIN_STORAGE_EXTERNAL, parentNorm)
+    }
+}
+
+internal fun CryptoManager.writeEncryptedFolderOrigin(
+    context: Context,
+    encryptedFolder: File,
+    origin: EncryptedFolderOrigin
+) {
+    if (activeKek() == null) return
+    val json = Gson().toJson(origin)
+    val encrypted = encryptStringForVault(context, json, FOLDER_ORIGIN_PURPOSE)
+    if (!isEncryptedVaultString(encrypted)) return
+
+    val originFile = File(encryptedFolder, VAULT_SUBFOLDER_ORIGIN_FILE)
+    FileOutputStream(originFile).use { fos ->
+        fos.write(encrypted.toByteArray(Charsets.UTF_8))
+        fos.flush()
+        fos.fd.sync()
+    }
+}
+
+internal fun CryptoManager.readEncryptedFolderOrigin(folder: File): EncryptedFolderOrigin? {
+    if (activeKek() == null) return null
+    val originFile = File(folder, VAULT_SUBFOLDER_ORIGIN_FILE)
+    if (!originFile.isFile) return null
+
+    return try {
+        val content = originFile.readText(Charsets.UTF_8).trim()
+        val json = if (isEncryptedVaultString(content)) {
+            decryptStringFromVault(content, FOLDER_ORIGIN_PURPOSE)
+        } else {
+            null
+        }
+        val parsed = json?.let { Gson().fromJson(it, EncryptedFolderOrigin::class.java) }
+        val validType = parsed != null && (
+            parsed.storageType == ORIGIN_STORAGE_INTERNAL ||
+                parsed.storageType == ORIGIN_STORAGE_EXTERNAL
+            )
+        if (validType && !parsed!!.parentPath.contains('\u0000')) parsed else null
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun CryptoManager.listMountedExternalOriginRoots(
+    context: Context,
+    internalRootNorm: String
+): List<File> {
+    val candidates = ArrayList<File>()
+    candidates.addAll(listExternalStorageVolumeRoots(context))
+    runCatching { context.sdCardPath }.getOrNull()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { candidates.add(File(it)) }
+    runCatching { context.config.OTGPath }.getOrNull()
+        ?.takeIf {
+            it.isNotEmpty() &&
+                !it.startsWith("otg:", ignoreCase = true) &&
+                !it.startsWith("content://", ignoreCase = true)
+        }
+        ?.let { candidates.add(File(it)) }
+    otgMountBaseOverrideForTest?.forEach { base ->
+        base.listFiles()?.filter { it.isDirectory }?.let { candidates.addAll(it) }
+    }
+
+    val unique = LinkedHashMap<String, File>()
+    for (root in candidates) {
+        val norm = normalizeOriginPath(root.absolutePath)
+        if (norm.isEmpty() || norm.equals(internalRootNorm, ignoreCase = true)) continue
+        if (root.exists() && root.isDirectory) {
+            unique.putIfAbsent(norm.lowercase(), root)
+        }
+    }
+    return unique.values.toList()
+}
+
+private fun resolveInternalOriginCandidate(
+    origin: EncryptedFolderOrigin,
+    internalRoot: File,
+    internalRootNorm: String
+): Triple<File, File, Boolean>? {
+    if (!hasValidRelativeSegments(origin.parentPath)) return null
+    val candidate = if (origin.parentPath.isEmpty()) internalRoot else File(internalRoot, origin.parentPath)
+    val candidateNorm = normalizeOriginPath(candidate.absolutePath)
+    return if (isSameOrChildPath(candidateNorm, internalRootNorm)) {
+        Triple(candidate, internalRoot, false)
+    } else {
+        null
+    }
+}
+
+private fun CryptoManager.resolveExternalOriginCandidate(
+    context: Context,
+    origin: EncryptedFolderOrigin,
+    internalRootNorm: String
+): Triple<File, File, Boolean>? {
+    val originParentNorm = normalizeOriginPath(origin.parentPath)
+    if (originParentNorm.isEmpty() || originParentNorm.split('/').any { it == "." || it == ".." }) {
+        return null
+    }
+    val matchedRoot = listMountedExternalOriginRoots(context, internalRootNorm).firstOrNull { root ->
+        isSameOrChildPath(originParentNorm, normalizeOriginPath(root.absolutePath))
+    } ?: return null
+
+    val rootNorm = normalizeOriginPath(matchedRoot.absolutePath)
+    val rel = extractRelativeSubpath(originParentNorm, rootNorm) ?: return null
+    val candidate = if (rel.isEmpty()) matchedRoot else File(matchedRoot, rel)
+    return Triple(candidate, matchedRoot, true)
+}
+
+private fun CryptoManager.resolveOriginCandidateAndRoot(
+    context: Context,
+    origin: EncryptedFolderOrigin,
+    internalRoot: File,
+    internalRootNorm: String
+): Triple<File, File, Boolean>? {
+    return if (origin.storageType == ORIGIN_STORAGE_INTERNAL) {
+        resolveInternalOriginCandidate(origin, internalRoot, internalRootNorm)
+    } else {
+        resolveExternalOriginCandidate(context, origin, internalRootNorm)
+    }
+}
+
+private fun CryptoManager.isDisallowedDecryptParent(
+    context: Context,
+    candidateParent: File,
+    internalRoot: File,
+    internalRootNorm: String,
+    storageRoot: File
+): Boolean {
+    val candidateNorm = normalizeOriginPath(candidateParent.absolutePath)
+    val storageRootNorm = normalizeOriginPath(storageRoot.absolutePath)
+    val cipherRootNorm = normalizeOriginPath(File(internalRoot, CIPHER_APP_DIR_NAME).absolutePath)
+    val vaultRootNorm = findVaultRoot(context)?.let { normalizeOriginPath(it.absolutePath) }
+    val canonicalEscape = if (candidateParent.exists()) {
+        val candidateCanon = runCatching { normalizeOriginPath(candidateParent.canonicalPath) }.getOrNull()
+        val storageCanon = runCatching { normalizeOriginPath(storageRoot.canonicalPath) }.getOrNull()
+        candidateCanon != null && storageCanon != null && !isSameOrChildPath(candidateCanon, storageCanon)
+    } else {
+        false
+    }
+
+    return !isSameOrChildPath(candidateNorm, storageRootNorm) ||
+        HiddenFoldersPolicy.isAndroidRestrictedSubpath(candidateNorm, internalRootNorm) ||
+        isSameOrChildPath(candidateNorm, cipherRootNorm) ||
+        (vaultRootNorm != null && isSameOrChildPath(candidateNorm, vaultRootNorm)) ||
+        canonicalEscape
+}
+
+private fun findExistingAncestorWithinRoot(candidateParent: File, storageRoot: File): File? {
+    val rootNorm = normalizeOriginPath(storageRoot.absolutePath)
+    var current: File? = candidateParent
+    var found: File? = null
+    var done = false
+    while (current != null && !done) {
+        val currentNorm = normalizeOriginPath(current.absolutePath)
+        if (!isSameOrChildPath(currentNorm, rootNorm)) {
+            done = true
+        } else if (current.exists()) {
+            found = if (current.isDirectory) current else null
+            done = true
+        } else if (currentNorm.equals(rootNorm, ignoreCase = true)) {
+            done = true
+        } else {
+            current = current.parentFile
+        }
+    }
+    return found
+}
+
+internal fun CryptoManager.resolveValidOriginParentDir(context: Context, folder: File): File? {
+    if (isDefaultHiddenAlbum(folder) || isVaultRecycleBin(folder)) return null
+    val origin = readEncryptedFolderOrigin(folder) ?: return null
+    val internalRootRaw = runCatching { context.internalStoragePath }.getOrDefault("").trimEnd('/', '\\')
+    if (internalRootRaw.isEmpty()) return null
+
+    val internalRoot = File(internalRootRaw)
+    val internalRootNorm = normalizeOriginPath(internalRoot.absolutePath)
+    val resolved = resolveOriginCandidateAndRoot(
+        context = context,
+        origin = origin,
+        internalRoot = internalRoot,
+        internalRootNorm = internalRootNorm
+    )
+    var validParent: File? = null
+    if (resolved != null) {
+        val (candidateParent, storageRoot, isExternal) = resolved
+        val disallowed = isDisallowedDecryptParent(
+            context = context,
+            candidateParent = candidateParent,
+            internalRoot = internalRoot,
+            internalRootNorm = internalRootNorm,
+            storageRoot = storageRoot
+        )
+        val ancestor = if (disallowed) null else findExistingAncestorWithinRoot(candidateParent, storageRoot)
+        val writable = ancestor != null && if (isExternal) canWriteToDirectory(ancestor) else ancestor.canWrite()
+        if (writable) {
+            validParent = candidateParent
+        }
+    }
+    return validParent
 }

@@ -434,7 +434,12 @@
     <string name="encrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新相簿，或合併至現有的加密相簿（可在設定中調整）。\n• 合併時，您可選擇要刪除已驗證與目的地 100% 位元完全相同的來源檔案，或將其保留在來源資料夾中。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
     <string name="encrypt_files_info_message" formatted="false">資料夾與檔案結構：\n• 將未加密的相簿加密時，會轉換為加密保險箱（Secrets）內的加密子資料夾。\n• 資料夾名稱與內部所有檔案名稱及內容皆會加密，因此在應用程式外無法讀取任何內容。</string>
     <string name="decrypt_info_title">解密運作方式</string>
-    <string name="decrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將加密相簿或檔案解密時，會以原始名稱與格式還原至所選的目的地資料夾，並從加密保險箱中移除。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
+    <string name="decrypt_info_message" formatted="false">資料夾與檔案結構：\n• 將加密相簿解密時，會以目前的相簿名稱還原至其原始位置，並從加密保險箱中移除。\n• 若未記錄原始位置、該儲存空間無法使用，或您選擇其他位置，系統會開啟目的地選擇器，讓您選擇要提取至何處。\n• 單獨解密的檔案會以原始名稱與格式還原至所選的目的地資料夾。\n\n若已存在同名相簿：\n• 預設情況下，應用程式會詢問要建立如 Album(1) 的新資料夾，或合併至現有的目的地資料夾（可在設定中調整）。\n• 合併時，您可選擇要從保險箱移除已驗證與目的地 100% 位元完全相同的加密複本，或將其保留。\n• 同名但內容不同的檔案（例如 download.jpg）會保留為 download(1).jpg，或依您的衝突解決設定處理。</string>
+    <string name="confirm_decrypt_album">確定要解密「%s」嗎？</string>
+    <string name="confirm_decrypt_albums">確定要解密所選的 %d 個相簿嗎？</string>
+    <string name="decrypt_destination_label">目的地：</string>
+    <string name="decrypt_destination_to_be_selected">待選擇位置</string>
+    <string name="decrypt_to_other_location">其他位置</string>
     <string name="vault_location">保險箱位置</string>
     <string name="vault_location_standard_summary">標準（內部儲存空間）</string>
     <string name="vault_location_unavailable_summary">外接磁碟機已中斷連線 (%s)</string>

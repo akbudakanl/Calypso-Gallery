@@ -169,6 +169,14 @@ private fun CryptoManager.encryptFolderRegistered(
     if (!File(subfolder, VAULT_SUBFOLDER_META_FILE).exists()) {
         writeEncryptedFolderMeta(context, subfolder, originalFolderName)
     }
+    if (!targetAlbumExistedBefore &&
+        !isDefaultAlbumRawName(originalFolderName) &&
+        originalFolderName != VAULT_RECYCLE_BIN_NAME
+    ) {
+        buildEncryptedFolderOrigin(context, folder)?.let { origin ->
+            writeEncryptedFolderOrigin(context, subfolder, origin)
+        }
+    }
 
     val total = filesToEncrypt.size
     onProgress?.invoke(0, total)
@@ -478,8 +486,9 @@ private fun CryptoManager.encryptFolderRegistered(
 
 
 /**
- * Decrypts an encrypted subfolder back to plaintext inside Pictures/<originalFolderName>,
- * or into [targetFolderOverride] when specified by the user.
+ * Decrypts an encrypted subfolder back to plaintext into its recorded original parent directory,
+ * or into [targetFolderOverride] when specified by the user. Returns null if no valid target
+ * location is available or cannot be created.
  */
 fun CryptoManager.decryptFolder(
     context: Context,
@@ -498,6 +507,28 @@ fun CryptoManager.decryptFolder(
     }
 }
 
+private fun CryptoManager.prepareDecryptTargetFolder(
+    context: Context,
+    folder: File,
+    targetFolderOverride: File?,
+    resolution: AlbumConflictResolution
+): Pair<File, Boolean>? {
+    val initialTarget = resolveDecryptTargetFolder(context, folder, targetFolderOverride) ?: return null
+    val targetFolder = if (
+        initialTarget.exists() &&
+        initialTarget.isDirectory &&
+        resolution == AlbumConflictResolution.RENAME
+    ) {
+        val parent = initialTarget.parentFile ?: initialTarget
+        resolveUniquePlainFolder(parent, initialTarget.name)
+    } else {
+        initialTarget
+    }
+    val targetExistedBefore = targetFolder.exists()
+    val ready = targetExistedBefore || targetFolder.mkdirs()
+    return if (ready) targetFolder to targetExistedBefore else null
+}
+
 private fun CryptoManager.decryptFolderRegistered(
     context: Context,
     folder: File,
@@ -509,15 +540,12 @@ private fun CryptoManager.decryptFolderRegistered(
 ): String? {
 
     val hadNoMedia = File(folder, NOMEDIA).exists()
-    val initialTarget = resolveDecryptTargetFolder(context, folder, targetFolderOverride)
-    val targetFolder = if (initialTarget.exists() && initialTarget.isDirectory && options.resolution == AlbumConflictResolution.RENAME) {
-        val parent = initialTarget.parentFile ?: initialTarget
-        resolveUniquePlainFolder(parent, initialTarget.name)
-    } else {
-        initialTarget
-    }
-    val targetExistedBefore = targetFolder.exists()
-    if (!targetExistedBefore && !targetFolder.mkdirs()) return null
+    val (targetFolder, targetExistedBefore) = prepareDecryptTargetFolder(
+        context = context,
+        folder = folder,
+        targetFolderOverride = targetFolderOverride,
+        resolution = options.resolution
+    ) ?: return null
 
     // Process pre-numbered (n) variants before base names so colliding base files do not steal "(1)" names.
     val filesToDecrypt = getSortedEncryptedFilesForDecrypt(folder)
