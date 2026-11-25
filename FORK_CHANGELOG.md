@@ -4,19 +4,22 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
-### Fixed
+## [1.0.1] - 2026-11-25
 
-- **Video mute behaviour per album session** — mute now follows upstream Fossify Gallery: entering an album (or "show all files") starts with sound on, toggling it applies to videos that have not started yet, already playing videos keep their state until they are replayed, and the choice is kept when leaving fullscreen for the album grid. Exiting the album resets it to the default, and the speaker icon always matches the audio the player actually produces.
+### Added
 
-## [1.0.1] - 2026-11-24
+- **Original-location album decryption and destination-picker fallback** — encrypting a folder now stores its encrypted parent location in `.origin` (keeping `.meta` CLI-compatible). Decrypting a single album restores it to its original location with an option to pick another destination, while multi-album decryption or unavailable/unrecorded origins open the destination picker directly instead of silently falling back to `Pictures/`. Confirmation and album conflict dialogs display destination paths, follow the active `AppearancePalette` across all themes, and include updated translations across all 11 audited locales.
 
 ### Changed
 
-- **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and continuous breathing pulse animation while preserving the exact top light slit, lock descent, surface disc, rim, backlit radial glow, and haptic arming feedback.
+- **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and added a calm ambient breathing pulse while armed and held (no size pop), preserving the top light slit, lock descent, surface disc, rim, backlit radial glow, and haptic arming feedback.
 
 ### Fixed
 
-- **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders exist. `MainActivity` now persists newly discovered folders to the directory cache immediately instead of dropping them on early scan cancellation, `PickDirectoryDialog` falls back to a live MediaStore scan (including disk-only and included folders) when the cache is empty or stale (such as when launching directly into Files view), active media type filters no longer hide valid copy/move/decrypt destination folders, and copying from a virtual album now displays all valid real albums instead of excluding the stale owner folder.
+- **Video mute behaviour per album session** — mute now follows upstream Fossify Gallery: entering an album (or "show all files") starts with sound on, toggling it applies to videos that have not started yet, already playing videos keep their state until they are replayed, and the choice is kept when leaving fullscreen for the album grid. Exiting the album resets it to the default, and the speaker icon always matches the audio the player actually produces.
+- **Fullscreen video thumbnails and fast targeted indexing** — stabilized fullscreen video thumbnail caching and added fast targeted/screenshot folder indexing.
+- **Duplicate MediaStore entries** — deduplicated MediaStore queries by file path so devices returning duplicate rows no longer display duplicate thumbnails.
+- **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found with the selected filters" when folders exist. `MainActivity` now persists newly discovered folders to the directory cache immediately instead of dropping them on early scan cancellation, `PickDirectoryDialog` falls back to a live MediaStore scan (including disk-only and included folders) when the cache is empty or stale and hides empty non-encrypted folders while rendering a clean folder icon for empty vault albums, active media type filters no longer hide valid copy/move/decrypt destination folders, and copying from a virtual album now displays all valid real albums instead of excluding the stale owner folder.
 - **Share metadata temp folder** — `Pictures/Calypso/Shared` now creates a `.nomedia` marker directly on all Android versions (and repairs existing folders missing `.nomedia` on startup) and is excluded as an internal path so it never appears as a gallery album.
 
 ## [1.0.0] - 2026-11-24

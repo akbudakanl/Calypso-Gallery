@@ -1,10 +1,10 @@
+Added:
+
+• **Original-location album decryption and destination-picker fallback** — encrypting a folder now stores its encrypted…
+
 Changed:
 
-• **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and continuous breathing pulse…
-
-Fixed:
-
-• **Copy and move destination picker** — destination folder selection no longer shows "No media files have been found…
+• **Pull-to-open vault indicator** — removed the post-settle lock/disc scale pop and added a calm ambient breathing…
 
 Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.1
 Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.0.1.tar.gz
