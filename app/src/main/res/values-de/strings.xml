@@ -810,4 +810,5 @@
     <string name="vault_sync_stale_marker_message">Diese Brücke enthält eine Schreibmarkierung vom %1$s. Das CLI scheint nicht zu laufen. Markierung entfernen und den Import fortsetzen?</string>
     <string name="vault_sync_stale_marker_remove">Entfernen und fortfahren</string>
     <string name="vault_sync_stale_marker_keep">Behalten</string>
+    <string name="cannot_include_restricted_or_vault_folder">Verschlüsselte Tresorordner, App-Systemverzeichnisse und eingeschränkte Android-Ordner können nicht einbezogen werden.</string>
 </resources>

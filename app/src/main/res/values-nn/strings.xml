@@ -883,4 +883,5 @@
     <string name="vault_sync_stale_marker_message">Denne brua inneheld ein skrivemarkør frå %1$s. CLI ser ikkje ut til å køyre. Fjerne markøren og halde fram importen?</string>
     <string name="vault_sync_stale_marker_remove">Fjern og hald fram</string>
     <string name="vault_sync_stale_marker_keep">Behald</string>
+    <string name="cannot_include_restricted_or_vault_folder">Krypterte kvelvmapper, systemkatalogane til appen og avgrensa Android-mapper kan ikkje inkluderast.</string>
 </resources>

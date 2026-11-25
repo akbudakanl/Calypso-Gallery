@@ -24,6 +24,7 @@ import org.fossify.gallery.dialogs.StoragePermissionRequiredDialog
 import org.fossify.gallery.extensions.addPathToDB
 import org.fossify.gallery.extensions.applyVaultScreenProtection
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.isIncludedFolderDisallowed
 import org.fossify.gallery.extensions.isPathHiddenOrEncrypted
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.ScreenshotFolderObserver
@@ -275,6 +276,10 @@ open class SimpleActivity : BaseSimpleActivity() {
 
     protected fun showAddIncludedFolderDialog(callback: () -> Unit) {
         FilePickerDialog(this, config.lastFilepickerPath, false, config.shouldShowHidden, false, true) {
+            if (isIncludedFolderDisallowed(it)) {
+                toast(R.string.cannot_include_restricted_or_vault_folder)
+                return@FilePickerDialog
+            }
             config.lastFilepickerPath = it
             config.addIncludedFolder(it)
             callback()

@@ -878,4 +878,5 @@
     <string name="vault_sync_stale_marker_message">This bridge contains a write marker from %1$s. The CLI does not appear to be running. Remove the marker and continue the transfer?</string>
     <string name="vault_sync_stale_marker_remove">Remove and continue</string>
     <string name="vault_sync_stale_marker_keep">Keep it</string>
+    <string name="cannot_include_restricted_or_vault_folder">Encrypted vault folders, app system directories, and restricted Android folders cannot be included.</string>
 </resources>

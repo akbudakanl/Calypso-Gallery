@@ -813,4 +813,5 @@
     <string name="vault_sync_stale_marker_message">Este puente contiene un marcador de escritura de %1$s. La CLI parece no estar ejecutándose. ¿Eliminar el marcador y continuar con la importación?</string>
     <string name="vault_sync_stale_marker_remove">Eliminar y continuar</string>
     <string name="vault_sync_stale_marker_keep">Conservar</string>
+    <string name="cannot_include_restricted_or_vault_folder">No se pueden incluir carpetas de la bóveda cifrada, directorios del sistema de la aplicación ni carpetas restringidas de Android.</string>
 </resources>

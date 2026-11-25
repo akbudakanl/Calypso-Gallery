@@ -810,4 +810,5 @@
     <string name="vault_sync_stale_marker_message">このブリッジには %1$s の書き込みマーカーがあります。CLI は動作していないようです。マーカーを削除してインポートを続けますか？</string>
     <string name="vault_sync_stale_marker_remove">削除して続行</string>
     <string name="vault_sync_stale_marker_keep">保持する</string>
+    <string name="cannot_include_restricted_or_vault_folder">暗号化された保管庫フォルダー、アプリのシステムディレクトリ、および制限された Android フォルダーは追加できません。</string>
 </resources>

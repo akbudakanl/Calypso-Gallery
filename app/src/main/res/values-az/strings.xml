@@ -881,4 +881,5 @@
     <string name="vault_sync_stale_marker_message">Bu körpü %1$s vaxtında yazı işarəsi ehtiva edir. CLI işləmir görünür. İşarəni silib idxala davam edilsin?</string>
     <string name="vault_sync_stale_marker_remove">Sil və davam et</string>
     <string name="vault_sync_stale_marker_keep">Olduğu kimi saxla</string>
+    <string name="cannot_include_restricted_or_vault_folder">Şifrəli seyf qovluqları, tətbiqin sistem qovluqları və məhdudlaşdırılmış Android qovluqları daxil edilə bilməz.</string>
 </resources>

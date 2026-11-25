@@ -734,6 +734,17 @@ fun Context.isCipherSystemPath(path: String): Boolean {
     return CryptoManager.isEncryptedFolderPath(this, clean) || isEncryptedVaultAlbum(clean)
 }
 
+/**
+ * Returns true if [path] is a Cipher/vault system directory or a restricted Android storage
+ * subpath that must never be added to or scanned via `includedFolders`.
+ */
+fun Context.isIncludedFolderDisallowed(path: String): Boolean {
+    val clean = path.trimEnd('/')
+    if (clean.isEmpty()) return true
+    return isCipherSystemPath(clean) ||
+        HiddenFoldersPolicy.isAndroidRestrictedSubpath(clean, internalStoragePath)
+}
+
 fun Context.isEncryptedAlbumExcluded(path: String): Boolean {
     if (path.isEmpty() || path == FAVORITES || path == RECYCLE_BIN || path.isVirtualAlbumPath()) {
         return false

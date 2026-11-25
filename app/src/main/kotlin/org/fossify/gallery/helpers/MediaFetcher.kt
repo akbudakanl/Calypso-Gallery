@@ -416,6 +416,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
 
             val includedPaths = config.includedFolders
+                .filterNotTo(HashSet()) { context.isIncludedFolderDisallowed(it) }
 
             val folderNoMediaStatuses = HashMap<String, Boolean>()
             val distinctPathsMap = HashMap<String, String>()
@@ -599,7 +600,9 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         }
 
         includedFolders.forEach {
-            addFolder(foldersToScan, it)
+            if (!context.isIncludedFolderDisallowed(it)) {
+                addFolder(foldersToScan, it)
+            }
         }
 
         if (CryptoManager.isVaultUnlocked && (config.temporarilyShowHidden || isSecretVaultView)) {
@@ -651,6 +654,9 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
     }
 
     private fun addFolder(curFolders: HashSet<String>, folder: String) {
+        if (context.isIncludedFolderDisallowed(folder)) {
+            return
+        }
         curFolders.add(folder)
         val files = File(folder).listFiles() ?: return
         for (file in files) {

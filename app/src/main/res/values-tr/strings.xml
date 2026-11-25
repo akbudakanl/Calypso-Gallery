@@ -810,4 +810,5 @@
     <string name="vault_sync_stale_marker_message">Bu köprü %1$s zamanında bir yazım işareti içeriyor. CLI çalışmıyor görünüyor. İşareti kaldırıp aktarıma devam edilsin mi?</string>
     <string name="vault_sync_stale_marker_remove">Kaldır ve devam et</string>
     <string name="vault_sync_stale_marker_keep">Olduğu gibi bırak</string>
+    <string name="cannot_include_restricted_or_vault_folder">Şifreli kasa klasörleri, uygulama sistem dizinleri ve kısıtlı Android klasörleri dahil edilemez.</string>
 </resources>

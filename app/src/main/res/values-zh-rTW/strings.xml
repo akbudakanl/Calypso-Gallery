@@ -807,4 +807,5 @@
     <string name="vault_sync_stale_marker_message">此橋接包含 %1$s 的寫入標記。CLI 似乎未在執行。是否移除標記並繼續匯入？</string>
     <string name="vault_sync_stale_marker_remove">移除並繼續</string>
     <string name="vault_sync_stale_marker_keep">保留</string>
+    <string name="cannot_include_restricted_or_vault_folder">無法包含加密保險庫資料夾、應用程式系統目錄以及受限制的 Android 資料夾。</string>
 </resources>

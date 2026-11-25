@@ -10,6 +10,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.adapters.ManageFoldersAdapter
 import org.fossify.gallery.databinding.ActivityManageFoldersBinding
 import org.fossify.gallery.extensions.config
+import org.fossify.gallery.extensions.isIncludedFolderDisallowed
 
 class IncludedFoldersActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
@@ -36,7 +37,9 @@ class IncludedFoldersActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun updateFolders() {
         val folders = ArrayList<String>()
-        config.includedFolders.mapTo(folders) { it }
+        config.includedFolders
+            .filterNot { isIncludedFolderDisallowed(it) }
+            .mapTo(folders) { it }
         binding.manageFoldersPlaceholder.apply {
             text = getString(R.string.included_activity_placeholder)
             beVisibleIf(folders.isEmpty())

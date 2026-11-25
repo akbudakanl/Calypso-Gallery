@@ -827,4 +827,5 @@
     <string name="vault_sync_stale_marker_message">Denne broen inneholder en skrivemarkør fra %1$s. CLI ser ikke ut til å kjøre. Fjerne markøren og fortsette importen?</string>
     <string name="vault_sync_stale_marker_remove">Fjern og fortsett</string>
     <string name="vault_sync_stale_marker_keep">Behold</string>
+    <string name="cannot_include_restricted_or_vault_folder">Krypterte hvelvmapper, appens systemkataloger og begrensede Android-mapper kan ikke inkluderes.</string>
 </resources>
