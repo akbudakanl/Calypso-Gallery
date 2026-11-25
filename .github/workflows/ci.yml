@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fork-tooling:
+    name: Fork tooling tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.x"
+      - run: python -m unittest discover -s .github/scripts/tests -v
+
+  rust:
+    name: Rust (Argon2) tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Cargo test
+        run: cargo test --manifest-path rust/calypso-argon2/Cargo.toml --locked
+
+  android:
+    name: Android (detekt, unit tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: FossifyOrg/.github/.github/actions/gradle-cache@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+
+      - name: Set up Rust & Android NDK for native Argon2
+        run: |
+          set -euo pipefail
+          rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+          ndk_dir=$(ls -d "$ANDROID_HOME"/ndk/* 2>/dev/null | sort -V | tail -n1 || true)
+          if [[ -z "$ndk_dir" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018"
+            ndk_dir="$ANDROID_HOME/ndk/27.2.12479018"
+          fi
+          echo "ANDROID_NDK_HOME=$ndk_dir" >> "$GITHUB_ENV"
+
+      - name: Detekt
+        run: ./gradlew detekt
+
+      - name: Unit tests (FOSS debug)
+        run: ./gradlew testFossDebugUnitTest
+
+      - name: Assemble FOSS debug
+        run: ./gradlew assembleFossDebug

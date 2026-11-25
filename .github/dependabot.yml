@@ -18,10 +18,14 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
+    groups:
+      ruby-minor-patch:
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "gradle"
     directory: "/"
@@ -31,18 +35,57 @@ updates:
       - jitpack
     schedule:
       interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
     ignore:
       - dependency-name: "org.fossify:commons"
+    groups:
+      # Security-sensitive libraries: kept separate (one PR each) for careful review.
+      # A group listed first takes precedence over later ones.
+      crypto:
+        patterns:
+          - "com.google.crypto.tink:*"
+          - "org.bouncycastle:*"
+          - "androidx.biometric:*"
+        update-types: ["major", "minor", "patch"]
+      androidx:
+        patterns:
+          - "androidx.*"
+        update-types: ["minor", "patch"]
+      kotlin-ksp:
+        patterns:
+          - "org.jetbrains.kotlin*"
+          - "com.google.devtools.ksp*"
+        update-types: ["minor", "patch"]
+      other-minor-patch:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
+
+  # Native Argon2 (Rust) dependencies: argon2, jni, zeroize
+  - package-ecosystem: "cargo"
+    directory: "/rust/calypso-argon2"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
+    groups:
+      actions:
+        patterns:
+          - "*"
