@@ -15,8 +15,10 @@ import com.google.android.material.textfield.TextInputLayout
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.AppearanceManager
 
-/** Themes the caret with the colour actually rendered as text, whatever set it. */
-fun TextView.applyThemedCursor() = applyThemedCursor(currentTextColor)
+/** Themes the caret with the active palette's accent colour. */
+fun TextView.applyThemedCursor() = applyThemedCursor(
+    AppearanceManager.resolve(context, context.config).primary
+)
 
 /**
  * Replaces the library's green text cursor with one drawn in the active palette color.
@@ -100,7 +102,7 @@ fun TextView.themeTextColor(): Int = runCatching {
  * on focus. Dialogs inflate their own window, so each one has to call this on its root view.
  */
 fun View.applyPaletteCursors(context: Context) {
-    val color = AppearanceManager.resolve(context, context.config).text
+    val color = AppearanceManager.resolve(context, context.config).primary
     fun walk(view: View) {
         if (view is EditText) {
             view.applyThemedCursor(color)

@@ -66,7 +66,7 @@ fun MySearchMenu.applyCalypsoSearchBarStyle() {
         // default, so the caret has to be replaced at runtime with the active palette colour.
         // Every search bar in the fork (home, vault, album/file view, in-album search, pickers)
         // goes through this helper, so this is the single place that needs the override.
-        input.applyThemedCursor()
+        input.applyThemedCursor(palette.primary)
     }
 
     val actionIconColor = resolveCalypsoSearchIconColor(context, isSearchOpen)
