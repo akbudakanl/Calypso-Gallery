@@ -6,7 +6,7 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ### Fixed
 
-- **Video mute state and icon consistency** — each video now keeps its own mute state, matching upstream Fossify Gallery where every page has its own player. Toggling mute on one video no longer re-applies the preference to other videos while swiping, and the speaker icon always reflects the audio the player actually produces.
+- **Video mute behaviour per album session** — mute now follows upstream Fossify Gallery: entering an album (or "show all files") starts with sound on, toggling it applies to videos that have not started yet, already playing videos keep their state until they are replayed, and the choice is kept when leaving fullscreen for the album grid. Exiting the album resets it to the default, and the speaker icon always matches the audio the player actually produces.
 
 ## [1.0.1] - 2026-11-24
 

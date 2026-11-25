@@ -532,6 +532,10 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
 
     override fun onResume() {
         super.onResume()
+        // Back at the album list (or the app entry point) the viewing session ends. The next
+        // album - including the "show all files" view - starts with sound on again. Inside an
+        // album, going fullscreen and back keeps the last choice.
+        config.muteVideos = false
         if (VaultSessionManager.isReauthPending()) {
             return
         }

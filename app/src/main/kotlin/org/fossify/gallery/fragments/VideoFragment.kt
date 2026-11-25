@@ -185,10 +185,11 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mOriginalPlaybackSpeed = 1f
     private var mIsLongPressActive = false
     private var mHasAudio = true
-    // Upstream Gallery gives every video its own player, so each one keeps its own audio state.
-    // The fork shares one player across pages, so remember the state per fragment and restore it
-    // only when that video starts, instead of re-applying the global preference on every swipe.
+    // The album-wide preference (config.muteVideos) is adopted by a video only when it starts.
+    // Already started videos keep their own audio state until they are restarted, mirroring
+    // upstream Gallery where every page owns a separate ExoPlayer.
     private var mIsMuted = false
+    private var mHasStarted = false
 
     private val mTouchHoldRunnable = Runnable {
         mView.parent.requestDisallowInterceptTouchEvent(true)
@@ -229,9 +230,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mIsViewDestroyed = false
         mMedium = arguments.getSerializable(MEDIUM) as Medium
         mConfig = context.config
-        // Each page inherits the preference as it was when it was created, just like a fresh
-        // ExoPlayer would in upstream. Later changes on other pages do not affect this page.
-        mIsMuted = mConfig.muteVideos
         mTouchSlop = (ViewConfiguration.get(context).scaledTouchSlop) / TOUCH_SLOP_DIVIDER
         binding = PagerVideoItemBinding.inflate(inflater, container, false).apply {
             panoramaOutline.setOnClickListener { openPanorama() }
@@ -696,7 +694,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         binding.bottomVideoTimeHolder.videoPlaybackSpeed.beVisible()
         binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
             "${DecimalFormat("#.##").format(mConfig.playbackSpeed)}x"
-        updatePlayerMuteState()
+        syncMuteStateOnStart()
     }
 
     private fun setupTimeHolder() {
@@ -932,7 +930,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             }
         }
 
-        updatePlayerMuteState()
+        syncMuteStateOnStart()
     }
 
     private fun ExoPlayer.initListeners() {
@@ -1239,6 +1237,19 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
     }
 
+    /**
+     * A video takes the album-wide preference only when it actually starts for the first time,
+     * or when it is played again after it ended. Videos that already started keep their own
+     * state, so a preference change is never applied instantly to a playing video.
+     */
+    private fun syncMuteStateOnStart(restarted: Boolean = false) {
+        if (restarted || !mHasStarted) {
+            mHasStarted = true
+            mIsMuted = mConfig.muteVideos
+        }
+        updatePlayerMuteState()
+    }
+
     private fun updatePlayerMuteState(showToast: Boolean = false) {
         if (mHasAudio) {
             if (mIsMuted) mExoPlayer?.mute() else mExoPlayer?.unmute()
@@ -1330,6 +1341,8 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         val wasEnded = videoEnded()
         if (wasEnded) {
             setPosition(0)
+            // Replaying a finished video picks up the current album preference again.
+            syncMuteStateOnStart(restarted = true)
         }
 
         if (mStoredRememberLastVideoPosition && !mWasLastPositionRestored) {
