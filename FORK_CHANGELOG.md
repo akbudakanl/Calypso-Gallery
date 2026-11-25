@@ -5,6 +5,17 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 ## [Unreleased]
 
 
+## [1.0.3] - 2026-11-25
+### Fixed
+
+- **Vault archive dialog flow** — archiving an encrypted vault now shows only the "vault archived" notice with its storage location. The follow-up "create a new encrypted vault" dialog no longer appears.
+- **File operation notifications and crash recovery** — hardened journal-based recovery after interrupted operations, posted immediate and fallback notifications when Android restricts foreground service launches, cleared stale completion notifications, and localized progress text.
+- **Album decrypt destination picker** — album decryption now uses the physical folder picker and rejects encrypted vault albums as destinations.
+
+### Changed
+
+- **Updated translations** — added localized operation progress and notification strings across the audited locales.
+
 ## [1.0.2] - 2026-11-25
 ### Added
 
@@ -103,7 +114,8 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.2...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.3...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 [1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
 [1.0.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...1.0.2
+[1.0.3]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.2...1.0.3
