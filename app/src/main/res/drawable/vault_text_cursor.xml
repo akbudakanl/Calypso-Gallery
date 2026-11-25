@@ -2,6 +2,8 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <size android:width="2dp" />
-    <!-- Theme text colour: dark in light mode, light in dark mode - never the library's green accent. -->
-    <solid android:color="?android:attr/textColorPrimary" />
+    <!-- Neutral fallback: the app theme stays Material3-Dark even in Light appearance mode, so
+         ?attr/textColorPrimary is white there and an all-white caret is invisible. Runtime code
+         replaces this drawable with the active palette colour; this is only the pre-runtime value. -->
+    <solid android:color="#FF71717A" />
 </shape>

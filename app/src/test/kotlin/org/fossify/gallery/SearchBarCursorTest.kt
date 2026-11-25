@@ -69,6 +69,15 @@ class SearchBarCursorTest {
     }
 
     @Test
+    fun cursorFallbackIsVisibleInLightThemes() {
+        val drawable = locateAppFile("src/main/res/drawable/vault_text_cursor.xml").readText()
+        assertTrue(
+            "Theme textColorPrimary is white in this fork's dark-based theme and invisible in Light mode",
+            drawable.contains("#FF71717A") && !drawable.contains("?android:attr/textColorPrimary"),
+        )
+    }
+
+    @Test
     fun appLayoutsNeverUseNullCursorDrawable() {
         val layoutDir = locateAppFile("src/main/res/layout")
         val offenders = layoutDir.walkTopDown().filter { it.isFile && it.extension == "xml" }
