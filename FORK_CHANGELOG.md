@@ -2,7 +2,7 @@
 
 User-facing release notes for Calypso Gallery. The original Fossify Gallery release history is kept in [CHANGELOG.md](CHANGELOG.md).
 
-## [Unreleased]
+## [1.0.4] - 2026-11-25
 ### Fixed
 
 - **CLI bridge cleanup on vault deletion** — deleting an encrypted vault now also removes every CLI bridge folder that carries a copy of its header, including the bridges under `Calypso Gallery/CLI/Archived/`. The copied `.vault` header is securely wiped and empty bridge folders are pruned; bridges of other vaults are preserved.
