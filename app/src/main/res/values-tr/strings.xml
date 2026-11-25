@@ -366,6 +366,10 @@
     <string name="checking_files_before_transfer">Dosyalar aktarım öncesi kontrol ediliyor…</string>
     <string name="checking_files_before_crypto">Dosyalar şifreleme öncesi kontrol ediliyor…</string>
     <string name="deleting_files_progress">Dosyalar siliniyor…</string>
+    <string name="moving_to_recycle_bin_progress">Geri dönüşüm kutusuna taşınıyor…</string>
+    <string name="emptying_recycle_bin_progress">Geri dönüşüm kutusu boşaltılıyor…</string>
+    <string name="restoring_files_progress">Dosyalar geri yükleniyor…</string>
+    <string name="updating_virtual_album_progress">Sanal albüm güncelleniyor…</string>
     <string name="place_finger_prompt">Lütfen parmağınızı parmak izi sensörüne yerleştirin</string>
     <string name="connect_at_least_4_dots_prompt">En az 4 noktayı birleştirin</string>
     <string name="password_must_be_at_least_4_characters">Parola en az 4 karakter olmalıdır</string>

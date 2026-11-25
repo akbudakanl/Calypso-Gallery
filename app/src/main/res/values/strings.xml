@@ -421,6 +421,10 @@
     <string name="checking_files_before_transfer">Checking files before transfer…</string>
     <string name="checking_files_before_crypto">Checking files before encryption…</string>
     <string name="deleting_files_progress">Deleting files…</string>
+    <string name="moving_to_recycle_bin_progress">Moving to recycle bin…</string>
+    <string name="emptying_recycle_bin_progress">Emptying recycle bin…</string>
+    <string name="restoring_files_progress">Restoring files…</string>
+    <string name="updating_virtual_album_progress">Updating virtual album…</string>
     <string name="place_finger_prompt">Please place your finger on the fingerprint sensor</string>
     <string name="connect_at_least_4_dots_prompt">Connect at least 4 dots</string>
     <string name="password_must_be_at_least_4_characters">Password must be at least 4 characters long</string>

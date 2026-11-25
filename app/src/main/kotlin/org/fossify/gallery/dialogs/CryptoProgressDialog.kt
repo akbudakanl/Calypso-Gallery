@@ -123,14 +123,19 @@ class CryptoProgressDialog(
         }
     }
 
-    fun updateNotifierOnly(current: Int, max: Int, @Suppress("UNUSED_PARAMETER") contentText: String) {
+    fun updateNotifierOnly(
+        current: Int,
+        max: Int,
+        @Suppress("UNUSED_PARAMETER") contentText: String,
+        summaryText: String? = null
+    ) {
         // contentText is a file name in practice — never expose it on the lock screen / shade.
         ForegroundOperationRegistry.updateProgress(
             context = activity.applicationContext,
             category = category,
             current = current,
             max = max,
-            text = null
+            text = summaryText
         )
     }
 

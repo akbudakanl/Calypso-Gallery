@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import org.fossify.gallery.App
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.OperationNotificationCategory
@@ -32,6 +33,7 @@ class FileOperationService : Service() {
         private const val EXTRA_LABEL = "label"
         private const val ACTION_CANCEL = "org.fossify.gallery.action.CANCEL_FILE_OPERATION"
         private const val WAKE_LOCK_TIMEOUT_MS = 10 * 60 * 1000L
+        private const val NOTIFICATION_UPDATE_INTERVAL_MS = 250L
         private val COUNT_SUMMARY_REGEX = Regex("""^\d+ / \d+ \(\d+%\)$""")
 
         @Volatile
@@ -55,6 +57,9 @@ class FileOperationService : Service() {
         @Volatile
         private var progressText: String? = null
 
+        @Volatile
+        private var lastNotifyElapsedMs = 0L
+
         fun start(context: Context, label: String, showProgress: Boolean = true) {
             shouldRun = true
             currentLabel = label
@@ -62,6 +67,7 @@ class FileOperationService : Service() {
             progressCurrent = 0
             progressMax = 0
             progressText = null
+            lastNotifyElapsedMs = 0L
             val instance = activeInstance
             if (instance != null) {
                 instance.refreshNotification()
@@ -84,6 +90,7 @@ class FileOperationService : Service() {
 
         /** Re-renders the notification when the app moves between foreground and background. */
         fun refreshVisibility(context: Context) {
+            lastNotifyElapsedMs = 0L
             activeInstance?.refreshNotification()
         }
 
@@ -94,8 +101,15 @@ class FileOperationService : Service() {
             progressMax = max.coerceAtLeast(0)
             // Defense in depth: only the anonymous "n / total (x%)" summary may reach a
             // notification. Even if a future caller passes a file name, it is dropped here.
-            progressText = text?.takeIf { COUNT_SUMMARY_REGEX.matches(it) }
-            activeInstance?.refreshNotification()
+            if (text != null) {
+                progressText = text.takeIf { COUNT_SUMMARY_REGEX.matches(it) }
+            }
+            if (App.isAppInForeground) return
+            val now = SystemClock.elapsedRealtime()
+            val isBoundary = current == 0 || (max > 0 && current >= max)
+            if (isBoundary || now - lastNotifyElapsedMs >= NOTIFICATION_UPDATE_INTERVAL_MS) {
+                activeInstance?.refreshNotification()
+            }
         }
 
         fun stop(context: Context) {
@@ -207,6 +221,9 @@ class FileOperationService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .addAction(cancelAction)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+        }
 
         // Android requires a foreground-service notification for the whole operation, so it cannot
         // be removed while the app is in the foreground. What we *can* do is keep it minimal there
@@ -222,6 +239,7 @@ class FileOperationService : Service() {
 
     private fun refreshNotification() {
         if (!foregroundStarted) return
+        lastNotifyElapsedMs = SystemClock.elapsedRealtime()
         if (shouldRun) {
             acquireOrRefreshWakeLock()
         }

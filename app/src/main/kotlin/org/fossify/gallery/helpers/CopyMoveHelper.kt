@@ -8,8 +8,6 @@ import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.baseConfig
 import org.fossify.commons.extensions.canManageMedia
 import org.fossify.commons.extensions.createDirectorySync
-import org.fossify.commons.extensions.deleteFileBg
-import org.fossify.commons.extensions.deleteFromMediaStore
 import org.fossify.commons.extensions.formatSize
 import org.fossify.commons.extensions.getAndroidSAFFileItems
 import org.fossify.commons.extensions.getDocumentFile
@@ -21,6 +19,7 @@ import org.fossify.commons.extensions.getFileUrisFromFileDirItems
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getMimeType
 import org.fossify.commons.extensions.isAccessibleWithSAFSdk30
+import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isMediaFile
 import org.fossify.commons.extensions.isPathOnOTG
 import org.fossify.commons.extensions.isPathOnSD
@@ -36,6 +35,7 @@ import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.ensureBackgroundThread
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.commons.models.FileDirItem
 import org.fossify.gallery.R
 import org.fossify.gallery.dialogs.CryptoProgressDialog
@@ -67,6 +67,8 @@ import java.io.OutputStream
 private const val COPY_BUFFER_SIZE = 256 * 1024
 private const val BYTES_PER_KB = 1000L
 private const val UI_PROGRESS_UPDATE_INTERVAL_MS = 100L
+
+private class CopyMoveCancelledException : IOException("Copy/move cancelled")
 
 /**
  * Executes unencrypted copy/move operations with both an in-app progress bar dialog and the
@@ -106,7 +108,12 @@ fun BaseSimpleActivity.copyMoveFilesWithProgress(
             }
 
             val useStreamCopy = isCopyOperation || needsStreamCopyMove(source, destination)
-            if (isCopyOperation && canManageMedia() && !fileDirItems.first().isRecycleBinPath(this)) {
+            val needsUpdateSdk30Uris = isCopyOperation &&
+                canManageMedia() &&
+                !isExternalStorageManager() &&
+                fileDirItems.size <= SDK30_DELETE_CHUNK_SIZE &&
+                !fileDirItems.first().isRecycleBinPath(this)
+            if (needsUpdateSdk30Uris) {
                 val uris = getFileUrisFromFileDirItems(fileDirItems)
                 updateSDK30Uris(uris) { updated ->
                     if (updated) {
@@ -476,7 +483,7 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
 
         runOnUiThread {
             progressDialog.dismiss()
-            val finishUi = {
+            if (!result.cancelled) {
                 showCopyMoveCompletionToast(
                     isCopyOperation = isCopyOperation,
                     taskSucceeded = result.succeeded,
@@ -485,26 +492,13 @@ private fun BaseSimpleActivity.executeCopyMoveWithProgress(
                     skippedConflictCount = result.skippedConflictCount,
                     identicalSkippedCount = result.identicalSkippedCount
                 )
-                if (result.succeeded) {
-                    val sourceFolders = fileDirItems.mapNotNull { item ->
-                        if (item.isDirectory) item.path else item.getParentPath()
-                    }.filter { it.isNotEmpty() }
-                    MediaIndexCoordinator.markFoldersDirty(sourceFolders + destination)
-                    callback(destination)
-                }
             }
-            if (result.itemsToDeleteSdk30.isNotEmpty()) {
-                val uris = getFileUrisFromFileDirItems(result.itemsToDeleteSdk30)
-                deleteSDK30Uris(uris) { deleted ->
-                    if (deleted) {
-                        ensureBackgroundThread {
-                            result.itemsToDeleteSdk30.forEach { deleteFromMediaStore(it.path) }
-                        }
-                    }
-                    finishUi()
-                }
-            } else {
-                finishUi()
+            if (result.succeeded || result.transferredCount > 0) {
+                val sourceFolders = fileDirItems.mapNotNull { item ->
+                    if (item.isDirectory) item.path else item.getParentPath()
+                }.filter { it.isNotEmpty() }
+                MediaIndexCoordinator.markFoldersDirty(sourceFolders + destination)
+                callback(destination)
             }
         }
     }
@@ -558,10 +552,10 @@ private data class CopyMoveConfig(
 
 private data class CopyMoveResult(
     val succeeded: Boolean,
+    val cancelled: Boolean,
     val transferredCount: Int,
     val expectedCount: Int,
     val skippedConflictCount: Int,
-    val itemsToDeleteSdk30: ArrayList<FileDirItem>,
     val identicalSkippedCount: Int = 0
 )
 
@@ -579,7 +573,8 @@ private class CopyMoveRunner(
     private val progressDialog: CryptoProgressDialog
 ) {
     private val transferredFiles = ArrayList<FileDirItem>()
-    private val itemsToDeleteSdk30 = ArrayList<FileDirItem>()
+    private val pendingSdk30Deletes = ArrayList<Pair<FileDirItem, OperationContext>>()
+    private val deletedDirectSourcePaths = ArrayList<String>()
     private val movedPathsToRescan = ArrayList<String>()
     // Stream-copied files are collected here and indexed in one bulk pass at the end instead of
     // firing one MediaScanner request per file. Each request used to change the MediaStore ids and
@@ -706,18 +701,12 @@ private class CopyMoveRunner(
             }
         )
 
+        var cancelled = false
         val succeeded = try {
             for ((index, item) in items.withIndex()) {
                 if (ForegroundOperationRegistry.isCancelled) {
-                    operation.operationId?.let { OperationJournal.clear(it) }
-                    return CopyMoveResult(
-                        succeeded = false,
-                        transferredCount = transferredFiles.size,
-                        expectedCount = expectedCount,
-                        skippedConflictCount = skippedConflictCount,
-                        itemsToDeleteSdk30 = itemsToDeleteSdk30,
-                        identicalSkippedCount = identicalSkippedCount
-                    )
+                    cancelled = true
+                    break
                 }
                 val itemCtx = OperationContext(operation.operationId, index, operation.kind, operation.batch)
                 when (val outcome = resolveTopLevelDestination(item)) {
@@ -739,23 +728,15 @@ private class CopyMoveRunner(
                     }
                 }
             }
-            // One bulk MediaScanner pass for every transferred file (rename fast paths plus
-            // stream copies) instead of one request per copied file. A single pass changes the
-            // MediaStore ids once, so the album grid is reloaded once instead of N times.
-            val allPathsToRescan = ArrayList<String>(movedPathsToRescan.size + copiedPathsToRescan.size)
-            allPathsToRescan.addAll(movedPathsToRescan)
-            allPathsToRescan.addAll(copiedPathsToRescan.map { it.path })
-            if (allPathsToRescan.isNotEmpty()) {
-                activity.rescanPaths(allPathsToRescan) {
-                    if (activity.baseConfig.keepLastModified) {
-                        copiedPathsToRescan.forEach {
-                            updateLastModifiedValues(it.path, it.lastModified, it.dateTaken)
-                        }
-                    }
-                }
-            }
-            operation.operationId?.let { OperationJournal.clear(it) }
-            true
+
+            finalizeTransferredSourcesAndMediaStore(cancelled)
+            operation.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
+            !cancelled
+        } catch (e: CopyMoveCancelledException) {
+            cancelled = true
+            finalizeTransferredSourcesAndMediaStore(cancelled = true)
+            operation.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
+            false
         } catch (e: Exception) {
             if (OperationFaults.isSimulatedAbort(e)) {
                 throw e
@@ -766,12 +747,52 @@ private class CopyMoveRunner(
 
         return CopyMoveResult(
             succeeded = succeeded,
+            cancelled = cancelled,
             transferredCount = transferredFiles.size,
             expectedCount = expectedCount,
             skippedConflictCount = skippedConflictCount,
-            itemsToDeleteSdk30 = itemsToDeleteSdk30,
             identicalSkippedCount = identicalSkippedCount
         )
+    }
+
+    private fun finalizeTransferredSourcesAndMediaStore(cancelled: Boolean) {
+        if (deletedDirectSourcePaths.isNotEmpty()) {
+            activity.batchDeleteFromMediaStore(deletedDirectSourcePaths)
+        }
+
+        if (!cancelled && pendingSdk30Deletes.isNotEmpty()) {
+            val ctxByPath = pendingSdk30Deletes.associate { it.first.path to it.second }
+            val itemMap = pendingSdk30Deletes.associate { it.first.path to it.first }
+            val sdkRes = DeleteOperationEngine.deleteFilesPermanentlyChunked(
+                sourcePaths = pendingSdk30Deletes.map { it.first.path },
+                isCancelled = { ForegroundOperationRegistry.isCancelled },
+                deleteChunkOriginals = { chunkPaths -> activity.deleteChunkWithSdk30Sync(chunkPaths, itemMap) },
+                doesOriginalExist = { path -> activity.doesPlainFileExistSync(path) },
+                onItemDeleted = { path ->
+                    ctxByPath[path]?.let { OperationJournal.markSourceDeleted(it) }
+                },
+                onItemProgress = {}
+            )
+            if (sdkRes.deletedPaths.isNotEmpty()) {
+                activity.batchDeleteFromMediaStore(sdkRes.deletedPaths)
+            }
+        }
+
+        // One bulk MediaScanner pass for every transferred file (rename fast paths plus
+        // stream copies) instead of one request per copied file. A single pass changes the
+        // MediaStore ids once, so the album grid is reloaded once instead of N times.
+        val allPathsToRescan = ArrayList<String>(movedPathsToRescan.size + copiedPathsToRescan.size)
+        allPathsToRescan.addAll(movedPathsToRescan)
+        allPathsToRescan.addAll(copiedPathsToRescan.map { it.path })
+        if (allPathsToRescan.isNotEmpty()) {
+            activity.rescanPaths(allPathsToRescan) {
+                if (activity.baseConfig.keepLastModified) {
+                    copiedPathsToRescan.forEach {
+                        updateLastModifiedValues(it.path, it.lastModified, it.dateTaken)
+                    }
+                }
+            }
+        }
     }
 
     private fun computeTotalBytes(items: ArrayList<FileDirItem>): Long {
@@ -845,7 +866,7 @@ private class CopyMoveRunner(
                     srcFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
                 }
                 movedPathsToRescan.add(dstFile.absolutePath)
-                activity.deleteFromMediaStore(source.path)
+                deletedDirectSourcePaths.add(source.path)
                 transferredFiles.add(source)
                 transferredBytes += source.size
                 val itemCtx = OperationContext(operation.operationId, topLevelIndex, operation.kind, operation.batch)
@@ -1171,6 +1192,13 @@ private class CopyMoveRunner(
             } else {
                 OperationJournal.markFailed(itemContext, "incomplete copy")
             }
+        } catch (e: CopyMoveCancelledException) {
+            OperationJournal.markSkipped(itemContext)
+            if (fileStaging != null) {
+                AtomicStaging.discard(fileStaging, containsPlaintext = true, context = activity.applicationContext)
+            }
+            if (safStaging != null) AtomicStaging.discardSaf(safStaging)
+            throw e
         } catch (e: Exception) {
             activity.showErrorToast(e)
             OperationJournal.markFailed(itemContext, e.message ?: "copy failed")
@@ -1200,8 +1228,7 @@ private class CopyMoveRunner(
                     lastModified = capturedLastModified
                 )
             }
-            deleteSourceFile(source)
-            OperationJournal.markSourceDeleted(itemContext)
+            deleteSourceFile(source, itemContext)
             sourceFile.parentFile?.let { activity.cleanupEmptyPlaintextAlbumIfNeeded(it, forceIfEmpty = false) }
         }
     }
@@ -1219,6 +1246,9 @@ private class CopyMoveRunner(
         val buffer = ByteArray(COPY_BUFFER_SIZE)
         var bytesRead = inputStream.read(buffer)
         while (bytesRead >= 0) {
+            if (ForegroundOperationRegistry.isCancelled) {
+                throw CopyMoveCancelledException()
+            }
             outputStream.write(buffer, 0, bytesRead)
             digest?.update(buffer, 0, bytesRead)
             bytesCopied += bytesRead
@@ -1246,12 +1276,19 @@ private class CopyMoveRunner(
         }
     }
 
-    private fun deleteSourceFile(source: FileDirItem) {
-        if (activity.isRestrictedWithSAFSdk30(source.path) && !activity.canManageMedia()) {
-            itemsToDeleteSdk30.add(source)
-        } else {
-            activity.deleteFileBg(source, allowDeleteFolder = false, isDeletingMultipleFiles = false)
-            activity.deleteFromMediaStore(source.path)
+    private fun deleteSourceFile(source: FileDirItem, itemContext: OperationContext) {
+        val path = source.path
+        if (activity.isRestrictedWithSAFSdk30(path) && !activity.canManageMedia() && !isExternalStorageManager()) {
+            pendingSdk30Deletes.add(source to itemContext)
+            return
+        }
+        val deleted = activity.deletePlainFileDirectlySync(source, allowDeleteFolder = false) &&
+            !activity.doesPlainFileExistSync(path)
+        if (deleted) {
+            deletedDirectSourcePaths.add(path)
+            OperationJournal.markSourceDeleted(itemContext)
+        } else if (isRPlus() && !activity.isPathOnOTG(path) && !activity.isRestrictedSAFOnlyRoot(path)) {
+            pendingSdk30Deletes.add(source to itemContext)
         }
     }
 
@@ -1272,8 +1309,19 @@ private class CopyMoveRunner(
         val currentKb = (transferredBytes / BYTES_PER_KB).toInt()
         val barMax = if (totalKb > 0) totalKb else maxOf(totalItems, 1)
         val barCurrent = if (totalKb > 0) currentKb.coerceIn(0, barMax) else processedItems.coerceIn(0, barMax)
+        val summary = OperationProgressFormatter.formatCountSummary(
+            current = processedItems,
+            total = totalItems,
+            barCurrent = barCurrent,
+            barMax = barMax
+        )
 
-        progressDialog.updateNotifierOnly(current = barCurrent, max = barMax, contentText = filename)
+        progressDialog.updateNotifierOnly(
+            current = barCurrent,
+            max = barMax,
+            contentText = filename,
+            summaryText = summary
+        )
 
         val now = System.currentTimeMillis()
         if (forceUi || now - lastUiUpdateMs >= UI_PROGRESS_UPDATE_INTERVAL_MS) {

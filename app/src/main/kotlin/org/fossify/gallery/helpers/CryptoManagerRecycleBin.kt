@@ -149,44 +149,100 @@ fun CryptoManager.saveVaultRecycleBinRestoreMap(context: Context, map: HashMap<S
 
 
 fun CryptoManager.moveEncryptedFilesToVaultRecycleBin(context: Context, paths: List<String>): Boolean {
-    if (paths.isEmpty()) return true
-    return ForegroundOperationRegistry.withOperation(context, "vault-delete") {
-        val binFolder = getOrCreateVaultRecycleBin(context) ?: return@withOperation false
-        val restoreMap = getVaultRecycleBinRestoreMap(context)
-        var success = true
-
-        for (path in paths) {
-            if (ForegroundOperationRegistry.isCancelled) break
-            val sourceFile = File(path)
-            if (!sourceFile.exists() || !isEncryptedFile(sourceFile.name)) continue
-            val parentPath = sourceFile.parent ?: continue
-            if (parentPath == binFolder.absolutePath) continue
-
-            var destFile = File(binFolder, sourceFile.name)
-            while (destFile.exists()) {
-                destFile = File(binFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
-            }
-
-            val destPath = destFile.absolutePath
-            if (sourceFile.renameTo(destFile)) {
-                restoreMap[destFile.name] = parentPath
-                context.updateVirtualAlbumItemPath(path, destPath)
-                metadataCache.remove(path)?.let { meta ->
-                    metadataCache[destPath] = meta
-                }
-            } else {
-                success = false
-            }
-        }
-
-        saveVaultRecycleBinRestoreMap(context, restoreMap)
-        MediaIndexCoordinator.markPathsDirty(paths, destinationFolder = binFolder.absolutePath)
-        success
-    } ?: false
+    return moveEncryptedFilesToVaultRecycleBinDetailed(context, paths).allSucceeded
 }
 
 
-fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<String>): Int {
+fun CryptoManager.moveEncryptedFilesToVaultRecycleBinDetailed(
+    context: Context,
+    paths: List<String>,
+    onProgress: ((current: Int, total: Int) -> Unit)? = null
+): DeleteBatchResult {
+    if (paths.isEmpty()) return DeleteBatchResult(emptyList(), emptyList(), false)
+    return ForegroundOperationRegistry.withOperation(context, "vault-delete") {
+        val binFolder = getOrCreateVaultRecycleBin(context)
+            ?: return@withOperation DeleteBatchResult(emptyList(), paths.toList(), false)
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
+        val deletedPaths = ArrayList<String>(paths.size)
+        val failedPaths = ArrayList<String>()
+        var cancelled = false
+        val total = paths.size
+        onProgress?.invoke(0, total)
+
+        for ((index, path) in paths.withIndex()) {
+            if (ForegroundOperationRegistry.isCancelled) {
+                cancelled = true
+                break
+            }
+            val moved = moveSingleEncryptedFileToBin(context, path, binFolder, restoreMap)
+            if (moved) {
+                deletedPaths.add(path)
+            } else {
+                failedPaths.add(path)
+            }
+            onProgress?.invoke(index + 1, total)
+        }
+
+        saveVaultRecycleBinRestoreMap(context, restoreMap)
+        if (deletedPaths.isNotEmpty()) {
+            MediaIndexCoordinator.markPathsDirty(deletedPaths, destinationFolder = binFolder.absolutePath)
+        }
+        DeleteBatchResult(deletedPaths, failedPaths, cancelled)
+    } ?: DeleteBatchResult(emptyList(), paths.toList(), false)
+}
+
+
+private fun CryptoManager.moveSingleEncryptedFileToBin(
+    context: Context,
+    path: String,
+    binFolder: File,
+    restoreMap: HashMap<String, String>
+): Boolean {
+    val sourceFile = File(path)
+    if (!sourceFile.exists() || !isEncryptedFile(sourceFile.name)) return false
+    val parentPath = sourceFile.parent ?: return false
+    if (parentPath == binFolder.absolutePath) return false
+
+    var destFile = File(binFolder, sourceFile.name)
+    while (destFile.exists()) {
+        destFile = File(binFolder, "${randomHex(8)}$ENCRYPTED_BIN_EXT")
+    }
+
+    val destPath = destFile.absolutePath
+    var moved = sourceFile.renameTo(destFile) && destFile.exists() && !sourceFile.exists()
+    if (!moved) {
+        val copied = DeleteOperationEngine.copyToRecycleBinAtomically(
+            expectedSize = sourceFile.length(),
+            lastModified = sourceFile.lastModified(),
+            destFile = destFile,
+            keepLastModified = true
+        ) { runCatching { FileInputStream(sourceFile) }.getOrNull() }
+        if (copied) {
+            val sourceRemoved = deleteEncryptedFile(context, sourceFile) && !sourceFile.exists()
+            if (sourceRemoved) {
+                moved = true
+            } else {
+                runCatching { destFile.delete() }
+            }
+        }
+    }
+
+    if (moved) {
+        restoreMap[destFile.name] = parentPath
+        context.updateVirtualAlbumItemPath(path, destPath)
+        metadataCache.remove(path)?.let { meta ->
+            metadataCache[destPath] = meta
+        }
+    }
+    return moved
+}
+
+
+fun CryptoManager.restoreVaultRecycleBinFiles(
+    context: Context,
+    paths: List<String>,
+    onProgress: ((current: Int, total: Int) -> Unit)? = null
+): Int {
     if (paths.isEmpty()) return 0
     return ForegroundOperationRegistry.withOperation(context, "vault-restore") {
         val binFolder = getVaultRecycleBin(context) ?: return@withOperation 0
@@ -194,11 +250,16 @@ fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<Stri
         val vaultRoot = findVaultRoot(context) ?: return@withOperation 0
         var restoredCount = 0
         val restoredFolders = LinkedHashSet<String>()
+        val total = paths.size
+        onProgress?.invoke(0, total)
 
-        for (path in paths) {
+        for ((index, path) in paths.withIndex()) {
             if (ForegroundOperationRegistry.isCancelled) break
             val binFile = File(path)
-            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
+            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) {
+                onProgress?.invoke(index + 1, total)
+                continue
+            }
 
             val originalParentPath = restoreMap[binFile.name]
             var targetFolder = if (!originalParentPath.isNullOrEmpty()) File(originalParentPath) else null
@@ -233,6 +294,7 @@ fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<Stri
                 restoredFolders.add(targetFolder.absolutePath)
                 restoredCount++
             }
+            onProgress?.invoke(index + 1, total)
         }
 
         saveVaultRecycleBinRestoreMap(context, restoreMap)
@@ -245,53 +307,96 @@ fun CryptoManager.restoreVaultRecycleBinFiles(context: Context, paths: List<Stri
 
 
 fun CryptoManager.permanentlyDeleteVaultRecycleBinFiles(context: Context, paths: List<String>): Int {
-    if (paths.isEmpty()) return 0
-    return ForegroundOperationRegistry.withOperation(context, "secure-wipe") {
-        val binFolder = getVaultRecycleBin(context) ?: return@withOperation 0
-        val restoreMap = getVaultRecycleBinRestoreMap(context)
-        var deletedCount = 0
-
-        for (path in paths) {
-            if (ForegroundOperationRegistry.isCancelled) break
-            val binFile = File(path)
-            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) continue
-
-            metadataCache.remove(path)?.fileKey?.fill(0)
-            context.deleteVirtualAlbumItemFromAllAlbums(path)
-            secureWipeAndDeleteFile(context, binFile)
-            restoreMap.remove(binFile.name)
-            deletedCount++
-        }
-
-        saveVaultRecycleBinRestoreMap(context, restoreMap)
-        if (deletedCount > 0) {
-            MediaIndexCoordinator.markFoldersDirty(listOf(binFolder.absolutePath))
-        }
-        deletedCount
-    } ?: 0
+    return permanentlyDeleteVaultRecycleBinFilesDetailed(context, paths).deletedPaths.size
 }
 
 
-fun CryptoManager.emptyVaultRecycleBin(context: Context): Boolean {
+fun CryptoManager.permanentlyDeleteVaultRecycleBinFilesDetailed(
+    context: Context,
+    paths: List<String>,
+    onProgress: ((current: Int, total: Int) -> Unit)? = null
+): DeleteBatchResult {
+    if (paths.isEmpty()) return DeleteBatchResult(emptyList(), emptyList(), false)
+    return ForegroundOperationRegistry.withOperation(context, "secure-wipe") {
+        val binFolder = getVaultRecycleBin(context)
+            ?: return@withOperation DeleteBatchResult(emptyList(), paths.toList(), false)
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
+        val deletedPaths = ArrayList<String>(paths.size)
+        val failedPaths = ArrayList<String>()
+        var cancelled = false
+        val total = paths.size
+        onProgress?.invoke(0, total)
+
+        for ((index, path) in paths.withIndex()) {
+            if (ForegroundOperationRegistry.isCancelled) {
+                cancelled = true
+                break
+            }
+            val binFile = File(path)
+            if (!binFile.exists() || binFile.parentFile?.absolutePath != binFolder.absolutePath) {
+                failedPaths.add(path)
+                onProgress?.invoke(index + 1, total)
+                continue
+            }
+
+            val wiped = secureWipeAndDeleteFile(context, binFile) && !binFile.exists()
+            if (wiped) {
+                metadataCache.remove(path)?.fileKey?.fill(0)
+                context.deleteVirtualAlbumItemFromAllAlbums(path)
+                restoreMap.remove(binFile.name)
+                deletedPaths.add(path)
+            } else {
+                failedPaths.add(path)
+            }
+            onProgress?.invoke(index + 1, total)
+        }
+
+        saveVaultRecycleBinRestoreMap(context, restoreMap)
+        if (deletedPaths.isNotEmpty()) {
+            MediaIndexCoordinator.markFoldersDirty(listOf(binFolder.absolutePath))
+        }
+        DeleteBatchResult(deletedPaths, failedPaths, cancelled)
+    } ?: DeleteBatchResult(emptyList(), paths.toList(), false)
+}
+
+
+fun CryptoManager.emptyVaultRecycleBin(
+    context: Context,
+    onProgress: ((current: Int, total: Int) -> Unit)? = null
+): Boolean {
     return ForegroundOperationRegistry.withOperation(context, "secure-wipe") {
         val binFolder = getVaultRecycleBin(context) ?: return@withOperation true
         val binFiles = binFolder.listFiles()?.filter { isEncryptedFile(it.name) } ?: emptyList()
+        val restoreMap = getVaultRecycleBinRestoreMap(context)
         var cancelled = false
-        for (file in binFiles) {
+        var allDeleted = true
+        val total = binFiles.size
+        onProgress?.invoke(0, total)
+
+        for ((index, file) in binFiles.withIndex()) {
             if (ForegroundOperationRegistry.isCancelled) {
                 cancelled = true
                 break
             }
             val path = file.absolutePath
-            metadataCache.remove(path)?.fileKey?.fill(0)
-            context.deleteVirtualAlbumItemFromAllAlbums(path)
-            secureWipeAndDeleteFile(context, file)
+            val wiped = secureWipeAndDeleteFile(context, file) && !file.exists()
+            if (wiped) {
+                metadataCache.remove(path)?.fileKey?.fill(0)
+                context.deleteVirtualAlbumItemFromAllAlbums(path)
+                restoreMap.remove(file.name)
+            } else {
+                allDeleted = false
+            }
+            onProgress?.invoke(index + 1, total)
         }
+
         val restoreFile = File(binFolder, VAULT_RESTORE_INFO_FILE)
-        if (!cancelled && restoreFile.exists()) {
+        if (!cancelled && allDeleted && restoreFile.exists()) {
             restoreFile.delete()
+        } else {
+            saveVaultRecycleBinRestoreMap(context, restoreMap)
         }
         MediaIndexCoordinator.markFoldersDirty(listOf(binFolder.absolutePath))
-        !cancelled
+        !cancelled && allDeleted
     } ?: false
 }

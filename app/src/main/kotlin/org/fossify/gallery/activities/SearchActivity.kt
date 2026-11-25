@@ -18,9 +18,7 @@ import org.fossify.gallery.adapters.MediaAdapter
 import org.fossify.gallery.asynctasks.GetMediaAsynctask
 import org.fossify.gallery.databinding.ActivitySearchBinding
 import org.fossify.gallery.extensions.*
-import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.EXTRA_SECRET_VAULT_FILES
 import org.fossify.gallery.helpers.GridSpacingItemDecoration
 import org.fossify.gallery.helpers.MediaFetcher
@@ -30,14 +28,11 @@ import org.fossify.gallery.helpers.SKIP_AUTHENTICATION
 import org.fossify.gallery.helpers.VIDEO_PLAYER_APP
 import org.fossify.gallery.helpers.VIDEO_PLAYER_SYSTEM
 import org.fossify.gallery.helpers.VaultSessionManager
-import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
+import org.fossify.gallery.helpers.deleteMediaItemsWithProgress
 import org.fossify.gallery.interfaces.MediaOperationsListener
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.ThumbnailItem
 import java.io.File
-import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
-import org.fossify.gallery.helpers.purgeTracesForFile
-import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 
 class SearchActivity : SimpleActivity(), MediaOperationsListener {
     override var isSearchBarEnabled = true
@@ -312,164 +307,24 @@ class SearchActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     override fun tryDeleteFiles(fileDirItems: ArrayList<FileDirItem>, skipRecycleBin: Boolean) {
-        val filtered = fileDirItems.filter { File(it.path).isFile && (it.path.isMediaFile() || CryptoManager.isEncryptedFile(it.path)) } as ArrayList
+        val filtered = fileDirItems.filter {
+            File(it.path).isFile && (it.path.isMediaFile() || CryptoManager.isEncryptedFile(it.path))
+        }
         if (filtered.isEmpty()) {
             return
         }
 
-        val encItems = filtered.filter { CryptoManager.isEncryptedFile(it.path) }
-        val plainItems = filtered.filter { !CryptoManager.isEncryptedFile(it.path) }
-
-        if (config.useRecycleBin && !skipRecycleBin && !filtered.first().path.startsWith(recycleBinPath)) {
-            val movingItems = resources.getQuantityString(org.fossify.commons.R.plurals.moving_items_into_bin, filtered.size, filtered.size)
-            toast(movingItems)
-
-            val progressDialog = CryptoProgressDialog(
-                activity = this,
-                max = filtered.size,
-                titleId = R.string.deleting_files_progress,
-                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
-            )
-            val processed = java.util.concurrent.atomic.AtomicInteger(0)
-
-            ensureBackgroundThread {
-                ForegroundOperationRegistry.withOperation(this, "delete") {
-                    if (encItems.isNotEmpty()) {
-                        CryptoManager.moveEncryptedFilesToVaultRecycleBin(this, encItems.map { it.path })
-                        progressDialog.updateProgress(processed.addAndGet(encItems.size), filtered.size)
-                    }
-
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) }
-                        val normalPlain = plainItems.filter { !hiddenPlain.contains(it) }
-
-                        if (hiddenPlain.isNotEmpty()) {
-                            val hiddenPaths = ArrayList(hiddenPlain.map { it.path })
-                            movePathsInRecycleBin(hiddenPaths) { success ->
-                                ensureBackgroundThread {
-                                    hiddenPlain.forEach {
-                                        try { File(it.path).delete() } catch (_: Exception) {}
-                                        deleteDBPath(it.path)
-                                        CryptoManager.purgeTracesForFile(this, it.path)
-                                        progressDialog.updateProgress(
-                                            processed.incrementAndGet(),
-                                            filtered.size,
-                                            notificationText = it.name
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (normalPlain.isNotEmpty()) {
-                            runOnUiThread {
-                                movePathsInRecycleBin(normalPlain.map { it.path } as ArrayList<String>) {
-                                    if (it) {
-                                        deleteFilteredFiles(ArrayList(normalPlain))
-                                        progressDialog.updateProgress(
-                                            processed.addAndGet(normalPlain.size),
-                                            filtered.size
-                                        )
-                                    } else {
-                                        toast(org.fossify.commons.R.string.unknown_error_occurred)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    runOnUiThread {
-                        progressDialog.updateProgress(filtered.size, filtered.size)
-                        progressDialog.dismiss()
-                        mAllMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
-                        (binding.searchGrid.adapter as? MediaAdapter)?.updateMedia(mAllMedia)
-                    }
-                }
+        deleteMediaItemsWithProgress(
+            fileDirItems = filtered,
+            skipRecycleBin = skipRecycleBin
+        ) { result ->
+            val deletedSet = result.deletedPaths.toHashSet()
+            if (deletedSet.isNotEmpty()) {
+                mAllMedia.removeAll { (it as? Medium)?.path in deletedSet }
+                (binding.searchGrid.adapter as? MediaAdapter)?.updateMedia(mAllMedia)
             }
-        } else {
-            val deletingItems = resources.getQuantityString(org.fossify.commons.R.plurals.deleting_items, filtered.size, filtered.size)
-            toast(deletingItems)
-
-            val progressDialog = CryptoProgressDialog(
-                activity = this,
-                max = filtered.size,
-                titleId = R.string.deleting_files_progress,
-                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
-            )
-            val processed = java.util.concurrent.atomic.AtomicInteger(0)
-
-            ensureBackgroundThread {
-                ForegroundOperationRegistry.withOperation(this, "delete") {
-                    if (encItems.isNotEmpty()) {
-                        for (item in encItems) {
-                            if (ForegroundOperationRegistry.isCancelled) break
-                            val f = File(item.path)
-                            CryptoManager.secureWipeAndDeleteFile(this, f)
-                            deleteVirtualAlbumItemFromAllAlbums(item.path)
-                            progressDialog.updateProgress(
-                                processed.incrementAndGet(),
-                                filtered.size,
-                                notificationText = item.name
-                            )
-                        }
-                    }
-
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) }
-                        val normalPlain = plainItems.filter { !hiddenPlain.contains(it) }
-
-                        if (hiddenPlain.isNotEmpty()) {
-                            for (item in hiddenPlain) {
-                                if (ForegroundOperationRegistry.isCancelled) break
-                                try { File(item.path).delete() } catch (_: Exception) {}
-                                deleteDBPath(item.path)
-                                CryptoManager.purgeTracesForFile(this, item.path)
-                                progressDialog.updateProgress(
-                                    processed.incrementAndGet(),
-                                    filtered.size,
-                                    notificationText = item.name
-                                )
-                            }
-                        }
-
-                        if (normalPlain.isNotEmpty()) {
-                            runOnUiThread {
-                                deleteFilteredFiles(ArrayList(normalPlain))
-                                progressDialog.updateProgress(
-                                    processed.addAndGet(normalPlain.size),
-                                    filtered.size
-                                )
-                            }
-                        }
-                    }
-
-                    runOnUiThread {
-                        progressDialog.updateProgress(filtered.size, filtered.size)
-                        progressDialog.dismiss()
-                        mAllMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
-                        (binding.searchGrid.adapter as? MediaAdapter)?.updateMedia(mAllMedia)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun deleteFilteredFiles(filtered: ArrayList<FileDirItem>) {
-        deleteFiles(filtered) {
-            if (!it) {
-                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                return@deleteFiles
-            }
-
-            mAllMedia.removeAll { filtered.map { it.path }.contains((it as? Medium)?.path) }
-
-            ensureBackgroundThread {
-                val useRecycleBin = config.useRecycleBin
-                filtered.forEach {
-                    if (it.path.startsWith(recycleBinPath) || !useRecycleBin) {
-                        deleteDBPath(it.path)
-                    }
-                }
+            if (result.failedPaths.isNotEmpty() || result.cancelled) {
+                refreshItems()
             }
         }
     }

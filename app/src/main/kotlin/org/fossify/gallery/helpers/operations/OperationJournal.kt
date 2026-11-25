@@ -301,4 +301,35 @@ object OperationJournal {
     fun clear(operationId: String) {
         runCatching { dao?.deleteOperation(operationId) }
     }
+
+    /**
+     * Clears [operationId] once complete or cancelled, while preserving any `STATE_VERIFIED` item
+     * whose source still needs deletion/wiping. Any unstarted (`PENDING`, `IN_FLIGHT`,
+     * `COPIED_UNVERIFIED`, `WAITING_FOR_SPACE`) items are marked skipped so deliberate
+     * cancellation never triggers a false resume prompt on next launch.
+     */
+    fun clearAfterCompletionOrCancel(operationId: String) {
+        val current = dao ?: return
+        val rows = current.forOperation(operationId)
+        if (rows.isEmpty()) return
+        val batch = rows.firstNotNullOfOrNull { decodeBatch(it.batchPayload) }
+        val hasPendingSourceDelete = rows.any {
+            it.state == STATE_VERIFIED && requiresSourceDeletion(it, batch)
+        }
+        if (!hasPendingSourceDelete) {
+            clear(operationId)
+            return
+        }
+        val now = System.currentTimeMillis()
+        val updated = rows.map { row ->
+            when (row.state) {
+                STATE_PENDING,
+                STATE_IN_FLIGHT,
+                STATE_COPIED_UNVERIFIED,
+                STATE_WAITING_FOR_SPACE -> row.copy(state = STATE_SKIPPED_CONFLICT, updatedAt = now)
+                else -> row
+            }
+        }
+        runCatching { current.upsertAll(updated) }
+    }
 }

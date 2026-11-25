@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
 import org.fossify.gallery.helpers.decryptFileToDirectory
@@ -538,6 +539,57 @@ class ResumableOperationsTest {
 
         assertEquals(1, discardCount)
         assertEquals("recovered-attempt-2", result)
+    }
+
+    @Test
+    fun clearAfterCompletionOrCancel_clearsWhenNoSourceDeleteRemainsAndKeepsVerifiedMoveSources() {
+        val copyOp = OperationContext(
+            operationId = "cancel_copy_op",
+            kind = OperationJournal.KIND_COPY,
+            batch = BatchOperationInfo(isMove = false)
+        )
+        OperationJournal.beginBatch(
+            copyOp,
+            listOf(
+                JournalItem("/src/c1.jpg", "/dst/c1.jpg", 10L, kind = OperationJournal.KIND_COPY),
+                JournalItem("/src/c2.jpg", "/dst/c2.jpg", 10L, kind = OperationJournal.KIND_COPY)
+            )
+        )
+        OperationJournal.markVerified(OperationContext(copyOp.operationId, 0, OperationJournal.KIND_COPY, copyOp.batch), "fp1")
+        OperationJournal.clearAfterCompletionOrCancel(copyOp.operationId!!)
+        assertTrue(OperationJournal.itemsFor(copyOp.operationId!!).isEmpty())
+
+        val moveOp = OperationContext(
+            operationId = "cancel_move_op",
+            kind = OperationJournal.KIND_MOVE,
+            batch = BatchOperationInfo(isMove = true, deleteSource = true)
+        )
+        OperationJournal.beginBatch(
+            moveOp,
+            listOf(
+                JournalItem("/src/m1.jpg", "/dst/m1.jpg", 10L, kind = OperationJournal.KIND_MOVE),
+                JournalItem("/src/m2.jpg", "/dst/m2.jpg", 10L, kind = OperationJournal.KIND_MOVE)
+            )
+        )
+        OperationJournal.markVerified(OperationContext(moveOp.operationId, 0, OperationJournal.KIND_MOVE, moveOp.batch), "fp1")
+        OperationJournal.clearAfterCompletionOrCancel(moveOp.operationId!!)
+
+        val remaining = OperationJournal.itemsFor(moveOp.operationId!!)
+        assertEquals(2, remaining.size)
+        assertEquals(OperationJournal.STATE_VERIFIED, remaining[0].state)
+        assertEquals(OperationJournal.STATE_SKIPPED_CONFLICT, remaining[1].state)
+        val resumable = OperationJournal.resumableItems().filter { it.operationId == moveOp.operationId }
+        assertEquals(1, resumable.size)
+        assertEquals(0, resumable.first().itemIndex)
+    }
+
+    @Test
+    fun operationNotificationCategoryMapsOwnersConsistently() {
+        assertEquals(OperationNotificationCategory.COPY_MOVE, OperationNotificationCategory.fromOwner("copy-move"))
+        assertEquals(OperationNotificationCategory.CRYPTO, OperationNotificationCategory.fromOwner("crypto-encrypt"))
+        assertEquals(OperationNotificationCategory.CRYPTO, OperationNotificationCategory.fromOwner("crypto-decrypt"))
+        assertEquals(OperationNotificationCategory.VIRTUAL_ALBUM, OperationNotificationCategory.fromOwner("virtual-album-add"))
+        assertEquals(OperationNotificationCategory.DELETE, OperationNotificationCategory.fromOwner("delete"))
     }
 
     private fun unlockTestVault() {

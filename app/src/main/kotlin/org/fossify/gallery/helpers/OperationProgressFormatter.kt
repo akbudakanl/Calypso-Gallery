@@ -1,6 +1,10 @@
 package org.fossify.gallery.helpers
 
 import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.hasPermission
+import org.fossify.commons.helpers.PERMISSION_POST_NOTIFICATIONS
+import org.fossify.commons.helpers.isTiramisuPlus
+import org.fossify.gallery.extensions.config
 
 /**
  * Pure formatting helpers shared by the progress dialog and the foreground-service notification.
@@ -47,14 +51,21 @@ object OperationProgressFormatter {
 }
 
 /**
- * File-operation progress is now posted by [org.fossify.gallery.helpers.operations.FileOperationService],
- * a foreground service whose notification is exempt from POST_NOTIFICATIONS on Android 13+.
- * No runtime prompt is needed before starting an operation, and the previous one-shot
- * "asked" flag (which silently disabled progress forever after a single denial) is gone.
- *
- * Kept as a thin adapter so the existing call sites keep working without restructuring;
- * it never blocks or delays the operation.
+ * Ensures Android 13+ notification permission has been requested once before starting a foreground
+ * file operation so the two-tier [org.fossify.gallery.helpers.operations.FileOperationService]
+ * notification is actually visible when the user backgrounds the app.
  */
 fun BaseSimpleActivity.ensureNotificationPermissionThenRun(onReady: (notificationsAllowed: Boolean) -> Unit) {
-    onReady(true)
+    if (!isTiramisuPlus() || hasPermission(PERMISSION_POST_NOTIFICATIONS)) {
+        onReady(true)
+        return
+    }
+    if (!config.notificationsEnabled || config.wasNotificationPermissionAsked) {
+        onReady(false)
+        return
+    }
+    config.wasNotificationPermissionAsked = true
+    handleNotificationPermission { granted ->
+        onReady(granted)
+    }
 }

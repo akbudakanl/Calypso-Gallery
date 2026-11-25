@@ -26,7 +26,6 @@ import org.fossify.commons.extensions.areSystemAnimationsEnabled
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.deleteFiles
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFileCount
 import org.fossify.commons.extensions.getFilePublicUri
@@ -132,7 +131,6 @@ import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.mediaDB
 import org.fossify.gallery.extensions.repairReferencesAfterExternalChange
 import org.fossify.gallery.extensions.restoreFavoritesFromBackup
-import org.fossify.gallery.extensions.movePathsInRecycleBin
 import org.fossify.gallery.extensions.movePinnedDirectoriesToFront
 import org.fossify.gallery.extensions.openRecycleBin
 import org.fossify.gallery.extensions.removeInvalidDBDirectories
@@ -143,9 +141,7 @@ import org.fossify.gallery.extensions.updateWidgets
 import org.fossify.gallery.helpers.CalypsoToolbarMenuController
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.deleteEncryptedFile
-import org.fossify.gallery.helpers.isDefaultHiddenAlbum
-import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
+import org.fossify.gallery.helpers.deleteFoldersWithProgress
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.getOrCreateVaultRecycleBin
 import org.fossify.gallery.helpers.getVaultProtectionType
@@ -1949,161 +1945,11 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
     }
 
     override fun deleteFolders(folders: ArrayList<File>) {
-        // The default secret album is permanent. "Delete" means emptying it: keep the folder
-        // itself, but remove/move all encrypted items according to the recycle-bin setting.
-        val defaultVaultAlbums = folders.filter { CryptoManager.isDefaultHiddenAlbum(it) }
-        val deletableFolders = ArrayList(folders.filterNot { CryptoManager.isDefaultHiddenAlbum(it) })
-        if (defaultVaultAlbums.isNotEmpty()) {
-            emptyDefaultVaultAlbums(defaultVaultAlbums)
-        }
-        if (deletableFolders.isEmpty()) {
+        if (folders.isEmpty()) {
             return
         }
-
-        val fileDirItems = deletableFolders
-            .asSequence()
-            .filter { it.isDirectory }
-            .map { FileDirItem(it.absolutePath, it.name, true) }
-            .toMutableList() as ArrayList<FileDirItem>
-
-        when {
-            fileDirItems.isEmpty() -> return
-            fileDirItems.size == 1 -> {
-                try {
-                    toast(
-                        String.format(
-                            getString(org.fossify.commons.R.string.deleting_folder),
-                            fileDirItems.first().name
-                        )
-                    )
-                } catch (e: Exception) {
-                    showErrorToast(e)
-                }
-            }
-
-            else -> {
-                val baseString = if (config.useRecycleBin && !config.tempSkipRecycleBin) {
-                    org.fossify.commons.R.plurals.moving_items_into_bin
-                } else {
-                    org.fossify.commons.R.plurals.delete_items
-                }
-
-                toast(
-                    msg = resources.getQuantityString(
-                        baseString, fileDirItems.size, fileDirItems.size
-                    )
-                )
-            }
-        }
-
-        val itemsToDelete = ArrayList<FileDirItem>()
-        val filter = config.filterMedia
-        val showHidden = config.shouldShowHidden
-        fileDirItems.filter { it.isDirectory }.forEach {
-            val files = File(it.path).listFiles()
-            files?.filter {
-                it.absolutePath.isMediaFile()
-                        && (showHidden || !it.name.startsWith('.'))
-                        && ((it.isImageFast() && filter and TYPE_IMAGES != 0)
-                        || (it.isVideoFast() && filter and TYPE_VIDEOS != 0)
-                        || (it.isGif() && filter and TYPE_GIFS != 0)
-                        || (it.isRawFast() && filter and TYPE_RAWS != 0)
-                        || (it.isSvg() && filter and TYPE_SVGS != 0))
-            }?.mapTo(itemsToDelete) { it.toFileDirItem(applicationContext) }
-        }
-
-        if (config.useRecycleBin && !config.tempSkipRecycleBin) {
-            val pathsToDelete = ArrayList<String>()
-            itemsToDelete.mapTo(pathsToDelete) { it.path }
-
-            movePathsInRecycleBin(pathsToDelete) {
-                if (it) {
-                    deleteFilteredFileDirItems(itemsToDelete, deletableFolders)
-                } else {
-                    toast(org.fossify.commons.R.string.unknown_error_occurred)
-                }
-            }
-        } else {
-            deleteFilteredFileDirItems(itemsToDelete, deletableFolders)
-        }
-    }
-
-    private fun emptyDefaultVaultAlbums(albums: List<File>) {
-        ensureBackgroundThread {
-            val permanentlyDeletedDirs = LinkedHashSet<String>()
-            albums.forEach { folder ->
-                runCatching {
-                    val encryptedFiles = folder.listFiles()
-                        ?.filter { it.isFile && CryptoManager.isEncryptedFile(it.name) }
-                        .orEmpty()
-                    val paths = encryptedFiles.map { it.absolutePath }
-                    if (paths.isNotEmpty()) {
-                        if (config.useRecycleBin && !config.tempSkipRecycleBin) {
-                            CryptoManager.moveEncryptedFilesToVaultRecycleBin(this, paths)
-                        } else {
-                            paths.forEach { path -> CryptoManager.deleteEncryptedFile(this, File(path)) }
-                            permanentlyDeletedDirs.add(folder.absolutePath)
-                        }
-                    }
-                }
-            }
-            if (permanentlyDeletedDirs.isNotEmpty()) {
-                MediaIndexCoordinator.markFoldersDirty(permanentlyDeletedDirs)
-            }
-            runOnUiThread { refreshItems() }
-        }
-    }
-
-    private fun deleteFilteredFileDirItems(
-        fileDirItems: ArrayList<FileDirItem>,
-        folders: ArrayList<File>
-    ) {
-        val OTGPath = config.OTGPath
-        deleteFiles(fileDirItems) {
-            runOnUiThread {
-                refreshItems()
-            }
-
-            ensureBackgroundThread {
-                val permanentlyDeleted = !config.useRecycleBin || config.tempSkipRecycleBin
-                val deletedFolders = folders.filter { !getDoesFilePathExist(it.absolutePath, OTGPath) }
-                deletedFolders.forEach {
-                    directoryDB.deleteDirPath(it.absolutePath)
-                }
-
-                if (permanentlyDeleted) {
-                    val deletedFilePaths = fileDirItems.mapNotNull { item ->
-                        if (!item.isDirectory && !getDoesFilePathExist(item.path, OTGPath)) item.path else null
-                    }
-                    val deletedFolderPaths = deletedFolders.map { it.absolutePath }
-                    if (deletedFilePaths.isNotEmpty() || deletedFolderPaths.isNotEmpty()) {
-                        deleteDBPaths(deletedFilePaths, deletedFolderPaths)
-                    }
-                }
-
-                if (config.deleteEmptyFolders) {
-                    val autoDeletedFolders = ArrayList<String>()
-                    folders.filter {
-                        !it.absolutePath.isDownloadsFolder()
-                                && it.isDirectory
-                                && it.toFileDirItem(this).getProperFileCount(this, true) == 0
-                    }
-                        .forEach {
-                            tryDeleteFileDirItem(it.toFileDirItem(this), true, true)
-                            if (!getDoesFilePathExist(it.absolutePath, OTGPath)) {
-                                autoDeletedFolders.add(it.absolutePath)
-                            }
-                        }
-                    if (permanentlyDeleted && autoDeletedFolders.isNotEmpty()) {
-                        deleteDBPaths(emptyList(), autoDeletedFolders)
-                    }
-                }
-
-                MediaIndexCoordinator.markFoldersDirty(
-                    folderPaths = folders.map { it.absolutePath },
-                    includeRecycleBin = !permanentlyDeleted
-                )
-            }
+        deleteFoldersWithProgress(folders, skipRecycleBin = config.tempSkipRecycleBin) {
+            refreshItems()
         }
     }
 

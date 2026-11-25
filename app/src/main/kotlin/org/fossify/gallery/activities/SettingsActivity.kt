@@ -2674,25 +2674,42 @@ class SettingsActivity : SimpleActivity() {
             } else {
                 showRecycleBinEmptyingDialog {
                     if (CryptoManager.isVaultUnlocked) {
-                        ensureBackgroundThread {
-                            val emptied = CryptoManager.emptyVaultRecycleBin(this)
+                        emptyVaultRecycleBinWithProgress { emptied ->
                             if (emptied) {
                                 toast(org.fossify.commons.R.string.recycle_bin_emptied)
                             }
-                            val remainingSize = if (emptied) {
-                                0L
-                            } else {
-                                CryptoManager.getVaultRecycleBinSize(this)
-                            }
-                            runOnUiThread {
-                                mRecycleBinContentSize = remainingSize
-                                binding.settingsEmptyRecycleBinSize.text = remainingSize.formatSize()
+                            ensureBackgroundThread {
+                                val remainingSize = if (emptied) {
+                                    0L
+                                } else {
+                                    CryptoManager.getVaultRecycleBinSize(this)
+                                }
+                                runOnUiThread {
+                                    mRecycleBinContentSize = remainingSize
+                                    binding.settingsEmptyRecycleBinSize.text = remainingSize.formatSize()
+                                }
                             }
                         }
                     } else {
-                        emptyTheRecycleBin()
-                        mRecycleBinContentSize = 0L
-                        binding.settingsEmptyRecycleBinSize.text = 0L.formatSize()
+                        emptyTheRecycleBin { _ ->
+                            ensureBackgroundThread {
+                                val remainingSize = runCatching {
+                                    mediaDB.getDeletedMedia().sumByLong { medium ->
+                                        val size = medium.size
+                                        if (size == 0L) {
+                                            val path = medium.path.removePrefix(RECYCLE_BIN).prependIndent(recycleBinPath)
+                                            File(path).length()
+                                        } else {
+                                            size
+                                        }
+                                    }
+                                }.getOrDefault(0L)
+                                runOnUiThread {
+                                    mRecycleBinContentSize = remainingSize
+                                    binding.settingsEmptyRecycleBinSize.text = remainingSize.formatSize()
+                                }
+                            }
+                        }
                     }
                 }
             }

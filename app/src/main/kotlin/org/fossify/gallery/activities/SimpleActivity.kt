@@ -1,5 +1,6 @@
 package org.fossify.gallery.activities
 
+import android.app.Activity
 import android.app.Dialog
 import android.app.assist.AssistContent
 import android.content.Intent
@@ -13,11 +14,14 @@ import android.provider.MediaStore
 import android.provider.MediaStore.Images
 import android.provider.MediaStore.Video
 import android.view.WindowManager
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.helpers.isPiePlus
+import org.fossify.commons.helpers.isRPlus
 import org.fossify.gallery.App
 import org.fossify.gallery.R
 import org.fossify.gallery.dialogs.StoragePermissionRequiredDialog
@@ -34,6 +38,14 @@ import org.fossify.gallery.helpers.getPermissionsToRequest
 open class SimpleActivity : BaseSimpleActivity() {
 
     private var dialog: Dialog? = null
+    private var pendingSdk30DeleteCallback: ((Boolean) -> Unit)? = null
+    private val sdk30DeleteLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        val callback = pendingSdk30DeleteCallback
+        pendingSdk30DeleteCallback = null
+        callback?.invoke(result.resultCode == Activity.RESULT_OK)
+    }
     private val mediaObserverHandler = Handler(Looper.getMainLooper())
     private val pendingObserverFolders = LinkedHashSet<String>()
     private var hasPendingWildcardObserverChange = false
@@ -99,12 +111,42 @@ open class SimpleActivity : BaseSimpleActivity() {
     }
 
     override fun onDestroy() {
+        val pendingCallback = pendingSdk30DeleteCallback
+        pendingSdk30DeleteCallback = null
+        pendingCallback?.invoke(false)
         dialog?.dismiss()
         dialog = null
         mediaObserverHandler.removeCallbacks(dispatchObserverChangeRunnable)
         screenshotFolderObserver?.stop()
         screenshotFolderObserver = null
         super.onDestroy()
+    }
+
+    fun launchSdk30DeleteRequest(uris: List<Uri>, callback: (Boolean) -> Unit) {
+        if (uris.isEmpty()) {
+            callback(true)
+            return
+        }
+        if (!isRPlus() || isFinishing || isDestroyed) {
+            callback(false)
+            return
+        }
+        runOnUiThread {
+            if (!isRPlus() || isFinishing || isDestroyed) {
+                callback(false)
+                return@runOnUiThread
+            }
+            try {
+                hideKeyboard()
+                val pendingIntent = MediaStore.createDeleteRequest(contentResolver, uris)
+                pendingSdk30DeleteCallback = callback
+                sdk30DeleteLauncher.launch(IntentSenderRequest.Builder(pendingIntent.intentSender).build())
+            } catch (e: Exception) {
+                pendingSdk30DeleteCallback = null
+                showErrorToast(e)
+                callback(false)
+            }
+        }
     }
 
     protected open fun shouldObserveScreenshotFolders(): Boolean = false

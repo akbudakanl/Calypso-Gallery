@@ -6,6 +6,9 @@ import androidx.documentfile.provider.DocumentFile
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.internalStoragePath
+import org.fossify.commons.extensions.getFilenameFromPath
+import org.fossify.commons.extensions.getParentPath
+import org.fossify.commons.extensions.recycleBinPath
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.views.MyTextView
@@ -28,7 +31,9 @@ import org.fossify.gallery.extensions.updateDBMediaPath
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_DELETE
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_KEEP
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.DeleteOperationEngine
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.RECYCLE_BIN
 import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
@@ -37,8 +42,10 @@ import org.fossify.gallery.helpers.encryptFileToDirectory
 import org.fossify.gallery.helpers.findVaultRoot
 import org.fossify.gallery.helpers.isEncryptedFolder
 import org.fossify.gallery.helpers.purgeMediaTracesPreservingReferences
+import org.fossify.gallery.helpers.resolvePlainMediaType
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.verifyFileIntegrity
+import org.fossify.gallery.models.Medium
 import org.fossify.gallery.models.PendingOperation
 import java.io.File
 import java.io.RandomAccessFile
@@ -87,12 +94,45 @@ object OperationRecovery {
         promptCheckInFlight.set(false)
     }
 
+    private fun reconcileRecycleBinAfterCrash(context: Context) {
+        val binRoot = File(context.recycleBinPath)
+        if (!binRoot.exists()) return
+        val deletedMedia = runCatching { context.mediaDB.getDeletedMedia() }.getOrDefault(emptyList())
+        val registeredOrigPaths = deletedMedia.mapTo(HashSet(deletedMedia.size)) {
+            it.path.removePrefix(RECYCLE_BIN)
+        }
+        val deletedTs = System.currentTimeMillis()
+        DeleteOperationEngine.reconcileRecycleBinState(
+            recycleBinRoot = binRoot,
+            registeredDeletedOrigPaths = registeredOrigPaths,
+            doesOriginalExist = { origPath -> File(origPath).exists() },
+            adoptMissingDbEntry = { origPath, binFile ->
+                val medium = Medium(
+                    id = null,
+                    name = origPath.getFilenameFromPath(),
+                    path = "$RECYCLE_BIN$origPath",
+                    parentPath = origPath.getParentPath(),
+                    modified = binFile.lastModified(),
+                    taken = binFile.lastModified(),
+                    size = binFile.length(),
+                    type = resolvePlainMediaType(origPath),
+                    videoDuration = 0,
+                    isFavorite = false,
+                    deletedTS = deletedTs,
+                    mediaStoreId = 0L
+                )
+                runCatching { context.mediaDB.insert(medium) }
+            }
+        )
+    }
+
     /** Number of interrupted operations still needing a user decision. */
     fun reconcile(context: Context): Int {
         if (ForegroundOperationRegistry.isActive) return 0
         if (!reconciled) {
             reconciled = true
             cleanupOrphanStaging(context)
+            runCatching { reconcileRecycleBinAfterCrash(context.applicationContext) }
             // Fix MediaStore/Room/manifest references of items that were already committed before
             // the process died. Guarded internally so each operation is processed at most once.
             runCatching { MetadataReconciler.reconcile(context.applicationContext) }

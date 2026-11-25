@@ -246,7 +246,7 @@ private fun CryptoManager.encryptFolderRegistered(
             subfolder.deleteRecursively()
         }
         if (!operation.isJournalled) {
-            batchOperation.operationId?.let { OperationJournal.clear(it) }
+            batchOperation.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
         }
         return null
     }
@@ -665,7 +665,7 @@ private fun CryptoManager.decryptFolderRegistered(
             try { targetFolder.deleteRecursively() } catch (_: Exception) {}
         }
         if (!operation.isJournalled) {
-            batchOperation.operationId?.let { OperationJournal.clear(it) }
+            batchOperation.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
         }
         return null
     }
@@ -772,7 +772,7 @@ private fun CryptoManager.decryptFolderRegistered(
         }
     }
     if (!operation.isJournalled) {
-        batchOperation.operationId?.let { OperationJournal.clear(it) }
+        batchOperation.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
     } else if (options.resolution == AlbumConflictResolution.MERGE && targetExistedBefore) {
         batchOperation.operationId?.let { OperationJournal.markSourceAlbumFolded(it, folderPath) }
     }

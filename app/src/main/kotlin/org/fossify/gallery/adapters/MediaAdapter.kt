@@ -120,6 +120,7 @@ import org.fossify.gallery.helpers.EXTRA_ALBUM_PATH
 import org.fossify.gallery.helpers.DeleteOriginType
 import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.MediaUpdatePolicy
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.PATH
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.RECYCLE_BIN
@@ -149,7 +150,7 @@ import org.fossify.gallery.helpers.isEncryptedFolder
 import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultMediaPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
-import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFilesWithProgress
 import org.fossify.gallery.helpers.showSkippedIdenticalToast
 import org.fossify.gallery.helpers.operations.BatchOperationInfo
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
@@ -968,7 +969,7 @@ class MediaAdapter(
                             }
                         }
 
-                        batchOp.operationId?.let { OperationJournal.clear(it) }
+                        batchOp.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
                         CryptoManager.clearAppImageCaches(activity)
                         org.fossify.gallery.helpers.MediaIndexCoordinator.markFoldersDirty(
                             selectedMedia.mapNotNull { File(it.path).parent } + targetIndexes.keys
@@ -1175,7 +1176,7 @@ class MediaAdapter(
                             }
                         }
 
-                        batchOp.operationId?.let { OperationJournal.clear(it) }
+                        batchOp.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
                         CryptoManager.clearAppImageCaches(activity)
                         org.fossify.gallery.helpers.MediaIndexCoordinator.markPathsDirty(
                             filePaths = selectedMedia.map { it.path },
@@ -1283,17 +1284,29 @@ class MediaAdapter(
     private fun removeFromVirtualAlbum() {
         val albumId = path.getVirtualAlbumId() ?: return
         val paths = getSelectedPaths()
-        val owner = "virtual-album-remove"
-        ensureBackgroundThread {
-            ForegroundOperationRegistry.withOperation(activity, owner) {
-                ForegroundOperationRegistry.updateProgress(activity, 0, paths.size, null)
-                activity.removePathsFromVirtualAlbum(albumId, paths)
-                ForegroundOperationRegistry.updateProgress(activity, paths.size, paths.size, null)
+        val progressDialog = CryptoProgressDialog(
+            activity = activity,
+            max = paths.size,
+            titleId = R.string.updating_virtual_album_progress,
+            notificationChannelId = OperationNotificationCategory.CHANNEL_VIRTUAL_ALBUM
+        )
+        activity.ensureNotificationPermissionThenRun {
+            if (activity.isFinishing || activity.isDestroyed) {
+                progressDialog.dismiss()
+                return@ensureNotificationPermissionThenRun
             }
-            activity.runOnUiThread {
-                activity.toast(R.string.removed_from_virtual_album)
-                listener?.refreshItems()
-                finishActMode()
+            ensureBackgroundThread {
+                ForegroundOperationRegistry.withOperation(activity, "virtual-album-remove") {
+                    progressDialog.updateProgress(0, paths.size)
+                    activity.removePathsFromVirtualAlbum(albumId, paths)
+                    progressDialog.updateProgress(paths.size, paths.size)
+                }
+                activity.runOnUiThread {
+                    progressDialog.dismiss()
+                    activity.toast(R.string.removed_from_virtual_album)
+                    listener?.refreshItems()
+                    finishActMode()
+                }
             }
         }
     }
@@ -1311,12 +1324,9 @@ class MediaAdapter(
 
     private fun doRestoreFiles(paths: ArrayList<String>) {
         if (paths.all { CryptoManager.isVaultRecycleBinPath(activity, it) }) {
-            ensureBackgroundThread {
-                CryptoManager.restoreVaultRecycleBinFiles(activity, paths)
-                activity.runOnUiThread {
-                    listener?.refreshItems()
-                    finishActMode()
-                }
+            activity.restoreVaultRecycleBinFilesWithProgress(paths) {
+                listener?.refreshItems()
+                finishActMode()
             }
         } else {
             activity.restoreRecycleBinPaths(paths) {
@@ -1601,53 +1611,37 @@ class MediaAdapter(
         }
 
         val selectedItems = getSelectedItems()
-        val selectedPaths = selectedItems.map { it.path } as ArrayList<String>
+        val selectedPaths = selectedItems.map { it.path }
 
-        val allEncrypted = selectedPaths.all { CryptoManager.isEncryptedFile(it) || CryptoManager.isVaultRecycleBinPath(activity, it) }
+        val allEncrypted = selectedPaths.all {
+            CryptoManager.isEncryptedFile(it) || CryptoManager.isVaultRecycleBinPath(activity, it)
+        }
         if (allEncrypted) {
-            val fileDirItems = ArrayList<FileDirItem>(selectedKeys.size)
-            val removeMedia = ArrayList<Medium>(selectedKeys.size)
-            val positions = getSelectedItemPositions()
-
-            selectedItems.forEach { medium ->
-                fileDirItems.add(medium.toFileDirItem())
-                removeMedia.add(medium)
-            }
-
-            media.removeAll(removeMedia)
+            val fileDirItems = selectedItems.mapTo(ArrayList(selectedItems.size)) { it.toFileDirItem() }
+            finishActMode()
             listener?.tryDeleteFiles(fileDirItems, skipRecycleBin)
-            listener?.updateMediaGridDecoration(media)
-            removeSelectedItems(positions)
-            currentMediaHash = media.hashCode()
             return
         }
 
-        val SAFPath = selectedPaths.firstOrNull { activity.needsStupidWritePermissions(it) } ?: getFirstSelectedItemPath() ?: return
-        activity.handleSAFDialog(SAFPath) {
-            if (!it) {
+        val safPath = selectedPaths.firstOrNull { activity.needsStupidWritePermissions(it) }
+            ?: getFirstSelectedItemPath()
+            ?: return
+        activity.handleSAFDialog(safPath) { safGranted ->
+            if (!safGranted) {
                 return@handleSAFDialog
             }
 
-            val sdk30SAFPath = selectedPaths.firstOrNull { activity.isAccessibleWithSAFSdk30(it) } ?: getFirstSelectedItemPath() ?: return@handleSAFDialog
-            activity.checkManageMediaOrHandleSAFDialogSdk30(sdk30SAFPath) {
-                if (!it) {
+            val sdk30SAFPath = selectedPaths.firstOrNull { activity.isAccessibleWithSAFSdk30(it) }
+                ?: getFirstSelectedItemPath()
+                ?: return@handleSAFDialog
+            activity.checkManageMediaOrHandleSAFDialogSdk30(sdk30SAFPath) { sdk30Granted ->
+                if (!sdk30Granted) {
                     return@checkManageMediaOrHandleSAFDialogSdk30
                 }
 
-                val fileDirItems = ArrayList<FileDirItem>(selectedKeys.size)
-                val removeMedia = ArrayList<Medium>(selectedKeys.size)
-                val positions = getSelectedItemPositions()
-
-                selectedItems.forEach { medium ->
-                    fileDirItems.add(medium.toFileDirItem())
-                    removeMedia.add(medium)
-                }
-
-                media.removeAll(removeMedia)
+                val fileDirItems = selectedItems.mapTo(ArrayList(selectedItems.size)) { it.toFileDirItem() }
+                finishActMode()
                 listener?.tryDeleteFiles(fileDirItems, skipRecycleBin)
-                listener?.updateMediaGridDecoration(media)
-                removeSelectedItems(positions)
-                currentMediaHash = MediaUpdatePolicy.computeMediaContentHash(media)
             }
         }
     }

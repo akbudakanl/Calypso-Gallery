@@ -32,7 +32,6 @@ import org.fossify.commons.extensions.areSystemAnimationsEnabled
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
-import org.fossify.commons.extensions.deleteFiles
 import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getIsPathDirectory
@@ -107,7 +106,6 @@ import org.fossify.gallery.extensions.isDownloadsFolder
 import org.fossify.gallery.extensions.launchSettings
 import org.fossify.gallery.extensions.launchGesturePlayer
 import org.fossify.gallery.extensions.mediaDB
-import org.fossify.gallery.extensions.movePathsInRecycleBin
 import org.fossify.gallery.extensions.openPath
 import org.fossify.gallery.extensions.openVideoWithDefaultPlayer
 import org.fossify.gallery.extensions.openRecycleBin
@@ -166,16 +164,13 @@ import org.fossify.gallery.models.ThumbnailSection
 import java.io.File
 import java.io.IOException
 import org.fossify.gallery.helpers.clearAppImageCaches
-import org.fossify.gallery.helpers.emptyVaultRecycleBin
+import org.fossify.gallery.helpers.deleteMediaItemsWithProgress
+import org.fossify.gallery.helpers.emptyVaultRecycleBinWithProgress
 import org.fossify.gallery.helpers.getOrCreateDefaultHiddenAlbum
 import org.fossify.gallery.helpers.isConfiguredVaultTemporarilyUnavailable
 import org.fossify.gallery.helpers.isEncryptedFolderPath
 import org.fossify.gallery.helpers.isVaultRecycleBinPath
-import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
-import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
-import org.fossify.gallery.helpers.purgeTracesForFile
-import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
-import org.fossify.gallery.helpers.secureWipeAndDeleteFile
+import org.fossify.gallery.helpers.restoreVaultRecycleBinFilesWithProgress
 
 class MediaActivity : SimpleActivity(), MediaOperationsListener {
     override var isSearchBarEnabled = true
@@ -1216,15 +1211,20 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     private fun emptyRecycleBin() {
         showRecycleBinEmptyingDialog {
             if (CryptoManager.isVaultRecycleBinPath(this, mPath)) {
-                ensureBackgroundThread {
-                    CryptoManager.emptyVaultRecycleBin(this)
-                    runOnUiThread {
+                emptyVaultRecycleBinWithProgress { emptied ->
+                    if (emptied) {
                         finish()
+                    } else {
+                        refreshItems()
                     }
                 }
             } else {
-                emptyTheRecycleBin {
-                    finish()
+                emptyTheRecycleBin { emptied ->
+                    if (emptied) {
+                        finish()
+                    } else {
+                        refreshItems()
+                    }
                 }
             }
         }
@@ -1242,11 +1242,8 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         val paths = mMedia.filter { it is Medium }.map { (it as Medium).path } as ArrayList<String>
         showRestoreConfirmationDialog(paths.size) {
             if (CryptoManager.isVaultRecycleBinPath(this, mPath)) {
-                ensureBackgroundThread {
-                    CryptoManager.restoreVaultRecycleBinFiles(this, paths)
-                    runOnUiThread {
-                        finish()
-                    }
+                restoreVaultRecycleBinFilesWithProgress(paths) {
+                    finish()
                 }
             } else {
                 restoreRecycleBinPaths(paths) {
@@ -1842,233 +1839,28 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
     }
 
     override fun tryDeleteFiles(fileDirItems: ArrayList<FileDirItem>, skipRecycleBin: Boolean) {
-        val filtered = fileDirItems
-            .filter { !getIsPathDirectory(it.path) && (it.path.isMediaFile() || CryptoManager.isEncryptedFile(it.path)) } as ArrayList
+        val filtered = fileDirItems.filter {
+            !getIsPathDirectory(it.path) && (it.path.isMediaFile() || CryptoManager.isEncryptedFile(it.path))
+        }
         if (filtered.isEmpty()) {
             return
         }
 
-        val isVaultRecycleBin = CryptoManager.isVaultRecycleBinPath(this, mPath)
-
-        if (isVaultRecycleBin) {
-            val deletingItems = resources.getQuantityString(
-                org.fossify.commons.R.plurals.deleting_items,
-                filtered.size,
-                filtered.size
-            )
-            toast(deletingItems)
-            ensureBackgroundThread {
-                val paths = filtered.map { it.path }
-                CryptoManager.permanentlyDeleteVaultRecycleBinFiles(this, paths)
-                runOnUiThread {
-                    mMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
-                    getMediaAdapter()?.updateMedia(mMedia)
-                    if (mMedia.isEmpty()) {
-                        finish()
-                    }
-                }
+        deleteMediaItemsWithProgress(
+            fileDirItems = filtered,
+            skipRecycleBin = skipRecycleBin,
+            currentDirectoryPath = mPath
+        ) { result ->
+            val deletedSet = result.deletedPaths.toHashSet()
+            if (deletedSet.isNotEmpty()) {
+                mMedia.removeAll { (it as? Medium)?.path in deletedSet }
+                updateMediaGridDecoration(mMedia)
+                getMediaAdapter()?.updateMedia(mMedia)
             }
-            return
-        }
-
-        if (
-            config.useRecycleBin
-            && !skipRecycleBin
-            && !filtered.first().path.startsWith(recycleBinPath)
-        ) {
-            val movingItems = resources.getQuantityString(
-                org.fossify.commons.R.plurals.moving_items_into_bin,
-                filtered.size,
-                filtered.size
-            )
-            toast(movingItems)
-
-            val progressDialog = CryptoProgressDialog(
-                activity = this,
-                max = filtered.size,
-                titleId = R.string.deleting_files_progress,
-                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
-            )
-            val processed = java.util.concurrent.atomic.AtomicInteger(0)
-
-            val encItems = filtered.filter { CryptoManager.isEncryptedFile(it.path) }
-            val plainItems = filtered.filter { !CryptoManager.isEncryptedFile(it.path) }
-
-            ensureBackgroundThread {
-                ForegroundOperationRegistry.withOperation(this, "delete") {
-                    if (encItems.isNotEmpty()) {
-                        CryptoManager.moveEncryptedFilesToVaultRecycleBin(this, encItems.map { it.path })
-                        progressDialog.updateProgress(processed.addAndGet(encItems.size), filtered.size)
-                    }
-
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
-                        val normalPlain = plainItems.filter { !hiddenPlain.contains(it) }
-
-                        if (hiddenPlain.isNotEmpty()) {
-                            val hiddenPaths = ArrayList(hiddenPlain.map { it.path })
-                            movePathsInRecycleBin(hiddenPaths) { success ->
-                                ensureBackgroundThread {
-                                    hiddenPlain.forEach {
-                                        try { File(it.path).delete() } catch (_: Exception) {}
-                                        deleteDBPath(it.path)
-                                        CryptoManager.purgeTracesForFile(this, it.path)
-                                        progressDialog.updateProgress(
-                                            processed.incrementAndGet(),
-                                            filtered.size,
-                                            notificationText = it.name
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (normalPlain.isNotEmpty()) {
-                            runOnUiThread {
-                                movePathsInRecycleBin(normalPlain.map { it.path } as ArrayList<String>) {
-                                    if (it) {
-                                        deleteFilteredFiles(ArrayList(normalPlain))
-                                        progressDialog.updateProgress(
-                                            processed.addAndGet(normalPlain.size),
-                                            filtered.size
-                                        )
-                                    } else {
-                                        toast(org.fossify.commons.R.string.unknown_error_occurred)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (encItems.isNotEmpty()) {
-                        MediaIndexCoordinator.markPathsDirty(
-                            filePaths = encItems.map { it.path },
-                            includeRecycleBin = mPath == RECYCLE_BIN
-                        )
-                    }
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenOrVirtualPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
-                        if (hiddenOrVirtualPlain.isNotEmpty()) {
-                            MediaIndexCoordinator.markPathsDirty(
-                                filePaths = hiddenOrVirtualPlain.map { it.path },
-                                includeRecycleBin = mPath == RECYCLE_BIN
-                            )
-                        }
-                    }
-
-                    runOnUiThread {
-                        progressDialog.updateProgress(filtered.size, filtered.size)
-                        progressDialog.dismiss()
-                        mMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
-                        getMediaAdapter()?.updateMedia(mMedia)
-                        if (mPath.isVirtualAlbumPath()) {
-                            val albumId = mPath.getVirtualAlbumId()
-                            if (albumId != null) {
-                                removePathsFromVirtualAlbum(albumId, filtered.map { it.path })
-                            }
-                        }
-                        if (mMedia.isEmpty()) {
-                            handleEmptyMediaAfterDelete()
-                        }
-                    }
-                }
-            }
-        } else {
-            val deletingItems = resources.getQuantityString(
-                org.fossify.commons.R.plurals.deleting_items,
-                filtered.size,
-                filtered.size
-            )
-            toast(deletingItems)
-
-            val progressDialog = CryptoProgressDialog(
-                activity = this,
-                max = filtered.size,
-                titleId = R.string.deleting_files_progress,
-                notificationChannelId = OperationNotificationCategory.CHANNEL_DELETE
-            )
-            val processed = java.util.concurrent.atomic.AtomicInteger(0)
-
-            val encItems = filtered.filter { CryptoManager.isEncryptedFile(it.path) }
-            val plainItems = filtered.filter { !CryptoManager.isEncryptedFile(it.path) }
-
-            ensureBackgroundThread {
-                ForegroundOperationRegistry.withOperation(this, "delete") {
-                    if (encItems.isNotEmpty()) {
-                        for (item in encItems) {
-                            if (ForegroundOperationRegistry.isCancelled) break
-                            val f = File(item.path)
-                            CryptoManager.secureWipeAndDeleteFile(this, f)
-                            deleteDBPath(item.path)
-                            progressDialog.updateProgress(
-                                processed.incrementAndGet(),
-                                filtered.size,
-                                notificationText = item.name
-                            )
-                        }
-                    }
-
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
-                        val normalPlain = plainItems.filter { !hiddenPlain.contains(it) }
-
-                        if (hiddenPlain.isNotEmpty()) {
-                            for (item in hiddenPlain) {
-                                if (ForegroundOperationRegistry.isCancelled) break
-                                try { File(item.path).delete() } catch (_: Exception) {}
-                                deleteDBPath(item.path)
-                                CryptoManager.purgeTracesForFile(this, item.path)
-                                progressDialog.updateProgress(
-                                    processed.incrementAndGet(),
-                                    filtered.size,
-                                    notificationText = item.name
-                                )
-                            }
-                        }
-
-                        if (normalPlain.isNotEmpty()) {
-                            runOnUiThread {
-                                deleteFilteredFiles(ArrayList(normalPlain), isPermanentDelete = true)
-                                progressDialog.updateProgress(
-                                    processed.addAndGet(normalPlain.size),
-                                    filtered.size
-                                )
-                            }
-                        }
-                    }
-
-                    if (encItems.isNotEmpty()) {
-                        MediaIndexCoordinator.markPathsDirty(
-                            filePaths = encItems.map { it.path },
-                            includeRecycleBin = mPath == RECYCLE_BIN
-                        )
-                    }
-                    if (plainItems.isNotEmpty()) {
-                        val hiddenOrVirtualPlain = plainItems.filter { isPathHiddenOrEncrypted(it.path) || mPath.isVirtualAlbumPath() }
-                        if (hiddenOrVirtualPlain.isNotEmpty()) {
-                            MediaIndexCoordinator.markPathsDirty(
-                                filePaths = hiddenOrVirtualPlain.map { it.path },
-                                includeRecycleBin = mPath == RECYCLE_BIN
-                            )
-                        }
-                    }
-
-                    runOnUiThread {
-                        progressDialog.updateProgress(filtered.size, filtered.size)
-                        progressDialog.dismiss()
-                        mMedia.removeAll { filtered.map { f -> f.path }.contains((it as? Medium)?.path) }
-                        getMediaAdapter()?.updateMedia(mMedia)
-                        if (mPath.isVirtualAlbumPath()) {
-                            val albumId = mPath.getVirtualAlbumId()
-                            if (albumId != null) {
-                                removePathsFromVirtualAlbum(albumId, filtered.map { it.path })
-                            }
-                        }
-                        if (mMedia.isEmpty()) {
-                            handleEmptyMediaAfterDelete()
-                        }
-                    }
-                }
+            if (mMedia.isEmpty() && deletedSet.isNotEmpty() && result.allSucceeded) {
+                handleEmptyMediaAfterDelete()
+            } else if (result.failedPaths.isNotEmpty() || result.cancelled) {
+                refreshItems()
             }
         }
     }
@@ -2087,36 +1879,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
 
     private fun shouldSkipAuthentication(): Boolean {
         return intent.getBooleanExtra(SKIP_AUTHENTICATION, false)
-    }
-
-    private fun deleteFilteredFiles(
-        filtered: ArrayList<FileDirItem>,
-        isPermanentDelete: Boolean = !config.useRecycleBin
-    ) {
-        deleteFiles(filtered) {
-            if (!it) {
-                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                return@deleteFiles
-            }
-
-            mMedia.removeAll { filtered.map { it.path }.contains((it as? Medium)?.path) }
-            MediaIndexCoordinator.markPathsDirty(
-                filePaths = filtered.map { item -> item.path },
-                includeRecycleBin = mPath == RECYCLE_BIN
-            )
-
-            ensureBackgroundThread {
-                filtered.forEach {
-                    if (it.path.startsWith(recycleBinPath) || isPermanentDelete) {
-                        deleteDBPath(it.path)
-                    }
-                }
-            }
-
-            if (mMedia.isEmpty()) {
-                handleEmptyMediaAfterDelete()
-            }
-        }
     }
 
     override fun refreshItems() {

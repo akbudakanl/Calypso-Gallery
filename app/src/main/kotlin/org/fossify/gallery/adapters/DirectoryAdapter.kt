@@ -44,12 +44,14 @@ import org.fossify.commons.extensions.getTimeFormat
 import org.fossify.gallery.extensions.handleDeletePasswordProtection
 import org.fossify.gallery.extensions.handleLockedFolderOpening
 import org.fossify.commons.extensions.isAStorageRootFolder
+import org.fossify.commons.extensions.isAccessibleWithSAFSdk30
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isGif
 import org.fossify.commons.extensions.isRawFast
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
 import org.fossify.commons.extensions.isVisible
+import org.fossify.commons.extensions.needsStupidWritePermissions
 import org.fossify.commons.extensions.rescanPaths
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toast
@@ -127,6 +129,8 @@ import org.fossify.gallery.helpers.CalypsoActionModeController
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CopyMovePolicy
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.DELETE_UI_PROGRESS_INTERVAL_MS
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.operations.OperationFaults
@@ -158,7 +162,7 @@ import java.io.File
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
-import org.fossify.gallery.helpers.emptyVaultRecycleBin
+import org.fossify.gallery.helpers.emptyVaultRecycleBinWithProgress
 import org.fossify.gallery.helpers.encryptFolder
 import org.fossify.gallery.helpers.findMergeTargetForEncryptFolder
 import org.fossify.gallery.helpers.getDisplayName
@@ -786,6 +790,7 @@ class DirectoryAdapter(
                         val deferredSkippedFiles = java.util.Collections.synchronizedList(ArrayList<File>())
                         val deferredIdenticalTargets = java.util.Collections.synchronizedMap(LinkedHashMap<String, File>())
 
+                        var lastUiProgressMs = 0L
                         for (path in paths) {
                             if (ForegroundOperationRegistry.isCancelled) {
                                 allSuccess = false
@@ -806,8 +811,14 @@ class DirectoryAdapter(
                                     if (diff > 0) {
                                         globalProcessed += diff
                                         folderLastCurrent = current
-                                        activity.runOnUiThread {
-                                            progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                                        val now = System.currentTimeMillis()
+                                        if (globalProcessed >= totalFilesCount ||
+                                            now - lastUiProgressMs >= DELETE_UI_PROGRESS_INTERVAL_MS
+                                        ) {
+                                            lastUiProgressMs = now
+                                            activity.runOnUiThread {
+                                                progressDialog.updateProgress(globalProcessed, totalFilesCount)
+                                            }
                                         }
                                     }
                                 }
@@ -868,20 +879,18 @@ class DirectoryAdapter(
     private fun emptyRecycleBin() {
         val selectedDir = getSelectedItems().firstOrNull()
         if (selectedDir != null && CryptoManager.isVaultRecycleBinPath(activity, selectedDir.path)) {
-            ensureBackgroundThread {
-                CryptoManager.emptyVaultRecycleBin(activity)
-                activity.runOnUiThread {
-                    listener?.refreshItems()
-                    finishActMode()
-                }
+            activity.emptyVaultRecycleBinWithProgress {
+                listener?.refreshItems()
+                finishActMode()
             }
             return
         }
 
         activity.handleLockedFolderOpening(RECYCLE_BIN) { success ->
             if (success) {
-                activity.emptyTheRecycleBin {
+                activity.emptyTheRecycleBin { _ ->
                     listener?.refreshItems()
+                    finishActMode()
                 }
             }
         }
@@ -958,9 +967,14 @@ class DirectoryAdapter(
                 activity.runOnUiThread {
                     progressDialog.updateProgress(0, totalFiles)
                 }
+                var lastUiProgressMs = 0L
                 val result = CryptoManager.encryptFolder(activity, path) { current, total ->
-                    activity.runOnUiThread {
-                        progressDialog.updateProgress(current, total)
+                    val now = System.currentTimeMillis()
+                    if (current == 0 || current >= total || now - lastUiProgressMs >= DELETE_UI_PROGRESS_INTERVAL_MS) {
+                        lastUiProgressMs = now
+                        activity.runOnUiThread {
+                            progressDialog.updateProgress(current, total)
+                        }
                     }
                 }
                 activity.runOnUiThread {
@@ -1523,20 +1537,38 @@ class DirectoryAdapter(
             org.fossify.commons.R.string.yes,
             org.fossify.commons.R.string.no
         ) {
-            ensureBackgroundThread {
-                // only the album and its references are removed, the original files stay untouched
-                albums.forEach { album ->
-                    if (album.areFavorites()) {
-                        clearFavoritesAlbum()
-                    } else {
-                        album.path.getVirtualAlbumId()?.let { activity.deleteVirtualAlbum(it) }
-                    }
+            val progressDialog = CryptoProgressDialog(
+                activity = activity,
+                max = albums.size,
+                titleId = R.string.updating_virtual_album_progress,
+                notificationChannelId = OperationNotificationCategory.CHANNEL_VIRTUAL_ALBUM
+            )
+            activity.ensureNotificationPermissionThenRun {
+                if (activity.isFinishing || activity.isDestroyed) {
+                    progressDialog.dismiss()
+                    return@ensureNotificationPermissionThenRun
                 }
+                ensureBackgroundThread {
+                    ForegroundOperationRegistry.withOperation(activity, "virtual-album-delete") {
+                        progressDialog.updateProgress(0, albums.size)
+                        // only the album and its references are removed, the original files stay untouched
+                        for ((index, album) in albums.withIndex()) {
+                            if (ForegroundOperationRegistry.isCancelled) break
+                            if (album.areFavorites()) {
+                                clearFavoritesAlbum()
+                            } else {
+                                album.path.getVirtualAlbumId()?.let { activity.deleteVirtualAlbum(it) }
+                            }
+                            progressDialog.updateProgress(index + 1, albums.size)
+                        }
+                    }
 
-                activity.runOnUiThread {
-                    VaultSessionManager.lockVaultIfOutsideSession(activity)
-                    finishActMode()
-                    listener?.refreshItems()
+                    activity.runOnUiThread {
+                        progressDialog.dismiss()
+                        VaultSessionManager.lockVaultIfOutsideSession(activity)
+                        finishActMode()
+                        listener?.refreshItems()
+                    }
                 }
             }
         }
@@ -1556,42 +1588,63 @@ class DirectoryAdapter(
             return
         }
 
-        val SAFPath = getFirstSelectedItemPath() ?: return
         val selectedDirs = getSelectedItems()
-        activity.handleSAFDialog(SAFPath) {
-            if (!it) {
+        val normalPaths = selectedDirs
+            .filterNot {
+                it.areFavorites() ||
+                    it.isRecycleBin() ||
+                    CryptoManager.isEncryptedFolderPath(activity, it.path)
+            }
+            .map { it.path }
+
+        val proceedWithPermissionsGranted = {
+            val foldersToDelete = ArrayList<File>(selectedDirs.size)
+            selectedDirs.forEach {
+                if (it.areFavorites() || it.isRecycleBin()) {
+                    if (it.isRecycleBin()) {
+                        tryEmptyRecycleBin(false)
+                    } else {
+                        ensureBackgroundThread {
+                            clearFavoritesAlbum()
+                            activity.runOnUiThread {
+                                listener?.refreshItems()
+                            }
+                        }
+                    }
+
+                    if (selectedKeys.size == 1) {
+                        finishActMode()
+                    }
+                } else {
+                    foldersToDelete.add(File(it.path))
+                }
+            }
+
+            if (foldersToDelete.isNotEmpty()) {
+                handleLockedFolderOpeningForFolders(foldersToDelete.map { it.absolutePath }) { unlocked ->
+                    if (unlocked.isNotEmpty()) {
+                        finishActMode()
+                        listener?.deleteFolders(ArrayList(unlocked.map { path -> File(path) }))
+                    }
+                }
+            }
+        }
+
+        if (normalPaths.isEmpty()) {
+            proceedWithPermissionsGranted()
+            return
+        }
+
+        val safPath = normalPaths.firstOrNull { activity.needsStupidWritePermissions(it) } ?: normalPaths.first()
+        activity.handleSAFDialog(safPath) { safGranted ->
+            if (!safGranted) {
                 return@handleSAFDialog
             }
 
-            activity.handleSAFDialogSdk30(SAFPath) {
-                if (!it) {
-                    return@handleSAFDialogSdk30
-                }
-
-                var foldersToDelete = ArrayList<File>(selectedKeys.size)
-                selectedDirs.forEach {
-                    if (it.areFavorites() || it.isRecycleBin()) {
-                        if (it.isRecycleBin()) {
-                            tryEmptyRecycleBin(false)
-                        } else {
-                            ensureBackgroundThread {
-                                clearFavoritesAlbum()
-                                activity.runOnUiThread {
-                                    listener?.refreshItems()
-                                }
-                            }
-                        }
-
-                        if (selectedKeys.size == 1) {
-                            finishActMode()
-                        }
-                    } else {
-                        foldersToDelete.add(File(it.path))
-                    }
-                }
-
-                handleLockedFolderOpeningForFolders(foldersToDelete.map { it.absolutePath }) {
-                    listener?.deleteFolders(it.map { File(it) }.toMutableList() as ArrayList<File>)
+            val sdk30Path = normalPaths.firstOrNull { activity.isAccessibleWithSAFSdk30(it) } ?: safPath
+            activity.checkManageMediaOrHandleSAFDialogSdk30(sdk30Path) { sdk30Granted ->
+                if (sdk30Granted) {
+                    proceedWithPermissionsGranted()
                 }
             }
         }

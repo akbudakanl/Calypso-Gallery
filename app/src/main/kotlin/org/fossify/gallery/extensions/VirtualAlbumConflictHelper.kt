@@ -8,13 +8,17 @@ import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.models.FileDirItem
+import org.fossify.gallery.R
+import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.SmartFileConflictDialog
 import org.fossify.gallery.dialogs.SmartConflictItem
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_AUTO
 import org.fossify.gallery.helpers.CONFLICT_HANDLING_SMART_DIALOG
 import org.fossify.gallery.helpers.FolderIdentity
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.VirtualAlbumSyncManager
+import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.models.VirtualAlbumItem
 import java.io.File
 
@@ -40,6 +44,13 @@ object VirtualAlbumConflictHelper {
             return
         }
 
+        val scanDialog = CryptoProgressDialog(
+            activity = activity,
+            max = valid.size,
+            titleId = R.string.updating_virtual_album_progress,
+            notificationChannelId = OperationNotificationCategory.CHANNEL_VIRTUAL_ALBUM
+        )
+
         ensureBackgroundThread {
             val existing = activity.virtualAlbumsDB.getItems(albumId)
             val byName = existing.groupBy { it.filename.lowercase() }
@@ -62,8 +73,16 @@ object VirtualAlbumConflictHelper {
 
             val conflicting = pending.filter { it.conflict != null }
             if (conflicting.isEmpty()) {
-                val added = activity.addFileDirItemsToVirtualAlbum(albumId, valid, forceMarkAlbumHidden)
-                activity.runOnUiThread { onComplete(added) }
+                val added = ForegroundOperationRegistry.withOperation(activity, "virtual-album-add") {
+                    scanDialog.updateProgress(0, valid.size)
+                    val count = activity.addFileDirItemsToVirtualAlbum(albumId, valid, forceMarkAlbumHidden)
+                    scanDialog.updateProgress(valid.size, valid.size)
+                    count
+                } ?: 0
+                activity.runOnUiThread {
+                    scanDialog.dismiss()
+                    onComplete(added)
+                }
                 return@ensureBackgroundThread
             }
 
@@ -71,7 +90,7 @@ object VirtualAlbumConflictHelper {
             when (activity.config.conflictHandlingMode) {
                 CONFLICT_HANDLING_AUTO -> {
                     pending.forEach { resolutions[it.item.path] = if (it.identical) CONFLICT_SKIP else CONFLICT_OVERWRITE }
-                    apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, onComplete)
+                    apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, scanDialog, onComplete)
                 }
 
                 CONFLICT_HANDLING_SMART_DIALOG -> {
@@ -79,19 +98,21 @@ object VirtualAlbumConflictHelper {
                     identicalPaths.forEach { resolutions[it] = CONFLICT_SKIP }
                     val different = pending.filter { it.conflict != null && !it.identical }
                     if (different.isEmpty()) {
-                        apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, onComplete)
+                        apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, scanDialog, onComplete)
                     } else {
                         activity.runOnUiThread {
+                            scanDialog.dismiss()
                             askSmart(activity, different, 0, resolutions) {
-                                apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, onComplete)
+                                apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, null, onComplete)
                             }
                         }
                     }
                 }
 
                 else -> activity.runOnUiThread {
+                    scanDialog.dismiss()
                     askStandard(activity, conflicting, 0, resolutions) {
-                        apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, onComplete)
+                        apply(activity, albumId, pending, resolutions, forceMarkAlbumHidden, null, onComplete)
                     }
                 }
             }
@@ -170,27 +191,57 @@ object VirtualAlbumConflictHelper {
         pending: List<Pending>,
         resolutions: Map<String, Int>,
         forceMarkAlbumHidden: Boolean,
+        existingDialog: CryptoProgressDialog?,
         onComplete: (Int) -> Unit
     ) {
-        ensureBackgroundThread {
-            val accepted = ArrayList<FileDirItem>()
-            val removePaths = ArrayList<String>()
-            pending.forEach { p ->
-                when (resolutions[p.item.path] ?: CONFLICT_KEEP_BOTH) {
-                    CONFLICT_SKIP -> Unit
-                    CONFLICT_OVERWRITE -> {
-                        p.conflict?.let { removePaths.add(it.fullPath) }
-                        accepted.add(p.item)
+        val applyWithDialog = { dialog: CryptoProgressDialog ->
+            ensureBackgroundThread {
+                val accepted = ArrayList<FileDirItem>()
+                val removePaths = ArrayList<String>()
+                pending.forEach { p ->
+                    when (resolutions[p.item.path] ?: CONFLICT_KEEP_BOTH) {
+                        CONFLICT_SKIP -> Unit
+                        CONFLICT_OVERWRITE -> {
+                            p.conflict?.let { removePaths.add(it.fullPath) }
+                            accepted.add(p.item)
+                        }
+                        else -> accepted.add(p.item)
                     }
-                    else -> accepted.add(p.item)
+                }
+                val total = maxOf(accepted.size + removePaths.size, 1)
+                val added = ForegroundOperationRegistry.withOperation(activity, "virtual-album-add") {
+                    dialog.updateProgress(0, total)
+                    if (!ForegroundOperationRegistry.isCancelled) {
+                        removePaths.forEach { activity.virtualAlbumsDB.removeItemFromAlbum(albumId, it) }
+                        val count = activity.addFileDirItemsToVirtualAlbum(albumId, accepted, forceMarkAlbumHidden)
+                        if (removePaths.isNotEmpty()) {
+                            VirtualAlbumSyncManager.saveAlbumToFile(activity, albumId)
+                        }
+                        dialog.updateProgress(total, total)
+                        count
+                    } else {
+                        0
+                    }
+                } ?: 0
+                activity.runOnUiThread {
+                    dialog.dismiss()
+                    onComplete(added)
                 }
             }
-            removePaths.forEach { activity.virtualAlbumsDB.removeItemFromAlbum(albumId, it) }
-            val added = activity.addFileDirItemsToVirtualAlbum(albumId, accepted, forceMarkAlbumHidden)
-            if (removePaths.isNotEmpty()) {
-                VirtualAlbumSyncManager.saveAlbumToFile(activity, albumId)
+        }
+
+        if (existingDialog != null) {
+            applyWithDialog(existingDialog)
+        } else {
+            activity.runOnUiThread {
+                val dialog = CryptoProgressDialog(
+                    activity = activity,
+                    max = pending.size,
+                    titleId = R.string.updating_virtual_album_progress,
+                    notificationChannelId = OperationNotificationCategory.CHANNEL_VIRTUAL_ALBUM
+                )
+                applyWithDialog(dialog)
             }
-            activity.runOnUiThread { onComplete(added) }
         }
     }
 
