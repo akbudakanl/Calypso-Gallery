@@ -340,7 +340,7 @@ class DirectoryAdapter(
             findItem(R.id.cab_empty_recycle_bin).isVisible = isRecycleBin
             findItem(R.id.cab_empty_disable_recycle_bin).isVisible = isOneItemSelected && selectedPaths.first() == RECYCLE_BIN
 
-            findItem(R.id.cab_create_shortcut).isVisible = isOneItemSelected
+            findItem(R.id.cab_create_shortcut).isVisible = isOneItemSelected && !hasEncryptedFolder
             findItem(R.id.cab_copy_to).isVisible = canCopyOrAdd
             findItem(R.id.cab_move_to).isVisible = canCopyMove
             findItem(R.id.cab_add_to_virtual_album).isVisible = canCopyOrAdd
@@ -1414,7 +1414,11 @@ class DirectoryAdapter(
     }
 
     private fun tryCreateShortcut() {
-        activity.handleLockedFolderOpening(getFirstSelectedItemPath() ?: "") { success ->
+        val path = getFirstSelectedItemPath() ?: return
+        if (CryptoManager.isEncryptedFolderPath(activity, path)) {
+            return
+        }
+        activity.handleLockedFolderOpening(path) { success ->
             if (success) {
                 createShortcut()
             }
@@ -1426,6 +1430,9 @@ class DirectoryAdapter(
         if (manager.isRequestPinShortcutSupported) {
             val dir = getFirstSelectedItem() ?: return
             val path = dir.path
+            if (CryptoManager.isEncryptedFolderPath(activity, path)) {
+                return
+            }
             val drawable = resources.getDrawable(R.drawable.shortcut_image).mutate()
             val coverThumbnail = config.parseAlbumCovers().firstOrNull { it.tmb == dir.path }?.tmb ?: dir.tmb
             activity.getShortcutImage(coverThumbnail, drawable) {
