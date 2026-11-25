@@ -1387,11 +1387,13 @@ fun Context.loadImageBase(
         options.optionalTransform(WebpDrawable::class.java, WebpDrawableTransformation(FitCenter()))
     }
 
-    // animation is only supported without rounded corners and the file must be a GIF or WEBP.
     val effectiveName = if (isEncrypted) CryptoManager.getDisplayName(path) else path
-    if (animate && roundCorners == ROUNDED_CORNERS_NONE && (effectiveName.isGif() || effectiveName.isWebP())) {
+    if (animate && (effectiveName.isGif() || effectiveName.isWebP())) {
         // this is required to make glide cache aware of changes
         options.decode(Drawable::class.java)
+        if (isEncrypted) {
+            options.set(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT, true)
+        }
     } else {
         options.dontAnimate()
         // don't animate is not enough for webp files, decode as bitmap forces first frame use in animated webps
