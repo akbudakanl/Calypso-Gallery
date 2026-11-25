@@ -879,4 +879,7 @@
     <string name="vault_sync_stale_marker_remove">Remove and continue</string>
     <string name="vault_sync_stale_marker_keep">Keep it</string>
     <string name="cannot_include_restricted_or_vault_folder">Encrypted vault folders, app system directories, and restricted Android folders cannot be included.</string>
+    <string name="app_lock_mode_label">Lock timing</string>
+    <string name="app_lock_mode_cold_start">Only on app start</string>
+    <string name="app_lock_mode_every_entry">On every entry</string>
 </resources>

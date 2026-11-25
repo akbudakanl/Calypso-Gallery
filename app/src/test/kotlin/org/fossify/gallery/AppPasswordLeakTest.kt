@@ -49,7 +49,28 @@ class AppPasswordLeakTest {
         assertTrue(
             unlock.contains("overrideActivityTransition(0, 0, false)") &&
                 unlock.contains("WindowManager.LayoutParams.FLAG_SECURE") &&
-                unlock.contains("App.markAppUnlocked()")
+                unlock.contains("App.markAppUnlocked()") &&
+                unlock.contains("App.markAppLockGateClosed()")
+        )
+    }
+
+    @Test
+    fun everyEntryModeLocksImmediatelyOnBackgroundAndScreenOff() {
+        val app = locate("src/main/kotlin/org/fossify/gallery/App.kt").readText()
+        val screenOffBranch = app.substringAfter("Intent.ACTION_SCREEN_OFF ->")
+            .substringBefore("syncPrivacyCurtainForTrackedActivities()")
+        assertTrue(
+            "Screen-off must lock appLockManager immediately when APP_LOCK_MODE_EVERY_ENTRY is active",
+            screenOffBranch.contains("Config.APP_LOCK_MODE_EVERY_ENTRY") &&
+                screenOffBranch.contains("appLockManager.lock()")
+        )
+
+        val stoppedBranch = app.substringAfter("override fun onActivityStopped")
+            .substringBefore("VaultSessionManager.onAppBackgrounded")
+        assertTrue(
+            "Backgrounding must lock appLockManager immediately when APP_LOCK_MODE_EVERY_ENTRY is active",
+            stoppedBranch.contains("Config.APP_LOCK_MODE_EVERY_ENTRY") &&
+                stoppedBranch.contains("appLockManager.lock()")
         )
     }
 }

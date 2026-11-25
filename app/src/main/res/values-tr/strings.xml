@@ -811,4 +811,7 @@
     <string name="vault_sync_stale_marker_remove">Kaldır ve devam et</string>
     <string name="vault_sync_stale_marker_keep">Olduğu gibi bırak</string>
     <string name="cannot_include_restricted_or_vault_folder">Şifreli kasa klasörleri, uygulama sistem dizinleri ve kısıtlı Android klasörleri dahil edilemez.</string>
+    <string name="app_lock_mode_label">Kilitleme zamanı</string>
+    <string name="app_lock_mode_cold_start">Yalnızca uygulama başlatıldığında</string>
+    <string name="app_lock_mode_every_entry">Her girişte</string>
 </resources>

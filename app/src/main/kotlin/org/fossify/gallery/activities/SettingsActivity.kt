@@ -1992,6 +1992,8 @@ class SettingsActivity : SimpleActivity() {
 
     private fun setupAppPasswordProtection() {
         binding.settingsAppPasswordProtection.isChecked = config.isAppPasswordProtectionOn
+        updateAppLockModeRow()
+
         binding.settingsAppPasswordProtectionHolder.setOnClickListener {
             val tabToShow = if (config.isAppPasswordProtectionOn) config.appProtectionType else SHOW_ALL_TABS
             AppSecurityDialog(this, config.appPasswordHash, tabToShow) { hash, type, success ->
@@ -2003,13 +2005,44 @@ class SettingsActivity : SimpleActivity() {
                     config.appProtectionType = type
 
                     if (config.isAppPasswordProtectionOn) {
+                        org.fossify.gallery.App.markAppUnlocked()
                         val confirmationTextId = if (config.appProtectionType == PROTECTION_FINGERPRINT)
                             org.fossify.commons.R.string.fingerprint_setup_successfully else org.fossify.commons.R.string.protection_setup_successfully
                         ConfirmationDialog(this, "", confirmationTextId, org.fossify.commons.R.string.ok, 0) { }
                     }
+                    updateAppLockModeRow()
                 }
             }
         }
+
+        binding.settingsSecurityCard.findViewById<android.view.View>(R.id.settings_app_lock_mode_holder)?.setOnClickListener {
+            val items = arrayListOf(
+                RadioItem(Config.APP_LOCK_MODE_COLD_START, getString(R.string.app_lock_mode_cold_start)),
+                RadioItem(Config.APP_LOCK_MODE_EVERY_ENTRY, getString(R.string.app_lock_mode_every_entry))
+            )
+            RadioGroupDialog(
+                activity = this@SettingsActivity,
+                items = items,
+                checkedItemId = config.appLockMode,
+                titleId = R.string.app_lock_mode_label
+            ) {
+                config.appLockMode = it as Int
+                updateAppLockModeRow()
+            }
+        }
+    }
+
+    private fun updateAppLockModeRow() {
+        val holder = binding.settingsSecurityCard.findViewById<android.view.View>(R.id.settings_app_lock_mode_holder)
+        val valueView = binding.settingsSecurityCard.findViewById<org.fossify.commons.views.MyTextView>(R.id.settings_app_lock_mode)
+        holder?.beVisibleIf(config.isAppPasswordProtectionOn)
+        valueView?.text = getString(
+            if (config.appLockMode == Config.APP_LOCK_MODE_EVERY_ENTRY) {
+                R.string.app_lock_mode_every_entry
+            } else {
+                R.string.app_lock_mode_cold_start
+            }
+        )
     }
 
     private fun setupFileDeletionPasswordProtection() {

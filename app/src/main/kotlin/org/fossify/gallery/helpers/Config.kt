@@ -46,6 +46,10 @@ class Config(context: Context) : BaseConfig(context) {
         private const val SHOW_VAULT_PIN_DOTS = "show_vault_pin_dots"
         private const val PIN_DOTS_NOTICE_SHOWN = "pin_dots_notice_shown"
         private const val SHARE_METADATA_MODE = "share_metadata_mode"
+        private const val APP_LOCK_MODE = "app_lock_mode"
+
+        const val APP_LOCK_MODE_COLD_START = 0
+        const val APP_LOCK_MODE_EVERY_ENTRY = 1
 
         fun newInstance(context: Context) = Config(context)
     }
@@ -98,6 +102,11 @@ class Config(context: Context) : BaseConfig(context) {
     var pinDotsNoticeShown: Boolean
         get() = prefs.getBoolean(PIN_DOTS_NOTICE_SHOWN, false)
         set(value) = prefs.edit().putBoolean(PIN_DOTS_NOTICE_SHOWN, value).apply()
+
+    /** Controls when whole-app password protection locks: cold start only or every background/screen-off. */
+    var appLockMode: Int
+        get() = prefs.getInt(APP_LOCK_MODE, APP_LOCK_MODE_COLD_START)
+        set(value) = prefs.edit().putInt(APP_LOCK_MODE, value).apply()
 
     /**
      * How outgoing images are sanitized. Defaults to stripping GPS only, matching the privacy

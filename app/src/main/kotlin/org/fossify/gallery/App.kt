@@ -76,6 +76,10 @@ class App : FossifyApp() {
             appLockGateLaunched = false
             appBackgroundElapsedMs = 0L
         }
+
+        fun markAppLockGateClosed() {
+            appLockGateLaunched = false
+        }
     }
 
     /**
@@ -131,6 +135,11 @@ class App : FossifyApp() {
                         when (intent?.action) {
                             Intent.ACTION_SCREEN_OFF -> {
                                 VaultSessionManager.onScreenOff(this@App)
+                                if (config.isAppPasswordProtectionOn &&
+                                    config.appLockMode == Config.APP_LOCK_MODE_EVERY_ENTRY
+                                ) {
+                                    appLockManager.lock()
+                                }
                                 syncPrivacyCurtainForTrackedActivities()
                             }
                             Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
@@ -196,6 +205,9 @@ class App : FossifyApp() {
                     if (!activity.isChangingConfigurations) {
                         if (config.isAppPasswordProtectionOn) {
                             appBackgroundElapsedMs = SystemClock.elapsedRealtime()
+                            if (config.appLockMode == Config.APP_LOCK_MODE_EVERY_ENTRY) {
+                                appLockManager.lock()
+                            }
                         }
                         // Immediately wipe RAM keys (unless a foreground operation is running) while keeping
                         // the UI session resumable behind VaultLockActivity for VAULT_AUTO_LOCK_TIMEOUT_MS.

@@ -82,6 +82,13 @@ class AppUnlockActivity : EdgeToEdgeActivity(), HashListener {
         overrideActivityTransition(0, 0, true)
     }
 
+    override fun onDestroy() {
+        if (isFinishing) {
+            App.markAppLockGateClosed()
+        }
+        super.onDestroy()
+    }
+
     override fun receivedHash(hash: String, type: Int) {
         appLockManager.unlock()
         App.markAppUnlocked()

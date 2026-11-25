@@ -407,6 +407,8 @@
                             android:text="@string/password_protect_whole_app" />
                     </RelativeLayout>
 
+                    <include layout="@layout/item_app_lock_mode" />
+
                     <RelativeLayout
                         android:id="@+id/settings_excluded_item_password_protection_holder"
                         style="@style/CalypsoCardRowStyle"
