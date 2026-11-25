@@ -3,6 +3,7 @@ package org.fossify.gallery.dialogs
 import org.fossify.gallery.extensions.secureVaultWindow
 
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -30,6 +31,7 @@ import org.fossify.commons.extensions.formatSize
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.getContrastColor
 import org.fossify.commons.extensions.getProperBackgroundColor
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
@@ -341,6 +343,7 @@ class SmartFileConflictDialog(
         errorOverlay: View
     ) {
         if (activity.isFinishing || activity.isDestroyed) return
+        progressBar.indeterminateTintList = ColorStateList.valueOf(activity.getProperPrimaryColor())
         val file = File(path)
         val isEncrypted = CryptoManager.isEncryptedFile(file.name)
         val effectiveName = if (isEncrypted) conflict.displayName else path

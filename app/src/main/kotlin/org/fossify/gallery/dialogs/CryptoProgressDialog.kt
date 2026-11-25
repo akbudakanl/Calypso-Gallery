@@ -3,9 +3,12 @@ package org.fossify.gallery.dialogs
 import org.fossify.gallery.extensions.secureVaultWindow
 
 import android.app.Activity
+import android.content.res.ColorStateList
 import android.view.KeyEvent
 import androidx.appcompat.app.AlertDialog
+import androidx.core.graphics.ColorUtils
 import org.fossify.commons.extensions.getAlertDialogBuilder
+import org.fossify.commons.extensions.getProperPrimaryColor
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogCryptoProgressBinding
@@ -34,10 +37,18 @@ class CryptoProgressDialog(
     private val binding = DialogCryptoProgressBinding.inflate(activity.layoutInflater)
 
     init {
+        val primaryColor = activity.getProperPrimaryColor()
+        val primaryTint = ColorStateList.valueOf(primaryColor)
+        val trackTint = ColorStateList.valueOf(ColorUtils.setAlphaComponent(primaryColor, 64))
         binding.cryptoProgressMessage.setText(titleId)
-        binding.cryptoProgressBar.max = maxOf(max, 1)
-        binding.cryptoProgressBar.progress = 0
-        binding.cryptoProgressBar.isIndeterminate = max <= 0
+        binding.cryptoProgressBar.apply {
+            progressTintList = primaryTint
+            indeterminateTintList = primaryTint
+            progressBackgroundTintList = trackTint
+            this.max = maxOf(this@CryptoProgressDialog.max, 1)
+            progress = 0
+            isIndeterminate = this@CryptoProgressDialog.max <= 0
+        }
         val initialSummary = OperationProgressFormatter.formatCountSummary(current = 0, total = max)
         binding.cryptoProgressCount.text = initialSummary
 
