@@ -1701,10 +1701,9 @@ class SettingsActivity : SimpleActivity() {
                         },
                     )
 
-                    promptWhereToCreateVault(
-                        onVaultReady = { setupVaultSettings() },
-                        onBack = { setupVaultSettings() },
-                    )
+                    // Arşivleme sonrası yalnızca kasa konumunu gösteren diyalog çıkar;
+                    // yeni şifreli kasa oluşturma diyaloğu açılmaz.
+                    setupVaultSettings()
                 }
             }
         }
