@@ -113,6 +113,9 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
         val favoriteSet = if (favoritePaths.isEmpty()) emptySet() else favoritePaths.toHashSet()
         val topLatest = ArrayList<Pair<Long, String>>(11)
         val defaultLocale = Locale.getDefault()
+        // Some devices expose the same file as two MediaStore rows. Without this guard the
+        // gallery shows two identical thumbnails and deleting one removes both (delete is by path).
+        val seenPaths = HashSet<String>()
 
         try {
             context.contentResolver.query(uri, projection, selection, null, null)?.use { cursor ->
@@ -131,6 +134,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
                     try {
                         if (dataIdx < 0 || cursor.isNull(dataIdx)) continue
                         val path = cursor.getString(dataIdx) ?: continue
+                        if (!seenPaths.add(path.lowercase(defaultLocale))) continue
                         val separator = path.lastIndexOf('/')
                         if (separator <= 0) continue
                         val parentPath = path.substring(0, separator)
@@ -338,10 +342,11 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             }
         }
 
+        val distinctMedia = curMedia.distinctBy { it.path.lowercase(Locale.getDefault()) }.toCollection(ArrayList<Medium>())
         if (shouldSort) {
-            sortMedia(curMedia, context.config.getEffectiveMediaSorting(curPath), enableRandom, curPath.ifEmpty { SHOW_ALL })
+            sortMedia(distinctMedia, context.config.getEffectiveMediaSorting(curPath), enableRandom, curPath.ifEmpty { SHOW_ALL })
         }
-        return curMedia
+        return distinctMedia
     }
 
     fun getFoldersToScan(
@@ -851,6 +856,8 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             return media
         }
 
+        // Same file can appear as multiple MediaStore rows on some devices. Keep one entry per path.
+        val seenPaths = HashSet<String>()
         val filterMedia = context.config.filterMedia
         val showHidden = context.config.shouldShowHidden
 
@@ -874,6 +881,7 @@ class MediaFetcher(val context: Context, var isSecretVaultView: Boolean = false)
             try {
                 val mediaStoreId = cursor.getLongValue(Images.Media._ID)
                 val path = cursor.getStringValue(Images.Media.DATA) ?: return@queryCursor
+                if (!seenPaths.add(path.lowercase(Locale.getDefault()))) return@queryCursor
                 val filename = cursor.getStringValue(Images.Media.DISPLAY_NAME)
                     ?.takeIf { it.isNotEmpty() }
                     ?: path.getFilenameFromPath()
