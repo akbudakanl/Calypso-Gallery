@@ -74,7 +74,7 @@ object ForegroundOperationRegistry {
     /** Publishes progress for an explicit category (used by the pre-flight check dialog). */
     fun updateProgress(context: Context, category: String, current: Int, max: Int, text: String?) {
         if (!isActive || !context.config.shouldShowOperationProgress(category)) return
-        FileOperationService.updateProgress(current, max, text)
+        FileOperationService.updateProgress(context, current, max, text)
     }
 
     @Synchronized

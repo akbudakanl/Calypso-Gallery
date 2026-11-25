@@ -785,6 +785,10 @@
     <string name="checking_files_before_transfer">Dateien werden vor der Übertragung geprüft…</string>
     <string name="checking_files_before_crypto">Dateien werden vor der Verschlüsselung geprüft…</string>
     <string name="deleting_files_progress">Dateien werden gelöscht…</string>
+    <string name="moving_to_recycle_bin_progress">Wird in den Papierkorb verschoben…</string>
+    <string name="emptying_recycle_bin_progress">Papierkorb wird geleert…</string>
+    <string name="restoring_files_progress">Dateien werden wiederhergestellt…</string>
+    <string name="updating_virtual_album_progress">Virtuelles Album wird aktualisiert…</string>
     <string name="brute_force_level_fast">Schnelle Entsperrung</string>
     <string name="brute_force_level_balanced">Ausgewogene Sicherheit</string>
     <string name="brute_force_level_high">Hohe Sicherheit</string>

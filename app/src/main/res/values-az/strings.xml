@@ -856,6 +856,10 @@
     <string name="checking_files_before_transfer">Köçürmədən əvvəl fayllar yoxlanılır…</string>
     <string name="checking_files_before_crypto">Şifrələmədən əvvəl fayllar yoxlanılır…</string>
     <string name="deleting_files_progress">Fayllar silinir…</string>
+    <string name="moving_to_recycle_bin_progress">Zibil qutusuna köçürülür…</string>
+    <string name="emptying_recycle_bin_progress">Zibil qutusu boşaldılır…</string>
+    <string name="restoring_files_progress">Fayllar bərpa edilir…</string>
+    <string name="updating_virtual_album_progress">Virtual albom yenilənir…</string>
     <string name="brute_force_level_fast">Sürətli açılış</string>
     <string name="brute_force_level_balanced">Balanslaşdırılmış təhlükəsizlik</string>
     <string name="brute_force_level_high">Yüksək təhlükəsizlik</string>

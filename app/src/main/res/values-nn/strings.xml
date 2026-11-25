@@ -858,6 +858,10 @@
     <string name="checking_files_before_transfer">Sjekkar filer før overføring…</string>
     <string name="checking_files_before_crypto">Sjekkar filer før kryptering…</string>
     <string name="deleting_files_progress">Sletter filer…</string>
+    <string name="moving_to_recycle_bin_progress">Flyttar til papirkorga…</string>
+    <string name="emptying_recycle_bin_progress">Tømmer papirkorga…</string>
+    <string name="restoring_files_progress">Gjenopprettar filer…</string>
+    <string name="updating_virtual_album_progress">Oppdaterer virtuelt album…</string>
     <string name="brute_force_level_fast">Rask opplåsing</string>
     <string name="brute_force_level_balanced">Balansert tryggleik</string>
     <string name="brute_force_level_high">Høg tryggleik</string>

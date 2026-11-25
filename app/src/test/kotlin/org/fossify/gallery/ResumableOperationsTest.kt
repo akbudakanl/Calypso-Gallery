@@ -5,13 +5,17 @@ import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import org.fossify.commons.helpers.CONFLICT_KEEP_BOTH
+import org.fossify.commons.helpers.CONFLICT_OVERWRITE
 import org.fossify.commons.helpers.CONFLICT_SKIP
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.MediaIdentity
 import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.SECRETS_DIR_NAME
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
 import org.fossify.gallery.helpers.decryptFileToDirectory
 import org.fossify.gallery.helpers.encryptFileToDirectory
+import org.fossify.gallery.helpers.getOrCreateVaultRecycleBin
+import org.fossify.gallery.helpers.getVaultRecycleBinRestoreMap
 import org.fossify.gallery.helpers.operations.AtomicStaging
 import org.fossify.gallery.helpers.operations.BatchOperationInfo
 import org.fossify.gallery.helpers.operations.EncryptedSizeInput
@@ -22,6 +26,8 @@ import org.fossify.gallery.helpers.operations.OperationJournal
 import org.fossify.gallery.helpers.operations.OperationRecovery
 import org.fossify.gallery.helpers.operations.SpaceEstimator
 import org.fossify.gallery.helpers.operations.TransientOperationWaiter
+import org.fossify.gallery.helpers.reconcileVaultRecycleBin
+import org.fossify.gallery.helpers.saveVaultRecycleBinRestoreMap
 import org.fossify.gallery.helpers.setVaultRootLocation
 import org.fossify.gallery.helpers.vault.VaultContainerWriter
 import org.fossify.gallery.helpers.verifyFileIntegrity
@@ -378,7 +384,7 @@ class ResumableOperationsTest {
             actualDestPath = File(dstDir, "photo (1).jpg").absolutePath
         )
 
-        OperationRecovery.reconcile(testContext)
+        OperationRecovery.cleanupOrphanStaging(testContext)
         var resumed = false
         OperationRecovery.resume(testContext) { resumed = it }
 
@@ -436,39 +442,118 @@ class ResumableOperationsTest {
     }
 
     @Test
-    fun selectPromptBatchSplitsPlainAndAutoWipesPhase2Encrypt() {
-        val plainBatch = BatchOperationInfo(isMove = false, wipeSource = false, deleteSource = false)
-        val plainCtx = OperationContext("plain_copy_1", kind = OperationJournal.KIND_COPY, batch = plainBatch)
+    fun copyMoveNeverPromptsCleanOrphansAndFinishesVerifiedMoveSourceDeletes() {
+        val srcDir = File(tempRoot, "cm_src").apply { mkdirs() }
+        val dstDir = File(tempRoot, "cm_dst").apply { mkdirs() }
+
+        val untouchedCopySrc = File(srcDir, "copy_left.jpg").apply { writeBytes(ByteArray(300) { 1 }) }
+        val inFlightMoveSrc = File(srcDir, "move_left.jpg").apply { writeBytes(ByteArray(400) { 2 }) }
+        val orphanMoveStage = AtomicStaging.fileFor(
+            File(dstDir, "move_left.jpg"),
+            OperationContext("move_crash", 0, OperationJournal.KIND_MOVE)
+        ).apply { writeBytes(ByteArray(128) { 9 }) }
+
+        val verifiedMoveSrc = File(srcDir, "move_done.jpg").apply { writeBytes(ByteArray(500) { 3 }) }
+        val verifiedMoveDst = File(dstDir, "move_done.jpg").apply { writeBytes(verifiedMoveSrc.readBytes()) }
+        val verifiedFp = MediaIdentity.computeFingerprint(verifiedMoveSrc)
+
+        val copyBatch = BatchOperationInfo(isMove = false, wipeSource = false, deleteSource = false)
+        val copyCtx = OperationContext("copy_crash", kind = OperationJournal.KIND_COPY, batch = copyBatch)
         OperationJournal.beginBatch(
-            plainCtx,
-            listOf(JournalItem("/src/c.jpg", "/dst/c.jpg", 500L, kind = OperationJournal.KIND_COPY))
+            copyCtx,
+            listOf(
+                JournalItem(
+                    sourcePath = untouchedCopySrc.absolutePath,
+                    destPath = File(dstDir, "copy_left.jpg").absolutePath,
+                    sourceSize = untouchedCopySrc.length(),
+                    kind = OperationJournal.KIND_COPY
+                )
+            )
         )
 
-        val srcDir = File(tempRoot, "phase2_src").apply { mkdirs() }
+        val moveBatch = BatchOperationInfo(isMove = true, wipeSource = false, deleteSource = true)
+        val moveCtx = OperationContext("move_crash", kind = OperationJournal.KIND_MOVE, batch = moveBatch)
+        OperationJournal.beginBatch(
+            moveCtx,
+            listOf(
+                JournalItem(
+                    sourcePath = inFlightMoveSrc.absolutePath,
+                    destPath = File(dstDir, "move_left.jpg").absolutePath,
+                    sourceSize = inFlightMoveSrc.length(),
+                    kind = OperationJournal.KIND_MOVE
+                ),
+                JournalItem(
+                    sourcePath = verifiedMoveSrc.absolutePath,
+                    destPath = verifiedMoveDst.absolutePath,
+                    sourceSize = verifiedMoveSrc.length(),
+                    sourceFingerprint = verifiedFp,
+                    kind = OperationJournal.KIND_MOVE
+                )
+            )
+        )
+        OperationJournal.markInFlight(
+            moveCtx.copy(itemIndex = 0),
+            orphanMoveStage.absolutePath,
+            actualDestPath = File(dstDir, "move_left.jpg").absolutePath,
+            sourceFingerprint = MediaIdentity.computeFingerprint(inFlightMoveSrc)
+        )
+        OperationJournal.markVerified(moveCtx.copy(itemIndex = 1), verifiedFp, verifiedMoveDst.absolutePath)
+
+        // COPY / MOVE never prompt regardless of lock state.
+        assertEquals(OperationRecovery.PromptMode.NONE, OperationRecovery.selectPromptBatch(isVaultUnlocked = false).mode)
+        assertEquals(OperationRecovery.PromptMode.NONE, OperationRecovery.selectPromptBatch(isVaultUnlocked = true).mode)
+
+        // Reconcile cleans orphan staging, deletes already-verified move source, keeps untouched files, and clears rows.
+        assertEquals(0, OperationRecovery.reconcile(testContext))
+        assertFalse("Orphan move staging must be wiped", orphanMoveStage.exists())
+        assertTrue("Untouched copy source must stay intact", untouchedCopySrc.exists())
+        assertTrue("Unfinished move source must stay intact", inFlightMoveSrc.exists())
+        assertFalse("Verified move duplicate source must be cleaned up", verifiedMoveSrc.exists())
+        assertTrue("Verified move destination must stay intact", verifiedMoveDst.exists())
+        assertTrue("Copy/Move rows must be cleared after silent reconciliation", OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun selectPromptBatchPromptsEncryptOnAppLaunchAndAutoWipesPhase2Encrypt() {
+        val srcDir = File(tempRoot, "phase1_2_src").apply { mkdirs() }
         val vaultSub = File(tempRoot, "vault/sub_phase2").apply { mkdirs() }
+        val srcPhase1 = File(srcDir, "pending.jpg").apply { writeBytes(ByteArray(600) { 8 }) }
         val srcSecret = File(srcDir, "secret.jpg").apply { writeBytes(ByteArray(800) { 9 }) }
         val encBin = CryptoManager.encryptFileToDirectory(testContext, srcSecret, vaultSub, wipeSource = false)!!
 
         val encBatch = BatchOperationInfo(isMove = true, wipeSource = true, deleteSource = true)
-        val encCtx = OperationContext("enc_phase2_1", kind = OperationJournal.KIND_ENCRYPT, batch = encBatch)
+        val encCtxPhase1 = OperationContext("enc_phase1_1", kind = OperationJournal.KIND_ENCRYPT, batch = encBatch)
         OperationJournal.beginBatch(
-            encCtx,
+            encCtxPhase1,
+            listOf(
+                JournalItem(
+                    sourcePath = srcPhase1.absolutePath,
+                    destPath = File(vaultSub, srcPhase1.name).absolutePath,
+                    sourceSize = srcPhase1.length(),
+                    kind = OperationJournal.KIND_ENCRYPT
+                )
+            )
+        )
+
+        val encCtxPhase2 = OperationContext("enc_phase2_1", kind = OperationJournal.KIND_ENCRYPT, batch = encBatch)
+        OperationJournal.beginBatch(
+            encCtxPhase2,
             listOf(JournalItem(srcSecret.absolutePath, encBin.absolutePath, srcSecret.length(), kind = OperationJournal.KIND_ENCRYPT))
         )
-        OperationJournal.markVerified(encCtx.copy(itemIndex = 0), "fp_enc", encBin.absolutePath)
+        OperationJournal.markVerified(encCtxPhase2.copy(itemIndex = 0), "fp_enc", encBin.absolutePath)
 
-        // Locked vault: only the plain copy prompts; Phase-2 encrypt never prompts.
+        // Normal app launch (vault locked): Phase-1 encrypt/decrypt still prompts, Phase-2 never prompts.
         val lockedSelection = OperationRecovery.selectPromptBatch(isVaultUnlocked = false)
-        assertEquals(setOf("plain_copy_1"), lockedSelection.operationIds)
+        assertEquals(setOf("enc_phase1_1"), lockedSelection.operationIds)
         assertEquals(OperationRecovery.PromptMode.STANDARD, lockedSelection.mode)
-        assertEquals(listOf(OperationJournal.KIND_COPY), lockedSelection.distinctKinds)
+        assertEquals(listOf(OperationJournal.KIND_ENCRYPT), lockedSelection.distinctKinds)
 
-        // Declining plain operation clears only plain_copy_1 permanently.
+        // Declining Phase-1 prompt leaves Phase-2 wipe intact until vault unlock.
         OperationRecovery.discardOperations(lockedSelection.operationIds)
-        assertTrue(OperationJournal.itemsFor("plain_copy_1").isEmpty())
+        assertTrue(OperationJournal.itemsFor("enc_phase1_1").isEmpty())
         assertEquals(1, OperationJournal.itemsFor("enc_phase2_1").size)
 
-        // Unlocked vault: Phase-2 encrypt is silently wiped in background with zero prompt needed.
+        // Unlocked vault: Phase-2 wipe executes silently.
         assertEquals(OperationRecovery.PromptMode.NONE, OperationRecovery.selectPromptBatch(isVaultUnlocked = true).mode)
         assertEquals(1, OperationRecovery.resumeSilentPhase2EncryptWipes(testContext))
         assertFalse("Original plaintext must be wiped automatically", srcSecret.exists())
@@ -590,6 +675,156 @@ class ResumableOperationsTest {
         assertEquals(OperationNotificationCategory.CRYPTO, OperationNotificationCategory.fromOwner("crypto-decrypt"))
         assertEquals(OperationNotificationCategory.VIRTUAL_ALBUM, OperationNotificationCategory.fromOwner("virtual-album-add"))
         assertEquals(OperationNotificationCategory.DELETE, OperationNotificationCategory.fromOwner("delete"))
+    }
+
+    @Test
+    fun resumeWithFreshConflictOverrideIgnoresPreCrashDecision() {
+        val srcDir = File(tempRoot, "override_src").apply { mkdirs() }
+        val vaultSub = File(tempRoot, "vault/sub_override").apply { mkdirs() }
+
+        // Pre-existing different files at destination for both source filenames.
+        val existingA = File(srcDir, "temp_a.jpg").apply { writeBytes(ByteArray(300) { 1 }) }
+        val existingB = File(srcDir, "temp_b.jpg").apply { writeBytes(ByteArray(300) { 2 }) }
+        val oldBinA = CryptoManager.encryptFileToDirectory(testContext, existingA, vaultSub, wipeSource = true, forcedOriginalName = "a.jpg")!!
+        val oldBinB = CryptoManager.encryptFileToDirectory(testContext, existingB, vaultSub, wipeSource = true, forcedOriginalName = "b.jpg")!!
+
+        val srcA = File(srcDir, "a.jpg").apply { writeBytes(ByteArray(512) { 10 }) }
+        val srcB = File(srcDir, "b.jpg").apply { writeBytes(ByteArray(640) { 20 }) }
+
+        val opId = "override_enc_op"
+        val batch = BatchOperationInfo(
+            sourceRoot = srcDir.absolutePath,
+            destRoot = vaultSub.absolutePath,
+            isMove = true,
+            wipeSource = true,
+            deleteSource = true
+        )
+        // Record stale pre-crash decisions: A was SKIP, B was OVERWRITE.
+        OperationJournal.beginBatch(
+            OperationContext(opId, kind = OperationJournal.KIND_ENCRYPT, batch = batch),
+            listOf(
+                JournalItem(
+                    sourcePath = srcA.absolutePath,
+                    destPath = File(vaultSub, srcA.name).absolutePath,
+                    sourceSize = srcA.length(),
+                    resolvedDestName = "a(9).jpg",
+                    kind = OperationJournal.KIND_ENCRYPT,
+                    conflictResolution = CONFLICT_SKIP.toString()
+                ),
+                JournalItem(
+                    sourcePath = srcB.absolutePath,
+                    destPath = File(vaultSub, srcB.name).absolutePath,
+                    sourceSize = srcB.length(),
+                    resolvedDestName = "b.jpg",
+                    kind = OperationJournal.KIND_ENCRYPT,
+                    conflictResolution = CONFLICT_OVERWRITE.toString()
+                )
+            )
+        )
+
+        val skippedCollector = ArrayList<File>()
+        val override = OperationRecovery.ResumeConflictOverride(
+            resolutionsBySourcePath = mapOf(
+                srcA.absolutePath to CONFLICT_KEEP_BOTH,
+                srcB.absolutePath to CONFLICT_SKIP
+            ),
+            nonIdenticalSourcePaths = setOf(srcA.absolutePath),
+            ignoreRecordedConflictResolutions = true
+        )
+        var resumed = false
+        OperationRecovery.resume(
+            context = testContext,
+            operationIds = setOf(opId),
+            conflictOverride = override,
+            skippedEncryptCollector = skippedCollector
+        ) { resumed = it }
+
+        assertTrue(resumed)
+        // A had pre-crash CONFLICT_SKIP, but fresh override chose KEEP_BOTH -> encrypted and wiped!
+        assertFalse("Fresh override KEEP_BOTH must encrypt & wipe srcA", srcA.exists())
+        assertTrue(oldBinA.exists())
+        val aNames = vaultSub.listFiles()
+            ?.filter { it.name.endsWith(".bin") }
+            ?.mapNotNull { CryptoManager.readMetadata(it, includeThumbnail = false, cacheResult = false)?.originalName }
+            ?.toSet() ?: emptySet()
+        assertTrue("Fresh KEEP_BOTH must produce a.jpg and a(1).jpg, ignoring stale a(9).jpg", "a(1).jpg" in aNames)
+        assertFalse("a(9).jpg" in aNames)
+
+        // B had pre-crash CONFLICT_OVERWRITE, but fresh override chose SKIP -> kept intact & collected!
+        assertTrue("Fresh override SKIP must preserve srcB", srcB.exists())
+        assertTrue("oldBinB must stay untouched", oldBinB.exists())
+        assertEquals(listOf(srcB), skippedCollector)
+        assertTrue(OperationJournal.allItems().isEmpty())
+    }
+
+    @Test
+    fun encryptFolderIdenticalPreExistingWithDeleteFalseDoesNotMarkVerified() {
+        val srcDir = File(tempRoot, "ident_src").apply { mkdirs() }
+        val vaultSub = File(tempRoot, "vault/sub_ident").apply { mkdirs() }
+        val fileCopySource = File(srcDir, "dup.jpg").apply { writeBytes(ByteArray(700) { 7 }) }
+        val existingBin = CryptoManager.encryptFileToDirectory(testContext, fileCopySource, vaultSub, wipeSource = false)!!
+
+        val opId = "ident_skip_op"
+        val batch = BatchOperationInfo(
+            sourceRoot = srcDir.absolutePath,
+            destRoot = vaultSub.absolutePath,
+            isMove = true,
+            wipeSource = true,
+            deleteSource = true
+        )
+        val ctx = OperationContext(opId, 0, OperationJournal.KIND_ENCRYPT, batch)
+        OperationJournal.beginBatch(
+            ctx,
+            listOf(JournalItem(fileCopySource.absolutePath, File(vaultSub, fileCopySource.name).absolutePath, fileCopySource.length(), kind = OperationJournal.KIND_ENCRYPT))
+        )
+
+        val result = CryptoManager.encryptFileToDirectory(
+            context = testContext,
+            sourceFile = fileCopySource,
+            targetDir = vaultSub,
+            wipeSource = false,
+            deleteSourceOnIdentical = false,
+            operation = ctx
+        )
+        assertEquals(existingBin.absolutePath, result?.absolutePath)
+        val row = OperationJournal.itemsFor(opId).single()
+        assertEquals(OperationJournal.STATE_SKIPPED_CONFLICT, row.state)
+        assertEquals(0, OperationRecovery.resumeSilentPhase2EncryptWipes(testContext))
+        assertTrue("Plaintext identical source must remain untouched", fileCopySource.exists())
+    }
+
+    @Test
+    fun vaultRecycleBinRestoreMapAtomicWriteAndOrphanCleanup() {
+        val binDir = CryptoManager.getOrCreateVaultRecycleBin(testContext)!!
+        val map = hashMapOf("deadbeef.bin" to "/vault/album1")
+        CryptoManager.saveVaultRecycleBinRestoreMap(testContext, map)
+
+        val loaded = CryptoManager.getVaultRecycleBinRestoreMap(testContext)
+        assertEquals("/vault/album1", loaded["deadbeef.bin"])
+
+        val validBin = File(binDir, "deadbeef.bin").apply { writeBytes(ByteArray(16) { 1 }) }
+        val orphanTmp = File(binDir, ".tmp_partial.bin").apply { writeBytes(ByteArray(16) { 2 }) }
+        val orphanMapTmp = File(binDir, "${CryptoManager.VAULT_RESTORE_INFO_FILE}.tmp").apply { writeText("corrupt") }
+
+        val cleaned = CryptoManager.reconcileVaultRecycleBin(testContext)
+        assertEquals(2, cleaned)
+        assertFalse(orphanTmp.exists())
+        assertFalse(orphanMapTmp.exists())
+        assertTrue(validBin.exists())
+        assertEquals("/vault/album1", CryptoManager.getVaultRecycleBinRestoreMap(testContext)["deadbeef.bin"])
+    }
+
+    @Test
+    fun atomicStagingCommitReplacesExistingTargetAtomically() {
+        val dir = File(tempRoot, "staging_replace").apply { mkdirs() }
+        val target = File(dir, "photo.jpg").apply { writeText("old-content") }
+        val ctx = OperationContext("op_replace", 0, OperationJournal.KIND_DECRYPT)
+        val staging = AtomicStaging.fileFor(target, ctx).apply { writeText("new-verified-content") }
+
+        AtomicStaging.commit(staging, target, alreadyFileSynced = false)
+        assertFalse(staging.exists())
+        assertTrue(target.exists())
+        assertEquals("new-verified-content", target.readText())
     }
 
     private fun unlockTestVault() {

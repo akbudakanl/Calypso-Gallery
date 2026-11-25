@@ -21,27 +21,36 @@ import org.fossify.gallery.dialogs.CryptoProgressDialog
 import org.fossify.gallery.dialogs.deleteSkippedCryptoSourcesBlocking
 import org.fossify.gallery.dialogs.getSkippedEncryptFilesMode
 import org.fossify.gallery.dialogs.resolveSkippedCryptoFiles
+import org.fossify.gallery.extensions.TransferPairSpec
 import org.fossify.gallery.extensions.cleanupEmptyPlaintextAlbumIfNeeded
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.directoryDB
+import org.fossify.gallery.extensions.ensureVaultUnlocked
 import org.fossify.gallery.extensions.markReferencesOnDecrypt
 import org.fossify.gallery.extensions.markReferencesOnEncrypt
 import org.fossify.gallery.extensions.mediaDB
+import org.fossify.gallery.extensions.resolveCryptoTransferConflicts
 import org.fossify.gallery.extensions.updateDBMediaPath
+import org.fossify.gallery.helpers.CONFLICT_HANDLING_STANDARD_DIALOG
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_DELETE
 import org.fossify.gallery.helpers.CRYPTO_SKIPPED_FILES_KEEP
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DeleteOperationEngine
 import org.fossify.gallery.helpers.MediaIdentity
+import org.fossify.gallery.helpers.MediaIndexCoordinator
+import org.fossify.gallery.helpers.OperationNotificationCategory
 import org.fossify.gallery.helpers.RECYCLE_BIN
+import org.fossify.gallery.helpers.VaultSessionManager
 import org.fossify.gallery.helpers.cleanupEmptyEncryptedAlbumIfNeeded
 import org.fossify.gallery.helpers.clearAppImageCaches
 import org.fossify.gallery.helpers.copyOrMoveEncryptedFileToDirectory
 import org.fossify.gallery.helpers.decryptFileToDirectory
 import org.fossify.gallery.helpers.encryptFileToDirectory
+import org.fossify.gallery.helpers.ensureNotificationPermissionThenRun
 import org.fossify.gallery.helpers.findVaultRoot
 import org.fossify.gallery.helpers.isEncryptedFolder
 import org.fossify.gallery.helpers.purgeMediaTracesPreservingReferences
+import org.fossify.gallery.helpers.reconcileVaultRecycleBin
 import org.fossify.gallery.helpers.resolvePlainMediaType
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.verifyFileIntegrity
@@ -87,6 +96,14 @@ object OperationRecovery {
         val forceCleanupEmptyAlbum: Boolean
     )
 
+    internal data class ResumeConflictOverride(
+        val resolutionsBySourcePath: Map<String, Int> = emptyMap(),
+        val identicalSourcePaths: Set<String> = emptySet(),
+        val identicalTargetsBySourcePath: Map<String, File> = emptyMap(),
+        val nonIdenticalSourcePaths: Set<String> = emptySet(),
+        val ignoreRecordedConflictResolutions: Boolean = false
+    )
+
     /** Test/debug only: allow a fresh reconciliation pass in the same process. */
     fun resetForTests() {
         reconciled = false
@@ -126,18 +143,103 @@ object OperationRecovery {
         )
     }
 
+    private fun reconcileVaultRecycleBinAfterCrash(context: Context) {
+        if (!CryptoManager.isVaultUnlocked) return
+        runCatching { CryptoManager.reconcileVaultRecycleBin(context) }
+    }
+
+    /**
+     * Silently reconciles interrupted COPY and MOVE batches without prompting the user:
+     * - Plain/unlocked MOVE items that were already committed + verified (`STATE_VERIFIED`)
+     *   finish deleting their leftover source so no duplicates remain.
+     * - Locked vault `.bin` MOVE items waiting in `STATE_VERIFIED` are deferred until vault unlock.
+     * - Untouched sources for unstarted `PENDING` / `IN_FLIGHT` COPY or MOVE items are preserved
+     *   intact; their journal rows are cleared so the user can manually copy/move the rest.
+     */
+    internal fun reconcileSilentCopyMoveAfterCrash(
+        context: Context,
+        isVaultUnlocked: Boolean
+    ): Int {
+        if (ForegroundOperationRegistry.isActive) return 0
+        val grouped = OperationJournal.allItems().groupBy { it.operationId }
+        if (grouped.isEmpty()) return 0
+
+        var completedSourceDeletes = 0
+        val dirtyFolders = LinkedHashSet<String>()
+
+        grouped.forEach { (operationId, items) ->
+            if (operationId.isBlank()) return@forEach
+            val isCopyMoveOp = items.all {
+                it.kind == OperationJournal.KIND_COPY || it.kind == OperationJournal.KIND_MOVE
+            }
+            if (!isCopyMoveOp) return@forEach
+
+            val batch = OperationJournal.decodeBatch(items.first().batchPayload)
+            var waitingOnLockedVault = false
+
+            items.sortedBy { it.itemIndex }.forEach { item ->
+                if (ForegroundOperationRegistry.isActive) return completedSourceDeletes
+                val isMoveDeletionPending = item.state == OperationJournal.STATE_VERIFIED &&
+                    OperationJournal.requiresSourceDeletion(item, batch)
+                if (!isMoveDeletionPending) return@forEach
+
+                val source = File(item.sourcePath)
+                val dest = File(item.destPath)
+                val isVaultItem = source.name.endsWith(".bin") || dest.name.endsWith(".bin")
+                if (isVaultItem && !isVaultUnlocked) {
+                    waitingOnLockedVault = true
+                    return@forEach
+                }
+
+                val destVerified = dest.exists() && if (dest.name.endsWith(".bin")) {
+                    CryptoManager.verifyFileIntegrity(dest)
+                } else {
+                    item.destFingerprint.isEmpty() || MediaIdentity.computeFingerprint(dest) == item.destFingerprint
+                }
+                val ctx = OperationContext(operationId, item.itemIndex, item.kind, batch)
+                if (destVerified && completePendingSourceDeletion(context, item, source, dest, ctx)) {
+                    completedSourceDeletes++
+                    source.parent?.let { dirtyFolders.add(it) }
+                    dest.parent?.let { dirtyFolders.add(it) }
+                } else if (!source.exists()) {
+                    OperationJournal.markSourceDeleted(ctx)
+                }
+            }
+
+            if (waitingOnLockedVault) {
+                OperationJournal.clearAfterCompletionOrCancel(operationId)
+            } else {
+                OperationJournal.clear(operationId)
+            }
+        }
+
+        if (completedSourceDeletes > 0) {
+            runCatching { MetadataReconciler.reconcile(context.applicationContext) }
+            if (dirtyFolders.isNotEmpty()) {
+                MediaIndexCoordinator.markFoldersDirty(dirtyFolders)
+            }
+        }
+        return completedSourceDeletes
+    }
+
     /** Number of interrupted operations still needing a user decision. */
     fun reconcile(context: Context): Int {
         if (ForegroundOperationRegistry.isActive) return 0
+        val appContext = context.applicationContext
         if (!reconciled) {
             reconciled = true
             cleanupOrphanStaging(context)
-            runCatching { reconcileRecycleBinAfterCrash(context.applicationContext) }
+            runCatching { reconcileRecycleBinAfterCrash(appContext) }
+            runCatching { reconcileVaultRecycleBinAfterCrash(appContext) }
             // Fix MediaStore/Room/manifest references of items that were already committed before
             // the process died. Guarded internally so each operation is processed at most once.
-            runCatching { MetadataReconciler.reconcile(context.applicationContext) }
+            runCatching { MetadataReconciler.reconcile(appContext) }
+            runCatching { reconcileSilentCopyMoveAfterCrash(appContext, CryptoManager.isVaultUnlocked) }
             OperationJournal.activeItems().forEach { item ->
                 if (ForegroundOperationRegistry.isActive) return 0
+                if (item.kind != OperationJournal.KIND_ENCRYPT && item.kind != OperationJournal.KIND_DECRYPT) {
+                    return@forEach
+                }
                 if (item.state != OperationJournal.STATE_PENDING) {
                     val ctx = OperationContext(
                         operationId = item.operationId,
@@ -150,12 +252,25 @@ object OperationRecovery {
             }
         }
 
-        // Prune operations whose items are all terminal (e.g. completed COPYs or FAILED batches)
-        // while keeping pending Phase-1 ops and deferred skipped-file decision batches intact.
+        // Prune operations whose items are all terminal while keeping pending Encrypt/Decrypt ops
+        // and deferred skipped-file decision batches intact.
         val grouped = OperationJournal.allItems().groupBy { it.operationId }
         var resumableOpCount = 0
         grouped.forEach { (operationId, items) ->
             if (operationId.isBlank()) return@forEach
+            val isCryptoOp = items.any {
+                it.kind == OperationJournal.KIND_ENCRYPT || it.kind == OperationJournal.KIND_DECRYPT
+            }
+            if (!isCryptoOp) {
+                val batch = OperationJournal.decodeBatch(items.first().batchPayload)
+                val hasVerifiedMove = items.any {
+                    it.state == OperationJournal.STATE_VERIFIED && OperationJournal.requiresSourceDeletion(it, batch)
+                }
+                if (!hasVerifiedMove) {
+                    OperationJournal.clear(operationId)
+                }
+                return@forEach
+            }
             val batch = OperationJournal.decodeBatch(items.first().batchPayload)
             val hasResume = items.any { OperationJournal.needsResume(it, batch) }
             val hasDeferredSkip = items.any { OperationJournal.hasDeferredSkippedWork(it) }
@@ -217,12 +332,23 @@ object OperationRecovery {
 
     /** Continue every interrupted operation, one item at a time. */
     fun resume(context: Context, onDone: (Boolean) -> Unit) {
-        resume(context, onProgress = null, onDone = onDone)
+        resume(
+            context = context,
+            operationIds = null,
+            conflictOverride = null,
+            skippedEncryptCollector = null,
+            skippedIdenticalMap = null,
+            onProgress = null,
+            onDone = onDone
+        )
     }
 
-    fun resume(
+    internal fun resume(
         context: Context,
         operationIds: Set<String>? = null,
+        conflictOverride: ResumeConflictOverride? = null,
+        skippedEncryptCollector: MutableList<File>? = null,
+        skippedIdenticalMap: MutableMap<String, File>? = null,
         onProgress: ((current: Int, total: Int) -> Unit)? = null,
         onDone: (Boolean) -> Unit
     ) {
@@ -242,6 +368,7 @@ object OperationRecovery {
         var anyCryptoTouched = false
         var processed = 0
         val total = items.size
+        val touchedFolders = LinkedHashSet<String>()
         try {
             items.groupBy { it.operationId }.forEach { (operationId, operationItems) ->
                 if (ForegroundOperationRegistry.isCancelled) {
@@ -264,9 +391,19 @@ object OperationRecovery {
                         opCryptoTouched = true
                         anyCryptoTouched = true
                     }
+                    File(item.sourcePath).parent?.let { touchedFolders.add(it) }
+                    File(item.destPath).parent?.let { touchedFolders.add(it) }
                     val ctx = OperationContext(operationId, item.itemIndex, item.kind, batch)
                     val succeeded = try {
-                        resumeOne(context, item, ctx, batch)
+                        resumeOne(
+                            context = context,
+                            item = item,
+                            ctx = ctx,
+                            batch = batch,
+                            conflictOverride = conflictOverride,
+                            skippedEncryptCollector = skippedEncryptCollector,
+                            skippedIdenticalMap = skippedIdenticalMap
+                        )
                     } catch (t: Throwable) {
                         OperationJournal.markFailed(ctx, t.message ?: t::class.java.simpleName)
                         false
@@ -288,6 +425,9 @@ object OperationRecovery {
             }
             if (anyCryptoTouched) {
                 runCatching { CryptoManager.clearAppImageCaches(context) }
+            }
+            if (touchedFolders.isNotEmpty()) {
+                MediaIndexCoordinator.markFoldersDirty(touchedFolders)
             }
         } finally {
             ForegroundOperationRegistry.release(context, "resume")
@@ -326,7 +466,10 @@ object OperationRecovery {
         context: Context,
         item: PendingOperation,
         ctx: OperationContext,
-        batch: BatchOperationInfo?
+        batch: BatchOperationInfo?,
+        conflictOverride: ResumeConflictOverride? = null,
+        skippedEncryptCollector: MutableList<File>? = null,
+        skippedIdenticalMap: MutableMap<String, File>? = null
     ): Boolean {
         if (batch != null && batch.sourceRoot.isNotBlank() && batch.sourceRoot in batch.foldedRoots()) {
             OperationJournal.markSkipped(ctx)
@@ -382,16 +525,51 @@ object OperationRecovery {
             return true
         }
 
-        // ADR 0003 §4: if the first attempt's committed output already exists and matches, reuse it.
-        tryReuseExistingVerifiedDestination(context, item, source, dest, ctx, batch)?.let { return it }
+        val hasFreshConflictOverride = conflictOverride?.ignoreRecordedConflictResolutions == true
+        if (!hasFreshConflictOverride) {
+            // ADR 0003 §4: if the first attempt's committed output already exists and matches, reuse it.
+            tryReuseExistingVerifiedDestination(context, item, source, dest, ctx, batch)?.let { return it }
+        }
 
-        val conflictResolution = item.batchConflictResolution.toIntOrNull() ?: CONFLICT_KEEP_BOTH
+        val sourceKey = source.absolutePath
+        val conflictResolution = if (hasFreshConflictOverride && conflictOverride != null) {
+            if (sourceKey in conflictOverride.identicalSourcePaths) {
+                OperationJournal.markSkipped(ctx)
+                if (item.kind == OperationJournal.KIND_ENCRYPT && (batch?.wipeSource != false)) {
+                    skippedEncryptCollector?.add(source)
+                    conflictOverride.identicalTargetsBySourcePath[sourceKey]?.let { target ->
+                        skippedIdenticalMap?.put(sourceKey, target)
+                    }
+                }
+                return true
+            }
+            conflictOverride.resolutionsBySourcePath[sourceKey] ?: CONFLICT_KEEP_BOTH
+        } else {
+            item.batchConflictResolution.toIntOrNull() ?: CONFLICT_KEEP_BOTH
+        }
+
         if (conflictResolution == CONFLICT_SKIP) {
             OperationJournal.markSkipped(ctx)
+            if (hasFreshConflictOverride && item.kind == OperationJournal.KIND_ENCRYPT && (batch?.wipeSource != false)) {
+                skippedEncryptCollector?.add(source)
+            }
             return true
         }
 
-        val pinnedName = item.resolvedDestName.takeIf { it.isNotEmpty() && !CryptoManager.isEncryptedFile(it) }
+        val pinnedName = if (hasFreshConflictOverride) {
+            null
+        } else {
+            item.resolvedDestName.takeIf { it.isNotEmpty() && !CryptoManager.isEncryptedFile(it) }
+        }
+        val skipDupCheck = if (hasFreshConflictOverride && conflictOverride != null) {
+            val standardMode = runCatching {
+                context.config.conflictHandlingMode == CONFLICT_HANDLING_STANDARD_DIALOG
+            }.getOrDefault(false)
+            standardMode || (sourceKey in conflictOverride.nonIdenticalSourcePaths)
+        } else {
+            false
+        }
+        val deleteIdentical = if (hasFreshConflictOverride) false else null
 
         return when (item.kind) {
             OperationJournal.KIND_ENCRYPT -> {
@@ -402,7 +580,8 @@ object OperationRecovery {
                         targetDir = destDir,
                         isMove = batch?.isMove ?: true,
                         conflictResolution = conflictResolution,
-                        skipDuplicateCheck = false,
+                        skipDuplicateCheck = skipDupCheck,
+                        deleteSourceOnIdentical = deleteIdentical ?: true,
                         operation = ctx,
                         forcedDesiredName = pinnedName
                     ) != null
@@ -413,10 +592,10 @@ object OperationRecovery {
                         targetDir = destDir,
                         wipeSource = batch?.wipeSource ?: true,
                         conflictResolution = conflictResolution,
-                        skipDuplicateCheck = false,
-                        deleteSourceOnIdentical = batch?.wipeSource ?: true,
+                        skipDuplicateCheck = skipDupCheck,
+                        deleteSourceOnIdentical = deleteIdentical ?: (batch?.wipeSource ?: true),
                         operation = ctx,
-                        forcedOriginalName = item.resolvedDestName.takeIf { it.isNotEmpty() }
+                        forcedOriginalName = if (hasFreshConflictOverride) null else item.resolvedDestName.takeIf { it.isNotEmpty() }
                     ) != null
                 }
             }
@@ -427,8 +606,8 @@ object OperationRecovery {
                 targetDir = destDir,
                 deleteEncryptedSource = batch?.deleteSource ?: true,
                 conflictResolution = conflictResolution,
-                skipDuplicateCheck = false,
-                deleteSourceOnIdentical = batch?.deleteSource ?: true,
+                skipDuplicateCheck = skipDupCheck,
+                deleteSourceOnIdentical = deleteIdentical ?: (batch?.deleteSource ?: true),
                 operation = ctx,
                 forcedDestName = pinnedName
             ) != null
@@ -441,7 +620,7 @@ object OperationRecovery {
                         targetDir = destDir,
                         isMove = item.kind == OperationJournal.KIND_MOVE || batch?.isMove == true,
                         conflictResolution = conflictResolution,
-                        skipDuplicateCheck = false,
+                        skipDuplicateCheck = skipDupCheck,
                         operation = ctx,
                         forcedDesiredName = pinnedName
                     ) != null
@@ -639,6 +818,7 @@ object OperationRecovery {
 
         var completedCount = 0
         val touchedOps = LinkedHashMap<String, BatchOperationInfo?>()
+        val dirtyFolders = LinkedHashSet<String>()
         ForegroundOperationRegistry.withOperation(context, "encrypt-phase2-wipe") {
             phase2Items.forEach { (opId, batch, item) ->
                 if (ForegroundOperationRegistry.isCancelled) return@forEach
@@ -649,6 +829,8 @@ object OperationRecovery {
                 if (dest.exists() && (!dest.name.endsWith(".bin") || CryptoManager.verifyFileIntegrity(dest))) {
                     if (completePendingSourceDeletion(context, item, source, dest, ctx)) {
                         completedCount++
+                        source.parent?.let { dirtyFolders.add(it) }
+                        dest.parent?.let { dirtyFolders.add(it) }
                     }
                 } else if (!source.exists()) {
                     OperationJournal.markFailed(ctx, "missing source and destination")
@@ -669,6 +851,9 @@ object OperationRecovery {
             }
             if (completedCount > 0) {
                 runCatching { CryptoManager.clearAppImageCaches(context) }
+                if (dirtyFolders.isNotEmpty()) {
+                    MediaIndexCoordinator.markFoldersDirty(dirtyFolders)
+                }
             }
         }
         return completedCount
@@ -742,13 +927,16 @@ object OperationRecovery {
         return dialogsToReopen
     }
 
-    internal fun selectPromptBatch(isVaultUnlocked: Boolean): PromptSelection {
+    internal fun selectPromptBatch(@Suppress("UNUSED_PARAMETER") isVaultUnlocked: Boolean): PromptSelection {
         val resumable = OperationJournal.resumableItems()
         if (resumable.isEmpty()) {
             return PromptSelection(emptySet(), emptyList(), PromptMode.NONE, emptyList())
         }
         val batchCache = HashMap<String, BatchOperationInfo?>()
         val promptableItems = resumable.filter { item ->
+            if (item.kind != OperationJournal.KIND_ENCRYPT && item.kind != OperationJournal.KIND_DECRYPT) {
+                return@filter false
+            }
             val batch = batchCache.getOrPut(item.operationId) {
                 OperationJournal.decodeBatch(item.batchPayload)
             }
@@ -758,15 +946,8 @@ object OperationRecovery {
             return PromptSelection(emptySet(), emptyList(), PromptMode.NONE, emptyList())
         }
         val byOp = promptableItems.groupBy { it.operationId }
-        val eligibleEntries = byOp.filter { (opId, items) ->
-            if (opId in promptedOperationIds) return@filter false
-            val isVaultOp = items.any {
-                it.kind == OperationJournal.KIND_ENCRYPT ||
-                    it.kind == OperationJournal.KIND_DECRYPT ||
-                    it.destPath.endsWith(".bin") ||
-                    it.sourcePath.endsWith(".bin")
-            }
-            if (isVaultUnlocked) true else !isVaultOp
+        val eligibleEntries = byOp.filter { (opId, _) ->
+            opId !in promptedOperationIds
         }
         if (eligibleEntries.isEmpty()) {
             return PromptSelection(emptySet(), emptyList(), PromptMode.NONE, emptyList())
@@ -782,7 +963,7 @@ object OperationRecovery {
     }
 
     internal fun discardOperations(operationIds: Set<String>) {
-        operationIds.forEach { OperationJournal.clear(it) }
+        operationIds.forEach { OperationJournal.clearAfterCompletionOrCancel(it) }
     }
 
     private fun formatOperationKindsLabel(context: Context, kinds: List<String>): String {
@@ -800,13 +981,27 @@ object OperationRecovery {
 
     private fun showPendingSkippedDialogIfReady(
         activity: BaseSimpleActivity,
-        pendingSkipDialogs: List<PendingSkippedDialog>
+        pendingSkipDialogs: List<PendingSkippedDialog>,
+        onAllDone: () -> Unit = {}
     ) {
-        val next = pendingSkipDialogs.firstOrNull { it.operationId !in promptedOperationIds } ?: return
+        val next = pendingSkipDialogs.firstOrNull { it.operationId !in promptedOperationIds }
+        if (next == null) {
+            onAllDone()
+            return
+        }
         activity.runOnUiThread {
-            if (activity.isFinishing || activity.isDestroyed) return@runOnUiThread
-            if (!CryptoManager.isVaultUnlocked) return@runOnUiThread
-            if (!promptedOperationIds.add(next.operationId)) return@runOnUiThread
+            if (activity.isFinishing || activity.isDestroyed) {
+                onAllDone()
+                return@runOnUiThread
+            }
+            if (!CryptoManager.isVaultUnlocked) {
+                onAllDone()
+                return@runOnUiThread
+            }
+            if (!promptedOperationIds.add(next.operationId)) {
+                showPendingSkippedDialogIfReady(activity, pendingSkipDialogs.drop(1), onAllDone)
+                return@runOnUiThread
+            }
 
             activity.resolveSkippedCryptoFiles(
                 isEncrypt = next.isEncrypt,
@@ -814,9 +1009,11 @@ object OperationRecovery {
                 identicalTargetMap = next.identicalTargetMap,
                 forceCleanupEmptyAlbum = next.forceCleanupEmptyAlbum,
                 existingSkipOpId = next.operationId
-            ) {
+            ) { _ ->
                 if (pendingSkipDialogs.size > 1) {
-                    showPendingSkippedDialogIfReady(activity, pendingSkipDialogs.drop(1))
+                    showPendingSkippedDialogIfReady(activity, pendingSkipDialogs.drop(1), onAllDone)
+                } else {
+                    onAllDone()
                 }
             }
         }
@@ -824,10 +1021,13 @@ object OperationRecovery {
 
     /**
      * Recovers interrupted operations cleanly by layer:
-     * 1. Already-encrypted Phase-2 secure wipes run silently in background upon vault unlock.
-     * 2. Approved/policy-delete skipped crypto files run silently in background; unanswered ASK
+     * 1. Orphan `.stage_*` / `.tmp_*` / plain recycle-bin temp files are cleaned silently;
+     *    COPY and MOVE operations silently settle any verified source deletes without prompting.
+     * 2. Upon vault unlock, already-encrypted Phase-2 secure wipes run silently in background.
+     * 3. Approved/policy-delete skipped crypto files run silently in background; unanswered ASK
      *    batches re-open [resolveSkippedCryptoFiles] on unlock.
-     * 3. Incomplete Phase-1 transfers show a one-time Yes / No prompt (plain on start, vault on unlock).
+     * 4. Incomplete Phase-1 ENCRYPT / DECRYPT transfers prompt Yes/No on app launch; tapping Yes
+     *    requests the vault password via [ensureVaultUnlocked] and freshly re-asks every conflict.
      */
     fun maybePromptResume(activity: BaseSimpleActivity) {
         if (ForegroundOperationRegistry.isActive) return
@@ -838,7 +1038,9 @@ object OperationRecovery {
             try {
                 reconcile(appContext)
                 val vaultUnlocked = CryptoManager.isVaultUnlocked
-                val pendingSkipDialogs = if (vaultUnlocked) {
+                val initialSkipDialogs = if (vaultUnlocked) {
+                    reconcileVaultRecycleBinAfterCrash(appContext)
+                    reconcileSilentCopyMoveAfterCrash(appContext, isVaultUnlocked = true)
                     resumeSilentPhase2EncryptWipes(appContext)
                     processPendingSkippedCryptoWork(appContext)
                 } else {
@@ -847,8 +1049,8 @@ object OperationRecovery {
 
                 val selection = selectPromptBatch(vaultUnlocked)
                 if (selection.mode == PromptMode.NONE || selection.items.isEmpty()) {
-                    if (vaultUnlocked && pendingSkipDialogs.isNotEmpty()) {
-                        showPendingSkippedDialogIfReady(activity, pendingSkipDialogs)
+                    if (vaultUnlocked && initialSkipDialogs.isNotEmpty()) {
+                        showPendingSkippedDialogIfReady(activity, initialSkipDialogs)
                     }
                     return@ensureBackgroundThread
                 }
@@ -873,31 +1075,134 @@ object OperationRecovery {
                     activity.getAlertDialogBuilder()
                         .setCancelable(false)
                         .setPositiveButton(org.fossify.commons.R.string.yes) { _, _ ->
-                            val progressDialog = CryptoProgressDialog(
-                                activity = activity,
-                                max = totalItems,
-                                titleId = R.string.resume_operations_title,
-                                enableNotification = false
-                            )
-                            ensureBackgroundThread {
-                                resume(
-                                    context = activity,
-                                    operationIds = targetOpIds,
-                                    onProgress = { current, total ->
-                                        activity.runOnUiThread {
-                                            progressDialog.updateProgress(current, total)
+                            activity.ensureVaultUnlocked(
+                                onCancelled = {
+                                    promptedOperationIds.removeAll(targetOpIds)
+                                }
+                            ) {
+                                ensureBackgroundThread {
+                                    reconcileVaultRecycleBinAfterCrash(appContext)
+                                    reconcileSilentCopyMoveAfterCrash(appContext, isVaultUnlocked = true)
+                                    resumeSilentPhase2EncryptWipes(appContext)
+                                    val unlockedSkipDialogs = processPendingSkippedCryptoWork(appContext)
+                                    val combinedSkipDialogs = (initialSkipDialogs + unlockedSkipDialogs)
+                                        .distinctBy { it.operationId }
+
+                                    val remainingItems = OperationJournal.resumableItems()
+                                        .filter { it.operationId in targetOpIds }
+                                    val transferItems = remainingItems.filter {
+                                        it.state != OperationJournal.STATE_VERIFIED && File(it.sourcePath).isFile
+                                    }
+
+                                    val finishSession: () -> Unit = {
+                                        if (combinedSkipDialogs.isNotEmpty()) {
+                                            showPendingSkippedDialogIfReady(activity, combinedSkipDialogs) {
+                                                VaultSessionManager.lockVaultIfOutsideSession(activity)
+                                            }
+                                        } else {
+                                            VaultSessionManager.lockVaultIfOutsideSession(activity)
                                         }
                                     }
-                                ) { success ->
+
                                     activity.runOnUiThread {
-                                        try {
-                                            progressDialog.dismiss()
-                                        } catch (_: Exception) {}
-                                        activity.toast(
-                                            if (success) R.string.resume_done else R.string.resume_failed
-                                        )
-                                        if (vaultUnlocked && pendingSkipDialogs.isNotEmpty()) {
-                                            showPendingSkippedDialogIfReady(activity, pendingSkipDialogs)
+                                        if (activity.isFinishing || activity.isDestroyed) {
+                                            VaultSessionManager.lockVaultIfOutsideSession(activity)
+                                            return@runOnUiThread
+                                        }
+                                        if (remainingItems.isEmpty()) {
+                                            finishSession()
+                                            return@runOnUiThread
+                                        }
+
+                                        activity.resolveCryptoTransferConflicts(
+                                            allowFastLargeCheck = true,
+                                            buildPairs = {
+                                                transferItems.mapNotNull { item ->
+                                                    val srcFile = File(item.sourcePath)
+                                                    val targetDir = File(item.destPath).parentFile ?: return@mapNotNull null
+                                                    val isTargetEncrypted = (item.kind == OperationJournal.KIND_ENCRYPT) ||
+                                                        item.destPath.endsWith(".bin")
+                                                    TransferPairSpec(
+                                                        sourceFile = srcFile,
+                                                        targetDir = targetDir,
+                                                        isTargetEncrypted = isTargetEncrypted,
+                                                        desiredPlainName = if (!isTargetEncrypted && CryptoManager.isEncryptedFile(srcFile.name)) {
+                                                            null
+                                                        } else {
+                                                            srcFile.name
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        ) { scan, _ ->
+                                            if (activity.isFinishing || activity.isDestroyed) {
+                                                VaultSessionManager.lockVaultIfOutsideSession(activity)
+                                                return@resolveCryptoTransferConflicts
+                                            }
+                                            activity.ensureNotificationPermissionThenRun {
+                                                if (activity.isFinishing || activity.isDestroyed) {
+                                                    VaultSessionManager.lockVaultIfOutsideSession(activity)
+                                                    return@ensureNotificationPermissionThenRun
+                                                }
+                                                val progressDialog = CryptoProgressDialog(
+                                                    activity = activity,
+                                                    max = remainingItems.size,
+                                                    titleId = R.string.resume_operations_title,
+                                                    notificationChannelId = OperationNotificationCategory.CHANNEL_CRYPTO,
+                                                    enableNotification = true
+                                                )
+                                                val skippedEncryptFiles = ArrayList<File>()
+                                                val skippedIdenticalMap = LinkedHashMap<String, File>()
+                                                var lastUiProgressMs = 0L
+                                                val conflictOverride = ResumeConflictOverride(
+                                                    resolutionsBySourcePath = scan.resolutions,
+                                                    identicalSourcePaths = scan.identicalPaths,
+                                                    identicalTargetsBySourcePath = scan.identicalTargets,
+                                                    nonIdenticalSourcePaths = scan.nonIdenticalPaths,
+                                                    ignoreRecordedConflictResolutions = true
+                                                )
+                                                ensureBackgroundThread {
+                                                    resume(
+                                                        context = activity,
+                                                        operationIds = targetOpIds,
+                                                        conflictOverride = conflictOverride,
+                                                        skippedEncryptCollector = skippedEncryptFiles,
+                                                        skippedIdenticalMap = skippedIdenticalMap,
+                                                        onProgress = { current, total ->
+                                                            val now = System.currentTimeMillis()
+                                                            if (current == 0 || current >= total || now - lastUiProgressMs >= 80L) {
+                                                                lastUiProgressMs = now
+                                                                activity.runOnUiThread {
+                                                                    progressDialog.updateProgress(current, total)
+                                                                }
+                                                            }
+                                                        }
+                                                    ) { success ->
+                                                        activity.runOnUiThread {
+                                                            try {
+                                                                progressDialog.dismiss()
+                                                            } catch (_: Exception) {}
+                                                            activity.toast(
+                                                                if (success) R.string.resume_done else R.string.resume_failed
+                                                            )
+                                                            if (skippedEncryptFiles.isNotEmpty() &&
+                                                                !activity.isFinishing && !activity.isDestroyed
+                                                            ) {
+                                                                activity.resolveSkippedCryptoFiles(
+                                                                    isEncrypt = true,
+                                                                    skippedFiles = skippedEncryptFiles,
+                                                                    identicalTargetMap = skippedIdenticalMap,
+                                                                    forceCleanupEmptyAlbum = false
+                                                                ) { _ ->
+                                                                    finishSession()
+                                                                }
+                                                            } else {
+                                                                finishSession()
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }

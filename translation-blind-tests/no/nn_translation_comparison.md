@@ -1305,3 +1305,14 @@ Added `cannot_include_restricted_or_vault_folder` in `values-nn/strings.xml` (No
 | Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
 |---|---|---|---|
 | `cannot_include_restricted_or_vault_folder` | Encrypted vault folders, app system directories, and restricted Android folders cannot be included. | Krypterte kvelvmapper, systemkatalogane til appen og avgrensa Android-mapper kan ikkje inkluderast. | Toast shown when attempting to include a Cipher/vault system directory or restricted Android folder (`Android/data`, `Android/obb`) |
+
+## File operation progress strings (this revision)
+
+Added the 4 new fork-only progress dialog titles after `deleting_files_progress` in `values-nn/strings.xml` (Norwegian Nynorsk). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Norwegian Nynorsk (`values-nn/strings.xml`) | Notes |
+|---|---|---|---|
+| `moving_to_recycle_bin_progress` | Moving to recycle bin… | Flyttar til papirkorga… | Progress dialog title when moving media/albums to the recycle bin |
+| `emptying_recycle_bin_progress` | Emptying recycle bin… | Tømmer papirkorga… | Progress dialog title while emptying normal or encrypted vault recycle bin |
+| `restoring_files_progress` | Restoring files… | Gjenopprettar filer… | Progress dialog title while restoring files from normal or vault recycle bin |
+| `updating_virtual_album_progress` | Updating virtual album… | Oppdaterer virtuelt album… | Progress dialog title when adding to or removing items from a virtual album |

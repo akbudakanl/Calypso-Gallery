@@ -150,3 +150,16 @@ Six fork-only keys (`5` new + `1` updated) document the album-decryption destina
 | `decrypt_info_message` | **Updated** | Restores to original `.origin` location or opens destination picker | Orijinal konuma geri çıkarma / hedef seçici açıklaması | Keeps `formatted="false"`; separates album `.origin` restore from individual file decryption |
 
 Each `<lang>_translation_comparison.md` ends with an `## Album decryption destination strings (this revision)` table pairing the English source and localized counterpart.
+
+### File operation progress strings (this revision)
+
+Four fork-only progress dialog titles were added across all 11 audited locales (`values/`, `values-tr/`, and the 9 blind-test locales):
+
+| Key (`name`) | English (`values/strings.xml`) | Turkish (`values-tr/strings.xml`) | Purpose |
+|---|---|---|---|
+| `moving_to_recycle_bin_progress` | `Moving to recycle bin…` | `Geri dönüşüm kutusuna taşınıyor…` | Progress dialog title when moving media or albums to the recycle bin |
+| `emptying_recycle_bin_progress` | `Emptying recycle bin…` | `Geri dönüşüm kutusu boşaltılıyor…` | Progress dialog title while emptying the normal or encrypted vault recycle bin |
+| `restoring_files_progress` | `Restoring files…` | `Dosyalar geri yükleniyor…` | Progress dialog title while restoring files from the normal or vault recycle bin |
+| `updating_virtual_album_progress` | `Updating virtual album…` | `Sanal albüm güncelleniyor…` | Progress dialog title when adding to or removing items from a virtual album |
+
+Each `<lang>_translation_comparison.md` ends with a `## File operation progress strings (this revision)` table pairing the English source and localized counterpart.

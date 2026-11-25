@@ -1299,3 +1299,14 @@ Added `cannot_include_restricted_or_vault_folder` in `values-zh-rTW/strings.xml`
 | Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
 |---|---|---|---|
 | `cannot_include_restricted_or_vault_folder` | Encrypted vault folders, app system directories, and restricted Android folders cannot be included. | 無法包含加密保險庫資料夾、應用程式系統目錄以及受限制的 Android 資料夾。 | Toast shown when attempting to include a Cipher/vault system directory or restricted Android folder (`Android/data`, `Android/obb`) |
+
+## File operation progress strings (this revision)
+
+Added the 4 new fork-only progress dialog titles after `deleting_files_progress` in `values-zh-rTW/strings.xml` (Traditional Chinese - Taiwan). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Traditional Chinese (Taiwan) (`values-zh-rTW/strings.xml`) | Notes |
+|---|---|---|---|
+| `moving_to_recycle_bin_progress` | Moving to recycle bin… | 正在移至回收桶… | Progress dialog title when moving media/albums to the recycle bin |
+| `emptying_recycle_bin_progress` | Emptying recycle bin… | 正在清空回收桶… | Progress dialog title while emptying normal or encrypted vault recycle bin |
+| `restoring_files_progress` | Restoring files… | 正在還原檔案… | Progress dialog title while restoring files from normal or vault recycle bin |
+| `updating_virtual_album_progress` | Updating virtual album… | 正在更新虛擬相簿… | Progress dialog title when adding to or removing items from a virtual album |

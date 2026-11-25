@@ -170,6 +170,7 @@ fun CryptoManager.encryptFileToDirectory(
     }
 
     var activeIndex: TargetEncryptedIndex? = targetIndex
+    var pendingOverwriteBins: List<File> = emptyList()
     run {
         val index = activeIndex ?: TargetEncryptedIndex(targetDir).also { activeIndex = it }
 
@@ -210,7 +211,7 @@ fun CryptoManager.encryptFileToDirectory(
                         }
                         OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
                         OperationJournal.markSourceDeleted(operation)
-                    } else if (!wipeSource) {
+                    } else if (!wipeSource && deleteSourceOnIdentical) {
                         OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
                     } else {
                         OperationJournal.markSkipped(operation)
@@ -231,12 +232,9 @@ fun CryptoManager.encryptFileToDirectory(
                     return null
                 }
                 CONFLICT_OVERWRITE -> {
-                    val removed = index.removeExactEntries(originalName)
-                    removed.forEach { existingBin ->
-                        metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
-                        runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
-                        existingBin.delete()
-                    }
+                    // Defer deleting existing overwritten containers until the replacement commits
+                    // and passes read-back verification so crashes/errors cannot lose the old copy.
+                    pendingOverwriteBins = index.removeExactEntries(originalName)
                 }
                 else -> {
                     originalName = index.getAlternativeOriginalName(originalName)
@@ -347,6 +345,14 @@ fun CryptoManager.encryptFileToDirectory(
             MediaIdentity.computeFingerprint(encryptedFile),
             encryptedFile.absolutePath
         )
+
+        if (pendingOverwriteBins.isNotEmpty()) {
+            pendingOverwriteBins.forEach { existingBin ->
+                metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+                runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
+                runCatching { existingBin.delete() }
+            }
+        }
 
         encryptedFile.setLastModified(lastModified)
 
@@ -646,7 +652,6 @@ fun CryptoManager.decryptFileToDirectory(
                 return null
             }
             CONFLICT_OVERWRITE -> {
-                outFile.delete()
                 index.removeFile(outFile)
             }
             else -> {
@@ -662,6 +667,7 @@ fun CryptoManager.decryptFileToDirectory(
 
     val staging = AtomicStaging.fileFor(outFile, operation)
     val encSourceFp = MediaIdentity.computeFingerprint(encryptedFile)
+    var committed = false
 
     return try {
         val encPath = encryptedFile.absolutePath
@@ -696,6 +702,7 @@ fun CryptoManager.decryptFileToDirectory(
             } ?: throw IOException("Could not open decrypted content stream")
 
             AtomicStaging.commit(staging, outFile, alreadyFileSynced = true)
+            committed = true
         }
         if (outFile.length() != meta.originalSize) {
             throw IOException("Decrypted output size does not match the container header")
@@ -735,8 +742,10 @@ fun CryptoManager.decryptFileToDirectory(
         outFile
     } catch (e: Exception) {
         AtomicStaging.discard(staging, containsPlaintext = true, context = context)
-        // A post-commit failure can leave a plaintext output behind: wipe it, do not just unlink it.
-        runCatching { secureWipeAndDeleteFile(outFile, context, syncParentDir = false, purgeTraces = false) }
+        // A post-commit failure can leave a bad plaintext output behind: wipe only if we actually committed it.
+        if (committed) {
+            runCatching { secureWipeAndDeleteFile(outFile, context, syncParentDir = false, purgeTraces = false) }
+        }
         OperationJournal.markFailed(operation, e.message ?: "decrypt failed")
         null
     }

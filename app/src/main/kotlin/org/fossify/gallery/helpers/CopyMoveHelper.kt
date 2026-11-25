@@ -63,6 +63,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 private const val COPY_BUFFER_SIZE = 256 * 1024
 private const val BYTES_PER_KB = 1000L
@@ -844,11 +846,7 @@ private class CopyMoveRunner(
                 destIndex.recordFile(altFile)
                 destItem = FileDirItem(altFile.path, altFile.name, false)
             }
-            CONFLICT_OVERWRITE -> {
-                if (!config.useStreamCopy) {
-                    File(destItem.path).delete()
-                }
-            }
+            CONFLICT_OVERWRITE -> Unit
         }
         return TopLevelResolution.Proceed(destItem)
     }
@@ -857,7 +855,23 @@ private class CopyMoveRunner(
         if (!config.useStreamCopy && !source.isDirectory) {
             val srcFile = File(source.path)
             val dstFile = File(dest.path)
-            if (!dstFile.exists() && srcFile.renameTo(dstFile)) {
+            val isOverwrite = config.conflictResolutions[dstFile.absolutePath] == CONFLICT_OVERWRITE
+            val movedByRename = if (!dstFile.exists()) {
+                srcFile.renameTo(dstFile)
+            } else if (isOverwrite) {
+                runCatching {
+                    Files.move(
+                        srcFile.toPath(),
+                        dstFile.toPath(),
+                        StandardCopyOption.ATOMIC_MOVE,
+                        StandardCopyOption.REPLACE_EXISTING
+                    )
+                    true
+                }.getOrDefault(false)
+            } else {
+                false
+            }
+            if (movedByRename) {
                 if (!activity.baseConfig.keepLastModified) {
                     dstFile.setLastModified(System.currentTimeMillis())
                 }

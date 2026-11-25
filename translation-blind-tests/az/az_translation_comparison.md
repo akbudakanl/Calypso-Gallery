@@ -1288,3 +1288,14 @@ Added `cannot_include_restricted_or_vault_folder` in `values-az/strings.xml` (Az
 | Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
 |---|---|---|---|
 | `cannot_include_restricted_or_vault_folder` | Encrypted vault folders, app system directories, and restricted Android folders cannot be included. | Şifrəli seyf qovluqları, tətbiqin sistem qovluqları və məhdudlaşdırılmış Android qovluqları daxil edilə bilməz. | Toast shown when attempting to include a Cipher/vault system directory or restricted Android folder (`Android/data`, `Android/obb`) |
+
+## File operation progress strings (this revision)
+
+Added the 4 new fork-only progress dialog titles after `deleting_files_progress` in `values-az/strings.xml` (Azerbaijani). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Azerbaijani (`values-az/strings.xml`) | Notes |
+|---|---|---|---|
+| `moving_to_recycle_bin_progress` | Moving to recycle bin… | Zibil qutusuna köçürülür… | Progress dialog title when moving media/albums to the recycle bin |
+| `emptying_recycle_bin_progress` | Emptying recycle bin… | Zibil qutusu boşaldılır… | Progress dialog title while emptying normal or encrypted vault recycle bin |
+| `restoring_files_progress` | Restoring files… | Fayllar bərpa edilir… | Progress dialog title while restoring files from normal or vault recycle bin |
+| `updating_virtual_album_progress` | Updating virtual album… | Virtual albom yenilənir… | Progress dialog title when adding to or removing items from a virtual album |

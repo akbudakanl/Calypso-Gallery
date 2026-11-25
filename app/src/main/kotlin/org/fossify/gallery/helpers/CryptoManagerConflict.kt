@@ -505,6 +505,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     }
 
     var desiredName = forcedDesiredName?.takeIf { it.isNotEmpty() } ?: sourceMeta.originalName
+    var pendingOverwriteBins: List<File> = emptyList()
     val exactMatches = index.findExactEntries(desiredName)
     if (exactMatches.isNotEmpty()) {
         when (conflictResolution) {
@@ -513,16 +514,19 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                 return null
             }
             CONFLICT_OVERWRITE -> {
-                val removed = index.removeExactEntries(desiredName)
-                removed.forEach { existingBin ->
-                    metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
-                    runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
-                    existingBin.delete()
-                }
+                pendingOverwriteBins = index.removeExactEntries(desiredName)
             }
             else -> {
                 desiredName = index.getAlternativeOriginalName(desiredName)
             }
+        }
+    }
+
+    fun deletePendingOverwriteBins() {
+        pendingOverwriteBins.forEach { existingBin ->
+            metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+            runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
+            runCatching { existingBin.delete() }
         }
     }
 
@@ -548,6 +552,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     )
     val transferred = if (isMove && !needsRename && sourceBin.renameTo(destBin)) {
         // Same-filesystem rename is already atomic — no staging involved.
+        deletePendingOverwriteBins()
         OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin), destBin.absolutePath)
         OperationJournal.markSourceDeleted(operation)
         true
@@ -590,6 +595,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                 OperationJournal.markFailed(operation, "encrypted rename failed")
                 return null
             }
+            deletePendingOverwriteBins()
             OperationJournal.markVerified(operation, MediaIdentity.computeFingerprint(destBin), destBin.absolutePath)
             destBin.setLastModified(sourceBin.lastModified())
             if (isMove) {

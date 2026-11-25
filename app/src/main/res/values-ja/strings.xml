@@ -785,6 +785,10 @@
     <string name="checking_files_before_transfer">転送前にファイルを確認中…</string>
     <string name="checking_files_before_crypto">暗号化前にファイルを確認中…</string>
     <string name="deleting_files_progress">ファイルを削除中…</string>
+    <string name="moving_to_recycle_bin_progress">ごみ箱に移動中…</string>
+    <string name="emptying_recycle_bin_progress">ごみ箱を空にしています…</string>
+    <string name="restoring_files_progress">ファイルを復元中…</string>
+    <string name="updating_virtual_album_progress">仮想アルバムを更新中…</string>
     <string name="brute_force_level_fast">高速なロック解除</string>
     <string name="brute_force_level_balanced">バランスの取れたセキュリティ</string>
     <string name="brute_force_level_high">高いセキュリティ</string>

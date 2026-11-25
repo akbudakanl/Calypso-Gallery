@@ -38,7 +38,12 @@ object AtomicStaging {
         if (!alreadyFileSynced) {
             RandomAccessFile(staging, "rw").use { it.fd.sync() }
         }
-        Files.move(staging.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE)
+        Files.move(
+            staging.toPath(),
+            target.toPath(),
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING
+        )
         CryptoManager.syncDir(target.parentFile)
     }
 

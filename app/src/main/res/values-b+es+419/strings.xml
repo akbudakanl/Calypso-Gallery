@@ -791,6 +791,10 @@
     <string name="checking_files_before_transfer">Comprobando archivos antes de la transferencia…</string>
     <string name="checking_files_before_crypto">Comprobando archivos antes del cifrado…</string>
     <string name="deleting_files_progress">Eliminando archivos…</string>
+    <string name="moving_to_recycle_bin_progress">Moviendo a la papelera de reciclaje…</string>
+    <string name="emptying_recycle_bin_progress">Vaciando la papelera de reciclaje…</string>
+    <string name="restoring_files_progress">Restaurando archivos…</string>
+    <string name="updating_virtual_album_progress">Actualizando álbum virtual…</string>
     <string name="brute_force_level_fast">Desbloqueo rápido</string>
     <string name="brute_force_level_balanced">Seguridad equilibrada</string>
     <string name="brute_force_level_high">Seguridad alta</string>

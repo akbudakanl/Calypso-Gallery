@@ -9,6 +9,8 @@ import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.*
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerRecycleBin.
@@ -140,11 +142,51 @@ fun CryptoManager.saveVaultRecycleBinRestoreMap(context: Context, map: HashMap<S
         }
         return
     }
+    val tmpFile = File(binFolder, "$VAULT_RESTORE_INFO_FILE.tmp")
     try {
         val json = Gson().toJson(map)
         val encryptedContent = encryptStringForVault(context, json, "restore_info")
-        restoreFile.writeText(encryptedContent, Charsets.UTF_8)
-    } catch (_: Exception) {}
+        val bytes = encryptedContent.toByteArray(Charsets.UTF_8)
+        FileOutputStream(tmpFile).use { fos ->
+            fos.write(bytes)
+            fos.flush()
+            fos.fd.sync()
+        }
+        val movedAtomically = runCatching {
+            Files.move(
+                tmpFile.toPath(),
+                restoreFile.toPath(),
+                StandardCopyOption.ATOMIC_MOVE,
+                StandardCopyOption.REPLACE_EXISTING
+            )
+            true
+        }.getOrDefault(false)
+        if (!movedAtomically && !tmpFile.renameTo(restoreFile)) {
+            restoreFile.writeBytes(bytes)
+        }
+        syncDir(binFolder)
+    } catch (_: Exception) {
+    } finally {
+        if (tmpFile.exists()) {
+            runCatching { tmpFile.delete() }
+        }
+    }
+}
+
+
+fun CryptoManager.reconcileVaultRecycleBin(context: Context): Int {
+    if (!isVaultUnlocked) return 0
+    val binFolder = getVaultRecycleBin(context) ?: return 0
+    var cleaned = 0
+    val children = binFolder.listFiles() ?: return 0
+    for (child in children) {
+        if (child.isFile && (child.name.startsWith(".tmp_") || child.name == "$VAULT_RESTORE_INFO_FILE.tmp")) {
+            if (runCatching { child.delete() }.getOrDefault(false)) {
+                cleaned++
+            }
+        }
+    }
+    return cleaned
 }
 
 
@@ -166,6 +208,8 @@ fun CryptoManager.moveEncryptedFilesToVaultRecycleBinDetailed(
         val deletedPaths = ArrayList<String>(paths.size)
         val failedPaths = ArrayList<String>()
         var cancelled = false
+        var dirtyMapCount = 0
+        var lastMapFlushMs = System.currentTimeMillis()
         val total = paths.size
         onProgress?.invoke(0, total)
 
@@ -177,6 +221,13 @@ fun CryptoManager.moveEncryptedFilesToVaultRecycleBinDetailed(
             val moved = moveSingleEncryptedFileToBin(context, path, binFolder, restoreMap)
             if (moved) {
                 deletedPaths.add(path)
+                dirtyMapCount++
+                val now = System.currentTimeMillis()
+                if (dirtyMapCount >= 10 || now - lastMapFlushMs >= 500L) {
+                    saveVaultRecycleBinRestoreMap(context, restoreMap)
+                    dirtyMapCount = 0
+                    lastMapFlushMs = now
+                }
             } else {
                 failedPaths.add(path)
             }
@@ -249,6 +300,8 @@ fun CryptoManager.restoreVaultRecycleBinFiles(
         val restoreMap = getVaultRecycleBinRestoreMap(context)
         val vaultRoot = findVaultRoot(context) ?: return@withOperation 0
         var restoredCount = 0
+        var dirtyMapCount = 0
+        var lastMapFlushMs = System.currentTimeMillis()
         val restoredFolders = LinkedHashSet<String>()
         val total = paths.size
         onProgress?.invoke(0, total)
@@ -293,6 +346,13 @@ fun CryptoManager.restoreVaultRecycleBinFiles(
                 }
                 restoredFolders.add(targetFolder.absolutePath)
                 restoredCount++
+                dirtyMapCount++
+                val now = System.currentTimeMillis()
+                if (dirtyMapCount >= 10 || now - lastMapFlushMs >= 500L) {
+                    saveVaultRecycleBinRestoreMap(context, restoreMap)
+                    dirtyMapCount = 0
+                    lastMapFlushMs = now
+                }
             }
             onProgress?.invoke(index + 1, total)
         }
@@ -324,6 +384,8 @@ fun CryptoManager.permanentlyDeleteVaultRecycleBinFilesDetailed(
         val deletedPaths = ArrayList<String>(paths.size)
         val failedPaths = ArrayList<String>()
         var cancelled = false
+        var dirtyMapCount = 0
+        var lastMapFlushMs = System.currentTimeMillis()
         val total = paths.size
         onProgress?.invoke(0, total)
 
@@ -345,6 +407,13 @@ fun CryptoManager.permanentlyDeleteVaultRecycleBinFilesDetailed(
                 context.deleteVirtualAlbumItemFromAllAlbums(path)
                 restoreMap.remove(binFile.name)
                 deletedPaths.add(path)
+                dirtyMapCount++
+                val now = System.currentTimeMillis()
+                if (dirtyMapCount >= 10 || now - lastMapFlushMs >= 500L) {
+                    saveVaultRecycleBinRestoreMap(context, restoreMap)
+                    dirtyMapCount = 0
+                    lastMapFlushMs = now
+                }
             } else {
                 failedPaths.add(path)
             }

@@ -216,6 +216,7 @@ private fun CryptoManager.encryptFolderRegistered(
             conflictResolution = fileResolution,
             targetIndex = subfolderIndex,
             skipDuplicateCheck = options.skipDuplicateCheck || (file.absolutePath in options.precheckedNonIdenticalPaths),
+            deleteSourceOnIdentical = options.deleteIdenticalSource,
             operation = itemOperation
         )
         if (enc != null && enc.exists()) {

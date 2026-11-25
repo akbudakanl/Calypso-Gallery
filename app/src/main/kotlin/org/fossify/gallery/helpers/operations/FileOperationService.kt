@@ -12,9 +12,11 @@ import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.SystemClock
+import android.util.Log
 import org.fossify.gallery.App
 import org.fossify.gallery.R
 import org.fossify.gallery.helpers.OperationNotificationCategory
+import org.fossify.gallery.helpers.OperationProgressFormatter
 
 /**
  * ADR 0002 §7 / ADR 0003 §7: keeps the process alive for the duration of a registered file
@@ -28,7 +30,9 @@ import org.fossify.gallery.helpers.OperationNotificationCategory
 class FileOperationService : Service() {
 
     companion object {
-        private const val CHANNEL_ID = "cipher_file_operations"
+        private const val TAG = "FileOperationService"
+        internal const val CHANNEL_ID = "cipher_file_operations_v2"
+        private const val LEGACY_CHANNEL_ID = "cipher_file_operations"
         private const val NOTIFICATION_ID = 4103
         private const val EXTRA_LABEL = "label"
         private const val ACTION_CANCEL = "org.fossify.gallery.action.CANCEL_FILE_OPERATION"
@@ -61,6 +65,7 @@ class FileOperationService : Service() {
         private var lastNotifyElapsedMs = 0L
 
         fun start(context: Context, label: String, showProgress: Boolean = true) {
+            val appContext = context.applicationContext
             shouldRun = true
             currentLabel = label
             progressEnabled = showProgress
@@ -69,34 +74,51 @@ class FileOperationService : Service() {
             progressText = null
             lastNotifyElapsedMs = 0L
             val instance = activeInstance
-            if (instance != null) {
+            if (instance != null && instance.foregroundStarted) {
                 instance.refreshNotification()
                 return
             }
+            // Post immediately on the shared channel/id so the user sees feedback at t=0ms
+            // and still gets notifications even if background FGS launch restrictions apply.
+            postNotificationDirect(appContext, label)
             runCatching {
-                val intent = Intent(context, FileOperationService::class.java).putExtra(EXTRA_LABEL, label)
+                val intent = Intent(appContext, FileOperationService::class.java).putExtra(EXTRA_LABEL, label)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
+                    appContext.startForegroundService(intent)
                 } else {
-                    context.startService(intent)
+                    appContext.startService(intent)
                 }
+            }.onFailure { err ->
+                runCatching { Log.w(TAG, "Unable to start FileOperationService", err) }
             }
         }
 
         fun updateStatus(context: Context, label: String) {
             currentLabel = label
-            activeInstance?.refreshNotification()
+            if (!shouldRun) return
+            val instance = activeInstance
+            if (instance != null && instance.foregroundStarted) {
+                instance.refreshNotification()
+            } else {
+                postNotificationDirect(context.applicationContext, label)
+            }
         }
 
         /** Re-renders the notification when the app moves between foreground and background. */
         fun refreshVisibility(context: Context) {
             lastNotifyElapsedMs = 0L
-            activeInstance?.refreshNotification()
+            if (!shouldRun) return
+            val instance = activeInstance
+            if (instance != null && instance.foregroundStarted) {
+                instance.refreshNotification()
+            } else {
+                postNotificationDirect(context.applicationContext, currentLabel)
+            }
         }
 
         /** Publishes progress for the currently registered operation. */
-        fun updateProgress(current: Int, max: Int, text: String?) {
-            if (!progressEnabled) return
+        fun updateProgress(context: Context, current: Int, max: Int, text: String?) {
+            if (!shouldRun || !progressEnabled) return
             progressCurrent = current.coerceAtLeast(0)
             progressMax = max.coerceAtLeast(0)
             // Defense in depth: only the anonymous "n / total (x%)" summary may reach a
@@ -105,21 +127,135 @@ class FileOperationService : Service() {
                 progressText = text.takeIf { COUNT_SUMMARY_REGEX.matches(it) }
             }
             if (App.isAppInForeground) return
-            val now = SystemClock.elapsedRealtime()
+            val now = runCatching { SystemClock.elapsedRealtime() }.getOrElse { System.currentTimeMillis() }
             val isBoundary = current == 0 || (max > 0 && current >= max)
             if (isBoundary || now - lastNotifyElapsedMs >= NOTIFICATION_UPDATE_INTERVAL_MS) {
-                activeInstance?.refreshNotification()
+                val instance = activeInstance
+                if (instance != null && instance.foregroundStarted) {
+                    instance.refreshNotification()
+                } else {
+                    postNotificationDirect(context.applicationContext, currentLabel)
+                }
             }
         }
 
         fun stop(context: Context) {
+            val appContext = context.applicationContext
             shouldRun = false
             val instance = activeInstance
             if (instance != null) {
                 runCatching { instance.stopSelfSafe() }
             }
-            // If activeInstance is null, startForegroundService() may still be in flight;
-            // onStartCommand() will call startForeground() and immediately stopSelfSafe().
+            // Cancel any directly posted fallback notification and ensure no completion
+            // notification remains on screen after the operation finishes.
+            runCatching {
+                appContext.getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
+            }
+        }
+
+        internal fun ensureChannel(context: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                runCatching {
+                    val manager = context.getSystemService(NotificationManager::class.java) ?: return
+                    runCatching { manager.deleteNotificationChannel(LEGACY_CHANNEL_ID) }
+                    val channel = NotificationChannel(
+                        CHANNEL_ID,
+                        context.getString(R.string.file_operations_notifications),
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    ).apply {
+                        setSound(null, null)
+                        enableLights(false)
+                        enableVibration(false)
+                        setShowBadge(false)
+                        lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                    }
+                    manager.createNotificationChannel(channel)
+                }
+            }
+        }
+
+        private fun titleFor(context: Context, label: String): String {
+            val category = OperationNotificationCategory.fromOwner(label)
+            return context.getString(
+                when (category) {
+                    OperationNotificationCategory.COPY_MOVE -> R.string.file_operation_copy_move
+                    OperationNotificationCategory.CRYPTO -> R.string.file_operation_crypto
+                    OperationNotificationCategory.DELETE -> R.string.file_operation_delete
+                    OperationNotificationCategory.VIRTUAL_ALBUM -> R.string.file_operation_virtual_album
+                    else -> R.string.file_operation_generic
+                }
+            )
+        }
+
+        private fun smallIconFor(label: String): Int {
+            return when (OperationNotificationCategory.fromOwner(label)) {
+                OperationNotificationCategory.DELETE -> R.drawable.ic_delete_calypso_vector
+                OperationNotificationCategory.CRYPTO -> R.drawable.ic_encrypt_calypso_vector
+                OperationNotificationCategory.VIRTUAL_ALBUM -> R.drawable.ic_album_virtual_vector
+                else -> R.drawable.ic_files_vector
+            }
+        }
+
+        private fun buildNotificationFor(context: Context, label: String): Notification {
+            val cancelIntent = Intent(context, FileOperationService::class.java).setAction(ACTION_CANCEL)
+            val pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            val cancelPending = PendingIntent.getService(context, 0, cancelIntent, pendingFlags)
+            val cancelAction = Notification.Action.Builder(
+                null,
+                context.getString(android.R.string.cancel),
+                cancelPending
+            ).build()
+
+            val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Notification.Builder(context, CHANNEL_ID)
+            } else {
+                @Suppress("DEPRECATION")
+                Notification.Builder(context)
+            }
+            builder.setSmallIcon(smallIconFor(label))
+                .setContentTitle(titleFor(context, label))
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .addAction(cancelAction)
+            runCatching {
+                context.packageManager?.getLaunchIntentForPackage(context.packageName)?.let { launchIntent ->
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    PendingIntent.getActivity(context, 1, launchIntent, pendingFlags)
+                }
+            }.getOrNull()?.let { contentPending ->
+                builder.setContentIntent(contentPending)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
+            }
+
+            // Two-tier notification structure:
+            // - In foreground: minimal ongoing notification (on-screen dialog already shows details).
+            // - In background: detailed progress bar + anonymous "current / total (x%)" summary.
+            // File names, paths and vault contents are never posted to any notification.
+            if (!App.isAppInForeground && progressEnabled) {
+                val max = progressMax
+                val bodyText = progressText ?: if (max > 0) {
+                    OperationProgressFormatter.formatCountSummary(progressCurrent, max)
+                } else {
+                    context.getString(R.string.file_operation_generic)
+                }
+                builder.setProgress(max, progressCurrent.coerceAtMost(maxOf(max, 1)), max <= 0)
+                builder.setContentText(bodyText)
+            } else {
+                builder.setContentText(context.getString(R.string.file_operation_generic))
+            }
+            return builder.build()
+        }
+
+        private fun postNotificationDirect(context: Context, label: String) {
+            runCatching {
+                ensureChannel(context)
+                lastNotifyElapsedMs = runCatching { SystemClock.elapsedRealtime() }
+                    .getOrElse { System.currentTimeMillis() }
+                context.getSystemService(NotificationManager::class.java)
+                    ?.notify(NOTIFICATION_ID, buildNotificationFor(context, label))
+            }
         }
     }
 
@@ -140,8 +276,8 @@ class FileOperationService : Service() {
             ?: currentLabel.takeIf { it.isNotEmpty() }
             ?: getString(R.string.resume_operations_title)
         currentLabel = label
-        ensureChannel()
-        val notification = buildNotification(label)
+        ensureChannel(this)
+        val notification = buildNotificationFor(this, label)
         val started = try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -154,6 +290,9 @@ class FileOperationService : Service() {
         }
         foregroundStarted = started
         if (!started) {
+            if (activeInstance === this) {
+                activeInstance = null
+            }
             releaseWakeLock()
             runCatching { stopSelf() }
             return START_NOT_STICKY
@@ -173,78 +312,20 @@ class FileOperationService : Service() {
         stopSelfSafe()
     }
 
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                getString(R.string.file_operations_notifications),
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                enableLights(false)
-                enableVibration(false)
-            }
-            getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
-        }
-    }
-
-    private fun titleFor(label: String): String {
-        val category = OperationNotificationCategory.fromOwner(label)
-        return getString(
-            when (category) {
-                OperationNotificationCategory.COPY_MOVE -> R.string.file_operation_copy_move
-                OperationNotificationCategory.CRYPTO -> R.string.file_operation_crypto
-                OperationNotificationCategory.DELETE -> R.string.file_operation_delete
-                OperationNotificationCategory.VIRTUAL_ALBUM -> R.string.file_operation_virtual_album
-                else -> R.string.file_operation_generic
-            }
-        )
-    }
-
-    private fun buildNotification(label: String): Notification {
-        val cancelIntent = Intent(this, FileOperationService::class.java).setAction(ACTION_CANCEL)
-        val cancelFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val cancelPending = PendingIntent.getService(this, 0, cancelIntent, cancelFlags)
-        val cancelAction = Notification.Action.Builder(
-            null,
-            getString(android.R.string.cancel),
-            cancelPending
-        ).build()
-
-        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(this, CHANNEL_ID)
-        } else {
-            @Suppress("DEPRECATION")
-            Notification.Builder(this)
-        }
-        builder.setSmallIcon(android.R.drawable.stat_sys_download)
-            .setContentTitle(titleFor(label))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .addAction(cancelAction)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
-        }
-
-        // Android requires a foreground-service notification for the whole operation, so it cannot
-        // be removed while the app is in the foreground. What we *can* do is keep it minimal there
-        // (the on-screen progress dialog is already visible) and only show detailed progress after
-        // the user actually backgrounds the app. No file names or paths are ever posted.
-        if (progressEnabled && !App.isAppInForeground) {
-            val max = progressMax
-            builder.setProgress(max, progressCurrent.coerceAtMost(maxOf(max, 1)), max <= 0)
-            progressText?.let { builder.setContentText(it) }
-        }
-        return builder.build()
-    }
-
     private fun refreshNotification() {
-        if (!foregroundStarted) return
-        lastNotifyElapsedMs = SystemClock.elapsedRealtime()
+        if (!foregroundStarted) {
+            if (shouldRun) {
+                postNotificationDirect(applicationContext, currentLabel)
+            }
+            return
+        }
+        lastNotifyElapsedMs = runCatching { SystemClock.elapsedRealtime() }
+            .getOrElse { System.currentTimeMillis() }
         if (shouldRun) {
             acquireOrRefreshWakeLock()
         }
         runCatching {
-            getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotification(currentLabel))
+            getSystemService(NotificationManager::class.java)?.notify(NOTIFICATION_ID, buildNotificationFor(this, currentLabel))
         }
     }
 
@@ -268,6 +349,9 @@ class FileOperationService : Service() {
     }
 
     private fun stopSelfSafe() {
+        if (activeInstance === this) {
+            activeInstance = null
+        }
         if (foregroundStarted) {
             foregroundStarted = false
             runCatching {
@@ -278,6 +362,9 @@ class FileOperationService : Service() {
                     stopForeground(true)
                 }
             }
+        }
+        runCatching {
+            getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
         }
         releaseWakeLock()
         runCatching { stopSelf() }

@@ -1250,3 +1250,14 @@ Added `cannot_include_restricted_or_vault_folder` in `values-de/strings.xml` (Ge
 | Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
 |---|---|---|---|
 | `cannot_include_restricted_or_vault_folder` | Encrypted vault folders, app system directories, and restricted Android folders cannot be included. | Verschlüsselte Tresorordner, App-Systemverzeichnisse und eingeschränkte Android-Ordner können nicht einbezogen werden. | Toast shown when attempting to include a Cipher/vault system directory or restricted Android folder (`Android/data`, `Android/obb`) |
+
+## File operation progress strings (this revision)
+
+Added the 4 new fork-only progress dialog titles after `deleting_files_progress` in `values-de/strings.xml` (German). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | German (`values-de/strings.xml`) | Notes |
+|---|---|---|---|
+| `moving_to_recycle_bin_progress` | Moving to recycle bin… | Wird in den Papierkorb verschoben… | Progress dialog title when moving media/albums to the recycle bin |
+| `emptying_recycle_bin_progress` | Emptying recycle bin… | Papierkorb wird geleert… | Progress dialog title while emptying normal or encrypted vault recycle bin |
+| `restoring_files_progress` | Restoring files… | Dateien werden wiederhergestellt… | Progress dialog title while restoring files from normal or vault recycle bin |
+| `updating_virtual_album_progress` | Updating virtual album… | Virtuelles Album wird aktualisiert… | Progress dialog title when adding to or removing items from a virtual album |

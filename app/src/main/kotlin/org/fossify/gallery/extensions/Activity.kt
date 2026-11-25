@@ -1582,7 +1582,7 @@ fun BaseSimpleActivity.toggleFileVisibility(oldPath: String, hide: Boolean, call
                                     if (OperationFaults.isSimulatedAbort(e)) throw e
                                     null
                                 } finally {
-                                    itemOp.operationId?.let { OperationJournal.clear(it) }
+                                    itemOp.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
                                 }
                             }
                             val resultPath = decryptedFile?.absolutePath ?: oldPath
@@ -1798,7 +1798,7 @@ private fun BaseSimpleActivity.encryptFileToVault(oldPath: String, callback: ((n
                                 if (OperationFaults.isSimulatedAbort(e)) throw e
                                 null
                             } finally {
-                                itemOp.operationId?.let { OperationJournal.clear(it) }
+                                itemOp.operationId?.let { OperationJournal.clearAfterCompletionOrCancel(it) }
                             }
                         }
                         val resultPath = encryptedFile?.absolutePath ?: oldPath

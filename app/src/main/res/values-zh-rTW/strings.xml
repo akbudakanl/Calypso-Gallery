@@ -782,6 +782,10 @@
     <string name="checking_files_before_transfer">傳輸前正在檢查檔案…</string>
     <string name="checking_files_before_crypto">加密前正在檢查檔案…</string>
     <string name="deleting_files_progress">正在刪除檔案…</string>
+    <string name="moving_to_recycle_bin_progress">正在移至回收桶…</string>
+    <string name="emptying_recycle_bin_progress">正在清空回收桶…</string>
+    <string name="restoring_files_progress">正在還原檔案…</string>
+    <string name="updating_virtual_album_progress">正在更新虛擬相簿…</string>
     <string name="brute_force_level_fast">快速解鎖</string>
     <string name="brute_force_level_balanced">平衡安全性</string>
     <string name="brute_force_level_high">高安全性</string>
