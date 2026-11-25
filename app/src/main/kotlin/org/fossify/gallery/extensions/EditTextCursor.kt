@@ -18,23 +18,34 @@ import org.fossify.gallery.helpers.AppearanceManager
 /** Themes the caret with the colour actually rendered as text, whatever set it. */
 fun TextView.applyThemedCursor() = applyThemedCursor(currentTextColor)
 
-/** Replaces the library's green text cursor with one drawn in the active palette color. */
+/**
+ * Replaces the library's green text cursor with one drawn in the active palette color.
+ *
+ * Android's Editor caches the cursor Drawable on first use (`loadCursorDrawable()` only assigns
+ * when its field is null) and ignores later `setTextCursorDrawable()` calls. Recolouring the
+ * Drawable TextView handed out is therefore the only reliable way to change an already-focused
+ * field; replacing it only works before the first draw.
+ */
 fun TextView.applyThemedCursor(color: Int) {
     val density = resources.displayMetrics.density
-    val cursor = GradientDrawable().apply {
+    fun newCursor() = GradientDrawable().apply {
         shape = GradientDrawable.RECTANGLE
         setColor(color)
         setSize((2f * density).toInt().coerceAtLeast(1), 0)
     }
 
-    // TextView.setTextCursorDrawable(Drawable) is public from API 29 and also clears the XML
-    // resource id, so the platform cannot recreate the green caret on focus. Reflection into
-    // TextView/Editor internals is blocked by hidden-API rules for apps targeting modern Android
-    // and silently left the library default in place, which is why release builds stayed green.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        textCursorDrawable = cursor
+        val current = textCursorDrawable
+        if (current == null) {
+            // No cached cursor yet: assign ours before Editor loads its default.
+            textCursorDrawable = newCursor()
+        } else {
+            // Editor already holds this instance; mutate it so the cached draw follows the theme.
+            current.mutate().setTint(color)
+        }
     } else {
         // API 26-28 have no public setter; retain the legacy fallback.
+        val cursor = newCursor()
         runCatching {
             val resField = TextView::class.java.getDeclaredField("mCursorDrawableRes")
             resField.isAccessible = true
@@ -58,6 +69,7 @@ fun TextView.applyThemedCursor(color: Int) {
     }
 
     highlightColor = ColorUtils.setAlphaComponent(color, 60)
+    invalidate()
 }
 
 /**

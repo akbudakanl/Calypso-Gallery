@@ -60,11 +60,13 @@ class SearchBarCursorTest {
     }
 
     @Test
-    fun cursorThemingUsesPublicApiFromApi29() {
+    fun cursorThemingRecoloursCachedDrawableFromApi29() {
         val helper = locateAppFile("src/main/kotlin/org/fossify/gallery/extensions/EditTextCursor.kt").readText()
         assertTrue(
-            "setTextCursorDrawable must be used from API 29; hidden-field reflection is blocked on modern Android",
-            helper.contains("Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q") && helper.contains("textCursorDrawable = cursor"),
+            "Editor caches the cursor drawable; recolour the cached instance instead of replacing it",
+            helper.contains("Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q") &&
+                helper.contains("textCursorDrawable = newCursor()") &&
+                helper.contains("current.mutate().setTint(color)"),
         )
     }
 
