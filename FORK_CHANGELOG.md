@@ -4,6 +4,25 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+
+## [1.0.2] - 2026-11-25
+### Added
+
+- **Configurable app lock timing** — added a "Lock timing" option in security settings to choose between locking only on app start or on every entry (after backgrounding or screen-off).
+
+### Changed
+
+- **Animated GIF and WebP thumbnails** — enabled animated GIF and WebP thumbnails with rounded corners in album grids, including inside the encrypted vault.
+- **Themed file operation progress bars** — file operation and conflict dialogs now tint progress bars with the active theme's primary color.
+
+### Fixed
+
+- **Unified file operations, transactional delete, and crash recovery** — unified progress reporting across delete, recycle bin, restore, and virtual album operations; added transactional delete with journal-based crash recovery and two-tier background/completion notifications.
+- **Isolated vault recycle bin emptying** — emptying the recycle bin from Settings now keeps the encrypted vault recycle bin and the normal recycle bin strictly isolated.
+- **Viewer keep-screen-on management** — centralized keep-screen-on window flag handling across photo and video viewers.
+- **Decrypt destination picker hidden folders** — matched hidden folder visibility in the vault decrypt destination picker to copy/move behavior.
+- **Vault album shortcuts** — disabled the "Create shortcut" action for encrypted vault albums.
+
 ## [1.0.1] - 2026-11-25
 
 ### Added
@@ -84,6 +103,7 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.2...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 [1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
+[1.0.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...1.0.2

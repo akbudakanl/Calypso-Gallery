@@ -1,0 +1,10 @@
+Added:
+
+• **Configurable app lock timing** — added a "Lock timing" option in security settings to choose between locking only on…
+
+Changed:
+
+• **Animated GIF and WebP thumbnails** — enabled animated GIF and WebP thumbnails with rounded corners in album grids,…
+
+Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.2
+Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.0.2.tar.gz
