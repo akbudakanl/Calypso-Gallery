@@ -9,6 +9,7 @@ import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogResizeMultipleImagesBinding
 import org.fossify.gallery.extensions.ensureWriteAccess
 import org.fossify.gallery.extensions.rescanPathsAndUpdateLastModified
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.resizeImage
 import java.io.File
 import kotlin.math.roundToInt
@@ -29,6 +30,7 @@ class ResizeMultipleImagesDialog(
 
     init {
         resizeFactorEditText.setText(DEFAULT_RESIZE_FACTOR)
+        binding.root.applyPaletteCursors(activity)
         progressView.apply {
             max = imagePaths.size
             setIndicatorColor(activity.getProperPrimaryColor())

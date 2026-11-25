@@ -10,6 +10,7 @@ import org.fossify.commons.extensions.value
 import org.fossify.commons.models.RadioItem
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSlideshowBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.SLIDESHOW_ANIMATION_FADE
 import org.fossify.gallery.helpers.SLIDESHOW_ANIMATION_NONE
@@ -70,6 +71,7 @@ class SlideshowDialog(val activity: BaseSimpleActivity, val callback: () -> Unit
             }
         }
         setupValues()
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)

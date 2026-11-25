@@ -47,6 +47,7 @@ private fun Activity.buildAlbumNameField(initialText: String): Pair<FrameLayout,
         setPadding(padding, padding, padding, 0)
         addView(editText)
     }
+    container.applyPaletteCursors(this)
     return container to editText
 }
 

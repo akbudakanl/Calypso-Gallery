@@ -1,12 +1,19 @@
 package org.fossify.gallery.extensions
 
+import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.ColorUtils
+import com.google.android.material.textfield.TextInputLayout
 import org.fossify.gallery.R
+import org.fossify.gallery.helpers.AppearanceManager
 
 /** Replaces the library's green text cursor with one drawn in the active palette color. */
 fun TextView.applyThemedCursor(color: Int) {
@@ -68,3 +75,30 @@ fun TextView.themeTextColor(): Int = runCatching {
     attrs.recycle()
     resolved
 }.getOrDefault(Color.WHITE)
+
+/**
+ * Applies the palette-aware caret to every EditText in a hierarchy, including Material
+ * TextInputEditText fields whose TextInputLayout repaints the caret with colorControlActivated
+ * on focus. Dialogs inflate their own window, so each one has to call this on its root view.
+ */
+fun View.applyPaletteCursors(context: Context) {
+    val color = AppearanceManager.resolve(context, context.config).text
+    fun walk(view: View) {
+        if (view is EditText) {
+            view.applyThemedCursor(color)
+            var ancestor = view.parent
+            while (ancestor is View) {
+                if (ancestor is TextInputLayout) {
+                    ancestor.setCursorColor(ColorStateList.valueOf(color))
+                }
+                ancestor = ancestor.parent
+            }
+        }
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                walk(view.getChildAt(index))
+            }
+        }
+    }
+    walk(this)
+}

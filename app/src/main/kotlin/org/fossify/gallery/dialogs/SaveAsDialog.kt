@@ -17,6 +17,7 @@ import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.value
 import org.fossify.gallery.databinding.DialogSaveAsBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.ensureWritablePath
 
 class SaveAsDialog(
@@ -69,6 +70,7 @@ class SaveAsDialog(
                 }
             }
         }
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)

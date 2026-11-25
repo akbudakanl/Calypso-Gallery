@@ -1,5 +1,6 @@
 package org.fossify.gallery.dialogs
 
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.secureVaultWindow
 
 import android.text.InputType
@@ -46,6 +47,7 @@ class RenameEncryptedItemDialog(
             renameEncryptedFilenameValue.setText(initialBase)
             renameEncryptedExtensionValue.setText(initialExt)
         }
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
@@ -109,6 +111,7 @@ class RenameEncryptedItemsDialog(
             setPadding(padding, padding, padding, 0)
             addView(editText)
         }
+        container.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
@@ -179,6 +182,7 @@ class RenameEncryptedFolderDialog(
             setPadding(padding, padding, padding, 0)
             addView(editText)
         }
+        container.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)

@@ -5,4 +5,11 @@
     <color name="circle_black_background">#66000000</color>
     <color name="abc_decor_view_status_guard" tools:override="true">@android:color/transparent</color>
     <color name="abc_decor_view_status_guard_light" tools:override="true">@android:color/transparent</color>
+
+    <!-- Commons ships color_primary = md_green_900 (#106D1F). Its accent-derived carets,
+         selection handles and controls leak that green into any view we cannot theme at
+         runtime (library-owned dialogs, platform widgets). Neutral fallback for those spots;
+         fields we own are themed to the active AppearancePalette via applyThemedCursor(). -->
+    <color name="color_primary" tools:override="true">#FF71717A</color>
+    <color name="color_primary_dark" tools:override="true">#FF3F3F46</color>
 </resources>

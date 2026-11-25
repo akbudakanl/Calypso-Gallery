@@ -21,6 +21,7 @@ import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogSelectLanguageBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.AppearanceManager
 import java.util.Locale
@@ -282,6 +283,7 @@ class ChangeLanguageDialog(
                 applyLanguage(chosen.code)
             }
         }
+        binding.root.applyPaletteCursors(activity)
 
         val builder = activity.getAlertDialogBuilder()
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)

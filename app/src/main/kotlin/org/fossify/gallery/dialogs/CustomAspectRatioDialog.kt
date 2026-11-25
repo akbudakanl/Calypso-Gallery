@@ -8,6 +8,7 @@ import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.commons.extensions.showKeyboard
 import org.fossify.commons.extensions.value
 import org.fossify.gallery.databinding.DialogCustomAspectRatioBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 
 class CustomAspectRatioDialog(
     val activity: BaseSimpleActivity, val defaultCustomAspectRatio: Pair<Float, Float>?, val callback: (aspectRatio: Pair<Float, Float>) -> Unit
@@ -17,6 +18,7 @@ class CustomAspectRatioDialog(
             aspectRatioWidth.setText(defaultCustomAspectRatio?.first?.toInt()?.toString() ?: "")
             aspectRatioHeight.setText(defaultCustomAspectRatio?.second?.toInt()?.toString() ?: "")
         }
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)

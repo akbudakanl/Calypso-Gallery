@@ -7,10 +7,12 @@ import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.extensions.*
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogResizeImageBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 
 class ResizeDialog(val activity: BaseSimpleActivity, val size: Point, val callback: (newSize: Point) -> Unit) {
     init {
         val binding = DialogResizeImageBinding.inflate(activity.layoutInflater)
+        binding.root.applyPaletteCursors(activity)
         val widthView = binding.resizeImageWidth
         val heightView = binding.resizeImageHeight
 

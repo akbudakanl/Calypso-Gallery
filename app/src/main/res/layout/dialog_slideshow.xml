@@ -40,7 +40,7 @@
                 android:imeOptions="actionDone"
                 android:inputType="number"
                 android:maxLength="5"
-                android:textCursorDrawable="@null"
+                android:textCursorDrawable="@drawable/vault_text_cursor"
                 android:textSize="@dimen/bigger_text_size" />
 
         </org.fossify.commons.views.MyTextInputLayout>

@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/activity_margin"
                 android:singleLine="true"
-                android:textCursorDrawable="@null"
+                android:textCursorDrawable="@drawable/vault_text_cursor"
                 android:textSize="@dimen/normal_text_size" />
 
         </org.fossify.commons.views.MyTextInputLayout>

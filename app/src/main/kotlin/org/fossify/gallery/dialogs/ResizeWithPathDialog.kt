@@ -9,6 +9,7 @@ import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogResizeImageWithPathBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.config
 
 class ResizeWithPathDialog(val activity: BaseSimpleActivity, val size: Point, val path: String, val callback: (newSize: Point, newPath: String) -> Unit) {
@@ -35,6 +36,7 @@ class ResizeWithPathDialog(val activity: BaseSimpleActivity, val size: Point, va
                 }
             }
         }
+        binding.root.applyPaletteCursors(activity)
 
         val widthView = binding.resizeImageWidth
         val heightView = binding.resizeImageHeight

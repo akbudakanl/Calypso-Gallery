@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:inputType="number"
             android:singleLine="true"
-            android:textCursorDrawable="@null"
+            android:textCursorDrawable="@drawable/vault_text_cursor"
             android:textSize="@dimen/bigger_text_size" />
 
     </org.fossify.commons.views.MyTextInputLayout>

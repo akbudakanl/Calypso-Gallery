@@ -7,6 +7,7 @@ import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
 import org.fossify.gallery.R
 import org.fossify.gallery.databinding.DialogExportFavoritesBinding
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.extensions.config
 
 class ExportFavoritesDialog(
@@ -37,6 +38,7 @@ class ExportFavoritesDialog(
                 }
             }
         }
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)

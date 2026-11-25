@@ -429,6 +429,8 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsSearchContainer.clipToOutline = true
         binding.settingsSearch.setTextColor(palette.text)
         binding.settingsSearch.setHintTextColor(mutedColor)
+        // Plain EditText outside MySearchMenu: needs the same palette-aware caret override.
+        binding.settingsSearch.applyThemedCursor(palette.text)
         binding.settingsSearchIcon.imageTintList = ColorStateList.valueOf(mutedColor)
         binding.settingsSearchClear.imageTintList = ColorStateList.valueOf(mutedColor)
     }

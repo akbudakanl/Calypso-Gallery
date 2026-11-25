@@ -13,6 +13,7 @@ import org.fossify.commons.extensions.toast
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.commons.views.MyEditText
 import org.fossify.gallery.R
+import org.fossify.gallery.extensions.applyPaletteCursors
 import org.fossify.gallery.helpers.CryptoManager
 import java.io.File
 import org.fossify.gallery.helpers.createHiddenPhysicalAlbum
@@ -41,6 +42,7 @@ class CreateEncryptedAlbumDialog(
             setPadding(padding, padding, padding, 0)
             addView(editText)
         }
+        container.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
