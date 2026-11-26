@@ -31,7 +31,6 @@ Security fixes target the latest release (`1.0.x`) and `tools/calypso-cli`.
 
 - Vulnerabilities solely in third-party libraries or unmodified upstream [Fossify Gallery](https://github.com/FossifyOrg/Gallery) code.
 - Host-OS forensic traces on disk-backed computers (journals, swap, SSD wear-leveling, cloud-synced folders) documented in [tools/calypso-cli/README.md](tools/calypso-cli/README.md).
-- Attacks requiring physical/root access on an already unlocked device, OS/TEE/`BiometricPrompt` bypasses, or weak user-chosen passwords.
 - Best-practice suggestions without a demonstrable weakness.
 
 ## What to Include
