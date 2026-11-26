@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (audit outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c
         with:
           egress-policy: audit
 
@@ -69,7 +69,7 @@ jobs:
       - name: Calculate next fork version name
         if: steps.release-history.outputs.hasCurrentTag == 'true' && steps.changelog.outputs.has_changes == 'true'
         id: semantic-version
-        uses: ietf-tools/semver-action@c90370b2958652d71c06a3484129a4d423a6d8a8
+        uses: ietf-tools/semver-action@46feaa27e7375da0e3d602721e9fb9573598b880
         with:
           token: ${{ github.token }}
           branch: ${{ github.event.repository.default_branch }}
@@ -167,14 +167,14 @@ jobs:
       - name: Create release app token
         if: steps.update-version.outcome == 'success'
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Create or update release PR
         if: steps.version-name.outputs.nextStrict && steps.extract-changelog.outcome == 'success'
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1
         with:
           token: ${{ steps.app-token.outputs.token }}
           sign-commits: true
