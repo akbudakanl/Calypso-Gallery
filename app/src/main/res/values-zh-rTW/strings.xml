@@ -680,7 +680,7 @@
     <string name="archived_vault_invalid_message">在 %1$s 找不到保險箱標頭。您可以用檔案管理器刪除此資料夾。</string>
     <string name="copy_path">複製路徑</string>
     <string name="faq_forgot_password_title">我忘記加密保險箱的密碼了，該怎麼辦？</string>
-    <string name="faq_forgot_password_text">1. 使用生物辨識解鎖。\n2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍保留。\n3. 設定 → 封存加密保險箱，然後建立新的保險箱。\n\n警告：若生物辨識也無法使用，則無法存取保險箱。您可以封存、複製，或用檔案管理器刪除 %1$s 的資料夾。</string>
+    <string name="faq_forgot_password_text">1. 使用生物辨識解鎖。\n2. 複製（匯出）加密資料 — 複製不是移動，原始檔案仍會保留在原地。\n3. 設定 → 封存加密保險箱，然後建立新的保險箱。\n\n若生物辨識也無法解鎖，則無法存取保險箱。若要在無法存取的現有加密保險箱相同位置建立新保險箱，您可以在設定中重設、匯出或封存目前的保險箱。您也可以在設定中查看包含加密保險箱的資料夾於磁碟上的位置，並從該處刪除或移動保險箱。刪除作業無法復原。</string>
 
     <string name="unarchive_vault">從封存區還原</string>
     <string name="unarchive_vault_summary">將保險箱移回封存前的位置</string>
@@ -812,4 +812,10 @@
     <string name="vault_sync_stale_marker_remove">移除並繼續</string>
     <string name="vault_sync_stale_marker_keep">保留</string>
     <string name="cannot_include_restricted_or_vault_folder">無法包含加密保險庫資料夾、應用程式系統目錄以及受限制的 Android 資料夾。</string>
+    <string name="faq_encrypt_hide_exclude_title">加密、隱藏與排除之間有什麼差別？</string>
+    <string name="faq_encrypt_hide_exclude_text">這三項功能在可見度與安全性上有本質上的差異：\n\n• 排除：僅在 Calypso Gallery 內不顯示該資料夾。檔案仍未加密且原封不動地留在磁碟上，其他相簿應用程式與檔案管理器依然看得到。您可以隨時在「設定 → 管理排除的資料夾」中恢復。\n\n• 隱藏（加入 .nomedia）：在資料夾內建立空白的「.nomedia」檔案（或將單一項目設為隱藏），使 Android 媒體掃描器（MediaStore）略過該資料夾及其子資料夾，因此不只 Calypso Gallery，系統中的其他相簿應用程式也不會顯示。但檔案「不會」被加密 — 任何人透過檔案管理器、將手機連接電腦，或在應用程式內開啟「顯示隱藏項目」仍可直接讀取。（在 Android 11+ 上需要所有檔案存取權限，且相機、螢幕截圖、下載等系統資料夾可能受限。）\n\n• 加密（加密保險箱）：使用高強度密碼學（Argon2id + AES-256-GCM / Tink 串流加密）將檔案內容以及檔案／資料夾名稱全部加密寫入保險箱，並可選擇刪除未加密的原始檔案。沒有保險箱密碼或生物辨識驗證，包括 Calypso Gallery 在內的任何應用程式、檔案管理器或電腦都無法讀取檔案內容與名稱。真正的隱私與保護只能透過加密實現。</string>
+    <string name="faq_conflict_modes_title">檔案衝突與重複檢查中的標準對話方塊、智慧對話方塊與自動模式如何運作？</string>
+    <string name="faq_conflict_modes_text">在「設定 → 檔案操作 → 檔案衝突與重複項目處理」中，您可以選擇複製、移動、加密、解密與匯入保險箱時遇到同名檔案的處理方式：\n\n• 標準對話方塊（預設）：不比對檔案內容，僅檢查檔名，每次衝突皆詢問 略過 / 覆寫 / 兩者皆保留。\n\n• 智慧對話方塊：先比對檔案大小，大小相同時在 RAM 中進行逐位元（bit-to-bit）內容比對（加密檔案會在記憶體中驗證，不會將明文寫入磁碟）。對於 8 MiB 以上的大型檔案，為維持效能會改採快速掃描，僅讀取並比對首、中、尾等 256 KiB 取樣區塊。完全相同的檔案會自動略過；若內容不同，則顯示並排預覽對話方塊供您決定。\n\n• 自動（實驗性）：採用相同的逐位元／快速掃描邏輯自動略過完全相同的重複檔案，遇到同名但內容不同的檔案則不詢問，直接將新檔案重新命名為 檔名(1).副檔名 予以保留。\n\n• 日期差異處理（「內容相同但日期不同時」）：僅適用於智慧對話方塊與自動模式（標準對話方塊不受影響）。當兩個檔案逐位元相同但拍攝或修改時間不同時，此設定決定要保留目標日期、採用來源日期、保留較舊／較新日期或詢問（自動模式不顯示對話方塊，因此「永遠詢問」會退回保留目標檔案日期）。\n\n• 與「保留舊的最後修改時間值」無關：檔案操作中的「在檔案操作時保留舊的最後修改時間值」設定不會影響衝突偵測或日期比對規則。該設定僅用於控制一般複製、移動或還原操作所建立的目標檔案，是否要沿用來源檔案在檔案系統上的最後修改時間（last modified）。</string>
+    <string name="faq_cli_tool_title">桌面版 CLI 工具如何運作，為什麼應該使用它？</string>
+    <string name="faq_cli_tool_text">桌面版 CLI 工具（calypso-cli）可讓您將電腦上既有的檔案，或改由電腦下載而非手機下載的檔案，直接在電腦端完成加密後傳輸至手機的加密保險箱，全程絕不將未加密（明文）檔案寫入手機磁碟。\n\n為何重要：當您在手機上直接加密未加密檔案時，預期系統會在加密後安全刪除原本的明文複本；但由於手機快閃記憶體（UFS/eMMC 的磨損均衡 wear-leveling 等）的硬體特性，無法百分之百保證先前寫入磁碟的明文資料已從實體區塊完全抹除。透過 CLI 工具，媒體從一開始就只會以加密形式進入手機。\n\n支援平台與使用步驟（Windows、Linux 與 macOS）：\n1. 在手機上前往「設定 → 準備 CLI 橋接」，於 Calypso Gallery/CLI 下為目前啟用的保險箱建立橋接資料夾。\n2. 在電腦上將照片與影片放入 To_Encrypt 資料夾（子資料夾會成為加密相簿）。在 Windows 與 Linux 上執行 run.bat / run.sh 會自動傳輸至橋接資料夾；在 macOS 上請使用 OpenMTP 複製橋接資料夾。CLI 只會將加密的 .bin 檔案與 pending_sync 清單寫入橋接資料夾，絕不會直接寫入保險箱。\n3. 在手機上點選「設定 → 從 CLI 匯入加密媒體」。所有待處理檔案會合併至目前啟用的保險箱，並在完全匯入成功後清除橋接資料夾。</string>
 </resources>

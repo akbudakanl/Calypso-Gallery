@@ -160,6 +160,7 @@ class AboutActivity : SimpleActivity() {
 
     private fun getFaqItems(): ArrayList<FAQItem> {
         val faqItems = arrayListOf(
+            FAQItem(R.string.faq_encrypt_hide_exclude_title, R.string.faq_encrypt_hide_exclude_text),
             FAQItem(R.string.faq_3_title, R.string.faq_3_text),
             FAQItem(R.string.faq_12_title, R.string.faq_12_text),
             FAQItem(R.string.faq_7_title, R.string.faq_7_text),
@@ -169,10 +170,12 @@ class AboutActivity : SimpleActivity() {
             FAQItem(R.string.faq_5_title, R.string.faq_5_text),
             FAQItem(R.string.faq_4_title, R.string.faq_4_text),
             FAQItem(R.string.faq_6_title, R.string.faq_6_text),
+            FAQItem(R.string.faq_conflict_modes_title, R.string.faq_conflict_modes_text),
             FAQItem(R.string.faq_8_title, R.string.faq_8_text),
             FAQItem(R.string.faq_10_title, R.string.faq_10_text),
             FAQItem(R.string.faq_11_title, R.string.faq_11_text),
             FAQItem(R.string.faq_13_title, R.string.faq_13_text),
+            FAQItem(R.string.faq_cli_tool_title, R.string.faq_cli_tool_text),
             FAQItem(R.string.faq_15_title, R.string.faq_15_text),
             FAQItem(R.string.faq_2_title, R.string.faq_2_text),
             FAQItem(R.string.faq_18_title, R.string.faq_18_text),
@@ -185,7 +188,7 @@ class AboutActivity : SimpleActivity() {
                 0,
                 FAQItem(
                     R.string.faq_forgot_password_title,
-                    getString(R.string.faq_forgot_password_text, humanizePath(activePath)),
+                    R.string.faq_forgot_password_text,
                 ),
             )
         }
