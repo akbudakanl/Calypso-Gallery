@@ -9,7 +9,7 @@ name = "calypso_argon2"
 crate-type = ["cdylib"]
 
 [dependencies]
-argon2 = { version = "0.5.3", default-features = false, features = ["alloc", "zeroize"] }
+argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize"] }
 jni = { version = "0.22.4", default-features = false }
 zeroize = "1.8.1"
 
