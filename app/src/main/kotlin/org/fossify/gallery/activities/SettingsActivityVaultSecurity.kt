@@ -207,8 +207,12 @@ internal fun SettingsActivity.setupUnarchiveVault() {
             return@setOnClickListener
         }
 
-        DeleteSecretsDialog(this, getString(R.string.unarchive_vault_confirm)) {
-            requireDeviceOwner {
+        requireDeviceOwner {
+            DeleteSecretsDialog(
+                this,
+                getString(R.string.unarchive_vault_confirm),
+                titleId = R.string.unarchive_vault,
+            ) {
                 val result = VaultArchiveManager.restoreArchivedVault(this, entry)
                 if (result == VaultArchiveManager.UnarchiveResult.OK) {
                     toast(R.string.unarchive_vault_success)
