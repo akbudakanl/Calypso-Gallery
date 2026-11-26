@@ -39,21 +39,21 @@ data class AppearancePalette(
         const val DARK_BACKGROUND = 0xFF000000.toInt()
         const val DARK_PRIMARY = 0xFFE4E4E7.toInt()
 
-        const val NAVY_TEXT = 0xFFEFF6FF.toInt()
-        const val NAVY_BACKGROUND = 0xFF0B1220.toInt()
-        const val NAVY_PRIMARY = 0xFF93C5FD.toInt()
+        const val NAVY_TEXT = 0xFFDAE3F0.toInt()
+        const val NAVY_BACKGROUND = 0xFF0C111B.toInt()
+        const val NAVY_PRIMARY = 0xFF7EACD8.toInt()
 
         const val PAPER_TEXT = 0xFF29231E.toInt()
         const val PAPER_BACKGROUND = 0xFFF4EFE6.toInt()
         const val PAPER_PRIMARY = 0xFF7C5438.toInt()
 
-        const val FOREST_TEXT = 0xFFECFDF5.toInt()
-        const val FOREST_BACKGROUND = 0xFF0C1713.toInt()
-        const val FOREST_PRIMARY = 0xFF6EE7B7.toInt()
+        const val FOREST_TEXT = 0xFFDAE8E2.toInt()
+        const val FOREST_BACKGROUND = 0xFF0C1511.toInt()
+        const val FOREST_PRIMARY = 0xFF79C4A7.toInt()
 
-        const val VIOLET_TEXT = 0xFFF5F3FF.toInt()
-        const val VIOLET_BACKGROUND = 0xFF0E0A18.toInt()
-        const val VIOLET_PRIMARY = 0xFFA78BFA.toInt()
+        const val VIOLET_TEXT = 0xFFE3DDEE.toInt()
+        const val VIOLET_BACKGROUND = 0xFF100C18.toInt()
+        const val VIOLET_PRIMARY = 0xFFB19BD9.toInt()
 
         const val CORAL_TEXT = 0xFF2B1A18.toInt()
         const val CORAL_BACKGROUND = 0xFFFFF7F5.toInt()
@@ -88,10 +88,10 @@ data class AppearancePalette(
             text = NAVY_TEXT,
             background = NAVY_BACKGROUND,
             primary = NAVY_PRIMARY,
-            secondary = 0xFF8BA7CC.toInt(),
+            secondary = 0xFF899EB8.toInt(),
             appIcon = DARK.appIcon,
-            surface = 0xFF131D31.toInt(),
-            border = 0xFF243451.toInt(),
+            surface = 0xFF151E2E.toInt(),
+            border = 0xFF25334A.toInt(),
             onPrimary = PURE_BLACK,
             onSecondary = PURE_BLACK,
         )
@@ -112,10 +112,10 @@ data class AppearancePalette(
             text = FOREST_TEXT,
             background = FOREST_BACKGROUND,
             primary = FOREST_PRIMARY,
-            secondary = 0xFF86B5A1.toInt(),
+            secondary = 0xFF87A89A.toInt(),
             appIcon = DARK.appIcon,
-            surface = 0xFF13241E.toInt(),
-            border = 0xFF243D34.toInt(),
+            surface = 0xFF15231E.toInt(),
+            border = 0xFF253B33.toInt(),
             onPrimary = PURE_BLACK,
             onSecondary = PURE_BLACK,
         )
@@ -124,10 +124,10 @@ data class AppearancePalette(
             text = VIOLET_TEXT,
             background = VIOLET_BACKGROUND,
             primary = VIOLET_PRIMARY,
-            secondary = 0xFFA697CC.toInt(),
+            secondary = 0xFFA396BC.toInt(),
             appIcon = DARK.appIcon,
-            surface = 0xFF1A132B.toInt(),
-            border = 0xFF2F234B.toInt(),
+            surface = 0xFF1B1528.toInt(),
+            border = 0xFF302643.toInt(),
             onPrimary = PURE_BLACK,
             onSecondary = PURE_BLACK,
         )
