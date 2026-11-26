@@ -18,7 +18,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
@@ -35,7 +37,9 @@ updates:
       - jitpack
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     commit-message:
       prefix: "chore"
@@ -44,17 +48,13 @@ updates:
     ignore:
       - dependency-name: "org.fossify:commons"
     groups:
-      # Security-sensitive libraries: kept separate (one PR each) for careful review.
-      # A group listed first takes precedence over later ones.
-      crypto:
-        patterns:
-          - "com.google.crypto.tink:*"
-          - "org.bouncycastle:*"
-          - "androidx.biometric:*"
-        update-types: ["major", "minor", "patch"]
+      # Security-sensitive libraries (Tink, BouncyCastle, Biometric) are excluded from
+      # groups below so each arrives in its own separate PR for careful review.
       androidx:
         patterns:
           - "androidx.*"
+        exclude-patterns:
+          - "androidx.biometric:*"
         update-types: ["minor", "patch"]
       kotlin-ksp:
         patterns:
@@ -64,6 +64,10 @@ updates:
       other-minor-patch:
         patterns:
           - "*"
+        exclude-patterns:
+          - "com.google.crypto.tink:*"
+          - "org.bouncycastle:*"
+          - "androidx.biometric:*"
         update-types: ["minor", "patch"]
 
   # Native Argon2 (Rust) dependencies: argon2, jni, zeroize
@@ -71,7 +75,9 @@ updates:
     directory: "/rust/calypso-argon2"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -80,7 +86,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "friday"
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
