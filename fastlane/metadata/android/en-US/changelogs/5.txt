@@ -1,0 +1,7 @@
+Fixed:
+
+• **CLI bridge cleanup on vault deletion** — deleting an encrypted vault now also removes every CLI bridge folder that…
+• **Archived bridges stay usable** — the CLI now discovers bridge headers in `CLI/Archived/<vault-id>/`, so an archived…
+
+Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.4
+Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.0.4.tar.gz
