@@ -1,0 +1,123 @@
+name: Sync Upstream Fossify Release
+
+on:
+  schedule:
+    # Check daily at 09:00 UTC for new FossifyOrg/Gallery releases
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional FossifyOrg/Gallery release tag (leave empty for latest)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: upstream-sync-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      - name: Check latest FossifyOrg/Gallery release and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ -n "$INPUT_TAG" ]]; then
+            release_json=$(gh release view "$INPUT_TAG" -R FossifyOrg/Gallery --json tagName,url,body)
+          else
+            release_json=$(gh release view -R FossifyOrg/Gallery --json tagName,url,body)
+          fi
+
+          tag=$(printf '%s' "$release_json" | jq -r '.tagName')
+          release_url=$(printf '%s' "$release_json" | jq -r '.url')
+          release_body=$(printf '%s' "$release_json" | jq -r '.body // ""')
+          branch="upstream-sync/$tag"
+
+          echo "Target upstream release: $tag ($release_url)"
+
+          git remote add upstream https://github.com/FossifyOrg/Gallery.git
+          git fetch upstream "refs/tags/$tag:refs/tags/upstream-$tag"
+
+          if git merge-base --is-ancestor "refs/tags/upstream-$tag" HEAD; then
+            echo "Upstream release $tag is already merged into main."
+            exit 0
+          fi
+
+          existing_pr=$(gh pr list --state open --head "$branch" --json number --jq '.[0].number // empty')
+          if [[ -n "$existing_pr" ]]; then
+            echo "PR #$existing_pr already exists for $branch."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$branch"
+
+          if git merge --no-edit --allow-unrelated-histories "refs/tags/upstream-$tag"; then
+            git push -u origin "$branch" --force
+
+            body_file=$(mktemp)
+            {
+              echo "Upstream release: [$tag]($release_url)"
+              echo ""
+              echo "This PR merges \`FossifyOrg/Gallery\` release \`$tag\` into \`main\`."
+              echo ""
+              if [[ -n "$release_body" ]]; then
+                echo "### Upstream Release Notes"
+                echo "$release_body"
+              fi
+              echo ""
+              echo "> **Note:** PRs opened by \`GITHUB_TOKEN\` do not trigger CI automatically. After reviewing, you can trigger **Actions → CI → Run workflow** on this branch or close/reopen the PR to run checks."
+            } > "$body_file"
+
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore(upstream): sync FossifyOrg/Gallery $tag" \
+              --body-file "$body_file"
+          else
+            conflicts=$(git diff --name-only --diff-filter=U || true)
+            git merge --abort || true
+
+            issue_title="chore(upstream): sync FossifyOrg/Gallery $tag (conflicts)"
+            existing_issue=$(gh issue list --state open --search "\"$issue_title\" in:title" --json number --jq '.[0].number // empty')
+            if [[ -n "$existing_issue" ]]; then
+              echo "Issue #$existing_issue already exists for $tag conflicts."
+              exit 0
+            fi
+
+            issue_file=$(mktemp)
+            {
+              echo "A new \`FossifyOrg/Gallery\` release is available: [$tag]($release_url)"
+              echo ""
+              echo "Automatic merge into \`main\` hit conflicts in the following files:"
+              echo '```'
+              echo "$conflicts"
+              echo '```'
+              echo ""
+              if [[ -n "$release_body" ]]; then
+                echo "### Upstream Release Notes"
+                echo "$release_body"
+              fi
+            } > "$issue_file"
+
+            gh issue create \
+              --title "$issue_title" \
+              --body-file "$issue_file"
+          fi
