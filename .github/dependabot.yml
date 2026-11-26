@@ -47,6 +47,8 @@ updates:
       include: "scope"
     ignore:
       - dependency-name: "org.fossify:commons"
+      - dependency-name: "io.nlopez.compose.rules:detekt"
+        versions: [">= 0.5.0"]
     groups:
       # Security-sensitive libraries (Tink, BouncyCastle, Biometric) are excluded from
       # groups below so each arrives in its own separate PR for careful review.
