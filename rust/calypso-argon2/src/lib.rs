@@ -1,8 +1,9 @@
 use argon2::{Algorithm, Argon2, Block, Params, Version};
+use jni::errors::ThrowRuntimeExAndDefault;
 use jni::objects::{JByteArray, JClass};
+use jni::strings::{JNIStr, JNIString};
 use jni::sys::jint;
-use jni::JNIEnv;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use jni::{jni_str, Env, EnvUnowned};
 use zeroize::{Zeroize, Zeroizing};
 
 const MIN_OUTPUT_LEN: usize = 4;
@@ -77,7 +78,7 @@ pub(crate) fn derive_argon2id_raw(
 }
 
 fn jbyte_array_to_zeroizing_vec(
-    env: &JNIEnv,
+    env: &Env,
     arr: &JByteArray,
 ) -> Result<Zeroizing<Vec<u8>>, DeriveError> {
     if arr.is_null() {
@@ -106,9 +107,9 @@ fn jbyte_array_to_zeroizing_vec(
 }
 
 fn derive_jni_inner<'local>(
-    env: &mut JNIEnv<'local>,
-    password: JByteArray<'local>,
-    salt: JByteArray<'local>,
+    env: &mut Env<'local>,
+    password: &JByteArray<'local>,
+    salt: &JByteArray<'local>,
     memory_kb: jint,
     iterations: jint,
     parallelism: jint,
@@ -123,8 +124,8 @@ fn derive_jni_inner<'local>(
     let out_len = usize::try_from(output_length)
         .map_err(|_| DeriveError::InvalidParam("output_length must be positive"))?;
 
-    let pwd_bytes = jbyte_array_to_zeroizing_vec(env, &password)?;
-    let salt_bytes = jbyte_array_to_zeroizing_vec(env, &salt)?;
+    let pwd_bytes = jbyte_array_to_zeroizing_vec(env, password)?;
+    let salt_bytes = jbyte_array_to_zeroizing_vec(env, salt)?;
 
     let derived = derive_argon2id_raw(
         &pwd_bytes,
@@ -139,9 +140,10 @@ fn derive_jni_inner<'local>(
         .map_err(|_| DeriveError::OutOfMemory)
 }
 
-fn throw_if_clear(env: &mut JNIEnv, class_name: &str, msg: &str) {
-    if !env.exception_check().unwrap_or(true) {
-        let _ = env.throw_new(class_name, msg);
+fn throw_if_clear(env: &mut Env, class_name: &JNIStr, msg: &str) {
+    if !env.exception_check() {
+        let jni_msg = JNIString::new(msg);
+        let _ = env.throw_new(class_name, &jni_msg);
     }
 }
 
@@ -149,7 +151,7 @@ fn throw_if_clear(env: &mut JNIEnv, class_name: &str, msg: &str) {
 pub extern "system" fn Java_org_fossify_gallery_helpers_NativeArgon2_deriveKeyArgon2idNative<
     'local,
 >(
-    mut env: JNIEnv<'local>,
+    mut unowned_env: EnvUnowned<'local>,
     _class: JClass<'local>,
     password: JByteArray<'local>,
     salt: JByteArray<'local>,
@@ -158,46 +160,38 @@ pub extern "system" fn Java_org_fossify_gallery_helpers_NativeArgon2_deriveKeyAr
     parallelism: jint,
     output_length: jint,
 ) -> JByteArray<'local> {
-    let result = catch_unwind(AssertUnwindSafe(|| {
-        derive_jni_inner(
-            &mut env,
-            password,
-            salt,
-            memory_kb,
-            iterations,
-            parallelism,
-            output_length,
-        )
-    }));
-
-    match result {
-        Ok(Ok(arr)) => arr,
-        Ok(Err(DeriveError::InvalidParam(msg))) => {
-            throw_if_clear(&mut env, "java/lang/IllegalArgumentException", msg);
-            JByteArray::default()
-        }
-        Ok(Err(DeriveError::OutOfMemory)) => {
-            throw_if_clear(
-                &mut env,
-                "java/lang/OutOfMemoryError",
-                "Native Argon2 memory allocation failed",
-            );
-            JByteArray::default()
-        }
-        Ok(Err(DeriveError::Argon2Failed(err))) => {
-            let msg = format!("Argon2 derivation failed: {err}");
-            throw_if_clear(&mut env, "java/lang/IllegalStateException", &msg);
-            JByteArray::default()
-        }
-        Err(_) => {
-            throw_if_clear(
-                &mut env,
-                "java/lang/RuntimeException",
-                "Native Argon2 internal error",
-            );
-            JByteArray::default()
-        }
-    }
+    unowned_env
+        .with_env(|env| -> jni::errors::Result<JByteArray<'local>> {
+            match derive_jni_inner(
+                env,
+                &password,
+                &salt,
+                memory_kb,
+                iterations,
+                parallelism,
+                output_length,
+            ) {
+                Ok(arr) => Ok(arr),
+                Err(DeriveError::InvalidParam(msg)) => {
+                    throw_if_clear(env, jni_str!("java/lang/IllegalArgumentException"), msg);
+                    Ok(JByteArray::null())
+                }
+                Err(DeriveError::OutOfMemory) => {
+                    throw_if_clear(
+                        env,
+                        jni_str!("java/lang/OutOfMemoryError"),
+                        "Native Argon2 memory allocation failed",
+                    );
+                    Ok(JByteArray::null())
+                }
+                Err(DeriveError::Argon2Failed(err)) => {
+                    let msg = format!("Argon2 derivation failed: {err}");
+                    throw_if_clear(env, jni_str!("java/lang/IllegalStateException"), &msg);
+                    Ok(JByteArray::null())
+                }
+            }
+        })
+        .resolve::<ThrowRuntimeExAndDefault>()
 }
 
 #[cfg(test)]
