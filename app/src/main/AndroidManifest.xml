@@ -46,8 +46,8 @@
         tools:node="remove" />
 
     <queries>
-        <package android:name="org.fossify.gallery.debug" />
-        <package android:name="org.fossify.gallery" />
+        <package android:name="com.calypso.gallery.debug" />
+        <package android:name="com.calypso.gallery" />
     </queries>
 
     <uses-feature
