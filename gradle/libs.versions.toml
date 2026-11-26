@@ -33,7 +33,7 @@ androidsvgAar = "1.4"
 androidphotofilters = "f2f3b444ea"
 sanselan = "0.97-incubator"
 media3Exoplayer = "1.10.1"
-bouncycastle = "1.78.1"
+bouncycastle = "1.87"
 tink = "1.24.0"
 subsamplingScaleImageView = "d705c3c4ad"
 #build
