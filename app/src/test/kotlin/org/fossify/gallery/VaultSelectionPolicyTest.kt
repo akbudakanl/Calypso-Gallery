@@ -21,7 +21,7 @@ class VaultSelectionPolicyTest {
     @Test
     fun selectingExistingVaultSkipsCredentialPrompt() {
         val activity = locateAppFile(
-            "src/main/kotlin/org/fossify/gallery/extensions/Activity.kt"
+            "src/main/kotlin/org/fossify/gallery/extensions/ActivityVaultSetup.kt"
         ).readText()
         val selectBody = activity.substringAfter("private fun BaseSimpleActivity.selectCandidateVault(")
             .substringBefore("private fun BaseSimpleActivity.")
@@ -44,7 +44,7 @@ class VaultSelectionPolicyTest {
     @Test
     fun deviceOwnerGateRunsOnVaultLocationEntryNotOnSelection() {
         val activity = locateAppFile(
-            "src/main/kotlin/org/fossify/gallery/extensions/Activity.kt"
+            "src/main/kotlin/org/fossify/gallery/extensions/ActivityVaultSetup.kt"
         ).readText()
         val entry = activity.substringAfter("fun BaseSimpleActivity.promptVaultSetupChoice(")
             .substringBefore("private fun BaseSimpleActivity.showArchivedVaultPicker(")

@@ -23,18 +23,18 @@ import java.util.ArrayDeque
  */
 object MediaIdentityResolver {
     /** How deep we search below fallback roots when scanning for candidates. */
-    private const val MAX_SCAN_DEPTH = 4
+    internal const val MAX_SCAN_DEPTH = 4
 
     /** Maximum number of files inspected (`stat()` only) during a single fallback scan. */
-    private const val MAX_FALLBACK_FILES_VISITED = 15000
+    internal const val MAX_FALLBACK_FILES_VISITED = 15000
 
     /** Maximum number of size-matched candidates retained per size bucket. */
-    private const val MAX_CANDIDATES_PER_SIZE = 40
+    internal const val MAX_CANDIDATES_PER_SIZE = 40
 
     /** Chunk size for SQLite `IN (...)` queries against MediaStore. */
-    private const val MEDIA_STORE_BATCH_SIZE = 200
+    internal const val MEDIA_STORE_BATCH_SIZE = 200
 
-    private val SKIPPED_DIR_NAMES = hashSetOf(
+    internal val SKIPPED_DIR_NAMES = hashSetOf(
         ".thumbnails",
         "recycle_bin"
     )
@@ -118,7 +118,7 @@ object MediaIdentityResolver {
                 val directTarget = relocatedFolders[oldParent.lowercase()]
                 if (directTarget != null) {
                     val candidate = File(directTarget, fileName)
-                    if (matchesFile(candidate, identity)) {
+                    if (MediaIdentityScoring.matchesFile(candidate, identity)) {
                         return Resolution(candidate.absolutePath, identity, confirmed = identity.hasFingerprint)
                     }
                 }
@@ -130,7 +130,7 @@ object MediaIdentityResolver {
                     if (oldParentLower.startsWith(prefix)) {
                         val relSub = oldParent.substring(oldRootLower.length)
                         val candidate = File("$newRoot$relSub", fileName)
-                        if (matchesFile(candidate, identity)) {
+                        if (MediaIdentityScoring.matchesFile(candidate, identity)) {
                             return Resolution(candidate.absolutePath, identity, confirmed = identity.hasFingerprint)
                         }
                     }
@@ -161,10 +161,10 @@ object MediaIdentityResolver {
             }
 
             if (missingIds.isNotEmpty()) {
-                queryMediaStoreByIds(context, missingIds, mediaStoreIdMap)
+                MediaIdentityIndex.queryMediaStoreByIds(context, missingIds, mediaStoreIdMap)
             }
             if (missingSizes.isNotEmpty()) {
-                queryMediaStoreBySizes(context, missingSizes, mediaStoreSizeMap)
+                MediaIdentityIndex.queryMediaStoreBySizes(context, missingSizes, mediaStoreSizeMap)
             }
         }
 
@@ -186,7 +186,7 @@ object MediaIdentityResolver {
                 targetSizes.add(identity.size)
             }
             if (fallbackSizeIndex == null) {
-                fallbackSizeIndex = buildSizeIndex(roots, targetSizes)
+                fallbackSizeIndex = MediaIdentityIndex.buildSizeIndex(roots, targetSizes)
             }
             val index = fallbackSizeIndex ?: return emptyList()
             return if (identity.size > 0L) {
@@ -197,45 +197,6 @@ object MediaIdentityResolver {
         }
     }
 
-    private data class ResolvedCandidate(
-        val path: String,
-        val mediaStoreId: Long,
-        val lastModified: Long,
-        val name: String,
-        val dateAddedSec: Long = 0L
-    )
-
-    private data class CandidateSelection(
-        val candidate: ResolvedCandidate,
-        val highConfidenceRelocation: Boolean
-    )
-
-    private data class CandidateScore(
-        val exactMediaStoreId: Int,
-        val inodeMatches: Int,
-        val matchedAnchorCount: Int,
-        val trailingFolderMatches: Int,
-        val lastModifiedMatch: Int,
-        val folderNameSimilarity: Int,
-        val commonPrefixSegments: Int,
-        val exactFileNameMatch: Int,
-        val pathLength: Int,
-        val normalizedPath: String,
-        val hasPositiveContinuity: Boolean
-    ) : Comparable<CandidateScore> {
-        override fun compareTo(other: CandidateScore): Int {
-            if (exactMediaStoreId != other.exactMediaStoreId) return other.exactMediaStoreId.compareTo(exactMediaStoreId)
-            if (inodeMatches != other.inodeMatches) return other.inodeMatches.compareTo(inodeMatches)
-            if (matchedAnchorCount != other.matchedAnchorCount) return other.matchedAnchorCount.compareTo(matchedAnchorCount)
-            if (trailingFolderMatches != other.trailingFolderMatches) return other.trailingFolderMatches.compareTo(trailingFolderMatches)
-            if (lastModifiedMatch != other.lastModifiedMatch) return other.lastModifiedMatch.compareTo(lastModifiedMatch)
-            if (folderNameSimilarity != other.folderNameSimilarity) return other.folderNameSimilarity.compareTo(folderNameSimilarity)
-            if (commonPrefixSegments != other.commonPrefixSegments) return other.commonPrefixSegments.compareTo(commonPrefixSegments)
-            if (exactFileNameMatch != other.exactFileNameMatch) return other.exactFileNameMatch.compareTo(exactFileNameMatch)
-            if (pathLength != other.pathLength) return pathLength.compareTo(other.pathLength)
-            return normalizedPath.compareTo(other.normalizedPath)
-        }
-    }
 
     /**
      * Resolves the file behind [identity].
@@ -286,7 +247,7 @@ object MediaIdentityResolver {
             val msPath = if (session != null && session.isMediaStoreIdQueried(identity.mediaStoreId)) {
                 session.getCachedMediaStorePath(identity.mediaStoreId)
             } else {
-                findByMediaStoreId(context, identity.mediaStoreId)
+                MediaIdentityIndex.findByMediaStoreId(context, identity.mediaStoreId)
             }
             if (msPath != null && msPath.lowercase() !in excludedLower) {
                 val file = File(msPath)
@@ -316,9 +277,9 @@ object MediaIdentityResolver {
         // confirm with the content fingerprint and folder continuity.
         if (identity.size > 0L && !allHintParentsExist) {
             val sizeCandidates = if (session != null) {
-                session.getCachedSizeCandidates(identity.size) ?: queryMediaStoreBySingleSize(context, identity.size)
+                session.getCachedSizeCandidates(identity.size) ?: MediaIdentityIndex.queryMediaStoreBySingleSize(context, identity.size)
             } else {
-                queryMediaStoreBySingleSize(context, identity.size)
+                MediaIdentityIndex.queryMediaStoreBySingleSize(context, identity.size)
             }
             resolveFromMediaStoreCandidates(
                 candidates = sizeCandidates,
@@ -339,7 +300,7 @@ object MediaIdentityResolver {
             return null
         }
 
-        val extraRoots = if (allHintParentsExist) emptyList() else buildAndroidFallbackRoots(context, hintPaths)
+        val extraRoots = if (allHintParentsExist) emptyList() else MediaIdentityIndex.buildAndroidFallbackRoots(context, hintPaths)
         val effectiveSearchRoots = if (allHintParentsExist) existingParentDirs else searchRoots
         return resolveInFilesystem(
             identity = identity,
@@ -395,7 +356,7 @@ object MediaIdentityResolver {
                 File(dirPath).listFiles()?.filter { it.isFile } ?: emptyList()
             }
         } else {
-            val roots = expandSearchRoots(hintPaths, searchRoots, extraRoots)
+            val roots = MediaIdentityIndex.expandSearchRoots(hintPaths, searchRoots, extraRoots)
             if (roots.isEmpty()) {
                 return null
             }
@@ -404,7 +365,7 @@ object MediaIdentityResolver {
                 session.getFallbackCandidates(identity, roots)
             } else {
                 val targetSizes = if (identity.size > 0L) setOf(identity.size) else emptySet()
-                val index = buildSizeIndex(roots, targetSizes)
+                val index = MediaIdentityIndex.buildSizeIndex(roots, targetSizes)
                 if (identity.size > 0L) {
                     index[identity.size].orEmpty()
                 } else {
@@ -424,8 +385,8 @@ object MediaIdentityResolver {
             candidates
         }
 
-        val confirmedMatches = ArrayList<ResolvedCandidate>(2)
-        val unconfirmedMatches = ArrayList<ResolvedCandidate>(2)
+        val confirmedMatches = ArrayList<MediaIdentityScoring.ResolvedCandidate>(2)
+        val unconfirmedMatches = ArrayList<MediaIdentityScoring.ResolvedCandidate>(2)
 
         for (file in ordered) {
             if (!file.isFile) continue
@@ -434,7 +395,7 @@ object MediaIdentityResolver {
             if (identity.hasFingerprint) {
                 if (MediaIdentity.computeFingerprint(file) == identity.fingerprint) {
                     confirmedMatches.add(
-                        ResolvedCandidate(
+                        MediaIdentityScoring.ResolvedCandidate(
                             path = file.absolutePath,
                             mediaStoreId = 0L,
                             lastModified = file.lastModified(),
@@ -442,9 +403,9 @@ object MediaIdentityResolver {
                         )
                     )
                 }
-            } else if (matchesCheapSignature(file, identity)) {
+            } else if (MediaIdentityIndex.matchesCheapSignature(file, identity)) {
                 unconfirmedMatches.add(
-                    ResolvedCandidate(
+                    MediaIdentityScoring.ResolvedCandidate(
                         path = file.absolutePath,
                         mediaStoreId = 0L,
                         lastModified = file.lastModified(),
@@ -498,14 +459,14 @@ object MediaIdentityResolver {
             candidates
         }
 
-        val confirmedMatches = ArrayList<ResolvedCandidate>(2)
-        val unconfirmedMatches = ArrayList<ResolvedCandidate>(2)
+        val confirmedMatches = ArrayList<MediaIdentityScoring.ResolvedCandidate>(2)
+        val unconfirmedMatches = ArrayList<MediaIdentityScoring.ResolvedCandidate>(2)
 
         for (candidate in ordered) {
             val file = File(candidate.path)
             if (!file.isFile || file.length() != identity.size) continue
 
-            val entry = ResolvedCandidate(
+            val entry = MediaIdentityScoring.ResolvedCandidate(
                 path = candidate.path,
                 mediaStoreId = candidate.mediaStoreId,
                 lastModified = file.lastModified(),
@@ -516,7 +477,7 @@ object MediaIdentityResolver {
                 if (MediaIdentity.computeFingerprint(file) == identity.fingerprint) {
                     confirmedMatches.add(entry)
                 }
-            } else if (matchesCheapSignature(file, identity)) {
+            } else if (MediaIdentityIndex.matchesCheapSignature(file, identity)) {
                 unconfirmedMatches.add(entry)
             }
         }
@@ -532,8 +493,8 @@ object MediaIdentityResolver {
     }
 
     private fun resolveMatchLists(
-        confirmedMatches: List<ResolvedCandidate>,
-        unconfirmedMatches: List<ResolvedCandidate>,
+        confirmedMatches: List<MediaIdentityScoring.ResolvedCandidate>,
+        unconfirmedMatches: List<MediaIdentityScoring.ResolvedCandidate>,
         identity: MediaIdentity,
         hintPaths: List<String>,
         excludedLower: Set<String>,
@@ -541,7 +502,7 @@ object MediaIdentityResolver {
     ): Pair<Resolution, Boolean>? {
         val activeConfirmed = confirmedMatches.filter { it.path.lowercase() !in excludedLower }
         if (activeConfirmed.isNotEmpty()) {
-            val selected = selectBestCandidate(
+            val selected = MediaIdentityScoring.selectBestCandidate(
                 candidates = activeConfirmed,
                 identity = identity,
                 hintPaths = hintPaths,
@@ -564,7 +525,7 @@ object MediaIdentityResolver {
                 if (!canDisambiguateUnconfirmed) {
                     return null
                 }
-                val selected = selectBestCandidate(
+                val selected = MediaIdentityScoring.selectBestCandidate(
                     candidates = activeUnconfirmed,
                     identity = identity,
                     hintPaths = hintPaths,
@@ -583,514 +544,6 @@ object MediaIdentityResolver {
         return null
     }
 
-    private fun selectBestCandidate(
-        candidates: List<ResolvedCandidate>,
-        identity: MediaIdentity,
-        hintPaths: List<String>,
-        allowAmbiguous: Boolean
-    ): CandidateSelection? {
-        if (candidates.isEmpty()) return null
-
-        val folderMatchCache = HashMap<String, FolderIdentity.MatchResult>(4)
-        val scored = candidates.map { it to scoreCandidate(it, identity, hintPaths, folderMatchCache) }
-        val eligible = scored.filter { it.second.hasPositiveContinuity }
-        if (eligible.isEmpty()) {
-            return null
-        }
-
-        if (eligible.size == 1) {
-            val (winner, score) = eligible[0]
-            val highConfidence = score.exactMediaStoreId > 0 ||
-                score.inodeMatches > 0 ||
-                score.matchedAnchorCount > 0 ||
-                score.trailingFolderMatches > 0 ||
-                score.folderNameSimilarity >= 50
-            return CandidateSelection(winner, highConfidenceRelocation = highConfidence)
-        }
-
-        if (identity.mediaStoreId > 0L) {
-            val idMatches = eligible.filter { it.first.mediaStoreId == identity.mediaStoreId }
-            if (idMatches.size == 1) {
-                return CandidateSelection(idMatches[0].first, highConfidenceRelocation = true)
-            }
-        }
-
-        if (!allowAmbiguous) {
-            return null
-        }
-
-        var bestPair = eligible[0]
-        for (i in 1 until eligible.size) {
-            val pair = eligible[i]
-            if (pair.second < bestPair.second) {
-                bestPair = pair
-            }
-        }
-
-        val (bestCandidate, bestScore) = bestPair
-        val highConfidenceRelocation = bestScore.exactMediaStoreId > 0 ||
-            bestScore.inodeMatches > 0 ||
-            bestScore.matchedAnchorCount > 0 ||
-            bestScore.trailingFolderMatches > 0 ||
-            (bestScore.folderNameSimilarity > 0 && bestScore.commonPrefixSegments > 0)
-        return CandidateSelection(bestCandidate, highConfidenceRelocation = highConfidenceRelocation)
-    }
-
-    private fun scoreCandidate(
-        candidate: ResolvedCandidate,
-        identity: MediaIdentity,
-        hintPaths: List<String>,
-        folderMatchCache: MutableMap<String, FolderIdentity.MatchResult>
-    ): CandidateScore {
-        val exactMediaStoreId = if (identity.mediaStoreId > 0L && candidate.mediaStoreId == identity.mediaStoreId) 1 else 0
-        val lastModifiedMatch = if (identity.lastModified > 0L &&
-            CryptoManager.areTimestampsEquivalent(candidate.lastModified, identity.lastModified)
-        ) 1 else 0
-
-        val candFile = File(candidate.path)
-        val candParent = candFile.parentFile
-        val candParentKey = candParent?.absolutePath?.lowercase().orEmpty()
-        val folderMatch = if (identity.hasFolderEvidence && candParent != null) {
-            folderMatchCache.getOrPut(candParentKey) {
-                FolderIdentity.matchesCandidateParent(
-                    candidateParent = candParent,
-                    excludeFile = candFile,
-                    expectedInode = identity.folderInode,
-                    serializedAnchors = identity.folderSignature
-                )
-            }
-        } else {
-            FolderIdentity.MatchResult(inodeMatches = false, matchedAnchorCount = 0)
-        }
-
-        val inodeMatches = if (folderMatch.inodeMatches) 1 else 0
-        val matchedAnchorCount = folderMatch.matchedAnchorCount
-
-        val candParentSegs = splitPathSegments(candFile.parent ?: "")
-        val candParentName = candParentSegs.lastOrNull().orEmpty()
-
-        var bestTrailing = 0
-        var bestNameSim = 0
-        var bestPrefix = 0
-        var bestExactFileName = 0
-        var hasSourceHint = false
-        var inExistingHintParent = false
-
-        for (hint in hintPaths) {
-            if (hint.isEmpty()) continue
-            hasSourceHint = true
-            val hintFile = File(hint)
-            val hintParent = hintFile.parentFile
-            if (hintParent != null && hintParent.isDirectory && candParent != null &&
-                candParent.absolutePath.equals(hintParent.absolutePath, ignoreCase = true)
-            ) {
-                inExistingHintParent = true
-            }
-
-            val hintParentSegs = splitPathSegments(hintFile.parent ?: "")
-            val hintParentName = hintParentSegs.lastOrNull().orEmpty()
-
-            val trailing = countTrailingMatchingSegments(hintParentSegs, candParentSegs)
-            val nameSim = computeFolderNameSimilarity(hintParentName, candParentName)
-            val prefix = countCommonPrefixSegments(hintParentSegs, candParentSegs)
-            val exactName = if (hintFile.name.isNotEmpty() && candidate.name.equals(hintFile.name, ignoreCase = true)) 1 else 0
-
-            if (trailing > bestTrailing ||
-                (trailing == bestTrailing && nameSim > bestNameSim) ||
-                (trailing == bestTrailing && nameSim == bestNameSim && prefix > bestPrefix) ||
-                (trailing == bestTrailing && nameSim == bestNameSim && prefix == bestPrefix && exactName > bestExactFileName)
-            ) {
-                bestTrailing = trailing
-                bestNameSim = nameSim
-                bestPrefix = prefix
-                bestExactFileName = exactName
-            }
-        }
-
-        val isPreExistingForeignCopy = candidate.mediaStoreId > 0L &&
-            identity.mediaStoreId > 0L &&
-            candidate.mediaStoreId != identity.mediaStoreId &&
-            candidate.dateAddedSec > 0L &&
-            identity.capturedAtSec > 0L &&
-            candidate.dateAddedSec < identity.capturedAtSec - 5L
-
-        val hasPositiveContinuity = !hasSourceHint ||
-            exactMediaStoreId > 0 ||
-            inExistingHintParent ||
-            inodeMatches > 0 ||
-            matchedAnchorCount > 0 ||
-            (!isPreExistingForeignCopy && (bestTrailing > 0 || bestNameSim >= 50))
-
-        val normalized = candidate.path.replace('\\', '/').lowercase()
-        return CandidateScore(
-            exactMediaStoreId = exactMediaStoreId,
-            inodeMatches = inodeMatches,
-            matchedAnchorCount = matchedAnchorCount,
-            trailingFolderMatches = bestTrailing,
-            lastModifiedMatch = lastModifiedMatch,
-            folderNameSimilarity = bestNameSim,
-            commonPrefixSegments = bestPrefix,
-            exactFileNameMatch = bestExactFileName,
-            pathLength = normalized.length,
-            normalizedPath = normalized,
-            hasPositiveContinuity = hasPositiveContinuity
-        )
-    }
-
-    private fun splitPathSegments(path: String): List<String> {
-        if (path.isEmpty()) return emptyList()
-        return path.replace('\\', '/')
-            .trimEnd('/')
-            .split('/')
-            .filter { it.isNotEmpty() }
-    }
-
-    private fun countTrailingMatchingSegments(a: List<String>, b: List<String>): Int {
-        var count = 0
-        var ia = a.size - 1
-        var ib = b.size - 1
-        while (ia >= 0 && ib >= 0 && a[ia].equals(b[ib], ignoreCase = true)) {
-            count++
-            ia--
-            ib--
-        }
-        return count
-    }
-
-    private fun countCommonPrefixSegments(a: List<String>, b: List<String>): Int {
-        val limit = minOf(a.size, b.size)
-        var count = 0
-        while (count < limit && a[count].equals(b[count], ignoreCase = true)) {
-            count++
-        }
-        return count
-    }
-
-    private fun computeFolderNameSimilarity(aRaw: String, bRaw: String): Int {
-        if (aRaw.isEmpty() || bRaw.isEmpty()) return 0
-        val a = aRaw.lowercase()
-        val b = bRaw.lowercase()
-        if (a == b) return 100
-
-        val minLen = minOf(a.length, b.length)
-        val maxLen = maxOf(a.length, b.length)
-        val hasWordBoundaryPrefix = (a.length > b.length && a.startsWith(b) && !a[b.length].isLetterOrDigit()) ||
-            (b.length > a.length && b.startsWith(a) && !b[a.length].isLetterOrDigit())
-        if (hasWordBoundaryPrefix || (minLen >= 3 && (a.startsWith(b) || b.startsWith(a)))) {
-            return 70 + (minLen * 20) / maxLen
-        }
-        if (minLen >= 3 && (a.contains(b) || b.contains(a))) {
-            return 50 + (minLen * 20) / maxLen
-        }
-
-        var commonPrefix = 0
-        while (commonPrefix < minLen && a[commonPrefix] == b[commonPrefix]) {
-            commonPrefix++
-        }
-        if (commonPrefix >= 3) {
-            return 20 + (commonPrefix * 30) / maxLen
-        }
-
-        val tokenRegex = Regex("[^a-z0-9]+")
-        val tokensA = a.split(tokenRegex).filter { it.isNotEmpty() }.toHashSet()
-        val tokensB = b.split(tokenRegex).filter { it.isNotEmpty() }.toHashSet()
-        if (tokensA.isNotEmpty() && tokensB.isNotEmpty()) {
-            val shared = tokensA.intersect(tokensB).size
-            if (shared > 0) {
-                return 15 + (shared * 30) / maxOf(tokensA.size, tokensB.size)
-            }
-        }
-
-        return 0
-    }
-
-    private fun matchesFile(file: File, identity: MediaIdentity): Boolean {
-        if (!file.isFile) return false
-        if (identity.size > 0L && file.length() != identity.size) return false
-        return if (identity.hasFingerprint) {
-            MediaIdentity.computeFingerprint(file) == identity.fingerprint
-        } else {
-            matchesCheapSignature(file, identity)
-        }
-    }
-
-    private fun findByMediaStoreId(context: Context, mediaStoreId: Long): String? {
-        val uri = MediaStore.Files.getContentUri("external")
-        val projection = arrayOf(MediaStore.MediaColumns.DATA)
-        val selection = "${MediaStore.MediaColumns._ID} = ?"
-        val args = arrayOf(mediaStoreId.toString())
-
-        var cursor: Cursor? = null
-        return try {
-            cursor = context.contentResolver.query(uri, projection, selection, args, null)
-            if (cursor != null && cursor.moveToFirst()) {
-                val path = cursor.getString(0)
-                if (!path.isNullOrEmpty() && File(path).isFile) path else null
-            } else {
-                null
-            }
-        } catch (_: Exception) {
-            null
-        } finally {
-            cursor?.close()
-        }
-    }
-
-    private fun queryMediaStoreByIds(
-        context: Context,
-        ids: List<Long>,
-        out: MutableMap<Long, String>
-    ) {
-        val uri = MediaStore.Files.getContentUri("external")
-        val projection = arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DATA)
-        for (chunk in ids.chunked(MEDIA_STORE_BATCH_SIZE)) {
-            val placeholders = chunk.joinToString(",") { "?" }
-            val selection = "${MediaStore.MediaColumns._ID} IN ($placeholders)"
-            val args = chunk.map { it.toString() }.toTypedArray()
-            try {
-                context.contentResolver.query(uri, projection, selection, args, null)?.use { cursor ->
-                    while (cursor.moveToNext()) {
-                        val id = cursor.getLong(0)
-                        val path = cursor.getString(1)
-                        if (!path.isNullOrEmpty() && File(path).isFile) {
-                            out[id] = path
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    private fun queryMediaStoreBySingleSize(context: Context, size: Long): List<MediaStoreCandidate> {
-        val map = HashMap<Long, MutableList<MediaStoreCandidate>>()
-        queryMediaStoreBySizes(context, listOf(size), map)
-        return map[size].orEmpty()
-    }
-
-    private fun queryMediaStoreBySizes(
-        context: Context,
-        sizes: List<Long>,
-        out: MutableMap<Long, MutableList<MediaStoreCandidate>>
-    ) {
-        val uri = MediaStore.Files.getContentUri("external")
-        val projection = arrayOf(
-            MediaStore.MediaColumns._ID,
-            MediaStore.MediaColumns.DATA,
-            MediaStore.MediaColumns.DISPLAY_NAME,
-            MediaStore.MediaColumns.SIZE,
-            MediaStore.MediaColumns.DATE_ADDED
-        )
-        for (chunk in sizes.chunked(MEDIA_STORE_BATCH_SIZE)) {
-            val placeholders = chunk.joinToString(",") { "?" }
-            val selection = "${MediaStore.MediaColumns.SIZE} IN ($placeholders)"
-            val args = chunk.map { it.toString() }.toTypedArray()
-            try {
-                context.contentResolver.query(uri, projection, selection, args, null)?.use { cursor ->
-                    while (cursor.moveToNext()) {
-                        val id = cursor.getLong(0)
-                        val path = cursor.getString(1) ?: continue
-                        val name = cursor.getString(2) ?: File(path).name
-                        val size = cursor.getLong(3)
-                        val dateAddedSec = cursor.getLong(4)
-                        if (path.isNotEmpty() && size > 0L) {
-                            out.getOrPut(size) { ArrayList(2) }.add(
-                                MediaStoreCandidate(id, path, name, dateAddedSec)
-                            )
-                        }
-                    }
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    private fun buildAndroidFallbackRoots(context: Context, hintPaths: List<String>): List<String> {
-        val roots = LinkedHashSet<String>()
-        val isVaultHint = hintPaths.any { CryptoManager.isVaultMediaPath(context, it) || CryptoManager.isEncryptedFile(it) }
-        if (isVaultHint) {
-            CryptoManager.findVaultRoot(context)?.takeIf { it.isDirectory }?.let {
-                roots.add(it.absolutePath)
-            }
-            roots.add(CryptoManager.getCipherRootDirectory().absolutePath)
-            return roots.toList()
-        }
-        try {
-            val externalRoot = Environment.getExternalStorageDirectory()
-            if (externalRoot != null && externalRoot.isDirectory) {
-                listOf(
-                    Environment.DIRECTORY_DCIM,
-                    Environment.DIRECTORY_PICTURES,
-                    Environment.DIRECTORY_MOVIES,
-                    Environment.DIRECTORY_DOWNLOADS,
-                    Environment.DIRECTORY_DOCUMENTS
-                ).forEach { dirName ->
-                    val sub = File(externalRoot, dirName)
-                    if (sub.isDirectory) {
-                        roots.add(sub.absolutePath)
-                    }
-                }
-                // Include top-level storage roots after standard media directories so physical albums moved
-                // into custom folders (or external SD volumes) can still be recovered.
-                roots.add(externalRoot.absolutePath)
-            }
-        } catch (_: Exception) {
-        }
-        try {
-            CryptoManager.listExternalStorageVolumeRoots(context).forEach { volumeRoot ->
-                if (volumeRoot.isDirectory) {
-                    roots.add(volumeRoot.absolutePath)
-                }
-            }
-        } catch (_: Exception) {
-        }
-        return roots.toList()
-    }
-
-    private fun expandSearchRoots(
-        hintPaths: List<String>,
-        searchRoots: List<String>,
-        extraRoots: List<String>
-    ): List<File> {
-        val result = ArrayList<File>()
-        val seen = HashSet<String>()
-
-        fun addRoot(dir: File?) {
-            if (dir == null || !dir.isDirectory) return
-            val path = dir.absolutePath
-            if (isStorageBoundary(path)) return
-            if (seen.add(path.lowercase())) {
-                result.add(dir)
-            }
-        }
-
-        // 1. Direct searchRoots or their nearest existing ancestor (up to 2 levels up when a folder was renamed/moved).
-        for (raw in searchRoots) {
-            if (raw.isEmpty()) continue
-            var dir: File? = File(raw)
-            if (dir != null && dir.isDirectory) {
-                addRoot(dir)
-                continue
-            }
-            var steps = 0
-            while (dir != null && steps < 2) {
-                dir = dir.parentFile
-                steps++
-                if (dir != null && dir.isDirectory) {
-                    addRoot(dir)
-                    break
-                }
-            }
-        }
-
-        // 2. Hint path parents or nearest existing ancestor.
-        for (raw in hintPaths) {
-            if (raw.isEmpty()) continue
-            var dir: File? = File(raw).parentFile
-            var steps = 0
-            while (dir != null && steps < 3) {
-                if (dir.isDirectory) {
-                    addRoot(dir)
-                    break
-                }
-                dir = dir.parentFile
-                steps++
-            }
-        }
-
-        // 3. Broad extra fallback roots (e.g. Vault root, DCIM, Pictures, Documents).
-        for (raw in extraRoots) {
-            if (raw.isNotEmpty()) {
-                addRoot(File(raw))
-            }
-        }
-
-        return result
-    }
-
-    private fun isStorageBoundary(path: String): Boolean {
-        val trimmed = path.trimEnd('/', '\\')
-        return trimmed.isEmpty() ||
-            trimmed == "/storage" ||
-            trimmed == "/storage/emulated" ||
-            trimmed == "/mnt"
-    }
-
-    private fun buildSizeIndex(
-        roots: List<File>,
-        targetSizes: Set<Long>
-    ): HashMap<Long, MutableList<File>> {
-        val index = HashMap<Long, MutableList<File>>()
-        val visitedDirs = HashSet<String>()
-        var filesVisited = 0
-
-        val explicitRootPaths = roots.mapTo(HashSet()) { it.absolutePath.lowercase() }
-        val queue = ArrayDeque<Pair<File, Int>>()
-        for (root in roots) {
-            if (root.isDirectory && visitedDirs.add(root.absolutePath.lowercase())) {
-                queue.add(root to 0)
-            }
-        }
-
-        while (queue.isNotEmpty() && filesVisited < MAX_FALLBACK_FILES_VISITED) {
-            val (folder, depth) = queue.removeFirst()
-            if (depth > MAX_SCAN_DEPTH) continue
-
-            val children = folder.listFiles() ?: continue
-            for (child in children) {
-                if (filesVisited >= MAX_FALLBACK_FILES_VISITED) break
-
-                if (child.isDirectory) {
-                    val lowerName = child.name.lowercase()
-                    val isAndroidSystemDir = lowerName == "android" &&
-                        (File(child, "data").isDirectory || File(child, "obb").isDirectory)
-                    val isForeignVaultContainer = child.absolutePath.lowercase() !in explicitRootPaths &&
-                        File(child, ".vault").isFile
-                    if (lowerName in SKIPPED_DIR_NAMES || isAndroidSystemDir || isForeignVaultContainer) continue
-                    if (depth + 1 <= MAX_SCAN_DEPTH && visitedDirs.add(child.absolutePath.lowercase())) {
-                        queue.add(child to (depth + 1))
-                    }
-                    continue
-                }
-
-                if (!child.isFile) continue
-                filesVisited++
-
-                val len = child.length()
-                if (len <= 0L) continue
-                if (targetSizes.isNotEmpty() && len !in targetSizes) continue
-
-                val bucket = index.getOrPut(len) { ArrayList(2) }
-                if (bucket.size < MAX_CANDIDATES_PER_SIZE) {
-                    bucket.add(child)
-                }
-            }
-        }
-
-        return index
-    }
-
-    /**
-     * Cheap pre-filter: the size has to match exactly and the modification time has to match.
-     * Only used when no fingerprint is available.
-     */
-    private fun matchesCheapSignature(file: File, identity: MediaIdentity): Boolean {
-        if (identity.size > 0L && file.length() != identity.size) {
-            return false
-        }
-
-        if (identity.lastModified > 0L &&
-            !CryptoManager.areTimestampsEquivalent(file.lastModified(), identity.lastModified)
-        ) {
-            return false
-        }
-
-        return true
-    }
-
-    /**
-     * Looks for a file that matches the given identity in the given folder.
-     */
     fun findInFolder(identity: MediaIdentity, folder: File): String? {
         if (!folder.isDirectory) {
             return null
@@ -1107,7 +560,7 @@ object MediaIdentityResolver {
             }
 
             if (!identity.hasFingerprint) {
-                if (matchesCheapSignature(child, identity)) {
+                if (MediaIdentityIndex.matchesCheapSignature(child, identity)) {
                     return child.absolutePath
                 }
                 continue

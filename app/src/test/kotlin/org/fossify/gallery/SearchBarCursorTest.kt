@@ -51,7 +51,7 @@ class SearchBarCursorTest {
 
     @Test
     fun settingsSearchFieldThemesItsCursor() {
-        val settings = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/SettingsActivity.kt").readText()
+        val settings = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/SettingsActivitySearchUi.kt").readText()
         val refreshBlock = settings.substringAfter("refreshSettingsSearchColors")
         assertTrue(
             "Settings' plain EditText search field must override the inherited green caret",

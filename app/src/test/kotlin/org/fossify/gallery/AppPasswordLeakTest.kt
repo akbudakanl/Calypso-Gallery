@@ -35,7 +35,7 @@ class AppPasswordLeakTest {
 
     @Test
     fun appPasswordSuppressesRecentsPreviewAndDuplicatePrompt() {
-        val activity = locate("src/main/kotlin/org/fossify/gallery/extensions/Activity.kt").readText()
+        val activity = locate("src/main/kotlin/org/fossify/gallery/extensions/ActivityVaultSyncExport.kt").readText()
         val protection = activity.substringAfter("fun Activity.applyVaultScreenProtection")
         assertTrue(
             protection.contains("setRecentsScreenshotEnabled(!shouldProtect)") &&

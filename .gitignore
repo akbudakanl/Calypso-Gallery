@@ -18,3 +18,4 @@ fastlane/report.xml
 __pycache__/
 *.pyc
 rust/*/target/
+AGENTS.md

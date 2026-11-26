@@ -54,7 +54,7 @@ class CliBridgeCleanupTest {
             bridges.contains("if (bridge.dir.parentFile == archiveRoot(context))")
         )
         val activity = locateAppFile(
-            "src/main/kotlin/org/fossify/gallery/extensions/Activity.kt"
+            "src/main/kotlin/org/fossify/gallery/extensions/ActivityVaultSyncExport.kt"
         ).readText()
         assertTrue(
             "Import must consider archived bridges of the active vault",
