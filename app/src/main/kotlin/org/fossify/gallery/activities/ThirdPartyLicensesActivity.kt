@@ -187,6 +187,21 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             R.string.license_rust_jni_sys_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_rust_zlib_rs_title,
+            R.string.license_rust_zlib_rs_text,
+            R.string.license_rust_zlib_rs_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_brotli_alloc_title,
+            R.string.license_rust_brotli_alloc_text,
+            R.string.license_rust_brotli_alloc_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_media_support_title,
+            R.string.license_rust_media_support_text,
+            R.string.license_rust_media_support_url,
+        ),
+        ThirdPartyLicenseItem(
             org.fossify.commons.R.string.subsampling_title,
             org.fossify.commons.R.string.subsampling_text,
             org.fossify.commons.R.string.subsampling_url,
