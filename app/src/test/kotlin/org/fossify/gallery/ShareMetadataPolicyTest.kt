@@ -108,7 +108,8 @@ class ShareMetadataPolicyTest {
         )
         assertTrue(
             "Pending MediaStore entries must be published before sharing",
-            sanitizer.contains("finalizeMediaStoreEntry(context, published.second)") &&
+            sanitizer.contains("finalizeOrDelete(context, published.second)") &&
+                sanitizer.contains("finalizeMediaStoreEntry(context, uri)") &&
                 sanitizer.contains("put(MediaStore.Images.Media.IS_PENDING, 0)")
         )
         assertTrue(
@@ -146,6 +147,8 @@ class ShareMetadataPolicyTest {
         assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Calypso/Shared"))
         assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/pictures/calypso/shared/"))
         assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Calypso/Shared/calypso_shared_1.jpg"))
+        assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Movies/Calypso/Shared"))
+        assertTrue(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Movies/Calypso/Shared/a1b2c3d4.mp4"))
 
         assertFalse(ShareMetadataSanitizer.isShareTempPath(""))
         assertFalse(ShareMetadataSanitizer.isShareTempPath("/storage/emulated/0/Pictures/Shared"))

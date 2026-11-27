@@ -3282,6 +3282,7 @@ class MainActivity : SimpleActivity(), DirectoryOperationsListener {
             val excludedPrefixes = ArrayList<String>().apply {
                 add(CryptoManager.getCipherRootDirectory().absolutePath)
                 add(ShareMetadataSanitizer.getPublicShareDirectory().absolutePath)
+                add(ShareMetadataSanitizer.getPublicVideoShareDirectory().absolutePath)
                 CryptoManager.findVaultRoot(this@MainActivity)?.absolutePath?.let { add(it) }
                 config.vaultRootPath.takeIf { it.isNotEmpty() }?.let { add(it) }
                 addAll(config.encryptedFolders)
