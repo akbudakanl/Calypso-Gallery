@@ -22,8 +22,6 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.canhub.cropper.CropImageView
-import com.zomato.photofilters.FilterPack
-import com.zomato.photofilters.imageprocessors.Filter
 import org.fossify.commons.dialogs.ColorPickerDialog
 import org.fossify.commons.extensions.applyColorFilter
 import org.fossify.commons.extensions.setFillWithStroke
@@ -78,6 +76,8 @@ import org.fossify.gallery.helpers.ASPECT_RATIO_SIXTEEN_NINE
 import org.fossify.gallery.helpers.ColorModeHelper
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.FilterThumbnailsManager
+import org.fossify.gallery.helpers.filters.PhotoFilter
+import org.fossify.gallery.helpers.filters.PhotoFilterPack
 import org.fossify.gallery.helpers.getPermissionToRequest
 import org.fossify.gallery.models.FilterItem
 import java.io.File
@@ -87,10 +87,6 @@ import kotlin.math.max
 
 class EditActivity : BaseCropActivity() {
     companion object {
-        init {
-            System.loadLibrary("NativeImageProcessor")
-        }
-
         private const val ASPECT_X = "aspectX"
         private const val ASPECT_Y = "aspectY"
         private const val CROP = "crop"
@@ -436,8 +432,11 @@ class EditActivity : BaseCropActivity() {
         ensureBackgroundThread {
             try {
                 val original = getOriginalBitmap()
-                currentFilter.processFilter(original)
-                callback(original)
+                val filtered = currentFilter.apply(original)
+                if (filtered !== original && !original.isRecycled) {
+                    original.recycle()
+                }
+                callback(filtered)
             } catch (_: OutOfMemoryError) {
                 toast(org.fossify.commons.R.string.out_of_memory_error)
             }
@@ -469,8 +468,11 @@ class EditActivity : BaseCropActivity() {
                     }
 
                     val originalBitmap = getOriginalBitmap()
-                    currentFilter.filter.processFilter(originalBitmap)
-                    shareBitmap(originalBitmap)
+                    val filteredBitmap = currentFilter.filter.apply(originalBitmap)
+                    if (filteredBitmap !== originalBitmap && !originalBitmap.isRecycled) {
+                        originalBitmap.recycle()
+                    }
+                    shareBitmap(filteredBitmap)
                 }
 
                 binding.cropImageView.isVisible() -> {
@@ -721,10 +723,10 @@ class EditActivity : BaseCropActivity() {
                     val filterThumbnailsManager = FilterThumbnailsManager()
                     filterThumbnailsManager.clearThumbs()
 
-                    val noFilter = Filter(getString(org.fossify.commons.R.string.none))
+                    val noFilter = PhotoFilter(getString(org.fossify.commons.R.string.none))
                     filterThumbnailsManager.addThumb(FilterItem(bitmap, noFilter))
 
-                    FilterPack.getFilterPack(this).forEach {
+                    PhotoFilterPack.getDefaultFilters().forEach {
                         val filterItem = FilterItem(bitmap, it)
                         filterThumbnailsManager.addThumb(filterItem)
                     }
@@ -755,8 +757,8 @@ class EditActivity : BaseCropActivity() {
     }
 
     private fun applyFilter(filterItem: FilterItem) {
-        val newBitmap = Bitmap.createBitmap(filterInitialBitmap!!)
-        binding.defaultImageView.setImageBitmap(filterItem.filter.processFilter(newBitmap))
+        val source = filterInitialBitmap ?: return
+        binding.defaultImageView.setImageBitmap(filterItem.filter.apply(source))
     }
 
     private fun updateAspectRatio(aspectRatio: Int) {

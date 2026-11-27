@@ -24,7 +24,6 @@ androidImageCropper = "4.7.0"
 glideCompiler = "5.0.7"
 gestureviews = "e706487a14"
 androidsvgAar = "1.4"
-androidphotofilters = "f2f3b444ea"
 media3Exoplayer = "1.10.1"
 bouncycastle = "1.87"
 tink = "1.24.0"
@@ -57,7 +56,6 @@ android-image-cropper = { module = "com.vanniktech:android-image-cropper", versi
 subsamplingscaleimageview = { module = "org.fossify:subsampling-scale-image-view", version.ref = "subsamplingScaleImageView" }
 androidsvg-aar = { module = "com.caverock:androidsvg-aar", version.ref = "androidsvgAar" }
 gestureviews = { module = "org.fossify:gestureviews", version.ref = "gestureviews" }
-androidphotofilters = { module = "com.github.naveensingh:androidphotofilters", version.ref = "androidphotofilters" }
 glide-compiler = { module = "com.github.bumptech.glide:ksp", version.ref = "glideCompiler" }
 bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }

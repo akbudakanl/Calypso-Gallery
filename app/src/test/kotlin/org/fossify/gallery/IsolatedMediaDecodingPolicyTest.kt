@@ -29,6 +29,7 @@ class IsolatedMediaDecodingPolicyTest {
             "zjupure",
             "webpdecoder",
             "jxl-coder",
+            "androidphotofilters",
         )) {
             assertFalse(
                 "libs.versions.toml must not declare $forbidden",
@@ -54,6 +55,7 @@ class IsolatedMediaDecodingPolicyTest {
             "license_webpdecoder_title",
             "license_jxl_coder_title",
             "gif_drawable_title",
+            "filters_title",
         )) {
             assertFalse(
                 "ThirdPartyLicensesActivity must not list removed entry $forbidden",
@@ -264,6 +266,8 @@ class IsolatedMediaDecodingPolicyTest {
             "WebpGlideLibraryModule",
             "JxlCoder",
             "JxlCoderGlideModule",
+            "com.zomato.photofilters",
+            "NativeImageProcessor",
         )
         mainKotlinRoot.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }

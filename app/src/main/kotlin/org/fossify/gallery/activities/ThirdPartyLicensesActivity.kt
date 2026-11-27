@@ -227,11 +227,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.exoplayer_url,
         ),
         ThirdPartyLicenseItem(
-            org.fossify.commons.R.string.filters_title,
-            org.fossify.commons.R.string.filters_text,
-            org.fossify.commons.R.string.filters_url,
-        ),
-        ThirdPartyLicenseItem(
             R.string.license_androidsvg_title,
             R.string.license_androidsvg_text,
             R.string.license_androidsvg_url,
