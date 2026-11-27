@@ -4,6 +4,16 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-28
+### Added
+
+- **MP4/MOV video metadata stripping on share** — remuxes outgoing `.mp4` and `.mov` videos without re-encoding via `MediaExtractor` and `MediaMuxer` (`Movies/Calypso/Shared` with `.nomedia` protection), preserving orientation while stripping location (`©xyz`), device, and container metadata.
+- **JPEG/PNG/WebP container-level metadata stripping** — in **All metadata** mode, removes JPEG `APP13` (IPTC) and `COM` segments, PNG `tEXt`/`iTXt`/`zTXt` chunks, and WebP `EXIF`/`XMP ` RIFF chunks (clearing `VP8X` flags) while preserving color profiles (`ICC`/`sRGB`/`gAMA`) and pixel data.
+
+### Fixed
+
+- **Anonymized and brand-free shared filenames** — **All metadata** mode now generates a random 8-character hex filename (`<hex>.<ext>`) without original timestamps or app names; **Location only** mode now uses `<original>_<hex>.<ext>` instead of the `calypso_shared_` prefix.
+
 ## [1.1.0] - 2026-11-27
 ### Added
 
@@ -142,9 +152,10 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.1...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 [1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
 [1.0.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...1.0.2
 [1.0.3]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.2...1.0.3
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.4...1.1.0
+[1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.0...1.1.1

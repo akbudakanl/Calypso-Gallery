@@ -1,0 +1,7 @@
+Added:
+
+• **MP4/MOV video metadata stripping on share** — remuxes outgoing `.mp4` and `.mov` videos without re-encoding via…
+• **JPEG/PNG/WebP container-level metadata stripping** — in **All metadata** mode, removes JPEG `APP13` (IPTC) and `COM`…
+
+Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.1
+Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.1.1.tar.gz
