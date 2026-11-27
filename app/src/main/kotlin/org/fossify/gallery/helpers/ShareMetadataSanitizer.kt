@@ -104,13 +104,14 @@ object ShareMetadataSanitizer {
     }
 
     internal fun buildShareDisplayName(sourceName: String, extension: String, mode: Int): String {
+        val bytes = ByteArray(RANDOM_NAME_BYTES)
+        secureRandom.nextBytes(bytes)
+        val hex = bytes.joinToString("") { "%02x".format(it) }
         if (mode == SHARE_METADATA_MODE_ALL) {
-            val bytes = ByteArray(RANDOM_NAME_BYTES)
-            secureRandom.nextBytes(bytes)
-            val hex = bytes.joinToString("") { "%02x".format(it) }
             return "$hex.$extension"
         }
-        return "calypso_shared_${System.nanoTime()}_$sourceName"
+        val baseName = sourceName.substringBeforeLast('.', sourceName).ifEmpty { "file" }
+        return "${baseName}_$hex.$extension"
     }
 
     private fun sanitizeOne(

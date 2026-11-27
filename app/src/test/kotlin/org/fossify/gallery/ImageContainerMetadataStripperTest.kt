@@ -146,7 +146,9 @@ class ImageContainerMetadataStripperTest {
             extension = "jpg",
             mode = SHARE_METADATA_MODE_LOCATION
         )
-        assertTrue(locationName.endsWith("_IMG_20261128_001500.jpg"))
+        assertTrue(locationName.matches(Regex("IMG_20261128_001500_[0-9a-f]{8}\\.jpg")))
+        assertFalse(locationName.contains("calypso", ignoreCase = true))
+        assertFalse(locationName.contains("shared", ignoreCase = true))
     }
 
     private fun jpegSegment(marker: Int, payload: ByteArray): ByteArray {
