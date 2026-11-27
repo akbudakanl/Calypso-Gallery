@@ -3,17 +3,18 @@ package org.fossify.gallery.helpers.media
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
-import com.bumptech.glide.integration.avif.AvifByteBufferBitmapDecoder
-import com.bumptech.glide.load.Options
-import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPoolAdapter
 import com.caverock.androidsvg.SVG
 import java.io.ByteArrayInputStream
-import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
 internal fun probeAvifBounds(bytes: ByteArray): Pair<Int, Int>? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
     probePlatformBounds(bytes)?.let { return it }
-    val decoded = decodeAvifSoftware(bytes) ?: return null
+    val decoded = decodeWithImageDecoder(
+        bytes,
+        IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+        IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+    ) ?: return null
     return try {
         decoded.width to decoded.height
     } finally {
@@ -22,29 +23,8 @@ internal fun probeAvifBounds(bytes: ByteArray): Pair<Int, Int>? {
 }
 
 internal fun decodeAvif(bytes: ByteArray, targetW: Int, targetH: Int): Bitmap? {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        decodeWithImageDecoder(bytes, targetW, targetH)?.let { return it }
-    }
-    return decodeAvifSoftware(bytes)
-}
-
-private fun decodeAvifSoftware(bytes: ByteArray): Bitmap? {
-    val direct = ByteBuffer.allocateDirect(bytes.size).apply {
-        put(bytes)
-        flip()
-    }
-    val decoder = AvifByteBufferBitmapDecoder(BitmapPoolAdapter())
-    val options = Options()
-    if (!decoder.handles(direct, options)) return null
-    direct.rewind()
-    return runCatching {
-        decoder.decode(
-            direct,
-            IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
-            IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
-            options,
-        )?.get()
-    }.getOrNull()
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+    return decodeWithImageDecoder(bytes, targetW, targetH)
 }
 
 internal fun probeSvgBounds(bytes: ByteArray): Pair<Int, Int>? {

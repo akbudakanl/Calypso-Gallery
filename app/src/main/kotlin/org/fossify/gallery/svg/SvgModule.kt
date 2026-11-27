@@ -8,9 +8,7 @@ import android.os.ParcelFileDescriptor
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Priority
 import com.bumptech.glide.Registry
-import com.bumptech.glide.annotation.Excludes
 import com.bumptech.glide.annotation.GlideModule
-import com.bumptech.glide.integration.avif.AvifGlideModule
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.data.DataFetcher
@@ -33,7 +31,6 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 
 @GlideModule
-@Excludes(AvifGlideModule::class)
 class SvgModule : AppGlideModule() {
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
         val appContext = context.applicationContext

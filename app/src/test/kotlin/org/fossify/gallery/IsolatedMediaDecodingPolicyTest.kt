@@ -30,6 +30,7 @@ class IsolatedMediaDecodingPolicyTest {
             "webpdecoder",
             "jxl-coder",
             "androidphotofilters",
+            "avif-integration",
         )) {
             assertFalse(
                 "libs.versions.toml must not declare $forbidden",
@@ -125,7 +126,6 @@ class IsolatedMediaDecodingPolicyTest {
     fun glideModuleExcludesNativeThirdPartyModulesAndBlocksDirectStreams() {
         val svgModuleText = locateRepoFile("app/src/main/kotlin/org/fossify/gallery/svg/SvgModule.kt").readText()
         for (required in listOf(
-            "AvifGlideModule::class",
             "BlockedMainProcessStreamLoader",
             "BlockedMainProcessByteBufferFileLoader",
             "VideoOnlyPfdModelLoader",
@@ -268,6 +268,9 @@ class IsolatedMediaDecodingPolicyTest {
             "JxlCoderGlideModule",
             "com.zomato.photofilters",
             "NativeImageProcessor",
+            "AvifGlideModule",
+            "AvifByteBufferBitmapDecoder",
+            "AvifDecoder",
         )
         mainKotlinRoot.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
@@ -277,5 +280,13 @@ class IsolatedMediaDecodingPolicyTest {
                     assertFalse("${file.invariantSeparatorsPath} must not reference $token", text.contains(token))
                 }
             }
+
+        val platformCodecsText = locateRepoFile(
+            "app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedPlatformCodecs.kt",
+        ).readText()
+        assertTrue(
+            "IsolatedPlatformCodecs must prefer pure-Rust JPEG for embedded RAW previews",
+            platformCodecsText.contains("NativeMediaDecoder.decodeStatic(IsolatedMediaFormat.JPEG"),
+        )
     }
 }

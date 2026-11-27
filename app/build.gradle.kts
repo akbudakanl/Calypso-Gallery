@@ -245,7 +245,6 @@ dependencies {
     implementation(libs.gestureviews)
     implementation(libs.subsamplingscaleimageview)
     implementation(libs.androidx.swiperefreshlayout)
-    implementation(libs.avif.integration)
     implementation(libs.tink.android)
     testImplementation(libs.bouncycastle.bcprov)
 

@@ -80,6 +80,7 @@ private fun decodeEmbeddedRawPreview(bytes: ByteArray, targetW: Int, targetH: In
         ExifInterface(ByteArrayInputStream(bytes)).thumbnailBytes
     }.getOrNull() ?: return null
     if (embedded.isEmpty()) return null
+    NativeMediaDecoder.decodeStatic(IsolatedMediaFormat.JPEG, embedded, targetW, targetH)?.let { return it }
     val (ew, eh) = probePlatformBounds(embedded) ?: return null
     return decodePlatform(embedded, ew, eh, targetW, targetH)
 }
