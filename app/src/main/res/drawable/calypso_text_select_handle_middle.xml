@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Theme-aware replacement for the platform's green-tinted text selection handle. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="32dp"
-    android:viewportWidth="24"
-    android:viewportHeight="32">
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
     <path
         android:fillColor="?android:attr/textColorPrimary"
-        android:pathData="M12,0 C9,8 2,12 2,20 A10,10 0 0,0 22,20 C22,12 15,8 12,0 Z" />
+        android:pathData="M10,0 L15.86,5.86 A8.28,8.28 0 1,1 4.14,5.86 Z" />
 </vector>
