@@ -6,8 +6,9 @@ import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.system.Os
+import android.system.OsConstants
 import java.io.ByteArrayInputStream
-import java.io.FileInputStream
 import java.util.concurrent.atomic.AtomicLong
 
 private const val MAX_REGION_SESSIONS = 4
@@ -29,16 +30,22 @@ object IsolatedRegionDecoderStore {
     private val sessions = LinkedHashMap<Long, RegionSession>(SESSION_CAPACITY, SESSION_LOAD_FACTOR, true)
 
     fun openSession(request: IsolatedDecodeRequest): IsolatedRegionOpenResult {
-        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
-            return openStreamingSession(request)
+        val pfd = request.inputPfd
+        return if (request.sharedInputHandle == null && pfd != null && isSeekableRegionPfd(pfd)) {
+            openStreamingSession(request)
+        } else {
+            openInMemorySession(request)
         }
+    }
+
+    private fun openInMemorySession(request: IsolatedDecodeRequest): IsolatedRegionOpenResult {
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
                 IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES,
             ) ?: return IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
 
-            val decoder = createRegionDecoder(bytes)
+            val decoder = createRegionDecoderFromBytes(bytes)
                 ?: return IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
 
             if (!IsolatedFormatSniffer.isValidSourceDimensions(decoder.width, decoder.height)) {
@@ -67,33 +74,26 @@ object IsolatedRegionDecoderStore {
         var decoder: BitmapRegionDecoder? = null
         return try {
             ownedPfd = ParcelFileDescriptor.dup(sourcePfd.fileDescriptor)
-            FileInputStream(ownedPfd.fileDescriptor).channel.position(0L)
-            decoder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Os.lseek(ownedPfd.fileDescriptor, 0L, OsConstants.SEEK_SET)
+            val safeDecoder: BitmapRegionDecoder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 BitmapRegionDecoder.newInstance(ownedPfd)
             } else {
                 @Suppress("DEPRECATION")
                 BitmapRegionDecoder.newInstance(ownedPfd.fileDescriptor, false)
             }
-            val safeDecoder = decoder
-            when {
-                safeDecoder == null -> {
-                    runCatching { ownedPfd.close() }
-                    IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
-                }
-                !IsolatedFormatSniffer.isValidSourceDimensions(safeDecoder.width, safeDecoder.height) -> {
-                    runCatching { safeDecoder.recycle() }
-                    runCatching { ownedPfd.close() }
-                    IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
-                }
-                else -> {
-                    val sessionId = registerSession(RegionSession(safeDecoder, ownedPfd))
-                    IsolatedRegionOpenResult(
-                        status = IsolatedDecodeResult.STATUS_OK,
-                        sessionId = sessionId,
-                        width = safeDecoder.width,
-                        height = safeDecoder.height,
-                    )
-                }
+            decoder = safeDecoder
+            if (!IsolatedFormatSniffer.isValidSourceDimensions(safeDecoder.width, safeDecoder.height)) {
+                runCatching { safeDecoder.recycle() }
+                runCatching { ownedPfd.close() }
+                IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+            } else {
+                val sessionId = registerSession(RegionSession(safeDecoder, ownedPfd))
+                IsolatedRegionOpenResult(
+                    status = IsolatedDecodeResult.STATUS_OK,
+                    sessionId = sessionId,
+                    width = safeDecoder.width,
+                    height = safeDecoder.height,
+                )
             }
         } catch (_: Throwable) {
             runCatching { if (decoder?.isRecycled == false) decoder.recycle() }
@@ -207,15 +207,22 @@ object IsolatedRegionDecoderStore {
     private fun lookupSession(sessionId: Long): RegionSession? {
         return synchronized(mapLock) { sessions[sessionId] }
     }
+}
 
-    private fun createRegionDecoder(bytes: ByteArray): BitmapRegionDecoder? {
-        return runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                BitmapRegionDecoder.newInstance(ByteArrayInputStream(bytes))
-            } else {
-                @Suppress("DEPRECATION")
-                BitmapRegionDecoder.newInstance(bytes, 0, bytes.size, false)
-            }
-        }.getOrNull()
-    }
+private fun isSeekableRegionPfd(pfd: ParcelFileDescriptor): Boolean {
+    return runCatching {
+        Os.lseek(pfd.fileDescriptor, 0L, OsConstants.SEEK_SET)
+        true
+    }.getOrDefault(false)
+}
+
+private fun createRegionDecoderFromBytes(bytes: ByteArray): BitmapRegionDecoder? {
+    return runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            BitmapRegionDecoder.newInstance(ByteArrayInputStream(bytes))
+        } else {
+            @Suppress("DEPRECATION")
+            BitmapRegionDecoder.newInstance(bytes, 0, bytes.size, false)
+        }
+    }.getOrNull()
 }

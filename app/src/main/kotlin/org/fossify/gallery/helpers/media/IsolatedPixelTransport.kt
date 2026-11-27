@@ -9,6 +9,7 @@ import android.os.SharedMemory
 import android.system.OsConstants
 import androidx.annotation.RequiresApi
 import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.nio.ByteBuffer
 
 /**
@@ -37,6 +38,21 @@ object IsolatedPixelTransport {
         }
     }
 
+    fun packInputStream(name: String, input: InputStream, exactLength: Long): Parcelable? {
+        val maxInMemory = IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES.toLong()
+        if (exactLength !in 1..maxInMemory || Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+            return null
+        }
+        return SharedMemoryTransportApi27.writeStream(name, input, exactLength.toInt())
+    }
+
+    fun packDirectRgba(name: String, byteCount: Int, writer: (ByteBuffer) -> Boolean): PackedPixels? {
+        if (byteCount <= 0 || byteCount.toLong() > MAX_TRANSFER_BYTES) return null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) return null
+        val handle = SharedMemoryTransportApi27.writeDirect(name, byteCount, writer) ?: return null
+        return PackedPixels(byteCount = byteCount, sharedOutputHandle = handle)
+    }
+
     fun packInputPipe(bytes: ByteArray): ParcelFileDescriptor? {
         if (bytes.isEmpty()) return null
         return PipeTransport.writeBytesToPipe(bytes)
@@ -63,7 +79,7 @@ object IsolatedPixelTransport {
     }
 
     fun packBitmap(name: String, bitmap: Bitmap): PackedPixels? {
-        val software = ensureSoftwareArgb8888(bitmap) ?: return null
+        val software = ensureSoftwareArgb8888Bitmap(bitmap) ?: return null
         return try {
             val byteCount = software.byteCount
             if (byteCount <= 0) return null
@@ -88,19 +104,39 @@ object IsolatedPixelTransport {
         return byteCount > 0 && byteCount.toLong() == pixels * BYTES_PER_PIXEL
     }
 
-    fun unpackBitmap(result: IsolatedDecodeResult): Bitmap? {
+    fun unpackBitmap(
+        result: IsolatedDecodeResult,
+        bitmapSupplier: ((Int, Int) -> Bitmap?)? = null,
+    ): Bitmap? {
         val width = result.width
         val height = result.height
         val expectedBytes = result.byteCount
         if (!isValidTransferDimensions(width, height, expectedBytes)) return null
 
         val colorSpace = IsolatedHdrTransport.resolveColorSpace(result.colorSpaceId)
+        val allowPoolReuse = result.colorSpaceId == IsolatedHdrTransport.COLOR_SPACE_SRGB &&
+            result.hdrPayload == null
+        val effectiveSupplier = if (allowPoolReuse) bitmapSupplier else null
         val sharedHandle = result.sharedOutputHandle
         val bitmap = when {
             sharedHandle != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 ->
-                SharedMemoryTransportApi27.readBitmap(sharedHandle, width, height, expectedBytes, colorSpace)
+                SharedMemoryTransportApi27.readBitmap(
+                    handle = sharedHandle,
+                    width = width,
+                    height = height,
+                    expectedByteCount = expectedBytes,
+                    colorSpace = colorSpace,
+                    bitmapSupplier = effectiveSupplier,
+                )
             result.pixelPipePfd != null ->
-                PipeTransport.readBitmapFromPipe(result.pixelPipePfd, width, height, expectedBytes, colorSpace)
+                PipeTransport.readBitmapFromPipe(
+                    pfd = result.pixelPipePfd,
+                    width = width,
+                    height = height,
+                    expectedByteCount = expectedBytes,
+                    colorSpace = colorSpace,
+                    bitmapSupplier = effectiveSupplier,
+                )
             else -> null
         } ?: return null
 
@@ -111,17 +147,6 @@ object IsolatedPixelTransport {
     fun closeHandle(handle: Parcelable?) {
         if (handle != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             SharedMemoryTransportApi27.closeHandle(handle)
-        }
-    }
-
-    private fun ensureSoftwareArgb8888(bitmap: Bitmap): Bitmap? {
-        if (bitmap.isRecycled) return null
-        val needsCopy = bitmap.config != Bitmap.Config.ARGB_8888 ||
-            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.config == Bitmap.Config.HARDWARE)
-        return if (needsCopy) {
-            bitmap.copy(Bitmap.Config.ARGB_8888, false)
-        } else {
-            bitmap
         }
     }
 
@@ -179,12 +204,74 @@ object IsolatedPixelTransport {
             }
         }
 
+        fun writeStream(name: String, input: InputStream, expectedLength: Int): Parcelable? {
+            var shm: SharedMemory? = null
+            var mapped: ByteBuffer? = null
+            val scratch = ByteArray(PIPE_CHUNK_BYTES)
+            return try {
+                shm = SharedMemory.create(name, expectedLength)
+                mapped = shm.mapReadWrite()
+                var total = 0
+                while (total < expectedLength) {
+                    val toRead = minOf(scratch.size, expectedLength - total)
+                    val read = input.read(scratch, 0, toRead)
+                    if (read <= 0) break
+                    mapped.put(scratch, 0, read)
+                    total += read
+                }
+                if (total != expectedLength || input.read() >= 0) {
+                    SharedMemory.unmap(mapped)
+                    mapped = null
+                    shm.close()
+                    shm = null
+                    null
+                } else {
+                    SharedMemory.unmap(mapped)
+                    mapped = null
+                    shm.setProtect(OsConstants.PROT_READ)
+                    shm
+                }
+            } catch (_: Throwable) {
+                if (mapped != null) runCatching { SharedMemory.unmap(mapped) }
+                runCatching { shm?.close() }
+                null
+            } finally {
+                scratch.fill(0)
+            }
+        }
+
+        fun writeDirect(name: String, byteCount: Int, writer: (ByteBuffer) -> Boolean): Parcelable? {
+            var shm: SharedMemory? = null
+            var mapped: ByteBuffer? = null
+            return try {
+                shm = SharedMemory.create(name, byteCount)
+                mapped = shm.mapReadWrite()
+                val ok = writer(mapped)
+                SharedMemory.unmap(mapped)
+                mapped = null
+                if (!ok) {
+                    shm.close()
+                    shm = null
+                    null
+                } else {
+                    shm.setProtect(OsConstants.PROT_READ)
+                    shm
+                }
+            } catch (_: Throwable) {
+                if (mapped != null) runCatching { SharedMemory.unmap(mapped) }
+                runCatching { shm?.close() }
+                null
+            }
+        }
+
+        @Suppress("LongParameterList")
         fun readBitmap(
             handle: Parcelable,
             width: Int,
             height: Int,
             expectedByteCount: Int,
             colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
+            bitmapSupplier: ((Int, Int) -> Bitmap?)? = null,
         ): Bitmap? {
             val shm = handle as? SharedMemory ?: return null
             if (shm.size < expectedByteCount || shm.size.toLong() > MAX_TRANSFER_BYTES) return null
@@ -192,7 +279,7 @@ object IsolatedPixelTransport {
             return try {
                 mapped = shm.mapReadOnly()
                 if (mapped.remaining() < expectedByteCount) return null
-                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888, true, colorSpace).apply {
+                acquireOrCreatePixelBitmap(width, height, colorSpace, bitmapSupplier).apply {
                     copyPixelsFromBuffer(mapped)
                 }
             } catch (_: Throwable) {
@@ -302,17 +389,19 @@ object IsolatedPixelTransport {
             return out.toByteArray()
         }
 
+        @Suppress("LongParameterList")
         fun readBitmapFromPipe(
             pfd: ParcelFileDescriptor,
             width: Int,
             height: Int,
             expectedByteCount: Int,
             colorSpace: ColorSpace = ColorSpace.get(ColorSpace.Named.SRGB),
+            bitmapSupplier: ((Int, Int) -> Bitmap?)? = null,
         ): Bitmap? {
             val bytes = readBoundedFromPfd(pfd, expectedByteCount) ?: return null
             if (bytes.size != expectedByteCount) return null
             return runCatching {
-                Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888, true, colorSpace).apply {
+                acquireOrCreatePixelBitmap(width, height, colorSpace, bitmapSupplier).apply {
                     copyPixelsFromBuffer(ByteBuffer.wrap(bytes))
                 }
             }.getOrNull()
@@ -329,10 +418,32 @@ object IsolatedPixelTransport {
             }.getOrDefault(false)
         }
     }
+}
 
-    internal fun readRawPixelsFromPipe(
-        pfd: ParcelFileDescriptor,
-        target: Bitmap,
-        expectedByteCount: Int,
-    ): Boolean = PipeTransport.readRawPixelsIntoBitmap(pfd, target, expectedByteCount)
+private fun ensureSoftwareArgb8888Bitmap(bitmap: Bitmap): Bitmap? {
+    if (bitmap.isRecycled) return null
+    val needsCopy = bitmap.config != Bitmap.Config.ARGB_8888 ||
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && bitmap.config == Bitmap.Config.HARDWARE)
+    return if (needsCopy) {
+        bitmap.copy(Bitmap.Config.ARGB_8888, false)
+    } else {
+        bitmap
+    }
+}
+
+private fun acquireOrCreatePixelBitmap(
+    width: Int,
+    height: Int,
+    colorSpace: ColorSpace,
+    bitmapSupplier: ((Int, Int) -> Bitmap?)?,
+): Bitmap {
+    val reused = bitmapSupplier?.invoke(width, height)?.takeIf {
+        !it.isRecycled &&
+            it.isMutable &&
+            it.config == Bitmap.Config.ARGB_8888 &&
+            it.width == width &&
+            it.height == height &&
+            it.isPremultiplied
+    }
+    return reused ?: Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888, true, colorSpace)
 }

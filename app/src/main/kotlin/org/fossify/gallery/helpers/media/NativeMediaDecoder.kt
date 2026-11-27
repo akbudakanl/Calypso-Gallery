@@ -29,6 +29,20 @@ internal sealed class RustStaticDecodeOutcome {
     data object Failed : RustStaticDecodeOutcome()
 }
 
+internal class RustStaticDirectMeta(
+    val width: Int,
+    val height: Int,
+    val sourceWidth: Int,
+    val sourceHeight: Int,
+)
+
+internal sealed class RustStaticDirectOutcome {
+    data class Decoded(val meta: RustStaticDirectMeta) : RustStaticDirectOutcome()
+    data object DeferToPlatform : RustStaticDirectOutcome()
+    data object BufferTooSmall : RustStaticDirectOutcome()
+    data object Failed : RustStaticDirectOutcome()
+}
+
 /**
  * Pure-Rust isolated-process media decoder bridge (`png`, `image-webp`, `gif`, `jxl-oxide`).
  */
@@ -141,6 +155,42 @@ internal object NativeMediaDecoder {
         )
     }
 
+    @Suppress("LongParameterList")
+    fun decodeStaticRgbaIntoDirectBuffer(
+        format: IsolatedMediaFormat,
+        bytes: ByteArray,
+        targetW: Int,
+        targetH: Int,
+        exifOrientation: Int = 1,
+        fillMinSide: Boolean = false,
+        directBuffer: ByteBuffer,
+    ): RustStaticDirectOutcome {
+        val code = toFormatCode(format) ?: return RustStaticDirectOutcome.Failed
+        if (bytes.isEmpty() || !directBuffer.isDirect) return RustStaticDirectOutcome.Failed
+        if (!loaded) {
+            return if (format == IsolatedMediaFormat.PNG || format == IsolatedMediaFormat.WEBP) {
+                RustStaticDirectOutcome.DeferToPlatform
+            } else {
+                RustStaticDirectOutcome.Failed
+            }
+        }
+        val meta = IntArray(STATIC_META_LEN)
+        val scaleMode = if (fillMinSide) SCALE_MODE_FILL_MIN_SIDE else SCALE_MODE_FIT_INSIDE
+        val ok = runCatching {
+            NativeMediaJni.decodeStaticRgbaIntoBufferNative(
+                code,
+                bytes,
+                targetW,
+                targetH,
+                exifOrientation,
+                scaleMode,
+                directBuffer,
+                meta,
+            )
+        }.getOrDefault(false)
+        return mapDirectBufferOutcome(ok, meta)
+    }
+
     fun openGifSession(bytes: ByteArray, maxWidth: Int, maxHeight: Int): RustGifOpenInfo? {
         if (bytes.isEmpty() || !loaded) return null
         val info = IntArray(GIF_INFO_LEN)
@@ -199,4 +249,34 @@ internal object NativeMediaDecoder {
         IsolatedMediaFormat.JXL -> FORMAT_JXL
         else -> null
     }
+}
+
+private const val DIRECT_META_SRC_W = 2
+private const val DIRECT_META_SRC_H = 3
+private const val DIRECT_META_STATUS = 4
+private const val DIRECT_STATUS_OK = 0
+private const val DIRECT_STATUS_DEFER_PLATFORM = 1
+private const val DIRECT_STATUS_BUFFER_TOO_SMALL = 3
+
+private fun mapDirectBufferOutcome(ok: Boolean, meta: IntArray): RustStaticDirectOutcome {
+    if (!ok) {
+        return when (meta[DIRECT_META_STATUS]) {
+            DIRECT_STATUS_DEFER_PLATFORM -> RustStaticDirectOutcome.DeferToPlatform
+            DIRECT_STATUS_BUFFER_TOO_SMALL -> RustStaticDirectOutcome.BufferTooSmall
+            else -> RustStaticDirectOutcome.Failed
+        }
+    }
+    val w = meta[0]
+    val h = meta[1]
+    if (meta[DIRECT_META_STATUS] != DIRECT_STATUS_OK || w <= 0 || h <= 0) {
+        return RustStaticDirectOutcome.Failed
+    }
+    return RustStaticDirectOutcome.Decoded(
+        RustStaticDirectMeta(
+            width = w,
+            height = h,
+            sourceWidth = meta[DIRECT_META_SRC_W],
+            sourceHeight = meta[DIRECT_META_SRC_H],
+        ),
+    )
 }

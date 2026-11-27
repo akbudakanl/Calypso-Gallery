@@ -338,6 +338,40 @@ mod tests {
     }
 
     #[test]
+    fn early_streaming_png_downscale_handles_over_8mp_for_screen_targets() {
+        let width = 3200u32;
+        let height = 2600u32; // 8.32 MP (> STREAMING_PNG_MIN_PIXELS = 8_000_000)
+        let row = [90u8, 120, 150, 255].repeat(width as usize);
+        let mut png_bytes = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut png_bytes, width, height);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            encoder.set_compression(png::Compression::Fast);
+            let mut writer = encoder.write_header().unwrap();
+            let mut stream = writer.stream_writer().unwrap();
+            for _ in 0..height {
+                use std::io::Write;
+                stream.write_all(&row).unwrap();
+            }
+            stream.finish().unwrap();
+        }
+
+        let decoded = static_decoders::decode_static_ex(
+            FORMAT_PNG,
+            &png_bytes,
+            512,
+            512,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((decoded.src_width, decoded.src_height), (width, height));
+        assert!(decoded.width <= 512 && decoded.height <= 512);
+        assert_eq!(&decoded.rgba[..4], &[90, 120, 150, 255]);
+    }
+
+    #[test]
     fn apng_and_animated_webp_sessions_decode_and_reject_static() {
         let mut static_png = Vec::new();
         {

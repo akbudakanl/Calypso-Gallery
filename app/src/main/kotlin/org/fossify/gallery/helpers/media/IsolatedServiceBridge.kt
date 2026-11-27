@@ -10,12 +10,17 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
+import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
 private const val CONNECT_TIMEOUT_MS = 5_000L
@@ -23,7 +28,9 @@ private const val REQUEST_TIMEOUT_MS = 20_000L
 private const val GIF_REQUEST_TIMEOUT_MS = 5_000L
 private const val BACKGROUND_UNBIND_DELAY_MS = 15_000L
 private const val DECODE_POOL_THREADS = 4
+private const val MAINTENANCE_POOL_THREADS = 2
 private const val GIF_POOL_THREADS = 2
+private const val QUEUE_INITIAL_CAPACITY = 16
 
 internal enum class IsolatedDecoderChannel {
     PUBLIC,
@@ -31,11 +38,37 @@ internal enum class IsolatedDecoderChannel {
 }
 
 internal object IsolatedServiceBridge {
+    const val PRIORITY_IMMEDIATE = 0
+    const val PRIORITY_NORMAL = 1
+    const val PRIORITY_LOW = 2
+
+    private val taskSeq = AtomicLong(0L)
+    private val priorityComparator = Comparator<Runnable> { a, b ->
+        val pa = (a as? PrioritizedCallableTask<*>)?.priority ?: PRIORITY_NORMAL
+        val pb = (b as? PrioritizedCallableTask<*>)?.priority ?: PRIORITY_NORMAL
+        val byPrio = pa.compareTo(pb)
+        if (byPrio != 0) {
+            byPrio
+        } else {
+            val sa = (a as? PrioritizedCallableTask<*>)?.seq ?: 0L
+            val sb = (b as? PrioritizedCallableTask<*>)?.seq ?: 0L
+            sa.compareTo(sb)
+        }
+    }
+
     private val bindExecutor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "calypso-iso-bind").apply { isDaemon = true }
     }
-    private val decodeExecutor: ExecutorService = Executors.newFixedThreadPool(DECODE_POOL_THREADS) { runnable ->
-        Thread(runnable, "calypso-iso-decode").apply { isDaemon = true }
+    private val decodeExecutor: ExecutorService = ThreadPoolExecutor(
+        DECODE_POOL_THREADS,
+        DECODE_POOL_THREADS,
+        0L,
+        TimeUnit.MILLISECONDS,
+        PriorityBlockingQueue(QUEUE_INITIAL_CAPACITY, priorityComparator),
+        { runnable -> Thread(runnable, "calypso-iso-decode").apply { isDaemon = true } },
+    )
+    private val maintenanceExecutor: ExecutorService = Executors.newFixedThreadPool(MAINTENANCE_POOL_THREADS) { r ->
+        Thread(r, "calypso-iso-maint").apply { isDaemon = true }
     }
     private val gifExecutor: ExecutorService = Executors.newFixedThreadPool(GIF_POOL_THREADS) { runnable ->
         Thread(runnable, "calypso-iso-gif").apply { isDaemon = true }
@@ -44,6 +77,12 @@ internal object IsolatedServiceBridge {
 
     private val publicChannel = ChannelConnection(IsolatedMediaDecoderService::class.java)
     private val vaultChannel = ChannelConnection(VaultIsolatedMediaDecoderService::class.java)
+
+    private class PrioritizedCallableTask<T>(
+        val priority: Int,
+        val seq: Long,
+        callable: Callable<T>,
+    ) : FutureTask<T>(callable)
 
     private fun channelFor(channel: IsolatedDecoderChannel): ChannelConnection {
         return if (channel == IsolatedDecoderChannel.VAULT) vaultChannel else publicChannel
@@ -71,7 +110,7 @@ internal object IsolatedServiceBridge {
         block: (IIsolatedMediaDecoder) -> Unit,
     ) {
         val conn = channelFor(channel)
-        decodeExecutor.execute {
+        maintenanceExecutor.execute {
             val decoder = conn.ensureConnected(context) ?: return@execute
             runCatching { block(decoder) }
         }
@@ -82,14 +121,19 @@ internal object IsolatedServiceBridge {
         quarantineKey: String,
         quarantine: IsolatedFailureQuarantine,
         channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
+        priority: Int = PRIORITY_NORMAL,
+        cancelFlag: AtomicBoolean? = null,
         block: (IIsolatedMediaDecoder) -> T?,
     ): T? {
+        if (cancelFlag?.get() == true) return null
         return channelFor(channel).runWatchdogOnExecutor(
             executor = decodeExecutor,
             timeoutMs = REQUEST_TIMEOUT_MS,
             context = context,
             quarantineKey = quarantineKey,
             quarantine = quarantine,
+            priority = priority,
+            cancelFlag = cancelFlag,
             block = block,
         )
     }
@@ -107,6 +151,8 @@ internal object IsolatedServiceBridge {
             context = context,
             quarantineKey = quarantineKey,
             quarantine = quarantine,
+            priority = PRIORITY_IMMEDIATE,
+            cancelFlag = null,
             block = block,
         )
     }
@@ -142,24 +188,32 @@ internal object IsolatedServiceBridge {
             mainHandler?.postDelayed(pendingUnbind, BACKGROUND_UNBIND_DELAY_MS)
         }
 
+        @Suppress("LongParameterList")
         fun <T> runWatchdogOnExecutor(
             executor: ExecutorService,
             timeoutMs: Long,
             context: Context,
             quarantineKey: String,
             quarantine: IsolatedFailureQuarantine,
+            priority: Int,
+            cancelFlag: AtomicBoolean?,
             block: (IIsolatedMediaDecoder) -> T?,
             allowRetry: Boolean = true,
         ): T? {
+            if (cancelFlag?.get() == true) return null
             val genBefore = connectionGen.get()
             val decoder = ensureConnected(context) ?: return null
-            val future = executor.submit<T?> { block(decoder) }
+            if (cancelFlag?.get() == true) return null
+            val task = PrioritizedCallableTask(priority, taskSeq.getAndIncrement()) {
+                if (cancelFlag?.get() == true) null else block(decoder)
+            }
+            executor.execute(task)
             var outcome: T? = null
             var shouldRetry = false
             try {
-                outcome = future.get(timeoutMs, TimeUnit.MILLISECONDS)
+                outcome = task.get(timeoutMs, TimeUnit.MILLISECONDS)
             } catch (_: TimeoutException) {
-                future.cancel(true)
+                task.cancel(true)
                 quarantine.recordFailure(quarantineKey)
                 resetConnection(context)
             } catch (err: ExecutionException) {
@@ -174,8 +228,18 @@ internal object IsolatedServiceBridge {
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
             }
-            if (shouldRetry) {
-                return runWatchdogOnExecutor(executor, timeoutMs, context, quarantineKey, quarantine, block, false)
+            if (shouldRetry && cancelFlag?.get() != true) {
+                return runWatchdogOnExecutor(
+                    executor = executor,
+                    timeoutMs = timeoutMs,
+                    context = context,
+                    quarantineKey = quarantineKey,
+                    quarantine = quarantine,
+                    priority = priority,
+                    cancelFlag = cancelFlag,
+                    block = block,
+                    allowRetry = false,
+                )
             }
             return outcome
         }

@@ -6,6 +6,7 @@ import android.graphics.Gainmap
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.Parcelable
+import android.os.SharedMemory
 import androidx.annotation.RequiresApi
 import java.nio.ByteBuffer
 import kotlin.math.roundToInt
@@ -168,9 +169,16 @@ private object GainmapPayloadCodec {
         val meta = IsolatedHdrTransport.sanitizeGainmapMeta(readMeta(gainmap)) ?: return null
         val byteCount = transferBmp.byteCount
         if (byteCount <= 0) return null
-        val bytes = ByteArray(byteCount)
-        transferBmp.copyPixelsToBuffer(ByteBuffer.wrap(bytes))
-        val packed = IsolatedPixelTransport.packRgbaBytes("calypso-gm", bytes) ?: return null
+        val packed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            IsolatedPixelTransport.SharedMemoryTransportApi27.writeBitmap("calypso-gm", transferBmp)
+                ?.let { handle ->
+                    IsolatedPixelTransport.PackedPixels(byteCount = byteCount, sharedOutputHandle = handle)
+                }
+        } else {
+            val bytes = ByteArray(byteCount)
+            transferBmp.copyPixelsToBuffer(ByteBuffer.wrap(bytes))
+            IsolatedPixelTransport.packRgbaBytes("calypso-gm", bytes)
+        } ?: return null
         return IsolatedHdrPayload(
             gainmapWidth = transferBmp.width,
             gainmapHeight = transferBmp.height,
@@ -189,21 +197,58 @@ private object GainmapPayloadCodec {
             gmH in 1..baseBitmap.height &&
             pixels <= IsolatedPixelTransport.MAX_TRANSFER_PIXELS
         val config = if (validDims) resolveGainmapConfig(pixels, payload.gainmapByteCount.toLong()) else null
-        val bytes = config?.let {
-            readRawPayloadBytes(
-                handle = payload.gainmapHandle,
-                pfd = payload.gainmapPipePfd,
-                expectedByteCount = payload.gainmapByteCount,
-            )
+        return config?.let { cfg ->
+            val handle = payload.gainmapHandle
+            val pfd = payload.gainmapPipePfd
+            when {
+                handle != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 ->
+                    readGainmapFromSharedMemory(handle, gmW, gmH, payload.gainmapByteCount, cfg)
+                pfd != null -> readGainmapFromPipe(pfd, gmW, gmH, payload.gainmapByteCount, cfg)
+                else -> null
+            }
         }
-        return if (config == null || bytes == null || bytes.size != payload.gainmapByteCount) {
+    }
+
+    private fun readGainmapFromPipe(
+        pfd: ParcelFileDescriptor,
+        width: Int,
+        height: Int,
+        expectedByteCount: Int,
+        config: Bitmap.Config,
+    ): Bitmap? {
+        val bytes = IsolatedPixelTransport.PipeTransport.readBoundedFromPfd(
+            pfd = pfd,
+            maxBytes = expectedByteCount,
+            expectedLength = expectedByteCount.toLong(),
+        )?.takeIf { it.size == expectedByteCount } ?: return null
+        return runCatching {
+            Bitmap.createBitmap(width, height, config).apply {
+                copyPixelsFromBuffer(ByteBuffer.wrap(bytes))
+            }
+        }.getOrNull()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O_MR1)
+    private fun readGainmapFromSharedMemory(
+        handle: Parcelable,
+        width: Int,
+        height: Int,
+        expectedByteCount: Int,
+        config: Bitmap.Config,
+    ): Bitmap? {
+        val shm = handle as? SharedMemory ?: return null
+        if (shm.size < expectedByteCount) return null
+        var mapped: ByteBuffer? = null
+        return try {
+            mapped = shm.mapReadOnly()
+            if (mapped.remaining() < expectedByteCount) return null
+            Bitmap.createBitmap(width, height, config).apply {
+                copyPixelsFromBuffer(mapped)
+            }
+        } catch (_: Throwable) {
             null
-        } else {
-            runCatching {
-                Bitmap.createBitmap(gmW, gmH, config).apply {
-                    copyPixelsFromBuffer(ByteBuffer.wrap(bytes))
-                }
-            }.getOrNull()
+        } finally {
+            if (mapped != null) runCatching { SharedMemory.unmap(mapped) }
         }
     }
 
@@ -211,24 +256,6 @@ private object GainmapPayloadCodec {
         return when (byteCount) {
             pixels * ALPHA8_BYTES_PER_PIXEL -> Bitmap.Config.ALPHA_8
             pixels * ARGB8888_BYTES_PER_PIXEL -> Bitmap.Config.ARGB_8888
-            else -> null
-        }
-    }
-
-    private fun readRawPayloadBytes(
-        handle: Parcelable?,
-        pfd: ParcelFileDescriptor?,
-        expectedByteCount: Int,
-    ): ByteArray? {
-        return when {
-            handle != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 ->
-                IsolatedPixelTransport.SharedMemoryTransportApi27.readBytes(handle, expectedByteCount)
-            pfd != null ->
-                IsolatedPixelTransport.PipeTransport.readBoundedFromPfd(
-                    pfd = pfd,
-                    maxBytes = expectedByteCount,
-                    expectedLength = expectedByteCount.toLong(),
-                )
             else -> null
         }
     }

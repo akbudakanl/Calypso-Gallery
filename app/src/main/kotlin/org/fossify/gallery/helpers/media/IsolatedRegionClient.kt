@@ -6,7 +6,6 @@ import android.graphics.Rect
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.openDecryptedContentStream
 import java.io.File
 
 /**
@@ -39,6 +38,7 @@ object IsolatedRegionClient {
                 quarantineKey = key,
                 quarantine = IsolatedDecoderClient.quarantine,
                 channel = channel,
+                priority = IsolatedServiceBridge.PRIORITY_LOW,
             ) { decoder ->
                 val res = decoder.openRegionSession(req)
                 if (res != null && res.status == IsolatedDecodeResult.STATUS_OK && res.sessionId > 0L) {
@@ -65,6 +65,7 @@ object IsolatedRegionClient {
             quarantineKey = "",
             quarantine = IsolatedDecoderClient.quarantine,
             channel = channel,
+            priority = IsolatedServiceBridge.PRIORITY_LOW,
         ) { decoder ->
             decoder.decodeRegionTile(
                 sessionId,
@@ -93,25 +94,12 @@ object IsolatedRegionClient {
 
     private fun buildEncryptedRegionRequest(file: File): IsolatedDecodeRequest? {
         if (!CryptoManager.isVaultUnlocked) return null
-        val plainBytes = runCatching {
-            CryptoManager.openDecryptedContentStream(file)?.use { it.readBytes() }
-        }.getOrNull() ?: return null
-        return try {
-            val shm = IsolatedPixelTransport.packInputBytes("calypso-reg", plainBytes)
-            val pipe = if (shm == null) IsolatedPixelTransport.packInputPipe(plainBytes) else null
-            if (shm == null && pipe == null) {
-                null
-            } else {
-                IsolatedDecodeRequest(
-                    inputPfd = pipe,
-                    sharedInputHandle = shm,
-                    inputLength = plainBytes.size.toLong(),
-                    nameHint = file.name,
-                )
-            }
-        } finally {
-            plainBytes.fill(0)
-        }
+        val meta = runCatching { CryptoManager.readMetadata(file) }.getOrNull()
+        return buildEncryptedStreamRequest(
+            file = file,
+            expectedPlainSize = meta?.originalSize ?: 0L,
+            nameHint = meta?.originalName ?: file.name,
+        )
     }
 
     private fun buildPlainRegionRequest(context: Context, uri: Uri, rawPath: String): IsolatedDecodeRequest? {

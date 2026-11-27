@@ -11,6 +11,7 @@ use crate::{gif_session, static_decoders, try_alloc_zeroed, MediaError, MAX_DECO
 const NATIVE_STATUS_OK: jint = 0;
 const NATIVE_STATUS_DEFER_PLATFORM: jint = 1;
 const NATIVE_STATUS_FAILED: jint = 2;
+const NATIVE_STATUS_BUFFER_TOO_SMALL: jint = 3;
 
 unsafe fn jni_table<'a>(env: *mut JNIEnv) -> Option<&'a JNINativeInterface__1_2> {
     if env.is_null() {
@@ -202,6 +203,87 @@ pub unsafe extern "system" fn Java_org_fossify_gallery_helpers_media_NativeMedia
         }
     }));
     result.ok().flatten().unwrap_or_else(null_mut)
+}
+
+#[no_mangle]
+pub unsafe extern "system" fn Java_org_fossify_gallery_helpers_media_NativeMediaJni_decodeStaticRgbaIntoBufferNative(
+    env: *mut JNIEnv,
+    _class: jclass,
+    format_code: jint,
+    data: jbyteArray,
+    max_width: jint,
+    max_height: jint,
+    exif_orientation: jint,
+    scale_mode: jint,
+    direct_buf: jobject,
+    out_meta: jintArray,
+) -> jboolean {
+    let result = catch_unwind(AssertUnwindSafe(|| -> Option<jboolean> {
+        if direct_buf.is_null() {
+            let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_FAILED]);
+            return Some(JNI_FALSE);
+        }
+        let table = jni_table_1_4(env)?;
+        let ptr = (table.GetDirectBufferAddress)(env, direct_buf) as *mut u8;
+        let cap = (table.GetDirectBufferCapacity)(env, direct_buf);
+        if ptr.is_null() || cap <= 0 {
+            let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_FAILED]);
+            return Some(JNI_FALSE);
+        }
+        let buf_len = usize::try_from(cap).ok()?.min(MAX_DECODE_ALLOC_BYTES);
+        let bytes = match read_jbyte_array(env, data) {
+            Ok(b) => b,
+            Err(_) => {
+                let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_FAILED]);
+                return Some(JNI_FALSE);
+            }
+        };
+        let req_w = u32::try_from(max_width).unwrap_or(0);
+        let req_h = u32::try_from(max_height).unwrap_or(0);
+        match static_decoders::decode_static_ex(
+            format_code,
+            &bytes,
+            req_w,
+            req_h,
+            exif_orientation,
+            scale_mode,
+        ) {
+            Ok(decoded) => {
+                if decoded.rgba.len() > buf_len {
+                    let meta = [
+                        decoded.width as jint,
+                        decoded.height as jint,
+                        decoded.src_width as jint,
+                        decoded.src_height as jint,
+                        NATIVE_STATUS_BUFFER_TOO_SMALL,
+                    ];
+                    let _ = write_jint_slice(env, out_meta, &meta);
+                    return Some(JNI_FALSE);
+                }
+                core::ptr::copy_nonoverlapping(decoded.rgba.as_ptr(), ptr, decoded.rgba.len());
+                let meta = [
+                    decoded.width as jint,
+                    decoded.height as jint,
+                    decoded.src_width as jint,
+                    decoded.src_height as jint,
+                    NATIVE_STATUS_OK,
+                ];
+                if !write_jint_slice(env, out_meta, &meta) {
+                    return Some(JNI_FALSE);
+                }
+                Some(JNI_TRUE)
+            }
+            Err(MediaError::DeferToPlatform) => {
+                let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_DEFER_PLATFORM]);
+                Some(JNI_FALSE)
+            }
+            Err(_) => {
+                let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_FAILED]);
+                Some(JNI_FALSE)
+            }
+        }
+    }));
+    result.ok().flatten().unwrap_or(JNI_FALSE)
 }
 
 #[no_mangle]

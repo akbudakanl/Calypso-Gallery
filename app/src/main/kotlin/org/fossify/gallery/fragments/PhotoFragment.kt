@@ -2,9 +2,7 @@ package org.fossify.gallery.fragments
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import android.graphics.Bitmap
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -16,17 +14,13 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.updateLayoutParams
 import androidx.exifinterface.media.ExifInterface
-import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180
+import androidx.viewpager.widget.ViewPager
 import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270
 import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90
-import androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSPOSE
-import androidx.exifinterface.media.ExifInterface.ORIENTATION_TRANSVERSE
-import androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION
 import com.alexvasilkov.gestures.GestureController
 import com.alexvasilkov.gestures.State
 import com.bumptech.glide.Glide
@@ -52,7 +46,6 @@ import org.fossify.commons.extensions.getProperBackgroundColor
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getRealPathFromURI
 import org.fossify.commons.extensions.isExternalStorageManager
-import org.fossify.commons.extensions.isPathOnOTG
 import org.fossify.commons.extensions.isVisible
 import org.fossify.commons.extensions.onGlobalLayout
 import org.fossify.commons.extensions.portrait
@@ -73,39 +66,24 @@ import org.fossify.gallery.extensions.getBottomActionsHeight
 import org.fossify.gallery.extensions.sendFakeClick
 import org.fossify.gallery.helpers.ColorModeHelper
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.HIGH_TILE_DPI
-import org.fossify.gallery.helpers.LOW_TILE_DPI
 import org.fossify.gallery.helpers.MAX_ZOOM_EQUALITY_TOLERANCE
 import org.fossify.gallery.helpers.MEDIUM
 import org.fossify.gallery.helpers.MyGlideImageDecoder
-import org.fossify.gallery.helpers.NORMAL_TILE_DPI
 import org.fossify.gallery.helpers.PicassoRegionDecoder
 import org.fossify.gallery.helpers.SHOULD_INIT_FRAGMENT
-import org.fossify.gallery.helpers.WEIRD_TILE_DPI
 import org.fossify.gallery.models.Medium
-import org.fossify.gallery.helpers.media.IsolatedDecodeRequest
-import org.fossify.gallery.helpers.media.IsolatedDecoderClient
-import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
 import org.fossify.gallery.helpers.media.IsolatedGifClient
 import org.fossify.gallery.helpers.media.IsolatedGifDrawable
 import org.fossify.gallery.helpers.media.IsolatedGlideOptions
+import org.fossify.gallery.helpers.media.PhotoSwipeOptimizer
+import org.fossify.gallery.helpers.media.orientationToDegrees
 import java.io.File
-import java.io.FileOutputStream
-import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.ceil
-import org.fossify.gallery.helpers.openDecryptedContentStream
 
 class PhotoFragment : ViewPagerFragment() {
     private val DEFAULT_DOUBLE_TAP_ZOOM = 2f
-    private val ZOOMABLE_VIEW_LOAD_DELAY = 100L
     private val SAME_ASPECT_RATIO_THRESHOLD = 0.01
-
-    // devices with good displays, but the rest of the hardware not good enough for them
-    private val WEIRD_DEVICES = arrayListOf(
-        "motorola xt1685",
-        "google nexus 5x"
-    )
 
     var mCurrentRotationDegrees = 0
     private var mIsFragmentVisible = false
@@ -127,6 +105,8 @@ class PhotoFragment : ViewPagerFragment() {
     private var mIsLoadingGif = false
     private var mIsAnimatedMedia = false
     private var mGifLoadGeneration = 0
+    private var mPendingZoomableViewOnIdle = false
+    private var mPendingColorModeOnIdle = false
 
     private var mStoredShowExtendedDetails = false
     private var mStoredHideExtendedDetails = false
@@ -252,27 +232,10 @@ class PhotoFragment : ViewPagerFragment() {
     }
 
     private fun cacheEmptyContentUriPath(): Boolean {
-        return try {
-            val uri = Uri.parse(mOriginalPath)
-            val rotated = checkNotNull(
-                IsolatedDecoderClient.decodeUri(
-                    context = requireContext(),
-                    uri = uri,
-                    maxWidth = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
-                    maxHeight = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
-                    flags = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
-                )
-            ) { "Unable to decode image stream" }
-            val file = File(requireContext().externalCacheDir, uri.lastPathSegment ?: "cached_photo.jpg")
-            FileOutputStream(file).use { out ->
-                rotated.compress(Bitmap.CompressFormat.JPEG, 100, out)
-            }
-            rotated.recycle()
-            mMedium.path = file.absolutePath
-            true
-        } catch (e: Exception) {
-            false
-        }
+        val ctx = context ?: return false
+        val cached = PhotoSwipeOptimizer.cacheEmptyContentUriToFile(ctx, mOriginalPath) ?: return false
+        mMedium.path = cached
+        return true
     }
 
     override fun onPause() {
@@ -372,11 +335,40 @@ class PhotoFragment : ViewPagerFragment() {
         mIsFragmentVisible = menuVisible
         if (mWasInit) {
             if (mIsAnimatedMedia) {
-                if (menuVisible) {
+                if (menuVisible && isResumed) {
                     mIsolatedGifDrawable?.start()
+                } else if (!menuVisible && listener?.isPagerScrolling() != true) {
+                    mIsolatedGifDrawable?.stop()
                 }
             } else {
                 photoFragmentVisibilityChanged(menuVisible)
+            }
+        }
+    }
+
+    override fun onPageScrollStateChanged(state: Int) {
+        if (!mWasInit) return
+        when (state) {
+            ViewPager.SCROLL_STATE_DRAGGING -> {
+                mLoadZoomableViewHandler.removeCallbacksAndMessages(null)
+                if (mIsAnimatedMedia && isResumed) mIsolatedGifDrawable?.start()
+            }
+            ViewPager.SCROLL_STATE_IDLE -> {
+                if (mIsAnimatedMedia) {
+                    if (mIsFragmentVisible && isResumed) mIsolatedGifDrawable?.start() else mIsolatedGifDrawable?.stop()
+                } else if (mIsFragmentVisible) {
+                    if (mPendingColorModeOnIdle) {
+                        mPendingColorModeOnIdle = false
+                        applyProperColorMode(binding.gesturesView.drawable)
+                    }
+                    if (mPendingZoomableViewOnIdle) {
+                        mPendingZoomableViewOnIdle = false
+                        scheduleZoomableView()
+                    }
+                } else {
+                    mPendingZoomableViewOnIdle = false
+                    mPendingColorModeOnIdle = false
+                }
             }
         }
     }
@@ -406,20 +398,22 @@ class PhotoFragment : ViewPagerFragment() {
 
     private fun photoFragmentVisibilityChanged(isVisible: Boolean) {
         if (isVisible) {
-            applyProperColorMode(binding.gesturesView.drawable)
-            scheduleZoomableView()
+            if (listener?.isPagerScrolling() == true) {
+                mPendingColorModeOnIdle = true
+                mPendingZoomableViewOnIdle = true
+            } else {
+                mPendingColorModeOnIdle = false
+                applyProperColorMode(binding.gesturesView.drawable)
+                scheduleZoomableView()
+            }
         } else {
+            mPendingColorModeOnIdle = false
+            mPendingZoomableViewOnIdle = false
             hideZoomableView()
-            ColorModeHelper.resetColorMode(activity)
         }
     }
 
-    private fun degreesForRotation(orientation: Int) = when (orientation) {
-        ORIENTATION_ROTATE_270, ORIENTATION_TRANSPOSE -> 270
-        ORIENTATION_ROTATE_180 -> 180
-        ORIENTATION_ROTATE_90, ORIENTATION_TRANSVERSE -> 90
-        else -> 0
-    }
+    private fun degreesForRotation(orientation: Int) = orientationToDegrees(orientation)
 
     private fun loadImage() {
         mHasInitialZoom = false
@@ -429,11 +423,17 @@ class PhotoFragment : ViewPagerFragment() {
             showPortraitStripe()
         }
 
+        val pathToLoad = getPathToLoad(mMedium)
+        if (!mMedium.isGIF() && !mMedium.isSVG() && PhotoSwipeOptimizer.isDefinitelyStaticByPath(pathToLoad)) {
+            mIsAnimatedMedia = false
+            loadBitmap()
+            return
+        }
+
         ensureBackgroundThread {
-            mImageOrientation = getImageOrientation()
             val ctx = context
             val isAnimated = mMedium.isGIF() ||
-                (ctx != null && IsolatedGifClient.isAnimatedMediaCandidate(ctx, getPathToLoad(mMedium)))
+                (ctx != null && IsolatedGifClient.isAnimatedMediaCandidate(ctx, pathToLoad))
             mIsAnimatedMedia = isAnimated
             activity?.runOnUiThread {
                 when {
@@ -494,7 +494,12 @@ class PhotoFragment : ViewPagerFragment() {
                 binding.gesturesView.beVisible()
                 binding.gesturesView.setImageDrawable(drawable)
                 applyProperColorMode(drawable)
-                if (isResumed) {
+                if (PhotoSwipeOptimizer.shouldKeepAnimatedPlaying(
+                        mIsFragmentVisible,
+                        isResumed,
+                        listener?.isPagerScrolling() == true,
+                    )
+                ) {
                     drawable.start()
                 }
             }
@@ -514,7 +519,6 @@ class PhotoFragment : ViewPagerFragment() {
     private fun loadWithGlide(path: String, addZoomableView: Boolean) {
         val priority = if (mIsFragmentVisible) Priority.IMMEDIATE else Priority.NORMAL
         val isEncrypted = CryptoManager.isEncryptedFile(path)
-        val maxScreenDim = maxOf(mScreenWidth, mScreenHeight)
         val includeGainmap = ColorModeHelper.isGainmapSupported() && (context?.config?.ultraHdrRendering ?: true)
         val options = RequestOptions()
             .signature(mMedium.getKey())
@@ -525,11 +529,11 @@ class PhotoFragment : ViewPagerFragment() {
             .skipMemoryCache(isEncrypted)
             .fitCenter()
             .run {
-                if (maxScreenDim > 0 && !mStoredShowHighestQuality) {
-                    override(maxScreenDim, maxScreenDim)
-                } else {
-                    this
-                }
+                PhotoSwipeOptimizer.resolveGlideTargetDimensions(
+                    mScreenWidth,
+                    mScreenHeight,
+                    mStoredShowHighestQuality,
+                )?.let { (w, h) -> override(w, h) } ?: this
             }
             .run {
                 if (mCurrentRotationDegrees != 0) {
@@ -718,14 +722,47 @@ class PhotoFragment : ViewPagerFragment() {
 
     private fun scheduleZoomableView() {
         mLoadZoomableViewHandler.removeCallbacksAndMessages(null)
+        if (listener?.isPagerScrolling() == true) {
+            mPendingZoomableViewOnIdle = true
+            return
+        }
         mLoadZoomableViewHandler.postDelayed({
-            if (mIsFragmentVisible && context?.config?.allowZoomingImages == true && (mMedium.isImage() || mMedium.isPortrait()) && !mIsSubsamplingVisible) {
+            if (canAttachZoomableView()) {
                 addZoomableView()
             }
-        }, ZOOMABLE_VIEW_LOAD_DELAY)
+        }, PhotoSwipeOptimizer.ZOOMABLE_VIEW_IDLE_DELAY_MS)
+    }
+
+    private fun canAttachZoomableView(): Boolean {
+        val zoomAllowed = context?.config?.allowZoomingImages == true
+        val isZoomableMedia = mMedium.isImage() || mMedium.isPortrait()
+        return mIsFragmentVisible &&
+            listener?.isPagerScrolling() != true &&
+            zoomAllowed &&
+            isZoomableMedia &&
+            !mIsSubsamplingVisible
     }
 
     private fun addZoomableView() {
+        if (mImageOrientation == -1) {
+            val path = getFilePathToShow()
+            val cachedOrient = PhotoSwipeOptimizer.cachedExifOrientation(path)
+            if (cachedOrient != null) {
+                mImageOrientation = cachedOrient
+            } else {
+                val ctx = context ?: return
+                ensureBackgroundThread {
+                    val resolved = PhotoSwipeOptimizer.readImageOrientation(ctx, path)
+                    activity?.runOnUiThread {
+                        mImageOrientation = resolved
+                        if (isAdded && canAttachZoomableView()) {
+                            addZoomableView()
+                        }
+                    }
+                }
+                return
+            }
+        }
         val rotation = degreesForRotation(mImageOrientation)
         mIsSubsamplingVisible = true
         val config = requireContext().config
@@ -800,43 +837,7 @@ class PhotoFragment : ViewPagerFragment() {
         }
     }
 
-    private fun getMinTileDpi(): Int {
-        val metrics = resources.displayMetrics
-        val averageDpi = (metrics.xdpi + metrics.ydpi) / 2
-        val device = "${Build.BRAND} ${Build.MODEL}".lowercase(Locale.getDefault())
-        return when {
-            WEIRD_DEVICES.contains(device) -> WEIRD_TILE_DPI
-            averageDpi > 400 -> HIGH_TILE_DPI
-            averageDpi > 300 -> NORMAL_TILE_DPI
-            else -> LOW_TILE_DPI
-        }
-    }
-
-    private fun getImageOrientation(): Int {
-        val defaultOrientation = -1
-        var orient = defaultOrientation
-
-        try {
-            val path = getFilePathToShow()
-            if (CryptoManager.isEncryptedFile(path)) {
-                CryptoManager.openDecryptedContentStream(File(path))?.use { stream ->
-                    orient = ExifInterface(stream).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
-                }
-                return orient
-            }
-            orient = if (path.startsWith("content:/") || requireContext().isPathOnOTG(path)) {
-                val uri = if (path.startsWith("content:/")) Uri.parse(path) else Uri.fromFile(File(path))
-                requireContext().contentResolver.openInputStream(uri)?.use { stream ->
-                    ExifInterface(stream).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
-                } ?: defaultOrientation
-            } else {
-                ExifInterface(path).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
-            }
-        } catch (ignored: Exception) {
-        } catch (ignored: OutOfMemoryError) {
-        }
-        return orient
-    }
+    private fun getMinTileDpi(): Int = PhotoSwipeOptimizer.resolveMinTileDpi(requireContext())
 
     private fun getDoubleTapZoomScale(width: Int, height: Int): Float {
         val bitmapAspectRatio = height / width.toFloat()
@@ -935,29 +936,16 @@ class PhotoFragment : ViewPagerFragment() {
     }
 
     private fun applyProperColorMode(resource: Drawable?) {
-        if (mIsFragmentVisible && activity != null) {
-            ColorModeHelper.setColorModeForImage(
-                activity = requireActivity(),
-                bitmap = (resource as? BitmapDrawable)?.bitmap ?: resource?.toBitmapOrNull(),
-                ultraHdr = context?.config?.ultraHdrRendering ?: true
-            )
-        }
+        PhotoSwipeOptimizer.applyProperColorMode(activity, resource, mIsFragmentVisible)
     }
 
     private fun resetColorModeIfVisible() {
-        if (mIsFragmentVisible) {
-            ColorModeHelper.resetColorMode(activity)
-        }
+        if (mIsFragmentVisible) ColorModeHelper.resetColorMode(activity)
     }
 
     private fun reapplyColorModeIfNeeded() {
-        if (mWasInit && mIsFragmentVisible) {
-            val drawable = binding.gesturesView.drawable
-            if (drawable != null && binding.gesturesView.isVisible()) {
-                applyProperColorMode(drawable)
-            } else {
-                resetColorModeIfVisible()
-            }
-        }
+        PhotoSwipeOptimizer.reapplyColorModeIfNeeded(
+            activity, mWasInit, mIsFragmentVisible, binding.gesturesView.drawable, binding.gesturesView.isVisible(),
+        )
     }
 }

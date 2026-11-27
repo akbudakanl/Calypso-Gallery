@@ -1,9 +1,11 @@
 package org.fossify.gallery.helpers.media
 
 import android.graphics.Bitmap
+import android.os.Build
 import androidx.exifinterface.media.ExifInterface
 
 private const val HEADER_SNIFF_BYTES = 512
+private const val RGBA_BYTES_PER_PIXEL = 4L
 
 private val RUST_STATIC_FORMATS = setOf(
     IsolatedMediaFormat.PNG,
@@ -30,9 +32,7 @@ private data class ProbedMetadata(
  */
 object IsolatedMediaDecoders {
     fun probeBounds(request: IsolatedDecodeRequest): IsolatedBoundsResult {
-        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
-            return IsolatedFdStreamingCodecs.probeBoundsFromPfd(request)
-        }
+        IsolatedFdStreamingCodecs.tryProbeBoundsFromSeekablePfd(request)?.let { return it }
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
@@ -45,9 +45,7 @@ object IsolatedMediaDecoders {
     }
 
     fun decodeStatic(request: IsolatedDecodeRequest): IsolatedDecodeResult {
-        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
-            return IsolatedFdStreamingCodecs.decodeStaticFromPfd(request)
-        }
+        IsolatedFdStreamingCodecs.tryDecodeStaticFromSeekablePfd(request)?.let { return it }
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
@@ -151,7 +149,17 @@ private fun tryFastRustStaticDecode(
     val fillMinSide = (flags and IsolatedDecodeRequest.FLAG_CENTER_CROP) != 0
     val effectiveExif = if (applyExif) exifOrientation else ExifInterface.ORIENTATION_NORMAL
 
-    val decoded = when (
+    val directOutcome = RustFastDirectBridge.decodeDirect(
+        bytes = bytes,
+        format = format,
+        effectiveExif = effectiveExif,
+        rotationDegrees = rotationDegrees,
+        fillMinSide = fillMinSide,
+        request = request,
+    )
+    if (directOutcome != null) return directOutcome
+
+    return when (
         val outcome = NativeMediaDecoder.decodeStaticRgba(
             format = format,
             bytes = bytes,
@@ -161,25 +169,106 @@ private fun tryFastRustStaticDecode(
             fillMinSide = fillMinSide,
         )
     ) {
-        is RustStaticDecodeOutcome.Decoded -> outcome.data
-        is RustStaticDecodeOutcome.DeferToPlatform -> return RustFastOutcome.DeferToPlatform
-        is RustStaticDecodeOutcome.Failed -> return RustFastOutcome.Failed
+        is RustStaticDecodeOutcome.Decoded -> RustFastDirectBridge.packStaticRgbaOutcome(outcome.data, rotationDegrees)
+        is RustStaticDecodeOutcome.DeferToPlatform -> RustFastOutcome.DeferToPlatform
+        is RustStaticDecodeOutcome.Failed -> RustFastOutcome.Failed
     }
-    val packed = IsolatedPixelTransport.packRgbaBytes("calypso-dec", decoded.rgba)
-        ?: return RustFastOutcome.Failed
-    return RustFastOutcome.Success(
-        IsolatedDecodeResult(
-            status = IsolatedDecodeResult.STATUS_OK,
-            width = decoded.width,
-            height = decoded.height,
-            sourceWidth = decoded.sourceWidth,
-            sourceHeight = decoded.sourceHeight,
-            rotationDegrees = rotationDegrees,
-            byteCount = packed.byteCount,
-            sharedOutputHandle = packed.sharedOutputHandle,
-            pixelPipePfd = packed.pixelPipePfd,
-        ),
-    )
+}
+
+private object RustFastDirectBridge {
+    fun packStaticRgbaOutcome(decoded: RustDecodedRgba, rotationDegrees: Int): RustFastOutcome {
+        val packed = IsolatedPixelTransport.packRgbaBytes("calypso-dec", decoded.rgba)
+            ?: return RustFastOutcome.Failed
+        return RustFastOutcome.Success(
+            IsolatedDecodeResult(
+                status = IsolatedDecodeResult.STATUS_OK,
+                width = decoded.width,
+                height = decoded.height,
+                sourceWidth = decoded.sourceWidth,
+                sourceHeight = decoded.sourceHeight,
+                rotationDegrees = rotationDegrees,
+                byteCount = packed.byteCount,
+                sharedOutputHandle = packed.sharedOutputHandle,
+                pixelPipePfd = packed.pixelPipePfd,
+            ),
+        )
+    }
+
+    @Suppress("LongParameterList")
+    fun decodeDirect(
+        bytes: ByteArray,
+        format: IsolatedMediaFormat,
+        effectiveExif: Int,
+        rotationDegrees: Int,
+        fillMinSide: Boolean,
+        request: IsolatedDecodeRequest,
+    ): RustFastOutcome? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) return null
+        val probed = NativeMediaDecoder.probeBounds(format, bytes) ?: return null
+        val target = resolveTargetSize(
+            ProbedMetadata(format, probed.first, probed.second, effectiveExif, rotationDegrees),
+            request,
+        ) ?: return null
+        val (outW, outH) = if (swapsAxesOrientation(effectiveExif)) {
+            target.second to target.first
+        } else {
+            target
+        }
+        val byteCountLong = outW.toLong() * outH.toLong() * RGBA_BYTES_PER_PIXEL
+        val maxBytes = IsolatedFormatSniffer.MAX_OUTPUT_PIXELS * RGBA_BYTES_PER_PIXEL
+        if (byteCountLong !in 1..maxBytes) return null
+
+        var directMeta: RustStaticDirectMeta? = null
+        var directByteCount = 0
+        var directStatus: RustStaticDirectOutcome? = null
+        val packed = IsolatedPixelTransport.packDirectRgba("calypso-dec", byteCountLong.toInt()) { buf ->
+            val outcome = NativeMediaDecoder.decodeStaticRgbaIntoDirectBuffer(
+                format = format,
+                bytes = bytes,
+                targetW = request.maxWidth,
+                targetH = request.maxHeight,
+                exifOrientation = effectiveExif,
+                fillMinSide = fillMinSide,
+                directBuffer = buf,
+            )
+            directStatus = outcome
+            if (outcome is RustStaticDirectOutcome.Decoded) {
+                val actualBytes = outcome.meta.width.toLong() *
+                    outcome.meta.height.toLong() *
+                    RGBA_BYTES_PER_PIXEL
+                if (actualBytes in 1..byteCountLong) {
+                    directMeta = outcome.meta
+                    directByteCount = actualBytes.toInt()
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+        return when {
+            packed != null && directMeta != null && directByteCount > 0 -> {
+                val meta = directMeta!!
+                RustFastOutcome.Success(
+                    IsolatedDecodeResult(
+                        status = IsolatedDecodeResult.STATUS_OK,
+                        width = meta.width,
+                        height = meta.height,
+                        sourceWidth = meta.sourceWidth,
+                        sourceHeight = meta.sourceHeight,
+                        rotationDegrees = rotationDegrees,
+                        byteCount = directByteCount,
+                        sharedOutputHandle = packed.sharedOutputHandle,
+                        pixelPipePfd = packed.pixelPipePfd,
+                    ),
+                )
+            }
+            directStatus is RustStaticDirectOutcome.DeferToPlatform -> RustFastOutcome.DeferToPlatform
+            directStatus is RustStaticDirectOutcome.Failed -> RustFastOutcome.Failed
+            else -> null
+        }
+    }
 }
 
 private fun resolveTargetSize(meta: ProbedMetadata, request: IsolatedDecodeRequest): Pair<Int, Int>? {

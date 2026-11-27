@@ -6,14 +6,21 @@ import android.os.Binder
 import android.os.IBinder
 import java.util.concurrent.Semaphore
 
-private const val MAX_CONCURRENT_HEAVY_DECODES = 2
+private const val MIN_CONCURRENT_HEAVY_DECODES = 2
+private const val MAX_CONCURRENT_HEAVY_DECODES = 3
 private const val HEAVY_DECODE_MIN_BYTES = 1_000_000L
 
 /**
  * Runs in `android:isolatedProcess="true"` with no filesystem, network, or main-process memory access.
  */
 open class IsolatedMediaDecoderService : Service() {
-    private val heavyDecodeSemaphore = Semaphore(MAX_CONCURRENT_HEAVY_DECODES, true)
+    private val heavyDecodeSemaphore = Semaphore(
+        Runtime.getRuntime().availableProcessors().coerceIn(
+            MIN_CONCURRENT_HEAVY_DECODES,
+            MAX_CONCURRENT_HEAVY_DECODES,
+        ),
+        true,
+    )
 
     private val binder = object : IIsolatedMediaDecoder.Stub() {
         override fun probeBounds(request: IsolatedDecodeRequest?): IsolatedBoundsResult {

@@ -113,7 +113,7 @@ internal object IsolatedGifBufferTransport {
                 return api27Slot.readInto(target, byteCount)
             }
             val pfd = pixelPipePfd ?: return false
-            return IsolatedPixelTransport.readRawPixelsFromPipe(pfd, target, byteCount)
+            return IsolatedPixelTransport.PipeTransport.readRawPixelsIntoBitmap(pfd, target, byteCount)
         }
 
         override fun close() {

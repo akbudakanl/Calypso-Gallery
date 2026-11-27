@@ -1,7 +1,10 @@
 package org.fossify.gallery.helpers.media
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorSpace
 import android.graphics.Matrix
+import android.graphics.Paint
 import androidx.exifinterface.media.ExifInterface
 import java.io.ByteArrayInputStream
 import kotlin.math.roundToInt
@@ -9,6 +12,7 @@ import kotlin.math.roundToInt
 private const val ROTATION_90 = 90
 private const val ROTATION_180 = 180
 private const val ROTATION_270 = 270
+private const val HALF_DIVISOR = 2f
 
 internal fun parseExifOnce(bytes: ByteArray, format: IsolatedMediaFormat): ExifInterface? {
     if (format == IsolatedMediaFormat.GIF || format == IsolatedMediaFormat.SVG) return null
@@ -37,55 +41,91 @@ internal fun swapsAxesOrientation(orientation: Int): Boolean {
 }
 
 internal fun finalizeIsolatedBitmap(source: Bitmap, exifOrientation: Int, target: Pair<Int, Int>): Bitmap {
-    val oriented = applyExifOrientation(source, exifOrientation)
+    val swapsAxes = swapsAxesOrientation(exifOrientation)
+    val postRotW = if (swapsAxes) source.height else source.width
+    val postRotH = if (swapsAxes) source.width else source.height
     val (targetW, targetH) = target
-    val scaled = if (oriented.width > targetW || oriented.height > targetH) {
-        val scale = minOf(
-            targetW.toFloat() / oriented.width.toFloat(),
-            targetH.toFloat() / oriented.height.toFloat(),
-        )
-        val newW = (oriented.width * scale).roundToInt().coerceAtLeast(1)
-        val newH = (oriented.height * scale).roundToInt().coerceAtLeast(1)
-        Bitmap.createScaledBitmap(oriented, newW, newH, true)
+    val (newW, newH) = if (postRotW > targetW || postRotH > targetH) {
+        val scale = minOf(targetW.toFloat() / postRotW.toFloat(), targetH.toFloat() / postRotH.toFloat())
+        (postRotW * scale).roundToInt().coerceAtLeast(1) to (postRotH * scale).roundToInt().coerceAtLeast(1)
     } else {
-        oriented
+        postRotW to postRotH
     }
-    if (scaled !== oriented && oriented !== source) {
-        oriented.recycle()
-    }
-    val finalBitmap = if (scaled.config == Bitmap.Config.ARGB_8888) {
-        scaled
+
+    val needsOrientation = needsOrientationTransform(exifOrientation)
+    val needsScale = newW != postRotW || newH != postRotH
+    val finalBitmap = if (!needsOrientation && !needsScale && source.config == Bitmap.Config.ARGB_8888) {
+        source
     } else {
-        scaled.copy(Bitmap.Config.ARGB_8888, false).also {
-            if (scaled !== source) scaled.recycle()
-        }
+        renderTransformedBitmap(source, exifOrientation, postRotW, postRotH, newW, newH)
     }
     IsolatedHdrTransport.transformGainmap(source, finalBitmap, exifOrientation, targetW, targetH)
     return finalBitmap
 }
 
-internal fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+private fun renderTransformedBitmap(
+    source: Bitmap,
+    exifOrientation: Int,
+    postRotW: Int,
+    postRotH: Int,
+    newW: Int,
+    newH: Int,
+): Bitmap {
     val matrix = Matrix()
+    matrix.setTranslate(-source.width / HALF_DIVISOR, -source.height / HALF_DIVISOR)
+    applyOrientationToMatrix(matrix, exifOrientation)
+    if (newW != postRotW || newH != postRotH) {
+        matrix.postScale(newW.toFloat() / postRotW.toFloat(), newH.toFloat() / postRotH.toFloat())
+    }
+    matrix.postTranslate(newW / HALF_DIVISOR, newH / HALF_DIVISOR)
+
+    val cs = source.colorSpace?.takeIf { it.model == ColorSpace.Model.RGB }
+        ?: ColorSpace.get(ColorSpace.Named.SRGB)
+    val dest = Bitmap.createBitmap(newW, newH, Bitmap.Config.ARGB_8888, true, cs)
+    val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
+    Canvas(dest).drawBitmap(source, matrix, paint)
+    return dest
+}
+
+private fun needsOrientationTransform(orientation: Int): Boolean {
+    return when (orientation) {
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL,
+        ExifInterface.ORIENTATION_ROTATE_180,
+        ExifInterface.ORIENTATION_FLIP_VERTICAL,
+        ExifInterface.ORIENTATION_TRANSPOSE,
+        ExifInterface.ORIENTATION_ROTATE_90,
+        ExifInterface.ORIENTATION_TRANSVERSE,
+        ExifInterface.ORIENTATION_ROTATE_270 -> true
+        else -> false
+    }
+}
+
+private fun applyOrientationToMatrix(matrix: Matrix, orientation: Int): Boolean {
     var modified = true
     when (orientation) {
-        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
-        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(ROTATION_180.toFloat())
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(ROTATION_180.toFloat())
         ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
-            matrix.setRotate(ROTATION_180.toFloat())
+            matrix.postRotate(ROTATION_180.toFloat())
             matrix.postScale(-1f, 1f)
         }
         ExifInterface.ORIENTATION_TRANSPOSE -> {
-            matrix.setRotate(ROTATION_90.toFloat())
+            matrix.postRotate(ROTATION_90.toFloat())
             matrix.postScale(-1f, 1f)
         }
-        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(ROTATION_90.toFloat())
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(ROTATION_90.toFloat())
         ExifInterface.ORIENTATION_TRANSVERSE -> {
-            matrix.setRotate(ROTATION_270.toFloat())
+            matrix.postRotate(ROTATION_270.toFloat())
             matrix.postScale(-1f, 1f)
         }
-        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(ROTATION_270.toFloat())
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(ROTATION_270.toFloat())
         else -> modified = false
     }
-    if (!modified || matrix.isIdentity) return bitmap
+    return modified
+}
+
+internal fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = Matrix()
+    if (!applyOrientationToMatrix(matrix, orientation) || matrix.isIdentity) return bitmap
     return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }

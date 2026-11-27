@@ -25,11 +25,16 @@ internal class IsolatedGifPrefetcher(
         val bitmap: Bitmap,
     )
 
-    private val stateLock = Any()
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private val fetchExecutor = Executors.newSingleThreadExecutor { runnable ->
-        Thread(runnable, "calypso-gif-frame").apply { isDaemon = true }
+    private companion object {
+        private const val SHARED_FETCH_THREADS = 2
+        private val sharedFetchExecutor = Executors.newFixedThreadPool(SHARED_FETCH_THREADS) { runnable ->
+            Thread(runnable, "calypso-gif-frame").apply { isDaemon = true }
+        }
     }
+
+    private val stateLock = Any()
+    private val ioLock = Any()
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var frontIndex = 0
     private var currentFrameIndex = 0
@@ -93,16 +98,17 @@ internal class IsolatedGifPrefetcher(
         mainHandler.removeCallbacksAndMessages(null)
         IsolatedGifClient.closeGifSessionAsync(appContext, sessionId, channel)
         runCatching {
-            fetchExecutor.execute {
-                synchronized(stateLock) {
-                    slots.forEach { slot -> runCatching { slot.close() } }
-                    bitmaps.forEach { bmp ->
-                        if (!bmp.isRecycled) bmp.recycle()
+            sharedFetchExecutor.execute {
+                synchronized(ioLock) {
+                    synchronized(stateLock) {
+                        slots.forEach { slot -> runCatching { slot.close() } }
+                        bitmaps.forEach { bmp ->
+                            if (!bmp.isRecycled) bmp.recycle()
+                        }
                     }
                 }
             }
         }
-        fetchExecutor.shutdown()
     }
 
     private fun swapToPrefetchedAndSchedule() {
@@ -147,16 +153,23 @@ internal class IsolatedGifPrefetcher(
 
     private fun submitFetch(target: FetchTarget) {
         runCatching {
-            fetchExecutor.execute {
-                val nextDuration = IsolatedGifClient.fetchGifFrameIntoSlot(
-                    context = appContext,
-                    sessionId = sessionId,
-                    frameIndex = target.frameIndex,
-                    slotIndex = target.slotIndex,
-                    slot = target.slot,
-                    targetBitmap = target.bitmap,
-                    channel = channel,
-                )
+            sharedFetchExecutor.execute {
+                val nextDuration = synchronized(ioLock) {
+                    val isClosed = synchronized(stateLock) { closed }
+                    if (isClosed) {
+                        null
+                    } else {
+                        IsolatedGifClient.fetchGifFrameIntoSlot(
+                            context = appContext,
+                            sessionId = sessionId,
+                            frameIndex = target.frameIndex,
+                            slotIndex = target.slotIndex,
+                            slot = target.slot,
+                            targetBitmap = target.bitmap,
+                            channel = channel,
+                        )
+                    }
+                }
                 mainHandler.post { onPrefetchComplete(target, nextDuration) }
             }
         }.onFailure {

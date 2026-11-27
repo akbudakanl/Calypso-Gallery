@@ -6,8 +6,9 @@ import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.system.Os
+import android.system.OsConstants
 import androidx.exifinterface.media.ExifInterface
-import java.io.FileInputStream
 import java.util.concurrent.Callable
 
 private const val FD_HEADER_SNIFF_BYTES = 512
@@ -29,6 +30,48 @@ internal object IsolatedFdStreamingCodecs {
         return request.sharedInputHandle == null &&
             request.inputPfd != null &&
             request.inputLength > IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES
+    }
+
+    fun tryProbeBoundsFromSeekablePfd(request: IsolatedDecodeRequest): IsolatedBoundsResult? {
+        if (request.sharedInputHandle != null || request.inputPfd == null) return null
+        if (request.inputLength > IsolatedFormatSniffer.MAX_STREAMING_INPUT_BYTES) {
+            return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+        }
+        val pfd = request.inputPfd
+        return try {
+            val header = PfdStreamHelpers.readHeaderAtStart(pfd) ?: return null
+            val format = IsolatedFormatSniffer.sniffFormat(header, request.nameHint)
+            when {
+                !isFormatAllowed(format, request.flags) -> IsolatedBoundsResult(IsolatedDecodeResult.STATUS_UNSUPPORTED)
+                format in FD_STREAMABLE_FORMATS -> probeVerifiedBounds(pfd, format)
+                request.inputLength > IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES ->
+                    IsolatedBoundsResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+                else -> null
+            }
+        } catch (_: Throwable) {
+            IsolatedBoundsResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+        }
+    }
+
+    fun tryDecodeStaticFromSeekablePfd(request: IsolatedDecodeRequest): IsolatedDecodeResult? {
+        if (request.sharedInputHandle != null || request.inputPfd == null) return null
+        if (request.inputLength > IsolatedFormatSniffer.MAX_STREAMING_INPUT_BYTES) {
+            return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+        }
+        val pfd = request.inputPfd
+        return try {
+            val header = PfdStreamHelpers.readHeaderAtStart(pfd) ?: return null
+            val format = IsolatedFormatSniffer.sniffFormat(header, request.nameHint)
+            when {
+                !isFormatAllowed(format, request.flags) -> IsolatedDecodeResult(IsolatedDecodeResult.STATUS_UNSUPPORTED)
+                format in FD_STREAMABLE_FORMATS -> decodeVerifiedPfd(pfd, format, request)
+                request.inputLength > IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES ->
+                    IsolatedDecodeResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+                else -> null
+            }
+        } catch (_: Throwable) {
+            IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+        }
     }
 
     fun probeBoundsFromPfd(request: IsolatedDecodeRequest): IsolatedBoundsResult {
@@ -223,15 +266,13 @@ private object PfdStreamHelpers {
     fun readHeaderAtStart(pfd: ParcelFileDescriptor): ByteArray? {
         if (!rewindPfd(pfd)) return null
         return runCatching {
-            val stream = FileInputStream(pfd.fileDescriptor)
             val buf = ByteArray(FD_HEADER_SNIFF_BYTES)
             var total = 0
             while (total < buf.size) {
-                val read = stream.read(buf, total, buf.size - total)
+                val read = Os.pread(pfd.fileDescriptor, buf, total, buf.size - total, total.toLong())
                 if (read <= 0) break
                 total += read
             }
-            rewindPfd(pfd)
             if (total > 0) buf.copyOf(total) else null
         }.getOrNull()
     }
@@ -286,7 +327,7 @@ private object PfdStreamHelpers {
 
     private fun rewindPfd(pfd: ParcelFileDescriptor): Boolean {
         return runCatching {
-            FileInputStream(pfd.fileDescriptor).channel.position(0L)
+            Os.lseek(pfd.fileDescriptor, 0L, OsConstants.SEEK_SET)
             true
         }.getOrDefault(false)
     }

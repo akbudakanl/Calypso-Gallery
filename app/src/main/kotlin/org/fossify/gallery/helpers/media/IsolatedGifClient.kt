@@ -156,13 +156,20 @@ object IsolatedGifClient {
         maxHeight: Int,
     ): IsolatedDecodeRequest? {
         if (!CryptoManager.isVaultUnlocked) return null
+        val meta = runCatching { CryptoManager.readMetadata(file) }.getOrNull()
+        val expectedSize = meta?.originalSize ?: 0L
+        val nameHint = meta?.originalName ?: file.name
+        if (expectedSize > IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES.toLong()) {
+            return null
+        }
+        tryStreamEncryptedOpenRequest(file, expectedSize, maxWidth, maxHeight, nameHint)?.let {
+            return it
+        }
         val decryptedBytes = runCatching {
             CryptoManager.openDecryptedContentStream(file)?.use { stream ->
-                readBoundedStream(stream, IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES)
+                GifOpenIoHelper.readBoundedStream(stream, IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES)
             }
-        }.getOrNull() ?: return null
-
-        if (decryptedBytes.isEmpty()) return null
+        }.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
         return try {
             val shm = IsolatedPixelTransport.packInputBytes("calypso-gif-in", decryptedBytes)
             val pipe = if (shm == null) IsolatedPixelTransport.packInputPipe(decryptedBytes) else null
@@ -175,7 +182,7 @@ object IsolatedGifClient {
                     inputLength = decryptedBytes.size.toLong(),
                     maxWidth = maxWidth,
                     maxHeight = maxHeight,
-                    nameHint = file.name,
+                    nameHint = nameHint,
                     flags = IsolatedDecodeRequest.FLAG_NONE,
                 )
             }
@@ -184,14 +191,35 @@ object IsolatedGifClient {
         }
     }
 
+    private fun tryStreamEncryptedOpenRequest(
+        file: File,
+        expectedSize: Long,
+        maxWidth: Int,
+        maxHeight: Int,
+        nameHint: String,
+    ): IsolatedDecodeRequest? {
+        if (expectedSize <= 0L) return null
+        val shm = runCatching {
+            CryptoManager.openDecryptedContentStream(file)?.use { stream ->
+                IsolatedPixelTransport.packInputStream("calypso-gif-in", stream, expectedSize)
+            }
+        }.getOrNull() ?: return null
+        return IsolatedDecodeRequest(
+            sharedInputHandle = shm,
+            inputLength = expectedSize,
+            maxWidth = maxWidth,
+            maxHeight = maxHeight,
+            nameHint = nameHint,
+            flags = IsolatedDecodeRequest.FLAG_NONE,
+        )
+    }
+
     private fun buildOpenedDrawable(
         appContext: Context,
         openResult: IsolatedGifOpenResult,
         channel: IsolatedDecoderChannel,
     ): IsolatedGifDrawable? {
-        val width = openResult.frameWidth
-        val height = openResult.frameHeight
-        val sessionId = openResult.sessionId
+        val (width, height, sessionId) = Triple(openResult.frameWidth, openResult.frameHeight, openResult.sessionId)
         val slot0 = if (width > 0 && height > 0 && sessionId > 0L) {
             IsolatedGifBufferTransport.createReadableSlot(width, height, openResult.slot0Handle)
         } else {
@@ -205,7 +233,7 @@ object IsolatedGifClient {
             null
         }
         val slotsReady = slot0 != null && slot1 != null
-        val bitmaps = if (slotsReady) createBitmapPair(width, height) else null
+        val bitmaps = if (slotsReady) GifOpenIoHelper.createBitmapPair(width, height) else null
         val initialDuration = if (slot0 != null && bitmaps != null) {
             fetchGifFrameIntoSlot(appContext, sessionId, 0, 0, slot0, bitmaps.first, channel)
         } else {
@@ -235,8 +263,12 @@ object IsolatedGifClient {
         closeGifSessionAsync(appContext, sessionId, channel)
         return null
     }
+}
 
-    private fun createBitmapPair(width: Int, height: Int): Pair<Bitmap, Bitmap>? {
+private object GifOpenIoHelper {
+    private const val IO_BUFFER_BYTES = 64 * 1024
+
+    fun createBitmapPair(width: Int, height: Int): Pair<Bitmap, Bitmap>? {
         return try {
             val first = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             val second = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -248,7 +280,7 @@ object IsolatedGifClient {
         }
     }
 
-    private fun readBoundedStream(input: InputStream, maxBytes: Int): ByteArray? {
+    fun readBoundedStream(input: InputStream, maxBytes: Int): ByteArray? {
         val out = ByteArrayOutputStream()
         val chunk = ByteArray(IO_BUFFER_BYTES)
         var total = 0
@@ -269,14 +301,26 @@ private object AnimatedCandidateProbe {
     fun isAnimatedCandidate(context: Context, path: String): Boolean {
         if (path.isEmpty() || IsolatedFormatSniffer.isVideoFileHint(path)) return false
         val isEncrypted = CryptoManager.isEncryptedFile(path)
+        val localFile = if (!path.startsWith("content://")) {
+            File(path.removePrefix("file://"))
+        } else {
+            null
+        }
+        if (localFile != null) {
+            IsolatedMetadataCache.get(localFile, isEncrypted)?.isAnimated?.let { return it }
+        }
         val effectiveName = resolveEffectiveName(path, isEncrypted) ?: return false
         val ext = extractExtension(effectiveName)
-        return when {
+        val animated = when {
             ext == "gif" -> true
             ext.isNotEmpty() && ext !in ANIM_CANDIDATE_EXTENSIONS && !path.startsWith("content://") -> false
             else -> readHeaderBytes(context, path, isEncrypted)
                 ?.let { IsolatedFormatSniffer.hasAnimatedContainerHint(it) } == true
         }
+        if (localFile != null) {
+            IsolatedMetadataCache.putAnimatedHint(localFile, isEncrypted, animated)
+        }
+        return animated
     }
 
     private fun resolveEffectiveName(path: String, isEncrypted: Boolean): String? {

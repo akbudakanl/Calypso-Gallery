@@ -10,6 +10,8 @@ use crate::{
     MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS, MAX_RUST_LOSSY_WEBP_PIXELS, MAX_RUST_PNG_PIXELS,
 };
 
+const STREAMING_PNG_MIN_PIXELS: u64 = 8_000_000;
+
 pub(crate) fn probe_png_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     let decoder = PngDecoder::new_with_limits(
         Cursor::new(data),
@@ -45,10 +47,19 @@ pub(crate) fn decode_png_static(
     validate_source_dimensions(src_w, src_h)?;
 
     let pixel_count_u64 = u64::from(src_w) * u64::from(src_h);
-    if pixel_count_u64 > MAX_RUST_PNG_PIXELS {
-        if interlaced {
-            return Err(MediaError::DeferToPlatform);
-        }
+    if pixel_count_u64 > MAX_RUST_PNG_PIXELS && interlaced {
+        return Err(MediaError::DeferToPlatform);
+    }
+    let can_stream_downscale = !interlaced
+        && (pixel_count_u64 > MAX_RUST_PNG_PIXELS
+            || (pixel_count_u64 > STREAMING_PNG_MIN_PIXELS
+                && req_w > 0
+                && req_h > 0
+                && u64::from(req_w)
+                    .saturating_mul(u64::from(req_h))
+                    .saturating_mul(2)
+                    < pixel_count_u64));
+    if can_stream_downscale {
         return decode_png_streaming_downscale(
             reader,
             src_w,
@@ -65,9 +76,7 @@ pub(crate) fn decode_png_static(
     let out_info = reader
         .next_frame(&mut raw)
         .map_err(|_| MediaError::DecodeFailed)?;
-    let slice = raw
-        .get(..out_info.buffer_size())
-        .ok_or(MediaError::DecodeFailed)?;
+    let out_size = out_info.buffer_size();
 
     let pixel_count = (src_w as usize)
         .checked_mul(src_h as usize)
@@ -75,14 +84,24 @@ pub(crate) fn decode_png_static(
     let (rgba, is_opaque) = match out_info.color_type {
         ColorType::Rgba => {
             let expected = pixel_count.checked_mul(4).ok_or(MediaError::TooLarge)?;
-            if slice.len() < expected {
+            if out_size < expected || raw.len() < expected {
                 return Err(MediaError::DecodeFailed);
             }
-            (slice[..expected].to_vec(), false)
+            raw.truncate(expected);
+            (raw, false)
         }
-        ColorType::Rgb => (expand_rgb_to_rgba(slice, pixel_count)?, true),
-        ColorType::GrayscaleAlpha => (expand_ga_to_rgba(slice, pixel_count)?, false),
-        ColorType::Grayscale => (expand_g_to_rgba(slice, pixel_count)?, true),
+        ColorType::Rgb => {
+            let slice = raw.get(..out_size).ok_or(MediaError::DecodeFailed)?;
+            (expand_rgb_to_rgba(slice, pixel_count)?, true)
+        }
+        ColorType::GrayscaleAlpha => {
+            let slice = raw.get(..out_size).ok_or(MediaError::DecodeFailed)?;
+            (expand_ga_to_rgba(slice, pixel_count)?, false)
+        }
+        ColorType::Grayscale => {
+            let slice = raw.get(..out_size).ok_or(MediaError::DecodeFailed)?;
+            (expand_g_to_rgba(slice, pixel_count)?, true)
+        }
         ColorType::Indexed => return Err(MediaError::DecodeFailed),
     };
 

@@ -22,10 +22,13 @@ import com.bumptech.glide.signature.ObjectKey
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.EncryptedGlideOptions
+import java.io.Closeable
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val THUMB_PREVIEW_LIMIT = 600
 
@@ -36,7 +39,30 @@ object IsolatedGlideOptions {
         Option.memory("org.fossify.gallery.include_gainmap", false)
 }
 
-class IsolatedBitmapPacket(val bitmap: Bitmap)
+class IsolatedBitmapPacket(
+    val result: IsolatedDecodeResult? = null,
+    private var directBitmap: Bitmap? = null,
+    val isEncrypted: Boolean = false,
+) : Closeable {
+    fun takeDirectBitmap(): Bitmap? {
+        val bmp = directBitmap
+        directBitmap = null
+        return bmp
+    }
+
+    override fun close() {
+        runCatching { result?.close() }
+        val leftover = directBitmap
+        directBitmap = null
+        if (leftover != null && !leftover.isRecycled) {
+            if (isEncrypted) {
+                VaultBitmapPool.release(leftover)
+            } else {
+                runCatching { leftover.recycle() }
+            }
+        }
+    }
+}
 
 class IsolatedBitmapResourceDecoder(
     private val bitmapPool: BitmapPool,
@@ -48,7 +74,24 @@ class IsolatedBitmapResourceDecoder(
         width: Int,
         height: Int,
         options: Options,
-    ): Resource<Bitmap>? = BitmapResource.obtain(source.bitmap, bitmapPool)
+    ): Resource<Bitmap>? {
+        return source.use { pkt ->
+            val bmp = pkt.takeDirectBitmap() ?: pkt.result?.let { res ->
+                val supplier: (Int, Int) -> Bitmap? = if (pkt.isEncrypted) {
+                    { w, h -> VaultBitmapPool.acquire(w, h) }
+                } else {
+                    { w, h -> bitmapPool.getDirty(w, h, Bitmap.Config.ARGB_8888) }
+                }
+                IsolatedPixelTransport.unpackBitmap(res, supplier)
+            } ?: return@use null
+
+            if (pkt.isEncrypted) {
+                VaultBitmapResource(bmp)
+            } else {
+                BitmapResource.obtain(bmp, bitmapPool)
+            }
+        }
+    }
 }
 
 private data class IsolatedFetchSpec(
@@ -209,51 +252,99 @@ private class IsolatedPacketFetcher(
     private val context: Context,
     private val spec: IsolatedFetchSpec,
 ) : DataFetcher<IsolatedBitmapPacket> {
-    override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in IsolatedBitmapPacket>) {
-        val file = spec.file
-        val uri = spec.uri
-        val bitmap = when {
-            file != null && CryptoManager.isEncryptedFile(file.name) -> {
-                IsolatedDecoderClient.decodeEncryptedFile(
-                    context = context,
-                    file = file,
-                    maxWidth = spec.maxWidth,
-                    maxHeight = spec.maxHeight,
-                    preferEmbeddedThumbnail = spec.preferEmbeddedThumbnail,
-                    preferFullContent = spec.preferFullDecryptedContent,
-                    flags = spec.flags,
-                )
-            }
-            file != null -> {
-                IsolatedDecoderClient.decodeFile(
-                    context = context,
-                    file = file,
-                    maxWidth = spec.maxWidth,
-                    maxHeight = spec.maxHeight,
-                    flags = spec.flags,
-                )
-            }
-            uri != null -> {
-                IsolatedDecoderClient.decodeUri(
-                    context = context,
-                    uri = uri,
-                    maxWidth = spec.maxWidth,
-                    maxHeight = spec.maxHeight,
-                    flags = spec.flags,
-                )
-            }
-            else -> null
-        }
+    private val cancelled = AtomicBoolean(false)
+    private var activePacket: IsolatedBitmapPacket? = null
 
-        if (bitmap != null) {
-            callback.onDataReady(IsolatedBitmapPacket(bitmap))
-        } else {
-            callback.onLoadFailed(FileNotFoundException("Isolated decoder returned null"))
+    override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in IsolatedBitmapPacket>) {
+        if (cancelled.get()) {
+            callback.onLoadFailed(CancellationException("Cancelled"))
+            return
+        }
+        val isoPriority = mapPriority(priority)
+        val packet = fetchPacket(isoPriority)
+        when {
+            cancelled.get() -> {
+                packet?.close()
+                callback.onLoadFailed(CancellationException("Cancelled"))
+            }
+            packet != null -> {
+                activePacket = packet
+                callback.onDataReady(packet)
+            }
+            else -> callback.onLoadFailed(FileNotFoundException("Isolated decoder returned null"))
         }
     }
 
-    override fun cleanup() = Unit
-    override fun cancel() = Unit
+    private fun mapPriority(priority: Priority): Int {
+        return when (priority) {
+            Priority.IMMEDIATE, Priority.HIGH -> IsolatedServiceBridge.PRIORITY_IMMEDIATE
+            Priority.NORMAL -> IsolatedServiceBridge.PRIORITY_NORMAL
+            Priority.LOW -> IsolatedServiceBridge.PRIORITY_LOW
+        }
+    }
+
+    private fun fetchPacket(isoPriority: Int): IsolatedBitmapPacket? {
+        val file = spec.file
+        val uri = spec.uri
+        return when {
+            file != null && CryptoManager.isEncryptedFile(file.name) -> fetchEncryptedPacket(file, isoPriority)
+            file != null -> IsolatedDecodeRequestClient.decodeFileResult(
+                context = context,
+                file = file,
+                maxWidth = spec.maxWidth,
+                maxHeight = spec.maxHeight,
+                flags = spec.flags,
+                priority = isoPriority,
+                cancelFlag = cancelled,
+            )?.let { IsolatedBitmapPacket(result = it, isEncrypted = false) }
+            uri != null -> IsolatedDecodeRequestClient.decodeUriResult(
+                context = context,
+                uri = uri,
+                maxWidth = spec.maxWidth,
+                maxHeight = spec.maxHeight,
+                flags = spec.flags,
+                priority = isoPriority,
+                cancelFlag = cancelled,
+            )?.let { IsolatedBitmapPacket(result = it, isEncrypted = false) }
+            else -> null
+        }
+    }
+
+    private fun fetchEncryptedPacket(file: File, isoPriority: Int): IsolatedBitmapPacket? {
+        return when (
+            val outcome = IsolatedDecodeRequestClient.decodeEncryptedPacket(
+                context = context,
+                file = file,
+                maxWidth = spec.maxWidth,
+                maxHeight = spec.maxHeight,
+                preferEmbeddedThumbnail = spec.preferEmbeddedThumbnail,
+                preferFullContent = spec.preferFullDecryptedContent,
+                flags = spec.flags,
+                priority = isoPriority,
+                cancelFlag = cancelled,
+            )
+        ) {
+            is EncryptedPacketOutcome.Result -> IsolatedBitmapPacket(
+                result = outcome.result,
+                isEncrypted = true,
+            )
+            is EncryptedPacketOutcome.DirectBitmap -> IsolatedBitmapPacket(
+                directBitmap = outcome.bitmap,
+                isEncrypted = true,
+            )
+            null -> null
+        }
+    }
+
+    override fun cleanup() {
+        activePacket?.close()
+        activePacket = null
+    }
+
+    override fun cancel() {
+        cancelled.set(true)
+    }
+
     override fun getDataClass(): Class<IsolatedBitmapPacket> = IsolatedBitmapPacket::class.java
     override fun getDataSource(): DataSource = DataSource.LOCAL
 }

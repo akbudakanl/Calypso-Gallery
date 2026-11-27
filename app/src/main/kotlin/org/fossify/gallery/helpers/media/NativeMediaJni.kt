@@ -29,6 +29,19 @@ internal object NativeMediaJni {
         outMeta: IntArray,
     ): ByteArray?
 
+    @Suppress("LongParameterList")
+    @JvmStatic
+    external fun decodeStaticRgbaIntoBufferNative(
+        formatCode: Int,
+        data: ByteArray,
+        maxWidth: Int,
+        maxHeight: Int,
+        exifOrientation: Int,
+        scaleMode: Int,
+        directBuffer: ByteBuffer,
+        outMeta: IntArray,
+    ): Boolean
+
     @JvmStatic
     external fun openGifSessionNative(
         data: ByteArray,

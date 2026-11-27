@@ -24,7 +24,9 @@ object ColorModeHelper {
     }
 
     fun setColorMode(activity: Activity, colorMode: Int) {
-        activity.window.setColorMode(colorMode)
+        val window = activity.window ?: return
+        if (window.colorMode == colorMode) return
+        window.setColorMode(colorMode)
     }
 
     fun setColorModeForImage(activity: Activity, bitmap: Bitmap?, ultraHdr: Boolean = true) {
@@ -39,6 +41,6 @@ object ColorModeHelper {
     }
 
     fun resetColorMode(activity: Activity?) {
-        activity?.window?.setColorMode(ActivityInfo.COLOR_MODE_DEFAULT)
+        activity?.let { setColorMode(it, ActivityInfo.COLOR_MODE_DEFAULT) }
     }
 }
