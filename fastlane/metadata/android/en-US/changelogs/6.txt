@@ -1,0 +1,7 @@
+Added:
+
+• **Process-isolated media decoding (`isolatedProcess`)** — moved image bounds probing, static decoding, tile/region…
+• **Pure-Rust media decoders (`calypso-media`)** — bundled pure-Rust `gif`, `png` (including `> 32 MP` row-streamed…
+
+Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.0
+Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.1.0.tar.gz

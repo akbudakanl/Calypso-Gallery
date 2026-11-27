@@ -2,6 +2,28 @@
 
 User-facing release notes for Calypso Gallery. The original Fossify Gallery release history is kept in [CHANGELOG.md](CHANGELOG.md).
 
+## [Unreleased]
+
+## [1.1.0] - 2026-11-27
+### Added
+
+- **Process-isolated media decoding (`isolatedProcess`)** — moved image bounds probing, static decoding, tile/region decoding, and animated playback out of the app process into dedicated sandboxed `:media_decoder` (public) and `:vault_decoder` (encrypted vault) processes with `memtagMode="async"` (MTE), input/output pixel caps (`4096` / `32 MP`), and crash quarantine.
+- **Pure-Rust media decoders (`calypso-media`)** — bundled pure-Rust `gif`, `png` (including `> 32 MP` row-streamed non-interlaced PNG and APNG), `image-webp` (lossless `VP8L`, `<= 4 MP` lossy `VP8 `, and animated WebP), and `jxl-oxide` (`<= 32 MP` JPEG XL) decoders inside the isolated decoder processes.
+- **Fail-closed SVG security toggle** — disabled SVG rendering by default and gated `androidsvg` behind **Settings → Media viewer → Media security → Show SVG files** with a confirmation dialog; unrecognized or disallowed SVG payloads are rejected at the isolated decoder boundary.
+- **Ultra HDR (`Gainmap`), wide color gamut, and large-file FD streaming** — restored Android 14+ (`API 34+`) Ultra HDR `Gainmap` and `Display P3` / `BT2020` rendering via validated `SharedMemory` IPC, plus `ParcelFileDescriptor` streaming for `> 100 MiB` (up to `512 MiB`) RAW/TIFF/JPEG/HEIC files.
+- **Expanded FAQs** — added localized FAQ entries covering vault encryption, conflict handling, and the `calypso-cli` workflow, and updated password-recovery guidance.
+
+### Changed
+
+- **Removed third-party C/C++ image and filter JNI libraries** — replaced `androidphotofilters` (`libNativeImageProcessor.so`) with pure-Kotlin filters in the editor, and removed `android-gif-drawable` (`giflib`), `webpdecoder` (`libwebp`), `jxl-coder-glide` (`libjxl`), `avif-integration` (`libavif`/`libaom`; AVIF now uses isolated OS `ImageDecoder` on Android 12+), `penfeizhou` animated decoders, `sanselan`, and `sephiroth` EXIF.
+- **Refined theme palettes and dark-mode cards** — polished Midnight Blue, Deep Forest, and Velvet Violet color palettes and FAQ dark-mode cards.
+- **Updated third-party licenses and translations** — added full MIT/Apache-2.0 notices and localized titles for the pure-Rust media crates across all 11 audited locales.
+
+### Fixed
+
+- **Fullscreen swipe & video thumbnails** — always show a thumbnail when swiping into unvisited videos, and optimized fullscreen swipe prefetching, pooled IPC buffers, and `:vault_decoder` lifecycle cleanup on vault lock.
+- **Device-owner gate on vault unarchive** — require device credential or biometric verification before confirming vault unarchiving.
+
 ## [1.0.4] - 2026-11-25
 ### Fixed
 
@@ -120,8 +142,9 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.3...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.0...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 [1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
 [1.0.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...1.0.2
 [1.0.3]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.2...1.0.3
+[1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.4...1.1.0
