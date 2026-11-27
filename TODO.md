@@ -18,3 +18,10 @@
   2. Set `FileOperationService.ANDROID_NOTIFICATIONS_SUSPENDED = false`.
   3. Restore `CATEGORY_NOTIFICATIONS` in `SettingsActivity.kt` (`categorySpecs`, `settingsHubGeneralCard`, and `setupNotifications()`, referencing commit `9b55e8faf` if needed).
   4. Preserve the two-tier design: a minimal "in progress" notification while the app is in the foreground, a progress bar + anonymous `"current / total (%x)"` summary when backgrounded, and immediate removal (`STOP_FOREGROUND_REMOVE`) with no completion notification when finished.
+
+## Isolated Media Decoding
+
+### [ ] Evaluate pure-Rust AVIF decoding (`rav1d` + `mp4parse`) in `rust/calypso-media/`
+
+- **Context:** `glide:avif-integration` (`libavif`/`libaom`) was removed (ADR 0009 Option 2) so zero third-party C/C++ image decoder `.so` binaries remain in the APK. Android 12+ (`API 31+`) decodes AVIF via OS `ImageDecoder` inside `isolatedProcess="true"`; Android 8–11 (`API 26–30`) currently has AVIF decoding disabled.
+- **Future Goal (Option 3):** Evaluate adding pure-Rust `rav1d` + `mp4parse` inside `rust/calypso-media/` to restore AVIF support on Android 8–11 and add defense-in-depth on newer OS versions without reintroducing C/C++ FFI, weighing APK binary size and build complexity. See [docs/adr/0009-isolated-media-decoding.md](docs/adr/0009-isolated-media-decoding.md).

@@ -12,7 +12,7 @@ Calypso Gallery, kasa (vault) anahtarlarını ve çözülmüş kullanıcı oturu
 
 - **GIF:** `pl.droidsonroids.gif:android-gif-drawable` (`giflib` — C + JNI)
 - **WebP:** `com.github.zjupure:webpdecoder` (`libwebp` — C/C++ + JNI; `CVE-2023-4863` nedeniyle sistem decoder yerine kullanılıyor)
-- **AVIF:** `glide:avif-integration` (`libavif`/`libaom`) ve Android platform codec'leri
+- **AVIF:** Android 12+ (`API 31+`) cihazlarda izole süreç içindeki platform `ImageDecoder` (`dav1d` / Mainline); gömülü `glide:avif-integration` (`libavif`/`libaom`) C++ bağımlılığı kaldırılmıştır (Android 8–11 için gelecekte `rav1d` değerlendirmesi `TODO.md` içinde takip edilir)
 - **JPEG XL:** `io.github.awxkee:jxl-coder-glide` (Rust + C/C++ `libjxl` NDK; Faz 4'te saf Rust `jxl-oxide`'a geçeceği için destek korunur)
 - **JPG / PNG / HEIC / RAW:** Android `BitmapFactory` / `ImageDecoder` / `BitmapRegionDecoder` (Skia / `libjpeg-turbo` / DNG codec'leri)
 - **SVG:** `com.caverock:androidsvg-aar` (Saf Java; RCE riski düşük olsa da hatalı SVG'lerde OOM / CPU DoS riski taşır)
@@ -25,7 +25,7 @@ Bu decoder'ların tamamını bellek güvenli bir dile (ör. Rust) taşımak tek 
 Buna karşılık **yetki ayrımı (privilege separation)** yaklaşımıyla tüm medya çözümlemesini `android:isolatedProcess="true"` işaretli ayrı bir servise taşımak:
 
 1. Decoder içinde bir RCE / heap overflow / UAF açığı tetiklense bile saldırganı **`isolated_app` SELinux sandbox'ı** ve çekirdek **`seccomp-bpf`** filtresi içinde hapseder (uygulama UID'si yok, dosya sistemi erişimi yok, ağ erişimi yok, sistem servislerine erişim yok).
-2. `minSdk = 26` (Android 8.0) korunur; `isolatedProcess="true"`, `isolated_app` SELinux ve `seccomp-bpf` API 26'dan beri aktiftir (API 29+ cihazlarda ek olarak `android:useAppZygote="true"` kullanılabilir).
+2. `minSdk = 26` (Android 8.0) korunur; `isolatedProcess="true"`, `isolated_app` SELinux ve `seccomp-bpf` API 26'dan beri aktiftir (`android:useAppZygote="true"` ise Bölüm 5'teki nedenlerle bilinçli olarak kullanılmamıştır).
 3. Saldırganın ana süreç RAM'indeki kasa anahtarlarına (`CryptoManager`) veya diskteki diğer dosyalara ulaşmasını engeller.
 4. OOM, sonsuz döngü (DoS) veya `SIGSEGV` çökmelerinde yalnızca izole servisin kapanmasını sağlar; ana uygulama ayakta kalır.
 5. Faz 4'te izole sürecin *içindeki* yüksek riskli C/C++ decoder'ların (`giflib`, `libwebp`, `libjxl`, `png`/`jpeg`) saf Rust crate'lerle (`rust/calypso-media/`) değiştirilmesini kolaylaştırır.
@@ -123,6 +123,7 @@ flowchart LR
    - Liste/thumbnail aşamasında öncelikle gömülü JPEG önizlemenin izole süreçte çözülmesi tercih edilir; tam RAW decode yalnızca tam ekran gerektiğinde izole süreçte çalıştırılır.
 3. **Sıcak (Warm) Tek Worker Stratejisi:**
    - Uygulama ön plandayken tek bir sıcak izole servis bağlı tutulur; çözme işleri öncelikli bir kuyrukta yürütülür. Arka plana alındığında kaynakları serbest bırakmak üzere kontrollü süre sonunda `unbindService` uygulanır.
+   - **`android:useAppZygote="true"` kullanılmaması kararı:** Tek sıcak `:media_decoder` işçisi tekrarlanan soğuk başlangıçları zaten önler; buna karşılık `useAppZygote="true"` ek bir kalıcı App Zygote sürecini RAM'de tutar ve watchdog/çökme sonrasında yeniden doğan izole süreçlerin aynı ASLR adres yerleşimini miras almasına yol açar. Bu nedenle kullanılmamıştır.
 4. **Zaman Aşımı (Watchdog) ve Çökme Dayanıklılığı:**
    - Sabit istek zaman aşımı (ör. 5–10 sn) aşılırsa `unbindService` ile izole süreç sonlandırılıp yeniden başlatılır.
    - `onBindingDied` / `onServiceDisconnected` durumunda ana süreç çökmez; çökerten dosya kimliği kısa süreli kara listeye alınarak crash loop engellenir.
@@ -147,6 +148,8 @@ flowchart LR
 - **Faz 4 — Saf Rust Decoder Sertleştirmesi (`rust/calypso-media/`) (Tamamlandı):**
   - İzole süreç içindeki yüksek riskli C/C++ decoder'lar saf Rust `calypso-media` (`libcalypso_media.so`) crate'ine taşındı: `gif` (`giflib` yerine hem statik hem akışlı O(1) oturum GIF), `image-webp` (`zjupure:webpdecoder` / `libwebp` yerine), `png` (`libpng` yerine öncelikli), `zune-jpeg` (`libjpeg-turbo` yerine öncelikli) ve `jxl-oxide` (`jxl-coder-glide` / `libjxl` yerine, `lcms2` hariç).
   - `android-gif-drawable`, `zjupure:webpdecoder` ve `jxl-coder-glide` bağımlılıkları ile eski `.so`/JNI köprüleri projeden tamamen kaldırıldı.
-- **Sonraki Tartışma Konuları:**
-  - AVIF / HEIC / RAW decoder stratejisinin netleştirilmesi.
-  - `EditActivity` içindeki `androidphotofilters` (`libNativeImageProcessor.so`) C++ JNI filtre kütüphanesinin saf Kotlin (`ColorMatrix` / shader) ile değiştirilmesi.
+- **Sonraki Konular:**
+  - **AVIF / HEIC / RAW stratejisi uygulandı:**
+    - `glide:avif-integration` kaldırıldı (Seçenek 2); Android 12+ (`API 31+`) izole `ImageDecoder` kullanır. Üçüncü parti C/C++ görsel `.so` kalmadı. Gelecekte Android 8–11 (`API 26–30`) AVIF desteği ve derinlemesine savunma için `rust/calypso-media/` içine saf Rust `rav1d` + `mp4parse` eklenmesi (`Seçenek 3`) [TODO.md](file:///c:/Users/ben/Desktop/Calypso-Gallery/TODO.md) içinde planlandı.
+    - HEIC ve tam RAW/DNG çözme izole süreçte Android OS codec'leri (`media.swcodec` / platform DNG) üzerinden devam eder; RAW gömülü JPEG önizlemeleri önce saf Rust `zune-jpeg` (`NativeMediaDecoder`) ile çözülür.
+  - ~~`EditActivity` içindeki `androidphotofilters` (`libNativeImageProcessor.so`) C++ JNI filtre kütüphanesinin saf Kotlin (`ColorMatrix` / LUT) ile değiştirilmesi~~ (**Tamamlandı:** `helpers/filters/` altına saf Kotlin filtre motoru taşındı).
