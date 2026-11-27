@@ -6,8 +6,15 @@ import androidx.exifinterface.media.ExifInterface
 private const val HEADER_SNIFF_BYTES = 512
 
 private val RUST_STATIC_FORMATS = setOf(
+    IsolatedMediaFormat.PNG,
+    IsolatedMediaFormat.WEBP,
     IsolatedMediaFormat.GIF,
     IsolatedMediaFormat.JXL,
+)
+
+private val PLATFORM_DEFER_ALLOWED_FORMATS = setOf(
+    IsolatedMediaFormat.PNG,
+    IsolatedMediaFormat.WEBP,
 )
 
 private data class ProbedMetadata(
@@ -23,36 +30,29 @@ private data class ProbedMetadata(
  */
 object IsolatedMediaDecoders {
     fun probeBounds(request: IsolatedDecodeRequest): IsolatedBoundsResult {
+        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
+            return IsolatedFdStreamingCodecs.probeBoundsFromPfd(request)
+        }
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
                 IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES,
             ) ?: return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
-
-            val meta = inspectBytes(bytes, request.nameHint)
-                ?: return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
-
-            if (!IsolatedFormatSniffer.isValidSourceDimensions(meta.width, meta.height)) {
-                return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
-            }
-            IsolatedBoundsResult(
-                status = IsolatedDecodeResult.STATUS_OK,
-                width = meta.width,
-                height = meta.height,
-                rotationDegrees = meta.rotationDegrees,
-            )
+            probeBoundsBytes(bytes, request)
         } catch (_: Throwable) {
             IsolatedBoundsResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
         }
     }
 
     fun decodeStatic(request: IsolatedDecodeRequest): IsolatedDecodeResult {
+        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
+            return IsolatedFdStreamingCodecs.decodeStaticFromPfd(request)
+        }
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
                 IsolatedFormatSniffer.MAX_IN_MEMORY_INPUT_BYTES,
             ) ?: return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
-
             decodeStaticBytes(bytes, request)
         } catch (_: Throwable) {
             IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
@@ -60,20 +60,71 @@ object IsolatedMediaDecoders {
     }
 }
 
+internal fun isFormatAllowed(format: IsolatedMediaFormat, flags: Int): Boolean {
+    return format != IsolatedMediaFormat.SVG || (flags and IsolatedDecodeRequest.FLAG_ALLOW_SVG) != 0
+}
+
+private fun probeBoundsBytes(bytes: ByteArray, request: IsolatedDecodeRequest): IsolatedBoundsResult {
+    if (bytes.isEmpty()) return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
+    val header = bytes.copyOfRange(0, minOf(bytes.size, HEADER_SNIFF_BYTES))
+    val format = IsolatedFormatSniffer.sniffFormat(header, request.nameHint)
+    if (!isFormatAllowed(format, request.flags)) {
+        return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_UNSUPPORTED)
+    }
+    val dims = probeFormatBounds(format, bytes)
+        ?: return IsolatedBoundsResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+    val orientation = readExifOrientation(parseExifOnce(bytes, format))
+    val rotation = orientationToDegrees(orientation)
+    return if (!IsolatedFormatSniffer.isValidSourceDimensions(dims.first, dims.second)) {
+        IsolatedBoundsResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+    } else {
+        IsolatedBoundsResult(
+            status = IsolatedDecodeResult.STATUS_OK,
+            width = dims.first,
+            height = dims.second,
+            rotationDegrees = rotation,
+        )
+    }
+}
+
 private fun decodeStaticBytes(bytes: ByteArray, request: IsolatedDecodeRequest): IsolatedDecodeResult {
     if (bytes.isEmpty()) return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
     val header = bytes.copyOfRange(0, minOf(bytes.size, HEADER_SNIFF_BYTES))
     val format = IsolatedFormatSniffer.sniffFormat(header, request.nameHint)
+    if (!isFormatAllowed(format, request.flags)) {
+        return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_UNSUPPORTED)
+    }
+    return decodeAllowedStaticBytes(bytes, format, request)
+}
+
+private fun decodeAllowedStaticBytes(
+    bytes: ByteArray,
+    format: IsolatedMediaFormat,
+    request: IsolatedDecodeRequest,
+): IsolatedDecodeResult {
     val exif = parseExifOnce(bytes, format)
     val exifOrientation = readExifOrientation(exif)
     val rotationDegrees = orientationToDegrees(exifOrientation)
 
     if (format in RUST_STATIC_FORMATS) {
-        tryFastRustStaticDecode(bytes, format, exifOrientation, rotationDegrees, request)?.let {
-            return it
+        val outcome = tryFastRustStaticDecode(bytes, format, exifOrientation, rotationDegrees, request)
+        val canDefer = outcome is RustFastOutcome.DeferToPlatform && format in PLATFORM_DEFER_ALLOWED_FORMATS
+        if (!canDefer) {
+            return (outcome as? RustFastOutcome.Success)?.result
+                ?: IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
         }
     }
 
+    return decodeViaPlatformPath(bytes, format, exifOrientation, rotationDegrees, request)
+}
+
+private fun decodeViaPlatformPath(
+    bytes: ByteArray,
+    format: IsolatedMediaFormat,
+    exifOrientation: Int,
+    rotationDegrees: Int,
+    request: IsolatedDecodeRequest,
+): IsolatedDecodeResult {
     val dims = probeFormatBounds(format, bytes)
         ?: return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
     val meta = ProbedMetadata(format, dims.first, dims.second, exifOrientation, rotationDegrees)
@@ -82,37 +133,52 @@ private fun decodeStaticBytes(bytes: ByteArray, request: IsolatedDecodeRequest):
     return encodeStaticResult(bytes, meta, target, request.flags)
 }
 
+private sealed class RustFastOutcome {
+    data class Success(val result: IsolatedDecodeResult) : RustFastOutcome()
+    data object DeferToPlatform : RustFastOutcome()
+    data object Failed : RustFastOutcome()
+}
+
 private fun tryFastRustStaticDecode(
     bytes: ByteArray,
     format: IsolatedMediaFormat,
     exifOrientation: Int,
     rotationDegrees: Int,
     request: IsolatedDecodeRequest,
-): IsolatedDecodeResult? {
+): RustFastOutcome {
     val flags = request.flags
     val applyExif = (flags and IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION) != 0
     val fillMinSide = (flags and IsolatedDecodeRequest.FLAG_CENTER_CROP) != 0
     val effectiveExif = if (applyExif) exifOrientation else ExifInterface.ORIENTATION_NORMAL
 
-    val decoded = NativeMediaDecoder.decodeStaticRgba(
-        format = format,
-        bytes = bytes,
-        targetW = request.maxWidth,
-        targetH = request.maxHeight,
-        exifOrientation = effectiveExif,
-        fillMinSide = fillMinSide,
-    ) ?: return null
-    val packed = IsolatedPixelTransport.packRgbaBytes("calypso-dec", decoded.rgba) ?: return null
-    return IsolatedDecodeResult(
-        status = IsolatedDecodeResult.STATUS_OK,
-        width = decoded.width,
-        height = decoded.height,
-        sourceWidth = decoded.sourceWidth,
-        sourceHeight = decoded.sourceHeight,
-        rotationDegrees = rotationDegrees,
-        byteCount = packed.byteCount,
-        sharedOutputHandle = packed.sharedOutputHandle,
-        pixelPipePfd = packed.pixelPipePfd,
+    val decoded = when (
+        val outcome = NativeMediaDecoder.decodeStaticRgba(
+            format = format,
+            bytes = bytes,
+            targetW = request.maxWidth,
+            targetH = request.maxHeight,
+            exifOrientation = effectiveExif,
+            fillMinSide = fillMinSide,
+        )
+    ) {
+        is RustStaticDecodeOutcome.Decoded -> outcome.data
+        is RustStaticDecodeOutcome.DeferToPlatform -> return RustFastOutcome.DeferToPlatform
+        is RustStaticDecodeOutcome.Failed -> return RustFastOutcome.Failed
+    }
+    val packed = IsolatedPixelTransport.packRgbaBytes("calypso-dec", decoded.rgba)
+        ?: return RustFastOutcome.Failed
+    return RustFastOutcome.Success(
+        IsolatedDecodeResult(
+            status = IsolatedDecodeResult.STATUS_OK,
+            width = decoded.width,
+            height = decoded.height,
+            sourceWidth = decoded.sourceWidth,
+            sourceHeight = decoded.sourceHeight,
+            rotationDegrees = rotationDegrees,
+            byteCount = packed.byteCount,
+            sharedOutputHandle = packed.sharedOutputHandle,
+            pixelPipePfd = packed.pixelPipePfd,
+        ),
     )
 }
 
@@ -166,6 +232,8 @@ private fun encodeStaticResult(
         transformed = finalizeIsolatedBitmap(decoded, effectiveOrientation, finalTarget)
         val packed = IsolatedPixelTransport.packBitmap("calypso-dec", transformed)
             ?: return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+        val colorSpaceId = IsolatedHdrTransport.extractColorSpaceId(transformed)
+        val hdrPayload = IsolatedHdrTransport.packGainmapIfRequested(transformed, flags)
 
         IsolatedDecodeResult(
             status = IsolatedDecodeResult.STATUS_OK,
@@ -177,6 +245,8 @@ private fun encodeStaticResult(
             byteCount = packed.byteCount,
             sharedOutputHandle = packed.sharedOutputHandle,
             pixelPipePfd = packed.pixelPipePfd,
+            colorSpaceId = colorSpaceId,
+            hdrPayload = hdrPayload,
         )
     } finally {
         if (transformed != null && transformed !== decoded && !transformed.isRecycled) {
@@ -188,19 +258,10 @@ private fun encodeStaticResult(
     }
 }
 
-private fun inspectBytes(bytes: ByteArray, nameHint: String): ProbedMetadata? {
-    if (bytes.isEmpty()) return null
-    val header = bytes.copyOfRange(0, minOf(bytes.size, HEADER_SNIFF_BYTES))
-    val format = IsolatedFormatSniffer.sniffFormat(header, nameHint)
-    val exif = parseExifOnce(bytes, format)
-    val orientation = readExifOrientation(exif)
-    val rotation = orientationToDegrees(orientation)
-    val dims = probeFormatBounds(format, bytes)
-    return dims?.let { (w, h) -> ProbedMetadata(format, w, h, orientation, rotation) }
-}
-
 private fun probeFormatBounds(format: IsolatedMediaFormat, bytes: ByteArray): Pair<Int, Int>? {
     return when (format) {
+        IsolatedMediaFormat.PNG,
+        IsolatedMediaFormat.WEBP,
         IsolatedMediaFormat.JXL,
         IsolatedMediaFormat.GIF -> NativeMediaDecoder.probeBounds(format, bytes)
         IsolatedMediaFormat.AVIF -> probeAvifBounds(bytes)
@@ -220,7 +281,13 @@ private fun decodeBitmapForFormat(
         IsolatedMediaFormat.GIF,
         IsolatedMediaFormat.JXL -> NativeMediaDecoder.decodeStatic(meta.format, bytes, targetW, targetH)
         IsolatedMediaFormat.AVIF -> decodeAvif(bytes, targetW, targetH)
-        IsolatedMediaFormat.SVG -> decodeSvg(bytes, targetW, targetH)
+        IsolatedMediaFormat.SVG -> {
+            if ((flags and IsolatedDecodeRequest.FLAG_ALLOW_SVG) != 0) {
+                decodeSvg(bytes, targetW, targetH)
+            } else {
+                null
+            }
+        }
         IsolatedMediaFormat.RAW -> decodeRaw(bytes, meta.width, meta.height, targetW, targetH, flags)
         else -> decodePlatform(bytes, meta.width, meta.height, targetW, targetH)
     }

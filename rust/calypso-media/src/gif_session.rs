@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use gif::{ColorOutput, DecodeOptions, Decoder as GifStreamDecoder, DisposalMethod, MemoryLimit};
 
 use crate::{
+    animated_session::{self, ApngSession, WebpAnimSession},
     compute_target_dimensions, pixel_ops, premultiply_rgba_in_place,
     static_decoders::DecodedStaticMeta, try_alloc_zeroed, validate_source_dimensions, MediaError,
     MAX_GIF_DIMENSION, MAX_GIF_FRAMES, MAX_GIF_PIXELS, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
@@ -49,10 +50,16 @@ struct GifSession {
     decoder: Option<GifStreamDecoder<Cursor<Arc<[u8]>>>>,
 }
 
+enum AnimSession {
+    Gif(GifSession),
+    Apng(ApngSession),
+    Webp(WebpAnimSession),
+}
+
 struct GifStore {
     next_handle: i64,
     order: VecDeque<i64>,
-    sessions: HashMap<i64, Arc<Mutex<GifSession>>>,
+    sessions: HashMap<i64, Arc<Mutex<AnimSession>>>,
 }
 
 impl GifStore {
@@ -156,7 +163,38 @@ pub(crate) fn open_session(
         return Err(MediaError::InvalidInput);
     }
     let shared: Arc<[u8]> = Arc::from(raw_bytes);
+    let (session_enum, mut open_info) = if animated_session::is_png_bytes(&shared) {
+        let (apng, info) = ApngSession::open(shared, req_w, req_h)?;
+        (AnimSession::Apng(apng), info)
+    } else if animated_session::is_webp_bytes(&shared) {
+        let (webp, info) = WebpAnimSession::open(shared, req_w, req_h)?;
+        (AnimSession::Webp(webp), info)
+    } else {
+        open_gif_anim_session(shared, req_w, req_h)?
+    };
 
+    let session = Arc::new(Mutex::new(session_enum));
+    let mut guard = store().lock().map_err(|_| MediaError::DecodeFailed)?;
+    while guard.sessions.len() >= MAX_GIF_SESSIONS {
+        if let Some(oldest) = guard.order.pop_front() {
+            guard.sessions.remove(&oldest);
+        } else {
+            break;
+        }
+    }
+    let handle = guard.next_handle;
+    guard.next_handle = guard.next_handle.saturating_add(1);
+    guard.order.push_back(handle);
+    guard.sessions.insert(handle, session);
+    open_info.handle = handle;
+    Ok(open_info)
+}
+
+fn open_gif_anim_session(
+    shared: Arc<[u8]>,
+    req_w: u32,
+    req_h: u32,
+) -> Result<(AnimSession, GifOpenInfo), MediaError> {
     let mut scanner = configure_options(true)
         .read_info(Cursor::new(Arc::clone(&shared)))
         .map_err(|_| MediaError::DecodeFailed)?;
@@ -197,7 +235,7 @@ pub(crate) fn open_session(
     let out_buf = try_alloc_zeroed(out_len)?;
     let frame_count = delays_ms.len() as u32;
 
-    let session = Arc::new(Mutex::new(GifSession {
+    let gif_session = GifSession {
         compositor: GifCompositor {
             raw_bytes: shared,
             delays_ms,
@@ -213,39 +251,39 @@ pub(crate) fn open_session(
             current_frame: None,
         },
         decoder: None,
-    }));
-
-    let mut guard = store().lock().map_err(|_| MediaError::DecodeFailed)?;
-    while guard.sessions.len() >= MAX_GIF_SESSIONS {
-        if let Some(oldest) = guard.order.pop_front() {
-            guard.sessions.remove(&oldest);
-        } else {
-            break;
-        }
-    }
-    let handle = guard.next_handle;
-    guard.next_handle = guard.next_handle.saturating_add(1);
-    guard.order.push_back(handle);
-    guard.sessions.insert(handle, session);
-
-    Ok(GifOpenInfo {
-        handle,
-        width: out_w,
-        height: out_h,
-        frame_count,
-    })
+    };
+    Ok((
+        AnimSession::Gif(gif_session),
+        GifOpenInfo {
+            handle: 0,
+            width: out_w,
+            height: out_h,
+            frame_count,
+        },
+    ))
 }
 
 pub(crate) fn render_frame(handle: i64, frame_index: usize) -> Result<GifRenderedFrame, MediaError> {
     let session = lookup_session(handle)?;
     let mut sess = session.lock().map_err(|_| MediaError::DecodeFailed)?;
-    let duration_ms = render_into_compositor_buf(&mut sess, frame_index)?;
-    let mut out = try_alloc_zeroed(sess.compositor.out_buf.len())?;
-    out.copy_from_slice(&sess.compositor.out_buf);
-    Ok(GifRenderedFrame {
-        duration_ms,
-        rgba: out,
-    })
+    match &mut *sess {
+        AnimSession::Gif(gif) => {
+            let duration_ms = render_into_compositor_buf(gif, frame_index)?;
+            let mut out = try_alloc_zeroed(gif.compositor.out_buf.len())?;
+            out.copy_from_slice(&gif.compositor.out_buf);
+            Ok(GifRenderedFrame { duration_ms, rgba: out })
+        }
+        AnimSession::Apng(apng) => {
+            let mut out = Vec::new();
+            let duration_ms = apng.render_into(frame_index, Some(&mut out))?;
+            Ok(GifRenderedFrame { duration_ms, rgba: out })
+        }
+        AnimSession::Webp(webp) => {
+            let mut out = Vec::new();
+            let duration_ms = webp.render_into(frame_index, Some(&mut out))?;
+            Ok(GifRenderedFrame { duration_ms, rgba: out })
+        }
+    }
 }
 
 pub(crate) fn render_frame_into(
@@ -255,16 +293,36 @@ pub(crate) fn render_frame_into(
 ) -> Result<u32, MediaError> {
     let session = lookup_session(handle)?;
     let mut sess = session.lock().map_err(|_| MediaError::DecodeFailed)?;
-    let need = sess.compositor.out_buf.len();
-    if dst.len() < need {
-        return Err(MediaError::InvalidInput);
+    match &mut *sess {
+        AnimSession::Gif(gif) => {
+            let need = gif.compositor.out_buf.len();
+            if dst.len() < need {
+                return Err(MediaError::InvalidInput);
+            }
+            let duration_ms = render_into_compositor_buf(gif, frame_index)?;
+            dst[..need].copy_from_slice(&gif.compositor.out_buf);
+            Ok(duration_ms)
+        }
+        AnimSession::Apng(apng) => {
+            if dst.len() < apng.out_len() {
+                return Err(MediaError::InvalidInput);
+            }
+            let duration_ms = apng.render_into(frame_index, None)?;
+            apng.copy_out_into(dst)?;
+            Ok(duration_ms)
+        }
+        AnimSession::Webp(webp) => {
+            if dst.len() < webp.out_len() {
+                return Err(MediaError::InvalidInput);
+            }
+            let duration_ms = webp.render_into(frame_index, None)?;
+            webp.copy_out_into(dst)?;
+            Ok(duration_ms)
+        }
     }
-    let duration_ms = render_into_compositor_buf(&mut sess, frame_index)?;
-    dst[..need].copy_from_slice(&sess.compositor.out_buf);
-    Ok(duration_ms)
 }
 
-fn lookup_session(handle: i64) -> Result<Arc<Mutex<GifSession>>, MediaError> {
+fn lookup_session(handle: i64) -> Result<Arc<Mutex<AnimSession>>, MediaError> {
     let guard = store().lock().map_err(|_| MediaError::DecodeFailed)?;
     guard
         .sessions

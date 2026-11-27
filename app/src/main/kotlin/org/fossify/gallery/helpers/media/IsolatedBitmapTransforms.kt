@@ -53,16 +53,18 @@ internal fun finalizeIsolatedBitmap(source: Bitmap, exifOrientation: Int, target
     if (scaled !== oriented && oriented !== source) {
         oriented.recycle()
     }
-    return if (scaled.config == Bitmap.Config.ARGB_8888) {
+    val finalBitmap = if (scaled.config == Bitmap.Config.ARGB_8888) {
         scaled
     } else {
         scaled.copy(Bitmap.Config.ARGB_8888, false).also {
             if (scaled !== source) scaled.recycle()
         }
     }
+    IsolatedHdrTransport.transformGainmap(source, finalBitmap, exifOrientation, targetW, targetH)
+    return finalBitmap
 }
 
-private fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+internal fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
     val matrix = Matrix()
     var modified = true
     when (orientation) {

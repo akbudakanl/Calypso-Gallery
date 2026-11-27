@@ -711,6 +711,14 @@
     <string name="license_rust_gif_url" translatable="false">https://github.com/image-rs/image-gif</string>
     <string name="license_rust_gif_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
 
+    <string name="license_rust_png_title" translatable="false">png</string>
+    <string name="license_rust_png_url" translatable="false">https://github.com/image-rs/image-png</string>
+    <string name="license_rust_png_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
+
+    <string name="license_rust_image_webp_title" translatable="false">image-webp</string>
+    <string name="license_rust_image_webp_url" translatable="false">https://github.com/image-rs/image-webp</string>
+    <string name="license_rust_image_webp_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
+
     <string name="license_rust_jxl_oxide_title" translatable="false">jxl-oxide</string>
     <string name="license_rust_jxl_oxide_url" translatable="false">https://github.com/tirr-c/jxl-oxide</string>
     <string name="license_rust_jxl_oxide_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
@@ -890,4 +898,10 @@
     <string name="app_lock_mode_label">Lock timing</string>
     <string name="app_lock_mode_cold_start">Only on app start</string>
     <string name="app_lock_mode_every_entry">On every entry</string>
+
+    <!-- Media security & SVG toggle strings (this revision) -->
+    <string name="media_security">Media security</string>
+    <string name="show_svg_files">Show SVG files</string>
+    <string name="show_svg_files_warning">SVG files are rendered in an isolated process using an older third-party library that no longer receives updates. Only enable this if you need to view SVG files.</string>
+    <string name="enable_svg_files">Enable</string>
 </resources>

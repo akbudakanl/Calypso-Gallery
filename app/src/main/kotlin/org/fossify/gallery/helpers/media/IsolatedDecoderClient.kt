@@ -2,21 +2,16 @@ package org.fossify.gallery.helpers.media
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Build
 import android.os.ParcelFileDescriptor
+import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CryptoManager
-import org.fossify.gallery.helpers.EncryptedVideoDataSource
 import org.fossify.gallery.helpers.TYPE_VIDEOS
-import org.fossify.gallery.helpers.openDecryptedContentStream
 import java.io.File
 
-private const val THUMB_EMBEDDED_THRESHOLD = 600
-
 /**
- * Main-process broker for [IsolatedMediaDecoderService] with warm single-worker connection reuse,
- * per-request watchdog timeouts, and failure quarantine.
+ * Main-process broker for [IsolatedMediaDecoderService] and [VaultIsolatedMediaDecoderService]
+ * with warm worker connection reuse, per-request watchdog timeouts, and failure quarantine.
  */
 object IsolatedDecoderClient {
     internal val quarantine = IsolatedFailureQuarantine()
@@ -73,7 +68,7 @@ object IsolatedDecoderClient {
             maxWidth = maxWidth,
             maxHeight = maxHeight,
             nameHint = nameHint,
-            flags = flags,
+            flags = resolvePolicyFlags(ctx, flags),
         )
         return executeDecode(ctx, request, key, quarantine)
     }
@@ -97,7 +92,7 @@ object IsolatedDecoderClient {
             maxWidth = maxWidth,
             maxHeight = maxHeight,
             nameHint = nameHint,
-            flags = flags,
+            flags = resolvePolicyFlags(ctx, flags),
         )
         return executeDecode(ctx, request, key, quarantine)
     }
@@ -111,11 +106,16 @@ object IsolatedDecoderClient {
         nameHint: String = "",
         quarantineKey: String = "",
     ): Bitmap? {
-        val ctx = context ?: appContext ?: return null
-        if (ProcessIsolation.isIsolatedProcess() || bytes.isEmpty()) return null
-        if (quarantineKey.isNotEmpty() && quarantine.isQuarantined(quarantineKey)) return null
-        val request = buildBytesRequest(bytes, maxWidth, maxHeight, nameHint, flags) ?: return null
-        return executeDecode(ctx, request, quarantineKey, quarantine)
+        return decodeBytesOnChannel(
+            context = context,
+            bytes = bytes,
+            maxWidth = maxWidth,
+            maxHeight = maxHeight,
+            flags = flags,
+            nameHint = nameHint,
+            quarantineKey = quarantineKey,
+            channel = IsolatedDecoderChannel.PUBLIC,
+        )
     }
 
     fun decodeEncryptedFile(
@@ -171,7 +171,12 @@ object IsolatedDecoderClient {
         val pfd = runCatching {
             ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
         }.getOrNull() ?: return null
-        val request = IsolatedDecodeRequest(inputPfd = pfd, inputLength = file.length(), nameHint = nameHint)
+        val request = IsolatedDecodeRequest(
+            inputPfd = pfd,
+            inputLength = file.length(),
+            nameHint = nameHint,
+            flags = resolvePolicyFlags(ctx, IsolatedDecodeRequest.FLAG_NONE),
+        )
         return executeProbe(ctx, request, key, quarantine)
     }
 
@@ -189,120 +194,25 @@ object IsolatedDecoderClient {
             inputPfd = pfd,
             inputLength = pfd.statSize.coerceAtLeast(0L),
             nameHint = nameHint,
+            flags = resolvePolicyFlags(ctx, IsolatedDecodeRequest.FLAG_NONE),
         )
         return executeProbe(ctx, request, key, quarantine)
     }
 
     fun probeBytesBounds(context: Context?, bytes: ByteArray, nameHint: String = ""): IsolatedBoundsResult? {
-        val ctx = context ?: appContext ?: return null
-        if (ProcessIsolation.isIsolatedProcess() || bytes.isEmpty()) return null
-        val request = buildBytesRequest(bytes, 0, 0, nameHint, IsolatedDecodeRequest.FLAG_NONE) ?: return null
-        return executeProbe(ctx, request, "", quarantine)
+        return probeBytesBoundsOnChannel(context, bytes, nameHint, IsolatedDecoderChannel.PUBLIC)
     }
 }
 
-private fun shouldTryEmbeddedThumb(
-    isVideo: Boolean,
-    preferEmbeddedThumbnail: Boolean,
-    preferFullContent: Boolean,
-    maxWidth: Int,
-    maxHeight: Int,
-): Boolean {
-    if (isVideo) return true
-    if (preferFullContent) return false
-    val isThumbSize = maxWidth in 1..THUMB_EMBEDDED_THRESHOLD && maxHeight in 1..THUMB_EMBEDDED_THRESHOLD
-    return preferEmbeddedThumbnail || isThumbSize
-}
-
-private fun decodeEncryptedEmbeddedThumb(
-    context: Context,
-    thumbBytes: ByteArray?,
-    maxWidth: Int,
-    maxHeight: Int,
-    flags: Int,
-    quarantineKey: String,
-): Bitmap? {
-    if (thumbBytes == null || thumbBytes.isEmpty()) return null
-    return try {
-        IsolatedDecoderClient.decodeBytes(
-            context = context,
-            bytes = thumbBytes,
-            maxWidth = maxWidth,
-            maxHeight = maxHeight,
-            flags = flags,
-            nameHint = "thumb.jpg",
-            quarantineKey = quarantineKey,
-        )
-    } finally {
-        thumbBytes.fill(0)
+internal fun resolvePolicyFlags(context: Context, flags: Int): Int {
+    return if (context.config.showSvgFiles) {
+        flags or IsolatedDecodeRequest.FLAG_ALLOW_SVG
+    } else {
+        flags and IsolatedDecodeRequest.FLAG_ALLOW_SVG.inv()
     }
 }
 
-private fun extractEncryptedVideoFrame(file: File, maxWidth: Int, maxHeight: Int): Bitmap? {
-    val retriever = MediaMetadataRetriever()
-    val dataSource = EncryptedVideoDataSource(file)
-    return try {
-        retriever.setDataSource(dataSource)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && maxWidth > 0 && maxHeight > 0) {
-            retriever.getScaledFrameAtTime(
-                -1L,
-                MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
-                maxWidth,
-                maxHeight,
-            ) ?: retriever.getFrameAtTime(-1L)
-        } else {
-            retriever.getFrameAtTime(-1L)
-        }
-    } catch (_: Throwable) {
-        null
-    } finally {
-        runCatching { retriever.release() }
-        runCatching { dataSource.close() }
-    }
-}
-
-private fun decodeEncryptedPayload(
-    context: Context,
-    file: File,
-    originalName: String,
-    maxWidth: Int,
-    maxHeight: Int,
-    flags: Int,
-    quarantineKey: String,
-): Bitmap? {
-    val plainBytes = runCatching {
-        CryptoManager.openDecryptedContentStream(file)?.use { it.readBytes() }
-    }.getOrNull() ?: return null
-    return try {
-        IsolatedDecoderClient.decodeBytes(
-            context = context,
-            bytes = plainBytes,
-            maxWidth = maxWidth,
-            maxHeight = maxHeight,
-            flags = flags or IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
-            nameHint = originalName,
-            quarantineKey = quarantineKey,
-        )
-    } finally {
-        plainBytes.fill(0)
-    }
-}
-
-private fun probeEncryptedBounds(context: Context?, file: File): IsolatedBoundsResult? {
-    val ctx = context ?: IsolatedDecoderClient.appContextOrNull ?: return null
-    if (ProcessIsolation.isIsolatedProcess() || !CryptoManager.isVaultUnlocked) return null
-    val meta = runCatching { CryptoManager.readMetadata(file) }.getOrNull() ?: return null
-    val plainBytes = runCatching {
-        CryptoManager.openDecryptedContentStream(file)?.use { it.readBytes() }
-    }.getOrNull() ?: return null
-    return try {
-        IsolatedDecoderClient.probeBytesBounds(ctx, plainBytes, meta.originalName)
-    } finally {
-        plainBytes.fill(0)
-    }
-}
-
-private fun buildBytesRequest(
+internal fun buildBytesRequest(
     bytes: ByteArray,
     maxWidth: Int,
     maxHeight: Int,
@@ -323,14 +233,15 @@ private fun buildBytesRequest(
     )
 }
 
-private fun executeDecode(
+internal fun executeDecode(
     context: Context,
     request: IsolatedDecodeRequest,
     quarantineKey: String,
     quarantine: IsolatedFailureQuarantine,
+    channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
 ): Bitmap? {
     return request.use { req ->
-        IsolatedServiceBridge.runWatchdogCall(context, quarantineKey, quarantine) { decoder ->
+        IsolatedServiceBridge.runWatchdogCall(context, quarantineKey, quarantine, channel) { decoder ->
             decoder.decodeStatic(req)?.use { res ->
                 if (res.status == IsolatedDecodeResult.STATUS_OK) {
                     IsolatedPixelTransport.unpackBitmap(res)
@@ -342,14 +253,15 @@ private fun executeDecode(
     }
 }
 
-private fun executeProbe(
+internal fun executeProbe(
     context: Context,
     request: IsolatedDecodeRequest,
     quarantineKey: String,
     quarantine: IsolatedFailureQuarantine,
+    channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
 ): IsolatedBoundsResult? {
     return request.use { req ->
-        IsolatedServiceBridge.runWatchdogCall(context, quarantineKey, quarantine) { decoder ->
+        IsolatedServiceBridge.runWatchdogCall(context, quarantineKey, quarantine, channel) { decoder ->
             val result = decoder.probeBounds(req)
             if (result != null && result.status == IsolatedDecodeResult.STATUS_OK) result else null
         }

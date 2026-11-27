@@ -85,6 +85,7 @@ object IsolatedFormatSniffer {
     const val MAX_SVG_DIMENSION = 2048
     const val DEFAULT_SVG_DIMENSION = 512
     const val MAX_IN_MEMORY_INPUT_BYTES = 100 * 1024 * 1024
+    const val MAX_STREAMING_INPUT_BYTES = 512L * 1024L * 1024L
 
     fun sniffFormat(header: ByteArray, nameHint: String = ""): IsolatedMediaFormat {
         var detected = sniffBinaryFormat(header)
@@ -155,6 +156,67 @@ object IsolatedFormatSniffer {
     }
 
     fun isVideoFileHint(pathOrName: String): Boolean = extensionOf(pathOrName) in VIDEO_EXTENSIONS
+
+    fun hasAnimatedContainerHint(header: ByteArray): Boolean {
+        return AnimatedHeaderSniffer.isAnimated(header)
+    }
+}
+
+private object AnimatedHeaderSniffer {
+    private const val PNG_CHUNK_HEADER_BYTES = 8
+    private const val PNG_CRC_BYTES = 4
+    private const val BYTE_3_OFFSET = 3
+    private const val SHIFT_24 = 24
+    private const val SHIFT_16 = 16
+    private const val SHIFT_8 = 8
+    private const val WEBP_VP8X_OFFSET = 12
+    private const val WEBP_VP8X_FLAGS_OFFSET = 20
+    private const val WEBP_VP8X_MIN_HEADER = 21
+    private const val WEBP_ANIM_FLAG = 0x02
+
+    fun isAnimated(header: ByteArray): Boolean {
+        return when {
+            isGifHeader(header) -> true
+            matchesPrefix(header, PNG_MAGIC, MIN_PNG_HEADER) -> hasApngActlChunk(header)
+            isWebpHeader(header) -> isAnimatedWebpHeader(header)
+            else -> false
+        }
+    }
+
+    private fun hasApngActlChunk(header: ByteArray): Boolean {
+        var offset = MIN_PNG_HEADER
+        var found = false
+        var stop = false
+        while (!stop && offset + PNG_CHUNK_HEADER_BYTES <= header.size) {
+            val chunkLen = readBeInt(header, offset)
+            val chunkType = asciiSlice(header, offset + BRAND_LENGTH, BRAND_LENGTH)
+            val step = PNG_CHUNK_HEADER_BYTES.toLong() + chunkLen.toLong() + PNG_CRC_BYTES.toLong()
+            val isTerminal = chunkType == "IDAT" || chunkType == "IEND"
+            if (chunkType == "acTL" && chunkLen >= 0) {
+                found = true
+                stop = true
+            } else if (chunkLen < 0 || isTerminal || step > (header.size - offset).toLong()) {
+                stop = true
+            } else {
+                offset += step.toInt()
+            }
+        }
+        return found
+    }
+
+    private fun isAnimatedWebpHeader(header: ByteArray): Boolean {
+        if (header.size < WEBP_VP8X_MIN_HEADER) return false
+        if (asciiSlice(header, WEBP_VP8X_OFFSET, BRAND_LENGTH) != "VP8X") return false
+        val flags = header[WEBP_VP8X_FLAGS_OFFSET].toInt() and BYTE_MASK
+        return (flags and WEBP_ANIM_FLAG) != 0
+    }
+
+    private fun readBeInt(bytes: ByteArray, offset: Int): Int {
+        return ((bytes[offset].toInt() and BYTE_MASK) shl SHIFT_24) or
+            ((bytes[offset + 1].toInt() and BYTE_MASK) shl SHIFT_16) or
+            ((bytes[offset + 2].toInt() and BYTE_MASK) shl SHIFT_8) or
+            (bytes[offset + BYTE_3_OFFSET].toInt() and BYTE_MASK)
+    }
 }
 
 private fun sniffBinaryFormat(header: ByteArray): IsolatedMediaFormat {

@@ -1,13 +1,20 @@
+mod animated_session;
 mod gif_session;
 mod jni_bridge;
 mod pixel_ops;
+mod png_webp_decoders;
 mod static_decoders;
 
+pub(crate) const FORMAT_PNG: i32 = 2;
+pub(crate) const FORMAT_WEBP: i32 = 3;
 pub(crate) const FORMAT_GIF: i32 = 4;
 pub(crate) const FORMAT_JXL: i32 = 5;
 
 pub(crate) const MAX_SOURCE_DIMENSION: u32 = 65_536;
 pub(crate) const MAX_SOURCE_PIXELS: u64 = 300_000_000;
+pub(crate) const MAX_JXL_SOURCE_PIXELS: u64 = 33_554_432;
+pub(crate) const MAX_RUST_PNG_PIXELS: u64 = 33_554_432;
+pub(crate) const MAX_RUST_LOSSY_WEBP_PIXELS: u64 = 4_000_000;
 pub(crate) const MAX_OUTPUT_DIMENSION: u32 = 4096;
 pub(crate) const MAX_OUTPUT_PIXELS: u64 = 16_777_216;
 pub(crate) const MAX_GIF_DIMENSION: u32 = 2048;
@@ -22,6 +29,7 @@ pub(crate) enum MediaError {
     TooLarge,
     OutOfMemory,
     DecodeFailed,
+    DeferToPlatform,
 }
 
 pub(crate) struct DecodedRgba {
@@ -48,6 +56,15 @@ pub(crate) fn validate_source_dimensions(width: u32, height: u32) -> Result<(), 
     }
     let pixels = u64::from(width) * u64::from(height);
     if pixels > MAX_SOURCE_PIXELS {
+        return Err(MediaError::TooLarge);
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_jxl_source_dimensions(width: u32, height: u32) -> Result<(), MediaError> {
+    validate_source_dimensions(width, height)?;
+    let pixels = u64::from(width) * u64::from(height);
+    if pixels > MAX_JXL_SOURCE_PIXELS {
         return Err(MediaError::TooLarge);
     }
     Ok(())
@@ -214,5 +231,202 @@ mod tests {
         assert_eq!(delay, 50);
         assert_eq!(buf, vec![255, 0, 0, 255]);
         gif_session::close_session(open.handle);
+    }
+
+    #[test]
+    fn png_and_lossless_webp_probe_and_decode_work() {
+        let mut png_bytes = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut png_bytes, 1, 1);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            let mut writer = encoder.write_header().unwrap();
+            writer.write_image_data(&[10, 20, 30, 255]).unwrap();
+        }
+        assert_eq!(
+            static_decoders::probe_bounds(FORMAT_PNG, &png_bytes).unwrap(),
+            (1, 1)
+        );
+        let decoded_png = static_decoders::decode_static_ex(
+            FORMAT_PNG,
+            &png_bytes,
+            0,
+            0,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((decoded_png.width, decoded_png.height), (1, 1));
+        assert_eq!(decoded_png.rgba, vec![10, 20, 30, 255]);
+
+        let mut webp_bytes = Vec::new();
+        {
+            let encoder = image_webp::WebPEncoder::new(&mut webp_bytes);
+            encoder
+                .encode(&[40, 50, 60, 255], 1, 1, image_webp::ColorType::Rgba8)
+                .unwrap();
+        }
+        assert_eq!(
+            static_decoders::probe_bounds(FORMAT_WEBP, &webp_bytes).unwrap(),
+            (1, 1)
+        );
+        let decoded_webp = static_decoders::decode_static_ex(
+            FORMAT_WEBP,
+            &webp_bytes,
+            0,
+            0,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((decoded_webp.width, decoded_webp.height), (1, 1));
+        assert_eq!(decoded_webp.rgba, vec![40, 50, 60, 255]);
+    }
+
+    #[test]
+    fn corrupt_webp_hard_fails_and_jxl_enforces_32mp_cap() {
+        let corrupt_vp8l = b"RIFF\x18\x00\x00\x00WEBPVP8L\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+        let err = static_decoders::decode_static_ex(
+            FORMAT_WEBP,
+            corrupt_vp8l,
+            0,
+            0,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        );
+        assert!(matches!(err, Err(MediaError::DecodeFailed)));
+
+        assert!(validate_jxl_source_dimensions(4096, 4096).is_ok());
+        assert!(matches!(
+            validate_jxl_source_dimensions(8000, 8000),
+            Err(MediaError::TooLarge)
+        ));
+    }
+
+    #[test]
+    fn streaming_row_by_row_png_downscale_handles_over_32mp() {
+        let width = 9000u32;
+        let height = 4000u32;
+        let row = [12u8, 34, 56, 255].repeat(width as usize);
+        let mut png_bytes = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut png_bytes, width, height);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            encoder.set_compression(png::Compression::Fast);
+            let mut writer = encoder.write_header().unwrap();
+            let mut stream = writer.stream_writer().unwrap();
+            for _ in 0..height {
+                use std::io::Write;
+                stream.write_all(&row).unwrap();
+            }
+            stream.finish().unwrap();
+        }
+
+        let decoded = static_decoders::decode_static_ex(
+            FORMAT_PNG,
+            &png_bytes,
+            512,
+            512,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((decoded.src_width, decoded.src_height), (width, height));
+        assert!(decoded.width <= 512 && decoded.height <= 512);
+        assert_eq!(&decoded.rgba[..4], &[12, 34, 56, 255]);
+    }
+
+    #[test]
+    fn apng_and_animated_webp_sessions_decode_and_reject_static() {
+        let mut static_png = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut static_png, 1, 1);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            enc.write_header().unwrap().write_image_data(&[1, 2, 3, 255]).unwrap();
+        }
+        assert!(matches!(
+            gif_session::open_session(static_png, 0, 0),
+            Err(MediaError::UnsupportedFormat)
+        ));
+
+        let mut apng = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut apng, 2, 2);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            enc.set_animated(2, 0).unwrap();
+            let mut writer = enc.write_header().unwrap();
+            writer.set_frame_delay(5, 100).unwrap();
+            writer.write_image_data(&[200, 10, 10, 255].repeat(4)).unwrap();
+            writer.set_frame_delay(12, 100).unwrap();
+            writer.write_image_data(&[10, 200, 10, 255].repeat(4)).unwrap();
+        }
+        let open_apng = gif_session::open_session(apng, 0, 0).unwrap();
+        assert_eq!((open_apng.width, open_apng.height, open_apng.frame_count), (2, 2, 2));
+        let f0 = gif_session::render_frame(open_apng.handle, 0).unwrap();
+        assert_eq!(f0.duration_ms, 50);
+        assert_eq!(&f0.rgba[..4], &[200, 10, 10, 255]);
+        let f1 = gif_session::render_frame(open_apng.handle, 1).unwrap();
+        assert_eq!(f1.duration_ms, 120);
+        assert_eq!(&f1.rgba[..4], &[10, 200, 10, 255]);
+        let mut loop_buf = vec![0u8; 16];
+        let d0 = gif_session::render_frame_into(open_apng.handle, 0, &mut loop_buf).unwrap();
+        assert_eq!(d0, 50);
+        assert_eq!(&loop_buf[..4], &[200, 10, 10, 255]);
+        gif_session::close_session(open_apng.handle);
+
+        let mut static_webp = Vec::new();
+        image_webp::WebPEncoder::new(&mut static_webp)
+            .encode(&[40, 50, 60, 255], 1, 1, image_webp::ColorType::Rgba8)
+            .unwrap();
+        assert!(matches!(
+            gif_session::open_session(static_webp.clone(), 0, 0),
+            Err(MediaError::UnsupportedFormat)
+        ));
+
+        let mut webp_green = Vec::new();
+        image_webp::WebPEncoder::new(&mut webp_green)
+            .encode(&[0, 220, 0, 255], 1, 1, image_webp::ColorType::Rgba8)
+            .unwrap();
+        let vp8l_0 = &static_webp[12..];
+        let vp8l_1 = &webp_green[12..];
+        let mut anim_chunks = Vec::new();
+        anim_chunks.extend_from_slice(b"WEBP");
+        anim_chunks.extend_from_slice(b"VP8X");
+        anim_chunks.extend_from_slice(&10u32.to_le_bytes());
+        anim_chunks.extend_from_slice(&[0x12, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        anim_chunks.extend_from_slice(b"ANIM");
+        anim_chunks.extend_from_slice(&6u32.to_le_bytes());
+        anim_chunks.extend_from_slice(&[0u8; 6]);
+        for (vp8l, delay_ms) in [(vp8l_0, 60u32), (vp8l_1, 80u32)] {
+            anim_chunks.extend_from_slice(b"ANMF");
+            let mut anmf = Vec::new();
+            anmf.extend_from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+            let d = delay_ms.to_le_bytes();
+            anmf.extend_from_slice(&[d[0], d[1], d[2], 0x02]);
+            anmf.extend_from_slice(vp8l);
+            if vp8l.len() % 2 == 1 {
+                anmf.push(0);
+            }
+            let payload_len = (anmf.len() - (vp8l.len() % 2)) as u32;
+            anim_chunks.extend_from_slice(&payload_len.to_le_bytes());
+            anim_chunks.extend_from_slice(&anmf);
+        }
+        let mut anim_webp = Vec::new();
+        anim_webp.extend_from_slice(b"RIFF");
+        anim_webp.extend_from_slice(&(anim_chunks.len() as u32).to_le_bytes());
+        anim_webp.extend_from_slice(&anim_chunks);
+
+        let open_webp = gif_session::open_session(anim_webp, 0, 0).unwrap();
+        assert_eq!((open_webp.width, open_webp.height, open_webp.frame_count), (1, 1, 2));
+        let wf0 = gif_session::render_frame(open_webp.handle, 0).unwrap();
+        assert_eq!(wf0.duration_ms, 60);
+        assert_eq!(wf0.rgba, vec![40, 50, 60, 255]);
+        let wf1 = gif_session::render_frame(open_webp.handle, 1).unwrap();
+        assert_eq!(wf1.duration_ms, 80);
+        assert_eq!(wf1.rgba, vec![0, 220, 0, 255]);
+        gif_session::close_session(open_webp.handle);
     }
 }

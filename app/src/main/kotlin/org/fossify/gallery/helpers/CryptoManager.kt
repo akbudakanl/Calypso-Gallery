@@ -235,6 +235,9 @@ object CryptoManager {
             VideoFragment.clearEncryptedFrameCache()
         } catch (_: Throwable) {}
         try {
+            org.fossify.gallery.helpers.media.VaultDecoderLifecycle.onVaultLocked(context)
+        } catch (_: Throwable) {}
+        try {
             MediaIndexCoordinator.clearVaultPaths(cachedVaultRoot?.absolutePath)
         } catch (_: Throwable) {}
         if (context != null && vaultClipboardTouched) {

@@ -8,6 +8,10 @@ use jni_sys::{
 
 use crate::{gif_session, static_decoders, try_alloc_zeroed, MediaError, MAX_DECODE_ALLOC_BYTES};
 
+const NATIVE_STATUS_OK: jint = 0;
+const NATIVE_STATUS_DEFER_PLATFORM: jint = 1;
+const NATIVE_STATUS_FAILED: jint = 2;
+
 unsafe fn jni_table<'a>(env: *mut JNIEnv) -> Option<&'a JNINativeInterface__1_2> {
     if env.is_null() {
         return None;
@@ -166,25 +170,36 @@ pub unsafe extern "system" fn Java_org_fossify_gallery_helpers_media_NativeMedia
         let bytes = read_jbyte_array(env, data).ok()?;
         let req_w = u32::try_from(max_width).unwrap_or(0);
         let req_h = u32::try_from(max_height).unwrap_or(0);
-        let decoded = static_decoders::decode_static_ex(
+        match static_decoders::decode_static_ex(
             format_code,
             &bytes,
             req_w,
             req_h,
             exif_orientation,
             scale_mode,
-        )
-        .ok()?;
-        let meta = [
-            decoded.width as jint,
-            decoded.height as jint,
-            decoded.src_width as jint,
-            decoded.src_height as jint,
-        ];
-        if !write_jint_slice(env, out_meta, &meta) {
-            return None;
+        ) {
+            Ok(decoded) => {
+                let meta = [
+                    decoded.width as jint,
+                    decoded.height as jint,
+                    decoded.src_width as jint,
+                    decoded.src_height as jint,
+                    NATIVE_STATUS_OK,
+                ];
+                if !write_jint_slice(env, out_meta, &meta) {
+                    return None;
+                }
+                Some(new_jbyte_array(env, &decoded.rgba))
+            }
+            Err(MediaError::DeferToPlatform) => {
+                let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_DEFER_PLATFORM]);
+                None
+            }
+            Err(_) => {
+                let _ = write_jint_slice(env, out_meta, &[0, 0, 0, 0, NATIVE_STATUS_FAILED]);
+                None
+            }
         }
-        Some(new_jbyte_array(env, &decoded.rgba))
     }));
     result.ok().flatten().unwrap_or_else(null_mut)
 }

@@ -39,6 +39,8 @@ data class IsolatedDecodeRequest(
         const val FLAG_APPLY_EXIF_ORIENTATION = 2
         const val FLAG_ALLOW_LARGE_OUTPUT = 4
         const val FLAG_CENTER_CROP = 8
+        const val FLAG_ALLOW_SVG = 16
+        const val FLAG_INCLUDE_GAINMAP = 32
 
         @JvmField
         val CREATOR: Parcelable.Creator<IsolatedDecodeRequest> =
@@ -60,6 +62,72 @@ data class IsolatedDecodeRequest(
     }
 }
 
+data class IsolatedHdrPayload(
+    val gainmapWidth: Int,
+    val gainmapHeight: Int,
+    val gainmapByteCount: Int,
+    val gainmapHandle: Parcelable? = null,
+    val gainmapPipePfd: ParcelFileDescriptor? = null,
+    val gainmapMeta: FloatArray = FloatArray(0),
+) : Parcelable, Closeable {
+
+    override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeInt(gainmapWidth)
+        dest.writeInt(gainmapHeight)
+        dest.writeInt(gainmapByteCount)
+        dest.writeParcelable(gainmapHandle, flags)
+        dest.writeParcelable(gainmapPipePfd, flags)
+        dest.writeFloatArray(gainmapMeta)
+    }
+
+    override fun describeContents(): Int = Parcelable.CONTENTS_FILE_DESCRIPTOR
+
+    override fun close() {
+        IsolatedPixelTransport.closeHandle(gainmapHandle)
+        runCatching { gainmapPipePfd?.close() }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is IsolatedHdrPayload) return false
+        return gainmapWidth == other.gainmapWidth &&
+            gainmapHeight == other.gainmapHeight &&
+            gainmapByteCount == other.gainmapByteCount &&
+            gainmapHandle == other.gainmapHandle &&
+            gainmapPipePfd == other.gainmapPipePfd &&
+            gainmapMeta.contentEquals(other.gainmapMeta)
+    }
+
+    override fun hashCode(): Int {
+        var result = gainmapWidth
+        result = 31 * result + gainmapHeight
+        result = 31 * result + gainmapByteCount
+        result = 31 * result + (gainmapHandle?.hashCode() ?: 0)
+        result = 31 * result + (gainmapPipePfd?.hashCode() ?: 0)
+        result = 31 * result + gainmapMeta.contentHashCode()
+        return result
+    }
+
+    companion object {
+        @JvmField
+        val CREATOR: Parcelable.Creator<IsolatedHdrPayload> =
+            object : Parcelable.Creator<IsolatedHdrPayload> {
+                override fun createFromParcel(source: Parcel): IsolatedHdrPayload {
+                    return IsolatedHdrPayload(
+                        gainmapWidth = source.readInt(),
+                        gainmapHeight = source.readInt(),
+                        gainmapByteCount = source.readInt(),
+                        gainmapHandle = source.readCompatParcelable(Parcelable::class.java),
+                        gainmapPipePfd = source.readCompatParcelable(ParcelFileDescriptor::class.java),
+                        gainmapMeta = source.createFloatArray() ?: FloatArray(0),
+                    )
+                }
+
+                override fun newArray(size: Int): Array<IsolatedHdrPayload?> = arrayOfNulls(size)
+            }
+    }
+}
+
 data class IsolatedDecodeResult(
     val status: Int,
     val width: Int = 0,
@@ -70,6 +138,8 @@ data class IsolatedDecodeResult(
     val byteCount: Int = 0,
     val sharedOutputHandle: Parcelable? = null,
     val pixelPipePfd: ParcelFileDescriptor? = null,
+    val colorSpaceId: Int = IsolatedHdrTransport.COLOR_SPACE_SRGB,
+    val hdrPayload: IsolatedHdrPayload? = null,
 ) : Parcelable, Closeable {
 
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -82,6 +152,8 @@ data class IsolatedDecodeResult(
         dest.writeInt(byteCount)
         dest.writeParcelable(sharedOutputHandle, flags)
         dest.writeParcelable(pixelPipePfd, flags)
+        dest.writeInt(colorSpaceId)
+        dest.writeParcelable(hdrPayload, flags)
     }
 
     override fun describeContents(): Int = Parcelable.CONTENTS_FILE_DESCRIPTOR
@@ -89,6 +161,7 @@ data class IsolatedDecodeResult(
     override fun close() {
         IsolatedPixelTransport.closeHandle(sharedOutputHandle)
         runCatching { pixelPipePfd?.close() }
+        runCatching { hdrPayload?.close() }
     }
 
     companion object {
@@ -112,6 +185,8 @@ data class IsolatedDecodeResult(
                         byteCount = source.readInt(),
                         sharedOutputHandle = source.readCompatParcelable(Parcelable::class.java),
                         pixelPipePfd = source.readCompatParcelable(ParcelFileDescriptor::class.java),
+                        colorSpaceId = source.readInt(),
+                        hdrPayload = source.readCompatParcelable(IsolatedHdrPayload::class.java),
                     )
                 }
 

@@ -16,6 +16,7 @@ class PicassoRegionDecoder(
 ) : ImageRegionDecoder {
     private var appContext: Context? = null
     private var sessionId: Long = -1L
+    private var isVaultSession: Boolean = false
 
     @Volatile
     private var recycled = false
@@ -25,6 +26,7 @@ class PicassoRegionDecoder(
         val appCtx = context.applicationContext
         appContext = appCtx
         val newUri = Uri.parse(uri.toString().replace("%", "%25").replace("#", "%23"))
+        isVaultSession = IsolatedRegionClient.isVaultUri(newUri)
         val opened = checkNotNull(IsolatedRegionClient.openRegionSession(appCtx, newUri)) {
             "Isolated region decoder failed to open $newUri"
         }
@@ -48,7 +50,7 @@ class PicassoRegionDecoder(
             }
 
             return checkNotNull(
-                IsolatedRegionClient.decodeRegionTile(ctx, sessionId, rect, newSampleSize),
+                IsolatedRegionClient.decodeRegionTile(ctx, sessionId, rect, newSampleSize, isVaultSession),
             ) { "Region decoder returned null bitmap - image format may not be supported" }
         }
     }
@@ -58,14 +60,16 @@ class PicassoRegionDecoder(
     override fun recycle() {
         val idToClose: Long
         val ctx: Context?
+        val vaultSession: Boolean
         synchronized(decoderLock) {
             recycled = true
             idToClose = sessionId
+            vaultSession = isVaultSession
             sessionId = -1L
             ctx = appContext
         }
         if (ctx != null && idToClose > 0L) {
-            IsolatedRegionClient.closeRegionSession(ctx, idToClose)
+            IsolatedRegionClient.closeRegionSession(ctx, idToClose, vaultSession)
         }
     }
 }

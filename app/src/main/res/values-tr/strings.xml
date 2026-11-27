@@ -821,4 +821,10 @@
     <string name="app_lock_mode_label">Kilitleme zamanı</string>
     <string name="app_lock_mode_cold_start">Yalnızca uygulama başlatıldığında</string>
     <string name="app_lock_mode_every_entry">Her girişte</string>
+
+    <!-- Media security & SVG toggle strings (this revision) -->
+    <string name="media_security">Medya güvenliği</string>
+    <string name="show_svg_files">SVG dosyalarını göster</string>
+    <string name="show_svg_files_warning">SVG dosyaları, artık güncelleme almayan eski bir üçüncü parti kütüphane ile izole bir süreçte işlenir. Yalnızca SVG dosyalarını görüntülemeniz gerekiyorsa etkinleştirin.</string>
+    <string name="enable_svg_files">Etkinleştir</string>
 </resources>

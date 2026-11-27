@@ -1,7 +1,11 @@
 package org.fossify.gallery
 
+import org.fossify.gallery.helpers.media.IsolatedDecodeRequest
 import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
+import org.fossify.gallery.helpers.media.IsolatedHdrTransport
 import org.fossify.gallery.helpers.media.IsolatedMediaFormat
+import org.fossify.gallery.helpers.media.IsolatedPixelTransport
+import org.fossify.gallery.helpers.media.isFormatAllowed
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -107,5 +111,96 @@ class IsolatedFormatSnifferTest {
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("photo.jpg"))
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("vector.svg"))
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("deadbeef.bin"))
+    }
+
+    @Test
+    fun svgFormatIsBlockedUnlessAllowSvgFlagIsSet() {
+        assertFalse(isFormatAllowed(IsolatedMediaFormat.SVG, IsolatedDecodeRequest.FLAG_NONE))
+        assertFalse(
+            isFormatAllowed(
+                IsolatedMediaFormat.SVG,
+                IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
+            ),
+        )
+        assertTrue(isFormatAllowed(IsolatedMediaFormat.SVG, IsolatedDecodeRequest.FLAG_ALLOW_SVG))
+
+        for (format in listOf(
+            IsolatedMediaFormat.JPEG,
+            IsolatedMediaFormat.PNG,
+            IsolatedMediaFormat.GIF,
+            IsolatedMediaFormat.WEBP,
+            IsolatedMediaFormat.AVIF,
+            IsolatedMediaFormat.JXL,
+            IsolatedMediaFormat.HEIC,
+            IsolatedMediaFormat.RAW,
+        )) {
+            assertTrue(
+                "Non-SVG format $format must remain allowed with FLAG_NONE",
+                isFormatAllowed(format, IsolatedDecodeRequest.FLAG_NONE),
+            )
+        }
+    }
+
+    @Test
+    fun transferDimensionsEnforce4096And32MpCaps() {
+        assertTrue(IsolatedPixelTransport.isValidTransferDimensions(4096, 4096, 4096 * 4096 * 4))
+        assertFalse(IsolatedPixelTransport.isValidTransferDimensions(4097, 100, 4097 * 100 * 4))
+        assertFalse(IsolatedPixelTransport.isValidTransferDimensions(16_384, 16_384, 16_384 * 16_384 * 4))
+        assertFalse(IsolatedPixelTransport.isValidTransferDimensions(100, 100, 100 * 100 * 4 + 4))
+        assertFalse(IsolatedPixelTransport.isValidTransferDimensions(0, 100, 0))
+    }
+
+    @Test
+    fun hasAnimatedContainerHintDetectsGifApngAndAnimatedWebp() {
+        assertTrue(IsolatedFormatSniffer.hasAnimatedContainerHint("GIF89a".encodeToByteArray()))
+
+        val staticPng = byteArrayOf(
+            0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 0,
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x44, 0x41, 0x54, 0, 0, 0, 0,
+        )
+        assertFalse(IsolatedFormatSniffer.hasAnimatedContainerHint(staticPng))
+
+        val apng = byteArrayOf(
+            0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x48, 0x44, 0x52, 0, 0, 0, 0,
+            0x00, 0x00, 0x00, 0x00, 0x61, 0x63, 0x54, 0x4C, 0, 0, 0, 0,
+        )
+        assertTrue(IsolatedFormatSniffer.hasAnimatedContainerHint(apng))
+
+        val staticVp8xWebp = "RIFF\u0000\u0000\u0000\u0000WEBPVP8X\u000a\u0000\u0000\u0000\u0010\u0000\u0000\u0000"
+            .encodeToByteArray()
+        assertFalse(IsolatedFormatSniffer.hasAnimatedContainerHint(staticVp8xWebp))
+
+        val animatedWebp = "RIFF\u0000\u0000\u0000\u0000WEBPVP8X\u000a\u0000\u0000\u0000\u0012\u0000\u0000\u0000"
+            .encodeToByteArray()
+        assertTrue(IsolatedFormatSniffer.hasAnimatedContainerHint(animatedWebp))
+    }
+
+    @Test
+    fun sanitizeGainmapMetaRejectsNanInfAndClampsBounds() {
+        assertNull(IsolatedHdrTransport.sanitizeGainmapMeta(null))
+        assertNull(IsolatedHdrTransport.sanitizeGainmapMeta(FloatArray(16) { 1f }))
+
+        val withNan = FloatArray(IsolatedHdrTransport.GAINMAP_META_FLOAT_COUNT) { 1f }
+        withNan[4] = Float.NaN
+        assertNull(IsolatedHdrTransport.sanitizeGainmapMeta(withNan))
+
+        val withInf = FloatArray(IsolatedHdrTransport.GAINMAP_META_FLOAT_COUNT) { 1f }
+        withInf[16] = Float.POSITIVE_INFINITY
+        assertNull(IsolatedHdrTransport.sanitizeGainmapMeta(withInf))
+
+        val extreme = FloatArray(IsolatedHdrTransport.GAINMAP_META_FLOAT_COUNT) { 1f }
+        extreme[0] = 5f
+        extreme[3] = 2f
+        extreme[6] = 100f
+        extreme[15] = 4f
+        extreme[16] = 2f
+        val sanitized = IsolatedHdrTransport.sanitizeGainmapMeta(extreme)!!
+        assertEquals(5f, sanitized[0])
+        assertEquals(5f, sanitized[3])
+        assertEquals(10f, sanitized[6])
+        assertEquals(4f, sanitized[15])
+        assertEquals(4f, sanitized[16])
     }
 }

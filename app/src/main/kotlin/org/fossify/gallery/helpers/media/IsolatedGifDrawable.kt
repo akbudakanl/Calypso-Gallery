@@ -27,14 +27,14 @@ class IsolatedGifDrawable internal constructor(
         val height: Int,
         val frameCount: Int,
         val initialDurationMs: Int,
+        val channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
     )
 
     private val paint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.DITHER_FLAG)
     private val coordinator = IsolatedGifPrefetcher(
         appContext = appContext,
         sessionId = sessionId,
-        frameCount = meta.frameCount,
-        initialDurationMs = meta.initialDurationMs,
+        meta = meta,
         slots = slots,
         bitmaps = bitmaps,
         onInvalidate = ::invalidateSelf,

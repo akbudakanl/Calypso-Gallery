@@ -1,6 +1,6 @@
 # ADR 0009: İzole Medya Çözme Mimarisi (`android:isolatedProcess="true"`)
 
-- **Durum:** Tamamlandı (Faz 0–4 uygulandı)
+- **Durum:** Tamamlandı (Faz 0–6 — Final)
 - **Tarih:** 2026-11-27
 - **Hedef:** Güvenilmeyen veya üçüncü parti C/C++ yerel (native) decoder kullanan medya formatlarını ana uygulama sürecinden tamamen izole etmek ve ilerleyen fazlarda izole süreç içi bellek-güvenli Rust decoder katmanı ile derinlemesine savunma sağlamak.
 
@@ -61,24 +61,32 @@ flowchart LR
     subgraph MainProcess["Ana Süreç (UID: App, Kasa Anahtarları RAM'de)"]
         UI["UI / Glide / Subsampling / Cropper"]
         Vault["CryptoManager (FGVLTENC v1)"]
-        Broker["IsolatedDecoderClient (Timeout + Watchdog)"]
+        Broker["IsolatedDecoderClient + Channel (Timeout + Watchdog)"]
     end
 
     subgraph BinderIPC["Binder / AIDL Sınırı"]
         Input["ParcelFileDescriptor (RO) / SharedMemory (RO, API 27+) / Pipe (API 26)"]
-        Output["SharedMemory Piksel Tamponu (API 27+) / Pipe (API 26)"]
+        Output["SharedMemory Piksel Tamponu (4096 / 32 MP Tavanı) / Pipe (API 26)"]
     end
 
-    subgraph IsolatedProcess["İzole Süreç (android:isolatedProcess=true, İzin Yok, Ağ Yok)"]
-        AppGuard["App.onCreate() İzole Süreç Koruması"]
-        Service["IsolatedMediaDecoderService"]
-        Decoders["Platform / Rust Decoder'lar"]
+    subgraph PublicIsolated["Genel İzole Süreç (:media_decoder, isolatedProcess=true, MTE=async)"]
+        AppGuard1["App.onCreate() İzole Süreç Koruması"]
+        Service1["IsolatedMediaDecoderService"]
+        Decoders1["Rust (png, image-webp, gif, jxl-oxide) + OS Codec"]
+    end
+
+    subgraph VaultIsolated["Kasa İzole Süreci (:vault_decoder, isolatedProcess=true, Kilitlenince Kapatılır)"]
+        AppGuard2["App.onCreate() İzole Süreç Koruması"]
+        Service2["VaultIsolatedMediaDecoderService"]
+        Decoders2["Rust + OS Codec (Yalnızca Kasa Medyası)"]
     end
 
     UI --> Broker
     Vault -. "Sadece çözülen tek dosya baytları" .-> Broker
-    Broker --> Input --> Service --> Decoders
-    Decoders --> Output --> Broker --> UI
+    Broker -- "PUBLIC" --> Input --> Service1 --> Decoders1
+    Broker -- "VAULT" --> Input --> Service2 --> Decoders2
+    Decoders1 --> Output --> Broker --> UI
+    Decoders2 --> Output
 ```
 
 ### 3.1. `App.onCreate()` İzole Süreç Koruması
@@ -92,7 +100,8 @@ flowchart LR
 ### 3.3. Çıktı Aktarımı (`SharedMemory` Piksel Tamponu — GPU/OEM Bağımsız)
 - `android:isolatedProcess="true"` altındaki `isolated_app` SELinux politikası, izole süreçlerin GPU sürücülerine (`/dev/kgsl`, `/dev/mali`), `gralloc` ve `SurfaceFlinger` HAL'lerine erişmesini pek çok OEM cihazda reddeder. Ayrıca `Bitmap.wrapHardwareBuffer` API 28+ gerektirir.
 - Bu nedenle tüm cihazlarda (API 26–36) kararlı ve sıfır GPU bağımlılığı sunan **`SharedMemory` CPU piksel tamponu (API 27+) + `ParcelFileDescriptor` pipe (API 26)** modeli benimsenmiştir:
-  - İzole süreç görseli ham ARGB_8888 / RGBA piksel tamponuna çözer, tamponu `PROT_READ` olarak mühürler (tek seferlik decode) veya çift tamponlu paylaşım kullanır ve ana sürece yalnızca genişlik, yükseklik, renk uzayı ve `SharedMemory`/`ParcelFileDescriptor` döner.
+  - İzole süreç görseli ham `ARGB_8888` / RGBA piksel tamponuna çözer, tamponu `PROT_READ` olarak mühürler (tek seferlik decode) veya çift tamponlu paylaşım kullanır ve ana sürece yalnızca genişlik, yükseklik ve `SharedMemory`/`ParcelFileDescriptor` döner.
+  - **Ana süreç çıktı doğrulaması ([IsolatedPixelTransport.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedPixelTransport.kt)):** İzole süreç ele geçirilse bile sahte boyutla ana süreçte OOM tetiklenmesini önlemek için ana süreç `isValidTransferDimensions` ile genişlik/yüksekliği en fazla `4096` piksel, toplam piksel sayısını en fazla `32 MP` (`33_554_432` piksel = `128 MiB`) ve `SharedMemory.size` değerini bu üst sınırla sıkı biçimde doğrular.
   - Ana süreç piksel baytlarını kendi `Bitmap` nesnesine alır; böylece Glide önbelleği, `GestureImageView`, `SubsamplingScaleImageView` ve `CropImageView` ile ek uyumluluk katmanı olmadan çalışır.
 
 ---
@@ -103,8 +112,9 @@ flowchart LR
 - *"Küçük resimlerdeki GIF'leri hareketlendir"* (`ANIMATE_GIFS` / `animateGifs`) ayarı ile `penfeizhou` (`apng`, `awebp`, `avif`) kütüphaneleri kaldırılmıştır.
 - Tüm statik ve animasyonlu formatların küçük resimleri yalnızca tek statik ilk kare olarak çözülür; böylece kaydırma sırasında paralel animasyon saldırı yüzeyi ve gereksiz IPC yükü ortadan kalkar.
 
-### 4.2. Tam Ekran GIF Oynatma: Seçenek B (`SharedMemory` Çift Tampon)
-- Tam ekranda yalnızca **GIF** animasyonu oynatılır (`APNG`, `aWebP`, `aAVIF` statik ilk kare olarak gösterilir).
+### 4.2. Tam Ekran Animasyonlu Oynatma: Seçenek B (`SharedMemory` Çift Tampon — GIF, APNG ve Animasyonlu WebP)
+- Tam ekranda **GIF**, **APNG** ve **animasyonlu WebP** tek bir birleşik oturum akışı (`IsolatedGifSessionStore` → `calypso-media` `gif_session` / `animated_session`) üzerinden animasyonlu oynatılır (`aAVIF` ve küçük resim ızgaraları statik ilk kare olarak kalır).
+- Yeni üçüncü parti native bağımlılık (`penfeizhou` vb.) eklenmeden halihazırda mevcut saf Rust `gif (0.14.2)`, `png (0.18.1)` ve `image-webp (0.2.4)` crate'leri kullanılır; yalnızca konteyner başlığında animasyon (`GIF` / `acTL` / `VP8X ANIM`) tespit edildiğinde tam ekran oturumu açılır, statik PNG/WebP'lerde çift IPC oluşmaz.
 - Seçenek A (`Surface` aktarımı) yerine **Seçenek B (`SharedMemory` çift tamponlu kare akışı)** seçilmiştir:
   - `isolated_app` SELinux kurallarıyla %100 uyumludur; GPU/OEM kararsızlığı üretmez.
   - Mevcut `GestureImageView` ile yakınlaştırma/kaydırma (pinch-to-zoom / pan) ve `ViewPager2` geçişleriyle doğal çalışır.
@@ -121,12 +131,17 @@ flowchart LR
    - İzole servis içinde tüm `Throwable` hataları (ve Rust FFI sınırındaki `panic` durumları) yakalanır.
 2. **RAW / DNG Stratejisi:**
    - Liste/thumbnail aşamasında öncelikle gömülü JPEG önizlemenin izole süreçte çözülmesi tercih edilir; tam RAW decode yalnızca tam ekran gerektiğinde izole süreçte çalıştırılır.
-3. **Sıcak (Warm) Tek Worker Stratejisi:**
-   - Uygulama ön plandayken tek bir sıcak izole servis bağlı tutulur; çözme işleri öncelikli bir kuyrukta yürütülür. Arka plana alındığında kaynakları serbest bırakmak üzere kontrollü süre sonunda `unbindService` uygulanır.
-   - **`android:useAppZygote="true"` kullanılmaması kararı:** Tek sıcak `:media_decoder` işçisi tekrarlanan soğuk başlangıçları zaten önler; buna karşılık `useAppZygote="true"` ek bir kalıcı App Zygote sürecini RAM'de tutar ve watchdog/çökme sonrasında yeniden doğan izole süreçlerin aynı ASLR adres yerleşimini miras almasına yol açar. Bu nedenle kullanılmamıştır.
+3. **Çift Kanallı Sıcak Worker ve Kasa Süreç Ayrımı (`:media_decoder` vs. `:vault_decoder`):**
+   - Uygulama ön plandayken normal/dış medya `IsolatedMediaDecoderService` (`:media_decoder` — `PUBLIC` kanalı), şifreli kasadan çözülen medya ise ayrı `VaultIsolatedMediaDecoderService` (`:vault_decoder` — `VAULT` kanalı) içinde çözülür; böylece güvenilmeyen bir dış görseli işlerken ele geçirilen süreç aynı bellekte daha önce veya sonra açılan kasa medyasına erişemez.
+   - GIF ve Region oturumları kendi kanal bilgisini (`PUBLIC` / `VAULT`) taşır; böylece iki süreçteki `sessionId` sayaçları birbiriyle çakışmaz.
+   - Kasa kilitlendiğinde `CryptoManager.lockVaultInternal` doğrudan `VaultDecoderLifecycle.onVaultLocked` çağırarak `:vault_decoder` bağlantısını anında `unbindService` ile keser ve süreci öldürür; arka plana geçildiğinde de her iki kanal kontrollü gecikme sonunda serbest bırakılır.
+   - **`android:useAppZygote="true"` kullanılmaması kararı:** Sıcak izole işçiler tekrarlanan soğuk başlangıçları zaten önler; buna karşılık `useAppZygote="true"` ek bir kalıcı App Zygote sürecini RAM'de tutar ve watchdog/çökme sonrasında yeniden doğan izole süreçlerin aynı ASLR adres yerleşimini miras almasına yol açar. Bu nedenle kullanılmamıştır.
 4. **Zaman Aşımı (Watchdog) ve Çökme Dayanıklılığı:**
-   - Sabit istek zaman aşımı (ör. 5–10 sn) aşılırsa `unbindService` ile izole süreç sonlandırılıp yeniden başlatılır.
-   - `onBindingDied` / `onServiceDisconnected` durumunda ana süreç çökmez; çökerten dosya kimliği kısa süreli kara listeye alınarak crash loop engellenir.
+   - Sabit istek zaman aşımı (`20 sn` statik/open, `5 sn` GIF kare render) aşılırsa `unbindService` ile ilgili izole süreç kanalı sonlandırılıp yeniden başlatılır.
+   - `onBindingDied` / `onServiceDisconnected` durumunda ana süreç çökmez; çökerten dosya kimliği `IsolatedFailureQuarantine` ile kısa süreli (`60 sn`) kara listeye alınarak crash loop engellenir.
+5. **Süreç İçi Bellek Sertleştirmesi (`MTE`) ve DoS Tavanları:**
+   - [AndroidManifest.xml](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/AndroidManifest.xml) üzerinde `android:memtagMode="async"` etkindir; ARMv9 destekli cihazlarda (Pixel 8+ vb.) hem ana süreçte hem izole süreçlerde bellek bozulmalarını düşük ek yükle yakalar.
+   - `jxl-oxide` `f32` framebuffer kullandığından JXL için kaynak piksel tavanı `32 MP` (`MAX_JXL_SOURCE_PIXELS`) ile sınırlanmıştır; lossless WebP (`VP8L`) için de C `libwebp` fallback'i olmaksızın `32 MP` tavanı uygulanır.
 
 ---
 
@@ -148,8 +163,54 @@ flowchart LR
 - **Faz 4 — Hibrit İzole Medya Mimarisi & Hafifletilmiş Saf Rust (`rust/calypso-media/`) (Tamamlandı):**
   - İzole süreç içindeki yüksek riskli üçüncü parti C/C++ kütüphaneler (`giflib` / `android-gif-drawable`, `zjupure:webpdecoder`, `jxl-coder-glide` / `libjxl` / `lcms2`) tamamen kaldırıldı ve JXL (`jxl-oxide`) ile statik/animasyonlu GIF (`gif` — O(1) bellekli `SharedMemory` çift tamponlu ön yükleme) saf Rust `calypso-media` (`libcalypso_media.so`) crate'ine alındı.
   - JPEG, PNG ve WebP çözme için izole süreç içinde Android işletim sisteminin donanım/NEON hızlandırmalı ve DCT `inSampleSize` destekli yerleşik codec'lerine (`BitmapFactory` / `ImageDecoder`) dönüldü; böylece ana süreç izolasyonu %100 korunurken düşük/orta cihazlarda galeri ızgara akıcılığı geri kazanıldı.
+- **Faz 5 — Kasa Süreç Ayrımı, MTE, Çıktı/JXL Tavanları, Varsayılan Kapalı SVG ve Saf Rust PNG + Karma WebP (Tamamlandı):**
+  - **Süreç ayrımı ve MTE:** Normal medya (`:media_decoder`) ile şifreli kasa medyası (`:vault_decoder`) iki ayrı `isolatedProcess="true"` servisine ayrıldı; kasa kilitlendiğinde `:vault_decoder` anında kapatılır. Manifest düzeyinde `android:memtagMode="async"` eklendi.
+  - **Çıktı ve DoS tavanları:** `IsolatedPixelTransport` ana süreç alım tavanı `4096` / `32 MP` (`128 MiB`) olarak sıkılaştırıldı; `jxl-oxide` için `MAX_JXL_SOURCE_PIXELS = 32 MP` sınırı eklendi.
+  - **SVG varsayılan kapalı (fail-closed):** Eski/bakımsız `androidsvg-aar` motoru varsayılan olarak tamamen erişilemez hale getirildi (`showSvgFiles = false`, `getDefaultFileFilter()` içinden `TYPE_SVGS` kaldırıldı, `MainActivity` otomatik göçü silindi). `:media_decoder` girişinde `FLAG_ALLOW_SVG` bayrağı yoksa dış `ACTION_VIEW` intent'leri ve `.jpg`/`.png` uzantılı sahte SVG'ler bile `STATUS_UNSUPPORTED` ile reddedilir. Ayar yalnızca **Ayarlar → Medya Görüntüleyici → Medya güvenliği → SVG dosyalarını göster** altından onay diyaloğu ile açılabilir.
+  - **Saf Rust `png (0.18.1)` (`fdeflate`) + Karma `image-webp (0.2.4)` — Seçenek A (Uygulanan):**
+    - **PNG:** Boyut okuma (`probeBounds`) ve statik decode saf Rust `png` (`128 MiB` bellek limiti) ile yapılır. Bozuk PNG'ler `DecodeFailed` ile kesin reddedilir (C `libpng` fallback'i yasaktır); yalnızca geçerli `> 32 MP` PNG'ler `inSampleSize` avantajı için `DeferToPlatform` ile izole OS'a bırakılır.
+    - **WebP — Seçenek A (Uygulanan, karma model):** Boyut okuma saf Rust `image-webp` ile yapılır. **Lossless (`VP8L`, `CVE-2023-4863` saldırı yüzeyi)** her zaman saf Rust'ta çözülür; bozuk `VP8L` veya `> 32 MP` durumda **asla** C `libwebp`'ye düşmez (`DecodeFailed` / `TooLarge`). **Lossy (`VP8 `)** `≤ 4 MP` (`MAX_RUST_LOSSY_WEBP_PIXELS = 4_000_000`) boyutuna kadar saf Rust'ta çözülür; yalnızca `> 4 MP` geçerli lossy veya animasyonlu WebP'ler `DeferToPlatform` ile izole OS codec'ine bırakılır.
+    - **WebP — Seçenek B (Alternatif, tam saf Rust statik WebP):** Tüm statik WebP (`VP8L` + `VP8 `) dosyalarının saf Rust `image-webp` ile çözülmesi, yalnızca animasyonlu veya desteklenmeyen WebP'lerin izole OS'a bırakılması seçeneğidir. Bu modelde büyük (`> 4 MP`) lossy WebP'lerde de sistem `libwebp`'ye hiç dokunulmaz; ancak `image-webp`'de lossy SIMD eksikliği nedeniyle büyük lossy WebP'lerde ~4–10× yavaşlama bedeli oluşur. İleride `image-webp` lossy SIMD desteği olgunlaştığında `MAX_RUST_LOSSY_WEBP_PIXELS` eşiği kaldırılarak doğrudan Seçenek B'ye geçilebilir.
+- **Faz 6 — Ultra HDR (`Gainmap`), Saf Rust APNG/aWebP, Satır-Bazlı >32 MP PNG ve Büyük Dosya FD Akışı (Tamamlandı — Final):**
+  - **Ultra HDR (`Gainmap`, API 34+) & Geniş Renk Gamı (`Display P3` / `BT2020`):** [IsolatedHdrTransport.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedHdrTransport.kt) ile tüm MPF/XMP/tmap/ICC ayrıştırması izole süreçte OS codec'ine bırakıldı. Ana süreç yalnızca `FLAG_INCLUDE_GAINMAP` istendiğinde (tam ekranda `ultraHdrRendering == true` iken) ham Gainmap piksel tamponunu (`ALPHA_8` / `ARGB_8888`, boyutlar baz görseli aşamaz), `isFinite()` + aralık kısıtlı 17 skaler float metadata değerini ve sabit `ColorSpace.Named` ID'sini `SharedMemory` üzerinden alır.
+  - **Sıfır Yeni Bağımlılıkla Saf Rust APNG & Animasyonlu WebP:** [animated_session.rs](file:///c:/Users/ben/Desktop/Calypso-Gallery/rust/calypso-media/src/animated_session.rs) ile `png (0.18.1)` (`acTL`/`fcTL`/`fdAT` + `DisposeOp` + `BlendOp`) ve `image-webp (0.2.4)` (`is_animated()` / `read_frame`) mevcut `SharedMemory` çift tamponlu `IsolatedGifSessionStore` / `IsolatedGifDrawable` hattına bağlandı. [IsolatedFormatSniffer.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedFormatSniffer.kt) (`hasAnimatedContainerHint`) saf Kotlin'de yalnızca APNG/aWebP/GIF için animasyon oturumu açar; statik görseller ek IPC ödemez.
+  - **Büyük (`> 32 MP`) PNG İçin Satır-Bazlı (`read_row`) Saf Rust Decode:** [png_webp_decoders.rs](file:///c:/Users/ben/Desktop/Calypso-Gallery/rust/calypso-media/src/png_webp_decoders.rs) non-interlaced PNG'lerde `> 32 MP` (300 MP tavanına kadar) görselleri `O(genişlik)` bellek ile satır satır (`reader.read_row`) çözüp premultiplied box-average ölçeklemeyi Rust içinde tamamlar; C `libpng` fallback'i non-interlaced PNG'ler için de ortadan kaldırılmıştır.
+  - **Büyük RAW / TIFF / JPEG / HEIC İçin `ParcelFileDescriptor` Akışı (`> 100 MiB` → `512 MiB`):** [IsolatedFdStreamingCodecs.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedFdStreamingCodecs.kt) ve [IsolatedRegionDecoderStore.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedRegionDecoderStore.kt), `100 MiB` üzeri (`512 MiB` tavanına kadar) SEEK destekli dosyaları tam `ByteArray` kopyası oluşturmadan doğrudan `FileDescriptor` / `ParcelFileDescriptor.dup` üzerinden decode eder ve bölgesel (tile) oturumu açar.
 - **Sonraki Konular:**
   - **AVIF / HEIC / RAW stratejisi uygulandı:**
     - `glide:avif-integration` kaldırıldı (Seçenek 2); Android 12+ (`API 31+`) izole `ImageDecoder` kullanır. Üçüncü parti C/C++ görsel `.so` kalmadı. Gelecekte Android 8–11 (`API 26–30`) AVIF desteği ve derinlemesine savunma için `rust/calypso-media/` içine saf Rust `rav1d` + `mp4parse` eklenmesi (`Seçenek 3`) [TODO.md](file:///c:/Users/ben/Desktop/Calypso-Gallery/TODO.md) içinde planlandı.
     - HEIC, RAW/DNG ve gömülü RAW önizlemeleri izole süreçte Android OS codec'leri (`BitmapFactory` / `ImageDecoder` / `media.swcodec`) üzerinden çözülür.
   - ~~`EditActivity` içindeki `androidphotofilters` (`libNativeImageProcessor.so`) C++ JNI filtre kütüphanesinin saf Kotlin (`ColorMatrix` / LUT) ile değiştirilmesi~~ (**Tamamlandı:** `helpers/filters/` altına saf Kotlin filtre motoru taşındı).
+
+---
+
+## 7. Geriye Dönük Uyumluluk, Platform Sınırları ve Bilinen Ödünleşimler
+
+İzole medya mimarisi ve Faz 0–6 değişikliklerinin eski Calypso / orijinal Fossify Gallery sürümleri ve Android API seviyeleriyle uyumluluk özeti:
+
+| Alan / Özellik | Mevcut Durum (Faz 6 Final) | Orijinal Fossify / Eski Durum ile Fark | Notlar |
+|---|---|---|---|
+| **AVIF** | Yalnızca **Android 12+ (`API 31+`)** OS `ImageDecoder` (izole süreçte) | Orijinal Fossify gömülü `avif-integration` (`libavif`/`dav1d`) ile API 26–30'da da açıyordu | API 26–30'da AVIF açılmaz; güvenlik ve APK boyutu için C++ JNI gömülmedi |
+| **HEIC / HEIF** | **Android 9+ (`API 28+`)** tam OS desteği; API 26–27 yalnızca OEM `BitmapFactory` desteği varsa | Aynı | Ek üçüncü parti C++ codec yok |
+| **API 26 IPC Aktarımı** | `ParcelFileDescriptor` pipe fallback'i (`SharedMemory` API 27+ gerektirir) | Ana süreçte doğrudan okuma | API 26'da çalışır ancak API 27+'a göre bellek kopyası daha yavaştır |
+| **MTE (`android:memtagMode="async"`)** | ARMv9 / Android 13+ cihazlarda aktif | Yoktu | Eski/desteklemeyen cihazlarda Android tarafından sessizce yok sayılır; uyumluluk sorunu yok |
+| **Animasyonlu Medya (GIF / APNG / aWebP)** | Tam ekranda **GIF, APNG ve Animasyonlu WebP** saf Rust motoruyla (`SharedMemory` çift tampon) oynatılır | Orijinal Fossify `giflib` + `penfeizhou` (C++) kullanıyordu | `aAVIF` ve tüm grid küçük resimleri güvenlik için statik ilk kare kalır |
+| **Grid GIF Animasyonu** | Kapalı (yalnızca statik ilk kare) | `animateGifs` ayarı vardı | Kaydırma sırasında paralel animasyon yükü ve saldırı yüzeyi kaldırıldı |
+| **SVG Desteği** | **Varsayılan kapalı** (Ayarlar → Medya Görüntüleyici → Medya güvenliği'nden onaylı açılabilir) | Varsayılan açıktı (`wasSVGShowingHandled` ile otomatik açılırdı) | Güncelleme alan kullanıcılarda da otomatik kapanır; kapalıyken `androidsvg` 100% erişilemez |
+| **DoS / Kaynak Sınırları** | RAM kopyası max `100 MiB`; büyük RAW/JPEG/HEIC/TIFF FD akışı max `512 MiB`; **JXL** & **Lossless WebP** max `32 MP`; non-interlaced PNG satır akışı `300 MP`; çıktı tavanı `4096` / `32 MP` | Sınırsızdı (OOM riski) | `> 100 MiB` profesyonel RAW/kamera dosyaları tam dosya belleğe alınmadan izole FD ve tile ile açılır |
+| **Ultra HDR (`Gainmap`) & Geniş Renk Gamı** | **Tam ekranda aktif** (`Display P3`/`BT2020` API 26+; `Gainmap` API 34+, `SharedMemory` + skaler doğrulamalı IPC) | Ana süreç doğrudan OS bitmap'i aldığı için HDR/P3 gösteriyordu | MPF/XMP/ICC ayrıştırması 100% izole süreçte kalır; [ColorModeHelper.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/ColorModeHelper.kt) ile çalışır |
+| **Şifreli Kasa (`FGVLTENC` v1), CLI Köprüsü, Ayar Yedekleri** | **%100 geriye dönük uyumlu** | Aynı format | Eski kasa dosyaları, `.bin`/`.vault` ve ayar dışa/içe aktarım dosyaları sorunsuz çalışır (`show_svg_files` yoksa `false`) |
+
+---
+
+## 8. Ultra HDR (`Gainmap`) ve Geniş Renk Gamı Güvenli IPC Tasarımı (Faz 6'da Uygulandı)
+
+[IsolatedHdrTransport.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedHdrTransport.kt) ile Android 14+ (`API 34+`) Ultra HDR fotoğraflar ve geniş renk gamlı görseller izole süreç sınırını zayıflatmadan ana sürece aktarılır:
+
+1. **Tüm ayrıştırma izole süreçte kalır:** JPEG MPF, XMP Gainmap metadata ve HEIC `tmap` ayrıştırması tamamen `:media_decoder` / `:vault_decoder` içinde OS `BitmapFactory` / `ImageDecoder` tarafından yapılır; [IsolatedBitmapTransforms.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedBitmapTransforms.kt) EXIF dönüş ve ölçeklemeyi Gainmap üzerinde de uygular. Ana süreçte sıkıştırılmış HDR/ICC baytları hiç işlenmez.
+2. **Yalnızca tam ekranda (`FLAG_INCLUDE_GAINMAP`):** Küçük resimlerde istenmez; yalnızca `Build.VERSION.SDK_INT >= 34` ve `config.ultraHdrRendering == true` iken tam ekran görüntülemede (`IsolatedGlideOptions.INCLUDE_GAINMAP`) istenir.
+3. **Minimal, doğrulanmış IPC yükü ([IsolatedMediaModels.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedMediaModels.kt) `IsolatedHdrPayload`):**
+   - **Gainmap ham piksel tamponu:** `ALPHA_8` (1 bpp) veya `ARGB_8888` (4 bpp) piksel tamponu `PROT_READ` mühürlü `SharedMemory` üzerinden taşınır; ana süreçte boyutun baz görseli aşmadığı (`<= baseWidth x baseHeight`) ve bayt sayısının kanal boyutuyla eşleştiği doğrulanır.
+   - **17 adet skaler `float` metadata değeri:** `ratioMin[3]`, `ratioMax[3]`, `gamma[3]`, `epsilonSdr[3]`, `epsilonHdr[3]`, `minDisplayRatioForHdrTransition`, `displayRatioForFullHdr` — ana süreçte tümünün `isFinite()` olduğu doğrulanıp güvenli aralıklara (`sanitizeGainmapMeta`) kırpılır.
+   - **Renk uzayı kimliği (`COLOR_SPACE_*`):** Keyfi ICC profil baytları yerine yalnızca sabit `SRGB`, `DISPLAY_P3`, `BT2020`, `DCI_P3`, `ADOBE_RGB` enum kimliği taşınır.
+4. **Ana süreçte birleştirme:** [IsolatedPixelTransport.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedPixelTransport.kt) baz bitmap'i doğrulanmış `ColorSpace` ile oluşturup `Gainmap` ekler; [ColorModeHelper.kt](file:///c:/Users/ben/Desktop/Calypso-Gallery/app/src/main/kotlin/org/fossify/gallery/helpers/ColorModeHelper.kt) `ActivityInfo.COLOR_MODE_HDR` veya `COLOR_MODE_WIDE_COLOR_GAMUT` modunu etkinleştirir.

@@ -88,6 +88,7 @@ import org.fossify.gallery.helpers.media.IsolatedDecoderClient
 import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
 import org.fossify.gallery.helpers.media.IsolatedGifClient
 import org.fossify.gallery.helpers.media.IsolatedGifDrawable
+import org.fossify.gallery.helpers.media.IsolatedGlideOptions
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
@@ -124,6 +125,7 @@ class PhotoFragment : ViewPagerFragment() {
     private var mHasInitialZoom = false
     private var mIsolatedGifDrawable: IsolatedGifDrawable? = null
     private var mIsLoadingGif = false
+    private var mIsAnimatedMedia = false
     private var mGifLoadGeneration = 0
 
     private var mStoredShowExtendedDetails = false
@@ -291,7 +293,7 @@ class PhotoFragment : ViewPagerFragment() {
                 mIsSubsamplingVisible = false
                 binding.subsamplingView.beGone()
                 loadImage()
-            } else if (mMedium.isGIF()) {
+            } else if (mIsAnimatedMedia) {
                 val existingGif = mIsolatedGifDrawable
                 if (existingGif == null) {
                     loadGif()
@@ -344,7 +346,7 @@ class PhotoFragment : ViewPagerFragment() {
             return
         }
 
-        if (mMedium.isGIF()) {
+        if (mIsAnimatedMedia) {
             mView.onGlobalLayout {
                 if (activity != null) {
                     measureScreen()
@@ -369,7 +371,7 @@ class PhotoFragment : ViewPagerFragment() {
         super.setMenuVisibility(menuVisible)
         mIsFragmentVisible = menuVisible
         if (mWasInit) {
-            if (mMedium.isGIF()) {
+            if (mIsAnimatedMedia) {
                 if (menuVisible) {
                     mIsolatedGifDrawable?.start()
                 }
@@ -429,9 +431,13 @@ class PhotoFragment : ViewPagerFragment() {
 
         ensureBackgroundThread {
             mImageOrientation = getImageOrientation()
+            val ctx = context
+            val isAnimated = mMedium.isGIF() ||
+                (ctx != null && IsolatedGifClient.isAnimatedMediaCandidate(ctx, getPathToLoad(mMedium)))
+            mIsAnimatedMedia = isAnimated
             activity?.runOnUiThread {
                 when {
-                    mMedium.isGIF() -> loadGif()
+                    isAnimated -> loadGif()
                     mMedium.isSVG() -> loadSVG()
                     else -> loadBitmap()
                 }
@@ -509,9 +515,11 @@ class PhotoFragment : ViewPagerFragment() {
         val priority = if (mIsFragmentVisible) Priority.IMMEDIATE else Priority.NORMAL
         val isEncrypted = CryptoManager.isEncryptedFile(path)
         val maxScreenDim = maxOf(mScreenWidth, mScreenHeight)
+        val includeGainmap = ColorModeHelper.isGainmapSupported() && (context?.config?.ultraHdrRendering ?: true)
         val options = RequestOptions()
             .signature(mMedium.getKey())
             .format(DecodeFormat.PREFER_ARGB_8888)
+            .set(IsolatedGlideOptions.INCLUDE_GAINMAP, includeGainmap)
             .priority(priority)
             .diskCacheStrategy(DiskCacheStrategy.NONE)
             .skipMemoryCache(isEncrypted)

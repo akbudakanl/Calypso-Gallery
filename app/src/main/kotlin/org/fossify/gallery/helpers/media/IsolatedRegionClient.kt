@@ -13,6 +13,11 @@ import java.io.File
  * Main-process client for isolated `BitmapRegionDecoder` tile sessions.
  */
 object IsolatedRegionClient {
+    fun isVaultUri(uri: Uri): Boolean {
+        val rawPath = uri.path ?: uri.toString().removePrefix("file://")
+        return CryptoManager.isEncryptedFile(rawPath)
+    }
+
     fun openRegionSession(context: Context, uri: Uri): IsolatedRegionOpenResult? {
         if (ProcessIsolation.isIsolatedProcess()) return null
         val rawPath = uri.path ?: uri.toString().removePrefix("file://")
@@ -20,14 +25,21 @@ object IsolatedRegionClient {
         val key = "region:$uri"
         if (IsolatedDecoderClient.quarantine.isQuarantined(key)) return null
 
-        val request = if (CryptoManager.isEncryptedFile(rawPath)) {
+        val isVault = CryptoManager.isEncryptedFile(rawPath)
+        val channel = if (isVault) IsolatedDecoderChannel.VAULT else IsolatedDecoderChannel.PUBLIC
+        val request = if (isVault) {
             buildEncryptedRegionRequest(File(rawPath))
         } else {
             buildPlainRegionRequest(appCtx, uri, rawPath)
         } ?: return null
 
         return request.use { req ->
-            IsolatedServiceBridge.runWatchdogCall(appCtx, key, IsolatedDecoderClient.quarantine) { decoder ->
+            IsolatedServiceBridge.runWatchdogCall(
+                context = appCtx,
+                quarantineKey = key,
+                quarantine = IsolatedDecoderClient.quarantine,
+                channel = channel,
+            ) { decoder ->
                 val res = decoder.openRegionSession(req)
                 if (res != null && res.status == IsolatedDecodeResult.STATUS_OK && res.sessionId > 0L) {
                     res
@@ -43,10 +55,17 @@ object IsolatedRegionClient {
         sessionId: Long,
         rect: Rect,
         sampleSize: Int,
+        isVault: Boolean = false,
     ): Bitmap? {
         if (ProcessIsolation.isIsolatedProcess() || sessionId <= 0L) return null
         val appCtx = context.applicationContext
-        return IsolatedServiceBridge.runWatchdogCall(appCtx, "", IsolatedDecoderClient.quarantine) { decoder ->
+        val channel = if (isVault) IsolatedDecoderChannel.VAULT else IsolatedDecoderChannel.PUBLIC
+        return IsolatedServiceBridge.runWatchdogCall(
+            context = appCtx,
+            quarantineKey = "",
+            quarantine = IsolatedDecoderClient.quarantine,
+            channel = channel,
+        ) { decoder ->
             decoder.decodeRegionTile(
                 sessionId,
                 rect.left,
@@ -64,9 +83,10 @@ object IsolatedRegionClient {
         }
     }
 
-    fun closeRegionSession(context: Context, sessionId: Long) {
+    fun closeRegionSession(context: Context, sessionId: Long, isVault: Boolean = false) {
         if (ProcessIsolation.isIsolatedProcess() || sessionId <= 0L) return
-        IsolatedServiceBridge.runFireAndForget(context.applicationContext) { decoder ->
+        val channel = if (isVault) IsolatedDecoderChannel.VAULT else IsolatedDecoderChannel.PUBLIC
+        IsolatedServiceBridge.runFireAndForget(context.applicationContext, channel = channel) { decoder ->
             decoder.closeRegionSession(sessionId)
         }
     }

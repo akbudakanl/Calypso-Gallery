@@ -67,6 +67,7 @@
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:memtagMode="async"
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:replace="android:label,android:allowBackup">
@@ -81,6 +82,12 @@
             android:exported="false"
             android:isolatedProcess="true"
             android:process=":media_decoder" />
+
+        <service
+            android:name="org.fossify.gallery.helpers.media.VaultIsolatedMediaDecoderService"
+            android:exported="false"
+            android:isolatedProcess="true"
+            android:process=":vault_decoder" />
 
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

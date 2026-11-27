@@ -19,6 +19,7 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.load.resource.bitmap.BitmapResource
 import com.bumptech.glide.signature.ObjectKey
+import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.EncryptedGlideOptions
 import java.io.File
@@ -31,6 +32,8 @@ private const val THUMB_PREVIEW_LIMIT = 600
 object IsolatedGlideOptions {
     val SCALE_CENTER_CROP: Option<Boolean> =
         Option.memory("org.fossify.gallery.scale_center_crop", false)
+    val INCLUDE_GAINMAP: Option<Boolean> =
+        Option.memory("org.fossify.gallery.include_gainmap", false)
 }
 
 class IsolatedBitmapPacket(val bitmap: Bitmap)
@@ -85,7 +88,7 @@ class IsolatedStringModelLoader(
             (uri.scheme == ContentResolver.SCHEME_FILE && !CryptoManager.isEncryptedFile(clean))
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH, options)
+        val flags = buildFlags(context, targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         val file = File(clean)
@@ -130,7 +133,7 @@ class IsolatedFileModelLoader(
     ): ModelLoader.LoadData<IsolatedBitmapPacket> {
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH, options)
+        val flags = buildFlags(context, targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         val sig = ObjectKey("iso:${model.absolutePath}:${targetW}x${targetH}:$flags:$preferThumb:$preferFull")
@@ -175,7 +178,7 @@ class IsolatedUriModelLoader(
         val isEncryptedFile = model.scheme == ContentResolver.SCHEME_FILE && CryptoManager.isEncryptedFile(clean)
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH, options)
+        val flags = buildFlags(context, targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         val spec = IsolatedFetchSpec(
@@ -424,13 +427,19 @@ private fun normalizeDim(dim: Int): Int {
     return if (dim <= 0) IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION else dim
 }
 
-private fun buildFlags(targetW: Int, targetH: Int, options: Options): Int {
+private fun buildFlags(context: Context, targetW: Int, targetH: Int, options: Options): Int {
     var flags = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION
     if (targetW in 1..THUMB_PREVIEW_LIMIT && targetH in 1..THUMB_PREVIEW_LIMIT) {
         flags = flags or IsolatedDecodeRequest.FLAG_PREFER_EMBEDDED_PREVIEW
     }
     if (options.get(IsolatedGlideOptions.SCALE_CENTER_CROP) == true) {
         flags = flags or IsolatedDecodeRequest.FLAG_CENTER_CROP
+    }
+    if (context.config.showSvgFiles) {
+        flags = flags or IsolatedDecodeRequest.FLAG_ALLOW_SVG
+    }
+    if (options.get(IsolatedGlideOptions.INCLUDE_GAINMAP) == true) {
+        flags = flags or IsolatedDecodeRequest.FLAG_INCLUDE_GAINMAP
     }
     return flags
 }

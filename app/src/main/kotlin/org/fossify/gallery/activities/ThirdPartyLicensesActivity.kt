@@ -167,6 +167,16 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             R.string.license_rust_gif_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_rust_png_title,
+            R.string.license_rust_png_text,
+            R.string.license_rust_png_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_image_webp_title,
+            R.string.license_rust_image_webp_text,
+            R.string.license_rust_image_webp_url,
+        ),
+        ThirdPartyLicenseItem(
             R.string.license_rust_jxl_oxide_title,
             R.string.license_rust_jxl_oxide_text,
             R.string.license_rust_jxl_oxide_url,

@@ -12,7 +12,7 @@ private const val HEAVY_DECODE_MIN_BYTES = 1_000_000L
 /**
  * Runs in `android:isolatedProcess="true"` with no filesystem, network, or main-process memory access.
  */
-class IsolatedMediaDecoderService : Service() {
+open class IsolatedMediaDecoderService : Service() {
     private val heavyDecodeSemaphore = Semaphore(MAX_CONCURRENT_HEAVY_DECODES, true)
 
     private val binder = object : IIsolatedMediaDecoder.Stub() {
@@ -117,3 +117,8 @@ class IsolatedMediaDecoderService : Service() {
         super.onDestroy()
     }
 }
+
+/**
+ * Dedicated isolated decoder process for decrypted Vault media; unbound immediately on vault lock.
+ */
+class VaultIsolatedMediaDecoderService : IsolatedMediaDecoderService()

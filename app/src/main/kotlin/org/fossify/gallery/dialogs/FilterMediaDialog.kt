@@ -1,6 +1,7 @@
 package org.fossify.gallery.dialogs
 
 import org.fossify.commons.activities.BaseSimpleActivity
+import org.fossify.commons.extensions.beVisibleIf
 import org.fossify.commons.extensions.getAlertDialogBuilder
 import org.fossify.commons.extensions.setupDialogStuff
 import org.fossify.gallery.R
@@ -13,12 +14,14 @@ class FilterMediaDialog(val activity: BaseSimpleActivity, val callback: (result:
 
     init {
         val filterMedia = activity.config.filterMedia
+        val svgEnabled = activity.config.showSvgFiles
         binding.apply {
             filterMediaImages.isChecked = filterMedia and TYPE_IMAGES != 0
             filterMediaVideos.isChecked = filterMedia and TYPE_VIDEOS != 0
             filterMediaGifs.isChecked = filterMedia and TYPE_GIFS != 0
             filterMediaRaws.isChecked = filterMedia and TYPE_RAWS != 0
-            filterMediaSvgs.isChecked = filterMedia and TYPE_SVGS != 0
+            filterMediaSvgs.beVisibleIf(svgEnabled)
+            filterMediaSvgs.isChecked = svgEnabled && filterMedia and TYPE_SVGS != 0
             filterMediaPortraits.isChecked = filterMedia and TYPE_PORTRAITS != 0
         }
 
@@ -40,7 +43,7 @@ class FilterMediaDialog(val activity: BaseSimpleActivity, val callback: (result:
             result += TYPE_GIFS
         if (binding.filterMediaRaws.isChecked)
             result += TYPE_RAWS
-        if (binding.filterMediaSvgs.isChecked)
+        if (activity.config.showSvgFiles && binding.filterMediaSvgs.isChecked)
             result += TYPE_SVGS
         if (binding.filterMediaPortraits.isChecked)
             result += TYPE_PORTRAITS

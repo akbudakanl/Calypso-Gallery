@@ -23,19 +23,30 @@ internal class RustDecodedRgba(
     val rgba: ByteArray,
 )
 
+internal sealed class RustStaticDecodeOutcome {
+    data class Decoded(val data: RustDecodedRgba) : RustStaticDecodeOutcome()
+    data object DeferToPlatform : RustStaticDecodeOutcome()
+    data object Failed : RustStaticDecodeOutcome()
+}
+
 /**
- * Pure-Rust isolated-process media decoder bridge (`gif`, `jxl-oxide`).
+ * Pure-Rust isolated-process media decoder bridge (`png`, `image-webp`, `gif`, `jxl-oxide`).
  */
 internal object NativeMediaDecoder {
+    private const val FORMAT_PNG = 2
+    private const val FORMAT_WEBP = 3
     private const val FORMAT_GIF = 4
     private const val FORMAT_JXL = 5
 
     private const val SCALE_MODE_FIT_INSIDE = 0
     private const val SCALE_MODE_FILL_MIN_SIDE = 1
     private const val BOUNDS_LEN = 2
-    private const val STATIC_META_LEN = 4
+    private const val STATIC_META_LEN = 5
     private const val STATIC_META_SRC_W = 2
     private const val STATIC_META_SRC_H = 3
+    private const val STATIC_META_STATUS = 4
+    private const val NATIVE_STATUS_OK = 0
+    private const val NATIVE_STATUS_DEFER_PLATFORM = 1
     private const val GIF_INFO_LEN = 3
     private const val RGBA_BYTES_PER_PIXEL = 4L
 
@@ -89,27 +100,44 @@ internal object NativeMediaDecoder {
         targetH: Int,
         exifOrientation: Int = 1,
         fillMinSide: Boolean = false,
-    ): RustDecodedRgba? {
-        val code = toFormatCode(format) ?: return null
-        if (bytes.isEmpty() || !loaded) return null
+    ): RustStaticDecodeOutcome {
+        val code = toFormatCode(format) ?: return RustStaticDecodeOutcome.Failed
+        if (bytes.isEmpty()) return RustStaticDecodeOutcome.Failed
+        if (!loaded) {
+            return if (format == IsolatedMediaFormat.PNG || format == IsolatedMediaFormat.WEBP) {
+                RustStaticDecodeOutcome.DeferToPlatform
+            } else {
+                RustStaticDecodeOutcome.Failed
+            }
+        }
         val meta = IntArray(STATIC_META_LEN)
         val scaleMode = if (fillMinSide) SCALE_MODE_FILL_MIN_SIDE else SCALE_MODE_FIT_INSIDE
         val rgba = runCatching {
             NativeMediaJni.decodeStaticRgbaExNative(code, bytes, targetW, targetH, exifOrientation, scaleMode, meta)
-        }.getOrNull() ?: return null
+        }.getOrNull()
+        if (rgba == null) {
+            return if (meta[STATIC_META_STATUS] == NATIVE_STATUS_DEFER_PLATFORM) {
+                RustStaticDecodeOutcome.DeferToPlatform
+            } else {
+                RustStaticDecodeOutcome.Failed
+            }
+        }
 
         val w = meta[0]
         val h = meta[1]
         val expectedBytes = w.toLong() * h.toLong() * RGBA_BYTES_PER_PIXEL
-        if (w <= 0 || h <= 0 || rgba.size.toLong() != expectedBytes) {
-            return null
+        val validHeader = meta[STATIC_META_STATUS] == NATIVE_STATUS_OK && w > 0 && h > 0
+        if (!validHeader || rgba.size.toLong() != expectedBytes) {
+            return RustStaticDecodeOutcome.Failed
         }
-        return RustDecodedRgba(
-            width = w,
-            height = h,
-            sourceWidth = meta[STATIC_META_SRC_W],
-            sourceHeight = meta[STATIC_META_SRC_H],
-            rgba = rgba,
+        return RustStaticDecodeOutcome.Decoded(
+            RustDecodedRgba(
+                width = w,
+                height = h,
+                sourceWidth = meta[STATIC_META_SRC_W],
+                sourceHeight = meta[STATIC_META_SRC_H],
+                rgba = rgba,
+            ),
         )
     }
 
@@ -165,6 +193,8 @@ internal object NativeMediaDecoder {
     }
 
     private fun toFormatCode(format: IsolatedMediaFormat): Int? = when (format) {
+        IsolatedMediaFormat.PNG -> FORMAT_PNG
+        IsolatedMediaFormat.WEBP -> FORMAT_WEBP
         IsolatedMediaFormat.GIF -> FORMAT_GIF
         IsolatedMediaFormat.JXL -> FORMAT_JXL
         else -> null

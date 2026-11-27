@@ -1103,6 +1103,37 @@
                             android:text="@string/allow_one_to_one_zoom" />
                     </RelativeLayout>
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/settings_media_security_eyebrow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/media_security" />
+
+                <LinearLayout
+                    android:id="@+id/settings_media_security_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RelativeLayout
+                        android:id="@+id/settings_show_svg_files_holder"
+                        style="@style/CalypsoCardRowStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <org.fossify.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_show_svg_files"
+                            style="@style/SettingsSwitchStyle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/show_svg_files" />
+                    </RelativeLayout>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- CATEGORY 4: VİDEO OYNATMA -->

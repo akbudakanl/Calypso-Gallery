@@ -163,3 +163,16 @@ Four fork-only progress dialog titles were added across all 11 audited locales (
 | `updating_virtual_album_progress` | `Updating virtual album…` | `Sanal albüm güncelleniyor…` | Progress dialog title when adding to or removing items from a virtual album |
 
 Each `<lang>_translation_comparison.md` ends with a `## File operation progress strings (this revision)` table pairing the English source and localized counterpart.
+
+### Media security & SVG toggle strings (this revision)
+
+Four fork-only keys were added across all 11 audited locales (`values/`, `values-tr/`, and the 9 blind-test locales) for the Media security card and SVG viewing confirmation dialog:
+
+| Key (`name`) | English (`values/strings.xml`) | Turkish (`values-tr/strings.xml`) | Purpose |
+|---|---|---|---|
+| `media_security` | `Media security` | `Medya güvenliği` | Eyebrow heading for the Media security card under Settings → Media viewer |
+| `show_svg_files` | `Show SVG files` | `SVG dosyalarını göster` | Switch row label (default OFF) and confirmation dialog title |
+| `show_svg_files_warning` | `SVG files are rendered in an isolated process using an older third-party library that no longer receives updates. Only enable this if you need to view SVG files.` | `SVG dosyaları, artık güncelleme almayan eski bir üçüncü parti kütüphane ile izole bir süreçte işlenir. Yalnızca SVG dosyalarını görüntülemeniz gerekiyorsa etkinleştirin.` | Confirmation dialog body shown before enabling `show_svg_files` |
+| `enable_svg_files` | `Enable` | `Etkinleştir` | Positive button in the confirmation dialog |
+
+Each `<lang>_translation_comparison.md` ends with a `## Media security & SVG toggle strings (this revision)` table pairing the English source and localized counterpart.

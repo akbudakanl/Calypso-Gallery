@@ -10,12 +10,14 @@ import java.util.concurrent.Executors
 internal class IsolatedGifPrefetcher(
     private val appContext: Context,
     private val sessionId: Long,
-    private val frameCount: Int,
-    private val initialDurationMs: Int,
+    private val meta: IsolatedGifDrawable.GifMetadata,
     private val slots: Array<IsolatedGifBufferTransport.ReadableGifSlot>,
     private val bitmaps: Array<Bitmap>,
     private val onInvalidate: () -> Unit,
 ) {
+    private val frameCount: Int = meta.frameCount
+    private val initialDurationMs: Int = meta.initialDurationMs
+    private val channel: IsolatedDecoderChannel = meta.channel
     private data class FetchTarget(
         val frameIndex: Int,
         val slotIndex: Int,
@@ -89,7 +91,7 @@ internal class IsolatedGifPrefetcher(
         if (!shouldClean) return
 
         mainHandler.removeCallbacksAndMessages(null)
-        IsolatedGifClient.closeGifSessionAsync(appContext, sessionId)
+        IsolatedGifClient.closeGifSessionAsync(appContext, sessionId, channel)
         runCatching {
             fetchExecutor.execute {
                 synchronized(stateLock) {
@@ -153,6 +155,7 @@ internal class IsolatedGifPrefetcher(
                     slotIndex = target.slotIndex,
                     slot = target.slot,
                     targetBitmap = target.bitmap,
+                    channel = channel,
                 )
                 mainHandler.post { onPrefetchComplete(target, nextDuration) }
             }

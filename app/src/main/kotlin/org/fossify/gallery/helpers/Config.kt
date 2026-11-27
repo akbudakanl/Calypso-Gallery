@@ -591,8 +591,15 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(BLACK_BACKGROUND, true)
         set(blackBackground) = prefs.edit().putBoolean(BLACK_BACKGROUND, blackBackground).apply()
 
+    var showSvgFiles: Boolean
+        get() = prefs.getBoolean(SHOW_SVG_FILES, false)
+        set(showSvgFiles) = prefs.edit().putBoolean(SHOW_SVG_FILES, showSvgFiles).apply()
+
     var filterMedia: Int
-        get() = prefs.getInt(FILTER_MEDIA, getDefaultFileFilter())
+        get() {
+            val stored = prefs.getInt(FILTER_MEDIA, getDefaultFileFilter())
+            return if (showSvgFiles) stored else stored and TYPE_SVGS.inv()
+        }
         set(filterMedia) = prefs.edit().putInt(FILTER_MEDIA, filterMedia).apply()
 
     var dirColumnCnt: Int

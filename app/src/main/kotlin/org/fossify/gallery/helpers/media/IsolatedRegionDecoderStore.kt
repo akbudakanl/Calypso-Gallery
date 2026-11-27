@@ -5,7 +5,9 @@ import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import java.io.ByteArrayInputStream
+import java.io.FileInputStream
 import java.util.concurrent.atomic.AtomicLong
 
 private const val MAX_REGION_SESSIONS = 4
@@ -18,6 +20,7 @@ private const val SESSION_LOAD_FACTOR = 0.75f
 object IsolatedRegionDecoderStore {
     private class RegionSession(
         val decoder: BitmapRegionDecoder,
+        val ownedPfd: ParcelFileDescriptor? = null,
         val lock: Any = Any(),
     )
 
@@ -26,6 +29,9 @@ object IsolatedRegionDecoderStore {
     private val sessions = LinkedHashMap<Long, RegionSession>(SESSION_CAPACITY, SESSION_LOAD_FACTOR, true)
 
     fun openSession(request: IsolatedDecodeRequest): IsolatedRegionOpenResult {
+        if (IsolatedFdStreamingCodecs.shouldStreamFromPfd(request)) {
+            return openStreamingSession(request)
+        }
         return try {
             val bytes = IsolatedPixelTransport.unpackInputBytes(
                 request,
@@ -47,6 +53,51 @@ object IsolatedRegionDecoderStore {
                 height = decoder.height,
             )
         } catch (_: Throwable) {
+            IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+        }
+    }
+
+    private fun openStreamingSession(request: IsolatedDecodeRequest): IsolatedRegionOpenResult {
+        if (request.inputLength > IsolatedFormatSniffer.MAX_STREAMING_INPUT_BYTES) {
+            return IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+        }
+        val sourcePfd = request.inputPfd
+            ?: return IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
+        var ownedPfd: ParcelFileDescriptor? = null
+        var decoder: BitmapRegionDecoder? = null
+        return try {
+            ownedPfd = ParcelFileDescriptor.dup(sourcePfd.fileDescriptor)
+            FileInputStream(ownedPfd.fileDescriptor).channel.position(0L)
+            decoder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                BitmapRegionDecoder.newInstance(ownedPfd)
+            } else {
+                @Suppress("DEPRECATION")
+                BitmapRegionDecoder.newInstance(ownedPfd.fileDescriptor, false)
+            }
+            val safeDecoder = decoder
+            when {
+                safeDecoder == null -> {
+                    runCatching { ownedPfd.close() }
+                    IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
+                }
+                !IsolatedFormatSniffer.isValidSourceDimensions(safeDecoder.width, safeDecoder.height) -> {
+                    runCatching { safeDecoder.recycle() }
+                    runCatching { ownedPfd.close() }
+                    IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_TOO_LARGE)
+                }
+                else -> {
+                    val sessionId = registerSession(RegionSession(safeDecoder, ownedPfd))
+                    IsolatedRegionOpenResult(
+                        status = IsolatedDecodeResult.STATUS_OK,
+                        sessionId = sessionId,
+                        width = safeDecoder.width,
+                        height = safeDecoder.height,
+                    )
+                }
+            }
+        } catch (_: Throwable) {
+            runCatching { if (decoder?.isRecycled == false) decoder.recycle() }
+            runCatching { ownedPfd?.close() }
             IsolatedRegionOpenResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
         }
     }
@@ -115,11 +166,7 @@ object IsolatedRegionDecoderStore {
 
     fun closeSession(sessionId: Long) {
         val removed = synchronized(mapLock) { sessions.remove(sessionId) } ?: return
-        synchronized(removed.lock) {
-            runCatching {
-                if (!removed.decoder.isRecycled) removed.decoder.recycle()
-            }
-        }
+        disposeSession(removed)
     }
 
     fun closeAll() {
@@ -127,11 +174,7 @@ object IsolatedRegionDecoderStore {
             sessions.values.toList().also { sessions.clear() }
         }
         for (session in all) {
-            synchronized(session.lock) {
-                runCatching {
-                    if (!session.decoder.isRecycled) session.decoder.recycle()
-                }
-            }
+            disposeSession(session)
         }
     }
 
@@ -147,11 +190,18 @@ object IsolatedRegionDecoderStore {
             }
         }
         if (evicted != null) {
-            synchronized(evicted.lock) {
-                runCatching { if (!evicted.decoder.isRecycled) evicted.decoder.recycle() }
-            }
+            disposeSession(evicted)
         }
         return id
+    }
+
+    private fun disposeSession(session: RegionSession) {
+        synchronized(session.lock) {
+            runCatching {
+                if (!session.decoder.isRecycled) session.decoder.recycle()
+            }
+            runCatching { session.ownedPfd?.close() }
+        }
     }
 
     private fun lookupSession(sessionId: Long): RegionSession? {

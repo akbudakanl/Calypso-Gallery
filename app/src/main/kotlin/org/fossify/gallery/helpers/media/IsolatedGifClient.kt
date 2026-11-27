@@ -8,7 +8,12 @@ import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.openDecryptedContentStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStream
+import java.util.Locale
+
+private const val ANIM_SNIFF_HEADER_BYTES = 1024
+private val ANIM_CANDIDATE_EXTENSIONS = setOf("gif", "png", "apng", "webp")
 
 /**
  * Main-process client for opening, stepping, and closing isolated animated GIF playback sessions
@@ -16,6 +21,10 @@ import java.io.InputStream
  */
 object IsolatedGifClient {
     private const val IO_BUFFER_BYTES = 64 * 1024
+
+    fun isAnimatedMediaCandidate(context: Context, path: String): Boolean {
+        return AnimatedCandidateProbe.isAnimatedCandidate(context, path)
+    }
 
     fun openGifSession(
         context: Context,
@@ -33,9 +42,19 @@ object IsolatedGifClient {
             return null
         }
 
+        val channel = if (CryptoManager.isEncryptedFile(path)) {
+            IsolatedDecoderChannel.VAULT
+        } else {
+            IsolatedDecoderChannel.PUBLIC
+        }
         val request = buildOpenRequest(appCtx, path, maxWidth, maxHeight) ?: return null
         val openResult = try {
-            IsolatedServiceBridge.runWatchdogCall(appCtx, key, IsolatedDecoderClient.quarantine) { service ->
+            IsolatedServiceBridge.runWatchdogCall(
+                context = appCtx,
+                quarantineKey = key,
+                quarantine = IsolatedDecoderClient.quarantine,
+                channel = channel,
+            ) { service ->
                 service.openGifSession(request)
             }
         } finally {
@@ -48,7 +67,7 @@ object IsolatedGifClient {
             return null
         }
 
-        return buildOpenedDrawable(appCtx, openResult)
+        return buildOpenedDrawable(appCtx, openResult, channel)
     }
 
     internal fun fetchGifFrameIntoSlot(
@@ -58,11 +77,13 @@ object IsolatedGifClient {
         slotIndex: Int,
         slot: IsolatedGifBufferTransport.ReadableGifSlot,
         targetBitmap: Bitmap,
+        channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
     ): Int? {
         val result = IsolatedServiceBridge.runGifWatchdogCall(
             context = context,
             quarantineKey = "",
             quarantine = IsolatedDecoderClient.quarantine,
+            channel = channel,
         ) { service ->
             service.renderGifFrame(sessionId, frameIndex, slotIndex)
         }
@@ -78,9 +99,13 @@ object IsolatedGifClient {
         return IsolatedGifTimingPolicy.normalizeFrameDelayMs(result.durationMs)
     }
 
-    internal fun closeGifSessionAsync(context: Context, sessionId: Long) {
+    internal fun closeGifSessionAsync(
+        context: Context,
+        sessionId: Long,
+        channel: IsolatedDecoderChannel = IsolatedDecoderChannel.PUBLIC,
+    ) {
         if (sessionId <= 0L) return
-        IsolatedServiceBridge.runFireAndForget(context) { service ->
+        IsolatedServiceBridge.runFireAndForget(context, channel = channel) { service ->
             service.closeGifSession(sessionId)
         }
     }
@@ -162,6 +187,7 @@ object IsolatedGifClient {
     private fun buildOpenedDrawable(
         appContext: Context,
         openResult: IsolatedGifOpenResult,
+        channel: IsolatedDecoderChannel,
     ): IsolatedGifDrawable? {
         val width = openResult.frameWidth
         val height = openResult.frameHeight
@@ -181,7 +207,7 @@ object IsolatedGifClient {
         val slotsReady = slot0 != null && slot1 != null
         val bitmaps = if (slotsReady) createBitmapPair(width, height) else null
         val initialDuration = if (slot0 != null && bitmaps != null) {
-            fetchGifFrameIntoSlot(appContext, sessionId, 0, 0, slot0, bitmaps.first)
+            fetchGifFrameIntoSlot(appContext, sessionId, 0, 0, slot0, bitmaps.first, channel)
         } else {
             null
         }
@@ -195,6 +221,7 @@ object IsolatedGifClient {
                     height = height,
                     frameCount = openResult.frameCount.coerceAtLeast(1),
                     initialDurationMs = initialDuration,
+                    channel = channel,
                 ),
                 slots = arrayOf(slot0, slot1),
                 bitmaps = arrayOf(bitmaps.first, bitmaps.second),
@@ -205,7 +232,7 @@ object IsolatedGifClient {
         runCatching { slot1?.close() }
         bitmaps?.first?.recycle()
         bitmaps?.second?.recycle()
-        closeGifSessionAsync(appContext, sessionId)
+        closeGifSessionAsync(appContext, sessionId, channel)
         return null
     }
 
@@ -235,5 +262,54 @@ object IsolatedGifClient {
             out.write(chunk, 0, read)
         }
         return out.toByteArray()
+    }
+}
+
+private object AnimatedCandidateProbe {
+    fun isAnimatedCandidate(context: Context, path: String): Boolean {
+        if (path.isEmpty() || IsolatedFormatSniffer.isVideoFileHint(path)) return false
+        val isEncrypted = CryptoManager.isEncryptedFile(path)
+        val effectiveName = resolveEffectiveName(path, isEncrypted) ?: return false
+        val ext = extractExtension(effectiveName)
+        return when {
+            ext == "gif" -> true
+            ext.isNotEmpty() && ext !in ANIM_CANDIDATE_EXTENSIONS && !path.startsWith("content://") -> false
+            else -> readHeaderBytes(context, path, isEncrypted)
+                ?.let { IsolatedFormatSniffer.hasAnimatedContainerHint(it) } == true
+        }
+    }
+
+    private fun resolveEffectiveName(path: String, isEncrypted: Boolean): String? {
+        if (!isEncrypted) return path
+        if (!CryptoManager.isVaultUnlocked) return null
+        return runCatching { CryptoManager.readMetadata(File(path))?.originalName }.getOrNull().orEmpty()
+    }
+
+    private fun extractExtension(nameOrPath: String): String {
+        val clean = nameOrPath.substringBefore('?').substringBefore('#')
+        val dot = clean.lastIndexOf('.')
+        if (dot < 0 || dot == clean.lastIndex) return ""
+        return clean.substring(dot + 1).lowercase(Locale.US)
+    }
+
+    private fun readHeaderBytes(context: Context, path: String, isEncrypted: Boolean): ByteArray? {
+        return runCatching {
+            val stream: InputStream? = when {
+                isEncrypted -> CryptoManager.openDecryptedContentStream(File(path))
+                path.startsWith("content://") || path.startsWith("file://") ->
+                    context.contentResolver.openInputStream(Uri.parse(path))
+                else -> FileInputStream(File(path))
+            }
+            stream?.use { input ->
+                val buf = ByteArray(ANIM_SNIFF_HEADER_BYTES)
+                var total = 0
+                while (total < buf.size) {
+                    val read = input.read(buf, total, buf.size - total)
+                    if (read <= 0) break
+                    total += read
+                }
+                if (total > 0) buf.copyOf(total) else null
+            }
+        }.getOrNull()
     }
 }

@@ -3,9 +3,9 @@ use std::io::Cursor;
 use jxl_oxide::JxlImage;
 
 use crate::{
-    gif_session, pixel_ops, premultiply_rgba_in_place, try_alloc_zeroed,
-    validate_source_dimensions, DecodedRgba, MediaError, FORMAT_GIF, FORMAT_JXL,
-    MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
+    gif_session, pixel_ops, png_webp_decoders, premultiply_rgba_in_place, try_alloc_zeroed,
+    validate_jxl_source_dimensions, DecodedRgba, MediaError, FORMAT_GIF, FORMAT_JXL, FORMAT_PNG,
+    FORMAT_WEBP, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
 };
 
 pub(crate) struct DecodedStaticMeta {
@@ -21,6 +21,8 @@ pub(crate) fn probe_bounds(format: i32, data: &[u8]) -> Result<(u32, u32), Media
         return Err(MediaError::InvalidInput);
     }
     match format {
+        FORMAT_PNG => png_webp_decoders::probe_png_bounds(data),
+        FORMAT_WEBP => png_webp_decoders::probe_webp_bounds(data),
         FORMAT_GIF => gif_session::probe_gif_bounds(data),
         FORMAT_JXL => probe_jxl_bounds(data),
         _ => Err(MediaError::UnsupportedFormat),
@@ -60,6 +62,20 @@ pub(crate) fn decode_static_ex(
         return Err(MediaError::InvalidInput);
     }
     match format {
+        FORMAT_PNG => png_webp_decoders::decode_png_static(
+            data,
+            req_w,
+            req_h,
+            exif_orientation,
+            scale_mode,
+        ),
+        FORMAT_WEBP => png_webp_decoders::decode_webp_static(
+            data,
+            req_w,
+            req_h,
+            exif_orientation,
+            scale_mode,
+        ),
         FORMAT_GIF => gif_session::decode_gif_first_frame_ex(
             data,
             req_w,
@@ -72,7 +88,7 @@ pub(crate) fn decode_static_ex(
     }
 }
 
-fn finish_rgba(
+pub(crate) fn finish_rgba(
     mut rgba: Vec<u8>,
     src_w: u32,
     src_h: u32,
@@ -120,7 +136,7 @@ fn probe_jxl_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
         .read(Cursor::new(data))
         .map_err(|_| MediaError::DecodeFailed)?;
     let (w, h) = (image.width(), image.height());
-    validate_source_dimensions(w, h)?;
+    validate_jxl_source_dimensions(w, h)?;
     Ok((w, h))
 }
 
@@ -135,7 +151,7 @@ fn decode_jxl_static(
         .read(Cursor::new(data))
         .map_err(|_| MediaError::DecodeFailed)?;
     let (src_w, src_h) = (image.width(), image.height());
-    validate_source_dimensions(src_w, src_h)?;
+    validate_jxl_source_dimensions(src_w, src_h)?;
 
     let render = image
         .render_frame(0)

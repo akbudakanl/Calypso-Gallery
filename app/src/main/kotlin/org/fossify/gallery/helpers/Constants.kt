@@ -100,6 +100,7 @@ const val INITIAL_STORAGE_SCAN_LEVEL = "initial_storage_scan_level"
 const val SHOW_RECYCLE_BIN_AT_FOLDERS = "show_recycle_bin_at_folders"
 const val SHOW_RECYCLE_BIN_LAST = "show_recycle_bin_last"
 const val ALLOW_ZOOMING_IMAGES = "allow_zooming_images"
+const val SHOW_SVG_FILES = "show_svg_files"
 const val WAS_SVG_SHOWING_HANDLED = "was_svg_showing_handled"
 const val LAST_BIN_CHECK = "last_bin_check"
 const val SHOW_HIGHEST_QUALITY = "show_highest_quality"
@@ -327,7 +328,7 @@ const val TYPE_RAWS = 8
 const val TYPE_SVGS = 16
 const val TYPE_PORTRAITS = 32
 
-fun getDefaultFileFilter() = TYPE_IMAGES or TYPE_VIDEOS or TYPE_GIFS or TYPE_RAWS or TYPE_SVGS
+fun getDefaultFileFilter() = TYPE_IMAGES or TYPE_VIDEOS or TYPE_GIFS or TYPE_RAWS
 
 const val LOCATION_INTERNAL = 1
 const val LOCATION_SD = 2

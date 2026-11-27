@@ -149,6 +149,7 @@ class SettingsActivity : SimpleActivity() {
                 groups = listOf(
                     binding.settingsFullscreenCard to binding.settingsFullscreenEyebrow,
                     binding.settingsDeepZoomCard to binding.settingsDeepZoomEyebrow,
+                    binding.settingsMediaSecurityCard to binding.settingsMediaSecurityEyebrow,
                 ),
             ),
             CategorySpec(
@@ -369,6 +370,7 @@ class SettingsActivity : SimpleActivity() {
             setupAllowZoomingImages()
             setupShowHighestQuality()
             setupAllowOneToOneZoom()
+            setupShowSvgFiles()
             setupAllowInstantChange()
             setupShowExtendedDetails()
             setupHideExtendedDetails()
