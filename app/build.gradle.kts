@@ -228,6 +228,7 @@ dependencies {
     implementation(libs.fossify.commons) {
         exclude(group = "com.github.tibbi", module = "reprint")
         exclude(group = "com.github.tibbi.reprint")
+        exclude(group = "com.googlecode.ez-vcard", module = "ez-vcard")
     }
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.print)
