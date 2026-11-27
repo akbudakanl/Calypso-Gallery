@@ -10,6 +10,8 @@ internal data class VideoSkipResult(
 )
 
 internal object VideoPlaybackUtils {
+    private const val MICROSECONDS_PER_MILLISECOND = 1000L
+
     /**
      * Converts a player or metadata duration in milliseconds into a safe non-negative duration.
      * Treats [C.TIME_UNSET] and any non-positive value as unknown (`0L`).
@@ -165,39 +167,119 @@ internal object VideoPlaybackUtils {
     }
 
     /**
-     * Decides whether the generic starting thumbnail (frame 0) should be loaded as the cover.
-     * In autoplay mode, unvisited videos starting from 0:00 load frame 0 so swiping into them
-     * shows the starting frame instead of a black screen, whereas videos resuming mid-playback
-     * without a cached snapshot skip frame 0 to avoid a mismatched thumbnail flash.
+     * Resolves the active non-negative playback position from init, pause, and current progress state.
      */
-    fun shouldLoadDefaultVideoPreview(
-        hasCachedFrame: Boolean,
-        hasRestoredPosition: Boolean,
-        isAutoplay: Boolean,
-        isGesturePlayer: Boolean,
-        isPanorama: Boolean,
-    ): Boolean {
-        if (hasCachedFrame || isPanorama) {
-            return false
+    fun resolvePlaybackPositionMs(
+        positionWhenInitMs: Long,
+        positionAtPauseMs: Long,
+        currentTimeMs: Long,
+    ): Long {
+        return when {
+            positionWhenInitMs > 0L -> positionWhenInitMs
+            positionAtPauseMs > 0L -> positionAtPauseMs
+            currentTimeMs > 0L -> currentTimeMs
+            else -> 0L
         }
-        if (isAutoplay && !isGesturePlayer) {
-            return !hasRestoredPosition
-        }
-        return true
     }
 
     /**
-     * Keeps an existing preview drawable visible when no cached snapshot exists, unless it is the
-     * frame-0 default thumbnail and playback has already progressed past 0:00.
+     * Returns the frame timestamp in microseconds for Glide's `RequestOptions.frameOf(...)` when
+     * resuming an unencrypted video from a positive restored position, or `null` when the default
+     * frame should be used (position <= 0 or encrypted vault loaders that ignore `frameOf`).
+     */
+    fun resolvePreviewFrameTimeMicros(
+        positionMs: Long,
+        isEncrypted: Boolean,
+    ): Long? {
+        if (isEncrypted || positionMs <= 0L) {
+            return null
+        }
+        return positionMs * MICROSECONDS_PER_MILLISECOND
+    }
+
+    /**
+     * Returns true when [org.fossify.gallery.fragments.VideoFragment] is in a valid pre-render state
+     * to start a Glide preview decode.
+     */
+    fun canLoadDefaultVideoPreview(
+        isAdded: Boolean,
+        isViewDestroyed: Boolean,
+        isBindingInitialized: Boolean,
+        hasRenderedFirstFrame: Boolean,
+        isPlaying: Boolean,
+    ): Boolean {
+        if (!isAdded || isViewDestroyed || !isBindingInitialized) {
+            return false
+        }
+        return !hasRenderedFirstFrame && !isPlaying
+    }
+
+    /**
+     * Decides whether a preview thumbnail should be loaded when no cached snapshot exists and the
+     * item is not a panorama. A thumbnail always beats a black screen.
+     */
+    fun shouldLoadDefaultVideoPreview(
+        hasCachedFrame: Boolean,
+        isPanorama: Boolean,
+    ): Boolean {
+        return !hasCachedFrame && !isPanorama
+    }
+
+    /**
+     * Returns true when an asynchronously decoded preview drawable arrived after playback already
+     * rendered a frame, started playing, obtained a cached snapshot, or the view was destroyed.
+     */
+    fun isDefaultVideoPreviewObsolete(
+        isViewDestroyed: Boolean,
+        isBindingInitialized: Boolean,
+        hasRenderedFirstFrame: Boolean,
+        isPlaying: Boolean,
+        hasCachedFrame: Boolean,
+    ): Boolean {
+        if (isViewDestroyed || !isBindingInitialized) {
+            return true
+        }
+        return hasRenderedFirstFrame || isPlaying || hasCachedFrame
+    }
+
+    /**
+     * Keeps an existing preview drawable visible while no cached snapshot exists so the cover never
+     * collapses to a black screen before playback renders.
      */
     fun shouldKeepExistingPreviewDrawable(
         hasCachedFrame: Boolean,
-        isShowingDefaultPreview: Boolean,
-        hasNonZeroPlaybackPosition: Boolean,
     ): Boolean {
-        if (hasCachedFrame) {
+        return !hasCachedFrame
+    }
+
+    /**
+     * Clears the preview view before player init only when no drawable is shown and no default
+     * preview Glide request is currently in flight.
+     */
+    fun shouldClearInFlightPreviewOnPlayerInit(
+        hasPreviewDrawable: Boolean,
+        isShowingDefaultPreview: Boolean,
+    ): Boolean {
+        return !hasPreviewDrawable && !isShowingDefaultPreview
+    }
+
+    /**
+     * Returns true when becoming visible should drain a pending safety-net preview request or load
+     * a missing cover when no frame has rendered yet.
+     */
+    fun shouldEnsureDefaultPreviewOnMenuVisible(
+        isPendingPreview: Boolean,
+        hasRenderedFirstFrame: Boolean,
+        isBindingInitialized: Boolean,
+        hasPreviewDrawable: Boolean,
+        isShowingDefaultPreview: Boolean,
+    ): Boolean {
+        if (isPendingPreview) {
+            return true
+        }
+        if (!isBindingInitialized || hasRenderedFirstFrame) {
             return false
         }
-        return !isShowingDefaultPreview || !hasNonZeroPlaybackPosition
+        return !hasPreviewDrawable && !isShowingDefaultPreview
     }
 }

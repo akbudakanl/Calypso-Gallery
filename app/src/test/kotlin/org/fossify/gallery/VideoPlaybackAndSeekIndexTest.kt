@@ -291,52 +291,17 @@ class VideoPlaybackAndSeekIndexTest {
         assertFalse(VideoPlaybackUtils.isCachedFramePositionFresh(5_000L, 10_000L))
         assertFalse(VideoPlaybackUtils.isCachedFramePositionFresh(null, 5_000L))
 
-        // Unvisited autoplay video (0:00, no cached frame) loads default frame-0 thumbnail.
+        // Unvisited or restored videos without a cached frame always load a preview (a thumbnail beats black).
         assertTrue(
             VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
                 hasCachedFrame = false,
-                hasRestoredPosition = false,
-                isAutoplay = true,
-                isGesturePlayer = false,
                 isPanorama = false,
             )
         )
-        // Visited video with cached last frame keeps the cached frame instead of loading frame 0.
+        // Visited video with cached last frame keeps the cached frame instead of loading via Glide.
         assertFalse(
             VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
                 hasCachedFrame = true,
-                hasRestoredPosition = true,
-                isAutoplay = true,
-                isGesturePlayer = false,
-                isPanorama = false,
-            )
-        )
-        // Visited autoplay video resuming mid-playback without a cached frame skips frame 0.
-        assertFalse(
-            VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
-                hasCachedFrame = false,
-                hasRestoredPosition = true,
-                isAutoplay = true,
-                isGesturePlayer = false,
-                isPanorama = false,
-            )
-        )
-        // Non-autoplay paused video still loads default preview when no cached snapshot exists.
-        assertTrue(
-            VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
-                hasCachedFrame = false,
-                hasRestoredPosition = true,
-                isAutoplay = false,
-                isGesturePlayer = false,
-                isPanorama = false,
-            )
-        )
-        assertFalse(
-            VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
-                hasCachedFrame = true,
-                hasRestoredPosition = false,
-                isAutoplay = false,
-                isGesturePlayer = false,
                 isPanorama = false,
             )
         )
@@ -344,35 +309,260 @@ class VideoPlaybackAndSeekIndexTest {
         assertFalse(
             VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
                 hasCachedFrame = false,
-                hasRestoredPosition = false,
-                isAutoplay = true,
-                isGesturePlayer = false,
+                isPanorama = true,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldLoadDefaultVideoPreview(
+                hasCachedFrame = true,
                 isPanorama = true,
             )
         )
 
-        // Existing preview drawable retention: never let frame-0 default thumbnail resurface after playback progressed.
+        // Existing preview drawable retention: keep any loaded preview while no cached frame exists.
         assertTrue(
             VideoPlaybackUtils.shouldKeepExistingPreviewDrawable(
                 hasCachedFrame = false,
-                isShowingDefaultPreview = true,
-                hasNonZeroPlaybackPosition = false,
             )
         )
         assertFalse(
             VideoPlaybackUtils.shouldKeepExistingPreviewDrawable(
+                hasCachedFrame = true,
+            )
+        )
+    }
+
+    private fun locateAppFile(relativePath: String): File {
+        val candidates = listOf(
+            File(relativePath),
+            File("app/$relativePath"),
+            File("../app/$relativePath"),
+        )
+        return candidates.first { it.exists() }
+    }
+
+    @Test
+    fun restoredPreviewFrameMicrosAndPlayerInitPoliciesBehaveCorrectly() {
+        assertEquals(0L, VideoPlaybackUtils.resolvePlaybackPositionMs(0L, 0L, 0L))
+        assertEquals(0L, VideoPlaybackUtils.resolvePlaybackPositionMs(-10L, -5L, 0L))
+        assertEquals(12_000L, VideoPlaybackUtils.resolvePlaybackPositionMs(12_000L, 8_000L, 4_000L))
+        assertEquals(8_000L, VideoPlaybackUtils.resolvePlaybackPositionMs(0L, 8_000L, 4_000L))
+        assertEquals(4_000L, VideoPlaybackUtils.resolvePlaybackPositionMs(0L, 0L, 4_000L))
+
+        // Unencrypted video with restored position > 0 requests Glide frameOf(positionMs * 1000).
+        assertEquals(
+            15_500_000L,
+            VideoPlaybackUtils.resolvePreviewFrameTimeMicros(positionMs = 15_500L, isEncrypted = false),
+        )
+        assertNull(VideoPlaybackUtils.resolvePreviewFrameTimeMicros(positionMs = 0L, isEncrypted = false))
+        assertNull(VideoPlaybackUtils.resolvePreviewFrameTimeMicros(positionMs = -100L, isEncrypted = false))
+        // Encrypted vault loader uses embedded header thumbnail and ignores frameOf; fall back cleanly.
+        assertNull(VideoPlaybackUtils.resolvePreviewFrameTimeMicros(positionMs = 15_500L, isEncrypted = true))
+    }
+
+    @Test
+    fun defaultPreviewCanLoadAndObsoletePoliciesBehaveCorrectly() {
+        // Default preview start guard does not depend on mPendingAutoplayOnIdle.
+        assertTrue(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = true,
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = false,
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = true,
+                isViewDestroyed = true,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = true,
+                isViewDestroyed = false,
+                isBindingInitialized = false,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = true,
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = true,
+                isPlaying = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.canLoadDefaultVideoPreview(
+                isAdded = true,
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = true,
+            )
+        )
+
+        // Obsolete check drops stale async preview only once rendered/playing/cached/destroyed.
+        assertFalse(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
                 hasCachedFrame = false,
-                isShowingDefaultPreview = true,
-                hasNonZeroPlaybackPosition = true,
             )
         )
         assertTrue(
-            VideoPlaybackUtils.shouldKeepExistingPreviewDrawable(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = true,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
                 hasCachedFrame = false,
-                isShowingDefaultPreview = false,
-                hasNonZeroPlaybackPosition = true,
             )
         )
+        assertTrue(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = false,
+                isBindingInitialized = false,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+                hasCachedFrame = false,
+            )
+        )
+        assertTrue(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = true,
+                isPlaying = false,
+                hasCachedFrame = false,
+            )
+        )
+        assertTrue(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = true,
+                hasCachedFrame = false,
+            )
+        )
+        assertTrue(
+            VideoPlaybackUtils.isDefaultVideoPreviewObsolete(
+                isViewDestroyed = false,
+                isBindingInitialized = true,
+                hasRenderedFirstFrame = false,
+                isPlaying = false,
+                hasCachedFrame = true,
+            )
+        )
+    }
+
+    @Test
+    fun playerInitAndMenuVisibilityPreviewPoliciesBehaveCorrectly() {
+        // Player init must not cancel an in-flight default preview request.
+        assertFalse(
+            VideoPlaybackUtils.shouldClearInFlightPreviewOnPlayerInit(
+                hasPreviewDrawable = false,
+                isShowingDefaultPreview = true,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldClearInFlightPreviewOnPlayerInit(
+                hasPreviewDrawable = true,
+                isShowingDefaultPreview = false,
+            )
+        )
+        assertTrue(
+            VideoPlaybackUtils.shouldClearInFlightPreviewOnPlayerInit(
+                hasPreviewDrawable = false,
+                isShowingDefaultPreview = false,
+            )
+        )
+
+        // setMenuVisibility(true) drains pending previews or recovers missing pre-render cover.
+        assertTrue(
+            VideoPlaybackUtils.shouldEnsureDefaultPreviewOnMenuVisible(
+                isPendingPreview = true,
+                hasRenderedFirstFrame = true,
+                isBindingInitialized = false,
+                hasPreviewDrawable = true,
+                isShowingDefaultPreview = true,
+            )
+        )
+        assertTrue(
+            VideoPlaybackUtils.shouldEnsureDefaultPreviewOnMenuVisible(
+                isPendingPreview = false,
+                hasRenderedFirstFrame = false,
+                isBindingInitialized = true,
+                hasPreviewDrawable = false,
+                isShowingDefaultPreview = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldEnsureDefaultPreviewOnMenuVisible(
+                isPendingPreview = false,
+                hasRenderedFirstFrame = false,
+                isBindingInitialized = true,
+                hasPreviewDrawable = false,
+                isShowingDefaultPreview = true,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldEnsureDefaultPreviewOnMenuVisible(
+                isPendingPreview = false,
+                hasRenderedFirstFrame = true,
+                isBindingInitialized = true,
+                hasPreviewDrawable = false,
+                isShowingDefaultPreview = false,
+            )
+        )
+    }
+
+    @Test
+    fun videoFragmentPreviewAndPagerContractChecks() {
+        val videoFragmentText = locateAppFile("src/main/kotlin/org/fossify/gallery/fragments/VideoFragment.kt")
+            .readText()
+        val constantsText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/Constants.kt")
+            .readText()
+
+        // Cause 1: never defer preview loading to idle in onCreateView, and drain safety net in DRAGGING/menuVisible.
+        assertFalse(videoFragmentText.contains("mPendingPreviewOnIdle = true"))
+        assertTrue(videoFragmentText.contains("shouldEnsureDefaultPreviewOnMenuVisible("))
+
+        // Cause 3: initExoPlayer checks shouldClearInFlightPreviewOnPlayerInit instead of clearing on drawable == null.
+        assertTrue(videoFragmentText.contains("shouldClearInFlightPreviewOnPlayerInit("))
+
+        // Cause 4: loadVideoPreview delegates to canLoadDefaultVideoPreview without mPendingAutoplayOnIdle guard.
+        assertTrue(videoFragmentText.contains("canLoadDefaultVideoPreview("))
+
+        // Cause 5: loadVideoPreview applies frameOf when resolvePreviewFrameTimeMicros returns non-null.
+        assertTrue(videoFragmentText.contains("resolvePreviewFrameTimeMicros("))
+        assertTrue(videoFragmentText.contains("RequestOptions.frameOf("))
+        assertTrue(videoFragmentText.contains("isDefaultVideoPreviewObsolete("))
+
+        // Optimization 1: immediate reveal on first rendered frame (no 60ms fade delay).
+        assertFalse(videoFragmentText.contains("PREVIEW_REVEAL_FADE_DURATION_MS"))
+
+        // Buffers remain minimal at 50 ms.
+        assertTrue(constantsText.contains("const val EXOPLAYER_PLAYBACK_BUFFER_MS = 50"))
     }
 
     @Test
