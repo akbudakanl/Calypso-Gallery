@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use gif::{ColorOutput, DecodeOptions, Decoder as GifStreamDecoder, DisposalMethod, MemoryLimit};
 
 use crate::{
-    compute_target_dimensions, downscale_rgba_bilinear, premultiply_rgba_in_place,
+    compute_target_dimensions, pixel_ops, premultiply_rgba_in_place, static_decoders::DecodedStaticMeta,
     try_alloc_zeroed, validate_source_dimensions, DecodedRgba, MediaError, MAX_GIF_DIMENSION,
     MAX_GIF_FRAMES, MAX_GIF_PIXELS, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
 };
@@ -37,6 +37,7 @@ struct GifCompositor {
     out_w: u32,
     out_h: u32,
     canvas: Vec<u8>,
+    out_buf: Vec<u8>,
     prev_canvas: Option<Vec<u8>>,
     last_dispose: DisposalMethod,
     last_rect: (u16, u16, u16, u16),
@@ -97,21 +98,44 @@ pub(crate) fn probe_gif_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     Ok((w, h))
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 pub(crate) fn decode_gif_first_frame(
     data: &[u8],
     req_w: u32,
     req_h: u32,
 ) -> Result<DecodedRgba, MediaError> {
+    let decoded = decode_gif_first_frame_ex(
+        data,
+        req_w,
+        req_h,
+        pixel_ops::EXIF_NORMAL,
+        pixel_ops::SCALE_MODE_FIT_INSIDE,
+    )?;
+    Ok(DecodedRgba {
+        width: decoded.width,
+        height: decoded.height,
+        rgba: decoded.rgba,
+    })
+}
+
+pub(crate) fn decode_gif_first_frame_ex(
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    _exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     let mut dec = configure_options(false)
         .read_info(Cursor::new(data))
         .map_err(|_| MediaError::DecodeFailed)?;
     let screen_w = u32::from(dec.width());
     let screen_h = u32::from(dec.height());
-    let (dst_w, dst_h) = compute_target_dimensions(
+    let (dst_w, dst_h) = pixel_ops::compute_target_dimensions_ex(
         screen_w,
         screen_h,
         req_w,
         req_h,
+        scale_mode,
         MAX_OUTPUT_DIMENSION,
         MAX_OUTPUT_PIXELS,
     )?;
@@ -130,13 +154,15 @@ pub(crate) fn decode_gif_first_frame(
     premultiply_rgba_in_place(&mut canvas);
 
     let out_rgba = if dst_w != screen_w || dst_h != screen_h {
-        downscale_rgba_bilinear(&canvas, screen_w, screen_h, dst_w, dst_h)?
+        pixel_ops::downscale_rgba_fast(&canvas, screen_w, screen_h, dst_w, dst_h)?
     } else {
         canvas
     };
-    Ok(DecodedRgba {
+    Ok(DecodedStaticMeta {
         width: dst_w,
         height: dst_h,
+        src_width: screen_w,
+        src_height: screen_h,
         rgba: out_rgba,
     })
 }
@@ -183,7 +209,12 @@ pub(crate) fn open_session(
         .checked_mul(usize::from(screen_h))
         .and_then(|n| n.checked_mul(4))
         .ok_or(MediaError::TooLarge)?;
+    let out_len = (out_w as usize)
+        .checked_mul(out_h as usize)
+        .and_then(|n| n.checked_mul(4))
+        .ok_or(MediaError::TooLarge)?;
     let canvas = try_alloc_zeroed(canvas_len)?;
+    let out_buf = try_alloc_zeroed(out_len)?;
     let frame_count = delays_ms.len() as u32;
 
     let session = Arc::new(Mutex::new(GifSession {
@@ -195,6 +226,7 @@ pub(crate) fn open_session(
             out_w,
             out_h,
             canvas,
+            out_buf,
             prev_canvas: None,
             last_dispose: DisposalMethod::Any,
             last_rect: (0, 0, 0, 0),
@@ -225,16 +257,50 @@ pub(crate) fn open_session(
 }
 
 pub(crate) fn render_frame(handle: i64, frame_index: usize) -> Result<GifRenderedFrame, MediaError> {
-    let session = {
-        let guard = store().lock().map_err(|_| MediaError::DecodeFailed)?;
-        Arc::clone(guard.sessions.get(&handle).ok_or(MediaError::InvalidInput)?)
-    };
-
+    let session = lookup_session(handle)?;
     let mut sess = session.lock().map_err(|_| MediaError::DecodeFailed)?;
+    let duration_ms = render_into_compositor_buf(&mut sess, frame_index)?;
+    let mut out = try_alloc_zeroed(sess.compositor.out_buf.len())?;
+    out.copy_from_slice(&sess.compositor.out_buf);
+    Ok(GifRenderedFrame {
+        duration_ms,
+        rgba: out,
+    })
+}
+
+pub(crate) fn render_frame_into(
+    handle: i64,
+    frame_index: usize,
+    dst: &mut [u8],
+) -> Result<u32, MediaError> {
+    let session = lookup_session(handle)?;
+    let mut sess = session.lock().map_err(|_| MediaError::DecodeFailed)?;
+    let need = sess.compositor.out_buf.len();
+    if dst.len() < need {
+        return Err(MediaError::InvalidInput);
+    }
+    let duration_ms = render_into_compositor_buf(&mut sess, frame_index)?;
+    dst[..need].copy_from_slice(&sess.compositor.out_buf);
+    Ok(duration_ms)
+}
+
+fn lookup_session(handle: i64) -> Result<Arc<Mutex<GifSession>>, MediaError> {
+    let guard = store().lock().map_err(|_| MediaError::DecodeFailed)?;
+    guard
+        .sessions
+        .get(&handle)
+        .map(Arc::clone)
+        .ok_or(MediaError::InvalidInput)
+}
+
+fn render_into_compositor_buf(
+    sess: &mut GifSession,
+    frame_index: usize,
+) -> Result<u32, MediaError> {
     let GifSession {
         compositor,
         decoder,
-    } = &mut *sess;
+    } = sess;
     let count = compositor.delays_ms.len();
     if count == 0 {
         return Err(MediaError::InvalidInput);
@@ -285,19 +351,22 @@ pub(crate) fn render_frame(handle: i64, frame_index: usize) -> Result<GifRendere
 
     let sw = u32::from(compositor.screen_w);
     let sh = u32::from(compositor.screen_h);
-    let mut out = if compositor.out_w != sw || compositor.out_h != sh {
-        downscale_rgba_bilinear(&compositor.canvas, sw, sh, compositor.out_w, compositor.out_h)?
+    if compositor.out_w != sw || compositor.out_h != sh {
+        pixel_ops::downscale_rgba_into(
+            &compositor.canvas,
+            sw,
+            sh,
+            compositor.out_w,
+            compositor.out_h,
+            &mut compositor.out_buf,
+        )?;
+    } else if compositor.out_buf.len() == compositor.canvas.len() {
+        compositor.out_buf.copy_from_slice(&compositor.canvas);
     } else {
-        let mut copy = try_alloc_zeroed(compositor.canvas.len())?;
-        copy.copy_from_slice(&compositor.canvas);
-        copy
-    };
-    premultiply_rgba_in_place(&mut out);
-
-    Ok(GifRenderedFrame {
-        duration_ms: compositor.delays_ms[target],
-        rgba: out,
-    })
+        return Err(MediaError::InvalidInput);
+    }
+    premultiply_rgba_in_place(&mut compositor.out_buf);
+    Ok(compositor.delays_ms[target])
 }
 
 pub(crate) fn close_session(handle: i64) {

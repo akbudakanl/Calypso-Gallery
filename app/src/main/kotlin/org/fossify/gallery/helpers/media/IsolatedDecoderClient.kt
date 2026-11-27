@@ -1,33 +1,17 @@
 package org.fossify.gallery.helpers.media
 
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.content.ServiceConnection
 import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
-import android.os.DeadObjectException
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
 import android.os.ParcelFileDescriptor
-import android.os.RemoteException
 import org.fossify.gallery.helpers.CryptoManager
+import org.fossify.gallery.helpers.EncryptedVideoDataSource
 import org.fossify.gallery.helpers.TYPE_VIDEOS
 import org.fossify.gallery.helpers.openDecryptedContentStream
-import org.fossify.gallery.helpers.readEmbeddedThumbnailBytes
 import java.io.File
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
-private const val CONNECT_TIMEOUT_MS = 5_000L
-private const val REQUEST_TIMEOUT_MS = 10_000L
-private const val BACKGROUND_UNBIND_DELAY_MS = 15_000L
-private const val WORKER_POOL_THREADS = 4
 private const val THUMB_EMBEDDED_THRESHOLD = 600
 
 /**
@@ -73,6 +57,7 @@ object IsolatedDecoderClient {
                 maxHeight = maxHeight,
                 preferEmbeddedThumbnail = preferThumb,
                 preferFullContent = !preferThumb,
+                flags = flags,
             )
         }
         val ctx = context ?: appContext ?: return null
@@ -140,6 +125,7 @@ object IsolatedDecoderClient {
         maxHeight: Int,
         preferEmbeddedThumbnail: Boolean = false,
         preferFullContent: Boolean = false,
+        flags: Int = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
     ): Bitmap? {
         val ctx = context ?: appContext ?: return null
         if (ProcessIsolation.isIsolatedProcess() || !CryptoManager.isVaultUnlocked) return null
@@ -156,14 +142,21 @@ object IsolatedDecoderClient {
             maxHeight = maxHeight,
         )
         val embedded = if (tryEmbedded) {
-            decodeEncryptedEmbeddedThumb(ctx, file, maxWidth, maxHeight, "$key:thumb")
+            decodeEncryptedEmbeddedThumb(
+                context = ctx,
+                thumbBytes = meta.thumbnailBytes,
+                maxWidth = maxWidth,
+                maxHeight = maxHeight,
+                flags = flags and IsolatedDecodeRequest.FLAG_CENTER_CROP,
+                quarantineKey = "$key:thumb",
+            )
         } else {
             null
         }
         return when {
             embedded != null -> embedded
-            isVideo -> null
-            else -> decodeEncryptedPayload(ctx, file, meta.originalName, maxWidth, maxHeight, key)
+            isVideo -> extractEncryptedVideoFrame(file, maxWidth, maxHeight)
+            else -> decodeEncryptedPayload(ctx, file, meta.originalName, maxWidth, maxHeight, flags, key)
         }
     }
 
@@ -223,12 +216,12 @@ private fun shouldTryEmbeddedThumb(
 
 private fun decodeEncryptedEmbeddedThumb(
     context: Context,
-    file: File,
+    thumbBytes: ByteArray?,
     maxWidth: Int,
     maxHeight: Int,
+    flags: Int,
     quarantineKey: String,
 ): Bitmap? {
-    val thumbBytes = runCatching { CryptoManager.readEmbeddedThumbnailBytes(file) }.getOrNull()
     if (thumbBytes == null || thumbBytes.isEmpty()) return null
     return try {
         IsolatedDecoderClient.decodeBytes(
@@ -236,12 +229,35 @@ private fun decodeEncryptedEmbeddedThumb(
             bytes = thumbBytes,
             maxWidth = maxWidth,
             maxHeight = maxHeight,
-            flags = IsolatedDecodeRequest.FLAG_NONE,
+            flags = flags,
             nameHint = "thumb.jpg",
             quarantineKey = quarantineKey,
         )
     } finally {
         thumbBytes.fill(0)
+    }
+}
+
+private fun extractEncryptedVideoFrame(file: File, maxWidth: Int, maxHeight: Int): Bitmap? {
+    val retriever = MediaMetadataRetriever()
+    val dataSource = EncryptedVideoDataSource(file)
+    return try {
+        retriever.setDataSource(dataSource)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && maxWidth > 0 && maxHeight > 0) {
+            retriever.getScaledFrameAtTime(
+                -1L,
+                MediaMetadataRetriever.OPTION_CLOSEST_SYNC,
+                maxWidth,
+                maxHeight,
+            ) ?: retriever.getFrameAtTime(-1L)
+        } else {
+            retriever.getFrameAtTime(-1L)
+        }
+    } catch (_: Throwable) {
+        null
+    } finally {
+        runCatching { retriever.release() }
+        runCatching { dataSource.close() }
     }
 }
 
@@ -251,6 +267,7 @@ private fun decodeEncryptedPayload(
     originalName: String,
     maxWidth: Int,
     maxHeight: Int,
+    flags: Int,
     quarantineKey: String,
 ): Bitmap? {
     val plainBytes = runCatching {
@@ -262,7 +279,7 @@ private fun decodeEncryptedPayload(
             bytes = plainBytes,
             maxWidth = maxWidth,
             maxHeight = maxHeight,
-            flags = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
+            flags = flags or IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
             nameHint = originalName,
             quarantineKey = quarantineKey,
         )
@@ -335,136 +352,6 @@ private fun executeProbe(
         IsolatedServiceBridge.runWatchdogCall(context, quarantineKey, quarantine) { decoder ->
             val result = decoder.probeBounds(req)
             if (result != null && result.status == IsolatedDecodeResult.STATUS_OK) result else null
-        }
-    }
-}
-
-internal object IsolatedServiceBridge {
-    private val lock = Any()
-    private val workerExecutor = Executors.newFixedThreadPool(WORKER_POOL_THREADS) { runnable ->
-        Thread(runnable, "calypso-iso-decode").apply { isDaemon = true }
-    }
-    private val mainHandler = runCatching { Handler(Looper.getMainLooper()) }.getOrNull()
-
-    @Volatile
-    private var scheduledContext: Context? = null
-
-    @Volatile
-    private var service: IIsolatedMediaDecoder? = null
-
-    @Volatile
-    private var isBound = false
-
-    private var activeConnection: ServiceConnection? = null
-    private var connectLatch: CountDownLatch? = null
-    private val pendingUnbind = Runnable {
-        scheduledContext?.let { resetConnection(it) }
-    }
-
-    fun cancelPendingUnbind() {
-        mainHandler?.removeCallbacks(pendingUnbind)
-    }
-
-    fun scheduleUnbind(context: Context) {
-        scheduledContext = context.applicationContext
-        mainHandler?.removeCallbacks(pendingUnbind)
-        mainHandler?.postDelayed(pendingUnbind, BACKGROUND_UNBIND_DELAY_MS)
-    }
-
-    fun runFireAndForget(context: Context, block: (IIsolatedMediaDecoder) -> Unit) {
-        workerExecutor.execute {
-            val decoder = ensureConnected(context) ?: return@execute
-            runCatching { block(decoder) }
-        }
-    }
-
-    fun <T> runWatchdogCall(
-        context: Context,
-        quarantineKey: String,
-        quarantine: IsolatedFailureQuarantine,
-        block: (IIsolatedMediaDecoder) -> T?,
-    ): T? {
-        val decoder = ensureConnected(context) ?: return null
-        val future = workerExecutor.submit<T?> { block(decoder) }
-        return try {
-            future.get(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        } catch (_: TimeoutException) {
-            future.cancel(true)
-            quarantine.recordFailure(quarantineKey)
-            resetConnection(context)
-            null
-        } catch (err: ExecutionException) {
-            if (err.cause is DeadObjectException || err.cause is RemoteException) {
-                quarantine.recordFailure(quarantineKey)
-                resetConnection(context)
-            }
-            null
-        } catch (_: InterruptedException) {
-            Thread.currentThread().interrupt()
-            null
-        }
-    }
-
-    private fun ensureConnected(context: Context): IIsolatedMediaDecoder? {
-        val alive = service?.takeIf { it.asBinder().isBinderAlive }
-        if (alive != null) return alive
-        val latch = bindIfNeeded(context.applicationContext) ?: return null
-        runCatching { latch.await(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS) }
-        return service?.takeIf { it.asBinder().isBinderAlive }
-    }
-
-    private fun bindIfNeeded(appCtx: Context): CountDownLatch? {
-        synchronized(lock) {
-            if (isBound) return connectLatch
-            val newLatch = CountDownLatch(1)
-            val conn = object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                    service = IIsolatedMediaDecoder.Stub.asInterface(binder)
-                    connectLatch?.countDown()
-                }
-
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    service = null
-                }
-
-                override fun onBindingDied(name: ComponentName?) {
-                    service = null
-                    isBound = false
-                    connectLatch?.countDown()
-                }
-            }
-            connectLatch = newLatch
-            activeConnection = conn
-            val bound = runCatching {
-                val intent = Intent(appCtx, IsolatedMediaDecoderService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    appCtx.bindService(intent, Context.BIND_AUTO_CREATE, workerExecutor, conn)
-                } else {
-                    appCtx.bindService(intent, conn, Context.BIND_AUTO_CREATE)
-                }
-            }.getOrDefault(false)
-            if (!bound) {
-                activeConnection = null
-                connectLatch = null
-                return null
-            }
-            isBound = true
-            return newLatch
-        }
-    }
-
-    private fun resetConnection(context: Context) {
-        val conn: ServiceConnection?
-        synchronized(lock) {
-            service = null
-            isBound = false
-            connectLatch?.countDown()
-            connectLatch = null
-            conn = activeConnection
-            activeConnection = null
-        }
-        if (conn != null) {
-            runCatching { context.applicationContext.unbindService(conn) }
         }
     }
 }

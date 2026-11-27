@@ -54,9 +54,21 @@ class SvgModule : AppGlideModule() {
             ParcelFileDescriptor::class.java,
             VideoOnlyPfdModelLoader.Factory(appContext),
         )
-        registry.replace(String::class.java, AssetFileDescriptor::class.java, VideoOnlyAfdModelLoader.Factory())
-        registry.replace(File::class.java, AssetFileDescriptor::class.java, VideoOnlyAfdModelLoader.Factory())
-        registry.replace(Uri::class.java, AssetFileDescriptor::class.java, VideoOnlyAfdModelLoader.Factory())
+        registry.replace(
+            String::class.java,
+            AssetFileDescriptor::class.java,
+            VideoOnlyAfdModelLoader.Factory(appContext),
+        )
+        registry.replace(
+            File::class.java,
+            AssetFileDescriptor::class.java,
+            VideoOnlyAfdModelLoader.Factory(appContext),
+        )
+        registry.replace(
+            Uri::class.java,
+            AssetFileDescriptor::class.java,
+            VideoOnlyAfdModelLoader.Factory(appContext),
+        )
 
         registry.prepend(
             String::class.java,

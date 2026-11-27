@@ -131,10 +131,28 @@ internal object IsolatedGifSessionStore {
     ): IsolatedGifFrameResult {
         val clampedFrame = frameIndex.mod(session.frameCount)
         val slotIdx = targetSlot.mod(IsolatedGifTimingPolicy.DOUBLE_BUFFER_SLOTS)
+        val slot = session.slots[slotIdx]
+        val directBuffer = slot.directByteBuffer()
+        if (directBuffer != null) {
+            val directDelay = NativeMediaDecoder.renderGifFrameIntoDirectBuffer(
+                session.rustHandle,
+                clampedFrame,
+                directBuffer,
+            )
+            if (directDelay != null) {
+                return IsolatedGifFrameResult(
+                    status = IsolatedDecodeResult.STATUS_OK,
+                    slotIndex = slotIdx,
+                    durationMs = IsolatedGifTimingPolicy.normalizeFrameDelayMs(directDelay),
+                    byteCount = session.frameByteCount,
+                )
+            }
+        }
+
         val frame = NativeMediaDecoder.renderGifFrame(session.rustHandle, clampedFrame)
             ?: return IsolatedGifFrameResult(status = IsolatedDecodeResult.STATUS_DECODE_FAILED)
 
-        val (written, pipePfd) = session.slots[slotIdx].writeRgbaBytes(frame.rgba)
+        val (written, pipePfd) = slot.writeRgbaBytes(frame.rgba)
         if (!written) {
             runCatching { pipePfd?.close() }
             return IsolatedGifFrameResult(status = IsolatedDecodeResult.STATUS_DECODE_FAILED)

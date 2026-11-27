@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.Option
 import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.ResourceDecoder
 import com.bumptech.glide.load.data.DataFetcher
@@ -26,6 +27,11 @@ import java.io.InputStream
 import java.nio.ByteBuffer
 
 private const val THUMB_PREVIEW_LIMIT = 600
+
+object IsolatedGlideOptions {
+    val SCALE_CENTER_CROP: Option<Boolean> =
+        Option.memory("org.fossify.gallery.scale_center_crop", false)
+}
 
 class IsolatedBitmapPacket(val bitmap: Bitmap)
 
@@ -69,21 +75,24 @@ class IsolatedStringModelLoader(
         height: Int,
         options: Options,
     ): ModelLoader.LoadData<IsolatedBitmapPacket> {
-        val clean = model.removePrefix("file://")
         val uri = Uri.parse(model)
+        val clean = if (uri.scheme == ContentResolver.SCHEME_FILE) {
+            uri.path.orEmpty()
+        } else {
+            model.removePrefix("file://")
+        }
         val isUriModel = uri.scheme == ContentResolver.SCHEME_CONTENT ||
             (uri.scheme == ContentResolver.SCHEME_FILE && !CryptoManager.isEncryptedFile(clean))
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH)
+        val flags = buildFlags(targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         val file = File(clean)
         val sig = if (isUriModel) {
             ObjectKey("iso:$model:${targetW}x${targetH}:$flags")
         } else {
-            val stamp = file.lastModified()
-            ObjectKey("iso:${file.absolutePath}:$stamp:${targetW}x${targetH}:$flags:$preferThumb:$preferFull")
+            ObjectKey("iso:${file.absolutePath}:${targetW}x${targetH}:$flags:$preferThumb:$preferFull")
         }
         val spec = IsolatedFetchSpec(
             file = if (isUriModel) null else file,
@@ -121,11 +130,10 @@ class IsolatedFileModelLoader(
     ): ModelLoader.LoadData<IsolatedBitmapPacket> {
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH)
+        val flags = buildFlags(targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
-        val stamp = model.lastModified()
-        val sig = ObjectKey("iso:${model.absolutePath}:$stamp:${targetW}x${targetH}:$flags:$preferThumb:$preferFull")
+        val sig = ObjectKey("iso:${model.absolutePath}:${targetW}x${targetH}:$flags:$preferThumb:$preferFull")
         val spec = IsolatedFetchSpec(
             file = model,
             uri = null,
@@ -167,7 +175,7 @@ class IsolatedUriModelLoader(
         val isEncryptedFile = model.scheme == ContentResolver.SCHEME_FILE && CryptoManager.isEncryptedFile(clean)
         val targetW = normalizeDim(width)
         val targetH = normalizeDim(height)
-        val flags = buildFlags(targetW, targetH)
+        val flags = buildFlags(targetW, targetH, options)
         val preferThumb = options.get(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL) == true
         val preferFull = options.get(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT) == true
         val spec = IsolatedFetchSpec(
@@ -210,6 +218,7 @@ private class IsolatedPacketFetcher(
                     maxHeight = spec.maxHeight,
                     preferEmbeddedThumbnail = spec.preferEmbeddedThumbnail,
                     preferFullContent = spec.preferFullDecryptedContent,
+                    flags = spec.flags,
                 )
             }
             file != null -> {
@@ -320,7 +329,9 @@ class VideoOnlyPfdModelLoader<Model : Any>(
     }
 }
 
-class VideoOnlyAfdModelLoader<Model : Any> : ModelLoader<Model, AssetFileDescriptor> {
+class VideoOnlyAfdModelLoader<Model : Any>(
+    private val context: Context,
+) : ModelLoader<Model, AssetFileDescriptor> {
     override fun handles(model: Model): Boolean = !isAndroidResourceModel(model)
 
     override fun buildLoadData(
@@ -331,13 +342,13 @@ class VideoOnlyAfdModelLoader<Model : Any> : ModelLoader<Model, AssetFileDescrip
     ): ModelLoader.LoadData<AssetFileDescriptor> {
         return ModelLoader.LoadData(
             ObjectKey(model.toString()),
-            FailingDataFetcher(AssetFileDescriptor::class.java),
+            VideoOnlyAfdFetcher(context, model),
         )
     }
 
-    class Factory<Model : Any> : ModelLoaderFactory<Model, AssetFileDescriptor> {
+    class Factory<Model : Any>(private val context: Context) : ModelLoaderFactory<Model, AssetFileDescriptor> {
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Model, AssetFileDescriptor> {
-            return VideoOnlyAfdModelLoader()
+            return VideoOnlyAfdModelLoader(context.applicationContext)
         }
 
         override fun teardown() = Unit
@@ -370,6 +381,34 @@ private class VideoOnlyPfdFetcher<Model : Any>(
     override fun getDataSource(): DataSource = DataSource.LOCAL
 }
 
+private class VideoOnlyAfdFetcher<Model : Any>(
+    private val context: Context,
+    private val model: Model,
+) : DataFetcher<AssetFileDescriptor> {
+    private var afd: AssetFileDescriptor? = null
+
+    override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in AssetFileDescriptor>) {
+        val opened = openIfVerifiedVideo(context, model)?.let { pfd ->
+            AssetFileDescriptor(pfd, 0L, AssetFileDescriptor.UNKNOWN_LENGTH)
+        }
+        if (opened != null) {
+            afd = opened
+            callback.onDataReady(opened)
+        } else {
+            callback.onLoadFailed(SecurityException("Direct main-process image decoding is disabled"))
+        }
+    }
+
+    override fun cleanup() {
+        runCatching { afd?.close() }
+        afd = null
+    }
+
+    override fun cancel() = Unit
+    override fun getDataClass(): Class<AssetFileDescriptor> = AssetFileDescriptor::class.java
+    override fun getDataSource(): DataSource = DataSource.LOCAL
+}
+
 private class FailingDataFetcher<Data>(private val dataClass: Class<Data>) : DataFetcher<Data> {
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in Data>) {
         callback.onLoadFailed(SecurityException("Direct main-process image decoding is disabled"))
@@ -385,10 +424,13 @@ private fun normalizeDim(dim: Int): Int {
     return if (dim <= 0) IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION else dim
 }
 
-private fun buildFlags(targetW: Int, targetH: Int): Int {
+private fun buildFlags(targetW: Int, targetH: Int, options: Options): Int {
     var flags = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION
     if (targetW in 1..THUMB_PREVIEW_LIMIT && targetH in 1..THUMB_PREVIEW_LIMIT) {
         flags = flags or IsolatedDecodeRequest.FLAG_PREFER_EMBEDDED_PREVIEW
+    }
+    if (options.get(IsolatedGlideOptions.SCALE_CENTER_CROP) == true) {
+        flags = flags or IsolatedDecodeRequest.FLAG_CENTER_CROP
     }
     return flags
 }
@@ -429,8 +471,12 @@ private fun openIfVerifiedVideo(context: Context, model: Any): ParcelFileDescrip
             }
         }
         is String -> {
-            val clean = model.removePrefix("file://")
             val uri = Uri.parse(model)
+            val clean = if (uri.scheme == ContentResolver.SCHEME_FILE) {
+                uri.path.orEmpty()
+            } else {
+                model.removePrefix("file://")
+            }
             if (!CryptoManager.isEncryptedFile(clean) && isVideoUriOrPath(context, clean, uri)) {
                 if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
                     runCatching { context.contentResolver.openFileDescriptor(uri, "r") }.getOrNull()

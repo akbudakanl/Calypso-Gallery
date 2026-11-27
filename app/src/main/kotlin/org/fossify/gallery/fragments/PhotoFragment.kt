@@ -463,9 +463,11 @@ class PhotoFragment : ViewPagerFragment() {
         mIsLoadingGif = true
         val pathToLoad = getPathToLoad(mMedium)
 
+        val maxGifDim = maxOf(mScreenWidth, mScreenHeight)
+            .coerceIn(0, org.fossify.gallery.helpers.media.IsolatedGifTimingPolicy.MAX_GIF_DIMENSION)
         ensureBackgroundThread {
             val drawable = runCatching {
-                IsolatedGifClient.openGifSession(ctx, pathToLoad, 0, 0)
+                IsolatedGifClient.openGifSession(ctx, pathToLoad, maxGifDim, maxGifDim)
             }.getOrNull()
 
             activity?.runOnUiThread {

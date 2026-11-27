@@ -1,6 +1,7 @@
 package org.fossify.gallery
 
 import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
+import org.fossify.gallery.helpers.media.IsolatedJpegHeaderParser
 import org.fossify.gallery.helpers.media.IsolatedMediaFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -77,12 +78,47 @@ class IsolatedFormatSnifferTest {
         assertEquals(4, IsolatedFormatSniffer.computeSampleSize(4000, 3000, 1000, 750))
         val target = IsolatedFormatSniffer.computeBoundedTargetSize(8000, 6000, 4096, 4096)
         assertEquals(4096 to 3072, target)
+
+        val fillPortrait = IsolatedFormatSniffer.computeBoundedTargetSize(
+            srcWidth = 1080,
+            srcHeight = 2400,
+            reqWidth = 360,
+            reqHeight = 360,
+            fillMinSide = true,
+        )
+        assertEquals(360 to 800, fillPortrait)
+
+        val fillLandscape = IsolatedFormatSniffer.computeBoundedTargetSize(
+            srcWidth = 4000,
+            srcHeight = 3000,
+            reqWidth = 360,
+            reqHeight = 360,
+            fillMinSide = true,
+        )
+        assertEquals(480 to 360, fillLandscape)
     }
 
     @Test
-    fun videoHintAllowlistMatchesVideoExtensionsOnly() {
+    fun probesMinimalJpegSofDimensions() {
+        val sof0Jpeg = byteArrayOf(
+            0xFF.toByte(), 0xD8.toByte(),
+            0xFF.toByte(), 0xC0.toByte(), 0x00, 0x0B, 0x08,
+            0x01, 0x40, // height = 320
+            0x02, 0x80.toByte(), // width = 640
+            0x03, 0x01, 0x11, 0x00,
+            0xFF.toByte(), 0xD9.toByte(),
+        )
+        assertEquals(640 to 320, IsolatedJpegHeaderParser.probeDimensions(sof0Jpeg))
+        assertNull(IsolatedJpegHeaderParser.probeDimensions(byteArrayOf(0x00, 0x01)))
+    }
+
+    @Test
+    fun videoHintAllowlistMatchesVideoExtensionsAndHashPaths() {
         assertTrue(IsolatedFormatSniffer.isVideoFileHint("/storage/emulated/0/DCIM/clip.MP4"))
+        assertTrue(IsolatedFormatSniffer.isVideoFileHint("/storage/emulated/0/Movies/Clip #1.mp4"))
         assertTrue(IsolatedFormatSniffer.isVideoFileHint("movie.mkv"))
+        assertTrue(IsolatedFormatSniffer.isVideoFileHint("legacy.3g2"))
+        assertTrue(IsolatedFormatSniffer.isVideoFileHint("flash.f4v"))
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("photo.jpg"))
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("vector.svg"))
         assertFalse(IsolatedFormatSniffer.isVideoFileHint("deadbeef.bin"))

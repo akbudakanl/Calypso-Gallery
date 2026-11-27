@@ -45,7 +45,18 @@ object IsolatedPixelTransport {
             return SharedMemoryTransportApi27.readBytes(sharedHandle, maxBytes)
         }
         val pfd = request.inputPfd ?: return null
-        return PipeTransport.readBoundedFromPfd(pfd, maxBytes)
+        return PipeTransport.readBoundedFromPfd(pfd, maxBytes, request.inputLength)
+    }
+
+    fun packRgbaBytes(name: String, rgba: ByteArray): PackedPixels? {
+        if (rgba.isEmpty()) return null
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            val handle = SharedMemoryTransportApi27.writeBytes(name, rgba) ?: return null
+            PackedPixels(byteCount = rgba.size, sharedOutputHandle = handle)
+        } else {
+            val pfd = PipeTransport.writeBytesToPipe(rgba) ?: return null
+            PackedPixels(byteCount = rgba.size, pixelPipePfd = pfd)
+        }
     }
 
     fun packBitmap(name: String, bitmap: Bitmap): PackedPixels? {
@@ -204,22 +215,73 @@ object IsolatedPixelTransport {
             return writeBytesToPipe(buffer.array())
         }
 
-        fun readBoundedFromPfd(pfd: ParcelFileDescriptor, maxBytes: Int): ByteArray? {
+        fun readBoundedFromPfd(
+            pfd: ParcelFileDescriptor,
+            maxBytes: Int,
+            expectedLength: Long = 0L,
+        ): ByteArray? {
             return runCatching {
                 ParcelFileDescriptor.AutoCloseInputStream(pfd).use { input ->
-                    val out = ByteArrayOutputStream()
-                    val buf = ByteArray(PIPE_CHUNK_BYTES)
-                    var total = 0
-                    while (true) {
-                        val read = input.read(buf)
-                        if (read <= 0) break
-                        total += read
-                        if (total > maxBytes) return@use null
-                        out.write(buf, 0, read)
+                    if (expectedLength in 1..maxBytes.toLong()) {
+                        readPreallocatedFromStream(input, expectedLength.toInt(), maxBytes)
+                    } else {
+                        readChunkedFromStream(input, maxBytes)
                     }
-                    out.toByteArray()
                 }
             }.getOrNull()
+        }
+
+        private fun readPreallocatedFromStream(
+            input: ParcelFileDescriptor.AutoCloseInputStream,
+            expected: Int,
+            maxBytes: Int,
+        ): ByteArray? {
+            val fixed = ByteArray(expected)
+            var filled = 0
+            while (filled < expected) {
+                val read = input.read(fixed, filled, expected - filled)
+                if (read <= 0) break
+                filled += read
+            }
+            if (filled < expected) {
+                return fixed.copyOf(filled)
+            }
+            val extraByte = input.read()
+            if (extraByte < 0) {
+                return fixed
+            }
+            if (expected + 1 > maxBytes) {
+                return null
+            }
+            val out = ByteArrayOutputStream(expected + PIPE_CHUNK_BYTES)
+            out.write(fixed, 0, expected)
+            out.write(extraByte)
+            return appendRemainingChunks(input, out, expected + 1, maxBytes)
+        }
+
+        private fun readChunkedFromStream(
+            input: ParcelFileDescriptor.AutoCloseInputStream,
+            maxBytes: Int,
+        ): ByteArray? {
+            return appendRemainingChunks(input, ByteArrayOutputStream(), 0, maxBytes)
+        }
+
+        private fun appendRemainingChunks(
+            input: ParcelFileDescriptor.AutoCloseInputStream,
+            out: ByteArrayOutputStream,
+            initialTotal: Int,
+            maxBytes: Int,
+        ): ByteArray? {
+            val buf = ByteArray(PIPE_CHUNK_BYTES)
+            var total = initialTotal
+            while (true) {
+                val read = input.read(buf)
+                if (read <= 0) break
+                total += read
+                if (total > maxBytes) return null
+                out.write(buf, 0, read)
+            }
+            return out.toByteArray()
         }
 
         fun readBitmapFromPipe(

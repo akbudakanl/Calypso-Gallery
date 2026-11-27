@@ -218,7 +218,7 @@ object MediaDimensions {
  * Gives [MediaMetadataRetriever] random access to the decrypted content of an encrypted file.
  */
 @Suppress("TooGenericExceptionCaught", "SwallowedException")
-private class EncryptedVideoDataSource(private val file: File) : MediaDataSource() {
+internal class EncryptedVideoDataSource(private val file: File) : MediaDataSource() {
     private var stream: InputStream? = null
     private var streamPosition = 0L
     private var size = 0L
@@ -259,7 +259,11 @@ private class EncryptedVideoDataSource(private val file: File) : MediaDataSource
         }
 
         return try {
-            currentStream.read(buffer, offset, size)
+            val bytesRead = currentStream.read(buffer, offset, size)
+            if (bytesRead > 0) {
+                streamPosition += bytesRead
+            }
+            bytesRead
         } catch (e: IOException) {
             -1
         }

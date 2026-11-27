@@ -59,7 +59,7 @@ object IsolatedGifClient {
         slot: IsolatedGifBufferTransport.ReadableGifSlot,
         targetBitmap: Bitmap,
     ): Int? {
-        val result = IsolatedServiceBridge.runWatchdogCall(
+        val result = IsolatedServiceBridge.runGifWatchdogCall(
             context = context,
             quarantineKey = "",
             quarantine = IsolatedDecoderClient.quarantine,

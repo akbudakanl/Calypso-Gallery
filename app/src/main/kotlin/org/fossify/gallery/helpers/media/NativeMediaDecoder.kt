@@ -15,6 +15,14 @@ internal class RustGifFrame(
     val rgba: ByteArray,
 )
 
+internal class RustDecodedRgba(
+    val width: Int,
+    val height: Int,
+    val sourceWidth: Int,
+    val sourceHeight: Int,
+    val rgba: ByteArray,
+)
+
 /**
  * Pure-Rust isolated-process media decoder bridge (`png`, `zune-jpeg`, `image-webp`, `gif`, `jxl-oxide`).
  */
@@ -25,7 +33,12 @@ internal object NativeMediaDecoder {
     private const val FORMAT_GIF = 4
     private const val FORMAT_JXL = 5
 
+    private const val SCALE_MODE_FIT_INSIDE = 0
+    private const val SCALE_MODE_FILL_MIN_SIDE = 1
     private const val BOUNDS_LEN = 2
+    private const val STATIC_META_LEN = 4
+    private const val STATIC_META_SRC_W = 2
+    private const val STATIC_META_SRC_H = 3
     private const val GIF_INFO_LEN = 3
     private const val RGBA_BYTES_PER_PIXEL = 4L
 
@@ -72,6 +85,37 @@ internal object NativeMediaDecoder {
         }.getOrNull()
     }
 
+    fun decodeStaticRgba(
+        format: IsolatedMediaFormat,
+        bytes: ByteArray,
+        targetW: Int,
+        targetH: Int,
+        exifOrientation: Int = 1,
+        fillMinSide: Boolean = false,
+    ): RustDecodedRgba? {
+        val code = toFormatCode(format) ?: return null
+        if (bytes.isEmpty() || !loaded) return null
+        val meta = IntArray(STATIC_META_LEN)
+        val scaleMode = if (fillMinSide) SCALE_MODE_FILL_MIN_SIDE else SCALE_MODE_FIT_INSIDE
+        val rgba = runCatching {
+            NativeMediaJni.decodeStaticRgbaExNative(code, bytes, targetW, targetH, exifOrientation, scaleMode, meta)
+        }.getOrNull() ?: return null
+
+        val w = meta[0]
+        val h = meta[1]
+        val expectedBytes = w.toLong() * h.toLong() * RGBA_BYTES_PER_PIXEL
+        if (w <= 0 || h <= 0 || rgba.size.toLong() != expectedBytes) {
+            return null
+        }
+        return RustDecodedRgba(
+            width = w,
+            height = h,
+            sourceWidth = meta[STATIC_META_SRC_W],
+            sourceHeight = meta[STATIC_META_SRC_H],
+            rgba = rgba,
+        )
+    }
+
     fun openGifSession(bytes: ByteArray, maxWidth: Int, maxHeight: Int): RustGifOpenInfo? {
         if (bytes.isEmpty() || !loaded) return null
         val info = IntArray(GIF_INFO_LEN)
@@ -99,6 +143,16 @@ internal object NativeMediaDecoder {
             NativeMediaJni.renderGifFrameNative(handle, frameIndex, meta)
         }.getOrNull() ?: return null
         return RustGifFrame(durationMs = meta[0], rgba = rgba)
+    }
+
+    fun renderGifFrameIntoDirectBuffer(handle: Long, frameIndex: Int, buffer: ByteBuffer): Int? {
+        val validArgs = handle > 0L && frameIndex >= 0
+        if (!validArgs || !buffer.isDirect || !loaded) return null
+        val meta = IntArray(1)
+        val ok = runCatching {
+            NativeMediaJni.renderGifFrameIntoBufferNative(handle, frameIndex, buffer, meta)
+        }.getOrDefault(false)
+        return if (ok) meta[0] else null
     }
 
     fun closeGifSession(handle: Long) {

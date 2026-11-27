@@ -38,6 +38,7 @@ data class IsolatedDecodeRequest(
         const val FLAG_PREFER_EMBEDDED_PREVIEW = 1
         const val FLAG_APPLY_EXIF_ORIENTATION = 2
         const val FLAG_ALLOW_LARGE_OUTPUT = 4
+        const val FLAG_CENTER_CROP = 8
 
         @JvmField
         val CREATOR: Parcelable.Creator<IsolatedDecodeRequest> =

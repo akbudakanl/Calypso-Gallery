@@ -1,6 +1,8 @@
 package org.fossify.gallery.helpers.media
 
 import java.util.Locale
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 enum class IsolatedMediaFormat {
     JPEG,
@@ -31,6 +33,7 @@ private const val BYTE_MASK = 0xFF
 private const val JPEG_MARKER_START = 0xFF
 private const val JPEG_MARKER_SOI = 0xD8
 private const val JXL_MARKER_SECOND = 0x0A
+private const val PANORAMA_SIDE_MULT = 4
 
 @Suppress("MagicNumber")
 private val PNG_MAGIC = byteArrayOf(
@@ -66,8 +69,9 @@ private val RAW_EXTENSIONS = setOf(
     "dng", "cr2", "cr3", "nef", "nrw", "arw", "orf", "rw2", "raf", "pef", "srw", "raw",
 )
 private val VIDEO_EXTENSIONS = setOf(
-    "mp4", "mkv", "webm", "3gp", "3gpp", "mov", "avi", "m4v", "flv", "wmv", "ts", "mts", "m2ts",
-    "mpg", "mpeg", "ogv",
+    "mp4", "mkv", "webm", "3gp", "3gpp", "3g2", "mov", "avi", "m4v", "flv", "f4v", "wmv",
+    "ts", "mts", "m2ts", "mpg", "mpeg", "m2v", "mpeg4", "mp4v", "ogv", "ogm", "vob", "asf",
+    "rm", "rmvb", "divx", "qt",
 )
 
 /**
@@ -116,23 +120,34 @@ object IsolatedFormatSniffer {
         reqHeight: Int,
         maxDimension: Int = MAX_OUTPUT_DIMENSION,
         maxPixels: Long = MAX_OUTPUT_PIXELS,
+        fillMinSide: Boolean = false,
     ): Pair<Int, Int>? {
         if (!isValidSourceDimensions(srcWidth, srcHeight)) return null
         val boundedMaxDim = maxDimension.coerceAtLeast(1)
         val capW = if (reqWidth > 0) minOf(reqWidth, boundedMaxDim) else boundedMaxDim
         val capH = if (reqHeight > 0) minOf(reqHeight, boundedMaxDim) else boundedMaxDim
 
-        val scale = minOf(
-            1.0,
-            capW.toDouble() / srcWidth.toDouble(),
-            capH.toDouble() / srcHeight.toDouble(),
-        )
-        var targetW = (srcWidth * scale).toInt().coerceAtLeast(1)
-        var targetH = (srcHeight * scale).toInt().coerceAtLeast(1)
+        val wRatio = capW.toDouble() / srcWidth.toDouble()
+        val hRatio = capH.toDouble() / srcHeight.toDouble()
+        val doFillMin = fillMinSide && reqWidth > 0 && reqHeight > 0
+        val scale = if (doFillMin) {
+            val maxCapW = minOf(capW * PANORAMA_SIDE_MULT, boundedMaxDim)
+            val maxCapH = minOf(capH * PANORAMA_SIDE_MULT, boundedMaxDim)
+            val hardCap = minOf(
+                1.0,
+                maxCapW.toDouble() / srcWidth.toDouble(),
+                maxCapH.toDouble() / srcHeight.toDouble(),
+            )
+            minOf(maxOf(wRatio, hRatio), hardCap)
+        } else {
+            minOf(1.0, wRatio, hRatio)
+        }
+        var targetW = (srcWidth * scale).roundToInt().coerceIn(1, boundedMaxDim)
+        var targetH = (srcHeight * scale).roundToInt().coerceIn(1, boundedMaxDim)
 
         val pixelCount = targetW.toLong() * targetH.toLong()
         if (pixelCount > maxPixels && maxPixels > 0L) {
-            val pixelScale = kotlin.math.sqrt(maxPixels.toDouble() / pixelCount.toDouble())
+            val pixelScale = sqrt(maxPixels.toDouble() / pixelCount.toDouble())
             targetW = (targetW * pixelScale).toInt().coerceAtLeast(1)
             targetH = (targetH * pixelScale).toInt().coerceAtLeast(1)
         }
@@ -166,7 +181,11 @@ private fun sniffIsoBmffFormat(header: ByteArray): IsolatedMediaFormat {
 }
 
 private fun extensionOf(pathOrName: String): String {
-    val clean = pathOrName.substringBefore('?').substringBefore('#')
+    val clean = if (pathOrName.startsWith("content://")) {
+        pathOrName.substringBefore('?').substringBefore('#')
+    } else {
+        pathOrName
+    }
     val lastDot = clean.lastIndexOf('.')
     if (lastDot < 0 || lastDot == clean.lastIndex) return ""
     return clean.substring(lastDot + 1).lowercase(Locale.US)

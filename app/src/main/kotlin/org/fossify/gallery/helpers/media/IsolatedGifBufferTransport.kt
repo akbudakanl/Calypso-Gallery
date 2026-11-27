@@ -59,6 +59,13 @@ internal object IsolatedGifBufferTransport {
             return (pipe != null) to pipe
         }
 
+        fun directByteBuffer(): ByteBuffer? {
+            if (api27Slot == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+                return null
+            }
+            return api27Slot.prepareDirectBuffer(byteCount)
+        }
+
         fun writeFrame(bitmap: Bitmap): Pair<Boolean, ParcelFileDescriptor?> {
             if (bitmap.isRecycled) return false to null
             val needsCopy = bitmap.config != Bitmap.Config.ARGB_8888 ||
@@ -130,6 +137,14 @@ internal object IsolatedGifBufferTransport {
                     mapped.put(rgba, 0, byteCount)
                     true
                 }.getOrDefault(false)
+            }
+
+            fun prepareDirectBuffer(byteCount: Int): ByteBuffer? {
+                val mapped = buffer ?: return null
+                if (!mapped.isDirect || mapped.capacity() < byteCount) return null
+                mapped.clear()
+                mapped.limit(byteCount)
+                return mapped
             }
 
             fun writeBitmap(bitmap: Bitmap): Boolean {

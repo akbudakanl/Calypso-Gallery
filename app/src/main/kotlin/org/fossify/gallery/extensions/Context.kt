@@ -359,6 +359,7 @@ fun Context.loadImageBase(
     if (isEncrypted) {
         options.set(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL, true)
     }
+    options.set(org.fossify.gallery.helpers.media.IsolatedGlideOptions.SCALE_CENTER_CROP, cropThumbnails)
 
     if (roundCorners != ROUNDED_CORNERS_NONE) {
         val cornerSize =

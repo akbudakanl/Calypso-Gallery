@@ -4,11 +4,16 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
+import java.util.concurrent.Semaphore
+
+private const val MAX_CONCURRENT_HEAVY_DECODES = 2
+private const val HEAVY_DECODE_MIN_BYTES = 1_000_000L
 
 /**
  * Runs in `android:isolatedProcess="true"` with no filesystem, network, or main-process memory access.
  */
 class IsolatedMediaDecoderService : Service() {
+    private val heavyDecodeSemaphore = Semaphore(MAX_CONCURRENT_HEAVY_DECODES, true)
 
     private val binder = object : IIsolatedMediaDecoder.Stub() {
         override fun probeBounds(request: IsolatedDecodeRequest?): IsolatedBoundsResult {
@@ -24,9 +29,16 @@ class IsolatedMediaDecoderService : Service() {
         override fun decodeStatic(request: IsolatedDecodeRequest?): IsolatedDecodeResult {
             val req = request ?: return IsolatedDecodeResult(IsolatedDecodeResult.STATUS_INVALID_INPUT)
             val token = Binder.clearCallingIdentity()
+            val isHeavy = req.inputLength <= 0L || req.inputLength > HEAVY_DECODE_MIN_BYTES
+            if (isHeavy) {
+                heavyDecodeSemaphore.acquire()
+            }
             return try {
                 req.use { IsolatedMediaDecoders.decodeStatic(it) }
             } finally {
+                if (isHeavy) {
+                    heavyDecodeSemaphore.release()
+                }
                 Binder.restoreCallingIdentity(token)
             }
         }

@@ -9,11 +9,19 @@ use zune_jpeg::zune_core::options::DecoderOptions;
 use zune_jpeg::JpegDecoder;
 
 use crate::{
-    compute_target_dimensions, downscale_rgba_bilinear, gif_session, premultiply_rgba_in_place,
-    try_alloc_zeroed, validate_source_dimensions, DecodedRgba, MediaError, FORMAT_GIF,
-    FORMAT_JPEG, FORMAT_JXL, FORMAT_PNG, FORMAT_WEBP, MAX_DECODE_ALLOC_BYTES,
-    MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS, MAX_SOURCE_DIMENSION,
+    gif_session, pixel_ops, premultiply_rgba_in_place, try_alloc_zeroed,
+    validate_source_dimensions, DecodedRgba, MediaError, FORMAT_GIF, FORMAT_JPEG, FORMAT_JXL,
+    FORMAT_PNG, FORMAT_WEBP, MAX_DECODE_ALLOC_BYTES, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
+    MAX_SOURCE_DIMENSION,
 };
+
+pub(crate) struct DecodedStaticMeta {
+    pub width: u32,
+    pub height: u32,
+    pub src_width: u32,
+    pub src_height: u32,
+    pub rgba: Vec<u8>,
+}
 
 pub(crate) fn probe_bounds(format: i32, data: &[u8]) -> Result<(u32, u32), MediaError> {
     if data.is_empty() {
@@ -35,15 +43,44 @@ pub(crate) fn decode_static(
     req_w: u32,
     req_h: u32,
 ) -> Result<DecodedRgba, MediaError> {
+    let decoded = decode_static_ex(
+        format,
+        data,
+        req_w,
+        req_h,
+        pixel_ops::EXIF_NORMAL,
+        pixel_ops::SCALE_MODE_FIT_INSIDE,
+    )?;
+    Ok(DecodedRgba {
+        width: decoded.width,
+        height: decoded.height,
+        rgba: decoded.rgba,
+    })
+}
+
+pub(crate) fn decode_static_ex(
+    format: i32,
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     if data.is_empty() {
         return Err(MediaError::InvalidInput);
     }
     match format {
-        FORMAT_PNG => decode_png_static(data, req_w, req_h),
-        FORMAT_JPEG => decode_jpeg_static(data, req_w, req_h),
-        FORMAT_WEBP => decode_webp_static(data, req_w, req_h),
-        FORMAT_GIF => gif_session::decode_gif_first_frame(data, req_w, req_h),
-        FORMAT_JXL => decode_jxl_static(data, req_w, req_h),
+        FORMAT_PNG => decode_png_static(data, req_w, req_h, exif_orientation, scale_mode),
+        FORMAT_JPEG => decode_jpeg_static(data, req_w, req_h, exif_orientation, scale_mode),
+        FORMAT_WEBP => decode_webp_static(data, req_w, req_h, exif_orientation, scale_mode),
+        FORMAT_GIF => gif_session::decode_gif_first_frame_ex(
+            data,
+            req_w,
+            req_h,
+            exif_orientation,
+            scale_mode,
+        ),
+        FORMAT_JXL => decode_jxl_static(data, req_w, req_h, exif_orientation, scale_mode),
         _ => Err(MediaError::UnsupportedFormat),
     }
 }
@@ -54,24 +91,39 @@ fn finish_rgba(
     src_h: u32,
     req_w: u32,
     req_h: u32,
-) -> Result<DecodedRgba, MediaError> {
-    let (dst_w, dst_h) = compute_target_dimensions(
+    exif_orientation: i32,
+    scale_mode: i32,
+    is_opaque: bool,
+) -> Result<DecodedStaticMeta, MediaError> {
+    let (eff_req_w, eff_req_h) = if pixel_ops::swaps_axes(exif_orientation) {
+        (req_h, req_w)
+    } else {
+        (req_w, req_h)
+    };
+    let (dst_w, dst_h) = pixel_ops::compute_target_dimensions_ex(
         src_w,
         src_h,
-        req_w,
-        req_h,
+        eff_req_w,
+        eff_req_h,
+        scale_mode,
         MAX_OUTPUT_DIMENSION,
         MAX_OUTPUT_PIXELS,
     )?;
-    premultiply_rgba_in_place(&mut rgba);
-    let final_rgba = if dst_w != src_w || dst_h != src_h {
-        downscale_rgba_bilinear(&rgba, src_w, src_h, dst_w, dst_h)?
+    if !is_opaque {
+        premultiply_rgba_in_place(&mut rgba);
+    }
+    let scaled = if dst_w != src_w || dst_h != src_h {
+        pixel_ops::downscale_rgba_fast(&rgba, src_w, src_h, dst_w, dst_h)?
     } else {
         rgba
     };
-    Ok(DecodedRgba {
-        width: dst_w,
-        height: dst_h,
+    let (final_rgba, final_w, final_h) =
+        pixel_ops::apply_exif_orientation_rgba(scaled, dst_w, dst_h, exif_orientation)?;
+    Ok(DecodedStaticMeta {
+        width: final_w,
+        height: final_h,
+        src_width: src_w,
+        src_height: src_h,
         rgba: final_rgba,
     })
 }
@@ -90,7 +142,13 @@ fn probe_png_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     Ok((info.width, info.height))
 }
 
-fn decode_png_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba, MediaError> {
+fn decode_png_static(
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     let mut decoder = PngDecoder::new_with_limits(
         Cursor::new(data),
         PngLimits {
@@ -111,8 +169,18 @@ fn decode_png_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba,
         .next_frame(&mut raw)
         .map_err(|_| MediaError::DecodeFailed)?;
     let bytes = &raw[..info.buffer_size()];
+    let is_opaque = matches!(info.color_type, ColorType::Rgb | ColorType::Grayscale);
     let rgba = expand_to_rgba(bytes, src_w, src_h, info.color_type)?;
-    finish_rgba(rgba, src_w, src_h, req_w, req_h)
+    finish_rgba(
+        rgba,
+        src_w,
+        src_h,
+        req_w,
+        req_h,
+        exif_orientation,
+        scale_mode,
+        is_opaque,
+    )
 }
 
 fn expand_to_rgba(
@@ -198,7 +266,13 @@ fn probe_jpeg_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     Ok((wu, hu))
 }
 
-fn decode_jpeg_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba, MediaError> {
+fn decode_jpeg_static(
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     let mut decoder = JpegDecoder::new_with_options(ZCursor::new(data), jpeg_options());
     decoder
         .decode_headers()
@@ -214,7 +288,16 @@ fn decode_jpeg_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba
     decoder
         .decode_into(&mut rgba)
         .map_err(|_| MediaError::DecodeFailed)?;
-    finish_rgba(rgba, src_w, src_h, req_w, req_h)
+    finish_rgba(
+        rgba,
+        src_w,
+        src_h,
+        req_w,
+        req_h,
+        exif_orientation,
+        scale_mode,
+        true,
+    )
 }
 
 fn probe_webp_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
@@ -225,7 +308,13 @@ fn probe_webp_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     Ok((w, h))
 }
 
-fn decode_webp_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba, MediaError> {
+fn decode_webp_static(
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     let mut decoder = WebPDecoder::new(Cursor::new(data)).map_err(|_| MediaError::DecodeFailed)?;
     decoder.set_memory_limit(MAX_DECODE_ALLOC_BYTES);
     let (src_w, src_h) = decoder.dimensions();
@@ -249,7 +338,16 @@ fn decode_webp_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba
     } else {
         expand_to_rgba(&raw, src_w, src_h, ColorType::Rgb)?
     };
-    finish_rgba(rgba, src_w, src_h, req_w, req_h)
+    finish_rgba(
+        rgba,
+        src_w,
+        src_h,
+        req_w,
+        req_h,
+        exif_orientation,
+        scale_mode,
+        !has_alpha,
+    )
 }
 
 fn probe_jxl_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
@@ -261,7 +359,13 @@ fn probe_jxl_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     Ok((w, h))
 }
 
-fn decode_jxl_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba, MediaError> {
+fn decode_jxl_static(
+    data: &[u8],
+    req_w: u32,
+    req_h: u32,
+    exif_orientation: i32,
+    scale_mode: i32,
+) -> Result<DecodedStaticMeta, MediaError> {
     let image = JxlImage::builder()
         .read(Cursor::new(data))
         .map_err(|_| MediaError::DecodeFailed)?;
@@ -320,7 +424,16 @@ fn decode_jxl_static(data: &[u8], req_w: u32, req_h: u32) -> Result<DecodedRgba,
             }
         }
     }
-    finish_rgba(rgba, src_w, src_h, req_w, req_h)
+    finish_rgba(
+        rgba,
+        src_w,
+        src_h,
+        req_w,
+        req_h,
+        exif_orientation,
+        scale_mode,
+        channels == 1 || channels == 3,
+    )
 }
 
 #[inline]

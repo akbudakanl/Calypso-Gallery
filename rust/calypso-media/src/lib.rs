@@ -1,5 +1,6 @@
 mod gif_session;
 mod jni_bridge;
+mod pixel_ops;
 mod static_decoders;
 
 pub(crate) const FORMAT_PNG: i32 = 1;
@@ -63,23 +64,15 @@ pub(crate) fn compute_target_dimensions(
     max_dim: u32,
     max_pixels: u64,
 ) -> Result<(u32, u32), MediaError> {
-    validate_source_dimensions(src_w, src_h)?;
-    let cap_w = if req_w > 0 { req_w.min(max_dim) } else { max_dim };
-    let cap_h = if req_h > 0 { req_h.min(max_dim) } else { max_dim };
-
-    let scale = (cap_w as f64 / src_w as f64)
-        .min(cap_h as f64 / src_h as f64)
-        .min(1.0);
-    let mut out_w = ((src_w as f64 * scale).round() as u32).max(1);
-    let mut out_h = ((src_h as f64 * scale).round() as u32).max(1);
-
-    let px = u64::from(out_w) * u64::from(out_h);
-    if px > max_pixels {
-        let p_scale = (max_pixels as f64 / px as f64).sqrt();
-        out_w = ((out_w as f64 * p_scale) as u32).max(1);
-        out_h = ((out_h as f64 * p_scale) as u32).max(1);
-    }
-    Ok((out_w, out_h))
+    pixel_ops::compute_target_dimensions_ex(
+        src_w,
+        src_h,
+        req_w,
+        req_h,
+        pixel_ops::SCALE_MODE_FIT_INSIDE,
+        max_dim,
+        max_pixels,
+    )
 }
 
 pub(crate) fn premultiply_rgba_in_place(rgba: &mut [u8]) {
@@ -108,65 +101,7 @@ pub(crate) fn downscale_rgba_bilinear(
     dst_w: u32,
     dst_h: u32,
 ) -> Result<Vec<u8>, MediaError> {
-    let expected_src = (src_w as usize)
-        .checked_mul(src_h as usize)
-        .and_then(|n| n.checked_mul(4))
-        .ok_or(MediaError::TooLarge)?;
-    if src.len() < expected_src || dst_w == 0 || dst_h == 0 {
-        return Err(MediaError::InvalidInput);
-    }
-    if src_w == dst_w && src_h == dst_h {
-        let mut copy = try_alloc_zeroed(expected_src)?;
-        copy.copy_from_slice(&src[..expected_src]);
-        return Ok(copy);
-    }
-
-    let out_len = (dst_w as usize)
-        .checked_mul(dst_h as usize)
-        .and_then(|n| n.checked_mul(4))
-        .ok_or(MediaError::TooLarge)?;
-    let mut dst = try_alloc_zeroed(out_len)?;
-
-    let sw = src_w as usize;
-    let sh = src_h as usize;
-    let dw = dst_w as usize;
-    let dh = dst_h as usize;
-
-    for dy in 0..dh {
-        let sy_f = ((dy as f32 + 0.5) * (sh as f32 / dh as f32)) - 0.5;
-        let y0 = (sy_f.floor().max(0.0) as usize).min(sh - 1);
-        let y1 = (y0 + 1).min(sh - 1);
-        let wy1 = (sy_f - y0 as f32).clamp(0.0, 1.0);
-        let wy0 = 1.0 - wy1;
-
-        for dx in 0..dw {
-            let sx_f = ((dx as f32 + 0.5) * (sw as f32 / dw as f32)) - 0.5;
-            let x0 = (sx_f.floor().max(0.0) as usize).min(sw - 1);
-            let x1 = (x0 + 1).min(sw - 1);
-            let wx1 = (sx_f - x0 as f32).clamp(0.0, 1.0);
-            let wx0 = 1.0 - wx1;
-
-            let i00 = (y0 * sw + x0) * 4;
-            let i10 = (y0 * sw + x1) * 4;
-            let i01 = (y1 * sw + x0) * 4;
-            let i11 = (y1 * sw + x1) * 4;
-            let di = (dy * dw + dx) * 4;
-
-            let w00 = wx0 * wy0;
-            let w10 = wx1 * wy0;
-            let w01 = wx0 * wy1;
-            let w11 = wx1 * wy1;
-
-            for c in 0..4 {
-                let v = src[i00 + c] as f32 * w00
-                    + src[i10 + c] as f32 * w10
-                    + src[i01 + c] as f32 * w01
-                    + src[i11 + c] as f32 * w11;
-                dst[di + c] = v.round().clamp(0.0, 255.0) as u8;
-            }
-        }
-    }
-    Ok(dst)
+    pixel_ops::downscale_rgba_fast(src, src_w, src_h, dst_w, dst_h)
 }
 
 #[cfg(test)]
@@ -227,6 +162,84 @@ mod tests {
         let dst = downscale_rgba_bilinear(&src, 4, 4, 2, 2).unwrap();
         assert_eq!(dst.len(), 2 * 2 * 4);
         assert!(dst.iter().all(|&b| b == 255));
+    }
+
+    #[test]
+    fn fill_min_side_keeps_portrait_thumbnail_sharp() {
+        let scaled = pixel_ops::compute_target_dimensions_ex(
+            1080,
+            2400,
+            360,
+            360,
+            pixel_ops::SCALE_MODE_FILL_MIN_SIDE,
+            MAX_OUTPUT_DIMENSION,
+            MAX_OUTPUT_PIXELS,
+        )
+        .unwrap();
+        assert_eq!(scaled, (360, 800));
+    }
+
+    #[test]
+    fn exif_orientation_transforms_pixels_and_dimensions() {
+        let px = vec![
+            1, 0, 0, 255, // (0,0)
+            2, 0, 0, 255, // (1,0)
+            3, 0, 0, 255, // (0,1)
+            4, 0, 0, 255, // (1,1)
+            5, 0, 0, 255, // (0,2)
+            6, 0, 0, 255, // (1,2)
+        ];
+        let (rot90, rw, rh) =
+            pixel_ops::apply_exif_orientation_rgba(px.clone(), 2, 3, pixel_ops::EXIF_ROTATE_90)
+                .unwrap();
+        assert_eq!((rw, rh), (3, 2));
+        // Row 0: (0,2)=5, (0,1)=3, (0,0)=1
+        assert_eq!(rot90[0], 5);
+        assert_eq!(rot90[4], 3);
+        assert_eq!(rot90[8], 1);
+
+        let (rot180, w180, h180) =
+            pixel_ops::apply_exif_orientation_rgba(px.clone(), 2, 3, pixel_ops::EXIF_ROTATE_180)
+                .unwrap();
+        assert_eq!((w180, h180), (2, 3));
+        assert_eq!(rot180[0], 6);
+
+        let (flipped, fw, fh) =
+            pixel_ops::apply_exif_orientation_rgba(px, 2, 3, pixel_ops::EXIF_FLIP_H).unwrap();
+        assert_eq!((fw, fh), (2, 3));
+        assert_eq!(flipped[0], 2);
+        assert_eq!(flipped[4], 1);
+    }
+
+    #[test]
+    fn fast_box_downscale_reduces_16x16_to_4x4() {
+        let src = vec![180u8; 16 * 16 * 4];
+        let dst = pixel_ops::downscale_rgba_fast(&src, 16, 16, 4, 4).unwrap();
+        assert_eq!(dst.len(), 4 * 4 * 4);
+        assert!(dst.iter().all(|&b| b == 180));
+    }
+
+    #[test]
+    fn decode_static_ex_and_gif_render_into_work() {
+        let png_bytes = make_test_png_2x1();
+        let ex = static_decoders::decode_static_ex(
+            FORMAT_PNG,
+            &png_bytes,
+            0,
+            0,
+            pixel_ops::EXIF_ROTATE_90,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((ex.width, ex.height), (1, 2));
+        assert_eq!((ex.src_width, ex.src_height), (2, 1));
+
+        let open = gif_session::open_session(SAMPLE_GIF_1X1.to_vec(), 0, 0).unwrap();
+        let mut buf = vec![0u8; 4];
+        let delay = gif_session::render_frame_into(open.handle, 0, &mut buf).unwrap();
+        assert_eq!(delay, 50);
+        assert_eq!(buf, vec![255, 0, 0, 255]);
+        gif_session::close_session(open.handle);
     }
 
     #[test]
