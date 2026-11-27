@@ -52,12 +52,6 @@ updates:
       # Requires compileSdk 37 (project is on compileSdk 36)
       - dependency-name: "com.github.bumptech.glide:*"
         versions: [">= 5.0.8"]
-      # Requires compileSdk >= 36.1 (project is on compileSdk 36)
-      - dependency-name: "androidx.biometric:biometric"
-        versions: [">= 1.3.0"]
-      # Requires core library desugaring enabled in :app
-      - dependency-name: "com.github.zjupure:webpdecoder"
-        versions: [">= 2.8.0"]
     groups:
       # Security-sensitive libraries (Tink, BouncyCastle, Biometric) are excluded from
       # groups below so each arrives in its own separate PR for careful review.
@@ -84,6 +78,18 @@ updates:
   # Native Argon2 (Rust) dependencies: argon2, jni, zeroize
   - package-ecosystem: "cargo"
     directory: "/rust/calypso-argon2"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  # Pure-Rust isolated media decoders: gif, png, image-webp, jxl-oxide, jni-sys
+  - package-ecosystem: "cargo"
+    directory: "/rust/calypso-media"
     schedule:
       interval: "weekly"
       day: "friday"
