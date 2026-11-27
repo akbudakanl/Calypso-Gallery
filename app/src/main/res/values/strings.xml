@@ -711,18 +711,6 @@
     <string name="license_rust_gif_url" translatable="false">https://github.com/image-rs/image-gif</string>
     <string name="license_rust_gif_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
 
-    <string name="license_rust_image_webp_title" translatable="false">image-webp</string>
-    <string name="license_rust_image_webp_url" translatable="false">https://github.com/image-rs/image-webp</string>
-    <string name="license_rust_image_webp_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
-
-    <string name="license_rust_png_title" translatable="false">png</string>
-    <string name="license_rust_png_url" translatable="false">https://github.com/image-rs/image-png</string>
-    <string name="license_rust_png_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
-
-    <string name="license_rust_zune_jpeg_title" translatable="false">zune-jpeg</string>
-    <string name="license_rust_zune_jpeg_url" translatable="false">https://github.com/etemesi254/zune-image</string>
-    <string name="license_rust_zune_jpeg_text" translatable="false">Licensed under the MIT License, Apache License, Version 2.0, or Zlib License, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://zlib.net/zlib_license.html</string>
-
     <string name="license_rust_jxl_oxide_title" translatable="false">jxl-oxide</string>
     <string name="license_rust_jxl_oxide_url" translatable="false">https://github.com/tirr-c/jxl-oxide</string>
     <string name="license_rust_jxl_oxide_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>

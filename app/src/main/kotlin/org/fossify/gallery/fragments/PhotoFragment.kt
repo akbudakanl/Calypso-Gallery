@@ -295,7 +295,7 @@ class PhotoFragment : ViewPagerFragment() {
                 val existingGif = mIsolatedGifDrawable
                 if (existingGif == null) {
                     loadGif()
-                } else if (mIsFragmentVisible) {
+                } else {
                     existingGif.start()
                 }
             } else if (mIsSubsamplingVisible && mShouldResetImage) {
@@ -372,8 +372,6 @@ class PhotoFragment : ViewPagerFragment() {
             if (mMedium.isGIF()) {
                 if (menuVisible) {
                     mIsolatedGifDrawable?.start()
-                } else {
-                    mIsolatedGifDrawable?.stop()
                 }
             } else {
                 photoFragmentVisibilityChanged(menuVisible)
@@ -490,7 +488,7 @@ class PhotoFragment : ViewPagerFragment() {
                 binding.gesturesView.beVisible()
                 binding.gesturesView.setImageDrawable(drawable)
                 applyProperColorMode(drawable)
-                if (mIsFragmentVisible && isResumed) {
+                if (isResumed) {
                     drawable.start()
                 }
             }

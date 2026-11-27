@@ -3,9 +3,6 @@ mod jni_bridge;
 mod pixel_ops;
 mod static_decoders;
 
-pub(crate) const FORMAT_PNG: i32 = 1;
-pub(crate) const FORMAT_JPEG: i32 = 2;
-pub(crate) const FORMAT_WEBP: i32 = 3;
 pub(crate) const FORMAT_GIF: i32 = 4;
 pub(crate) const FORMAT_JXL: i32 = 5;
 
@@ -94,16 +91,6 @@ pub(crate) fn premultiply_rgba_in_place(rgba: &mut [u8]) {
     }
 }
 
-pub(crate) fn downscale_rgba_bilinear(
-    src: &[u8],
-    src_w: u32,
-    src_h: u32,
-    dst_w: u32,
-    dst_h: u32,
-) -> Result<Vec<u8>, MediaError> {
-    pixel_ops::downscale_rgba_fast(src, src_w, src_h, dst_w, dst_h)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,28 +100,6 @@ mod tests {
         0x00, 0x00, 0x00, 0x00, 0x21, 0xF9, 0x04, 0x00, 0x05, 0x00, 0x00, 0x00, 0x2C, 0x00, 0x00,
         0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3B,
     ];
-
-    fn make_test_png_2x1() -> Vec<u8> {
-        let mut out = Vec::new();
-        {
-            let mut encoder = png::Encoder::new(&mut out, 2, 1);
-            encoder.set_color(png::ColorType::Rgba);
-            encoder.set_depth(png::BitDepth::Eight);
-            let mut writer = encoder.write_header().unwrap();
-            writer
-                .write_image_data(&[255, 0, 0, 255, 0, 200, 100, 128])
-                .unwrap();
-        }
-        out
-    }
-
-    fn make_test_webp_1x1() -> Vec<u8> {
-        let mut out = Vec::new();
-        image_webp::WebPEncoder::new(&mut out)
-            .encode(&[10, 20, 30, 255], 1, 1, image_webp::ColorType::Rgba8)
-            .unwrap();
-        out
-    }
 
     #[test]
     fn dimension_validation_enforces_decompression_bomb_caps() {
@@ -159,7 +124,7 @@ mod tests {
     #[test]
     fn downscale_reduces_4x4_to_2x2() {
         let src = vec![255u8; 4 * 4 * 4];
-        let dst = downscale_rgba_bilinear(&src, 4, 4, 2, 2).unwrap();
+        let dst = pixel_ops::downscale_rgba_fast(&src, 4, 4, 2, 2).unwrap();
         assert_eq!(dst.len(), 2 * 2 * 4);
         assert!(dst.iter().all(|&b| b == 255));
     }
@@ -220,59 +185,34 @@ mod tests {
     }
 
     #[test]
-    fn decode_static_ex_and_gif_render_into_work() {
-        let png_bytes = make_test_png_2x1();
-        let ex = static_decoders::decode_static_ex(
-            FORMAT_PNG,
-            &png_bytes,
-            0,
-            0,
-            pixel_ops::EXIF_ROTATE_90,
-            pixel_ops::SCALE_MODE_FIT_INSIDE,
-        )
-        .unwrap();
-        assert_eq!((ex.width, ex.height), (1, 2));
-        assert_eq!((ex.src_width, ex.src_height), (2, 1));
-
-        let open = gif_session::open_session(SAMPLE_GIF_1X1.to_vec(), 0, 0).unwrap();
-        let mut buf = vec![0u8; 4];
-        let delay = gif_session::render_frame_into(open.handle, 0, &mut buf).unwrap();
-        assert_eq!(delay, 50);
-        assert_eq!(buf, vec![255, 0, 0, 255]);
-        gif_session::close_session(open.handle);
-    }
-
-    #[test]
-    fn png_webp_and_gif_round_trip_decodes() {
-        let png_bytes = make_test_png_2x1();
-        assert_eq!(
-            static_decoders::probe_bounds(FORMAT_PNG, &png_bytes).unwrap(),
-            (2, 1)
-        );
-        let decoded_png =
-            static_decoders::decode_static(FORMAT_PNG, &png_bytes, 0, 0).unwrap();
-        assert_eq!((decoded_png.width, decoded_png.height), (2, 1));
-        assert_eq!(decoded_png.rgba, vec![255, 0, 0, 255, 0, 100, 50, 128]);
-
-        let webp_bytes = make_test_webp_1x1();
-        assert_eq!(
-            static_decoders::probe_bounds(FORMAT_WEBP, &webp_bytes).unwrap(),
-            (1, 1)
-        );
-        let decoded_webp =
-            static_decoders::decode_static(FORMAT_WEBP, &webp_bytes, 0, 0).unwrap();
-        assert_eq!((decoded_webp.width, decoded_webp.height), (1, 1));
-        assert_eq!(decoded_webp.rgba, vec![10, 20, 30, 255]);
-
+    fn decode_static_ex_and_gif_session_round_trip_work() {
         assert_eq!(
             static_decoders::probe_bounds(FORMAT_GIF, SAMPLE_GIF_1X1).unwrap(),
             (1, 1)
         );
+        let first_frame = static_decoders::decode_static_ex(
+            FORMAT_GIF,
+            SAMPLE_GIF_1X1,
+            0,
+            0,
+            pixel_ops::EXIF_NORMAL,
+            pixel_ops::SCALE_MODE_FIT_INSIDE,
+        )
+        .unwrap();
+        assert_eq!((first_frame.width, first_frame.height), (1, 1));
+        assert_eq!((first_frame.src_width, first_frame.src_height), (1, 1));
+        assert_eq!(first_frame.rgba, vec![255, 0, 0, 255]);
+
         let open = gif_session::open_session(SAMPLE_GIF_1X1.to_vec(), 0, 0).unwrap();
         assert_eq!((open.width, open.height, open.frame_count), (1, 1, 1));
         let frame = gif_session::render_frame(open.handle, 0).unwrap();
         assert_eq!(frame.duration_ms, 50);
         assert_eq!(frame.rgba, vec![255, 0, 0, 255]);
+
+        let mut buf = vec![0u8; 4];
+        let delay = gif_session::render_frame_into(open.handle, 0, &mut buf).unwrap();
+        assert_eq!(delay, 50);
+        assert_eq!(buf, vec![255, 0, 0, 255]);
         gif_session::close_session(open.handle);
     }
 }

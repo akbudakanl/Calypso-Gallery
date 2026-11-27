@@ -1,7 +1,6 @@
 package org.fossify.gallery
 
 import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
-import org.fossify.gallery.helpers.media.IsolatedJpegHeaderParser
 import org.fossify.gallery.helpers.media.IsolatedMediaFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -96,20 +95,6 @@ class IsolatedFormatSnifferTest {
             fillMinSide = true,
         )
         assertEquals(480 to 360, fillLandscape)
-    }
-
-    @Test
-    fun probesMinimalJpegSofDimensions() {
-        val sof0Jpeg = byteArrayOf(
-            0xFF.toByte(), 0xD8.toByte(),
-            0xFF.toByte(), 0xC0.toByte(), 0x00, 0x0B, 0x08,
-            0x01, 0x40, // height = 320
-            0x02, 0x80.toByte(), // width = 640
-            0x03, 0x01, 0x11, 0x00,
-            0xFF.toByte(), 0xD9.toByte(),
-        )
-        assertEquals(640 to 320, IsolatedJpegHeaderParser.probeDimensions(sof0Jpeg))
-        assertNull(IsolatedJpegHeaderParser.probeDimensions(byteArrayOf(0x00, 0x01)))
     }
 
     @Test

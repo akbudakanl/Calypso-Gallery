@@ -57,6 +57,9 @@ class IsolatedMediaDecodingPolicyTest {
             "license_jxl_coder_title",
             "gif_drawable_title",
             "filters_title",
+            "license_rust_image_webp_title",
+            "license_rust_png_title",
+            "license_rust_zune_jpeg_title",
         )) {
             assertFalse(
                 "ThirdPartyLicensesActivity must not list removed entry $forbidden",
@@ -65,9 +68,6 @@ class IsolatedMediaDecodingPolicyTest {
         }
         for (required in listOf(
             "license_rust_gif_title",
-            "license_rust_image_webp_title",
-            "license_rust_png_title",
-            "license_rust_zune_jpeg_title",
             "license_rust_jxl_oxide_title",
             "license_rust_jni_sys_title",
         )) {
@@ -250,11 +250,19 @@ class IsolatedMediaDecodingPolicyTest {
         val cargoToml = locateRepoFile("rust/calypso-media/Cargo.toml").readText()
         val cargoLock = locateRepoFile("rust/calypso-media/Cargo.lock").readText()
 
-        for (requiredCrate in listOf("gif", "image-webp", "png", "zune-jpeg", "jxl-oxide")) {
+        for (requiredCrate in listOf("gif", "jxl-oxide", "jni-sys")) {
             assertTrue("Cargo.toml must depend on $requiredCrate", cargoToml.contains(requiredCrate))
             assertTrue("Cargo.lock must lock $requiredCrate", cargoLock.contains("name = \"$requiredCrate\""))
         }
-        for (forbiddenSys in listOf("lcms2", "libjxl", "libwebp", "giflib", "windows-sys")) {
+        for (forbiddenSys in listOf(
+            "lcms2",
+            "libjxl",
+            "libwebp",
+            "giflib",
+            "windows-sys",
+            "zune-jpeg",
+            "image-webp",
+        )) {
             assertFalse("Cargo.lock must not include $forbiddenSys", cargoLock.contains(forbiddenSys))
         }
 
@@ -285,8 +293,8 @@ class IsolatedMediaDecodingPolicyTest {
             "app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedPlatformCodecs.kt",
         ).readText()
         assertTrue(
-            "IsolatedPlatformCodecs must prefer pure-Rust JPEG for embedded RAW previews",
-            platformCodecsText.contains("NativeMediaDecoder.decodeStatic(IsolatedMediaFormat.JPEG"),
+            "IsolatedPlatformCodecs must decode embedded RAW previews via decodePlatform inside :media_decoder",
+            platformCodecsText.contains("decodePlatform(embedded"),
         )
     }
 }

@@ -6,12 +6,12 @@ use std::sync::{Arc, Mutex, OnceLock};
 use gif::{ColorOutput, DecodeOptions, Decoder as GifStreamDecoder, DisposalMethod, MemoryLimit};
 
 use crate::{
-    compute_target_dimensions, pixel_ops, premultiply_rgba_in_place, static_decoders::DecodedStaticMeta,
-    try_alloc_zeroed, validate_source_dimensions, DecodedRgba, MediaError, MAX_GIF_DIMENSION,
-    MAX_GIF_FRAMES, MAX_GIF_PIXELS, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
+    compute_target_dimensions, pixel_ops, premultiply_rgba_in_place,
+    static_decoders::DecodedStaticMeta, try_alloc_zeroed, validate_source_dimensions, MediaError,
+    MAX_GIF_DIMENSION, MAX_GIF_FRAMES, MAX_GIF_PIXELS, MAX_OUTPUT_DIMENSION, MAX_OUTPUT_PIXELS,
 };
 
-const MAX_GIF_SESSIONS: usize = 3;
+const MAX_GIF_SESSIONS: usize = 4;
 const GIF_DECODE_MEMORY_LIMIT: usize = 64 * 1024 * 1024;
 const DEFAULT_FRAME_DELAY_MS: u32 = 100;
 const MIN_FRAME_DELAY_MS: u32 = 20;
@@ -96,26 +96,6 @@ pub(crate) fn probe_gif_bounds(data: &[u8]) -> Result<(u32, u32), MediaError> {
     let (w, h) = (u32::from(dec.width()), u32::from(dec.height()));
     validate_source_dimensions(w, h)?;
     Ok((w, h))
-}
-
-#[cfg_attr(not(test), allow(dead_code))]
-pub(crate) fn decode_gif_first_frame(
-    data: &[u8],
-    req_w: u32,
-    req_h: u32,
-) -> Result<DecodedRgba, MediaError> {
-    let decoded = decode_gif_first_frame_ex(
-        data,
-        req_w,
-        req_h,
-        pixel_ops::EXIF_NORMAL,
-        pixel_ops::SCALE_MODE_FIT_INSIDE,
-    )?;
-    Ok(DecodedRgba {
-        width: decoded.width,
-        height: decoded.height,
-        rgba: decoded.rgba,
-    })
 }
 
 pub(crate) fn decode_gif_first_frame_ex(

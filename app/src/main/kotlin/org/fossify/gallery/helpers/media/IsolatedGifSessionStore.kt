@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicLong
  * pixel slots so multi-frame GIF playback stays inside `isolatedProcess="true"` without `giflib`.
  */
 internal object IsolatedGifSessionStore {
-    private const val MAX_GIF_SESSIONS = 3
+    private const val MAX_GIF_SESSIONS = 4
     private const val BYTES_PER_PIXEL = 4
     private const val MAP_LOAD_FACTOR = 0.75f
 

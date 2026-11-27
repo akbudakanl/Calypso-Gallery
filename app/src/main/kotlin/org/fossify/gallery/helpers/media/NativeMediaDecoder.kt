@@ -24,12 +24,9 @@ internal class RustDecodedRgba(
 )
 
 /**
- * Pure-Rust isolated-process media decoder bridge (`png`, `zune-jpeg`, `image-webp`, `gif`, `jxl-oxide`).
+ * Pure-Rust isolated-process media decoder bridge (`gif`, `jxl-oxide`).
  */
 internal object NativeMediaDecoder {
-    private const val FORMAT_PNG = 1
-    private const val FORMAT_JPEG = 2
-    private const val FORMAT_WEBP = 3
     private const val FORMAT_GIF = 4
     private const val FORMAT_JXL = 5
 
@@ -168,9 +165,6 @@ internal object NativeMediaDecoder {
     }
 
     private fun toFormatCode(format: IsolatedMediaFormat): Int? = when (format) {
-        IsolatedMediaFormat.PNG -> FORMAT_PNG
-        IsolatedMediaFormat.JPEG -> FORMAT_JPEG
-        IsolatedMediaFormat.WEBP -> FORMAT_WEBP
         IsolatedMediaFormat.GIF -> FORMAT_GIF
         IsolatedMediaFormat.JXL -> FORMAT_JXL
         else -> null
