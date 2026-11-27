@@ -699,10 +699,7 @@
     <string name="gpl_license_title">GNU Genel Kamu Lisansı v3</string>
     <string name="license_tink_title">Google Tink (akışlı AEAD ve HKDF kriptografisi)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (yerel Argon2id anahtar türetme)</string>
-    <string name="license_webpdecoder_title">GlideWebpDecoder (hareketli WebP çözümleme)</string>
-    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL desteği)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG görüntüleme)</string>
-    <string name="license_exif_extended_title">Android-Exif-Extended (EXIF meta veri işleme)</string>
     <string name="license_material_icons_title">Material Design Icons (arayüz ikonları)</string>
     <!-- fossify-commons UI overrides missing from the library's Turkish resources -->
     <string name="search_in_placeholder">%s içinde ara</string>

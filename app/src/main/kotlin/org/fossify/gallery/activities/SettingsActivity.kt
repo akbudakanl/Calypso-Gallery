@@ -342,7 +342,6 @@ class SettingsActivity : SimpleActivity() {
             setupMaxBrightness()
             setupUltraHdrRendering()
             setupCropThumbnails()
-            setupAnimateGifs()
             setupDarkBackground()
             setupScrollHorizontally()
             setupScreenRotation()
@@ -654,14 +653,6 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsCropThumbnailsHolder.setOnClickListener {
             binding.settingsCropThumbnails.toggle()
             config.cropThumbnails = binding.settingsCropThumbnails.isChecked
-        }
-    }
-
-    private fun setupAnimateGifs() {
-        binding.settingsAnimateGifs.isChecked = config.animateGifs
-        binding.settingsAnimateGifsHolder.setOnClickListener {
-            binding.settingsAnimateGifs.toggle()
-            config.animateGifs = binding.settingsAnimateGifs.isChecked
         }
     }
 

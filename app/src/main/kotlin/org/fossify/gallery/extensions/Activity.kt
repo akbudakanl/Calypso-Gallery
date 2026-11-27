@@ -6,7 +6,6 @@ import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.drawable.Drawable
@@ -48,7 +47,6 @@ import org.fossify.commons.extensions.getFilenameExtension
 import org.fossify.commons.extensions.getFilenameFromContentUri
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getFinalUriFromPath
-import org.fossify.commons.extensions.getImageResolution
 import org.fossify.commons.extensions.getMimeType
 import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.extensions.getProperTextColor
@@ -58,6 +56,7 @@ import org.fossify.commons.extensions.hideBars
 import org.fossify.commons.extensions.hideKeyboard
 import org.fossify.commons.extensions.internalStoragePath
 import org.fossify.commons.extensions.isAccessibleWithSAFSdk30
+import org.fossify.commons.extensions.isPathOnOTG
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isJpg
 import org.fossify.commons.extensions.isRestrictedSAFOnlyRoot
@@ -89,6 +88,10 @@ import org.fossify.commons.helpers.isSPlus
 import org.fossify.commons.models.FileDirItem
 import org.fossify.commons.views.MyTextView
 import org.fossify.gallery.BuildConfig
+import org.fossify.gallery.helpers.media.IsolatedDecodeRequest
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
+import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
+import org.fossify.gallery.helpers.media.probeIsolatedImageResolution
 import org.fossify.gallery.R
 import org.fossify.gallery.activities.AboutActivity
 import org.fossify.gallery.activities.SettingsActivity
@@ -522,8 +525,29 @@ fun BaseSimpleActivity.saveRotatedImageToFile(oldPath: String, newPath: String, 
                 copyFile(oldPath, tmpPath)
                 saveExifRotation(ExifInterface(tmpPath), newDegrees)
             } else {
-                val inputstream = getFileInputStreamSync(oldPath)
-                val bitmap = BitmapFactory.decodeStream(inputstream)
+                val bitmap = if (oldPath.startsWith("content://") || isPathOnOTG(oldPath)) {
+                    IsolatedDecoderClient.decodeUri(
+                        context = this,
+                        uri = oldPath.toUri(),
+                        maxWidth = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                        maxHeight = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                        flags = IsolatedDecodeRequest.FLAG_NONE,
+                    )
+                } else {
+                    IsolatedDecoderClient.decodeFile(
+                        context = this,
+                        file = File(oldPath),
+                        maxWidth = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                        maxHeight = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                        flags = IsolatedDecodeRequest.FLAG_NONE,
+                    )
+                }
+                if (bitmap == null) {
+                    if (showToasts) {
+                        toast(org.fossify.commons.R.string.unknown_error_occurred)
+                    }
+                    return@getFileOutputStream
+                }
                 saveFile(tmpPath, bitmap, it as FileOutputStream, newDegrees)
             }
 
@@ -644,7 +668,7 @@ fun BaseSimpleActivity.launchResizeMultipleImagesDialog(paths: List<String>, cal
         val imagePaths = mutableListOf<String>()
         val imageSizes = mutableListOf<Point>()
         for (path in paths) {
-            val size = path.getImageResolution(this)
+            val size = probeIsolatedImageResolution(path)
             if (size != null) {
                 imagePaths.add(path)
                 imageSizes.add(size)
@@ -660,30 +684,35 @@ fun BaseSimpleActivity.launchResizeMultipleImagesDialog(paths: List<String>, cal
 }
 
 fun BaseSimpleActivity.launchResizeImageDialog(path: String, callback: (() -> Unit)? = null) {
-    val originalSize = path.getImageResolution(this) ?: return
-    ResizeWithPathDialog(this, originalSize, path) { newSize, newPath ->
-        ensureBackgroundThread {
-            val file = File(newPath)
-            val pathLastModifiedMap = mapOf(file.absolutePath to file.lastModified())
-            try {
-                resizeImage(path, newPath, newSize) { success ->
-                    if (success) {
-                        toast(org.fossify.commons.R.string.file_saved)
+    ensureBackgroundThread {
+        val originalSize = probeIsolatedImageResolution(path) ?: return@ensureBackgroundThread
+        runOnUiThread {
+            if (isFinishing || isDestroyed) return@runOnUiThread
+            ResizeWithPathDialog(this, originalSize, path) { newSize, newPath ->
+                ensureBackgroundThread {
+                    val file = File(newPath)
+                    val pathLastModifiedMap = mapOf(file.absolutePath to file.lastModified())
+                    try {
+                        resizeImage(path, newPath, newSize) { success ->
+                            if (success) {
+                                toast(org.fossify.commons.R.string.file_saved)
 
-                        val paths = arrayListOf(file.absolutePath)
-                        rescanPathsAndUpdateLastModified(paths, pathLastModifiedMap) {
-                            runOnUiThread {
-                                callback?.invoke()
+                                val paths = arrayListOf(file.absolutePath)
+                                rescanPathsAndUpdateLastModified(paths, pathLastModifiedMap) {
+                                    runOnUiThread {
+                                        callback?.invoke()
+                                    }
+                                }
+                            } else {
+                                toast(R.string.image_editing_failed)
                             }
                         }
-                    } else {
-                        toast(R.string.image_editing_failed)
+                    } catch (e: OutOfMemoryError) {
+                        toast(org.fossify.commons.R.string.out_of_memory_error)
+                    } catch (e: Exception) {
+                        showErrorToast(e)
                     }
                 }
-            } catch (e: OutOfMemoryError) {
-                toast(org.fossify.commons.R.string.out_of_memory_error)
-            } catch (e: Exception) {
-                showErrorToast(e)
             }
         }
     }

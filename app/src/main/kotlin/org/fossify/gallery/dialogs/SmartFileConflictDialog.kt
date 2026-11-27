@@ -5,10 +5,8 @@ import org.fossify.gallery.extensions.secureVaultWindow
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -16,8 +14,6 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import com.bumptech.glide.Glide
-import com.bumptech.glide.integration.webp.WebpBitmapFactory
-import com.bumptech.glide.integration.webp.decoder.WebpDownsampler
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.DecodeFormat
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -46,10 +42,10 @@ import org.fossify.gallery.databinding.DialogSmartFileConflictBinding
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.EncryptedGlideOptions
 import org.fossify.gallery.helpers.TYPE_VIDEOS
-import org.fossify.gallery.svg.SvgSoftwareLayerSetter
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import org.fossify.gallery.helpers.compareFilesForSmartConflict
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
 import org.fossify.gallery.helpers.verifyFileIntegrity
 
 data class SmartConflictItem(
@@ -230,9 +226,9 @@ class SmartFileConflictDialog(
         val isVideo = if (meta != null) meta.mediaType == TYPE_VIDEOS else effectiveName.isVideoFast()
 
         val dimensions = if (!isEncrypted && !isVideo && !effectiveName.isSvg() && file.isFile) {
-            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            runCatching { BitmapFactory.decodeFile(file.absolutePath, opts) }
-            if (opts.outWidth > 0 && opts.outHeight > 0) "${opts.outWidth}×${opts.outHeight}" else null
+            IsolatedDecoderClient.probeFileBounds(activity, file)?.let { bounds ->
+                "${bounds.width}×${bounds.height}"
+            }
         } else {
             null
         }
@@ -361,74 +357,37 @@ class SmartFileConflictDialog(
             options.set(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT, true)
         }
 
-        WebpBitmapFactory.sUseSystemDecoder = false
-        if (effectiveName.isSvg()) {
-            Glide.with(activity.applicationContext)
-                .`as`(PictureDrawable::class.java)
-                .listener(SvgSoftwareLayerSetter())
-                .load(path)
-                .apply(options)
-                .listener(object : RequestListener<PictureDrawable> {
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<PictureDrawable>,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
-                        progressBar.visibility = View.GONE
-                        errorOverlay.visibility = View.VISIBLE
-                        return true
-                    }
+        Glide.with(activity.applicationContext)
+            .asBitmap()
+            .load(path)
+            .apply(options)
+            .listener(object : RequestListener<Bitmap> {
+                override fun onLoadFailed(
+                    e: GlideException?,
+                    model: Any?,
+                    target: Target<Bitmap>,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
+                    progressBar.visibility = View.GONE
+                    errorOverlay.visibility = View.VISIBLE
+                    return true
+                }
 
-                    override fun onResourceReady(
-                        resource: PictureDrawable,
-                        model: Any,
-                        target: Target<PictureDrawable>,
-                        dataSource: DataSource,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
-                        progressBar.visibility = View.GONE
-                        errorOverlay.visibility = View.GONE
-                        return false
-                    }
-                })
-                .into(imageView)
-        } else {
-            Glide.with(activity.applicationContext)
-                .asBitmap()
-                .load(path)
-                .apply(options)
-                .set(WebpDownsampler.USE_SYSTEM_DECODER, false)
-                .listener(object : RequestListener<Bitmap> {
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<Bitmap>,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
-                        progressBar.visibility = View.GONE
-                        errorOverlay.visibility = View.VISIBLE
-                        return true
-                    }
-
-                    override fun onResourceReady(
-                        resource: Bitmap,
-                        model: Any,
-                        target: Target<Bitmap>,
-                        dataSource: DataSource,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
-                        progressBar.visibility = View.GONE
-                        errorOverlay.visibility = View.GONE
-                        return false
-                    }
-                })
-                .into(imageView)
-        }
+                override fun onResourceReady(
+                    resource: Bitmap,
+                    model: Any,
+                    target: Target<Bitmap>,
+                    dataSource: DataSource,
+                    isFirstResource: Boolean
+                ): Boolean {
+                    if (dismissed.get() || activity.isFinishing || activity.isDestroyed) return true
+                    progressBar.visibility = View.GONE
+                    errorOverlay.visibility = View.GONE
+                    return false
+                }
+            })
+            .into(imageView)
     }
 
     private fun showFullPreview(path: String, title: String) {

@@ -91,8 +91,9 @@ class SetWallpaperActivity : BaseCropActivity() {
         }
 
         wallpaperManager = WallpaperManager.getInstance(applicationContext)
-        binding.cropImageView.apply {
-            setImageUriAsync(uri)
+        loadIsolatedImageIntoCropView(uri) {
+            toast(R.string.image_editing_failed)
+            finish()
         }
 
         setupAspectRatio()

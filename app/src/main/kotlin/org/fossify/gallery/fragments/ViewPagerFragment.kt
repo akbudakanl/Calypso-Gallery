@@ -14,9 +14,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import org.fossify.commons.extensions.*
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.*
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
 import org.fossify.gallery.models.Medium
 import java.io.File
-import com.awxkee.jxlcoder.JxlCoder
 
 abstract class ViewPagerFragment : Fragment() {
     var listener: FragmentListener? = null
@@ -155,16 +155,11 @@ abstract class ViewPagerFragment : Fragment() {
     }
 
     private fun getResolution(medium: Medium, file: File): String? {
-        if (medium.name.endsWith(".jxl",ignoreCase = true)) {
-            val resolution = try {
-                JxlCoder.getSize(file.readBytes())
-            } catch (ignored: OutOfMemoryError) {
-                null
-            }
-            return resolution?.let { Point(it.width,it.height).formatAsResolution() }
-        } else {
+        if (medium.isVideo()) {
             return context?.getResolution(file.absolutePath)?.formatAsResolution()
         }
+        val bounds = IsolatedDecoderClient.probeFileBounds(context, file, medium.name)
+        return bounds?.let { Point(it.width, it.height).formatAsResolution() }
     }
 
     private fun getFileLastModified(file: File): String {

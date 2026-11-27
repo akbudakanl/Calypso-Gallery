@@ -522,10 +522,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(AUTOPLAY_VIDEOS, false)
         set(autoplayVideos) = prefs.edit().putBoolean(AUTOPLAY_VIDEOS, autoplayVideos).apply()
 
-    var animateGifs: Boolean
-        get() = prefs.getBoolean(ANIMATE_GIFS, false)
-        set(animateGifs) = prefs.edit().putBoolean(ANIMATE_GIFS, animateGifs).apply()
-
     var maxBrightness: Boolean
         get() = prefs.getBoolean(MAX_BRIGHTNESS, false)
         set(maxBrightness) = prefs.edit().putBoolean(MAX_BRIGHTNESS, maxBrightness).apply()

@@ -1,5 +1,6 @@
 package org.fossify.gallery
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -28,6 +29,8 @@ import org.fossify.gallery.helpers.RandomOrderManager
 import org.fossify.gallery.helpers.ShareMetadataSanitizer
 import org.fossify.gallery.helpers.SideloadCheck
 import org.fossify.gallery.helpers.VaultSessionManager
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
+import org.fossify.gallery.helpers.media.ProcessIsolation
 import java.io.IOException
 import java.net.Proxy
 import java.net.ProxySelector
@@ -96,8 +99,15 @@ class App : FossifyApp() {
         return SystemClock.elapsedRealtime() - appBackgroundElapsedMs >= config.unlockTimeoutDurationMs
     }
 
+    @SuppressLint("MissingSuperCall")
     override fun onCreate() {
+        if (ProcessIsolation.isIsolatedProcess()) {
+            // Skip FossifyApp.onCreate() (touches SharedPreferences, forbidden in isolatedProcess).
+            installCodeLevelNetworkBlocker()
+            return
+        }
         super.onCreate()
+        IsolatedDecoderClient.init(this)
         // ADR 0003: durable operation journal must be available before any file operation starts.
         OperationJournal.init(this)
         ShareMetadataSanitizer.clearTemp(this)
@@ -175,6 +185,7 @@ class App : FossifyApp() {
                         org.fossify.gallery.fragments.VideoFragment.pruneExpiredFrameCache()
                     }
                     RandomOrderManager.onAppForegrounded()
+                    IsolatedDecoderClient.onAppForegrounded()
                     MediaIndexCoordinator.notifyForegroundOrScreenOn()
                     if (pendingWipeJournalScheduled.compareAndSet(false, true)) {
                         runCatching {
@@ -213,6 +224,7 @@ class App : FossifyApp() {
                         // Immediately wipe RAM keys (unless a foreground operation is running) while keeping
                         // the UI session resumable behind VaultLockActivity for VAULT_AUTO_LOCK_TIMEOUT_MS.
                         VaultSessionManager.onAppBackgrounded(this@App)
+                        IsolatedDecoderClient.onAppBackgrounded(this@App)
                         RandomOrderManager.onAppBackgrounded()
                         syncPrivacyCurtainForTrackedActivities()
                     }

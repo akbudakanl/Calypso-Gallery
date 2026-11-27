@@ -26,13 +26,15 @@ jobs:
       - run: python -m unittest discover -s .github/scripts/tests -v
 
   rust:
-    name: Rust (Argon2) tests
+    name: Rust (Argon2 & Media) tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Cargo test
-        run: cargo test --manifest-path rust/calypso-argon2/Cargo.toml --locked
+        run: |
+          cargo test --manifest-path rust/calypso-argon2/Cargo.toml --locked
+          cargo test --manifest-path rust/calypso-media/Cargo.toml --locked
 
   android:
     name: Android (detekt, unit tests, build)

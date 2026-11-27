@@ -9,7 +9,6 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.PictureDrawable
 import android.media.AudioManager
 import android.net.Uri
 import android.provider.MediaStore.Files
@@ -17,10 +16,6 @@ import android.provider.MediaStore.Images
 import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Priority
-import com.bumptech.glide.integration.webp.WebpBitmapFactory
-import com.bumptech.glide.integration.webp.decoder.WebpDownsampler
-import com.bumptech.glide.integration.webp.decoder.WebpDrawable
-import com.bumptech.glide.integration.webp.decoder.WebpDrawableTransformation
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.DecodeFormat
 import com.bumptech.glide.load.MultiTransformation
@@ -52,7 +47,6 @@ import org.fossify.commons.extensions.isPortrait
 import org.fossify.commons.extensions.isRawFast
 import org.fossify.commons.extensions.isSvg
 import org.fossify.commons.extensions.isVideoFast
-import org.fossify.commons.extensions.isWebP
 import org.fossify.commons.extensions.otgPath
 import org.fossify.commons.extensions.sdCardPath
 import org.fossify.commons.extensions.toast
@@ -109,7 +103,6 @@ import org.fossify.gallery.interfaces.WidgetsDao
 import org.fossify.gallery.models.AlbumCover
 import org.fossify.gallery.models.Directory
 import org.fossify.gallery.models.Medium
-import org.fossify.gallery.svg.SvgSoftwareLayerSetter
 import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -274,7 +267,6 @@ fun Context.loadImage(
     path: String,
     target: MySquareImageView,
     horizontalScroll: Boolean,
-    animateGifs: Boolean,
     cropThumbnails: Boolean,
     roundCorners: Int,
     signature: ObjectKey,
@@ -298,7 +290,6 @@ fun Context.loadImage(
             roundCorners = roundCorners,
             signature = signature,
             skipMemoryCacheAtPaths = skipMemoryCacheAtPaths,
-            animate = animateGifs,
             onError = onError
         )
     }
@@ -345,7 +336,6 @@ fun Context.loadImageBase(
     roundCorners: Int,
     signature: ObjectKey,
     skipMemoryCacheAtPaths: ArrayList<String>? = null,
-    animate: Boolean = false,
     crossFadeDuration: Int = THUMBNAIL_FADE_DURATION_MS,
     onError: (() -> Unit)? = null
 ) {
@@ -356,54 +346,35 @@ fun Context.loadImageBase(
         .priority(Priority.LOW)
         .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.RESOURCE)
         .format(DecodeFormat.PREFER_ARGB_8888)
+        .dontAnimate()
+        // Decode thumbnails statically so animated images never spawn parallel animation decoders in grids.
+        .decode(Bitmap::class.java)
 
     if (cropThumbnails) {
         options.optionalTransform(CenterCrop())
-        options.optionalTransform(
-            WebpDrawable::class.java,
-            WebpDrawableTransformation(CenterCrop())
-        )
     } else {
         options.optionalTransform(FitCenter())
-        options.optionalTransform(WebpDrawable::class.java, WebpDrawableTransformation(FitCenter()))
     }
 
-    val effectiveName = if (isEncrypted) CryptoManager.getDisplayName(path) else path
-    if (animate && (effectiveName.isGif() || effectiveName.isWebP())) {
-        // this is required to make glide cache aware of changes
-        options.decode(Drawable::class.java)
-        if (isEncrypted) {
-            options.set(EncryptedGlideOptions.PREFER_FULL_DECRYPTED_CONTENT, true)
-        }
-    } else {
-        options.dontAnimate()
-        // don't animate is not enough for webp files, decode as bitmap forces first frame use in animated webps
-        options.decode(Bitmap::class.java)
-        if (isEncrypted) {
-            options.set(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL, true)
-        }
+    if (isEncrypted) {
+        options.set(EncryptedGlideOptions.PREFER_EMBEDDED_THUMBNAIL, true)
     }
 
     if (roundCorners != ROUNDED_CORNERS_NONE) {
         val cornerSize =
-            if (roundCorners == ROUNDED_CORNERS_SMALL) org.fossify.commons.R.dimen.rounded_corner_radius_small else org.fossify.commons.R.dimen.rounded_corner_radius_big
+            if (roundCorners == ROUNDED_CORNERS_SMALL) {
+                org.fossify.commons.R.dimen.rounded_corner_radius_small
+            } else {
+                org.fossify.commons.R.dimen.rounded_corner_radius_big
+            }
         val cornerRadius = resources.getDimension(cornerSize).toInt()
         val roundedCornersTransform = RoundedCorners(cornerRadius)
         options.optionalTransform(MultiTransformation(CenterCrop(), roundedCornersTransform))
-        options.optionalTransform(
-            WebpDrawable::class.java,
-            MultiTransformation(
-                WebpDrawableTransformation(CenterCrop()),
-                WebpDrawableTransformation(roundedCornersTransform)
-            )
-        )
     }
 
-    WebpBitmapFactory.sUseSystemDecoder = false // CVE-2023-4863
     var builder = Glide.with(applicationContext)
         .load(path)
         .apply(options)
-        .set(WebpDownsampler.USE_SYSTEM_DECODER, false) // CVE-2023-4863
         .transition(getOptionalCrossFadeTransition(crossFadeDuration))
 
     builder = builder.listener(object : RequestListener<Drawable> {
@@ -438,33 +409,14 @@ fun Context.loadSVG(
     signature: ObjectKey,
     crossFadeDuration: Int = THUMBNAIL_FADE_DURATION_MS,
 ) {
-    target.scaleType = if (cropThumbnails) {
-        ImageView.ScaleType.CENTER_CROP
-    } else {
-        ImageView.ScaleType.FIT_CENTER
-    }
-
-    val options = RequestOptions()
-        .signature(signature)
-        .applyEncryptedCachePolicy(CryptoManager.isEncryptedFile(path))
-    var builder = Glide.with(applicationContext)
-        .`as`(PictureDrawable::class.java)
-        .listener(SvgSoftwareLayerSetter())
-        .load(path)
-        .apply(options)
-        .transition(getOptionalCrossFadeTransition(crossFadeDuration))
-
-    if (roundCorners != ROUNDED_CORNERS_NONE) {
-        val cornerSize = when (roundCorners) {
-            ROUNDED_CORNERS_SMALL -> org.fossify.commons.R.dimen.rounded_corner_radius_small
-            else -> org.fossify.commons.R.dimen.rounded_corner_radius_big
-        }
-
-        val cornerRadius = resources.getDimension(cornerSize).toInt()
-        builder = builder.transform(CenterCrop(), RoundedCorners(cornerRadius))
-    }
-
-    builder.into(target)
+    loadImageBase(
+        path = path,
+        target = target,
+        cropThumbnails = cropThumbnails,
+        roundCorners = roundCorners,
+        signature = signature,
+        crossFadeDuration = crossFadeDuration,
+    )
 }
 
 fun Context.updateWidgets() {

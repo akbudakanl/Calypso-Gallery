@@ -781,10 +781,7 @@
     <string name="search_settings">Parametrlərdə axtar</string>
     <string name="license_tink_title">Google Tink (axınlı AEAD və HKDF kriptoqrafiyası)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (yerli Argon2id açar törətməsi)</string>
-    <string name="license_webpdecoder_title">GlideWebpDecoder (animasiyalı WebP deşifrələməsi)</string>
-    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL dəstəyi)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG göstərilməsi)</string>
-    <string name="license_exif_extended_title">Android-Exif-Extended (EXIF metaməlumat işlənməsi)</string>
     <string name="license_material_icons_title">Material Design Icons (interfeys nişanları)</string>
     <string name="checking_password">Parol yoxlanılır…</string>
     <string name="vault_same_password_title">Eyni parol</string>

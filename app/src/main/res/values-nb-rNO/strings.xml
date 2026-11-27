@@ -727,10 +727,7 @@
     <string name="search_settings">Søk i innstillinger</string>
     <string name="license_tink_title">Google Tink (strømmende AEAD- og HKDF-kryptografi)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (innebygd Argon2id-nøkkelutledning)</string>
-    <string name="license_webpdecoder_title">GlideWebpDecoder (dekoding av animert WebP)</string>
-    <string name="license_jxl_coder_title">JXL Coder Glide (støtte for JPEG XL)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG-gjengivelse)</string>
-    <string name="license_exif_extended_title">Android-Exif-Extended (håndtering av EXIF-metadata)</string>
     <string name="license_material_icons_title">Material Design Icons (grensesnittikoner)</string>
     <string name="checking_password">Kontrollerer passord…</string>
     <string name="vault_same_password_title">Samme passord</string>

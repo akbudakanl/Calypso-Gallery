@@ -1,0 +1,24 @@
+[package]
+name = "calypso-media"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "calypso_media"
+crate-type = ["cdylib"]
+
+[dependencies]
+gif = { version = "0.14.2", default-features = false, features = ["raii_no_panic", "std"] }
+image-webp = "0.2.4"
+jni-sys = "0.4.1"
+jxl-oxide = { version = "0.12.6", default-features = false }
+png = "0.18.1"
+zune-jpeg = "0.5.15"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = "symbols"
+panic = "unwind"

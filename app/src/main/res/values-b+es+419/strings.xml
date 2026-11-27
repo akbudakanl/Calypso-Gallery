@@ -716,10 +716,7 @@
     <string name="search_settings">Buscar en configuración</string>
     <string name="license_tink_title">Google Tink (criptografía AEAD en flujo y HKDF)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (derivación de claves Argon2id nativa)</string>
-    <string name="license_webpdecoder_title">GlideWebpDecoder (decodificación de WebP animado)</string>
-    <string name="license_jxl_coder_title">JXL Coder Glide (compatibilidad con JPEG XL)</string>
     <string name="license_androidsvg_title">AndroidSVG (renderizado de SVG)</string>
-    <string name="license_exif_extended_title">Android-Exif-Extended (manejo de metadatos EXIF)</string>
     <string name="license_material_icons_title">Material Design Icons (íconos de interfaz)</string>
     <string name="checking_password">Verificando contraseña…</string>
     <string name="vault_same_password_title">Misma contraseña</string>

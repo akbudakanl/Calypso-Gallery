@@ -312,7 +312,6 @@ class EditActivity : BaseCropActivity() {
         binding.editorDrawCanvas.beGone()
         binding.cropImageView.apply {
             beVisible()
-            setImageUriAsync(uri)
             guidelines = CropImageView.Guidelines.ON
 
             if (isCropIntent && shouldCropSquare()) {
@@ -321,6 +320,7 @@ class EditActivity : BaseCropActivity() {
                 binding.bottomEditorCropRotateActions.bottomAspectRatio.beGone()
             }
         }
+        uri?.let { loadIsolatedImageIntoCropView(it) }
     }
 
     private fun loadDrawCanvas() {

@@ -128,6 +128,7 @@ jobs:
           fi
           echo "ANDROID_NDK_HOME=$ndk_dir" >> "$GITHUB_ENV"
           cargo test --manifest-path rust/calypso-argon2/Cargo.toml --locked
+          cargo test --manifest-path rust/calypso-media/Cargo.toml --locked
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
@@ -211,6 +212,7 @@ jobs:
           fi
           echo "ANDROID_NDK_HOME=$ndk_dir" >> "$GITHUB_ENV"
           cargo test --manifest-path rust/calypso-argon2/Cargo.toml --locked
+          cargo test --manifest-path rust/calypso-media/Cargo.toml --locked
 
       - name: Build Release APKs
         run: ./gradlew assembleFossRelease -PABI_SPLITS=true

@@ -2,7 +2,6 @@ package org.fossify.gallery.helpers
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*

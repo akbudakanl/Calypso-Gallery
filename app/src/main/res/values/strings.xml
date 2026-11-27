@@ -707,21 +707,33 @@
     <string name="license_rustcrypto_argon2_url" translatable="false">https://github.com/RustCrypto/password-hashes</string>
     <string name="license_rustcrypto_argon2_text" translatable="false">Bundles Rust crates argon2 (0.6.0), zeroize (1.9.2), and jni (0.22.4).\n\nCopyright (c) 2020-2024 RustCrypto Developers (argon2, zeroize)\nCopyright (c) jni-rs contributors (jni: https://github.com/jni-rs/jni-rs)\n\nLicensed under either of Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0) or MIT license (https://opensource.org/licenses/MIT), at your option.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</string>
 
-    <string name="license_webpdecoder_title">GlideWebpDecoder (animated WebP decoding)</string>
-    <string name="license_webpdecoder_url" translatable="false">https://github.com/zjupure/GlideWebpDecoder</string>
-    <string name="license_webpdecoder_text" translatable="false">Copyright 2018 zjupure\n\nLicensed under the Apache License, Version 2.0 and the Simplified BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+    <string name="license_rust_gif_title" translatable="false">gif</string>
+    <string name="license_rust_gif_url" translatable="false">https://github.com/image-rs/image-gif</string>
+    <string name="license_rust_gif_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
 
-    <string name="license_jxl_coder_title">JXL Coder Glide (JPEG XL support)</string>
-    <string name="license_jxl_coder_url" translatable="false">https://github.com/awxkee/jxl-coder-glide</string>
-    <string name="license_jxl_coder_text" translatable="false">Copyright 2023 Radzivon Bartoshyk\n\nLicensed under the Apache License, Version 2.0 and the 3-Clause BSD License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
+    <string name="license_rust_image_webp_title" translatable="false">image-webp</string>
+    <string name="license_rust_image_webp_url" translatable="false">https://github.com/image-rs/image-webp</string>
+    <string name="license_rust_image_webp_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
+
+    <string name="license_rust_png_title" translatable="false">png</string>
+    <string name="license_rust_png_url" translatable="false">https://github.com/image-rs/image-png</string>
+    <string name="license_rust_png_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
+
+    <string name="license_rust_zune_jpeg_title" translatable="false">zune-jpeg</string>
+    <string name="license_rust_zune_jpeg_url" translatable="false">https://github.com/etemesi254/zune-image</string>
+    <string name="license_rust_zune_jpeg_text" translatable="false">Licensed under the MIT License, Apache License, Version 2.0, or Zlib License, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://zlib.net/zlib_license.html</string>
+
+    <string name="license_rust_jxl_oxide_title" translatable="false">jxl-oxide</string>
+    <string name="license_rust_jxl_oxide_url" translatable="false">https://github.com/tirr-c/jxl-oxide</string>
+    <string name="license_rust_jxl_oxide_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
+
+    <string name="license_rust_jni_sys_title" translatable="false">jni-sys</string>
+    <string name="license_rust_jni_sys_url" translatable="false">https://github.com/jni-rs/jni-sys</string>
+    <string name="license_rust_jni_sys_text" translatable="false">Licensed under the MIT License or Apache License, Version 2.0, at your option. Copies of the licenses are available at\n\nhttps://opensource.org/licenses/MIT\nhttps://www.apache.org/licenses/LICENSE-2.0</string>
 
     <string name="license_androidsvg_title">AndroidSVG (SVG rendering)</string>
     <string name="license_androidsvg_url" translatable="false">https://github.com/BigBadaboom/androidsvg</string>
     <string name="license_androidsvg_text" translatable="false">Copyright 2013-2020 Paul LeBeau\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
-
-    <string name="license_exif_extended_title">Android-Exif-Extended (EXIF metadata handling)</string>
-    <string name="license_exif_extended_url" translatable="false">https://github.com/sephiroth74/Android-Exif-Extended</string>
-    <string name="license_exif_extended_text" translatable="false">Copyright 2013 Alessandro Crugnola\n\nReleased into the Public Domain, based on the jhead library and the Android Open Source Project ExifInterface.\n\nIncludes Apache Commons Lang and Apache Commons IO, Copyright The Apache Software Foundation, licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).</string>
 
     <string name="license_material_icons_title">Material Design Icons (UI icons)</string>
     <string name="license_material_icons_url" translatable="false">https://github.com/google/material-design-icons</string>
@@ -730,8 +742,6 @@
     <string name="license_fast_scroller_title" translatable="false">RecyclerView-FastScroller (section scrollbar)</string>
     <string name="license_fast_scroller_url" translatable="false">https://github.com/tibbi/RecyclerView-FastScroller</string>
     <string name="license_fast_scroller_text" translatable="false">Copyright © Tibor Kaputa\n\nLicensed under the Apache License, Version 2.0 (the \"License\"); you may not use this file except in compliance with the License. You may obtain a copy of the License at\n\nhttps://www.apache.org/licenses/LICENSE-2.0\n\nUnless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</string>
-
-    <string name="license_animated_decoders_title" translatable="false">Animated image decoders (APNG, AWebP, AVIF)</string>
 
     <string name="license_material_components_title" translatable="false">Material Components for Android (UI components)</string>
     <string name="license_material_components_url" translatable="false">https://github.com/material-components/material-components-android</string>

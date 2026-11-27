@@ -198,7 +198,6 @@ class DirectoryAdapter(
     private val isListViewType = config.viewTypeFolders == VIEW_TYPE_LIST
     private var pinnedFolders = config.pinnedFolders
     private var scrollHorizontally = config.scrollHorizontally
-    private var animateGifs = config.animateGifs
     private var cropThumbnails = config.cropThumbnails
     private var groupDirectSubfolders = config.groupDirectSubfolders
     private var currentDirectoriesHash = MediaUpdatePolicy.computeDirectoryContentHash(dirs)
@@ -1847,11 +1846,6 @@ class DirectoryAdapter(
         }
     }
 
-    fun updateAnimateGifs(animateGifs: Boolean) {
-        this.animateGifs = animateGifs
-        notifyDataSetChanged()
-    }
-
     fun updateCropThumbnails(cropThumbnails: Boolean) {
         this.cropThumbnails = cropThumbnails
         notifyDataSetChanged()
@@ -2011,7 +2005,9 @@ class DirectoryAdapter(
                     else -> TYPE_IMAGES
                 }
 
-                val thumbKey = "${directory.path}|${directory.tmb}|${directory.modified}|$cropThumbnails|$roundedCorners|$animateGifs|$thumbnailType"
+                val thumbKey =
+                    "${directory.path}|${directory.tmb}|${directory.modified}|" +
+                        "$cropThumbnails|$roundedCorners|$thumbnailType"
                 if (dirThumbnail.drawable != null && dirThumbnail.getTag(R.id.dir_thumbnail) == thumbKey) {
                     return@apply
                 }
@@ -2030,7 +2026,6 @@ class DirectoryAdapter(
                     path = directory.tmb,
                     target = dirThumbnail,
                     horizontalScroll = scrollHorizontally,
-                    animateGifs = animateGifs,
                     cropThumbnails = cropThumbnails,
                     roundCorners = roundedCorners,
                     signature = directory.getKey(),

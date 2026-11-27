@@ -92,6 +92,7 @@ android {
     }
 
     buildFeatures {
+        aidl = true
         viewBinding = true
         buildConfig = true
     }
@@ -132,6 +133,9 @@ android {
         getByName("main").java.directories.add("src/main/kotlin")
         getByName("main").jniLibs.directories.add(
             layout.buildDirectory.dir("generated/rustJniLibs").get().asFile.absolutePath
+        )
+        getByName("main").jniLibs.directories.add(
+            layout.buildDirectory.dir("generated/rustMediaJniLibs").get().asFile.absolutePath
         )
     }
 
@@ -233,28 +237,20 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.print)
     implementation(libs.android.image.cropper)
-    implementation(libs.exif)
-    implementation(libs.android.gif.drawable)
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.documentfile)
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.sanselan)
     implementation(libs.androidphotofilters)
     implementation(libs.androidsvg.aar)
     implementation(libs.gestureviews)
     implementation(libs.subsamplingscaleimageview)
     implementation(libs.androidx.swiperefreshlayout)
-    implementation(libs.awebp)
-    implementation(libs.apng)
-    implementation(libs.avif)
     implementation(libs.avif.integration)
-    implementation(libs.jxl.integration)
     implementation(libs.tink.android)
     testImplementation(libs.bouncycastle.bcprov)
 
     ksp(libs.glide.compiler)
-    implementation(libs.zjupure.webpdecoder)
 
     implementation(libs.bundles.room)
     ksp(libs.androidx.room.compiler)
@@ -337,6 +333,9 @@ abstract class BuildRustArgon2AndroidTask : DefaultTask() {
     @get:Input
     abstract val clangSuffix: Property<String>
 
+    @get:Input
+    abstract val libFileName: Property<String>
+
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -347,6 +346,7 @@ abstract class BuildRustArgon2AndroidTask : DefaultTask() {
         val ndkBin = File(ndkPrebuiltBinDir.get())
         val suffix = clangSuffix.get()
         val rustDir = File(rustProjectPath.get())
+        val expectedLib = libFileName.get()
         val outRoot = outputDir.get().asFile
         outRoot.deleteRecursively()
         outRoot.mkdirs()
@@ -375,12 +375,12 @@ abstract class BuildRustArgon2AndroidTask : DefaultTask() {
                 environment("CARGO_TARGET_${envKey}_LINKER", clangFile.absolutePath)
                 environment("CARGO_TARGET_${envKey}_RUSTFLAGS", "-C link-arg=-Wl,-z,max-page-size=16384")
             }
-            val builtSo = File(rustDir, "target/$triple/release/libcalypso_argon2.so")
+            val builtSo = File(rustDir, "target/$triple/release/$expectedLib")
             check(builtSo.exists()) {
                 "Expected Rust library not produced at ${builtSo.absolutePath}"
             }
             val destDir = File(outRoot, abi).apply { mkdirs() }
-            builtSo.copyTo(File(destDir, "libcalypso_argon2.so"), overwrite = true)
+            builtSo.copyTo(File(destDir, expectedLib), overwrite = true)
         }
     }
 }
@@ -441,6 +441,7 @@ val buildRustArgon2Android = tasks.register<BuildRustArgon2AndroidTask>("buildRu
     cargoExecutable.set(providers.provider { resolveCargoExecutable() })
     ndkPrebuiltBinDir.set(providers.provider { resolveNdkPrebuiltBinDir(rootProject.rootDir) })
     clangSuffix.set(if (Os.isFamily(Os.FAMILY_WINDOWS)) ".cmd" else "")
+    libFileName.set("libcalypso_argon2.so")
     outputDir.set(layout.buildDirectory.dir("generated/rustJniLibs"))
 }
 
@@ -458,17 +459,50 @@ val buildRustArgon2Host = tasks.register<BuildRustArgon2HostTask>("buildRustArgo
     outputLib.set(File(rustArgon2Dir, "target/release/$hostRustLibName"))
 }
 
+val rustMediaDir = rootProject.file("rust/calypso-media")
+val rustMediaSources = files(
+    File(rustMediaDir, "Cargo.toml"),
+    File(rustMediaDir, "Cargo.lock"),
+    fileTree(File(rustMediaDir, "src"))
+)
+
+val buildRustMediaAndroid = tasks.register<BuildRustArgon2AndroidTask>("buildRustMediaAndroid") {
+    rustSources.from(rustMediaSources)
+    rustProjectPath.set(rustMediaDir.absolutePath)
+    cargoExecutable.set(providers.provider { resolveCargoExecutable() })
+    ndkPrebuiltBinDir.set(providers.provider { resolveNdkPrebuiltBinDir(rootProject.rootDir) })
+    clangSuffix.set(if (Os.isFamily(Os.FAMILY_WINDOWS)) ".cmd" else "")
+    libFileName.set("libcalypso_media.so")
+    outputDir.set(layout.buildDirectory.dir("generated/rustMediaJniLibs"))
+}
+
+val hostRustMediaLibName = when {
+    Os.isFamily(Os.FAMILY_WINDOWS) -> "calypso_media.dll"
+    Os.isFamily(Os.FAMILY_MAC) -> "libcalypso_media.dylib"
+    else -> "libcalypso_media.so"
+}
+
+val buildRustMediaHost = tasks.register<BuildRustArgon2HostTask>("buildRustMediaHost") {
+    rustSources.from(rustMediaSources)
+    rustProjectPath.set(rustMediaDir.absolutePath)
+    cargoExecutable.set(providers.provider { resolveCargoExecutable() })
+    windowsHost.set(Os.isFamily(Os.FAMILY_WINDOWS))
+    outputLib.set(File(rustMediaDir, "target/release/$hostRustMediaLibName"))
+}
+
 tasks.matching { it.name.startsWith("merge") && it.name.endsWith("JniLibFolders") }.configureEach {
-    dependsOn(buildRustArgon2Android)
+    dependsOn(buildRustArgon2Android, buildRustMediaAndroid)
 }
 
 tasks.withType<Test>().configureEach {
-    dependsOn(buildRustArgon2Host)
+    dependsOn(buildRustArgon2Host, buildRustMediaHost)
     val hostLibDir = File(rustArgon2Dir, "target/release").absolutePath
+    val mediaHostLibDir = File(rustMediaDir, "target/release").absolutePath
     val existingPath = System.getProperty("java.library.path")
+    val combinedRustPaths = "$hostLibDir${File.pathSeparator}$mediaHostLibDir"
     systemProperty(
         "java.library.path",
-        if (existingPath.isNullOrBlank()) hostLibDir else "$hostLibDir${File.pathSeparator}$existingPath"
+        if (existingPath.isNullOrBlank()) combinedRustPaths else "$combinedRustPaths${File.pathSeparator}$existingPath"
     )
 }
 

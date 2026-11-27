@@ -1305,20 +1305,6 @@
                     </RelativeLayout>
 
                     <RelativeLayout
-                        android:id="@+id/settings_animate_gifs_holder"
-                        style="@style/CalypsoCardRowStyle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <org.fossify.commons.views.MyMaterialSwitch
-                            android:id="@+id/settings_animate_gifs"
-                            style="@style/SettingsSwitchStyle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/animate_gifs" />
-                    </RelativeLayout>
-
-                    <RelativeLayout
                         android:id="@+id/settings_scroll_horizontally_holder"
                         style="@style/CalypsoCardRowStyle"
                         android:layout_width="match_parent"

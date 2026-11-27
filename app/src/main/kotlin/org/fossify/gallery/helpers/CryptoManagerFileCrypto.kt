@@ -2,7 +2,6 @@ package org.fossify.gallery.helpers
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import org.fossify.commons.extensions.*
 import org.fossify.commons.helpers.*
@@ -18,6 +17,8 @@ import java.security.SecureRandom
 import org.fossify.gallery.models.DateTaken
 import org.fossify.gallery.helpers.CryptoManager.TargetPlainIndex
 import org.fossify.gallery.helpers.CryptoManager.TargetEncryptedIndex
+import org.fossify.gallery.helpers.media.IsolatedDecodeRequest
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
 import org.fossify.gallery.helpers.operations.AtomicStaging
 import org.fossify.gallery.helpers.operations.EncryptedSizeInput
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
@@ -78,16 +79,14 @@ internal fun CryptoManager.generateEmbeddedThumbnail(file: File, mediaType: Int)
                 }
             }
         } else {
-            val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeFile(file.absolutePath, opts)
-            var sampleSize = 1
-            while (opts.outWidth / sampleSize > THUMB_MAX_DIMENSION * 2 ||
-                opts.outHeight / sampleSize > THUMB_MAX_DIMENSION * 2
-            ) {
-                sampleSize *= 2
-            }
-            val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-            BitmapFactory.decodeFile(file.absolutePath, decodeOpts)
+            IsolatedDecoderClient.decodeFile(
+                context = IsolatedDecoderClient.appContextOrNull,
+                file = file,
+                maxWidth = THUMB_MAX_DIMENSION * 2,
+                maxHeight = THUMB_MAX_DIMENSION * 2,
+                flags = IsolatedDecodeRequest.FLAG_PREFER_EMBEDDED_PREVIEW or
+                    IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
+            )
         }
 
         if (bitmap == null) return ByteArray(0)
@@ -507,20 +506,14 @@ fun CryptoManager.encryptStreamToDirectory(
 
 internal fun CryptoManager.generateEmbeddedThumbnailFromEncryptedFile(encryptedFile: File): ByteArray? {
     return try {
-        val boundsOpts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        openDecryptedContentStream(encryptedFile)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, boundsOpts)
-        }
-        var sampleSize = 1
-        while (boundsOpts.outWidth / sampleSize > THUMB_MAX_DIMENSION * 2 ||
-            boundsOpts.outHeight / sampleSize > THUMB_MAX_DIMENSION * 2
-        ) {
-            sampleSize *= 2
-        }
-        val decodeOpts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val bitmap = openDecryptedContentStream(encryptedFile)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, decodeOpts)
-        } ?: return null
+        val bitmap = IsolatedDecoderClient.decodeEncryptedFile(
+            context = IsolatedDecoderClient.appContextOrNull,
+            file = encryptedFile,
+            maxWidth = THUMB_MAX_DIMENSION * 2,
+            maxHeight = THUMB_MAX_DIMENSION * 2,
+            preferEmbeddedThumbnail = false,
+            preferFullContent = true,
+        ) ?: return null
 
         val width = bitmap.width
         val height = bitmap.height

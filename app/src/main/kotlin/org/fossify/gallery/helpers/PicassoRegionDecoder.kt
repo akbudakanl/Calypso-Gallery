@@ -1,9 +1,12 @@
 package org.fossify.gallery.helpers
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Point
+import android.graphics.Rect
 import android.net.Uri
 import com.davemorrissey.labs.subscaleview.ImageRegionDecoder
+import org.fossify.gallery.helpers.media.IsolatedRegionClient
 
 class PicassoRegionDecoder(
     val showHighestQuality: Boolean,
@@ -11,43 +14,58 @@ class PicassoRegionDecoder(
     val screenHeight: Int,
     val minTileDpi: Int
 ) : ImageRegionDecoder {
-    private var decoder: BitmapRegionDecoder? = null
+    private var appContext: Context? = null
+    private var sessionId: Long = -1L
+
+    @Volatile
+    private var recycled = false
     private val decoderLock = Any()
 
     override fun init(context: Context, uri: Uri): Point {
+        val appCtx = context.applicationContext
+        appContext = appCtx
         val newUri = Uri.parse(uri.toString().replace("%", "%25").replace("#", "%23"))
-        val rawPath = newUri.path ?: uri.toString().removePrefix("file://")
-        val inputStream = if (CryptoManager.isEncryptedFile(rawPath)) {
-            CryptoManager.openDecryptedContentStream(java.io.File(rawPath))
-        } else {
-            context.contentResolver.openInputStream(newUri)
+        val opened = checkNotNull(IsolatedRegionClient.openRegionSession(appCtx, newUri)) {
+            "Isolated region decoder failed to open $newUri"
         }
-        decoder = BitmapRegionDecoder.newInstance(inputStream!!, false)
-        return Point(decoder!!.width, decoder!!.height)
+        sessionId = opened.sessionId
+        return Point(opened.width, opened.height)
     }
 
     override fun decodeRegion(rect: Rect, sampleSize: Int): Bitmap {
         synchronized(decoderLock) {
+            val ctx = checkNotNull(appContext) { "Region decoder is not initialized" }
+            check(!recycled && sessionId > 0L) { "Region decoder is recycled" }
             var newSampleSize = sampleSize
             if (!showHighestQuality && minTileDpi == LOW_TILE_DPI) {
-                if ((rect.width() > rect.height() && screenWidth > screenHeight) || (rect.height() > rect.width() && screenHeight > screenWidth)) {
-                    if ((rect.width() / sampleSize > screenWidth || rect.height() / sampleSize > screenHeight)) {
-                        newSampleSize *= 2
-                    }
+                val wideMismatch = rect.width() > rect.height() && screenWidth > screenHeight
+                val tallMismatch = rect.height() > rect.width() && screenHeight > screenWidth
+                val exceedsScreen = rect.width() / sampleSize > screenWidth ||
+                    rect.height() / sampleSize > screenHeight
+                if ((wideMismatch || tallMismatch) && exceedsScreen) {
+                    newSampleSize *= 2
                 }
             }
 
-            val options = BitmapFactory.Options()
-            options.inSampleSize = newSampleSize
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888
-            val bitmap = decoder!!.decodeRegion(rect, options)
-            return bitmap ?: throw RuntimeException("Region decoder returned null bitmap - image format may not be supported")
+            return checkNotNull(
+                IsolatedRegionClient.decodeRegionTile(ctx, sessionId, rect, newSampleSize),
+            ) { "Region decoder returned null bitmap - image format may not be supported" }
         }
     }
 
-    override fun isReady() = decoder != null && !decoder!!.isRecycled
+    override fun isReady(): Boolean = !recycled && sessionId > 0L
 
     override fun recycle() {
-        decoder!!.recycle()
+        val idToClose: Long
+        val ctx: Context?
+        synchronized(decoderLock) {
+            recycled = true
+            idToClose = sessionId
+            sessionId = -1L
+            ctx = appContext
+        }
+        if (ctx != null && idToClose > 0L) {
+            IsolatedRegionClient.closeRegionSession(ctx, idToClose)
+        }
     }
 }

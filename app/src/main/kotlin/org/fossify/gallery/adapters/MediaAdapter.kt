@@ -322,7 +322,6 @@ class MediaAdapter(
     private val hasOTGConnected = activity.hasOTGConnected()
 
     private var scrollHorizontally = config.scrollHorizontally
-    private var animateGifs = config.animateGifs
     private var cropThumbnails = config.cropThumbnails
     private var displayFilenames = config.displayFileNames
     private var showFileTypes = config.showThumbnailFileTypes
@@ -1729,11 +1728,6 @@ class MediaAdapter(
         notifyDataSetChanged()
     }
 
-    fun updateAnimateGifs(animateGifs: Boolean) {
-        this.animateGifs = animateGifs
-        notifyDataSetChanged()
-    }
-
     fun updateCropThumbnails(cropThumbnails: Boolean) {
         this.cropThumbnails = cropThumbnails
         notifyDataSetChanged()
@@ -1827,7 +1821,7 @@ class MediaAdapter(
                 else -> ROUNDED_CORNERS_NONE
             }
 
-            val thumbKey = "$path|${medium.getSignature()}|$cropThumbnails|$roundedCorners|$animateGifs|${medium.type}"
+            val thumbKey = "$path|${medium.getSignature()}|$cropThumbnails|$roundedCorners|${medium.type}"
             if (mediumThumbnail.drawable != null &&
                 mediumThumbnail.getTag(R.id.medium_thumbnail) == thumbKey &&
                 !rotatedImagePaths.contains(path)
@@ -1849,7 +1843,6 @@ class MediaAdapter(
                 path = path,
                 target = mediumThumbnail,
                 horizontalScroll = scrollHorizontally,
-                animateGifs = animateGifs,
                 cropThumbnails = cropThumbnails,
                 roundCorners = roundedCorners,
                 signature = medium.getKey(),

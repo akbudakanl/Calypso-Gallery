@@ -707,10 +707,7 @@
     <string name="search_settings">搜尋設定</string>
     <string name="license_tink_title">Google Tink（串流 AEAD 與 HKDF 加密技術）</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2（原生 Argon2id 金鑰衍生）</string>
-    <string name="license_webpdecoder_title">GlideWebpDecoder（動態 WebP 解碼）</string>
-    <string name="license_jxl_coder_title">JXL Coder Glide（JPEG XL 支援）</string>
     <string name="license_androidsvg_title">AndroidSVG（SVG 算繪）</string>
-    <string name="license_exif_extended_title">Android-Exif-Extended（EXIF 中繼資料處理）</string>
     <string name="license_material_icons_title">Material Design Icons（介面圖示）</string>
     <string name="checking_password">正在檢查密碼…</string>
     <string name="vault_same_password_title">密碼相同</string>

@@ -3,13 +3,10 @@ package org.fossify.gallery.fragments
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.PictureDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +20,7 @@ import androidx.core.graphics.drawable.toBitmapOrNull
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type
 import androidx.core.view.updateLayoutParams
+import androidx.exifinterface.media.ExifInterface
 import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180
 import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270
 import androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90
@@ -45,12 +43,6 @@ import com.davemorrissey.labs.subscaleview.DecoderFactory
 import com.davemorrissey.labs.subscaleview.ImageDecoder
 import com.davemorrissey.labs.subscaleview.ImageRegionDecoder
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import com.github.penfeizhou.animation.apng.APNGDrawable
-import com.github.penfeizhou.animation.avif.AVIFDrawable
-import com.github.penfeizhou.animation.webp.WebPDrawable
-import it.sephiroth.android.library.exif2.ExifInterface
-import org.apache.sanselan.common.byteSources.ByteSourceInputStream
-import org.apache.sanselan.formats.jpeg.JpegImageParser
 import org.fossify.commons.extensions.beGone
 import org.fossify.commons.extensions.beVisible
 import org.fossify.commons.extensions.beVisibleIf
@@ -62,7 +54,6 @@ import org.fossify.commons.extensions.getRealPathFromURI
 import org.fossify.commons.extensions.isExternalStorageManager
 import org.fossify.commons.extensions.isPathOnOTG
 import org.fossify.commons.extensions.isVisible
-import org.fossify.commons.extensions.isWebP
 import org.fossify.commons.extensions.onGlobalLayout
 import org.fossify.commons.extensions.portrait
 import org.fossify.commons.extensions.realScreenSize
@@ -92,8 +83,11 @@ import org.fossify.gallery.helpers.PicassoRegionDecoder
 import org.fossify.gallery.helpers.SHOULD_INIT_FRAGMENT
 import org.fossify.gallery.helpers.WEIRD_TILE_DPI
 import org.fossify.gallery.models.Medium
-import org.fossify.gallery.svg.SvgSoftwareLayerSetter
-import pl.droidsonroids.gif.InputSource
+import org.fossify.gallery.helpers.media.IsolatedDecodeRequest
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
+import org.fossify.gallery.helpers.media.IsolatedFormatSniffer
+import org.fossify.gallery.helpers.media.IsolatedGifClient
+import org.fossify.gallery.helpers.media.IsolatedGifDrawable
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Locale
@@ -128,7 +122,9 @@ class PhotoFragment : ViewPagerFragment() {
     private var mCurrentGestureViewZoom = 1f
     private var mInitialZoom = 1f
     private var mHasInitialZoom = false
-    private var mHasGifSource = false
+    private var mIsolatedGifDrawable: IsolatedGifDrawable? = null
+    private var mIsLoadingGif = false
+    private var mGifLoadGeneration = 0
 
     private var mStoredShowExtendedDetails = false
     private var mStoredHideExtendedDetails = false
@@ -158,7 +154,6 @@ class PhotoFragment : ViewPagerFragment() {
         binding.apply {
             subsamplingView.setOnClickListener { photoClicked() }
             gesturesView.setOnClickListener { photoClicked() }
-            gifView.setOnClickListener { photoClicked() }
             instantPrevItem.setOnClickListener { listener?.goToPrevItem() }
             instantNextItem.setOnClickListener { listener?.goToNextItem() }
             panoramaOutline.setOnClickListener { openPanorama() }
@@ -175,24 +170,6 @@ class PhotoFragment : ViewPagerFragment() {
                     }
                 }
             })
-
-            gifView.setOnTouchListener { _, event ->
-                if (context.config.allowDownGesture && abs(gifViewFrame.controller.state.zoom - 1f) < MAX_ZOOM_EQUALITY_TOLERANCE) handleEvent(event)
-                false
-            }
-
-            gifViewFrame.setOnTouchListener { _, event ->
-                if (context.config.allowDownGesture && abs(gifViewFrame.controller.state.zoom - 1f) < MAX_ZOOM_EQUALITY_TOLERANCE) handleEvent(event)
-                false
-            }
-
-            photoHolder.setOnTouchListener { _, event ->
-                if (gifViewFrame.isVisible() && context.config.allowDownGesture && abs(gifViewFrame.controller.state.zoom - 1f) < MAX_ZOOM_EQUALITY_TOLERANCE) {
-                    handleEvent(event)
-                    return@setOnTouchListener true
-                }
-                false
-            }
 
             setupGesturesViewStateListener()
             gesturesView.setOnTouchListener { v, event ->
@@ -230,29 +207,28 @@ class PhotoFragment : ViewPagerFragment() {
             }
 
             if (mMedium.path.isEmpty()) {
-                var out: FileOutputStream? = null
-                try {
-                    var inputStream = requireContext().contentResolver.openInputStream(Uri.parse(mOriginalPath))
-                    val exif = ExifInterface()
-                    exif.readExif(inputStream, ExifInterface.Options.OPTION_ALL)
-                    val tag = exif.getTag(ExifInterface.TAG_ORIENTATION)
-                    val orientation = tag?.getValueAsInt(-1) ?: -1
-                    inputStream = requireContext().contentResolver.openInputStream(Uri.parse(mOriginalPath))
-                    val original = BitmapFactory.decodeStream(inputStream)
-                    val rotated = rotateViaMatrix(original, orientation)
-                    exif.setTagValue(ExifInterface.TAG_ORIENTATION, 1)
-                    exif.removeCompressedThumbnail()
-
-                    val file = File(requireContext().externalCacheDir, Uri.parse(mOriginalPath).lastPathSegment)
-                    out = FileOutputStream(file)
-                    rotated.compress(Bitmap.CompressFormat.JPEG, 100, out)
-                    mMedium.path = file.absolutePath
-                } catch (e: Exception) {
-                    requireActivity().toast(org.fossify.commons.R.string.unknown_error_occurred)
-                    return mView
-                } finally {
-                    out?.close()
+                mIsFullscreen = listener?.isFullScreen() == true
+                if (mIsFullscreen) {
+                    binding.bottomActionsDummy.beGone()
                 }
+                mWasInit = true
+                updateInstantSwitchWidths()
+                ensureBackgroundThread {
+                    if (cacheEmptyContentUriPath()) {
+                        activity?.runOnUiThread {
+                            if (isAdded) {
+                                listener?.applyAspectRatioOrientation(mMedium.path, 0, 0)
+                                loadImage()
+                                initExtendedDetails()
+                            }
+                        }
+                    } else {
+                        activity?.runOnUiThread {
+                            activity?.toast(org.fossify.commons.R.string.unknown_error_occurred)
+                        }
+                    }
+                }
+                return mView
             }
         }
 
@@ -270,16 +246,36 @@ class PhotoFragment : ViewPagerFragment() {
         mWasInit = true
         updateInstantSwitchWidths()
 
-        // TODO: Implement panorama using a FOSS library
-        // ensureBackgroundThread {
-        //      checkIfPanorama()
-        // }
-
         return mView
+    }
+
+    private fun cacheEmptyContentUriPath(): Boolean {
+        return try {
+            val uri = Uri.parse(mOriginalPath)
+            val rotated = checkNotNull(
+                IsolatedDecoderClient.decodeUri(
+                    context = requireContext(),
+                    uri = uri,
+                    maxWidth = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                    maxHeight = IsolatedFormatSniffer.MAX_OUTPUT_DIMENSION,
+                    flags = IsolatedDecodeRequest.FLAG_APPLY_EXIF_ORIENTATION,
+                )
+            ) { "Unable to decode image stream" }
+            val file = File(requireContext().externalCacheDir, uri.lastPathSegment ?: "cached_photo.jpg")
+            FileOutputStream(file).use { out ->
+                rotated.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            }
+            rotated.recycle()
+            mMedium.path = file.absolutePath
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        mIsolatedGifDrawable?.stop()
         storeStateVariables()
     }
 
@@ -296,7 +292,12 @@ class PhotoFragment : ViewPagerFragment() {
                 binding.subsamplingView.beGone()
                 loadImage()
             } else if (mMedium.isGIF()) {
-                loadGif()
+                val existingGif = mIsolatedGifDrawable
+                if (existingGif == null) {
+                    loadGif()
+                } else if (mIsFragmentVisible) {
+                    existingGif.start()
+                }
             } else if (mIsSubsamplingVisible && mShouldResetImage) {
                 binding.subsamplingView.onGlobalLayout {
                     binding.subsamplingView.resetView()
@@ -320,6 +321,9 @@ class PhotoFragment : ViewPagerFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        mGifLoadGeneration++
+        mIsLoadingGif = false
+        clearIsolatedGifDrawable()
         if (activity?.isDestroyed == false) {
             binding.subsamplingView.recycle()
 
@@ -340,13 +344,12 @@ class PhotoFragment : ViewPagerFragment() {
             return
         }
 
-        // avoid GIFs being skewed, played in wrong aspect ratio
         if (mMedium.isGIF()) {
             mView.onGlobalLayout {
                 if (activity != null) {
                     measureScreen()
                     Handler().postDelayed({
-                        binding.gifViewFrame.controller.resetState()
+                        binding.gesturesView.controller.resetState()
                         loadGif(forceReload = true)
                     }, 50)
                 }
@@ -366,9 +369,13 @@ class PhotoFragment : ViewPagerFragment() {
         super.setMenuVisibility(menuVisible)
         mIsFragmentVisible = menuVisible
         if (mWasInit) {
-            val isNotAnimatedContent =
-                !mMedium.isGIF() && !mMedium.isApng() && !mMedium.isAvif() && !mMedium.isWebP()
-            if (isNotAnimatedContent) {
+            if (mMedium.isGIF()) {
+                if (menuVisible) {
+                    mIsolatedGifDrawable?.start()
+                } else {
+                    mIsolatedGifDrawable?.stop()
+                }
+            } else {
                 photoFragmentVisibilityChanged(menuVisible)
             }
         }
@@ -414,17 +421,6 @@ class PhotoFragment : ViewPagerFragment() {
         else -> 0
     }
 
-    private fun rotateViaMatrix(original: Bitmap, orientation: Int): Bitmap {
-        val degrees = degreesForRotation(orientation).toFloat()
-        return if (degrees == 0f) {
-            original
-        } else {
-            val matrix = Matrix()
-            matrix.setRotate(degrees)
-            Bitmap.createBitmap(original, 0, 0, original.width, original.height, matrix, true)
-        }
-    }
-
     private fun loadImage() {
         mHasInitialZoom = false
         checkScreenDimensions()
@@ -439,145 +435,74 @@ class PhotoFragment : ViewPagerFragment() {
                 when {
                     mMedium.isGIF() -> loadGif()
                     mMedium.isSVG() -> loadSVG()
-                    mMedium.isApng() -> loadAPNG()
-                    mMedium.isAvif() -> loadAVIF()
                     else -> loadBitmap()
                 }
             }
         }
     }
 
+    private fun clearIsolatedGifDrawable() {
+        val existing = mIsolatedGifDrawable ?: return
+        mIsolatedGifDrawable = null
+        if (view != null) {
+            binding.gesturesView.setImageDrawable(null)
+        }
+        existing.close()
+    }
+
     private fun loadGif(forceReload: Boolean = false) {
-        // onCreateView starts the first load, then onResume is called immediately.
-        // Do not assign the same source twice while the GIF decoder is starting.
-        if (mHasGifSource && !forceReload) {
+        if (!forceReload && (mIsolatedGifDrawable != null || mIsLoadingGif)) {
             return
         }
 
-        mHasGifSource = true
-        try {
-            val pathToLoad = getPathToLoad(mMedium)
-            if (CryptoManager.isEncryptedFile(pathToLoad)) {
-                loadEncryptedGif(pathToLoad)
-                return
-            }
-            val source = if (pathToLoad.startsWith("content://") || pathToLoad.startsWith("file://")) {
-                InputSource.UriSource(requireContext().contentResolver, Uri.parse(pathToLoad))
-            } else {
-                InputSource.FileSource(pathToLoad)
-            }
-
-            binding.apply {
-                gesturesView.beGone()
-                gifViewFrame.beVisible()
-                ensureBackgroundThread {
-                    gifView.setInputSource(source)
-                }
-            }
-        } catch (e: Exception) {
-            mHasGifSource = false
-            loadBitmap()
-        } catch (e: OutOfMemoryError) {
-            mHasGifSource = false
-            loadBitmap()
+        val ctx = context ?: return
+        if (forceReload) {
+            clearIsolatedGifDrawable()
         }
-    }
+        val generation = ++mGifLoadGeneration
+        mIsLoadingGif = true
+        val pathToLoad = getPathToLoad(mMedium)
 
-    /**
-     * Plays a GIF stored in the vault. The bytes are decrypted straight into memory (never to disk) and handed to
-     * the same animated GIF view that is used for regular GIFs, so the animation actually plays.
-     */
-    private fun loadEncryptedGif(encryptedPath: String) {
         ensureBackgroundThread {
-            val gifBytes = try {
-                CryptoManager.openDecryptedContentStream(File(encryptedPath))?.use { it.readBytes() }
-            } catch (e: Exception) {
-                null
-            } catch (e: OutOfMemoryError) {
-                null
-            }
+            val drawable = runCatching {
+                IsolatedGifClient.openGifSession(ctx, pathToLoad, 0, 0)
+            }.getOrNull()
 
             activity?.runOnUiThread {
-                if (!isAdded || context == null) {
-                    mHasGifSource = false
-                    return@runOnUiThread
-                }
-
-                if (gifBytes == null || gifBytes.isEmpty()) {
-                    // fall back to a still image rather than showing nothing
-                    mHasGifSource = false
-                    loadWithGlide(encryptedPath, false)
-                    return@runOnUiThread
-                }
-
-                try {
-                    binding.apply {
-                        gesturesView.beGone()
-                        gifViewFrame.beVisible()
-                        gifView.setInputSource(InputSource.ByteArraySource(gifBytes))
+                if (!isAdded || context == null || generation != mGifLoadGeneration) {
+                    drawable?.close()
+                    if (generation == mGifLoadGeneration) {
+                        mIsLoadingGif = false
                     }
-                } catch (e: Exception) {
-                    mHasGifSource = false
-                    loadWithGlide(encryptedPath, false)
+                    return@runOnUiThread
+                }
+
+                mIsLoadingGif = false
+                if (drawable == null) {
+                    loadBitmap()
+                    return@runOnUiThread
+                }
+
+                clearIsolatedGifDrawable()
+                mIsolatedGifDrawable = drawable
+                binding.gesturesView.beVisible()
+                binding.gesturesView.setImageDrawable(drawable)
+                applyProperColorMode(drawable)
+                if (mIsFragmentVisible && isResumed) {
+                    drawable.start()
                 }
             }
         }
     }
 
     private fun loadSVG() {
-        if (context != null) {
-            val isEncrypted = CryptoManager.isEncryptedFile(mMedium.path)
-            Glide.with(requireContext())
-                .`as`(PictureDrawable::class.java)
-                .diskCacheStrategy(if (isEncrypted) DiskCacheStrategy.NONE else DiskCacheStrategy.AUTOMATIC)
-                .skipMemoryCache(isEncrypted)
-                .listener(SvgSoftwareLayerSetter())
-                .load(mMedium.path)
-                .into(binding.gesturesView)
-        }
-    }
-
-    private fun loadAPNG() {
-        if (context != null) {
-            if (CryptoManager.isEncryptedFile(mMedium.path)) {
-                loadWithGlide(mMedium.path, false)
-                return
-            }
-            val drawable = APNGDrawable.fromFile(mMedium.path)
-            binding.gesturesView.setImageDrawable(drawable)
-        }
-    }
-
-    private fun loadAVIF() {
-        if (context != null) {
-            if (CryptoManager.isEncryptedFile(mMedium.path)) {
-                loadWithGlide(mMedium.path, false)
-                return
-            }
-            val drawable = AVIFDrawable.fromFile(mMedium.path)
-            if (drawable.intrinsicWidth == 0 || drawable.intrinsicHeight == 0) {
-                loadBitmap()
-                return
-            }
-
-            binding.gesturesView.setImageDrawable(drawable)
-        }
+        loadBitmap(addZoomableView = false)
     }
 
     private fun loadBitmap(addZoomableView: Boolean = true) {
         mHasInitialZoom = false
         if (context == null) return
-        val path = getFilePathToShow()
-        if (path.isWebP() && !CryptoManager.isEncryptedFile(path)) {
-            val drawable = WebPDrawable.fromFile(path)
-            if (drawable.intrinsicWidth == 0) {
-                loadWithGlide(path, addZoomableView)
-            } else {
-                binding.gesturesView.setImageDrawable(drawable)
-            }
-        } else {
-            loadWithGlide(path, addZoomableView)
-        }
+        loadWithGlide(getFilePathToShow(), addZoomableView)
     }
 
     private fun loadWithGlide(path: String, addZoomableView: Boolean) {
@@ -879,33 +804,6 @@ class PhotoFragment : ViewPagerFragment() {
         }
     }
 
-    private fun checkIfPanorama() {
-        mIsPanorama = try {
-            if (mMedium.path.startsWith("content:/")) {
-                requireContext().contentResolver.openInputStream(Uri.parse(mMedium.path))
-            } else {
-                File(mMedium.path).inputStream()
-            }.use {
-                val imageParser = JpegImageParser().getXmpXml(ByteSourceInputStream(it, mMedium.name), HashMap<String, Any>())
-                imageParser.contains("GPano:UsePanoramaViewer=\"True\"", true) ||
-                    imageParser.contains("<GPano:UsePanoramaViewer>True</GPano:UsePanoramaViewer>", true) ||
-                    imageParser.contains("GPano:FullPanoWidthPixels=") ||
-                    imageParser.contains("GPano:ProjectionType>Equirectangular")
-            }
-        } catch (e: Exception) {
-            false
-        } catch (e: OutOfMemoryError) {
-            false
-        }
-
-        activity?.runOnUiThread {
-            binding.panoramaOutline.beVisibleIf(mIsPanorama)
-            if (mIsFullscreen) {
-                binding.panoramaOutline.alpha = 0f
-            }
-        }
-    }
-
     private fun getImageOrientation(): Int {
         val defaultOrientation = -1
         var orient = defaultOrientation
@@ -914,28 +812,17 @@ class PhotoFragment : ViewPagerFragment() {
             val path = getFilePathToShow()
             if (CryptoManager.isEncryptedFile(path)) {
                 CryptoManager.openDecryptedContentStream(File(path))?.use { stream ->
-                    val exif = androidx.exifinterface.media.ExifInterface(stream)
-                    orient = exif.getAttributeInt(TAG_ORIENTATION, defaultOrientation)
+                    orient = ExifInterface(stream).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
                 }
                 return orient
             }
-            orient = if (path.startsWith("content:/")) {
-                val inputStream = requireContext().contentResolver.openInputStream(Uri.parse(path))
-                val exif = ExifInterface()
-                exif.readExif(inputStream, ExifInterface.Options.OPTION_ALL)
-                val tag = exif.getTag(ExifInterface.TAG_ORIENTATION)
-                tag?.getValueAsInt(defaultOrientation) ?: defaultOrientation
-            } else {
-                val exif = androidx.exifinterface.media.ExifInterface(path)
-                exif.getAttributeInt(TAG_ORIENTATION, defaultOrientation)
-            }
-
-            if (orient == defaultOrientation || requireContext().isPathOnOTG(getFilePathToShow())) {
+            orient = if (path.startsWith("content:/") || requireContext().isPathOnOTG(path)) {
                 val uri = if (path.startsWith("content:/")) Uri.parse(path) else Uri.fromFile(File(path))
-                val inputStream = requireContext().contentResolver.openInputStream(uri)
-                val exif2 = ExifInterface()
-                exif2.readExif(inputStream, ExifInterface.Options.OPTION_ALL)
-                orient = exif2.getTag(ExifInterface.TAG_ORIENTATION)?.getValueAsInt(defaultOrientation) ?: defaultOrientation
+                requireContext().contentResolver.openInputStream(uri)?.use { stream ->
+                    ExifInterface(stream).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
+                } ?: defaultOrientation
+            } else {
+                ExifInterface(path).getAttributeInt(TAG_ORIENTATION, defaultOrientation)
             }
         } catch (ignored: Exception) {
         } catch (ignored: OutOfMemoryError) {

@@ -284,7 +284,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         )
     }
 
-    private var mStoredAnimateGifs = true
     private var mStoredCropThumbnails = true
     private var mStoredScrollHorizontally = true
     private var mStoredShowFileTypes = true
@@ -379,10 +378,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         // The font can be changed in Appearance while this activity stays alive.
         binding.root.refreshFontRecursively()
         updateExcludedFoldersAvailability()
-        if (mStoredAnimateGifs != config.animateGifs) {
-            getMediaAdapter()?.updateAnimateGifs(config.animateGifs)
-        }
-
         if (mStoredCropThumbnails != config.cropThumbnails) {
             getMediaAdapter()?.updateCropThumbnails(config.cropThumbnails)
         }
@@ -979,7 +974,6 @@ class MediaActivity : SimpleActivity(), MediaOperationsListener {
         mStoredTextColor = getProperTextColor()
         mStoredPrimaryColor = getProperPrimaryColor()
         config.apply {
-            mStoredAnimateGifs = animateGifs
             mStoredCropThumbnails = cropThumbnails
             mStoredScrollHorizontally = scrollHorizontally
             mStoredShowFileTypes = showThumbnailFileTypes

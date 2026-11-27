@@ -77,6 +77,12 @@
             android:foregroundServiceType="dataSync" />
 
         <service
+            android:name="org.fossify.gallery.helpers.media.IsolatedMediaDecoderService"
+            android:exported="false"
+            android:isolatedProcess="true"
+            android:process=":media_decoder" />
+
+        <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
             android:exported="false">

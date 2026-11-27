@@ -1,12 +1,12 @@
 package org.fossify.gallery.helpers
 
-import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.media.MediaDataSource
 import android.media.MediaMetadataRetriever
 import androidx.exifinterface.media.ExifInterface
 import org.fossify.commons.extensions.isGif
 import org.fossify.commons.extensions.isVideoFast
+import org.fossify.gallery.helpers.media.IsolatedDecoderClient
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -74,17 +74,12 @@ object MediaDimensions {
     @Suppress("TooGenericExceptionCaught", "SwallowedException")
     fun getImageSize(path: String): Point? {
         return try {
-            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            if (CryptoManager.isEncryptedFile(path)) {
-                CryptoManager.openDecryptedContentStream(File(path))?.use { stream ->
-                    BitmapFactory.decodeStream(stream, null, options)
-                }
-            } else {
-                BitmapFactory.decodeFile(path, options)
-            }
-
-            if (options.outWidth > 0 && options.outHeight > 0) {
-                Point(options.outWidth, options.outHeight)
+            val bounds = IsolatedDecoderClient.probeFileBounds(
+                IsolatedDecoderClient.appContextOrNull,
+                File(path),
+            )
+            if (bounds != null && bounds.width > 0 && bounds.height > 0) {
+                Point(bounds.width, bounds.height)
             } else {
                 null
             }
@@ -164,10 +159,13 @@ object MediaDimensions {
         }
 
         return try {
-            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-            if (options.outWidth > 0 && options.outHeight > 0) {
-                Point(options.outWidth, options.outHeight)
+            val bounds = IsolatedDecoderClient.probeBytesBounds(
+                IsolatedDecoderClient.appContextOrNull,
+                bytes,
+                file.name,
+            )
+            if (bounds != null && bounds.width > 0 && bounds.height > 0) {
+                Point(bounds.width, bounds.height)
             } else {
                 null
             }

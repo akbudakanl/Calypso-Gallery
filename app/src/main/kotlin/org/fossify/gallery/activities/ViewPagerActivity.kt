@@ -57,7 +57,7 @@ import org.fossify.commons.extensions.getDoesFilePathExist
 import org.fossify.commons.extensions.getDuration
 import org.fossify.commons.extensions.getFilenameFromPath
 import org.fossify.commons.extensions.getFinalUriFromPath
-import org.fossify.commons.extensions.getImageResolution
+import org.fossify.gallery.helpers.media.probeIsolatedImageResolution
 import org.fossify.commons.extensions.getIsPathDirectory
 import org.fossify.commons.extensions.getParentPath
 import org.fossify.commons.extensions.getProperBackgroundColor
@@ -1670,50 +1670,59 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         printHelper.scaleMode = PrintHelper.SCALE_MODE_FIT
         printHelper.orientation = SCREEN_ORIENTATION_PORTRAIT
 
-        try {
-            val resolution = path.getImageResolution(this)
-            if (resolution == null) {
-                toast(org.fossify.commons.R.string.unknown_error_occurred)
-                return
+        ensureBackgroundThread {
+            val resolution = probeIsolatedImageResolution(path)
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                if (resolution == null) {
+                    toast(org.fossify.commons.R.string.unknown_error_occurred)
+                    return@runOnUiThread
+                }
+
+                var requestedWidth = resolution.x
+                var requestedHeight = resolution.y
+
+                if (requestedWidth >= MAX_PRINT_SIDE_SIZE) {
+                    requestedHeight = (requestedHeight / (requestedWidth / MAX_PRINT_SIDE_SIZE.toFloat())).toInt()
+                    requestedWidth = MAX_PRINT_SIDE_SIZE
+                } else if (requestedHeight >= MAX_PRINT_SIDE_SIZE) {
+                    requestedWidth = (requestedWidth / (requestedHeight / MAX_PRINT_SIDE_SIZE.toFloat())).toInt()
+                    requestedHeight = MAX_PRINT_SIDE_SIZE
+                }
+
+                val options = RequestOptions()
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+
+                Glide.with(this)
+                    .asBitmap()
+                    .load(path)
+                    .apply(options)
+                    .listener(object : RequestListener<Bitmap> {
+                        override fun onLoadFailed(
+                            e: GlideException?,
+                            model: Any?,
+                            target: Target<Bitmap>,
+                            isFirstResource: Boolean,
+                        ): Boolean {
+                            showErrorToast(e?.localizedMessage ?: "")
+                            return false
+                        }
+
+                        override fun onResourceReady(
+                            bitmap: Bitmap,
+                            model: Any,
+                            target: Target<Bitmap>,
+                            dataSource: DataSource,
+                            isFirstResource: Boolean,
+                        ): Boolean {
+                            val jobName = getCurrentMedium()?.name?.ifEmpty { null }
+                                ?: CryptoManager.getDisplayName(path)
+                            printHelper.printBitmap(jobName, bitmap)
+                            return false
+                        }
+                    }).submit(requestedWidth, requestedHeight)
             }
-
-            var requestedWidth = resolution.x
-            var requestedHeight = resolution.y
-
-            if (requestedWidth >= MAX_PRINT_SIDE_SIZE) {
-                requestedHeight = (requestedHeight / (requestedWidth / MAX_PRINT_SIDE_SIZE.toFloat())).toInt()
-                requestedWidth = MAX_PRINT_SIDE_SIZE
-            } else if (requestedHeight >= MAX_PRINT_SIDE_SIZE) {
-                requestedWidth = (requestedWidth / (requestedHeight / MAX_PRINT_SIDE_SIZE.toFloat())).toInt()
-                requestedHeight = MAX_PRINT_SIDE_SIZE
-            }
-
-            val options = RequestOptions()
-                .skipMemoryCache(true)
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-
-            Glide.with(this)
-                .asBitmap()
-                .load(path)
-                .apply(options)
-                .listener(object : RequestListener<Bitmap> {
-                    override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>, isFirstResource: Boolean): Boolean {
-                        showErrorToast(e?.localizedMessage ?: "")
-                        return false
-                    }
-
-                    override fun onResourceReady(
-                        bitmap: Bitmap,
-                        model: Any,
-                        target: Target<Bitmap>,
-                        dataSource: DataSource,
-                        isFirstResource: Boolean,
-                    ): Boolean {
-                        printHelper.printBitmap(getCurrentMedium()?.name?.ifEmpty { null } ?: CryptoManager.getDisplayName(path), bitmap)
-                        return false
-                    }
-                }).submit(requestedWidth, requestedHeight)
-        } catch (e: Exception) {
         }
     }
 

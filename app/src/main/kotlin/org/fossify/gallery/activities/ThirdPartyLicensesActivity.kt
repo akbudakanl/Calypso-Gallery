@@ -162,6 +162,36 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             R.string.license_rustcrypto_argon2_url,
         ),
         ThirdPartyLicenseItem(
+            R.string.license_rust_gif_title,
+            R.string.license_rust_gif_text,
+            R.string.license_rust_gif_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_image_webp_title,
+            R.string.license_rust_image_webp_text,
+            R.string.license_rust_image_webp_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_png_title,
+            R.string.license_rust_png_text,
+            R.string.license_rust_png_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_zune_jpeg_title,
+            R.string.license_rust_zune_jpeg_text,
+            R.string.license_rust_zune_jpeg_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_jxl_oxide_title,
+            R.string.license_rust_jxl_oxide_text,
+            R.string.license_rust_jxl_oxide_url,
+        ),
+        ThirdPartyLicenseItem(
+            R.string.license_rust_jni_sys_title,
+            R.string.license_rust_jni_sys_text,
+            R.string.license_rust_jni_sys_url,
+        ),
+        ThirdPartyLicenseItem(
             org.fossify.commons.R.string.subsampling_title,
             org.fossify.commons.R.string.subsampling_text,
             org.fossify.commons.R.string.subsampling_url,
@@ -170,16 +200,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.glide_title,
             org.fossify.commons.R.string.glide_text,
             org.fossify.commons.R.string.glide_url,
-        ),
-        ThirdPartyLicenseItem(
-            R.string.license_webpdecoder_title,
-            R.string.license_webpdecoder_text,
-            R.string.license_webpdecoder_url,
-        ),
-        ThirdPartyLicenseItem(
-            R.string.license_jxl_coder_title,
-            R.string.license_jxl_coder_text,
-            R.string.license_jxl_coder_url,
         ),
         ThirdPartyLicenseItem(
             org.fossify.commons.R.string.cropper_title,
@@ -197,11 +217,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.pattern_url,
         ),
         ThirdPartyLicenseItem(
-            org.fossify.commons.R.string.gif_drawable_title,
-            org.fossify.commons.R.string.gif_drawable_text,
-            org.fossify.commons.R.string.gif_drawable_url,
-        ),
-        ThirdPartyLicenseItem(
             R.string.license_fast_scroller_title,
             R.string.license_fast_scroller_text,
             R.string.license_fast_scroller_url,
@@ -210,16 +225,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.exoplayer_title,
             org.fossify.commons.R.string.exoplayer_text,
             org.fossify.commons.R.string.exoplayer_url,
-        ),
-        ThirdPartyLicenseItem(
-            org.fossify.commons.R.string.sanselan_title,
-            org.fossify.commons.R.string.sanselan_text,
-            org.fossify.commons.R.string.sanselan_url,
-        ),
-        ThirdPartyLicenseItem(
-            R.string.license_exif_extended_title,
-            R.string.license_exif_extended_text,
-            R.string.license_exif_extended_url,
         ),
         ThirdPartyLicenseItem(
             org.fossify.commons.R.string.filters_title,
@@ -235,11 +240,6 @@ class ThirdPartyLicensesActivity : SimpleActivity() {
             org.fossify.commons.R.string.gesture_views_title,
             org.fossify.commons.R.string.gesture_views_text,
             org.fossify.commons.R.string.gesture_views_url,
-        ),
-        ThirdPartyLicenseItem(
-            R.string.license_animated_decoders_title,
-            org.fossify.commons.R.string.apng_text,
-            org.fossify.commons.R.string.apng_url,
         ),
         ThirdPartyLicenseItem(
             org.fossify.commons.R.string.gson_title,
