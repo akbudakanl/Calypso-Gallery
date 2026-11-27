@@ -713,6 +713,11 @@
     <string name="search_settings">Buscar en ajustes</string>
     <string name="license_tink_title">Google Tink (criptografía AEAD en flujo y HKDF)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (derivación de claves Argon2id nativa)</string>
+    <string name="license_rust_gif_title">gif (decodificación de GIF)</string>
+    <string name="license_rust_png_title">png (decodificación de PNG y APNG)</string>
+    <string name="license_rust_image_webp_title">image-webp (decodificación de WebP y WebP animado)</string>
+    <string name="license_rust_jxl_oxide_title">jxl-oxide (decodificación de JPEG XL)</string>
+    <string name="license_rust_jni_sys_title">jni-sys (enlaces JNI de Rust)</string>
     <string name="license_androidsvg_title">AndroidSVG (renderizado de SVG)</string>
     <string name="license_material_icons_title">Material Design Icons (iconos de interfaz)</string>
     <string name="checking_password">Comprobando contraseña…</string>

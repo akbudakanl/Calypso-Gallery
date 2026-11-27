@@ -781,6 +781,11 @@
     <string name="search_settings">Parametrlərdə axtar</string>
     <string name="license_tink_title">Google Tink (axınlı AEAD və HKDF kriptoqrafiyası)</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2 (yerli Argon2id açar törətməsi)</string>
+    <string name="license_rust_gif_title">gif (GIF dekodlaşdırması)</string>
+    <string name="license_rust_png_title">png (PNG və APNG dekodlaşdırması)</string>
+    <string name="license_rust_image_webp_title">image-webp (WebP və animasiyalı WebP dekodlaşdırması)</string>
+    <string name="license_rust_jxl_oxide_title">jxl-oxide (JPEG XL dekodlaşdırması)</string>
+    <string name="license_rust_jni_sys_title">jni-sys (Rust JNI bağlayıcıları)</string>
     <string name="license_androidsvg_title">AndroidSVG (SVG göstərilməsi)</string>
     <string name="license_material_icons_title">Material Design Icons (interfeys nişanları)</string>
     <string name="checking_password">Parol yoxlanılır…</string>

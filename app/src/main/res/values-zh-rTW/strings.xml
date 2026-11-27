@@ -707,6 +707,11 @@
     <string name="search_settings">搜尋設定</string>
     <string name="license_tink_title">Google Tink（串流 AEAD 與 HKDF 加密技術）</string>
     <string name="license_rustcrypto_argon2_title">RustCrypto Argon2（原生 Argon2id 金鑰衍生）</string>
+    <string name="license_rust_gif_title">gif（GIF 解碼）</string>
+    <string name="license_rust_png_title">png（PNG 與 APNG 解碼）</string>
+    <string name="license_rust_image_webp_title">image-webp（WebP 與動態 WebP 解碼）</string>
+    <string name="license_rust_jxl_oxide_title">jxl-oxide（JPEG XL 解碼）</string>
+    <string name="license_rust_jni_sys_title">jni-sys（Rust JNI 繫結）</string>
     <string name="license_androidsvg_title">AndroidSVG（SVG 算繪）</string>
     <string name="license_material_icons_title">Material Design Icons（介面圖示）</string>
     <string name="checking_password">正在檢查密碼…</string>

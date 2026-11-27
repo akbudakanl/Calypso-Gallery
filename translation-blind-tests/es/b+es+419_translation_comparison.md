@@ -1324,3 +1324,16 @@ Added 4 new fork-only Media security & SVG toggle strings in `values-b+es+419/st
 | `show_svg_files` | Show SVG files | Mostrar archivos SVG | Switch row label (default OFF) and confirmation dialog title |
 | `show_svg_files_warning` | SVG files are rendered in an isolated process using an older third-party library that no longer receives updates. Only enable this if you need to view SVG files. | Los archivos SVG se renderizan en un proceso aislado mediante una biblioteca de terceros antigua que ya no recibe actualizaciones. Actívalo solo si necesitas ver archivos SVG. | Confirmation dialog body shown before enabling `show_svg_files` (`tú` register) |
 | `enable_svg_files` | Enable | Activar | Positive button in the confirmation dialog |
+
+
+## Pure-Rust media decoder license titles (this revision)
+
+Added 5 fork-only Third-party licenses title strings for `calypso-media` crates in `values-b+es+419/strings.xml` (Spanish — Latin America). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Spanish (Latin America) (`values-b+es+419/strings.xml`) | Notes |
+|---|---|---|---|
+| `license_rust_gif_title` | gif (GIF decoding) | gif (decodificación de GIF) | Third-party license title for Rust `gif` crate |
+| `license_rust_png_title` | png (PNG & APNG decoding) | png (decodificación de PNG y APNG) | Third-party license title for Rust `png` crate |
+| `license_rust_image_webp_title` | image-webp (WebP & animated WebP decoding) | image-webp (decodificación de WebP y WebP animado) | Third-party license title for Rust `image-webp` crate |
+| `license_rust_jxl_oxide_title` | jxl-oxide (JPEG XL decoding) | jxl-oxide (decodificación de JPEG XL) | Third-party license title for Rust `jxl-oxide` crate |
+| `license_rust_jni_sys_title` | jni-sys (Rust JNI bindings) | jni-sys (enlaces JNI de Rust) | Third-party license title for Rust `jni-sys` crate |

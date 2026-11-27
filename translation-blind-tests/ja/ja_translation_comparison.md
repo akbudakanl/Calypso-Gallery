@@ -1327,3 +1327,16 @@ Added 4 new fork-only Media security & SVG toggle strings in `values-ja/strings.
 | `show_svg_files` | Show SVG files | SVG ファイルを表示 | Switch row label (default OFF) and confirmation dialog title |
 | `show_svg_files_warning` | SVG files are rendered in an isolated process using an older third-party library that no longer receives updates. Only enable this if you need to view SVG files. | SVG ファイルは、更新されなくなった古いサードパーティ製ライブラリを使用して、分離されたプロセスでレンダリングされます。SVG ファイルを表示する必要がある場合のみ有効にしてください。 | Confirmation dialog body shown before enabling `show_svg_files` |
 | `enable_svg_files` | Enable | 有効にする | Positive button in the confirmation dialog |
+
+
+## Pure-Rust media decoder license titles (this revision)
+
+Added 5 fork-only Third-party licenses title strings for `calypso-media` crates in `values-ja/strings.xml` (Japanese). English source: `values/strings.xml`.
+
+| Key (`name`) | English (`values/strings.xml`) | Japanese (`values-ja/strings.xml`) | Notes |
+|---|---|---|---|
+| `license_rust_gif_title` | gif (GIF decoding) | gif（GIF デコード） | Third-party license title for Rust `gif` crate |
+| `license_rust_png_title` | png (PNG & APNG decoding) | png（PNG および APNG デコード） | Third-party license title for Rust `png` crate |
+| `license_rust_image_webp_title` | image-webp (WebP & animated WebP decoding) | image-webp（WebP およびアニメーション WebP デコード） | Third-party license title for Rust `image-webp` crate |
+| `license_rust_jxl_oxide_title` | jxl-oxide (JPEG XL decoding) | jxl-oxide（JPEG XL デコード） | Third-party license title for Rust `jxl-oxide` crate |
+| `license_rust_jni_sys_title` | jni-sys (Rust JNI bindings) | jni-sys（Rust JNI バインディング） | Third-party license title for Rust `jni-sys` crate |
