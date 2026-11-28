@@ -42,9 +42,10 @@ try {
     if ($null -eq $cliFolder) { exit 3 }
 
     if ($Action -eq 'pull') {
-        if (-not (Test-Path -LiteralPath $LocalRoot)) {
-            New-Item -ItemType Directory -Path $LocalRoot -Force | Out-Null
+        if (Test-Path -LiteralPath $LocalRoot) {
+            Remove-Item -LiteralPath $LocalRoot -Recurse -Force
         }
+        New-Item -ItemType Directory -Path $LocalRoot -Force | Out-Null
         foreach ($bridge in $cliFolder.Items()) {
             if ($bridge.IsFolder) {
                 $dest = Join-Path $LocalRoot $bridge.Name

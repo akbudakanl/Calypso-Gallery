@@ -322,7 +322,12 @@ fun CryptoManager.rewrapVaultHeaderWithCurrentKdf(context: Context, secret: Char
                 headerBytes, secretBytes, argon2MemoryKb, argon2Iterations, argon2Parallelism, protectionType
             )
         }
-        newHeaderBytes != null && persistRewrappedVaultHeader(context, vaultRoot, headerFile, newHeaderBytes)
+        val persisted = newHeaderBytes != null &&
+            persistRewrappedVaultHeader(context, vaultRoot, headerFile, newHeaderBytes)
+        if (persisted) {
+            CliBridgeManager.syncRewrappedHeader(context, vaultRoot, headerBytes)
+        }
+        persisted
     } catch (_: OutOfMemoryError) {
         trimGlideMemoryCache(context)
         false

@@ -134,21 +134,7 @@ object CliBridgeManager {
     fun refresh(context: Context, bridge: Bridge): Boolean {
         val fingerprint = currentFingerprint() ?: return false
         val vaultRoot = CryptoManager.findVaultRoot(context) ?: return false
-        val header = File(vaultRoot, VAULT_HEADER_FILE)
-        if (header.isFile) {
-            runCatching { header.copyTo(File(bridge.dir, VAULT_HEADER_FILE), overwrite = true) }.onFailure { return false }
-        }
-        // An archived bridge keeps its original source path: restoreFromArchive() uses it
-        // to find the bridge when the vault is later moved back out of the archive.
-        val sourcePath = if (bridge.dir.parentFile == archiveRoot(context)) {
-            bridge.sourcePath
-        } else {
-            vaultRoot.absolutePath
-        }
-        val refreshed = bridge.copy(fingerprint = fingerprint, sourcePath = sourcePath)
-        writeMarker(refreshed, active = true)
-        setActiveFor(context, fingerprint, preferred = bridge.dir)
-        return true
+        return refreshForFingerprint(context, fingerprint, vaultRoot, preferred = bridge.dir) != null
     }
 
     /** Marks exactly one bridge as active and every other bridge (archived included) as inactive. */
@@ -168,9 +154,11 @@ object CliBridgeManager {
     private fun findBridgeForVault(
         context: Context,
         vaultRoot: File,
-        candidates: List<Bridge>
+        candidates: List<Bridge>,
+        previousHeaderBytes: ByteArray? = null
     ): Bridge? {
-        val header = runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
+        val header = previousHeaderBytes
+            ?: runCatching { File(vaultRoot, VAULT_HEADER_FILE).readBytes() }.getOrNull()
         if (header != null) {
             candidates.firstOrNull { bridge ->
                 runCatching { File(bridge.dir, VAULT_HEADER_FILE).readBytes() }
@@ -220,17 +208,112 @@ object CliBridgeManager {
 
     /**
      * Idempotent preparation used by the import flow and by vault creation:
-     * create the bridge if missing, otherwise refresh its header and make it
-     * the single active bridge. Never creates a second folder for the same KEK.
+     * create the bridge if missing, otherwise refresh its header, clean up any
+     * empty duplicate bridges for the same KEK, and make it the single active bridge.
      */
     fun ensureActiveBridge(context: Context): PrepareResult {
         val fingerprint = currentFingerprint() ?: return PrepareResult.Locked
-        val existing = bridgeFor(context, fingerprint)
-        if (existing != null) {
-            refresh(context, existing)
-            return PrepareResult.AlreadyExists(existing)
-        }
+        val vaultRoot = CryptoManager.findVaultRoot(context) ?: return PrepareResult.NoVault
+        val refreshed = refreshForFingerprint(context, fingerprint, vaultRoot)
+        if (refreshed != null) return PrepareResult.AlreadyExists(refreshed)
         return prepare(context)
+    }
+
+    /**
+     * Updates the CLI bridge header(s) after a KDF re-wrap. Works both when the vault is
+     * unlocked and when `rewrapVaultHeaderWithCurrentKdf` ran ephemerally while locked.
+     */
+    fun syncRewrappedHeader(
+        context: Context,
+        vaultRoot: File,
+        previousHeaderBytes: ByteArray
+    ) {
+        val fingerprint = currentFingerprint()
+        if (fingerprint != null) {
+            refreshForFingerprint(context, fingerprint, vaultRoot)
+            return
+        }
+        val candidates = bridges(context, includeArchived = true)
+        val matched = findBridgeForVault(context, vaultRoot, candidates, previousHeaderBytes) ?: return
+        refreshForFingerprint(context, matched.fingerprint, vaultRoot, preferred = matched.dir)
+    }
+
+    private fun refreshForFingerprint(
+        context: Context,
+        fingerprint: String,
+        vaultRoot: File,
+        preferred: File? = null
+    ): Bridge? {
+        val matching = bridges(context, includeArchived = true)
+            .filter { it.fingerprint.equals(fingerprint, ignoreCase = true) }
+        val bridge = selectPrimaryBridge(context, matching, preferred) ?: return null
+        val header = File(vaultRoot, VAULT_HEADER_FILE)
+        if (header.isFile) {
+            val copied = runCatching {
+                header.copyTo(File(bridge.dir, VAULT_HEADER_FILE), overwrite = true)
+            }.isSuccess
+            if (!copied) return null
+        }
+        // An archived bridge keeps its original source path: restoreFromArchive() uses it
+        // to find the bridge when the vault is later moved back out of the archive.
+        val primarySource = if (bridge.dir.parentFile == archiveRoot(context)) {
+            bridge.sourcePath
+        } else {
+            vaultRoot.absolutePath
+        }
+        val refreshed = bridge.copy(fingerprint = fingerprint, sourcePath = primarySource)
+        writeMarker(refreshed, active = true)
+        consolidateDuplicates(context, matching, bridge.dir, vaultRoot, header)
+        setActiveFor(context, fingerprint, preferred = bridge.dir)
+        return refreshed
+    }
+
+    private fun consolidateDuplicates(
+        context: Context,
+        matching: List<Bridge>,
+        primaryDir: File,
+        vaultRoot: File,
+        header: File
+    ) {
+        val archiveDir = archiveRoot(context)
+        for (dup in matching) {
+            if (dup.dir == primaryDir) continue
+            if (!hasStagedPayload(dup.dir)) {
+                deleteBridgeDir(context, dup.dir)
+                continue
+            }
+            if (header.isFile) {
+                runCatching { header.copyTo(File(dup.dir, VAULT_HEADER_FILE), overwrite = true) }
+            }
+            val dupSource = if (dup.dir.parentFile == archiveDir) dup.sourcePath else vaultRoot.absolutePath
+            writeMarker(dup.copy(sourcePath = dupSource), active = false)
+        }
+        deleteIfEmpty(archiveDir)
+    }
+
+    private fun selectPrimaryBridge(
+        context: Context,
+        matching: List<Bridge>,
+        preferred: File? = null
+    ): Bridge? {
+        if (matching.isEmpty()) return null
+        val archiveDir = archiveRoot(context)
+        return preferred?.let { p -> matching.firstOrNull { it.dir == p } }
+            ?: matching.firstOrNull { it.dir.parentFile != archiveDir && it.active }
+            ?: matching.firstOrNull { it.dir.parentFile != archiveDir }
+            ?: matching.firstOrNull { it.active }
+            ?: matching.first()
+    }
+
+    private fun hasStagedPayload(dir: File): Boolean {
+        val children = dir.listFiles() ?: return false
+        return children.any { child ->
+            child.isDirectory || (
+                child.name != VAULT_HEADER_FILE &&
+                    child.name != CLI_BRIDGE_MARKER_FILE &&
+                    child.name != "$CLI_BRIDGE_MARKER_FILE.tmp"
+                )
+        }
     }
 
     /**

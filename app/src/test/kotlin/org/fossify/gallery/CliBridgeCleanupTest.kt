@@ -141,4 +141,62 @@ class CliBridgeCleanupTest {
             deletion.contains("CryptoManager.secureWipeAndDeleteFile(file, context)")
         )
     }
+
+    @Test
+    fun kdfRewrapSyncsBridgeHeaderEvenWhenLocked() {
+        val credentials = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/CryptoManagerCredentials.kt"
+        ).readText()
+        val rewrapBody = credentials.substringAfter("fun CryptoManager.rewrapVaultHeaderWithCurrentKdf(")
+        assertTrue(
+            "KDF re-wrap must sync CLI bridge header after persisting .vault",
+            rewrapBody.contains("CliBridgeManager.syncRewrappedHeader(context, vaultRoot, headerBytes)")
+        )
+
+        val bridges = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/CliBridgeManager.kt"
+        ).readText()
+        val syncBody = bridges.substringAfter("fun syncRewrappedHeader(")
+            .substringBefore("private fun refreshForFingerprint(")
+        assertTrue(
+            "syncRewrappedHeader must fall back to matching previousHeaderBytes when locked",
+            syncBody.contains("findBridgeForVault(context, vaultRoot, candidates, previousHeaderBytes)")
+        )
+    }
+
+    @Test
+    fun duplicateBridgesWithSameFingerprintAreConsolidated() {
+        val bridges = locateAppFile(
+            "src/main/kotlin/org/fossify/gallery/helpers/CliBridgeManager.kt"
+        ).readText()
+        val consolidateBody = bridges.substringAfter("private fun consolidateDuplicates(")
+            .substringBefore("private fun selectPrimaryBridge(")
+        assertTrue(
+            "Empty duplicate bridges must be deleted",
+            consolidateBody.contains("!hasStagedPayload(dup.dir)") &&
+                consolidateBody.contains("deleteBridgeDir(context, dup.dir)")
+        )
+        assertTrue(
+            "Non-empty duplicate bridges must have their .vault header refreshed",
+            consolidateBody.contains("header.copyTo(File(dup.dir, VAULT_HEADER_FILE), overwrite = true)")
+        )
+    }
+
+    @Test
+    fun windowsBridgeSyncCleansTempWorkspaceBeforePull() {
+        val repoRoot = if (File("tools/calypso-cli/run.bat").exists()) File(".") else File("..")
+        val runBat = File(repoRoot, "tools/calypso-cli/run.bat").readText()
+        val syncPs1 = File(repoRoot, "tools/calypso-cli/sync_phone.ps1").readText()
+
+        val pullIdx = runBat.indexOf("-Action pull")
+        val cleanIdx = runBat.indexOf("rmdir /s /q \"%BRIDGE_TEMP%\"")
+        assertTrue("run.bat must clean BRIDGE_TEMP before pull", cleanIdx in 0 until pullIdx)
+
+        val psPullBody = syncPs1.substringAfter("if (\$Action -eq 'pull')")
+            .substringBefore("} else {")
+        assertTrue(
+            "sync_phone.ps1 pull must remove stale LocalRoot before copying from phone",
+            psPullBody.contains("Remove-Item -LiteralPath \$LocalRoot -Recurse -Force")
+        )
+    }
 }

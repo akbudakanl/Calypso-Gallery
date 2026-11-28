@@ -97,12 +97,14 @@ echo [Sandbox] Python audit hook active ^(OS-level bwrap sandbox is Linux-only^)
 REM Automatic phone bridge sync (best effort; manual steps remain as fallback).
 set "PHONE_SYNC=0"
 set "BRIDGE_TEMP=%TEMP%\calypso-cli-bridge"
+if exist "%BRIDGE_TEMP%" rmdir /s /q "%BRIDGE_TEMP%" >nul 2>&1
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\sync_phone.ps1" -Action pull -LocalRoot "%BRIDGE_TEMP%" >nul 2>&1
 if !errorlevel! equ 0 (
     set "PHONE_SYNC=1"
     set "CALYPSO_BRIDGE_ROOT=%BRIDGE_TEMP%"
     echo [Phone] Bridge copied to temporary workspace.
 ) else (
+    if exist "%BRIDGE_TEMP%" rmdir /s /q "%BRIDGE_TEMP%" >nul 2>&1
     echo [Phone] No MTP phone bridge found; continuing with local bridges.
 )
 
@@ -110,10 +112,16 @@ if !errorlevel! equ 0 (
 set "EXIT_CODE=%errorlevel%"
 
 if "!PHONE_SYNC!"=="1" (
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\sync_phone.ps1" -Action push -LocalRoot "%BRIDGE_TEMP%" >nul 2>&1
-    if !errorlevel! neq 0 (
-        echo [Phone] Could not copy the bridge back; copy it manually.
-        set "EXIT_CODE=1"
+    if !EXIT_CODE! equ 0 (
+        powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%\sync_phone.ps1" -Action push -LocalRoot "%BRIDGE_TEMP%" >nul 2>&1
+        if !errorlevel! neq 0 (
+            echo [Phone] Could not copy the bridge back; copy it manually from %BRIDGE_TEMP%.
+            set "EXIT_CODE=1"
+        ) else (
+            if exist "%BRIDGE_TEMP%" rmdir /s /q "%BRIDGE_TEMP%" >nul 2>&1
+        )
+    ) else (
+        echo [Phone] Temporary workspace kept at %BRIDGE_TEMP% ^(CLI error^).
     )
 )
 
