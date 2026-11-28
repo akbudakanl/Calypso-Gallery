@@ -21,6 +21,7 @@ import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.value
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.gallery.R
+import org.fossify.gallery.databinding.DialogRenameEncryptedFolderBinding
 import org.fossify.gallery.databinding.DialogRenameEncryptedItemBinding
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.TYPE_VIDEOS
@@ -166,29 +167,19 @@ class RenameEncryptedFolderDialog(
     val currentName: String,
     val callback: (newName: String) -> Unit
 ) {
-    init {
-        val padding = (20 * activity.resources.displayMetrics.density).toInt()
-        val editText = AppCompatEditText(activity).apply {
-            setText(currentName)
-            setSelection(currentName.length)
-            hint = activity.getString(R.string.album_name)
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            imeOptions = EditorInfo.IME_ACTION_DONE
-            setSingleLine(true)
-            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        }
+    private val binding = DialogRenameEncryptedFolderBinding.inflate(activity.layoutInflater)
 
-        val container = FrameLayout(activity).apply {
-            setPadding(padding, padding, padding, 0)
-            addView(editText)
-        }
-        container.applyPaletteCursors(activity)
+    init {
+        val editText = binding.renameEncryptedFolderValue
+        editText.setText(currentName)
+        editText.setSelection(currentName.length)
+        binding.root.applyPaletteCursors(activity)
 
         activity.getAlertDialogBuilder()
             .setPositiveButton(org.fossify.commons.R.string.ok, null)
             .setNegativeButton(org.fossify.commons.R.string.cancel, null)
             .apply {
-                activity.setupDialogStuff(container, this, org.fossify.commons.R.string.rename) { alertDialog -> alertDialog.secureVaultWindow()
+                activity.setupDialogStuff(binding.root, this, org.fossify.commons.R.string.rename) { alertDialog -> alertDialog.secureVaultWindow()
                     alertDialog.showKeyboard(editText)
                     alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                         val newName = editText.text.toString().trim()
