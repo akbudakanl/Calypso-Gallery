@@ -3,6 +3,8 @@ package org.fossify.gallery.helpers
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.annotation.RequiresApi
 import org.fossify.commons.helpers.isUpsideDownCakePlus
@@ -42,5 +44,13 @@ object ColorModeHelper {
 
     fun resetColorMode(activity: Activity?) {
         activity?.let { setColorMode(it, ActivityInfo.COLOR_MODE_DEFAULT) }
+    }
+
+    fun shouldPreferGesturesZoomForHdr(drawable: Drawable?, ultraHdrEnabled: Boolean): Boolean {
+        if (!ultraHdrEnabled || Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            return false
+        }
+        val bitmap = (drawable as? BitmapDrawable)?.bitmap ?: return false
+        return hasHdrContent(bitmap)
     }
 }

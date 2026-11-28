@@ -564,8 +564,16 @@ class PhotoFragment : ViewPagerFragment() {
                 ): Boolean {
                     applyProperColorMode(resource)
                     val allowZoomingImages = context?.config?.allowZoomingImages ?: true
-                    binding.gesturesView.controller.settings.isZoomEnabled = mMedium.isRaw() || mCurrentRotationDegrees != 0 || allowZoomingImages == false
-                    if (mIsFragmentVisible && addZoomableView) {
+                    val keepHdrGesturesZoom = ColorModeHelper.shouldPreferGesturesZoomForHdr(
+                        resource,
+                        context?.config?.ultraHdrRendering ?: true,
+                    )
+                    binding.gesturesView.controller.settings.isZoomEnabled =
+                        mMedium.isRaw() ||
+                        mCurrentRotationDegrees != 0 ||
+                        allowZoomingImages == false ||
+                        keepHdrGesturesZoom
+                    if (mIsFragmentVisible && addZoomableView && !keepHdrGesturesZoom) {
                         scheduleZoomableView()
                     }
                     return false
@@ -736,11 +744,16 @@ class PhotoFragment : ViewPagerFragment() {
     private fun canAttachZoomableView(): Boolean {
         val zoomAllowed = context?.config?.allowZoomingImages == true
         val isZoomableMedia = mMedium.isImage() || mMedium.isPortrait()
+        val keepHdrGesturesZoom = ColorModeHelper.shouldPreferGesturesZoomForHdr(
+            binding.gesturesView.drawable,
+            context?.config?.ultraHdrRendering ?: true,
+        )
         return mIsFragmentVisible &&
             listener?.isPagerScrolling() != true &&
             zoomAllowed &&
             isZoomableMedia &&
-            !mIsSubsamplingVisible
+            !mIsSubsamplingVisible &&
+            !keepHdrGesturesZoom
     }
 
     private fun addZoomableView() {

@@ -1,6 +1,7 @@
 package org.fossify.gallery
 
 import androidx.exifinterface.media.ExifInterface
+import org.fossify.gallery.helpers.ColorModeHelper
 import org.fossify.gallery.helpers.media.IsolatedMetadataCache
 import org.fossify.gallery.helpers.media.PhotoSwipeOptimizer
 import org.junit.Assert.assertEquals
@@ -128,5 +129,13 @@ class IsolatedSwipeOptimizationTest {
             "app/src/main/kotlin/org/fossify/gallery/helpers/ColorModeHelper.kt",
         ).readText()
         assertTrue(colorModeText.contains("window.colorMode == colorMode"))
+
+        val regionStoreText = locateRepoFile(
+            "app/src/main/kotlin/org/fossify/gallery/helpers/media/IsolatedRegionDecoderStore.kt",
+        ).readText()
+        assertTrue(regionStoreText.contains("colorSpaceId = IsolatedHdrTransport.extractColorSpaceId(bmp)"))
+
+        assertFalse(ColorModeHelper.shouldPreferGesturesZoomForHdr(null, true))
+        assertTrue(photoFragmentText.contains("shouldPreferGesturesZoomForHdr"))
     }
 }

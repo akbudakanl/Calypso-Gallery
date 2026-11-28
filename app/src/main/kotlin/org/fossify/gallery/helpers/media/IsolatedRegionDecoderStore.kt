@@ -125,6 +125,7 @@ object IsolatedRegionDecoderStore {
                 byteCount = packed.byteCount,
                 sharedOutputHandle = packed.sharedOutputHandle,
                 pixelPipePfd = packed.pixelPipePfd,
+                colorSpaceId = IsolatedHdrTransport.extractColorSpaceId(bmp),
             )
         } catch (_: Throwable) {
             IsolatedDecodeResult(IsolatedDecodeResult.STATUS_DECODE_FAILED)
