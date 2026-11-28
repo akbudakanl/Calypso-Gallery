@@ -540,6 +540,8 @@ class VideoPlaybackAndSeekIndexTest {
     fun videoFragmentPreviewAndPagerContractChecks() {
         val videoFragmentText = locateAppFile("src/main/kotlin/org/fossify/gallery/fragments/VideoFragment.kt")
             .readText()
+        val viewPagerActivityText = locateAppFile("src/main/kotlin/org/fossify/gallery/activities/ViewPagerActivity.kt")
+            .readText()
         val constantsText = locateAppFile("src/main/kotlin/org/fossify/gallery/helpers/Constants.kt")
             .readText()
 
@@ -558,11 +560,88 @@ class VideoPlaybackAndSeekIndexTest {
         assertTrue(videoFragmentText.contains("RequestOptions.frameOf("))
         assertTrue(videoFragmentText.contains("isDefaultVideoPreviewObsolete("))
 
+        // Surface recovery & color mode reset ordering before VideoFragment IDLE setup.
+        assertTrue(videoFragmentText.contains("shouldRecoverLostSurface("))
+        val resetColorIdx = viewPagerActivityText.indexOf("ColorModeHelper.resetColorMode(this)")
+        val adapterIdleIdx = viewPagerActivityText.indexOf(
+            "(binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)",
+        )
+        assertTrue(resetColorIdx in 0 until adapterIdleIdx)
+
         // Optimization 1: immediate reveal on first rendered frame (no 60ms fade delay).
         assertFalse(videoFragmentText.contains("PREVIEW_REVEAL_FADE_DURATION_MS"))
 
         // Buffers remain minimal at 50 ms.
         assertTrue(constantsText.contains("const val EXOPLAYER_PLAYBACK_BUFFER_MS = 50"))
+    }
+
+    @Test
+    fun lostSurfaceRecoveryOnlyTriggersWhenActiveVisibleAndInvalid() {
+        assertTrue(
+            VideoPlaybackUtils.shouldRecoverLostSurface(
+                isAdded = true,
+                isResumed = true,
+                isViewDestroyed = false,
+                isFragmentVisible = true,
+                isGesturePlayer = false,
+                isPanorama = false,
+                hasPlayer = true,
+                isPlayingOrPending = true,
+                hasValidSurface = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldRecoverLostSurface(
+                isAdded = true,
+                isResumed = false,
+                isViewDestroyed = false,
+                isFragmentVisible = true,
+                isGesturePlayer = false,
+                isPanorama = false,
+                hasPlayer = true,
+                isPlayingOrPending = true,
+                hasValidSurface = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldRecoverLostSurface(
+                isAdded = true,
+                isResumed = true,
+                isViewDestroyed = false,
+                isFragmentVisible = false,
+                isGesturePlayer = false,
+                isPanorama = false,
+                hasPlayer = true,
+                isPlayingOrPending = true,
+                hasValidSurface = false,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldRecoverLostSurface(
+                isAdded = true,
+                isResumed = true,
+                isViewDestroyed = false,
+                isFragmentVisible = true,
+                isGesturePlayer = false,
+                isPanorama = false,
+                hasPlayer = true,
+                isPlayingOrPending = true,
+                hasValidSurface = true,
+            )
+        )
+        assertFalse(
+            VideoPlaybackUtils.shouldRecoverLostSurface(
+                isAdded = true,
+                isResumed = true,
+                isViewDestroyed = false,
+                isFragmentVisible = true,
+                isGesturePlayer = false,
+                isPanorama = false,
+                hasPlayer = true,
+                isPlayingOrPending = false,
+                hasValidSurface = false,
+            )
+        )
     }
 
     @Test

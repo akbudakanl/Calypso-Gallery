@@ -115,6 +115,32 @@ internal object VideoPlaybackUtils {
     }
 
     /**
+     * Returns true when an active, resumed, visible video page lost its surface while playing or
+     * preparing to play and needs a fresh TextureView surface attached.
+     */
+    fun shouldRecoverLostSurface(
+        isAdded: Boolean,
+        isResumed: Boolean,
+        isViewDestroyed: Boolean,
+        isFragmentVisible: Boolean,
+        isGesturePlayer: Boolean,
+        isPanorama: Boolean,
+        hasPlayer: Boolean,
+        isPlayingOrPending: Boolean,
+        hasValidSurface: Boolean,
+    ): Boolean {
+        return isAdded &&
+            isResumed &&
+            !isViewDestroyed &&
+            isFragmentVisible &&
+            !isGesturePlayer &&
+            !isPanorama &&
+            hasPlayer &&
+            isPlayingOrPending &&
+            !hasValidSurface
+    }
+
+    /**
      * Safety-net check for [android.view.TextureView.SurfaceTextureListener.onSurfaceTextureUpdated]
      * to reveal the surface if a frame was delivered to the active texture while the preview cover
      * remained visible.

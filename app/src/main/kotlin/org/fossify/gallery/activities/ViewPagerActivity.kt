@@ -2560,10 +2560,10 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
                     if (getCurrentMedium() != null) {
                         checkOrientation()
                     }
-                    (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
                     if (getCurrentFragment() !is PhotoFragment) {
                         ColorModeHelper.resetColorMode(this)
                     }
+                    (binding.viewPager.adapter as? MyPagerAdapter)?.onPageScrollStateChanged(state)
                     syncKeepScreenOn()
                 }
             }

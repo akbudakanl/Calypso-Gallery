@@ -304,9 +304,6 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         if (binding.videoSurfaceFrame.alpha != 1f) {
             binding.videoSurfaceFrame.alpha = 1f
         }
-        if (!binding.videoPreview.isVisible()) {
-            return
-        }
         if (mIsShowingDefaultPreview) {
             if (isAdded) {
                 Glide.with(this).clear(binding.videoPreview)
@@ -314,6 +311,9 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 binding.videoPreview.setImageDrawable(null)
             }
             mIsShowingDefaultPreview = false
+        }
+        if (!binding.videoPreview.isVisible()) {
+            return
         }
         binding.videoPreview.beGone()
         binding.videoPreview.alpha = 1f
@@ -862,7 +862,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                     if (mPendingPreviewOnIdle) {
                         loadVideoPreview()
                     }
-                    if (mPendingFrameCaptureOnIdle) {
+                    if (mPendingFrameCaptureOnIdle || mIsCapturingFrame) {
                         mPendingFrameCaptureOnIdle = false
                         captureFrameSnapshot {
                             if (!mIsFragmentVisible && !mIsViewDestroyed) {
@@ -872,7 +872,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                                 detachTextureView()
                             }
                         }
-                    } else if (!mIsCapturingFrame) {
+                    } else {
                         if (mUsingSharedPlayer) {
                             releaseExoPlayer(allowDefer = false)
                         }
@@ -2200,14 +2200,56 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
             return false
         }
         if (mUsingSharedPlayer) {
-            mExoPlayer?.setVideoSurface(null)
-            mVideoSurface?.release()
-            mVideoSurface = null
+            releaseSharedSurfaceOnDestroy(surface)
         }
         if (!mIsViewDestroyed && ::binding.isInitialized) {
             ensureCachedPreviewShown()
         }
         return true
+    }
+
+    private fun releaseSharedSurfaceOnDestroy(surface: SurfaceTexture) {
+        val isActiveSurface = surface === mTextureView?.surfaceTexture
+        mExoPlayer?.setVideoSurface(null)
+        mVideoSurface?.release()
+        mVideoSurface = null
+        if (isActiveSurface && canRecoverLostSurface(hasValidSurface = false)) {
+            mTimerHandler.post { recoverLostSurface(surface) }
+        }
+    }
+
+    private fun canRecoverLostSurface(hasValidSurface: Boolean): Boolean =
+        VideoPlaybackUtils.shouldRecoverLostSurface(
+            isAdded = isAdded,
+            isResumed = isResumed,
+            isViewDestroyed = mIsViewDestroyed,
+            isFragmentVisible = mIsFragmentVisible,
+            isGesturePlayer = mConfig.gestureVideoPlayer,
+            isPanorama = mIsPanorama,
+            hasPlayer = mExoPlayer != null,
+            isPlayingOrPending = mIsPlaying || mPlayOnPrepared || mExoPlayer?.playWhenReady == true,
+            hasValidSurface = hasValidSurface,
+        )
+
+    private fun recoverLostSurface(destroyedSurface: SurfaceTexture) {
+        val player = mExoPlayer ?: return
+        if (!canRecoverLostSurface(hasValidSurface = mVideoSurface?.isValid == true) || !::binding.isInitialized) {
+            return
+        }
+        val currentTextureView = mTextureView
+        val liveTexture = currentTextureView?.surfaceTexture
+        if (liveTexture != null && liveTexture !== destroyedSurface && currentTextureView.isAvailable) {
+            attachSurface(player, liveTexture)
+            return
+        }
+        if (currentTextureView != null) {
+            currentTextureView.surfaceTextureListener = null
+            binding.videoSurfaceFrame.removeView(currentTextureView)
+            mTextureView = null
+        }
+        ensureTextureViewAttached()?.surfaceTexture?.let { surfaceTexture ->
+            attachSurface(player, surfaceTexture)
+        }
     }
 
     override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
