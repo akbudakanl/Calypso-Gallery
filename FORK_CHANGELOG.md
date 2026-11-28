@@ -4,6 +4,18 @@ User-facing release notes for Calypso Gallery. The original Fossify Gallery rele
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-28
+### Changed
+
+- **Modern playback speed icons** — replaced the legacy speed icons with a centered speedometer gauge on the video player button whose needle direction reflects slow (`< 1x`), normal (`1x`), and fast (`> 1x`) speeds without overlaying text, and updated the speed picker sheet with dedicated non-overlapping `-` / `+` gauge controls.
+- **Third-party Rust crate licenses** — added transitive `calypso-media` crate license notices (`zlib-rs`, `brotli-decompressor`, and support crates) to the third-party licenses screen.
+
+### Fixed
+
+- **Vault video progress bar alignment** — collapsed the empty bottom-actions spacer in ExoPlayer (`VideoFragment`) when bottom actions are hidden in the encrypted vault or hidden folders so the seekbar and controls sit cleanly at the bottom across MP4, MOV, and all supported formats.
+- **Themed search bar text-selection handles** — applied the active `AppearancePalette` primary color to text-selection handles across all search bars (home, encrypted vault, in-album, global search, and Settings) and dialog text inputs, removing the inherited green accent handle.
+- **Video surface recovery and color mode reset** — recovered lost `TextureView` video surfaces when resuming playback and reset wide-color window modes before switching to video playback.
+
 ## [1.1.1] - 2026-11-28
 ### Added
 
@@ -152,7 +164,7 @@ The first public release. The entries below summarize, by concept rather than by
 - **Overflow menu icon tint** — `CalypsoOverflowMenuPopup` now tints all row icons consistently with `palette.secondary`, including the Settings row.
 - **Font changes on already open screens** — changing the app font now refreshes the search bar and other text on the main, media and settings screens immediately, without restarting the app or switching between folder and file view.
 
-[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.2...HEAD
 [1.0.0]: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.0.0
 [1.0.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.0...1.0.1
 [1.0.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.1...1.0.2
@@ -160,3 +172,4 @@ The first public release. The entries below summarize, by concept rather than by
 [1.0.4]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.3...1.0.4
 [1.1.0]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.0.4...1.1.0
 [1.1.1]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.0...1.1.1
+[1.1.2]: https://github.com/akbudakanl/Calypso-Gallery/compare/1.1.1...1.1.2

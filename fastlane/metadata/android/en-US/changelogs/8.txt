@@ -1,0 +1,7 @@
+Changed:
+
+• **Modern playback speed icons** — replaced the legacy speed icons with a centered speedometer gauge on the video…
+• **Third-party Rust crate licenses** — added transitive `calypso-media` crate license notices (`zlib-rs`,…
+
+Complete GitHub release notes: https://github.com/akbudakanl/Calypso-Gallery/releases/tag/1.1.2
+Corresponding source archive: https://github.com/akbudakanl/Calypso-Gallery/archive/refs/tags/1.1.2.tar.gz
