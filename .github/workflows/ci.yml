@@ -65,14 +65,42 @@ jobs:
       - name: Unit tests (FOSS debug)
         run: ./gradlew testFossDebugUnitTest
 
-      - name: Assemble FOSS debug
-        run: ./gradlew assembleFossDebug
+      - name: Check signing secrets availability
+        id: signing
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        run: |
+          if [[ -n "$KEYSTORE_BASE64" && -n "$KEY_ALIAS" && -n "$KEY_PASSWORD" && -n "$KEYSTORE_PASSWORD" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Upload FOSS debug APK
+      - name: Decode signing secrets
+        if: steps.signing.outputs.available == 'true'
+        uses: FossifyOrg/.github/.github/actions/decode-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+
+      - name: Assemble FOSS release
+        run: ./gradlew assembleFossRelease
+
+      - name: Upload FOSS release APK
         if: success()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: calypso-foss-debug-apk
-          path: app/build/outputs/apk/foss/debug/*.apk
+          name: calypso-foss-release-apk
+          path: app/build/outputs/apk/foss/release/*.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Clean up secrets
+        if: always() && steps.signing.outputs.available == 'true'
+        uses: FossifyOrg/.github/.github/actions/cleanup-secrets@a5aa5c5191edab24a7a011dfa20c945b06e475fe
