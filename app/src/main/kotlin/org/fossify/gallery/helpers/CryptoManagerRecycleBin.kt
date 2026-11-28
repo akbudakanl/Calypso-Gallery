@@ -403,7 +403,7 @@ fun CryptoManager.permanentlyDeleteVaultRecycleBinFilesDetailed(
 
             val wiped = secureWipeAndDeleteFile(context, binFile) && !binFile.exists()
             if (wiped) {
-                metadataCache.remove(path)?.fileKey?.fill(0)
+                metadataCache.remove(path)
                 context.deleteVirtualAlbumItemFromAllAlbums(path)
                 restoreMap.remove(binFile.name)
                 deletedPaths.add(path)
@@ -450,7 +450,7 @@ fun CryptoManager.emptyVaultRecycleBin(
             val path = file.absolutePath
             val wiped = secureWipeAndDeleteFile(context, file) && !file.exists()
             if (wiped) {
-                metadataCache.remove(path)?.fileKey?.fill(0)
+                metadataCache.remove(path)
                 context.deleteVirtualAlbumItemFromAllAlbums(path)
                 restoreMap.remove(file.name)
             } else {

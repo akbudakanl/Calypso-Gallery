@@ -144,8 +144,7 @@ fun CryptoManager.encryptFileToDirectory(
     }
     if (isEncryptedFile(sourceFile.name)) return sourceFile
 
-    val kek = activeKek()
-    if (kek == null) {
+    if (!isVaultUnlocked) {
         OperationJournal.markFailed(operation, "vault locked")
         return null
     }
@@ -259,7 +258,6 @@ fun CryptoManager.encryptFileToDirectory(
     val thumbnailForContainer = if (thumbBytes.isNotEmpty()) thumbBytes else null
 
     val prepared = VaultContainerWriter.prepare(
-        kek = kek,
         keyId = 1,
         originalName = originalName,
         lastModified = lastModified,
@@ -280,6 +278,7 @@ fun CryptoManager.encryptFileToDirectory(
         EncryptedSizeInput(originalSize, originalName, thumbBytes.size)
     )
     if (!TransientOperationWaiter.awaitDestinationReady(context, operation, targetDir, expectedOutBytes)) {
+        prepared.wipe()
         OperationJournal.markFailed(operation, "destination unavailable or insufficient space")
         return null
     }
@@ -324,7 +323,6 @@ fun CryptoManager.encryptFileToDirectory(
             videoDuration = videoDuration,
             payloadOffset = prepared.payloadOffset,
             contentIv = ByteArray(0),
-            fileKey = prepared.dek.copyOf(),
             version = versionByte,
             isMacAuthenticated = true,
             thumbnailBytes = thumbnailForContainer,
@@ -347,7 +345,7 @@ fun CryptoManager.encryptFileToDirectory(
 
         if (pendingOverwriteBins.isNotEmpty()) {
             pendingOverwriteBins.forEach { existingBin ->
-                metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+                metadataCache.remove(existingBin.absolutePath)
                 runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
                 runCatching { existingBin.delete() }
             }
@@ -384,6 +382,8 @@ fun CryptoManager.encryptFileToDirectory(
         encryptedFile.delete()
         OperationJournal.markFailed(operation, e.message ?: "encrypt failed")
         null
+    } finally {
+        prepared.wipe()
     }
 }
 
@@ -404,7 +404,7 @@ fun CryptoManager.encryptStreamToDirectory(
     dateTakenOverride: Long? = null
 ): File? {
     fun perform(): File? {
-        val kek = activeKek() ?: return null
+        if (!isVaultUnlocked) return null
         val versionByte = VaultContainer.VAULT_FORMAT_VERSION
 
         if (!targetDir.exists()) {
@@ -418,7 +418,6 @@ fun CryptoManager.encryptStreamToDirectory(
         val mediaType = getMediaTypeForName(originalName)
         val videoDuration = 0
         val prepared = VaultContainerWriter.prepare(
-            kek = kek,
             keyId = 1,
             originalName = originalName,
             lastModified = lastModified,
@@ -448,16 +447,17 @@ fun CryptoManager.encryptStreamToDirectory(
                 // fileId/dek korunduğu için Tink akışı geçerli kalır.
                 VaultContainerWriter.rewriteHeaderInPlace(
                     file = encryptedFile,
-                    kek = kek,
                     keyId = 1,
                     prepared = prepared,
-                    originalName = originalName,
-                    lastModified = lastModified,
-                    dateTaken = dateTaken,
-                    originalSize = totalBytesRead,
-                    mediaType = mediaType,
-                    videoDuration = videoDuration,
-                    thumbnail = null
+                    metadata = VaultContainerWriter.ContainerMetadataFields(
+                        originalName = originalName,
+                        lastModified = lastModified,
+                        dateTaken = dateTaken,
+                        originalSize = totalBytesRead,
+                        mediaType = mediaType,
+                        videoDuration = videoDuration,
+                        thumbnail = null
+                    )
                 )
             }
 
@@ -476,7 +476,6 @@ fun CryptoManager.encryptStreamToDirectory(
                 videoDuration = videoDuration,
                 payloadOffset = prepared.payloadOffset,
                 contentIv = ByteArray(0),
-                fileKey = prepared.dek.copyOf(),
                 version = versionByte,
                 isMacAuthenticated = true,
                 thumbnailBytes = finalThumbBytes,
@@ -492,7 +491,7 @@ fun CryptoManager.encryptStreamToDirectory(
             encryptedFile.delete()
             null
         } finally {
-            prepared.dek.fill(0)
+            prepared.wipe()
         }
     }
 

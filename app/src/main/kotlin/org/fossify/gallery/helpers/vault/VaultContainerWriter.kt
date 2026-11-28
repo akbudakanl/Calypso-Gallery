@@ -7,13 +7,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.RandomAccessFile
-import java.security.GeneralSecurityException
-import java.security.SecureRandom
-import java.nio.channels.Channels
+import org.fossify.gallery.helpers.NativeVaultSession
 import org.fossify.gallery.helpers.operations.EncryptedSizeInput
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Kanonik konteynerin **tek yazma yolu**.
@@ -22,14 +17,24 @@ import javax.crypto.spec.SecretKeySpec
  *   magic(8) | version=1(1) | keyId(2) | fileId(16) | headerIv(12) | N(4) |
  *   encHeader(N) | Tink ciphertext(T)
  *
- * Header, KEK'ten fileId ile turetilen bir anahtarla AES-256-GCM ile sifrelenir;
+ * Header, Rust oturumundaki KEK'ten `fileId` ile turetilen bir anahtarla AES-256-GCM ile sifrelenir;
  * AAD cleartext onektir. Payload, dosyaya ozel rastgele DEK ile Tink
  * AES256_GCM_HKDF akisina sifrelenir; AAD = fileId.
  */
 internal object VaultContainerWriter {
 
     private const val BUFFER_SIZE = 256 * 1024
-    private val secureRandom = SecureRandom()
+    private const val MAX_ENC_HEADER_BYTES = 5 * 1024 * 1024
+
+    class ContainerMetadataFields(
+        val originalName: String,
+        val lastModified: Long,
+        val dateTaken: Long,
+        val originalSize: Long,
+        val mediaType: Int,
+        val videoDuration: Int,
+        val thumbnail: ByteArray?
+    )
 
     class Prepared(
         val version: Byte,
@@ -40,10 +45,13 @@ internal object VaultContainerWriter {
         val encryptedHeader: ByteArray,
         val payloadOffset: Long,
         val ciphertextLength: Long
-    )
+    ) {
+        fun wipe() {
+            dek.fill(0)
+        }
+    }
 
     fun prepare(
-        kek: ByteArray,
         keyId: Short,
         originalName: String,
         lastModified: Long,
@@ -54,29 +62,56 @@ internal object VaultContainerWriter {
         thumbnail: ByteArray?,
         version: Byte = VaultContainer.VAULT_FORMAT_VERSION
     ): Prepared {
-        val fileId = ByteArray(VaultContainer.FILE_ID_LENGTH).also { secureRandom.nextBytes(it) }
-        val dek = ByteArray(TinkStreamSpec.KEY_SIZE_BYTES).also { secureRandom.nextBytes(it) }
         val ciphertextLength = TinkStreamSpec.expectedCiphertextSize(originalSize)
-
-        val headerPlain = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                writeHeaderPlain(dos, dek, ciphertextLength, originalName, lastModified, dateTaken, originalSize, mediaType, videoDuration, thumbnail)
-            }
-            baos.toByteArray()
-        }
-
-        val headerIv = ByteArray(VaultContainer.GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val encHeader = encryptHeader(kek, fileId, keyId, version, headerIv, headerPlain)
+        val metaTail = buildMetaTail(
+            originalName = originalName,
+            lastModified = lastModified,
+            dateTaken = dateTaken,
+            originalSize = originalSize,
+            mediaType = mediaType,
+            videoDuration = videoDuration,
+            thumbnail = thumbnail
+        )
+        val packed = NativeVaultSession.encryptNewFileHeaderNative(
+            version = version.toInt(),
+            keyId = keyId.toInt(),
+            segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE,
+            ciphertextLength = ciphertextLength,
+            metaTail = metaTail
+        )
+        val parsed = NativeVaultSession.unpackNewFileHeader(packed)
         return Prepared(
             version = version,
             keyId = keyId,
-            fileId = fileId,
-            dek = dek,
-            headerIv = headerIv,
-            encryptedHeader = encHeader,
-            payloadOffset = VaultContainer.payloadOffset(encHeader.size),
+            fileId = parsed.fileId,
+            dek = parsed.dek,
+            headerIv = parsed.headerIv,
+            encryptedHeader = parsed.encHeader,
+            payloadOffset = VaultContainer.payloadOffset(parsed.encHeader.size),
             ciphertextLength = ciphertextLength
         )
+    }
+
+    private fun buildMetaTail(
+        originalName: String,
+        lastModified: Long,
+        dateTaken: Long,
+        originalSize: Long,
+        mediaType: Int,
+        videoDuration: Int,
+        thumbnail: ByteArray?
+    ): ByteArray = ByteArrayOutputStream().use { baos ->
+        DataOutputStream(baos).use { dos ->
+            dos.writeUTF(originalName)
+            dos.writeLong(lastModified)
+            dos.writeLong(dateTaken)
+            dos.writeLong(originalSize)
+            dos.writeInt(mediaType)
+            dos.writeInt(videoDuration)
+            dos.writeInt(thumbnail?.size ?: 0)
+            if (thumbnail != null) dos.write(thumbnail)
+        }
+        baos.toByteArray()
     }
 
     /** Single source of truth for the header layout, shared by [prepare] and the size estimator. */
@@ -178,42 +213,36 @@ internal object VaultContainerWriter {
      */
     fun rewriteHeaderInPlace(
         file: File,
-        kek: ByteArray,
         keyId: Short,
         prepared: Prepared,
-        originalName: String,
-        lastModified: Long,
-        dateTaken: Long,
-        originalSize: Long,
-        mediaType: Int,
-        videoDuration: Int,
-        thumbnail: ByteArray?
+        metadata: ContainerMetadataFields
     ) {
-        val ciphertextLength = TinkStreamSpec.expectedCiphertextSize(originalSize)
-        val headerPlain = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.writeShort(VaultContainer.ALGORITHM_PARAMS.toInt())
-                dos.writeInt(TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE)
-                dos.writeLong(ciphertextLength)
-                dos.write(prepared.dek)
-                dos.writeUTF(originalName)
-                dos.writeLong(lastModified)
-                dos.writeLong(dateTaken)
-                dos.writeLong(originalSize)
-                dos.writeInt(mediaType)
-                dos.writeInt(videoDuration)
-                dos.writeInt(thumbnail?.size ?: 0)
-                if (thumbnail != null) dos.write(thumbnail)
-            }
-            baos.toByteArray()
-        }
+        val ciphertextLength = TinkStreamSpec.expectedCiphertextSize(metadata.originalSize)
+        val metaTail = buildMetaTail(
+            originalName = metadata.originalName,
+            lastModified = metadata.lastModified,
+            dateTaken = metadata.dateTaken,
+            originalSize = metadata.originalSize,
+            mediaType = metadata.mediaType,
+            videoDuration = metadata.videoDuration,
+            thumbnail = metadata.thumbnail
+        )
+        val packed = NativeVaultSession.encryptFileHeaderWithDekNative(
+            version = prepared.version.toInt(),
+            keyId = keyId.toInt(),
+            fileId = prepared.fileId,
+            segmentSize = TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE,
+            ciphertextLength = ciphertextLength,
+            dek = prepared.dek,
+            metaTail = metaTail
+        )
+        val newIv = packed.copyOfRange(0, VaultContainer.GCM_IV_LENGTH)
+        val encHeader = packed.copyOfRange(VaultContainer.GCM_IV_LENGTH, packed.size)
         // Yeni header uzunlugu degisirse yerinde yazim guvenli degildir; boyut ayni
         // oldugu icin (ayni dosya adi/thumbnail) eski uzunlukla karsilastir.
-        require(headerPlain.size + 16 == prepared.encryptedHeader.size) {
+        require(encHeader.size == prepared.encryptedHeader.size) {
             "header length changed; in-place rewrite is unsafe"
         }
-        val newIv = ByteArray(VaultContainer.GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val encHeader = encryptHeader(kek, prepared.fileId, keyId, prepared.version, newIv, headerPlain)
         RandomAccessFile(file, "rw").use { raf ->
             // IV, header uzunluğu ve şifreli header sırayla 27 / 39 / 43. offset'inde başlar.
             // FIXED_PREFIX_LENGTH (43) header'ın kendisini gösterir; oraya yazmak N ve IV'yi bozar.
@@ -226,63 +255,61 @@ internal object VaultContainerWriter {
     }
 
     /**
-     * Yeniden adlandirma icin mevcut bir kanonik konteynerni yeni header ile yeniden yazar.
+     * Yeniden adlandirma icin mevcut bir kanonik konteyneri yeni header ile yeniden yazar.
      *
-     * Tink sifreli payload **aynen kopyalanir**; fileId ve DEK korundugu icin
-     * dogrulanmis akis gecerliligini korur. Yalnizca header yeni IV ile
-     * HKDF(KEK, fileId) anahtariyla yeniden sifrelenir. Dosya adi degistiginde
-     * header uzunlugu degisebileceginden payload ofseti kayar; bu yuzden hedef
-     * dosya bastan yazilir (atomik move cagiran tarafta yapilir).
+     * Tink sifreli payload **aynen kopyalanir**; header Rust icinde re-encrypt edilir ve
+     * DEK JVM bellegine hic cikmaz.
      *
      * @return yeni payload ofseti
      */
     fun rewriteContainer(
         source: File,
         target: File,
-        kek: ByteArray,
         keyId: Short,
         fileId: ByteArray,
-        dek: ByteArray,
         version: Byte,
         sourcePayloadOffset: Long,
         ciphertextLength: Long,
         segmentSize: Int,
-        originalName: String,
-        lastModified: Long,
-        dateTaken: Long,
-        originalSize: Long,
-        mediaType: Int,
-        videoDuration: Int,
-        thumbnail: ByteArray?,
+        metadata: ContainerMetadataFields,
         syncFile: Boolean = true
     ): Long {
         require(TinkStreamSpec.isSupportedSegmentSize(segmentSize)) {
             "Unsupported segment size: $segmentSize"
         }
-        require(TinkStreamSpec.expectedCiphertextSize(originalSize, segmentSize) == ciphertextLength) {
+        require(TinkStreamSpec.expectedCiphertextSize(metadata.originalSize, segmentSize) == ciphertextLength) {
             "Ciphertext length does not match the declared plaintext size"
         }
 
-        val headerPlain = ByteArrayOutputStream().use { baos ->
-            DataOutputStream(baos).use { dos ->
-                dos.writeShort(VaultContainer.ALGORITHM_PARAMS.toInt())
-                dos.writeInt(segmentSize)
-                dos.writeLong(ciphertextLength)
-                dos.write(dek)
-                dos.writeUTF(originalName)
-                dos.writeLong(lastModified)
-                dos.writeLong(dateTaken)
-                dos.writeLong(originalSize)
-                dos.writeInt(mediaType)
-                dos.writeInt(videoDuration)
-                dos.writeInt(thumbnail?.size ?: 0)
-                if (thumbnail != null) dos.write(thumbnail)
-            }
-            baos.toByteArray()
+        val (oldHeaderIv, oldEncHeader) = RandomAccessFile(source, "r").use { raf ->
+            raf.seek(VaultContainer.HEADER_IV_OFFSET.toLong())
+            val iv = ByteArray(VaultContainer.GCM_IV_LENGTH).also { raf.readFully(it) }
+            val len = raf.readInt()
+            require(len in 1..MAX_ENC_HEADER_BYTES) { "Invalid encrypted header length: $len" }
+            val enc = ByteArray(len).also { raf.readFully(it) }
+            iv to enc
         }
 
-        val headerIv = ByteArray(VaultContainer.GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-        val encHeader = encryptHeader(kek, fileId, keyId, version, headerIv, headerPlain)
+        val newMetaTail = buildMetaTail(
+            originalName = metadata.originalName,
+            lastModified = metadata.lastModified,
+            dateTaken = metadata.dateTaken,
+            originalSize = metadata.originalSize,
+            mediaType = metadata.mediaType,
+            videoDuration = metadata.videoDuration,
+            thumbnail = metadata.thumbnail
+        )
+        val packed = NativeVaultSession.reencryptFileHeaderNative(
+            version = version.toInt(),
+            keyId = keyId.toInt(),
+            fileId = fileId,
+            oldHeaderIv = oldHeaderIv,
+            oldEncHeader = oldEncHeader,
+            newMetaTail = newMetaTail
+        ) ?: error("Failed to re-encrypt container header")
+
+        val headerIv = packed.copyOfRange(0, VaultContainer.GCM_IV_LENGTH)
+        val encHeader = packed.copyOfRange(VaultContainer.GCM_IV_LENGTH, packed.size)
         val newPayloadOffset = VaultContainer.payloadOffset(encHeader.size)
 
         FileOutputStream(target).use { fos ->
@@ -313,33 +340,5 @@ internal object VaultContainerWriter {
             RandomAccessFile(target, "rw").use { it.fd.sync() }
         }
         return newPayloadOffset
-    }
-
-    private fun encryptHeader(
-        kek: ByteArray,
-        fileId: ByteArray,
-        keyId: Short,
-        version: Byte,
-        headerIv: ByteArray,
-        headerPlain: ByteArray
-    ): ByteArray {
-        val headerKey = VaultKeyDerivation.deriveFileHeaderKey(kek, fileId)
-        return try {
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(
-                Cipher.ENCRYPT_MODE,
-                SecretKeySpec(headerKey, "AES"),
-                GCMParameterSpec(VaultContainer.GCM_TAG_BITS, headerIv)
-            )
-            cipher.updateAAD(
-                headerAad(
-                    VaultContainer.VAULT_MAGIC.toByteArray(Charsets.US_ASCII),
-                    version, keyId, fileId, headerPlain.size + 16
-                )
-            )
-            cipher.doFinal(headerPlain)
-        } finally {
-            headerKey.fill(0)
-        }
     }
 }

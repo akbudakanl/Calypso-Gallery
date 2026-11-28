@@ -138,9 +138,11 @@ abstract class VaultTestBase {
     }
 
     protected fun setMasterKey(key: ByteArray?) {
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, key)
+        if (key == null) {
+            CryptoManager.lockVault()
+        } else {
+            CryptoManager.installSessionForTesting(key)
+        }
     }
 
     protected fun resetCryptoManagerSingletons() {

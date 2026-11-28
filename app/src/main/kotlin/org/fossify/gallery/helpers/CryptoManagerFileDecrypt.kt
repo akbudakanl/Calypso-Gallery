@@ -94,7 +94,7 @@ fun CryptoManager.decryptFileToDirectory(
                             hideStealthReferences = true
                         )
                     }
-                    metadataCache.remove(encPath)?.fileKey?.fill(0)
+                    metadataCache.remove(encPath)
                     runCatching { context.mediaDB.deleteMediumPath(encPath) }
                     encryptedFile.delete()
                     OperationJournal.markVerified(operation, dupFingerprint, existingPlain.absolutePath)
@@ -208,7 +208,7 @@ fun CryptoManager.decryptFileToDirectory(
                     hideStealthReferences = true
                 )
             }
-            metadataCache.remove(encPath)?.fileKey?.fill(0)
+            metadataCache.remove(encPath)
             runCatching { context.mediaDB.deleteMediumPath(encPath) }
             encryptedFile.delete()
             OperationJournal.markSourceDeleted(operation)
@@ -268,7 +268,7 @@ fun CryptoManager.renameEncryptedFile(
     if (!encryptedFile.exists() || !encryptedFile.isFile || !isEncryptedFile(encryptedFile.name)) return false
     val trimmedName = newOriginalName.trim()
     if (trimmedName.isEmpty()) return false
-    if (unlockedMasterKey == null) return false
+    if (!isVaultUnlocked) return false
 
     val meta = readMetadata(encryptedFile) ?: return false
     if (meta.originalName == trimmedName) return true
@@ -294,26 +294,25 @@ fun CryptoManager.renameEncryptedFile(
 
         val thumbBytes = readEmbeddedThumbnailBytes(encryptedFile) ?: meta.thumbnailBytes ?: ByteArray(0)
 
-        val kek = activeKek() ?: return false
         val fileId = meta.fileId ?: return false
         val newPayloadOffset = VaultContainerWriter.rewriteContainer(
             source = encryptedFile,
             target = tempFile,
-            kek = kek,
             keyId = meta.keyId,
             fileId = fileId,
-            dek = meta.fileKey,
             version = meta.version,
             sourcePayloadOffset = meta.payloadOffset,
             ciphertextLength = meta.ciphertextLength,
             segmentSize = meta.segmentSize,
-            originalName = trimmedName,
-            lastModified = meta.lastModified,
-            dateTaken = meta.dateTaken,
-            originalSize = meta.originalSize,
-            mediaType = updatedMediaType,
-            videoDuration = meta.videoDuration,
-            thumbnail = if (thumbBytes.isNotEmpty()) thumbBytes else null,
+            metadata = VaultContainerWriter.ContainerMetadataFields(
+                originalName = trimmedName,
+                lastModified = meta.lastModified,
+                dateTaken = meta.dateTaken,
+                originalSize = meta.originalSize,
+                mediaType = updatedMediaType,
+                videoDuration = meta.videoDuration,
+                thumbnail = if (thumbBytes.isNotEmpty()) thumbBytes else null
+            ),
             syncFile = syncParentDir
         )
 

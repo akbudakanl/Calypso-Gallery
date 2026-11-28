@@ -52,7 +52,7 @@ fun CryptoManager.encryptFolder(
     val folder = File(folderPath)
     if (!folder.exists() || !folder.isDirectory) return folderPath
 
-    if (unlockedMasterKey == null) {
+    if (!isVaultUnlocked) {
         return null
     }
 
@@ -182,7 +182,7 @@ private fun CryptoManager.encryptFolderRegistered(
     onProgress?.invoke(0, total)
 
     val preExistingBinPaths = subfolder.listFiles()?.mapTo(HashSet()) { it.absolutePath } ?: emptySet()
-    val subfolderIndex = if (unlockedMasterKey != null) TargetEncryptedIndex(subfolder, preExistingBinPaths) else null
+    val subfolderIndex = if (isVaultUnlocked) TargetEncryptedIndex(subfolder, preExistingBinPaths) else null
     val newlyCreatedBins = ArrayList<File>()
     val encryptedPairs = ArrayList<AlbumTransferItem>()
     val skippedConflictFiles = ArrayList<File>()
@@ -240,7 +240,7 @@ private fun CryptoManager.encryptFolderRegistered(
     if (failed || encryptedPairs.size != expectedProcessed) {
         if (targetAlbumExistedBefore) {
             newlyCreatedBins.forEach { createdBin ->
-                metadataCache.remove(createdBin.absolutePath)?.fileKey?.fill(0)
+                metadataCache.remove(createdBin.absolutePath)
                 runCatching { createdBin.delete() }
             }
         } else {
@@ -352,7 +352,7 @@ private fun CryptoManager.encryptFolderRegistered(
             kind = OperationJournal.KIND_MOVE,
             batch = batchOperation.batch
         )
-        if (unlockedMasterKey != null) {
+        if (isVaultUnlocked) {
             copyOrMoveEncryptedFileToDirectory(
                 context = context,
                 sourceBin = encFile,
@@ -699,7 +699,7 @@ private fun CryptoManager.decryptFolderRegistered(
             touchedAlbumIds.addAll(res.affectedAlbumIds)
             if (res.favoritesChanged) favoritesChanged = true
         }
-        metadataCache.remove(encPath)?.fileKey?.fill(0)
+        metadataCache.remove(encPath)
         runCatching { context.mediaDB.deleteMediumPath(encPath) }
         if (encFile.delete()) {
             OperationJournal.markSourceDeleted(itemOperation)

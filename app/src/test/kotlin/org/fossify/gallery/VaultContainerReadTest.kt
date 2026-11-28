@@ -46,9 +46,7 @@ class VaultContainerReadTest {
         tempDir.listFiles()?.forEach { it.delete() }
 
         // Stage 0'da KEK = VMK = legacy MEK.
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, kek)
+        CryptoManager.installSessionForTesting(kek)
     }
 
     @Test
@@ -62,7 +60,7 @@ class VaultContainerReadTest {
 
             val meta = DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
                 skipPrefix(it)
-                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)
+                readContainerMetadata(it, VaultContainer.VAULT_FORMAT_VERSION, true)
             }
             assertNotNull("metadata for size $size", meta)
             meta!!
@@ -70,7 +68,6 @@ class VaultContainerReadTest {
             assertEquals(size.toLong(), meta.originalSize)
             assertTrue(meta.isCanonicalFormat)
             assertArrayEquals(fileId, meta.fileId)
-            assertArrayEquals(dek, meta.fileKey)
             assertEquals(
                 TinkStreamSpec.expectedCiphertextSize(size.toLong()),
                 meta.ciphertextLength
@@ -127,7 +124,7 @@ class VaultContainerReadTest {
             null,
             DataInputStream(BufferedInputStream(FileInputStreamCompat(badHeader))).use {
                 skipPrefix(it)
-                readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, false)
+                readContainerMetadata(it, VaultContainer.VAULT_FORMAT_VERSION, false)
             }
         )
 
@@ -156,7 +153,7 @@ class VaultContainerReadTest {
     private fun readMeta(file: File) =
         DataInputStream(BufferedInputStream(FileInputStreamCompat(file))).use {
             skipPrefix(it)
-            readContainerMetadata(it, kek, VaultContainer.VAULT_FORMAT_VERSION, true)!!
+            readContainerMetadata(it, VaultContainer.VAULT_FORMAT_VERSION, true)!!
         }
 
     /** Gecerli bir v4 konteyner yazar (uretme amacli test helper'i). */

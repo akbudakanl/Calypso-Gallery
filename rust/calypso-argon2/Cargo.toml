@@ -9,9 +9,14 @@ name = "calypso_argon2"
 crate-type = ["cdylib"]
 
 [dependencies]
+aes-gcm = { version = "0.11.1", default-features = false, features = ["aes", "alloc", "zeroize"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "zeroize"] }
-jni = { version = "0.22.4", default-features = false }
-zeroize = "1.8.1"
+getrandom = "0.2.17"
+hkdf = { version = "0.13.0", default-features = false }
+hmac = { version = "0.13.0", default-features = false }
+jni-sys = "0.4.1"
+sha2 = { version = "0.11.2", default-features = false }
+zeroize = { version = "1.8.1", features = ["derive"] }
 
 [profile.release]
 opt-level = 3

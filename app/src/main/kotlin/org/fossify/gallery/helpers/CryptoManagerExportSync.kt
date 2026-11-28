@@ -125,7 +125,7 @@ fun CryptoManager.syncVaultFromExternalDirectory(
     requirePendingManifest: Boolean = true,
     onProgress: ((processed: Int, total: Int) -> Unit)? = null
 ): VaultSyncResult? {
-    if (unlockedMasterKey == null) return null
+    if (!isVaultUnlocked) return null
     val vaultRoot = findVaultRoot(context) ?: return null
     val effectiveSource = resolveSyncSourceRoot(sourceDir)
     if (!effectiveSource.exists() || !effectiveSource.isDirectory) return null

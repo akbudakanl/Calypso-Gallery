@@ -172,7 +172,7 @@ fun CryptoManager.inspectStandardFilenameConflict(
     val (_, _, desiredName) = resolveTransferDesiredName(sourceFile, targetDir, desiredPlainName)
         ?: return null
     return if (isTargetEncrypted) {
-        if (unlockedMasterKey == null) return null
+        if (!isVaultUnlocked) return null
         val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
         if (index.findExactEntries(desiredName).isNotEmpty()) desiredName else null
     } else {
@@ -210,7 +210,7 @@ fun CryptoManager.inspectTransferConflict(
     }
 
     if (isTargetEncrypted) {
-        if (unlockedMasterKey == null) {
+        if (!isVaultUnlocked) {
             return TransferConflictCheck(TransferConflictStatus.NO_CONFLICT)
         }
         val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
@@ -377,7 +377,7 @@ fun CryptoManager.findContentConflictInTarget(
     }
 
     if (isTargetEncrypted) {
-        if (unlockedMasterKey == null) return null
+        if (!isVaultUnlocked) return null
         val index = encryptedIndex ?: TargetEncryptedIndex(targetDir)
         val candidates = index.findCandidates(desiredName, includeCollisionVariants)
 
@@ -490,7 +490,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
                 if (isMove && deleteSourceOnIdentical) {
                     runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, existingBin.absolutePath) }
                     runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
-                    metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+                    metadataCache.remove(sourceBin.absolutePath)
                     sourceBin.delete()
                     OperationJournal.markVerified(operation, dupFingerprint, existingBin.absolutePath)
                     OperationJournal.markSourceDeleted(operation)
@@ -524,7 +524,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
 
     fun deletePendingOverwriteBins() {
         pendingOverwriteBins.forEach { existingBin ->
-            metadataCache.remove(existingBin.absolutePath)?.fileKey?.fill(0)
+            metadataCache.remove(existingBin.absolutePath)
             runCatching { context.mediaDB.deleteMediumPath(existingBin.absolutePath) }
             runCatching { existingBin.delete() }
         }
@@ -613,7 +613,7 @@ fun CryptoManager.copyOrMoveEncryptedFileToDirectory(
     if (!transferred) return null
 
     if (isMove) {
-        metadataCache.remove(sourceBin.absolutePath)?.fileKey?.fill(0)
+        metadataCache.remove(sourceBin.absolutePath)
         runCatching { context.updateVirtualAlbumItemPath(sourceBin.absolutePath, destBin.absolutePath) }
         runCatching { context.mediaDB.deleteMediumPath(sourceBin.absolutePath) }
     }

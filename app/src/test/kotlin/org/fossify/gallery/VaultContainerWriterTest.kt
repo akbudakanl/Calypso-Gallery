@@ -30,12 +30,7 @@ class VaultContainerWriterTest {
         tempDir = File(System.getProperty("java.io.tmpdir"), "v4_writer_test")
         tempDir.mkdirs()
         tempDir.listFiles()?.forEach { it.delete() }
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, kek)
-        val kekField = CryptoManager::class.java.getDeclaredField("unlockedKek")
-        kekField.isAccessible = true
-        kekField.set(CryptoManager, kek.copyOf())
+        CryptoManager.installSessionForTesting(kek)
     }
 
     @Test
@@ -46,7 +41,6 @@ class VaultContainerWriterTest {
             val target = File(tempDir, "case_$size.bin")
 
             val prepared = VaultContainerWriter.prepare(
-                kek = kek,
                 keyId = 1,
                 originalName = name,
                 lastModified = 1_700_000_000_000L,
@@ -61,6 +55,8 @@ class VaultContainerWriterTest {
                 prepared = prepared,
                 payloadProvider = { ByteArrayInputStream(payload) }
             )
+            prepared.wipe()
+            assertTrue(prepared.dek.all { it == 0.toByte() })
             assertEquals(size.toLong(), written)
             assertEquals(prepared.ciphertextLength, target.length() - prepared.payloadOffset)
             assertEquals(TinkStreamSpec.expectedCiphertextSize(size.toLong()), prepared.ciphertextLength)
@@ -71,7 +67,7 @@ class VaultContainerWriterTest {
                 assertEquals(VaultContainer.VAULT_MAGIC, String(magic, Charsets.US_ASCII))
                 assertEquals(VaultContainer.VAULT_FORMAT_VERSION, dis.readByte())
                 // skipPrefix sonrasi readContainerMetadata dogrudan cagrilamadigi icin
-                // tam okuma yolunu unlockedMasterKey uzerinden kullaniriz.
+                // tam okuma yolunu Rust oturumu uzerinden kullaniriz.
                 null
             }
 
@@ -80,7 +76,6 @@ class VaultContainerWriterTest {
             assertEquals(name, fullMeta.originalName)
             assertEquals(size.toLong(), fullMeta.originalSize)
             assertArrayEquals(prepared.fileId, fullMeta.fileId)
-            assertArrayEquals(prepared.dek, fullMeta.fileKey)
             assertEquals(prepared.payloadOffset, fullMeta.payloadOffset)
             assertEquals(TinkStreamSpec.CIPHERTEXT_SEGMENT_SIZE, fullMeta.segmentSize)
 
@@ -98,7 +93,7 @@ class VaultContainerWriterTest {
         val payload = ByteArray(70_000) { (it * 7 + 5).toByte() }
         // Aynı uzunlukta bir ad: header uzunluğu sabit kalır, yerinde yazım güvenlidir.
         val prepared = VaultContainerWriter.prepare(
-            kek = kek, keyId = 1, originalName = "a.jpg",
+            keyId = 1, originalName = "a.jpg",
             lastModified = 1L, dateTaken = 2L, originalSize = payload.size.toLong(),
             mediaType = 1, videoDuration = 0, thumbnail = null
         )
@@ -111,17 +106,19 @@ class VaultContainerWriterTest {
 
         VaultContainerWriter.rewriteHeaderInPlace(
             file = target,
-            kek = kek,
             keyId = 1,
             prepared = prepared,
-            originalName = "b.jpg",
-            lastModified = 3L,
-            dateTaken = 4L,
-            originalSize = payload.size.toLong(),
-            mediaType = 1,
-            videoDuration = 0,
-            thumbnail = null
+            metadata = VaultContainerWriter.ContainerMetadataFields(
+                originalName = "b.jpg",
+                lastModified = 3L,
+                dateTaken = 4L,
+                originalSize = payload.size.toLong(),
+                mediaType = 1,
+                videoDuration = 0,
+                thumbnail = null
+            )
         )
+        prepared.wipe()
 
         // Eski kod IV'yi offset 43'e (header'ın kendisine) yazdığı için burada okuma
         // başarısız olur veya bozuk bir başlık döner.
@@ -138,7 +135,7 @@ class VaultContainerWriterTest {
     fun rejectsTamperedV4Payload() {
         val payload = ByteArray(70_000) { (it * 3 + 9).toByte() }
         val prepared = VaultContainerWriter.prepare(
-            kek = kek, keyId = 1, originalName = "tamper.jpg",
+            keyId = 1, originalName = "tamper.jpg",
             lastModified = 1L, dateTaken = 1L, originalSize = payload.size.toLong(),
             mediaType = 1, videoDuration = 0, thumbnail = null
         )
@@ -148,6 +145,7 @@ class VaultContainerWriterTest {
             prepared = prepared,
             payloadProvider = { ByteArrayInputStream(payload) }
         )
+        prepared.wipe()
         val meta = CryptoManager.readMetadata(target)!!
 
         RandomAccessFile(target, "rw").use { raf ->

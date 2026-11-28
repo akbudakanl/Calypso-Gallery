@@ -720,7 +720,7 @@ class VideoPlaybackAndSeekIndexTest {
             testContext.config.vaultRootPath = vaultDir.absolutePath
             testContext.config.temporarilyShowHidden = true
             CryptoManager.cachedVaultRoot = vaultDir
-            CryptoManager.unlockedMasterKey = ByteArray(32) { 5 }
+            CryptoManager.installSessionForTesting(ByteArray(32) { 5 })
             SeekableExtractorsFactory.putCachedResult(encBin, CachedSeekResult.Hit(dummyChunk))
 
             VaultSessionManager.onAppBackgrounded(testContext)

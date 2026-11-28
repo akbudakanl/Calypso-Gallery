@@ -7,118 +7,151 @@ import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainer.ALGORITHM_PARAMS
 import org.fossify.gallery.helpers.vault.VaultContainer.FILE_ID_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
-import org.fossify.gallery.helpers.vault.VaultContainer.VAULT_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.payloadOffset
-import org.fossify.gallery.helpers.vault.VaultKeyDerivation.deriveFileHeaderKey
 import org.fossify.gallery.helpers.vault.openPayloadChannel
-import org.fossify.gallery.helpers.vault.headerAad
 import java.io.*
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Extracted from [CryptoManager]. Feature group: CryptoManagerStreams.
  */
 
+private const val MAX_HEADER_BYTES = 5 * 1024 * 1024
+private const val STREAM_BUFFER_BYTES = 8192
+private const val MAX_CIPHERTEXT_SCALE = 8L
+
+private data class ContainerHeaderEnvelope(
+    val version: Byte,
+    val keyId: Short,
+    val fileId: ByteArray,
+    val headerIv: ByteArray,
+    val encHeaderLen: Int,
+    val encHeader: ByteArray
+)
+
+private fun readHeaderEnvelopeFromStream(dis: DataInputStream): ContainerHeaderEnvelope? {
+    val magicBytes = ByteArray(VaultContainer.VAULT_MAGIC.length)
+    dis.readFully(magicBytes)
+    if (String(magicBytes, Charsets.US_ASCII) != VaultContainer.VAULT_MAGIC) return null
+
+    val version = dis.readByte()
+    if (version != VaultContainer.VAULT_FORMAT_VERSION) return null
+
+    val keyId = dis.readUnsignedShort().toShort()
+    val fileId = ByteArray(FILE_ID_LENGTH).also { dis.readFully(it) }
+    val headerIv = ByteArray(GCM_IV_LENGTH).also { dis.readFully(it) }
+    val encHeaderLen = dis.readInt()
+    val valid = !fileId.all { it == 0.toByte() } && encHeaderLen in 1..MAX_HEADER_BYTES
+    return if (valid) {
+        val encHeader = ByteArray(encHeaderLen).also { dis.readFully(it) }
+        ContainerHeaderEnvelope(version, keyId, fileId, headerIv, encHeaderLen, encHeader)
+    } else {
+        null
+    }
+}
+
+private fun parseStrippedHeaderMetadata(
+    strippedHeader: ByteArray,
+    encHeaderLen: Int,
+    fileId: ByteArray,
+    keyId: Short,
+    version: Byte,
+    includeThumbnail: Boolean
+): EncryptedFileMetadata? = DataInputStream(ByteArrayInputStream(strippedHeader)).use { hdis ->
+    val algoParams = hdis.readUnsignedShort()
+    val segmentSize = hdis.readInt()
+    val ciphertextLength = hdis.readLong()
+    val validPrefix = algoParams == ALGORITHM_PARAMS.toInt() &&
+        TinkStreamSpec.isSupportedSegmentSize(segmentSize) &&
+        ciphertextLength in 1L..(Int.MAX_VALUE.toLong() * MAX_CIPHERTEXT_SCALE)
+    if (!validPrefix) return null
+
+    val originalName = hdis.readUTF()
+    val lastModified = hdis.readLong()
+    val dateTaken = hdis.readLong()
+    val originalSize = hdis.readLong()
+    val mediaType = hdis.readInt()
+    val videoDuration = hdis.readInt()
+
+    // Tink akis uzunlugu tam olmali: truncation / eklenen bayt tespiti.
+    if (ciphertextLength != TinkStreamSpec.expectedCiphertextSize(originalSize, segmentSize)) return null
+
+    val thumbBytes = if (includeThumbnail && hdis.available() >= Int.SIZE_BYTES) {
+        val thumbLen = hdis.readInt()
+        if (thumbLen in 1..MAX_HEADER_BYTES && hdis.available() >= thumbLen) {
+            ByteArray(thumbLen).also { hdis.readFully(it) }
+        } else null
+    } else null
+
+    EncryptedFileMetadata(
+        originalName = originalName,
+        lastModified = lastModified,
+        dateTaken = dateTaken,
+        originalSize = originalSize,
+        mediaType = mediaType,
+        videoDuration = videoDuration,
+        payloadOffset = payloadOffset(encHeaderLen),
+        contentIv = ByteArray(0),
+        version = version,
+        isMacAuthenticated = true,
+        thumbnailBytes = thumbBytes,
+        fileId = fileId,
+        keyId = keyId,
+        ciphertextLength = ciphertextLength,
+        isCanonicalFormat = true,
+        segmentSize = segmentSize
+    )
+}
+
 /**
- * kanonik (Tink streaming AEAD) konteynerinin basligini okur.
+ * kanonik (Tink streaming AEAD) konteynerinin basligini Rust uzerinden okur.
+ * DEK Rust icinde soyulup sifirlanir; JVM tarafina yalnizca gizli olmayan metadata doner.
  *
  * Duzen: magic(8) | version(1) | keyId(2) | fileId(16) | headerIv(12) | N(4) |
  *        encHeader(N) | Tink ciphertext(T)
- * Header GCM AAD'si cleartext onektir: magic | version | keyId | fileId | N.
  */
 internal fun readContainerMetadata(
     dis: DataInputStream,
-    kek: ByteArray,
     version: Byte,
     includeThumbnail: Boolean
 ): EncryptedFileMetadata? {
     val keyId = dis.readUnsignedShort().toShort()
-
-    val fileId = ByteArray(FILE_ID_LENGTH)
-    dis.readFully(fileId)
-    if (fileId.all { it == 0.toByte() }) return null
-
-    val headerIv = ByteArray(GCM_IV_LENGTH)
-    dis.readFully(headerIv)
-
+    val fileId = ByteArray(FILE_ID_LENGTH).also { dis.readFully(it) }
+    val headerIv = ByteArray(GCM_IV_LENGTH).also { dis.readFully(it) }
     val encHeaderLen = dis.readInt()
-    if (encHeaderLen <= 0 || encHeaderLen > 5 * 1024 * 1024) return null
-    val encHeader = ByteArray(encHeaderLen)
-    dis.readFully(encHeader)
+    val validEnvelope = !fileId.all { it == 0.toByte() } && encHeaderLen in 1..MAX_HEADER_BYTES
+    if (!validEnvelope) return null
 
-    val headerKey = deriveFileHeaderKey(kek, fileId)
-    try {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(
-            Cipher.DECRYPT_MODE,
-            SecretKeySpec(headerKey, "AES"),
-            GCMParameterSpec(GCM_TAG_BITS, headerIv)
-        )
-        cipher.updateAAD(
-            headerAad(
-                VaultContainer.VAULT_MAGIC.toByteArray(Charsets.US_ASCII),
-                version, keyId, fileId, encHeaderLen
-            )
-        )
-        val plainHeader = cipher.doFinal(encHeader)
+    val encHeader = ByteArray(encHeaderLen).also { dis.readFully(it) }
+    val strippedHeader = NativeVaultSession.decryptFileHeaderMetadataNative(
+        version = version.toInt(),
+        keyId = keyId.toInt(),
+        fileId = fileId,
+        headerIv = headerIv,
+        encHeader = encHeader
+    ) ?: return null
 
-        DataInputStream(ByteArrayInputStream(plainHeader)).use { hdis ->
-            if (hdis.readUnsignedShort() != ALGORITHM_PARAMS.toInt()) return null
-            val segmentSize = hdis.readInt()
-            if (!TinkStreamSpec.isSupportedSegmentSize(segmentSize)) return null
-
-            val ciphertextLength = hdis.readLong()
-            if (ciphertextLength <= 0L || ciphertextLength > Int.MAX_VALUE.toLong() * 8L) return null
-
-            val dek = ByteArray(TinkStreamSpec.KEY_SIZE_BYTES)
-            hdis.readFully(dek)
-
-            val originalName = hdis.readUTF()
-            val lastModified = hdis.readLong()
-            val dateTaken = hdis.readLong()
-            val originalSize = hdis.readLong()
-            val mediaType = hdis.readInt()
-            val videoDuration = hdis.readInt()
-
-            // Tink akis uzunlugu tam olmali: truncation / eklenen bayt tespiti.
-            if (ciphertextLength != TinkStreamSpec.expectedCiphertextSize(originalSize, segmentSize)) return null
-
-            val thumbBytes = if (includeThumbnail && hdis.available() >= 4) {
-                val thumbLen = hdis.readInt()
-                if (thumbLen in 1..(5 * 1024 * 1024) && hdis.available() >= thumbLen) {
-                    ByteArray(thumbLen).also { hdis.readFully(it) }
-                } else null
-            } else null
-
-            return EncryptedFileMetadata(
-                originalName = originalName,
-                lastModified = lastModified,
-                dateTaken = dateTaken,
-                originalSize = originalSize,
-                mediaType = mediaType,
-                videoDuration = videoDuration,
-                payloadOffset = payloadOffset(encHeaderLen),
-                contentIv = ByteArray(0),
-                fileKey = dek,
-                version = version,
-                isMacAuthenticated = true,
-                thumbnailBytes = thumbBytes,
-                fileId = fileId,
-                keyId = keyId,
-                ciphertextLength = ciphertextLength,
-                isCanonicalFormat = true,
-                segmentSize = segmentSize
-            )
-        }
+    return try {
+        parseStrippedHeaderMetadata(strippedHeader, encHeaderLen, fileId, keyId, version, includeThumbnail)
     } catch (_: Exception) {
-        // Bozuk/yanlis AAD/anahtar: ust okuyucu da null dondurur; yardimci fonksiyon
-        // kendi basina da guvenli olmali (direkt cagrilar ve testler icin).
-        return null
-    } finally {
-        headerKey.fill(0)
+        null
+    }
+}
+
+private fun unwrapFileDekFromContainer(file: File): ByteArray? {
+    if (!CryptoManager.isVaultUnlocked || !file.exists() || !file.isFile) return null
+    return try {
+        val env = DataInputStream(BufferedInputStream(FileInputStream(file), STREAM_BUFFER_BYTES)).use { dis ->
+            readHeaderEnvelopeFromStream(dis)
+        } ?: return null
+        NativeVaultSession.unwrapFileDekNative(
+            version = env.version.toInt(),
+            keyId = env.keyId.toInt(),
+            fileId = env.fileId,
+            headerIv = env.headerIv,
+            encHeader = env.encHeader
+        )
+    } catch (_: Exception) {
+        null
     }
 }
 
@@ -140,14 +173,15 @@ fun CryptoManager.openDecryptedContentStream(
         return ByteArrayInputStream(ByteArray(0))
     }
 
-    // Kanonik format her zaman Tink streaming AEAD kullanir; CTR/legacy yollari kaldirildi.
+    // Kanonik format her zaman Tink streaming AEAD kullanir; DEK yalnizca bu stream icin cozulur.
     val fileId = meta.fileId ?: return null
+    val dek = unwrapFileDekFromContainer(file) ?: return null
     return try {
         val channel = openPayloadChannel(
             file = file,
             payloadOffset = meta.payloadOffset,
             ciphertextLength = meta.ciphertextLength,
-            dek = meta.fileKey,
+            dek = dek,
             fileId = fileId,
             segmentSize = meta.segmentSize
         )
@@ -156,8 +190,10 @@ fun CryptoManager.openDecryptedContentStream(
             java.nio.channels.Channels.newInputStream(channel),
             meta.originalSize - startOffset
         )
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         null
+    } finally {
+        dek.fill(0)
     }
 }
 
@@ -175,12 +211,13 @@ fun CryptoManager.verifyFileIntegrity(
 
     val fileId = meta.fileId ?: return false
     if (file.length() != meta.payloadOffset + meta.ciphertextLength) return false
+    val dek = unwrapFileDekFromContainer(file) ?: return false
     return try {
         val channel = openPayloadChannel(
             file = file,
             payloadOffset = meta.payloadOffset,
             ciphertextLength = meta.ciphertextLength,
-            dek = meta.fileKey,
+            dek = dek,
             fileId = fileId,
             segmentSize = meta.segmentSize
         )
@@ -194,5 +231,7 @@ fun CryptoManager.verifyFileIntegrity(
         true
     } catch (_: Exception) {
         false
+    } finally {
+        dek.fill(0)
     }
 }

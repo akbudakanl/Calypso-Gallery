@@ -831,9 +831,7 @@ class ResumableOperationsTest {
         val vaultDir = File(tempRoot, "vault").apply { mkdirs() }
         File(vaultDir, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         CryptoManager.setVaultRootLocation(testContext, vaultDir)
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, ByteArray(32) { (it + 1).toByte() })
+        CryptoManager.installSessionForTesting(ByteArray(32) { (it + 1).toByte() })
     }
 
     private class InMemoryPendingOperationsDao : PendingOperationsDao {

@@ -4,16 +4,18 @@ import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.helpers.ARGON2_HIGH_MEMORY_KB
 import org.fossify.gallery.helpers.ARGON2_MIN_MEMORY_KB
 import org.fossify.gallery.helpers.ARGON2_ULTRA_MEMORY_KB
+import org.fossify.gallery.helpers.CliBridgeManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.DeviceMemoryCapabilities
+import org.fossify.gallery.helpers.NativeVaultSession
 import org.fossify.gallery.helpers.PROTECTION_PASSWORD
 import org.fossify.gallery.helpers.calculateTieredArgon2Params
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.estimateVaultUnlockMs
 import org.fossify.gallery.helpers.VaultKdfParams
+import org.fossify.gallery.helpers.readParsedVaultHeader
 import org.fossify.gallery.helpers.readVaultHeaderVersion
 import org.fossify.gallery.helpers.readVaultProtectionType
-import org.fossify.gallery.helpers.unwrapVaultKeysEphemeral
 import org.fossify.gallery.helpers.vault.VaultContainer
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
@@ -265,11 +267,39 @@ class VaultHeaderFormatTest {
             wrappedKeyring = wrappedKeyring
         )
 
-        val unwrapped = CryptoManager.unwrapVaultKeysEphemeral(header, secret)
-        assertNotNull("Expected header with $iterations iterations to unwrap", unwrapped)
-        assertArrayEquals(vmk, unwrapped!!.vmk)
-        assertArrayEquals(kek, unwrapped.kek)
-        assertEquals(memoryKb, unwrapped.memoryKb)
-        assertEquals(iterations, unwrapped.iterations)
+        val headerBytes = header.readBytes()
+        val secretBytes = NativeVaultSession.secretCharsToUtf8Bytes(secret)
+        try {
+            CryptoManager.lockVault()
+            assertTrue(
+                "Expected header with $iterations iterations to verify ephemerally",
+                NativeVaultSession.verifyVaultSecretNative(headerBytes, secretBytes)
+            )
+            assertFalse("Ephemeral verify must not unlock session", CryptoManager.isVaultUnlocked)
+
+            assertTrue(
+                "Expected header with $iterations iterations to unlock",
+                NativeVaultSession.unlockVaultHeaderNative(headerBytes, secretBytes)
+            )
+            assertTrue(CryptoManager.isVaultUnlocked)
+
+            val mac = javax.crypto.Mac.getInstance("HmacSHA256").apply {
+                init(SecretKeySpec(kek, "HmacSHA256"))
+            }
+            val expectedFp = mac.doFinal("calypso-cli-bridge".toByteArray(Charsets.UTF_8))
+                .take(8).joinToString("") { "%02x".format(it) }
+            assertEquals(expectedFp, CliBridgeManager.currentFingerprint())
+
+            val parsed = readParsedVaultHeader(header)!!
+            try {
+                assertEquals(memoryKb, parsed.kdf.memoryKb)
+                assertEquals(iterations, parsed.kdf.iterations)
+            } finally {
+                parsed.wipe()
+            }
+        } finally {
+            secretBytes.fill(0)
+            CryptoManager.lockVault()
+        }
     }
 }

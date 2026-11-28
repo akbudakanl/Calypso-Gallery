@@ -9,8 +9,10 @@ import com.bumptech.glide.request.RequestOptions
 import org.fossify.commons.helpers.PROTECTION_PIN
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.BiometricCipherResult
+import org.fossify.gallery.helpers.CliBridgeManager
 import org.fossify.gallery.helpers.CryptoManager
 import org.fossify.gallery.helpers.EncryptedFileMetadata
+import org.fossify.gallery.helpers.NativeVaultSession
 import org.fossify.gallery.helpers.VAULT_HEADER_FILE
 import org.fossify.gallery.helpers.VaultLockPolicy
 import org.fossify.gallery.helpers.VaultSessionManager
@@ -18,12 +20,15 @@ import org.fossify.gallery.helpers.appendPendingWipe
 import org.fossify.gallery.helpers.applyEncryptedCachePolicy
 import org.fossify.gallery.helpers.biometricUnavailableReason
 import org.fossify.gallery.helpers.classifyBiometricCipherFailure
+import org.fossify.gallery.helpers.decryptStringFromVault
 import org.fossify.gallery.helpers.deriveKeyArgon2id
 import org.fossify.gallery.helpers.emptyVaultRecycleBin
 import org.fossify.gallery.helpers.encryptStreamToDirectory
+import org.fossify.gallery.helpers.encryptStringForVault
 import org.fossify.gallery.helpers.exportEncryptedVault
 import org.fossify.gallery.helpers.getPendingWipeJournalFile
 import org.fossify.gallery.helpers.getVaultRecycleBin
+import org.fossify.gallery.helpers.isCurrentVaultSecret
 import org.fossify.gallery.helpers.moveEncryptedFilesToVaultRecycleBin
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.helpers.permanentlyDeleteVaultRecycleBinFiles
@@ -31,9 +36,10 @@ import org.fossify.gallery.helpers.processPendingWipeJournalSync
 import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
+import org.fossify.gallery.helpers.unlockWithSecret
 import org.fossify.gallery.helpers.vault.VaultContainer
-import org.fossify.gallery.helpers.withEphemeralVaultKey
 import org.fossify.gallery.helpers.writeVaultHeader
+import org.fossify.gallery.helpers.writeVaultHeaderBytes
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -111,9 +117,9 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
     fun clearKeysZeroizesMasterKeyKekAndCachedFileKeys() {
         val vmk = ByteArray(32) { (it + 1).toByte() }
         val kek = ByteArray(32) { (it + 40).toByte() }
-        val fileKey = ByteArray(32) { (it + 90).toByte() }
-        CryptoManager.unlockedMasterKey = vmk
-        CryptoManager.unlockedKek = kek
+        CryptoManager.installSessionForTesting(vmk, kek)
+        val encryptedStr = CryptoManager.encryptStringForVault(testContext, "Secret Album", "album")
+        assertNotNull(CliBridgeManager.currentFingerprint())
         CryptoManager.metadataCache["/vault/sample.bin"] = EncryptedFileMetadata(
             originalName = "sample.jpg",
             lastModified = 100L,
@@ -122,19 +128,15 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
             mediaType = 1,
             videoDuration = 0,
             payloadOffset = 100L,
-            contentIv = ByteArray(0),
-            fileKey = fileKey
+            contentIv = ByteArray(0)
         )
 
         CryptoManager.clearKeys(testContext)
 
         assertFalse(CryptoManager.isVaultUnlocked)
-        assertNull(CryptoManager.unlockedMasterKey)
-        assertNull(CryptoManager.unlockedKek)
         assertTrue(CryptoManager.metadataCache.isEmpty())
-        assertTrue(vmk.all { it == 0.toByte() })
-        assertTrue(kek.all { it == 0.toByte() })
-        assertTrue(fileKey.all { it == 0.toByte() })
+        assertNull(CryptoManager.decryptStringFromVault(encryptedStr, "album"))
+        assertNull(CliBridgeManager.currentFingerprint())
     }
 
     @Test
@@ -147,23 +149,30 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
         testContext.config.vaultRootPath = vaultDir.absolutePath
         CryptoManager.cachedVaultRoot = vaultDir
 
-        var observedVmk: ByteArray? = null
-        var observedKek: ByteArray? = null
-        val result = CryptoManager.withEphemeralVaultKey(testContext, secretChars) { vmk, kek ->
-            assertFalse("Ephemeral unwrap must never populate unlockedMasterKey", CryptoManager.isVaultUnlocked)
-            assertArrayEquals(expectedVmk, vmk)
-            assertArrayEquals(expectedKek, kek)
-            observedVmk = vmk
-            observedKek = kek
-            "ok"
-        }
+        assertTrue(CryptoManager.isCurrentVaultSecret(testContext, secretChars))
+        assertFalse("Ephemeral check must never populate Rust VaultSession", CryptoManager.isVaultUnlocked)
 
-        assertEquals("ok", result)
-        assertFalse(CryptoManager.isVaultUnlocked)
-        assertNotNull(observedVmk)
-        assertNotNull(observedKek)
-        assertTrue(observedVmk!!.all { it == 0.toByte() })
-        assertTrue(observedKek!!.all { it == 0.toByte() })
+        val headerFile = File(vaultDir, VAULT_HEADER_FILE)
+        val secretBytes = NativeVaultSession.secretCharsToUtf8Bytes(secretChars)
+        val rewrapped = try {
+            NativeVaultSession.rewrapVaultHeaderNative(
+                headerFile.readBytes(),
+                secretBytes,
+                19 * 1024,
+                3,
+                1,
+                PROTECTION_PIN
+            )
+        } finally {
+            secretBytes.fill(0)
+        }
+        assertNotNull(rewrapped)
+        assertFalse("Ephemeral rewrap must never populate Rust VaultSession", CryptoManager.isVaultUnlocked)
+        writeVaultHeaderBytes(headerFile, rewrapped!!)
+
+        assertTrue(CryptoManager.unlockWithSecret(testContext, secretChars))
+        assertTrue(CryptoManager.isVaultUnlocked)
+        CryptoManager.lockVault()
     }
 
     @Test
@@ -175,13 +184,13 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
         CryptoManager.cachedVaultRoot = vaultDir
 
         val vmk = ByteArray(32) { 5 }
-        CryptoManager.unlockedMasterKey = vmk
+        CryptoManager.installSessionForTesting(vmk)
 
         VaultSessionManager.onAppBackgrounded(testContext)
 
-        // Keys are wiped from RAM immediately, while re-auth UI state remains armed for 30 minutes.
+        // Keys are wiped from Rust RAM immediately, while re-auth UI state remains armed for 30 minutes.
         assertFalse(CryptoManager.isVaultUnlocked)
-        assertTrue(vmk.all { it == 0.toByte() })
+        assertNull(CliBridgeManager.currentFingerprint())
         assertTrue(VaultSessionManager.isReauthPending())
         assertTrue(testContext.config.temporarilyShowHidden)
 
@@ -194,10 +203,10 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
 
         // Screen off also wipes RAM keys immediately.
         val vmk2 = ByteArray(32) { 7 }
-        CryptoManager.unlockedMasterKey = vmk2
+        CryptoManager.installSessionForTesting(vmk2)
         VaultSessionManager.onScreenOff(testContext)
         assertFalse(CryptoManager.isVaultUnlocked)
-        assertTrue(vmk2.all { it == 0.toByte() })
+        assertNull(CliBridgeManager.currentFingerprint())
         assertTrue(VaultSessionManager.isReauthPending())
     }
 
@@ -210,17 +219,17 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
         CryptoManager.cachedVaultRoot = vaultDir
 
         val vmk = ByteArray(32) { 9 }
-        CryptoManager.unlockedMasterKey = vmk
+        CryptoManager.installSessionForTesting(vmk)
 
         ForegroundOperationRegistry.withOperation(testContext, "album-encrypt") {
             VaultSessionManager.onAppBackgrounded(testContext)
             assertTrue("RAM key must stay alive during active foreground operation", CryptoManager.isVaultUnlocked)
-            assertFalse(vmk.all { it == 0.toByte() })
+            assertNotNull(CliBridgeManager.currentFingerprint())
         }
 
         // Once the operation finishes while app is still in background, RAM keys are wiped right away.
         assertFalse(CryptoManager.isVaultUnlocked)
-        assertTrue(vmk.all { it == 0.toByte() })
+        assertNull(CliBridgeManager.currentFingerprint())
         assertTrue(VaultSessionManager.isReauthPending())
     }
 
@@ -311,8 +320,7 @@ class VaultLockPolicyTest : VaultLockPolicyTestBase() {
         File(vaultDir, VAULT_HEADER_FILE).writeBytes("FGVLT".toByteArray(Charsets.US_ASCII) + ByteArray(32))
         testContext.config.vaultRootPath = vaultDir.absolutePath
         CryptoManager.cachedVaultRoot = vaultDir
-        CryptoManager.unlockedMasterKey = ByteArray(32) { 3 }
-        CryptoManager.unlockedKek = ByteArray(32) { 4 }
+        CryptoManager.installSessionForTesting(ByteArray(32) { 3 }, ByteArray(32) { 4 })
 
         val stateTransitions = ArrayList<Boolean>()
         ForegroundOperationRegistry.onStateChanged = { stateTransitions.add(it) }

@@ -32,7 +32,6 @@ import org.fossify.gallery.helpers.restoreVaultRecycleBinFiles
 import org.fossify.gallery.helpers.secureWipeAndDeleteFile
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.vault.VaultContainer
-import org.fossify.gallery.helpers.withEphemeralVaultKey
 import org.fossify.gallery.helpers.writeVaultHeader
 import org.junit.After
 import org.junit.Assert.assertArrayEquals

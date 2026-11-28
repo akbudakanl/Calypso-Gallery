@@ -29,8 +29,7 @@ class VaultMetadataTest {
             VaultContainer.VAULT_HEADER_MAGIC.toByteArray(Charsets.US_ASCII) +
                 byteArrayOf(VaultContainer.VAULT_FORMAT_VERSION)
         )
-        setField("unlockedMasterKey", vmk)
-        setField("unlockedKek", kek.copyOf())
+        CryptoManager.installSessionForTesting(vmk, kek)
         setField("cachedVaultRoot", tempDir)
     }
 

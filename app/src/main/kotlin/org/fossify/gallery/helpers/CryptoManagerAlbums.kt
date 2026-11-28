@@ -8,11 +8,7 @@ import org.fossify.gallery.extensions.config
 import org.fossify.gallery.helpers.CryptoManager.FOLDER_ORIGIN_PURPOSE
 import org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
 import org.fossify.gallery.helpers.vault.VaultContainer.GCM_IV_LENGTH
-import org.fossify.gallery.helpers.vault.VaultContainer.GCM_TAG_BITS
 import java.io.*
-import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 private const val ORIGIN_STORAGE_INTERNAL = "internal"
 private const val ORIGIN_STORAGE_EXTERNAL = "external"
@@ -29,12 +25,12 @@ internal data class EncryptedFolderOrigin(
 // ==================== FOLDER METADATA ENCRYPTION (.meta & .fmeta) ====================
 
 internal fun CryptoManager.writeEncryptedFolderMeta(context: Context, folder: File, originalName: String) {
+    if (!isVaultUnlocked) return
     val metaFile = File(folder, VAULT_SUBFOLDER_META_FILE)
-    val masterKey = unlockedMasterKey ?: return
-    val iv = ByteArray(GCM_IV_LENGTH).also { secureRandom.nextBytes(it) }
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-    val encryptedName = cipher.doFinal(originalName.toByteArray(Charsets.UTF_8))
+    val packed = NativeVaultSession.encryptFolderMetaNative(originalName.toByteArray(Charsets.UTF_8))
+    if (packed.size <= GCM_IV_LENGTH) return
+    val iv = packed.copyOfRange(0, GCM_IV_LENGTH)
+    val encryptedName = packed.copyOfRange(GCM_IV_LENGTH, packed.size)
 
     FileOutputStream(metaFile).use { fos ->
         DataOutputStream(fos).use { dos ->
@@ -51,7 +47,7 @@ internal fun CryptoManager.writeEncryptedFolderMeta(context: Context, folder: Fi
 
 
 fun CryptoManager.createHiddenPhysicalAlbum(context: Context, originalName: String): File? {
-    if (unlockedMasterKey == null) {
+    if (!isVaultUnlocked) {
         return null
     }
     val vaultRoot = findVaultRoot(context) ?: return null
@@ -142,7 +138,7 @@ fun CryptoManager.getHiddenPhysicalAlbums(context: Context): List<VaultPhysicalA
 
 fun CryptoManager.getDecryptedRawFolderName(folder: File): String? {
     folderNameCache[folder.absolutePath]?.let { return it }
-    val masterKey = unlockedMasterKey ?: return null
+    if (!isVaultUnlocked) return null
 
     val metaFile = File(folder, VAULT_SUBFOLDER_META_FILE)
     if (!metaFile.exists()) return null
@@ -160,9 +156,8 @@ fun CryptoManager.getDecryptedRawFolderName(folder: File): String? {
             if (len <= 0 || len > 4096) return null
             val encryptedName = ByteArray(len)
             dis.readFully(encryptedName)
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
-            val name = String(cipher.doFinal(encryptedName), Charsets.UTF_8)
+            val plain = NativeVaultSession.decryptFolderMetaNative(iv, encryptedName) ?: return null
+            val name = String(plain, Charsets.UTF_8)
             folderNameCache[folder.absolutePath] = name
             name
         }
@@ -196,7 +191,7 @@ fun CryptoManager.renameEncryptedFolder(context: Context, folder: File, newName:
     val trimmed = newName.trim()
     if (trimmed.isEmpty() || !folder.exists() || !folder.isDirectory) return false
     if (!isEncryptedFolder(folder) || isVaultRecycleBin(folder) || isDefaultHiddenAlbum(folder)) return false
-    if (unlockedMasterKey == null) return false
+    if (!isVaultUnlocked) return false
     return try {
         writeEncryptedFolderMeta(context, folder, trimmed)
         true
@@ -219,7 +214,7 @@ fun CryptoManager.getDecryptedFolderName(folder: File, context: Context? = null)
 
 
 fun CryptoManager.getOrCreateDefaultHiddenAlbum(context: Context): File? {
-    if (unlockedMasterKey == null) {
+    if (!isVaultUnlocked) {
         return null
     }
     val vaultRoot = findVaultRoot(context) ?: return null
@@ -363,7 +358,7 @@ internal fun CryptoManager.writeEncryptedFolderOrigin(
     encryptedFolder: File,
     origin: EncryptedFolderOrigin
 ) {
-    if (activeKek() == null) return
+    if (!isVaultUnlocked) return
     val json = Gson().toJson(origin)
     val encrypted = encryptStringForVault(context, json, FOLDER_ORIGIN_PURPOSE)
     if (!isEncryptedVaultString(encrypted)) return
@@ -377,7 +372,7 @@ internal fun CryptoManager.writeEncryptedFolderOrigin(
 }
 
 internal fun CryptoManager.readEncryptedFolderOrigin(folder: File): EncryptedFolderOrigin? {
-    if (activeKek() == null) return null
+    if (!isVaultUnlocked) return null
     val originFile = File(folder, VAULT_SUBFOLDER_ORIGIN_FILE)
     if (!originFile.isFile) return null
 

@@ -26,9 +26,11 @@ import org.fossify.gallery.helpers.verifyFileIntegrity
 class EncryptedRenameAndDefaultAlbumTest {
 
     private fun setMasterKey(key: ByteArray?) {
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, key)
+        if (key == null) {
+            CryptoManager.lockVault()
+        } else {
+            CryptoManager.installSessionForTesting(key)
+        }
     }
 
     private fun clearCaches() {

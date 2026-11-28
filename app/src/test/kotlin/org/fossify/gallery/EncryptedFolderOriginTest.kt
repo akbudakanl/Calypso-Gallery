@@ -33,6 +33,7 @@ import org.fossify.gallery.helpers.renameEncryptedFolder
 import org.fossify.gallery.helpers.resolveDecryptTargetInPickedDirectory
 import org.fossify.gallery.helpers.resolveOriginDecryptTargetFolder
 import org.fossify.gallery.helpers.setVaultRootLocation
+import org.fossify.gallery.helpers.writeEncryptedFolderMeta
 import org.fossify.gallery.helpers.syncVaultFromExternalDirectory
 import org.fossify.gallery.helpers.writeEncryptedFolderOrigin
 import org.junit.After
@@ -198,7 +199,6 @@ class EncryptedFolderOriginTest {
     @Test
     fun exceptions_returnNullOriginInsteadOfSilentPicturesFallback() {
         val random = SecureRandom()
-        val masterKey = CryptoManager.getMasterKeyCopy()!!
         val picturesDir = File(internalRoot, "Pictures")
 
         // 1. Vault-native album created via createHiddenPhysicalAlbum
@@ -219,7 +219,7 @@ class EncryptedFolderOriginTest {
 
         // 3. Legacy album (.meta only, no .origin)
         val legacyAlbum = File(vaultRoot, "leg123").apply { mkdirs() }
-        writeMetaV2(legacyAlbum, masterKey, "LegacyAlbum")
+        CryptoManager.writeEncryptedFolderMeta(testContext, legacyAlbum, "LegacyAlbum")
         val p3 = ByteArray(1024).also { random.nextBytes(it) }
         encryptBytesForTest(legacyAlbum, "l1.jpg", p3)
         assertNull(CryptoManager.resolveOriginDecryptTargetFolder(testContext, legacyAlbum))
@@ -229,7 +229,7 @@ class EncryptedFolderOriginTest {
         // 4. CLI / external-synced album -> user picks destination via picker helper
         val cliSourceRoot = File(tempRoot, "cli_sync_src").apply { mkdirs() }
         val cliSub = File(cliSourceRoot, "cli001").apply { mkdirs() }
-        writeMetaV2(cliSub, masterKey, "CliSynced")
+        CryptoManager.writeEncryptedFolderMeta(testContext, cliSub, "CliSynced")
         val p4 = ByteArray(1024).also { random.nextBytes(it) }
         encryptBytesForTest(cliSub, "c1.jpg", p4)
         val syncResult = CryptoManager.syncVaultFromExternalDirectory(
@@ -423,28 +423,12 @@ class EncryptedFolderOriginTest {
         )!!
     }
 
-    private fun writeMetaV2(folder: File, masterKey: ByteArray, rawName: String) {
-        val random = SecureRandom()
-        val iv = ByteArray(12).also { random.nextBytes(it) }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(masterKey, "AES"), GCMParameterSpec(128, iv))
-        val encryptedName = cipher.doFinal(rawName.toByteArray(Charsets.UTF_8))
-
-        FileOutputStream(File(folder, VAULT_SUBFOLDER_META_FILE)).use { fos ->
-            DataOutputStream(fos).use { dos ->
-                val magic = org.fossify.gallery.helpers.vault.VaultContainer.FOLDER_META_MAGIC
-                dos.write(magic.toByteArray(Charsets.US_ASCII))
-                dos.write(iv)
-                dos.writeInt(encryptedName.size)
-                dos.write(encryptedName)
-            }
-        }
-    }
-
     private fun setMasterKey(key: ByteArray?) {
-        val field = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-        field.isAccessible = true
-        field.set(CryptoManager, key)
+        if (key == null) {
+            CryptoManager.lockVault()
+        } else {
+            CryptoManager.installSessionForTesting(key)
+        }
     }
 
     private fun resetCryptoManagerSingletons() {

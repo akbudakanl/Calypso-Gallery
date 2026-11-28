@@ -336,7 +336,7 @@ fun CryptoManager.secureWipeAndDeleteFile(
 
 fun CryptoManager.deleteEncryptedFile(context: Context, file: File): Boolean {
     val path = file.absolutePath
-    metadataCache.remove(path)?.fileKey?.fill(0)
+    metadataCache.remove(path)
     if (!file.exists()) return true
     var deleted = file.delete()
     if (!deleted) {

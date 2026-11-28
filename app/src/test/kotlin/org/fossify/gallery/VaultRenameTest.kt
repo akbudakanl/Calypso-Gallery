@@ -32,11 +32,7 @@ class VaultRenameTest {
         tempDir.mkdirs()
         tempDir.listFiles()?.forEach { it.delete() }
 
-        for (name in listOf("unlockedMasterKey", "unlockedKek")) {
-            val field = CryptoManager::class.java.getDeclaredField(name)
-            field.isAccessible = true
-            field.set(CryptoManager, kek.copyOf())
-        }
+        CryptoManager.installSessionForTesting(kek)
     }
 
     @Test
@@ -105,7 +101,6 @@ class VaultRenameTest {
 
     private fun writeContainer(target: File, name: String, payload: ByteArray) {
         val prepared = VaultContainerWriter.prepare(
-            kek = kek,
             keyId = 7,
             originalName = name,
             lastModified = 1_700_000_000_000L,

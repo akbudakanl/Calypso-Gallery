@@ -74,7 +74,6 @@ data class EncryptedFileMetadata(
     val videoDuration: Int,
     val payloadOffset: Long,
     val contentIv: ByteArray,
-    val fileKey: ByteArray,
     val version: Byte = 1,
     val isMacAuthenticated: Boolean = false,
     val thumbnailBytes: ByteArray? = null,
@@ -134,20 +133,6 @@ object CryptoManager {
 
     internal val secureRandom = SecureRandom()
 
-
-    @Volatile
-    internal var unlockedMasterKey: ByteArray? = null
-
-    /**
-     * kanonik kasada keyring'den çözülen KEK.
-     * [activeKek] eski MEK'i (unlockedMasterKey) kullanir.
-     */
-    @Volatile
-    internal var unlockedKek: ByteArray? = null
-
-    /** Dosya basliklarini sifrelemek icin aktif KEK. */
-    internal fun activeKek(): ByteArray? = unlockedKek ?: unlockedMasterKey
-
     internal val metadataCache = ConcurrentHashMap<String, EncryptedFileMetadata>()
 
     internal val folderNameCache = ConcurrentHashMap<String, String>()
@@ -189,10 +174,17 @@ object CryptoManager {
 
 
     val isVaultUnlocked: Boolean
-        get() = unlockedMasterKey != null
+        get() = NativeVaultSession.isSessionUnlockedNative()
 
 
-    fun getMasterKeyCopy(): ByteArray? = unlockedMasterKey?.copyOf()
+    @VisibleForTesting
+    internal fun installSessionForTesting(
+        vmk: ByteArray,
+        kek: ByteArray = vmk,
+        keyId: Short = 1
+    ) {
+        NativeVaultSession.installSessionKeysForTestNative(vmk, kek, keyId.toInt())
+    }
 
 
     fun invalidateFolderCache() {
@@ -206,8 +198,8 @@ object CryptoManager {
     }
 
     /**
-     * ADR 0002 §5.2 centralized key zeroization: zeroes [unlockedMasterKey], [unlockedKek], every
-     * cached per-file [EncryptedFileMetadata.fileKey], clears decoded folder/name caches, and
+     * ADR 0002 §5.2 & ADR 0010 centralized key zeroization: wipes the native Rust [VaultSession]
+     * (`VMK`/`KEK`) via `ZeroizeOnDrop`, clears cached non-secret metadata/folder caches, and
      * clears any vault-derived clipboard content.
      */
     fun clearKeys(context: android.content.Context? = null) {
@@ -220,11 +212,7 @@ object CryptoManager {
 
 
     private fun lockVaultInternal(context: android.content.Context? = null) {
-        unlockedMasterKey?.fill(0)
-        unlockedMasterKey = null
-        unlockedKek?.fill(0)
-        unlockedKek = null
-        metadataCache.values.forEach { it.fileKey.fill(0) }
+        NativeVaultSession.lockSessionNative()
         metadataCache.clear()
         folderNameCache.clear()
         encryptedFolderCache.clear()
@@ -579,7 +567,7 @@ object CryptoManager {
         cacheResult: Boolean = true
     ): EncryptedFileMetadata? {
         metadataCache[file.absolutePath]?.let { return it }
-        val kek = activeKek() ?: return null
+        if (!isVaultUnlocked) return null
         if (!file.exists() || !file.isFile) return null
 
         return try {
@@ -592,7 +580,7 @@ object CryptoManager {
                     val version = dis.readByte()
                     if (version != VaultContainer.VAULT_FORMAT_VERSION) return null
 
-                    val meta = readContainerMetadata(dis, kek, version, includeThumbnail) ?: return null
+                    val meta = readContainerMetadata(dis, version, includeThumbnail) ?: return null
                     if (cacheResult && includeThumbnail) {
                         metadataCache[file.absolutePath] = meta
                     }

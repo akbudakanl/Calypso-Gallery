@@ -42,11 +42,7 @@ class CliFixtureCompatibilityTest {
             Manifest::class.java
         )
         val kek = manifest.kek_hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-        for (name in listOf("unlockedMasterKey", "unlockedKek")) {
-            val field = CryptoManager::class.java.getDeclaredField(name)
-            field.isAccessible = true
-            field.set(CryptoManager, kek.copyOf())
-        }
+        CryptoManager.installSessionForTesting(kek)
     }
 
     @Test

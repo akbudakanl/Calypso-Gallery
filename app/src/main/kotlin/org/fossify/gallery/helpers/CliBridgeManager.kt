@@ -4,8 +4,6 @@ import android.content.Context
 import org.fossify.gallery.extensions.config
 import java.io.File
 import java.security.SecureRandom
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * Manages the per-vault CLI bridge folders under `Calypso Gallery/CLI`.
@@ -42,13 +40,10 @@ object CliBridgeManager {
 
     /** KEK-derived identity. Stable across password changes; changes only with the KEK. */
     fun currentFingerprint(): String? {
-        val kek = CryptoManager.unlockedKek ?: return null
-        return runCatching {
-            val mac = Mac.getInstance("HmacSHA256")
-            mac.init(SecretKeySpec(kek, "HmacSHA256"))
-            mac.doFinal(FINGERPRINT_INFO.toByteArray(Charsets.UTF_8))
-                .take(8).joinToString("") { "%02x".format(it) }
-        }.getOrNull()
+        val fpBytes = runCatching {
+            NativeVaultSession.computeKekFingerprintNative(FINGERPRINT_INFO.toByteArray(Charsets.UTF_8))
+        }.getOrNull() ?: return null
+        return fpBytes.joinToString("") { "%02x".format(it) }
     }
 
     fun bridges(context: Context, includeArchived: Boolean = false): List<Bridge> {

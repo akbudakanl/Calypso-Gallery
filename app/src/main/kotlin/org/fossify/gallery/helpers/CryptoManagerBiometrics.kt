@@ -210,7 +210,7 @@ fun CryptoManager.getBiometricEncryptCipher(context: Context): Cipher? {
 
 
 fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Boolean {
-    val masterKey = unlockedMasterKey ?: return false
+    val masterKey = NativeVaultSession.exportVmkForBiometricWrapNative() ?: return false
     var encrypted: ByteArray? = null
     var iv: ByteArray? = null
     var combined: ByteArray? = null
@@ -229,6 +229,7 @@ fun CryptoManager.completeBiometricSetup(context: Context, cipher: Cipher): Bool
     } catch (_: Throwable) {
         false
     } finally {
+        masterKey.fill(0)
         encrypted?.fill(0)
         iv?.fill(0)
         combined?.fill(0)
@@ -296,6 +297,11 @@ fun CryptoManager.getBiometricDecryptCipher(context: Context): Cipher? {
 
 fun CryptoManager.completeBiometricUnlock(context: Context, cipher: Cipher): Boolean {
     if (!verifyVaultOnDisk(context)) return false
+    val vaultRoot = locateVaultRootOnDisk(context) ?: findVaultRoot(context) ?: return false
+    val headerFile = File(vaultRoot, VAULT_HEADER_FILE)
+    if (!isValidVaultHeader(headerFile)) return false
+    val headerBytes = runCatching { headerFile.readBytes() }.getOrNull() ?: return false
+
     val wrappedB64 = context.config.vaultBiometricWrappedBundle
     if (wrappedB64.isEmpty()) return false
     val combined = try {
@@ -311,30 +317,27 @@ fun CryptoManager.completeBiometricUnlock(context: Context, cipher: Cipher): Boo
     combined.fill(0)
 
     var bundle: ByteArray? = null
+    var vmk: ByteArray? = null
     return try {
         bundle = cipher.doFinal(encrypted)
         if (bundle.size < 32) {
             return false
         }
-        val vmk = bundle.copyOf(32)
-        val kek = loadKekFromVaultHeaderWithVmk(context, vmk)
-        if (kek == null) {
-            vmk.fill(0)
+        vmk = bundle.copyOf(32)
+        if (!NativeVaultSession.unlockVaultWithVmkNative(headerBytes, vmk)) {
             return false
         }
-        unlockedMasterKey?.fill(0)
-        unlockedKek?.fill(0)
-        unlockedMasterKey = vmk
-        unlockedKek = kek
         context.config.hiddenPasswordHash = "argon2id_aes256_gcm"
         context.config.isHiddenPasswordProtectionOn = true
-        findVaultRoot(context)?.let { context.config.vaultRootPath = it.absolutePath }
+        context.config.vaultRootPath = vaultRoot.absolutePath
+        cachedVaultRoot = vaultRoot
         true
     } catch (_: Throwable) {
         false
     } finally {
         encrypted.fill(0)
         bundle?.fill(0)
+        vmk?.fill(0)
     }
 }
 

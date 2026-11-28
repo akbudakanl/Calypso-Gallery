@@ -24,11 +24,9 @@ class VaultStreamingDownloadTest {
             val originalPayload = ByteArray(128 * 1024)
             random.nextBytes(originalPayload)
 
-            // Setup a test master key in CryptoManager via reflection or simulated vault unlock
-            val masterKeyField = CryptoManager::class.java.getDeclaredField("unlockedMasterKey")
-            masterKeyField.isAccessible = true
+            // Setup a test master key in Rust VaultSession
             val testMasterKey = ByteArray(32).also { random.nextBytes(it) }
-            masterKeyField.set(CryptoManager, testMasterKey)
+            CryptoManager.installSessionForTesting(testMasterKey)
 
             // Stream directly into CryptoManager.encryptStreamToDirectory
             val inputStream = ByteArrayInputStream(originalPayload)
@@ -76,7 +74,7 @@ class VaultStreamingDownloadTest {
             assertArrayEquals("Decrypted bytes must match original payload byte-for-byte", originalPayload, decryptedBytes)
 
             // Lock / clear master key
-            masterKeyField.set(CryptoManager, null)
+            CryptoManager.lockVault()
         } finally {
             tempDir.deleteRecursively()
         }
