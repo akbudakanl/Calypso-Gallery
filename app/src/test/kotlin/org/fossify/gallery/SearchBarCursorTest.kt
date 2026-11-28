@@ -66,7 +66,8 @@ class SearchBarCursorTest {
             "Editor caches the cursor drawable; recolour the cached instance instead of replacing it",
             helper.contains("Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q") &&
                 helper.contains("textCursorDrawable = newCursor()") &&
-                helper.contains("current.mutate().setTint(color)"),
+                helper.contains("current.mutate().setTint(color)") &&
+                helper.contains("applyThemedSelectionHandles(color)"),
         )
     }
 

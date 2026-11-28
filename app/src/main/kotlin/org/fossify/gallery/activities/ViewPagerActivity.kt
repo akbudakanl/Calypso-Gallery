@@ -2422,6 +2422,13 @@ class ViewPagerActivity : BaseViewerActivity(), ViewPager.OnPageChangeListener, 
         return true
     }
 
+    override fun shouldReserveBottomActionsSpace(path: String): Boolean {
+        return config.bottomActions &&
+            !CryptoManager.isVaultMediaPath(this, path) &&
+            !(mDirectory.isVirtualAlbumPath() && isHiddenVirtualAlbumPath(mDirectory)) &&
+            !isHiddenPath(path)
+    }
+
     override fun goToPrevItem() {
         binding.viewPager.setCurrentItem(binding.viewPager.currentItem - 1, false)
         checkOrientation()

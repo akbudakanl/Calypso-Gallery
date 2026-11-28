@@ -71,6 +71,7 @@ fun TextView.applyThemedCursor(color: Int) {
     }
 
     highlightColor = ColorUtils.setAlphaComponent(color, 60)
+    applyThemedSelectionHandles(color)
     invalidate()
 }
 
@@ -79,9 +80,13 @@ fun TextView.applyThemedCursor(color: Int) {
  * library's green accent in this fork. Replace them explicitly with theme-coloured copies.
  */
 fun TextView.applyThemedSelectionHandles(color: Int) {
-    if (Build.VERSION.SDK_INT < 29) return
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+    val tint = ColorStateList.valueOf(color)
+    listOf(textSelectHandle, textSelectHandleLeft, textSelectHandleRight).forEach { existing ->
+        existing?.mutate()?.setTintList(tint)
+    }
     fun handle(resId: Int) = AppCompatResources.getDrawable(context, resId)?.mutate()?.apply {
-        setTint(color)
+        setTintList(tint)
     }
     handle(R.drawable.calypso_text_select_handle_middle)?.let { setTextSelectHandle(it) }
     handle(R.drawable.calypso_text_select_handle_left)?.let { setTextSelectHandleLeft(it) }

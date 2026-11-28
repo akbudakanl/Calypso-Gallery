@@ -32,10 +32,8 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type
-import androidx.core.view.updateLayoutParams
 import androidx.viewpager.widget.ViewPager
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -73,7 +71,6 @@ import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.getVideoResolution
 import org.fossify.commons.extensions.isVisible
 import org.fossify.commons.extensions.onGlobalLayout
-import org.fossify.commons.extensions.setDrawablesRelativeWithIntrinsicBounds
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateTextColors
@@ -85,7 +82,6 @@ import org.fossify.gallery.activities.VideoActivity
 import org.fossify.gallery.databinding.PagerVideoItemBinding
 import org.fossify.gallery.extensions.config
 import org.fossify.gallery.extensions.getActionBarHeight
-import org.fossify.gallery.extensions.getBottomActionsHeight
 import org.fossify.gallery.extensions.getFormattedDuration
 import org.fossify.gallery.extensions.getFriendlyMessage
 import org.fossify.gallery.extensions.launchGesturePlayer
@@ -106,12 +102,13 @@ import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VIDEO_FRAME_CACHE_TTL_MS
 import org.fossify.gallery.helpers.VIDEO_FRAME_POSITION_TOLERANCE_MS
 import org.fossify.gallery.helpers.VideoPlaybackUtils
+import org.fossify.gallery.helpers.VideoSpeedUiHelper
+import org.fossify.gallery.helpers.isVaultMediaPath
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
 import org.fossify.gallery.models.Medium
 import org.fossify.gallery.views.MediaSideScroll
 import java.io.File
 import java.io.FileInputStream
-import java.text.DecimalFormat
 import kotlin.math.abs
 
 class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
@@ -408,6 +405,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     private var mTouchSlop = 0
     private var mInitialX = 0f
     private var mInitialY = 0f
+    private var mLastSystemBottomInset = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -525,9 +523,12 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
                 )
             }
 
-            binding.bottomActionsDummy.updateLayoutParams<ViewGroup.LayoutParams> {
-                height = resources.getBottomActionsHeight() + system.bottom
-            }
+            mLastSystemBottomInset = system.bottom
+            VideoSpeedUiHelper.updateBottomActionsSpacerHeight(
+                spacer = binding.bottomActionsDummy,
+                systemBottomInset = mLastSystemBottomInset,
+                reserveBottomActions = shouldReserveBottomActionsSpace(),
+            )
             insets
         }
 
@@ -955,8 +956,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         mPlayPauseButton.beVisible()
         binding.bottomVideoTimeHolder.videoToggleMute.beVisible()
         binding.bottomVideoTimeHolder.videoPlaybackSpeed.beVisible()
-        binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
-            "${DecimalFormat("#.##").format(mConfig.playbackSpeed)}x"
+        VideoSpeedUiHelper.updateSpeedButton(binding.bottomVideoTimeHolder.videoPlaybackSpeed, mConfig.playbackSpeed)
         syncMuteStateOnStart()
     }
 
@@ -1410,9 +1410,20 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
         }
     }
 
+    private fun shouldReserveBottomActionsSpace(): Boolean {
+        val ctx = context ?: return mConfig.bottomActions
+        return listener?.shouldReserveBottomActionsSpace(mMedium.path)
+            ?: (mConfig.bottomActions && !CryptoManager.isVaultMediaPath(ctx, mMedium.path))
+    }
+
     private fun initTimeHolder() {
         mTimeHolder.beGoneIf(mIsFullscreen)
         mTimeHolder.alpha = if (mIsFullscreen) 0f else 1f
+        VideoSpeedUiHelper.updateBottomActionsSpacerHeight(
+            spacer = binding.bottomActionsDummy,
+            systemBottomInset = mLastSystemBottomInset,
+            reserveBottomActions = shouldReserveBottomActionsSpace(),
+        )
         (activity as? BaseViewerActivity)?.applyProperHorizontalInsets(mTimeHolder)
     }
 
@@ -1474,23 +1485,7 @@ class VideoFragment : ViewPagerFragment(), TextureView.SurfaceTextureListener,
     }
 
     override fun updatePlaybackSpeed(speed: Float) {
-        val isSlow = speed < 1f
-        if (isSlow != binding.bottomVideoTimeHolder.videoPlaybackSpeed.tag as? Boolean) {
-            binding.bottomVideoTimeHolder.videoPlaybackSpeed.tag = isSlow
-
-            val drawableId =
-                if (isSlow) R.drawable.ic_playback_speed_slow_vector else R.drawable.ic_playback_speed_vector
-            context?.let {
-                binding.bottomVideoTimeHolder.videoPlaybackSpeed
-                    .setDrawablesRelativeWithIntrinsicBounds(
-                        AppCompatResources.getDrawable(it, drawableId)
-                    )
-            }
-        }
-
-        @SuppressLint("SetTextI18n")
-        binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
-            "${DecimalFormat("#.##").format(speed)}x"
+        VideoSpeedUiHelper.updateSpeedButton(binding.bottomVideoTimeHolder.videoPlaybackSpeed, speed)
         mExoPlayer?.setPlaybackSpeed(speed)
     }
 

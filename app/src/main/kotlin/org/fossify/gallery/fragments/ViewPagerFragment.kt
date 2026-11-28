@@ -73,6 +73,8 @@ abstract class ViewPagerFragment : Fragment() {
 
         fun updateVideoKeepScreenOn(keepOn: Boolean): Boolean = false
 
+        fun shouldReserveBottomActionsSpace(path: String): Boolean = true
+
         /**
          * Applies the screen orientation that matches the aspect ratio of the media with the given
          * path. If the dimensions of the media are not known yet, they are read in the background.

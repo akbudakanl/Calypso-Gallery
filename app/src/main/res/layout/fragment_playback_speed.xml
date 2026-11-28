@@ -22,7 +22,9 @@
         android:layout_below="@+id/playback_speed_title"
         android:layout_alignStart="@+id/playback_speed_seekbar"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_playback_speed_slow_vector" />
+        android:contentDescription="@string/playback_speed"
+        android:padding="4dp"
+        android:src="@drawable/ic_playback_speed_sheet_slow_vector" />
 
     <org.fossify.commons.views.MyTextView
         android:id="@+id/playback_speed_label"
@@ -41,7 +43,9 @@
         android:layout_below="@+id/playback_speed_title"
         android:layout_alignEnd="@+id/playback_speed_seekbar"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/ic_playback_speed_vector" />
+        android:contentDescription="@string/playback_speed"
+        android:padding="4dp"
+        android:src="@drawable/ic_playback_speed_sheet_fast_vector" />
 
     <org.fossify.commons.views.MySeekBar
         android:id="@+id/playback_speed_seekbar"

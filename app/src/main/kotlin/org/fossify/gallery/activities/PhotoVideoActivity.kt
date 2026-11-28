@@ -503,6 +503,12 @@ open class PhotoVideoActivity : BaseViewerActivity(), ViewPagerFragment.Fragment
         return true
     }
 
+    override fun shouldReserveBottomActionsSpace(path: String): Boolean {
+        return config.bottomActions &&
+            !org.fossify.gallery.helpers.CryptoManager.isVaultMediaPath(this, path) &&
+            !isPathHiddenOrEncrypted(path)
+    }
+
     override fun isSlideShowActive() = false
 
     override fun isFullScreen() = mIsFullScreen

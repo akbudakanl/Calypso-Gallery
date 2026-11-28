@@ -28,7 +28,6 @@ import android.view.ViewConfiguration
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.AudioAttributes
@@ -57,7 +56,6 @@ import org.fossify.commons.extensions.getFilenameFromUri
 import org.fossify.commons.extensions.getFormattedDuration
 import org.fossify.commons.extensions.getProperTextColor
 import org.fossify.commons.extensions.onGlobalLayout
-import org.fossify.commons.extensions.setDrawablesRelativeWithIntrinsicBounds
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.extensions.toast
 import org.fossify.commons.extensions.updateBrightness
@@ -100,9 +98,9 @@ import org.fossify.gallery.helpers.SeekableExtractorsFactory
 import org.fossify.gallery.helpers.VideoGestureCallbacks
 import org.fossify.gallery.helpers.VideoGestureHelper
 import org.fossify.gallery.helpers.VideoPlaybackUtils
+import org.fossify.gallery.helpers.VideoSpeedUiHelper
 import org.fossify.gallery.helpers.operations.ForegroundOperationRegistry
 import org.fossify.gallery.interfaces.PlaybackSpeedListener
-import java.text.DecimalFormat
 import kotlin.math.max
 import kotlin.math.min
 
@@ -505,8 +503,6 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
             binding.bottomVideoTimeHolder.videoTogglePlayPause.beVisible()
             binding.bottomVideoTimeHolder.videoPlaybackSpeed.beVisible()
             binding.bottomVideoTimeHolder.videoToggleMute.beVisible()
-            binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
-                "${DecimalFormat("#.##").format(config.playbackSpeed)}x"
             mDuration = VideoPlaybackUtils.sanitizeDurationMs(mExoPlayer!!.duration)
             binding.bottomVideoTimeHolder.videoSeekbar.max = VideoPlaybackUtils.toSeekBarMax(mDuration)
             binding.bottomVideoTimeHolder.videoDuration.text = mDuration.getFormattedDuration()
@@ -764,24 +760,7 @@ open class VideoPlayerActivity : BaseViewerActivity(), SeekBar.OnSeekBarChangeLi
     }
 
     override fun updatePlaybackSpeed(speed: Float) {
-        val isSlow = speed < 1f
-        if (isSlow != binding.bottomVideoTimeHolder.videoPlaybackSpeed.tag as? Boolean) {
-            binding.bottomVideoTimeHolder.videoPlaybackSpeed.tag = isSlow
-
-            val drawableId =
-                if (isSlow) R.drawable.ic_playback_speed_slow_vector else R.drawable.ic_playback_speed_vector
-            binding.bottomVideoTimeHolder.videoPlaybackSpeed
-                .setDrawablesRelativeWithIntrinsicBounds(
-                    AppCompatResources.getDrawable(
-                        this,
-                        drawableId
-                    )
-                )
-        }
-
-        @SuppressLint("SetTextI18n")
-        binding.bottomVideoTimeHolder.videoPlaybackSpeed.text =
-            "${DecimalFormat("#.##").format(speed)}x"
+        VideoSpeedUiHelper.updateSpeedButton(binding.bottomVideoTimeHolder.videoPlaybackSpeed, speed)
         mExoPlayer?.setPlaybackSpeed(speed)
     }
 
